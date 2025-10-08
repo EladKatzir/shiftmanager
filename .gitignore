@@ -35,14 +35,6 @@ obj/
 *.swp
 *.tmp
 
-# NuGet
-*.nupkg
-*.snupkg
-*.nuspec
-packages/
-*.nuget.props
-*.nuget.targets
-
 # Logs
 *.log
 logs/
@@ -114,3 +106,8 @@ _ReSharper*/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# EXCEPTION: ProjectPublish directory - commit everything inside it
+# This ensures ALL files and subdirectories within ProjectPublish are tracked
+!ProjectPublish/
+!ProjectPublish/**
