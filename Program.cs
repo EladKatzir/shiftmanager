@@ -101,6 +101,7 @@ builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IChoreService, ChoreService>();
 builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
 builder.Services.AddSingleton<IValidationService, ValidationService>();
+builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
 
 // Add health checks for container orchestration
 builder.Services.AddHealthChecks()
@@ -268,6 +269,9 @@ if (enableHttps)
 
 app.UseStaticFiles();
 app.UseRouting();
+
+// Add request logging middleware (must be after routing, before auth)
+app.UseRequestLogging();
 
 // ✅ SECURITY FIX: Add security headers middleware
 app.Use(async (context, next) =>
