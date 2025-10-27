@@ -70,6 +70,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         opt.Cookie.Name = "shiftmgr.auth";
         opt.ExpireTimeSpan = TimeSpan.FromDays(7);
         opt.SlidingExpiration = true;
+
+        // ✅ SECURITY FIX: Enhanced cookie security settings
+        opt.Cookie.HttpOnly = true; // Prevent XSS attacks from accessing cookie
+        opt.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Use Secure flag when HTTPS is available
+        opt.Cookie.SameSite = SameSiteMode.Lax; // Prevent CSRF attacks while allowing normal navigation
     });
 
 builder.Services.AddAuthorization(options =>
@@ -261,6 +266,36 @@ if (enableHttps)
 
 app.UseStaticFiles();
 app.UseRouting();
+
+// ✅ SECURITY FIX: Add security headers middleware
+app.Use(async (context, next) =>
+{
+    // Prevent clickjacking attacks
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+
+    // Prevent MIME type sniffing
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+
+    // Control referrer information
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+    // Prevent loading resources from untrusted sources
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " + // Allow inline scripts for Razor
+        "style-src 'self' 'unsafe-inline'; " +  // Allow inline styles
+        "img-src 'self' data:; " +               // Allow inline images for avatars
+        "font-src 'self'; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'";                // Redundant with X-Frame-Options but recommended
+
+    // Remove potentially revealing server headers
+    context.Response.Headers.Remove("Server");
+    context.Response.Headers.Remove("X-Powered-By");
+    context.Response.Headers.Remove("X-AspNet-Version");
+
+    await next();
+});
 
 // Add request localization middleware
 app.UseRequestLocalization();

@@ -75,9 +75,35 @@ public class CompaniesModel : PageModel
     {
         await OnGetAsync();
 
+        // ✅ SECURITY FIX: Enhanced input validation with length constraints
         if (string.IsNullOrWhiteSpace(CompanyName) || string.IsNullOrWhiteSpace(CompanySlug))
         {
             Error = "Company name and slug are required.";
+            return Page();
+        }
+
+        // Validate field lengths to prevent DoS via large strings
+        if (CompanyName.Length > 200 || CompanySlug.Length > 100)
+        {
+            Error = "Company name or slug exceeds maximum length (200/100 characters).";
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(CompanyDisplayName) && CompanyDisplayName.Length > 200)
+        {
+            Error = "Company display name must not exceed 200 characters.";
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(ManagerDisplayName) && ManagerDisplayName.Length > 200)
+        {
+            Error = "Manager display name must not exceed 200 characters.";
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(ManagerEmail) && ManagerEmail.Length > 255)
+        {
+            Error = "Manager email must not exceed 255 characters.";
             return Page();
         }
 
