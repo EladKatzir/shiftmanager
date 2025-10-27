@@ -17,12 +17,14 @@ public class SignupModel : PageModel
     private readonly AppDbContext _db;
     private readonly ILogger<SignupModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IConfiguration _configuration;
 
-    public SignupModel(AppDbContext db, ILogger<SignupModel> logger, IStringLocalizer<SharedResources> localizer)
+    public SignupModel(AppDbContext db, ILogger<SignupModel> logger, IStringLocalizer<SharedResources> localizer, IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
         _localizer = localizer;
+        _configuration = configuration;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -46,17 +48,37 @@ public class SignupModel : PageModel
 
     public async Task OnGetAsync()
     {
-        AvailableCompanies = await _db.Companies
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        // SECURITY FIX: Only load companies if public signup is explicitly enabled
+        var allowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        if (allowPublicSignup)
+        {
+            _logger.LogWarning("Public signup with company list is enabled - this exposes all company names");
+            AvailableCompanies = await _db.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+        else
+        {
+            // Production: signup disabled or requires invite code
+            AvailableCompanies = new List<Company>();
+        }
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Load companies for form redisplay if needed
-        AvailableCompanies = await _db.Companies
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        // SECURITY FIX: Only load companies if public signup is explicitly enabled
+        var allowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        if (allowPublicSignup)
+        {
+            AvailableCompanies = await _db.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+        else
+        {
+            Error = "Public signup is disabled. Please contact your administrator for an invitation.";
+            return Page();
+        }
 
         if (!ModelState.IsValid)
         {
