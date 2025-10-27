@@ -75,8 +75,59 @@ public class CreateModel : PageModel
             return RedirectToPage("/AccessDenied");
         }
 
-        await OnGetAsync();
-        if (SelectedAssignmentId is null || ToUserId is null) return Page();
+        // ✅ SECURITY FIX: Input validation
+        if (!SelectedAssignmentId.HasValue || SelectedAssignmentId.Value <= 0)
+        {
+            ModelState.AddModelError("", "Please select a valid shift assignment.");
+            await OnGetAsync();
+            return Page();
+        }
+
+        if (!ToUserId.HasValue || ToUserId.Value <= 0)
+        {
+            ModelState.AddModelError("", "Please select a valid user to swap with.");
+            await OnGetAsync();
+            return Page();
+        }
+
+        // Prevent swapping with yourself
+        if (ToUserId.Value == userId)
+        {
+            ModelState.AddModelError("", "Cannot swap shift with yourself.");
+            await OnGetAsync();
+            return Page();
+        }
+
+        // Validate that the assignment belongs to the current user (authorization check)
+        var assignment = await _db.ShiftAssignments
+            .Include(a => a.ShiftInstance)
+            .FirstOrDefaultAsync(a => a.Id == SelectedAssignmentId.Value);
+
+        if (assignment == null)
+        {
+            ModelState.AddModelError("", "Shift assignment not found.");
+            await OnGetAsync();
+            return Page();
+        }
+
+        if (assignment.UserId != userId)
+        {
+            ModelState.AddModelError("", "You can only swap your own shifts.");
+            await OnGetAsync();
+            return Page();
+        }
+
+        // Validate that ToUser is valid and in same company
+        var companyId = _companyContext.GetCompanyIdOrThrow();
+        var toUser = await _db.Users.FindAsync(ToUserId.Value);
+
+        if (toUser == null || !toUser.IsActive || toUser.CompanyId != companyId)
+        {
+            ModelState.AddModelError("", "Selected user is not valid or not in your company.");
+            await OnGetAsync();
+            return Page();
+        }
+
         _db.SwapRequests.Add(new SwapRequest { FromAssignmentId = SelectedAssignmentId.Value, ToUserId = ToUserId.Value });
         await _db.SaveChangesAsync();
         return RedirectToPage("/Requests/Index");
