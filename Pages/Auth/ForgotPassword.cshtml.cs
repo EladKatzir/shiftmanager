@@ -17,17 +17,20 @@ public class ForgotPasswordModel : PageModel
     private readonly IMailService _mailService;
     private readonly ILogger<ForgotPasswordModel> _logger;
     private readonly IRateLimitingService _rateLimiting;
+    private readonly IValidationService _validation;
 
     public ForgotPasswordModel(
         AppDbContext db,
         IMailService mailService,
         ILogger<ForgotPasswordModel> logger,
-        IRateLimitingService rateLimiting)
+        IRateLimitingService rateLimiting,
+        IValidationService validation)
     {
         _db = db;
         _mailService = mailService;
         _logger = logger;
         _rateLimiting = rateLimiting;
+        _validation = validation;
     }
 
     [BindProperty]
@@ -70,10 +73,17 @@ public class ForgotPasswordModel : PageModel
             return Page();
         }
 
-        // Basic format validation
-        if (!Email.Contains('@') || Email.Length < 3)
+        // ✅ SECURITY FIX: Proper email format validation with regex
+        if (!_validation.IsValidEmail(Email))
         {
             ErrorMessage = "Invalid email format.";
+            return Page();
+        }
+
+        // ✅ SECURITY FIX: Proper phone format validation with regex
+        if (!_validation.IsValidPhone(Phone))
+        {
+            ErrorMessage = "Invalid phone format.";
             return Page();
         }
 

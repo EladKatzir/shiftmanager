@@ -7,6 +7,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace ShiftManager.Pages.Auth;
@@ -18,13 +19,15 @@ public class SignupModel : PageModel
     private readonly ILogger<SignupModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IConfiguration _configuration;
+    private readonly IValidationService _validation;
 
-    public SignupModel(AppDbContext db, ILogger<SignupModel> logger, IStringLocalizer<SharedResources> localizer, IConfiguration configuration)
+    public SignupModel(AppDbContext db, ILogger<SignupModel> logger, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, IValidationService validation)
     {
         _db = db;
         _logger = logger;
         _localizer = localizer;
         _configuration = configuration;
+        _validation = validation;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -117,8 +120,8 @@ public class SignupModel : PageModel
             return Page();
         }
 
-        // Basic email format validation
-        if (!Email.Contains('@') || Email.Length < 3)
+        // ✅ SECURITY FIX: Proper email format validation with regex
+        if (!_validation.IsValidEmail(Email))
         {
             Error = "Invalid email format.";
             return Page();

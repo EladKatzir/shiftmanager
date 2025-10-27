@@ -16,12 +16,14 @@ public class LoginModel : PageModel
     private readonly AppDbContext _db;
     private readonly ILogger<LoginModel> _logger;
     private readonly IRateLimitingService _rateLimiting;
+    private readonly IValidationService _validation;
 
-    public LoginModel(AppDbContext db, ILogger<LoginModel> logger, IRateLimitingService rateLimiting)
+    public LoginModel(AppDbContext db, ILogger<LoginModel> logger, IRateLimitingService rateLimiting, IValidationService validation)
     {
         _db = db;
         _logger = logger;
         _rateLimiting = rateLimiting;
+        _validation = validation;
     }
 
     [BindProperty] public string Email { get; set; } = string.Empty;
@@ -59,8 +61,8 @@ public class LoginModel : PageModel
                 return Page();
             }
 
-            // Basic email format validation
-            if (!Email.Contains('@') || Email.Length < 3)
+            // ✅ SECURITY FIX: Proper email format validation with regex
+            if (!_validation.IsValidEmail(Email))
             {
                 Error = "Invalid email format.";
                 return Page();
