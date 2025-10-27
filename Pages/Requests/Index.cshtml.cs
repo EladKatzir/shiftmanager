@@ -7,6 +7,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
+using System.Security.Claims;
 
 namespace ShiftManager.Pages.Requests;
 
@@ -18,8 +19,17 @@ public class IndexModel : PageModel
     private readonly INotificationService _notificationService;
     private readonly ITraineeService _traineeService;
     private readonly ILogger<IndexModel> _logger;
-    public IndexModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ITraineeService traineeService, ILogger<IndexModel> logger)
-    { _db = db; _checker = checker; _notificationService = notificationService; _traineeService = traineeService; _logger = logger; }
+    private readonly IDirectorService _directorService;
+
+    public IndexModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ITraineeService traineeService, ILogger<IndexModel> logger, IDirectorService directorService)
+    {
+        _db = db;
+        _checker = checker;
+        _notificationService = notificationService;
+        _traineeService = traineeService;
+        _logger = logger;
+        _directorService = directorService;
+    }
 
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
     public List<TimeOffVM> TimeOff { get; set; } = new();
@@ -74,8 +84,33 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostApproveTimeOffAsync(int id)
     {
+        // ✅ SECURITY FIX: Validate authorization before approving request
         var r = await _db.TimeOffRequests.FindAsync(id);
-        if (r == null) return RedirectToPage();
+        if (r == null)
+        {
+            _logger.LogWarning("Time off request {RequestId} not found", id);
+            return RedirectToPage();
+        }
+
+        // Get current user and validate they have access to this request's company
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            Error = "Authentication error. Please log in again.";
+            return RedirectToPage();
+        }
+
+        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, r.CompanyId);
+        if (!hasAccess)
+        {
+            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve time off request {RequestId} for unauthorized company {CompanyId}",
+                currentUserId, currentUser!.Role, id, r.CompanyId);
+            Error = "You don't have permission to approve this request.";
+            await OnGetAsync();
+            return Page();
+        }
 
         r.Status = RequestStatus.Approved;
 
@@ -108,8 +143,33 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostDeclineTimeOffAsync(int id)
     {
+        // ✅ SECURITY FIX: Validate authorization before declining request
         var r = await _db.TimeOffRequests.FindAsync(id);
-        if (r == null) return RedirectToPage();
+        if (r == null)
+        {
+            _logger.LogWarning("Time off request {RequestId} not found", id);
+            return RedirectToPage();
+        }
+
+        // Get current user and validate they have access to this request's company
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            Error = "Authentication error. Please log in again.";
+            return RedirectToPage();
+        }
+
+        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, r.CompanyId);
+        if (!hasAccess)
+        {
+            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline time off request {RequestId} for unauthorized company {CompanyId}",
+                currentUserId, currentUser!.Role, id, r.CompanyId);
+            Error = "You don't have permission to decline this request.";
+            await OnGetAsync();
+            return Page();
+        }
 
         r.Status = RequestStatus.Declined;
         await _db.SaveChangesAsync();
@@ -123,8 +183,36 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostApproveSwapAsync(int id)
     {
         using var trx = await _db.Database.BeginTransactionAsync();
+
+        // ✅ SECURITY FIX: Validate authorization before approving swap
         var s = await _db.SwapRequests.FindAsync(id);
-        if (s == null) return RedirectToPage();
+        if (s == null)
+        {
+            _logger.LogWarning("Swap request {RequestId} not found", id);
+            return RedirectToPage();
+        }
+
+        // Get current user and validate they have access to this request's company
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            Error = "Authentication error. Please log in again.";
+            await trx.RollbackAsync();
+            return RedirectToPage();
+        }
+
+        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, s.CompanyId);
+        if (!hasAccess)
+        {
+            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve swap request {RequestId} for unauthorized company {CompanyId}",
+                currentUserId, currentUser!.Role, id, s.CompanyId);
+            Error = "You don't have permission to approve this request.";
+            await trx.RollbackAsync();
+            await OnGetAsync();
+            return Page();
+        }
 
         var assign = await _db.ShiftAssignments.FindAsync(s.FromAssignmentId);
         if (assign == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
@@ -165,8 +253,33 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostDeclineSwapAsync(int id)
     {
+        // ✅ SECURITY FIX: Validate authorization before declining swap
         var s = await _db.SwapRequests.FindAsync(id);
-        if (s == null) return RedirectToPage();
+        if (s == null)
+        {
+            _logger.LogWarning("Swap request {RequestId} not found", id);
+            return RedirectToPage();
+        }
+
+        // Get current user and validate they have access to this request's company
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            Error = "Authentication error. Please log in again.";
+            return RedirectToPage();
+        }
+
+        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, s.CompanyId);
+        if (!hasAccess)
+        {
+            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline swap request {RequestId} for unauthorized company {CompanyId}",
+                currentUserId, currentUser!.Role, id, s.CompanyId);
+            Error = "You don't have permission to decline this request.";
+            await OnGetAsync();
+            return Page();
+        }
 
         // Get shift information for notification before declining
         var shiftInfo = await (from sr in _db.SwapRequests
@@ -187,5 +300,27 @@ public class IndexModel : PageModel
         }
 
         return RedirectToPage();
+    }
+
+    /// <summary>
+    /// Validates that the current user has access to manage requests for the specified company.
+    /// </summary>
+    private async Task<bool> ValidateAccessToRequestAsync(AppUser currentUser, int targetCompanyId)
+    {
+        if (currentUser.Role == UserRole.Owner)
+        {
+            return true; // Owner has access to all companies
+        }
+        else if (currentUser.Role == UserRole.Director)
+        {
+            var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUser.Id);
+            return directorCompanyIds.Contains(targetCompanyId);
+        }
+        else if (currentUser.Role == UserRole.Manager)
+        {
+            return currentUser.CompanyId == targetCompanyId;
+        }
+
+        return false; // Employees and trainees cannot manage requests
     }
 }
