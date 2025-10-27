@@ -82,7 +82,12 @@ public class ProfileModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
         var user = await _db.Users.FindAsync(userId);
 
         if (user == null)
@@ -97,7 +102,12 @@ public class ProfileModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
         var user = await _db.Users.FindAsync(userId);
 
         if (user == null)
@@ -188,7 +198,12 @@ public class ProfileModel : PageModel
 
     public async Task<IActionResult> OnPostDeleteAvatarAsync()
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
         var success = await _avatarService.DeleteAvatarAsync(userId);
 
         if (success)

@@ -21,7 +21,12 @@ public class CreateModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (EndDate < StartDate) { ModelState.AddModelError("", "End date cannot be before start date."); return Page(); }
-        int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
         _db.TimeOffRequests.Add(new TimeOffRequest { UserId = userId, StartDate = StartDate, EndDate = EndDate, Reason = Reason });
         await _db.SaveChangesAsync();
         return RedirectToPage("/Requests/Index");

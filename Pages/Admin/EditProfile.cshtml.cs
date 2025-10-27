@@ -116,7 +116,12 @@ public class EditProfileModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        var editorUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var editorUserId))
+        {
+            return BadRequest("Invalid user claim");
+        }
         var targetUser = await _db.Users.FindAsync(UserId);
 
         if (targetUser == null)

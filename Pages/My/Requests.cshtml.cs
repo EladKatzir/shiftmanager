@@ -40,7 +40,14 @@ public class RequestsModel : PageModel
         try
         {
             _logger.LogInformation("Starting OnGetAsync for requests page");
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = "Authentication error. Please log in again.";
+                return;
+            }
             _logger.LogInformation("User ID: {UserId}", userId);
 
             // Load user's time off requests
@@ -139,7 +146,15 @@ public class RequestsModel : PageModel
                 return Page();
             }
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = "Authentication error. Please log in again.";
+                await OnGetAsync();
+                return Page();
+            }
             _logger.LogInformation("Time off request for user {UserId}, dates {StartDate} to {EndDate}", userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
 
             var request = new TimeOffRequest
@@ -190,7 +205,15 @@ public class RequestsModel : PageModel
                 return Page();
             }
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = "Authentication error. Please log in again.";
+                await OnGetAsync();
+                return Page();
+            }
             _logger.LogInformation("Swap request for user {UserId}, ShiftId {ShiftId}", userId, SwapRequest.ShiftId);
 
             // Verify the assignment belongs to the user

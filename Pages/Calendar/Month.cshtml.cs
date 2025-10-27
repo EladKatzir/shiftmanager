@@ -280,7 +280,13 @@ public class MonthModel : PageModel
         _logger.LogInformation("Adjust staffing: date={Date} shiftTypeId={ShiftTypeId} delta={Delta} companyId={CompanyId}", payload.date, payload.shiftTypeId, payload.delta, payload.companyId);
 
         // Get current user for authorization
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return BadRequest("Invalid user claim");
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         // ✅ SECURITY FIX (DEFECT-003): Always validate company access

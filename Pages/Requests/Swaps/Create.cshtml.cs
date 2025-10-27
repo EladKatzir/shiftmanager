@@ -31,7 +31,13 @@ public class CreateModel : PageModel
 
     public async Task OnGetAsync()
     {
-        int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            Response.Redirect("/Auth/Login");
+            return;
+        }
 
         // Block trainees from creating swap requests
         var currentUser = await _db.Users.FindAsync(userId);
@@ -55,7 +61,12 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
 
         // Block trainees from creating swap requests
         var currentUser = await _db.Users.FindAsync(userId);

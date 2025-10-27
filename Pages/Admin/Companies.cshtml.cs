@@ -151,11 +151,18 @@ public class CompaniesModel : PageModel
             {
                 // Assign the existing Director to this company
                 var director = await _db.Users.FindAsync(SelectedDirectorId!.Value);
+                // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out var grantedBy))
+                {
+                    grantedBy = 0; // Fallback for audit trail
+                }
+
                 var directorAssignment = new DirectorCompany
                 {
                     UserId = SelectedDirectorId!.Value,
                     CompanyId = company.Id,
-                    GrantedBy = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                    GrantedBy = grantedBy,
                     GrantedAt = DateTime.UtcNow
                 };
 

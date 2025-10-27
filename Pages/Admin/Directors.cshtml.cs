@@ -93,7 +93,13 @@ public class DirectorsModel : PageModel
 
     public async Task<IActionResult> OnPostAssignAsync()
     {
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage();
+        }
 
         // Validate inputs
         if (DirectorUserId == 0 || CompanyId == 0)

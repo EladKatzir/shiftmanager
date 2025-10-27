@@ -271,7 +271,13 @@ public class ManageModel : PageModel
 
     public async Task<IActionResult> OnPostAssignTraineeAsync(int assignmentId, int traineeUserId)
     {
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
+        }
 
         var success = await _traineeService.AssignTraineeToShiftAsync(assignmentId, traineeUserId, currentUserId);
 
@@ -289,7 +295,13 @@ public class ManageModel : PageModel
 
     public async Task<IActionResult> OnPostRemoveTraineeAsync(int assignmentId)
     {
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
+        }
 
         var success = await _traineeService.RemoveTraineeFromShiftAsync(assignmentId, "Manual", currentUserId);
 

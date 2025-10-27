@@ -296,7 +296,13 @@ public class UsersModel : PageModel
         await _db.SaveChangesAsync();
 
         // Audit logging (RoleAssignmentAudit)
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim during user creation audit");
+            currentUserId = 0; // Fallback for audit trail
+        }
         _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
         {
             ChangedBy = currentUserId,
@@ -357,7 +363,14 @@ public class UsersModel : PageModel
         {
             var oldRole = u.Role;
 
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+                return RedirectToPage();
+            }
 
             // If changing from Trainee to another role, validate and cancel shadowing
             if (oldRole == UserRole.Trainee && targetRole != UserRole.Trainee)
@@ -444,7 +457,13 @@ public class UsersModel : PageModel
             await _db.SaveChangesAsync();
 
             // Log the password reset for security audit
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim during password reset audit");
+                currentUserId = 0; // Fallback for audit trail
+            }
             await _auditLogService.LogUserActionAsync(
                 userId: currentUserId,
                 action: "PasswordReset",
@@ -464,7 +483,14 @@ public class UsersModel : PageModel
 
         try
         {
-            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+                return RedirectToPage();
+            }
 
             // Prevent self-deletion
             if (id == currentUserId)
@@ -558,7 +584,14 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostApproveJoinRequestAsync(int id)
     {
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage();
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         var joinRequest = await _db.UserJoinRequests
@@ -647,7 +680,14 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostRejectJoinRequestAsync(int id, string? reason)
     {
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage();
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         var joinRequest = await _db.UserJoinRequests
@@ -705,7 +745,14 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostBatchApproveJoinRequestsAsync()
     {
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage();
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         if (SelectedRequests == null || !SelectedRequests.Any())
