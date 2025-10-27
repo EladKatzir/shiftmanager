@@ -99,6 +99,7 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IChoreService, ChoreService>();
+builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
 
 // Add health checks for container orchestration
 builder.Services.AddHealthChecks()

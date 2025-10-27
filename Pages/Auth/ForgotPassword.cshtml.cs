@@ -16,15 +16,18 @@ public class ForgotPasswordModel : PageModel
     private readonly AppDbContext _db;
     private readonly IMailService _mailService;
     private readonly ILogger<ForgotPasswordModel> _logger;
+    private readonly IRateLimitingService _rateLimiting;
 
     public ForgotPasswordModel(
         AppDbContext db,
         IMailService mailService,
-        ILogger<ForgotPasswordModel> logger)
+        ILogger<ForgotPasswordModel> logger,
+        IRateLimitingService rateLimiting)
     {
         _db = db;
         _mailService = mailService;
         _logger = logger;
+        _rateLimiting = rateLimiting;
     }
 
     [BindProperty]
@@ -42,9 +45,35 @@ public class ForgotPasswordModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // ✅ SECURITY FIX: Rate limiting (3 attempts per 15 minutes per IP)
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var rateLimitKey = $"forgot-password:{ipAddress}";
+
+        if (!_rateLimiting.IsAllowed(rateLimitKey, 3, 15))
+        {
+            _logger.LogWarning("Rate limit exceeded for password reset from IP: {IP}", ipAddress);
+            ErrorMessage = "Too many password reset attempts. Please try again in 15 minutes.";
+            return Page();
+        }
+
+        // ✅ SECURITY FIX: Input validation
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Phone))
         {
             ErrorMessage = "Please provide both email and phone number.";
+            return Page();
+        }
+
+        if (Email.Length > 255 || Phone.Length > 50)
+        {
+            _logger.LogWarning("Password reset attempt with oversized input from IP: {IP}", ipAddress);
+            ErrorMessage = "Invalid input.";
+            return Page();
+        }
+
+        // Basic format validation
+        if (!Email.Contains('@') || Email.Length < 3)
+        {
+            ErrorMessage = "Invalid email format.";
             return Page();
         }
 

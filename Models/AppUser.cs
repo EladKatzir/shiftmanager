@@ -38,4 +38,9 @@ public class AppUser : IBelongsToCompany
     public string? AvatarFileName { get; set; }     // Filename in wwwroot/avatars/{companyId}/
     public DateTime? ProfileLastUpdated { get; set; }
     public int? ProfileLastUpdatedBy { get; set; }  // User ID who made the change
+
+    // Security - Account Lockout Protection
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
+    public DateTime? LastLoginAttempt { get; set; }
 }
