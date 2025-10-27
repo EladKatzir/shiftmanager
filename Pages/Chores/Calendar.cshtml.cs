@@ -102,6 +102,7 @@ public class CalendarModel : PageModel
     {
         try
         {
+            // ✅ SECURITY FIX: Input validation
             if (!ModelState.IsValid)
             {
                 ErrorMessage = "Please fill in all required fields.";
@@ -111,6 +112,41 @@ public class CalendarModel : PageModel
             if (string.IsNullOrWhiteSpace(ChoreTitle))
             {
                 ErrorMessage = "Chore title is required.";
+                return await OnGetAsync();
+            }
+
+            // Validate title length (prevent DoS and database errors)
+            if (ChoreTitle.Length > 200)
+            {
+                ErrorMessage = "Chore title must not exceed 200 characters.";
+                return await OnGetAsync();
+            }
+
+            // Validate notes length
+            if (!string.IsNullOrWhiteSpace(ChoreNotes) && ChoreNotes.Length > 1000)
+            {
+                ErrorMessage = "Chore notes must not exceed 1000 characters.";
+                return await OnGetAsync();
+            }
+
+            // Validate assignee ID
+            if (AssigneeId <= 0)
+            {
+                ErrorMessage = "Invalid assignee.";
+                return await OnGetAsync();
+            }
+
+            // Validate date (prevent far future dates)
+            if (ChoreDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
+            {
+                ErrorMessage = "Cannot create chores more than 2 years in the future.";
+                return await OnGetAsync();
+            }
+
+            // Validate date (prevent past dates)
+            if (ChoreDate < DateOnly.FromDateTime(DateTime.Today))
+            {
+                ErrorMessage = "Cannot create chores in the past.";
                 return await OnGetAsync();
             }
 
@@ -194,9 +230,32 @@ public class CalendarModel : PageModel
     {
         try
         {
+            // ✅ SECURITY FIX: Input validation
             if (ShiftAssignmentId <= 0 || string.IsNullOrWhiteSpace(ChoreTitle))
             {
                 ErrorMessage = "Invalid request.";
+                return await OnGetAsync();
+            }
+
+            // Validate title length
+            if (ChoreTitle.Length > 200)
+            {
+                ErrorMessage = "Chore title must not exceed 200 characters.";
+                return await OnGetAsync();
+            }
+
+            // Validate notes length
+            if (!string.IsNullOrWhiteSpace(ChoreNotes) && ChoreNotes.Length > 1000)
+            {
+                ErrorMessage = "Chore notes must not exceed 1000 characters.";
+                return await OnGetAsync();
+            }
+
+            // Check permissions
+            var currentUserId = GetCurrentUserId();
+            if (!await _choreService.CanUserManageChoresAsync(currentUserId))
+            {
+                ErrorMessage = "You do not have permission to replace shifts with chores.";
                 return await OnGetAsync();
             }
 
@@ -243,6 +302,7 @@ public class CalendarModel : PageModel
     {
         try
         {
+            // ✅ SECURITY FIX: Validate input and permissions
             // Manually read ChoreId from form to avoid binding conflicts
             var choreIdString = Request.Form["ChoreId"].ToString();
 
@@ -254,6 +314,15 @@ public class CalendarModel : PageModel
 
             // Use the manually parsed choreId instead of the property
             ChoreId = choreId;
+
+            // Check permissions
+            var currentUserId = GetCurrentUserId();
+            if (!await _choreService.CanUserManageChoresAsync(currentUserId))
+            {
+                _logger.LogWarning("SECURITY: User {UserId} attempted to cancel chore {ChoreId} without permission", currentUserId, ChoreId);
+                ErrorMessage = "You do not have permission to cancel chores.";
+                return await OnGetAsync();
+            }
 
             // Get the chore before canceling for notification purposes
             var chore = await _choreService.GetChoreByIdAsync(ChoreId);
