@@ -95,6 +95,12 @@ public class EditProfileModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
+        // ✅ SECURITY FIX: Input validation
+        if (UserId <= 0)
+        {
+            return BadRequest("Invalid user ID");
+        }
+
         var user = await _db.Users.FindAsync(UserId);
         if (user == null)
         {
@@ -116,6 +122,141 @@ public class EditProfileModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // ✅ SECURITY FIX: Input validation
+        if (UserId <= 0)
+        {
+            return BadRequest("Invalid user ID");
+        }
+
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName))
+        {
+            ErrorMessage = "Email and Display Name are required.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        // Length validation to prevent DoS and database errors
+        if (Email.Length > 255)
+        {
+            ErrorMessage = "Email must not exceed 255 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (DisplayName.Length > 200)
+        {
+            ErrorMessage = "Display name must not exceed 200 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(PreferredName) && PreferredName.Length > 100)
+        {
+            ErrorMessage = "Preferred name must not exceed 100 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length > 50)
+        {
+            ErrorMessage = "Phone must not exceed 50 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(City) && City.Length > 100)
+        {
+            ErrorMessage = "City must not exceed 100 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Department) && Department.Length > 100)
+        {
+            ErrorMessage = "Department must not exceed 100 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(JobTitle) && JobTitle.Length > 100)
+        {
+            ErrorMessage = "Job title must not exceed 100 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Skills) && Skills.Length > 5000)
+        {
+            ErrorMessage = "Skills must not exceed 5000 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Certifications) && Certifications.Length > 5000)
+        {
+            ErrorMessage = "Certifications must not exceed 5000 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EmergencyContactName) && EmergencyContactName.Length > 200)
+        {
+            ErrorMessage = "Emergency contact name must not exceed 200 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EmergencyContactPhone) && EmergencyContactPhone.Length > 50)
+        {
+            ErrorMessage = "Emergency contact phone must not exceed 50 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EmergencyContactRelation) && EmergencyContactRelation.Length > 100)
+        {
+            ErrorMessage = "Emergency contact relation must not exceed 100 characters.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
+        // Basic email format validation
+        if (!Email.Contains('@') || Email.Length < 3)
+        {
+            ErrorMessage = "Invalid email format.";
+            var user = await _db.Users.FindAsync(UserId);
+            if (user != null) LoadUserData(user);
+            await LoadRecentChangesAsync();
+            return Page();
+        }
+
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var editorUserId))
@@ -196,6 +337,12 @@ public class EditProfileModel : PageModel
 
     public async Task<IActionResult> OnPostDeleteAvatarAsync()
     {
+        // ✅ SECURITY FIX: Input validation
+        if (UserId <= 0)
+        {
+            return BadRequest("Invalid user ID");
+        }
+
         var success = await _avatarService.DeleteAvatarAsync(UserId);
 
         if (success)
