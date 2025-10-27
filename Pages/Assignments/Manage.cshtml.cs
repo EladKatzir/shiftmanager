@@ -65,8 +65,20 @@ public class ManageModel : PageModel
         var companyId = Type.CompanyId;
 
         // Validate user has access to this company
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return RedirectToPage("/Error");
+        }
+
         var currentUser = await _db.Users.FindAsync(currentUserId);
+        if (currentUser == null)
+        {
+            _logger.LogError("User {UserId} not found in database", currentUserId);
+            return RedirectToPage("/Error");
+        }
 
         bool hasAccess = false;
         if (currentUser!.Role == UserRole.Owner)

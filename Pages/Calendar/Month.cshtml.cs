@@ -71,10 +71,23 @@ public class MonthModel : PageModel
         Next = (target.AddMonths(1), target.AddMonths(1).ToString("MMM yyyy"));
 
         // Load accessible companies and shift types based on role
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return;
+        }
+
         var companyId = _companyContext.GetCompanyIdOrThrow();
         _logger.LogInformation("Month calendar: User {UserId} loading calendar with CompanyId={CompanyId}", currentUserId, companyId);
+
         var currentUser = await _db.Users.FindAsync(currentUserId);
+        if (currentUser == null)
+        {
+            _logger.LogError("User {UserId} not found in database", currentUserId);
+            return;
+        }
 
         List<int> accessibleCompanyIds;
         List<Company> accessibleCompanies;

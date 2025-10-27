@@ -22,8 +22,13 @@ public class DirectorService : IDirectorService
     {
         get
         {
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
             var userIdClaim = CurrentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return userIdClaim != null ? int.Parse(userIdClaim) : null;
+            if (userIdClaim != null && int.TryParse(userIdClaim, out var userId))
+            {
+                return userId;
+            }
+            return null;
         }
     }
 

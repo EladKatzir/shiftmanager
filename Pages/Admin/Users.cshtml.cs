@@ -92,9 +92,22 @@ public class UsersModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return;
+        }
+
         var currentUser = await _db.Users.FindAsync(currentUserId);
-        var role = currentUser!.Role;
+        if (currentUser == null)
+        {
+            _logger.LogError("User {UserId} not found in database", currentUserId);
+            return;
+        }
+
+        var role = currentUser.Role;
 
         // Determine accessible company IDs based on role
         List<int> accessibleCompanyIds;

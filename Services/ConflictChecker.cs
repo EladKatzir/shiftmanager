@@ -69,7 +69,7 @@ public class ConflictChecker : IConflictChecker
             .OrderBy(w => w.start)
             .FirstOrDefault();
 
-        int restHours = GetConfigInt(instance.CompanyId, "RestHours", 8);
+        int restHours = await GetConfigIntAsync(instance.CompanyId, "RestHours", 8, ct);
         if (before.end != default && (start - before.end).TotalHours < restHours)
             return ConflictResult.Fail($"Rest period too short (< {restHours}h) from previous shift.");
         if (after.start != default && (after.start - end).TotalHours < restHours)
@@ -94,16 +94,19 @@ public class ConflictChecker : IConflictChecker
 
         totalHoursThisWeek += TimeHelpers.Hours(t);
 
-        int weeklyCap = GetConfigInt(instance.CompanyId, "WeeklyHoursCap", 40);
+        int weeklyCap = await GetConfigIntAsync(instance.CompanyId, "WeeklyHoursCap", 40, ct);
         if (totalHoursThisWeek > weeklyCap)
             return ConflictResult.Fail($"Weekly hours cap exceeded (> {weeklyCap}h).");
 
         return ConflictResult.Ok();
     }
 
-    private int GetConfigInt(int companyId, string key, int defaultValue)
+    // PERFORMANCE FIX: Made async to prevent blocking thread pool
+    private async Task<int> GetConfigIntAsync(int companyId, string key, int defaultValue, CancellationToken ct = default)
     {
-        var v = _db.Configs.FirstOrDefault(c => c.CompanyId == companyId && c.Key == key)?.Value;
-        return int.TryParse(v, out var i) ? i : defaultValue;
+        var config = await _db.Configs
+            .Where(c => c.CompanyId == companyId && c.Key == key)
+            .FirstOrDefaultAsync(ct);
+        return int.TryParse(config?.Value, out var i) ? i : defaultValue;
     }
 }
