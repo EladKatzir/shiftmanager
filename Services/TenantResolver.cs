@@ -47,12 +47,13 @@ public class TenantResolver : ITenantResolver
         }
         else
         {
-            _logger?.LogInformation("TenantResolver: User not authenticated, using fallback CompanyId=1");
+            _logger?.LogWarning("TenantResolver: User not authenticated, no tenant access (CompanyId=0)");
         }
 
-        // Fallback to first company (for migration compatibility)
-        // TODO Phase 3: Remove this fallback when all requests are authenticated
-        return 1;
+        // SECURITY FIX: Removed dangerous fallback to CompanyId=1
+        // Unauthenticated requests should not have access to tenant data
+        // Return 0 to indicate no tenant context (query filters will exclude all records)
+        return 0;
     }
 
     public void SetCurrentTenantId(int companyId)

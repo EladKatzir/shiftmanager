@@ -12,8 +12,7 @@ using ShiftManager.Resources;
 namespace ShiftManager.Pages.Calendar;
 
 [Authorize]
-[IgnoreAntiforgeryToken] // ⬅ apply here (class level)
-
+// SECURITY FIX: Removed [IgnoreAntiforgeryToken] - CSRF protection is REQUIRED
 public class MonthModel : PageModel
 {
     private readonly AppDbContext _db;

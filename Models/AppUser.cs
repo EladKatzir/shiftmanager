@@ -2,7 +2,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Models;
 
-public class AppUser
+// SECURITY FIX: Implement IBelongsToCompany so CompanyIdInterceptor auto-sets CompanyId
+public class AppUser : IBelongsToCompany
 {
     public int Id { get; set; }
     public int CompanyId { get; set; }

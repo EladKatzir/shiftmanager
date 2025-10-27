@@ -273,6 +273,21 @@ public class AppDbContext : DbContext
 
             modelBuilder.Entity<Chore>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // SECURITY FIX: Add query filters for previously missing entities
+            modelBuilder.Entity<AppUser>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<AppConfig>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<RoleAssignmentAudit>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<UserJoinRequest>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
         }
 
         base.OnModelCreating(modelBuilder);
