@@ -84,6 +84,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostApproveTimeOffAsync(int id)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            _logger.LogWarning("Invalid time off request ID: {Id}", id);
+            return RedirectToPage();
+        }
+
         // ✅ SECURITY FIX: Validate authorization before approving request
         var r = await _db.TimeOffRequests.FindAsync(id);
         if (r == null)
@@ -143,6 +150,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostDeclineTimeOffAsync(int id)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            _logger.LogWarning("Invalid time off request ID: {Id}", id);
+            return RedirectToPage();
+        }
+
         // ✅ SECURITY FIX: Validate authorization before declining request
         var r = await _db.TimeOffRequests.FindAsync(id);
         if (r == null)
@@ -182,6 +196,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostApproveSwapAsync(int id)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            _logger.LogWarning("Invalid swap request ID: {Id}", id);
+            return RedirectToPage();
+        }
+
         using var trx = await _db.Database.BeginTransactionAsync();
 
         // ✅ SECURITY FIX: Validate authorization before approving swap
@@ -253,6 +274,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostDeclineSwapAsync(int id)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            _logger.LogWarning("Invalid swap request ID: {Id}", id);
+            return RedirectToPage();
+        }
+
         // ✅ SECURITY FIX: Validate authorization before declining swap
         var s = await _db.SwapRequests.FindAsync(id);
         if (s == null)

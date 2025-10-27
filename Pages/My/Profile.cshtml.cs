@@ -115,6 +115,77 @@ public class ProfileModel : PageModel
             return RedirectToPage("/Auth/Login");
         }
 
+        // ✅ SECURITY FIX: Input validation
+        if (string.IsNullOrWhiteSpace(DisplayName))
+        {
+            ErrorMessage = "Display name is required.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (DisplayName.Length > 200)
+        {
+            ErrorMessage = "Display name must not exceed 200 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(PreferredName) && PreferredName.Length > 100)
+        {
+            ErrorMessage = "Preferred name must not exceed 100 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length > 50)
+        {
+            ErrorMessage = "Phone must not exceed 50 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(City) && City.Length > 100)
+        {
+            ErrorMessage = "City must not exceed 100 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Skills) && Skills.Length > 5000)
+        {
+            ErrorMessage = "Skills must not exceed 5000 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Certifications) && Certifications.Length > 5000)
+        {
+            ErrorMessage = "Certifications must not exceed 5000 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EmergencyContactName) && EmergencyContactName.Length > 200)
+        {
+            ErrorMessage = "Emergency contact name must not exceed 200 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EmergencyContactPhone) && EmergencyContactPhone.Length > 50)
+        {
+            ErrorMessage = "Emergency contact phone must not exceed 50 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EmergencyContactRelation) && EmergencyContactRelation.Length > 100)
+        {
+            ErrorMessage = "Emergency contact relation must not exceed 100 characters.";
+            LoadUserData(user);
+            return Page();
+        }
+
         // Handle avatar upload first
         if (AvatarFile != null)
         {
