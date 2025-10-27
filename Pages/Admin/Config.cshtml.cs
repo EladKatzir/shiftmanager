@@ -23,6 +23,9 @@ public class ConfigModel : PageModel
     [BindProperty] public int RestHours { get; set; }
     [BindProperty] public int WeeklyCap { get; set; }
 
+    public string? Error { get; set; }
+    public string? Success { get; set; }
+
     public void OnGet()
     {
         var companyId = _companyContext.GetCompanyIdOrThrow();
@@ -32,9 +35,34 @@ public class ConfigModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // ✅ SECURITY FIX: Input validation for configuration values
+        if (RestHours < 0 || RestHours > 24)
+        {
+            Error = "Rest hours must be between 0 and 24.";
+            OnGet();
+            return Page();
+        }
+
+        if (WeeklyCap < 0 || WeeklyCap > 168)
+        {
+            Error = "Weekly hours cap must be between 0 and 168 (7 days × 24 hours).";
+            OnGet();
+            return Page();
+        }
+
+        // Logical validation: WeeklyCap should be reasonable
+        if (WeeklyCap > 0 && WeeklyCap < RestHours)
+        {
+            Error = "Weekly hours cap cannot be less than rest hours requirement.";
+            OnGet();
+            return Page();
+        }
+
         var companyId = _companyContext.GetCompanyIdOrThrow();
         await Set(companyId, "RestHours", RestHours.ToString());
         await Set(companyId, "WeeklyHoursCap", WeeklyCap.ToString());
+
+        Success = "Configuration updated successfully.";
         return RedirectToPage();
     }
 
