@@ -86,6 +86,44 @@ public class SignupModel : PageModel
             return Page();
         }
 
+        // ✅ SECURITY FIX: Additional input validation beyond data annotations
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Password))
+        {
+            Error = "All fields are required.";
+            return Page();
+        }
+
+        if (Email.Length > 255)
+        {
+            Error = "Email must not exceed 255 characters.";
+            return Page();
+        }
+
+        if (DisplayName.Length > 200)
+        {
+            Error = "Display name must not exceed 200 characters.";
+            return Page();
+        }
+
+        if (Password.Length > 128)
+        {
+            Error = "Password must not exceed 128 characters.";
+            return Page();
+        }
+
+        if (CompanyId <= 0)
+        {
+            Error = "Please select a valid company.";
+            return Page();
+        }
+
+        // Basic email format validation
+        if (!Email.Contains('@') || Email.Length < 3)
+        {
+            Error = "Invalid email format.";
+            return Page();
+        }
+
         // Check if user already exists
         if (await _db.Users.AnyAsync(u => u.Email == Email))
         {
