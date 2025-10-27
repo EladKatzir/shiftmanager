@@ -73,7 +73,12 @@ public class WeekModel : PageModel
         var companyId = _companyContext.GetCompanyIdOrThrow();
 
         // Load accessible companies and shift types based on role
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            return;
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         List<int> accessibleCompanyIds;
@@ -253,7 +258,12 @@ public class WeekModel : PageModel
         _logger.LogInformation("Adjust staffing: date={Date} shiftTypeId={ShiftTypeId} delta={Delta} companyId={CompanyId}", payload.date, payload.shiftTypeId, payload.delta, payload.companyId);
 
         // Get current user for authorization
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            return BadRequest("Invalid user claim");
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         // ✅ SECURITY FIX (DEFECT-003): Always validate company access

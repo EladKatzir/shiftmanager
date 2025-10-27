@@ -33,7 +33,7 @@ public class SignupModel : PageModel
     [BindProperty, Required]
     public string DisplayName { get; set; } = string.Empty;
 
-    [BindProperty, Required, MinLength(6)]
+    [BindProperty, Required, MinLength(12)]
     public string Password { get; set; } = string.Empty;
 
     [BindProperty, Required]

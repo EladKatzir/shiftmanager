@@ -21,7 +21,12 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return;
+        }
         var currentUser = await _db.Users.FindAsync(userId);
 
         var upcomingShifts = new List<UpcomingVM>();

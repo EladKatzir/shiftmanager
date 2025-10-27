@@ -65,7 +65,12 @@ public class DayModel : PageModel
         var companyId = _companyContext.GetCompanyIdOrThrow();
 
         // Determine accessible companies and load shift types accordingly
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            return;
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         List<int> accessibleCompanyIds;
@@ -245,7 +250,12 @@ public class DayModel : PageModel
         _logger.LogInformation("Adjust staffing: date={Date} shiftTypeId={ShiftTypeId} delta={Delta} companyId={CompanyId}", payload.date, payload.shiftTypeId, payload.delta, payload.companyId);
 
         // Get current user for authorization
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            return BadRequest("Invalid user claim");
+        }
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         // ✅ SECURITY FIX (DEFECT-003): Always validate company access
