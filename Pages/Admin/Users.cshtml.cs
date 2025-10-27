@@ -782,11 +782,21 @@ public class UsersModel : PageModel
             var skippedCount = 0;
             var errors = new List<string>();
 
+            // ✅ SECURITY FIX (DEFECT-019): Validate request IDs before processing
             // Get all selected join requests
             var joinRequests = await _db.UserJoinRequests
                 .Include(jr => jr.Company)
                 .Where(jr => SelectedRequests.Contains(jr.Id))
                 .ToListAsync();
+
+            // Check if any selected IDs were not found (potential tampering)
+            var foundIds = joinRequests.Select(jr => jr.Id).ToHashSet();
+            var invalidIds = SelectedRequests.Where(id => !foundIds.Contains(id)).ToList();
+            if (invalidIds.Any())
+            {
+                _logger.LogWarning("SECURITY: User {UserId} submitted invalid join request IDs: {InvalidIds}",
+                    currentUserId, string.Join(", ", invalidIds));
+            }
 
             // Get accessible company IDs for permission check
             List<int> accessibleCompanyIds;
@@ -810,9 +820,11 @@ public class UsersModel : PageModel
 
             foreach (var joinRequest in joinRequests)
             {
-                // Check permission for this specific request
+                // ✅ SECURITY FIX (DEFECT-019): Check permission for this specific request
                 if (!accessibleCompanyIds.Contains(joinRequest.CompanyId))
                 {
+                    _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company {CompanyId}",
+                        currentUserId, currentUser.Role, joinRequest.Id, joinRequest.CompanyId);
                     errors.Add($"No permission to approve {joinRequest.DisplayName} (different company)");
                     skippedCount++;
                     continue;
