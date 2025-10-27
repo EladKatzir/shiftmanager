@@ -262,8 +262,27 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostAddAsync()
     {
         await OnGetAsync();
+
+        // ✅ SECURITY FIX: Input validation
         if (string.IsNullOrWhiteSpace(NewEmail) || string.IsNullOrWhiteSpace(NewDisplayName) || string.IsNullOrWhiteSpace(NewPassword))
         { Error = "All fields are required."; return Page(); }
+
+        // Length validation to prevent DoS and database errors
+        if (NewEmail.Length > 255)
+        { Error = "Email must not exceed 255 characters."; return Page(); }
+
+        if (NewDisplayName.Length > 200)
+        { Error = "Display name must not exceed 200 characters."; return Page(); }
+
+        if (NewPassword.Length < 8)
+        { Error = "Password must be at least 8 characters."; return Page(); }
+
+        if (NewPassword.Length > 128)
+        { Error = "Password must not exceed 128 characters."; return Page(); }
+
+        // Basic email format validation
+        if (!NewEmail.Contains('@') || NewEmail.Length < 3)
+        { Error = "Invalid email format."; return Page(); }
 
         if (await _db.Users.AnyAsync(u => u.Email == NewEmail)) { Error = "Email already exists."; return Page(); }
 
@@ -327,6 +346,13 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostToggleAsync(int id)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = "Invalid user ID.";
+            return RedirectToPage();
+        }
+
         var u = await _db.Users.FindAsync(id);
         if (u != null)
         {
@@ -345,6 +371,19 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostRoleAsync(int id, string role)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = "Invalid user ID.";
+            return RedirectToPage();
+        }
+
+        if (string.IsNullOrWhiteSpace(role) || role.Length > 50)
+        {
+            TempData["ErrorMessage"] = "Invalid role.";
+            return RedirectToPage();
+        }
+
         // Validate role string and permission to assign
         if (!Enum.TryParse<UserRole>(role, ignoreCase: true, out var targetRole))
         {
@@ -442,8 +481,33 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostResetPasswordAsync(int id, string newPassword)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = "Invalid user ID.";
+            return RedirectToPage();
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword))
+        {
+            TempData["ErrorMessage"] = "Password is required.";
+            return RedirectToPage();
+        }
+
+        if (newPassword.Length < 8)
+        {
+            TempData["ErrorMessage"] = "Password must be at least 8 characters.";
+            return RedirectToPage();
+        }
+
+        if (newPassword.Length > 128)
+        {
+            TempData["ErrorMessage"] = "Password must not exceed 128 characters.";
+            return RedirectToPage();
+        }
+
         var u = await _db.Users.FindAsync(id);
-        if (u != null && !string.IsNullOrWhiteSpace(newPassword))
+        if (u != null)
         {
             // Check if current user has permission to modify this user
             if (!CanModifyUser(u.Role))
@@ -584,6 +648,13 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostApproveJoinRequestAsync(int id)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = "Invalid request ID.";
+            return RedirectToPage();
+        }
+
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
@@ -680,6 +751,19 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostRejectJoinRequestAsync(int id, string? reason)
     {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = "Invalid request ID.";
+            return RedirectToPage();
+        }
+
+        if (!string.IsNullOrWhiteSpace(reason) && reason.Length > 1000)
+        {
+            TempData["ErrorMessage"] = "Rejection reason must not exceed 1000 characters.";
+            return RedirectToPage();
+        }
+
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
