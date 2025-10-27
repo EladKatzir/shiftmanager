@@ -2,10 +2,18 @@
 @model ShiftManager.Pages.Admin.ConfigModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Config"], IsActive = true }
+})
+
 <h2>@Localizer["Config"]</h2>
 <div class="card" style="max-width:580px">
     <form method="post">

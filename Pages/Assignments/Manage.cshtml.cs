@@ -105,7 +105,7 @@ public class ManageModel : PageModel
             .ToListAsync();
 
         // Load users and trainees separately to avoid query filter issues
-        var userIds = assignments.Select(a => a.UserId).ToList();
+        var userIds = assignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).ToList();
         var traineeIds = assignments.Where(a => a.TraineeUserId.HasValue).Select(a => a.TraineeUserId!.Value).ToList();
         var allUserIds = userIds.Concat(traineeIds).Distinct().ToList();
 
@@ -114,9 +114,9 @@ public class ManageModel : PageModel
             .Where(u => allUserIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id);
 
-        Assigned = assignments.Select(a => (
+        Assigned = assignments.Where(a => a.UserId.HasValue).Select(a => (
             a.Id,
-            $"{users[a.UserId].DisplayName} ({users[a.UserId].Email})",
+            $"{users[a.UserId!.Value].DisplayName} ({users[a.UserId.Value].Email})",
             a.TraineeUserId,
             a.TraineeUserId.HasValue && users.ContainsKey(a.TraineeUserId.Value)
                 ? users[a.TraineeUserId.Value].DisplayName
@@ -233,14 +233,17 @@ public class ManageModel : PageModel
         {
             _logger.LogInformation("Removing assignment {AssignmentId} from shiftInstance {InstanceId}", assignmentId, a.ShiftInstanceId);
 
-            // Send notification before removing
-            await _notificationService.CreateShiftRemovedNotificationAsync(
-                a.UserId,
-                a.ShiftInstance.ShiftType.Name,
-                a.ShiftInstance.WorkDate,
-                a.ShiftInstance.ShiftType.Start,
-                a.ShiftInstance.ShiftType.End
-            );
+            // Send notification before removing (only if user is assigned)
+            if (a.UserId.HasValue)
+            {
+                await _notificationService.CreateShiftRemovedNotificationAsync(
+                    a.UserId.Value,
+                    a.ShiftInstance.ShiftType.Name,
+                    a.ShiftInstance.WorkDate,
+                    a.ShiftInstance.ShiftType.Start,
+                    a.ShiftInstance.ShiftType.End
+                );
+            }
 
             _db.ShiftAssignments.Remove(a);
             await _db.SaveChangesAsync();

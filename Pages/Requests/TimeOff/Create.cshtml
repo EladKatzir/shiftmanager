@@ -1,8 +1,19 @@
 @page
 @model ShiftManager.Pages.Requests.TimeOff.CreateModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Requests"], Url = "/Requests/Index" },
+    new BreadcrumbItem { Label = Localizer["RequestTimeOff"], IsActive = true }
+})
+
 <h2>Request Time-off</h2>
 <div class="card" style="max-width:560px">
     <form method="post">

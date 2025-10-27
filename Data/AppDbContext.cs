@@ -28,6 +28,9 @@ public class AppDbContext : DbContext
     public DbSet<DirectorCompany> DirectorCompanies => Set<DirectorCompany>();
     public DbSet<UserJoinRequest> UserJoinRequests => Set<UserJoinRequest>();
     public DbSet<RoleAssignmentAudit> RoleAssignmentAudits => Set<RoleAssignmentAudit>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
+    public DbSet<Chore> Chores => Set<Chore>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +54,12 @@ public class AppDbContext : DbContext
             .Property(p => p.StartDate).HasConversion(dateConverter);
         modelBuilder.Entity<TimeOffRequest>()
             .Property(p => p.EndDate).HasConversion(dateConverter);
+
+        // Profile Enhancements: AppUser DateOnly fields
+        modelBuilder.Entity<AppUser>()
+            .Property(p => p.DateOfBirth).HasConversion(dateConverter);
+        modelBuilder.Entity<AppUser>()
+            .Property(p => p.HireDate).HasConversion(dateConverter);
 
         modelBuilder.Entity<ShiftInstance>()
             .Property(p => p.Concurrency).IsConcurrencyToken();
@@ -144,6 +153,97 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RoleAssignmentAudit>()
             .HasIndex(ra => new { ra.ChangedBy, ra.Timestamp });
 
+        // Configure AuditLog
+        modelBuilder.Entity<AuditLog>()
+            .HasIndex(a => new { a.CompanyId, a.Timestamp });
+
+        modelBuilder.Entity<AuditLog>()
+            .HasIndex(a => new { a.CompanyId, a.UserId, a.Timestamp });
+
+        modelBuilder.Entity<AuditLog>()
+            .HasIndex(a => new { a.CompanyId, a.Action });
+
+        modelBuilder.Entity<AuditLog>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<AuditLog>()
+            .HasOne(a => a.Company)
+            .WithMany()
+            .HasForeignKey(a => a.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure ProfileChangeAudit
+        modelBuilder.Entity<ProfileChangeAudit>()
+            .HasIndex(pca => new { pca.CompanyId, pca.TargetUserId, pca.Timestamp });
+
+        modelBuilder.Entity<ProfileChangeAudit>()
+            .HasIndex(pca => new { pca.CompanyId, pca.ChangedBy, pca.Timestamp });
+
+        modelBuilder.Entity<ProfileChangeAudit>()
+            .HasOne(pca => pca.TargetUser)
+            .WithMany()
+            .HasForeignKey(pca => pca.TargetUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProfileChangeAudit>()
+            .HasOne(pca => pca.ChangedByUser)
+            .WithMany()
+            .HasForeignKey(pca => pca.ChangedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ProfileChangeAudit>()
+            .HasOne(pca => pca.Company)
+            .WithMany()
+            .HasForeignKey(pca => pca.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure Chore
+        modelBuilder.Entity<Chore>()
+            .Property(c => c.Date).HasConversion(dateConverter);
+
+        // Composite index for querying chores by company, user, and date
+        modelBuilder.Entity<Chore>()
+            .HasIndex(c => new { c.CompanyId, c.UserId, c.Date });
+
+        // Index for querying by company and date
+        modelBuilder.Entity<Chore>()
+            .HasIndex(c => new { c.CompanyId, c.Date });
+
+        // Unique constraint: Only one active chore per user per day
+        // Filter ensures canceled chores don't count toward uniqueness
+        modelBuilder.Entity<Chore>()
+            .HasIndex(c => new { c.CompanyId, c.UserId, c.Date, c.CanceledAt })
+            .IsUnique()
+            .HasFilter("[CanceledAt] IS NULL");
+
+        // Configure relationships
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.User)
+            .WithMany()
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.Creator)
+            .WithMany()
+            .HasForeignKey(c => c.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.Canceler)
+            .WithMany()
+            .HasForeignKey(c => c.CanceledBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.Company)
+            .WithMany()
+            .HasForeignKey(c => c.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Multitenancy Phase 2: Global query filters for automatic tenant scoping
         if (_tenantResolver != null)
         {
@@ -163,6 +263,15 @@ public class AppDbContext : DbContext
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<UserNotification>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<AuditLog>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<ProfileChangeAudit>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<Chore>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
         }
 

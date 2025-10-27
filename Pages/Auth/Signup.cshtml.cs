@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using System.ComponentModel.DataAnnotations;
 
 namespace ShiftManager.Pages.Auth;
@@ -14,11 +16,13 @@ public class SignupModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<SignupModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public SignupModel(AppDbContext db, ILogger<SignupModel> logger)
+    public SignupModel(AppDbContext db, ILogger<SignupModel> logger, IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -79,7 +83,7 @@ public class SignupModel : PageModel
         if (existingPendingRequest != null)
         {
             var company = await _db.Companies.FindAsync(CompanyId);
-            PendingRequestMessage = $"Your request to join {company?.Name} as {RequestedRole} is under review. We'll notify you once it's approved.";
+            PendingRequestMessage = _localizer["SignupPendingMessage", company?.Name ?? "", RequestedRole.ToString()];
             return Page();
         }
 
@@ -113,7 +117,7 @@ public class SignupModel : PageModel
         _logger.LogInformation("New join request created: {Email} requesting {Role} at {Company}",
             Email, RequestedRole, selectedCompany.Name);
 
-        PendingRequestMessage = $"Your request to join {selectedCompany.Name} as {RequestedRole} has been submitted. We'll notify you once it's reviewed.";
+        PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, RequestedRole.ToString()];
 
         // Clear form fields
         Email = string.Empty;

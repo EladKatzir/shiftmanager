@@ -81,6 +81,9 @@
   <data name="DayView" xml:space="preserve">
     <value>תצוגת יום</value>
   </data>
+  <data name="TableView" xml:space="preserve">
+    <value>תצוגת טבלה</value>
+  </data>
   <data name="Requests" xml:space="preserve">
     <value>בקשות</value>
   </data>
@@ -101,6 +104,12 @@
   </data>
   <data name="Config" xml:space="preserve">
     <value>הגדרות</value>
+  </data>
+  <data name="AuditLog" xml:space="preserve">
+    <value>יומן ביקורת</value>
+  </data>
+  <data name="Analytics" xml:space="preserve">
+    <value>אנליטיקה</value>
   </data>
   <data name="Schedule" xml:space="preserve">
     <value>לוח זמנים</value>
@@ -701,6 +710,12 @@
   <data name="LoginHere" xml:space="preserve">
     <value>התחבר כאן</value>
   </data>
+  <data name="SignupPendingMessage" xml:space="preserve">
+    <value>הבקשה שלך להצטרף ל{0} כ{1} נמצאת בבדיקה. נודיע לך ברגע שתאושר.</value>
+  </data>
+  <data name="SignupSubmittedMessage" xml:space="preserve">
+    <value>הבקשה שלך להצטרף ל{0} כ{1} הוגשה בהצלחה. נודיע לך ברגע שתיבדק.</value>
+  </data>
 
   <!-- Users Page - Join Requests -->
   <data name="JoinRequests" xml:space="preserve">
@@ -957,5 +972,777 @@
   </data>
   <data name="NotificationHubInfo" xml:space="preserve">
     <value>מרכז זה מצרף נתונים מכל החברות שאתה מפקח עליהן כמנהל אזורי. קיצורי חברות מוצגים בשורה עם שמות מלאים בריחוף.</value>
+  </data>
+
+  <!-- Profile Management -->
+  <data name="MyProfile" xml:space="preserve">
+    <value>הפרופיל שלי</value>
+  </data>
+  <data name="EditProfile" xml:space="preserve">
+    <value>ערוך פרופיל</value>
+  </data>
+  <data name="PersonalInformation" xml:space="preserve">
+    <value>מידע אישי</value>
+  </data>
+  <data name="ProfessionalInformation" xml:space="preserve">
+    <value>מידע מקצועי</value>
+  </data>
+  <data name="EmergencyContact" xml:space="preserve">
+    <value>איש קשר לחירום</value>
+  </data>
+  <data name="Avatar" xml:space="preserve">
+    <value>תמונת פרופיל</value>
+  </data>
+  <data name="UploadAvatar" xml:space="preserve">
+    <value>העלה תמונה</value>
+  </data>
+  <data name="DeleteAvatar" xml:space="preserve">
+    <value>מחק תמונה</value>
+  </data>
+  <data name="PreferredName" xml:space="preserve">
+    <value>שם מועדף</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>טלפון</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>עיר</value>
+  </data>
+  <data name="DateOfBirth" xml:space="preserve">
+    <value>תאריך לידה</value>
+  </data>
+  <data name="Department" xml:space="preserve">
+    <value>מחלקה</value>
+  </data>
+  <data name="JobTitle" xml:space="preserve">
+    <value>תפקיד</value>
+  </data>
+  <data name="HireDate" xml:space="preserve">
+    <value>תאריך תחילת עבודה</value>
+  </data>
+  <data name="Skills" xml:space="preserve">
+    <value>כישורים</value>
+  </data>
+  <data name="Certifications" xml:space="preserve">
+    <value>הסמכות</value>
+  </data>
+  <data name="EmergencyContactName" xml:space="preserve">
+    <value>שם איש קשר לחירום</value>
+  </data>
+  <data name="EmergencyContactPhone" xml:space="preserve">
+    <value>טלפון איש קשר לחירום</value>
+  </data>
+  <data name="EmergencyContactRelation" xml:space="preserve">
+    <value>קרבה</value>
+  </data>
+  <data name="ProfileUpdatedSuccessfully" xml:space="preserve">
+    <value>הפרופיל עודכן בהצלחה!</value>
+  </data>
+  <data name="AvatarDeletedSuccessfully" xml:space="preserve">
+    <value>התמונה נמחקה בהצלחה!</value>
+  </data>
+  <data name="AccountSettings" xml:space="preserve">
+    <value>הגדרות חשבון</value>
+  </data>
+  <data name="ActiveAccount" xml:space="preserve">
+    <value>חשבון פעיל</value>
+  </data>
+  <data name="RecentProfileChanges" xml:space="preserve">
+    <value>שינויים אחרונים בפרופיל</value>
+  </data>
+  <data name="FieldName" xml:space="preserve">
+    <value>שדה</value>
+  </data>
+  <data name="OldValue" xml:space="preserve">
+    <value>ערך קודם</value>
+  </data>
+  <data name="NewValue" xml:space="preserve">
+    <value>ערך חדש</value>
+  </data>
+  <data name="ChangedBy" xml:space="preserve">
+    <value>שונה על ידי</value>
+  </data>
+
+  <!-- Forgot Password -->
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>שכחתי סיסמה</value>
+  </data>
+  <data name="SendTemporaryPassword" xml:space="preserve">
+    <value>שלח סיסמה זמנית</value>
+  </data>
+  <data name="BackToLogin" xml:space="preserve">
+    <value>חזרה להתחברות</value>
+  </data>
+
+  <!-- Breadcrumb -->
+  <data name="Breadcrumb" xml:space="preserve">
+    <value>נתיב ניווט</value>
+  </data>
+
+  <!-- Analytics Dashboard -->
+  <data name="AnalyticsDashboard" xml:space="preserve">
+    <value>לוח בקרה אנליטי</value>
+  </data>
+  <data name="CoverageRate" xml:space="preserve">
+    <value>שיעור כיסוי</value>
+  </data>
+  <data name="SwapRequests" xml:space="preserve">
+    <value>בקשות החלפה</value>
+  </data>
+  <data name="TimeOffRequests" xml:space="preserve">
+    <value>בקשות חופש</value>
+  </data>
+  <data name="BackToBackShifts" xml:space="preserve">
+    <value>משמרות גב אל גב</value>
+  </data>
+  <data name="EmployeeAnalytics" xml:space="preserve">
+    <value>ניתוח עובדים</value>
+  </data>
+  <data name="TeamAnalytics" xml:space="preserve">
+    <value>ניתוח צוות</value>
+  </data>
+  <data name="UnderstaffingIssues" xml:space="preserve">
+    <value>בעיות תת-איוש</value>
+  </data>
+  <data name="OverstaffingIssues" xml:space="preserve">
+    <value>בעיות איוש-יתר</value>
+  </data>
+  <data name="ExportReport" xml:space="preserve">
+    <value>ייצא דוח</value>
+  </data>
+  <data name="Last7Days" xml:space="preserve">
+    <value>7 ימים אחרונים</value>
+  </data>
+  <data name="Last30Days" xml:space="preserve">
+    <value>30 ימים אחרונים</value>
+  </data>
+  <data name="Last90Days" xml:space="preserve">
+    <value>90 ימים אחרונים</value>
+  </data>
+  <data name="LastYear" xml:space="preserve">
+    <value>שנה אחרונה</value>
+  </data>
+  <data name="HoursWorked" xml:space="preserve">
+    <value>שעות עבודה</value>
+  </data>
+  <data name="TotalHours" xml:space="preserve">
+    <value>סה"כ שעות</value>
+  </data>
+  <data name="AverageHoursPerWeek" xml:space="preserve">
+    <value>ממוצע שעות/שבוע</value>
+  </data>
+  <data name="ShiftCount" xml:space="preserve">
+    <value>מספר משמרות</value>
+  </data>
+  <data name="Employee" xml:space="preserve">
+    <value>עובד</value>
+  </data>
+  <data name="NoDataAvailable" xml:space="preserve">
+    <value>אין נתונים זמינים</value>
+  </data>
+  <data name="BackToBackShiftWarnings" xml:space="preserve">
+    <value>אזהרות משמרות גב אל גב</value>
+  </data>
+  <data name="FirstShift" xml:space="preserve">
+    <value>משמרת ראשונה</value>
+  </data>
+  <data name="SecondShift" xml:space="preserve">
+    <value>משמרת שנייה</value>
+  </data>
+  <data name="RestHours" xml:space="preserve">
+    <value>שעות מנוחה</value>
+  </data>
+  <data name="HoursByRole" xml:space="preserve">
+    <value>שעות לפי תפקיד</value>
+  </data>
+  <data name="UpcomingShifts" xml:space="preserve">
+    <value>משמרות קרובות</value>
+  </data>
+  <data name="Next7Days" xml:space="preserve">
+    <value>7 ימים הבאים</value>
+  </data>
+  <data name="NoUnderstaffingIssues" xml:space="preserve">
+    <value>אין בעיות תת-איוש</value>
+  </data>
+  <data name="NoOverstaffingIssues" xml:space="preserve">
+    <value>אין בעיות איוש-יתר</value>
+  </data>
+  <data name="Assigned" xml:space="preserve">
+    <value>משובץ</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>נדרש</value>
+  </data>
+  <data name="Deficit" xml:space="preserve">
+    <value>גירעון</value>
+  </data>
+  <data name="Surplus" xml:space="preserve">
+    <value>עודף</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>סה"כ</value>
+  </data>
+  <data name="ApprovalRate" xml:space="preserve">
+    <value>שיעור אישור</value>
+  </data>
+  <data name="AverageApprovalTime" xml:space="preserve">
+    <value>זמן אישור ממוצע</value>
+  </data>
+  <data name="TopSwapRequesters" xml:space="preserve">
+    <value>מבקשי החלפה מובילים</value>
+  </data>
+  <data name="RequestCount" xml:space="preserve">
+    <value>בקשות</value>
+  </data>
+  <data name="TimeOffAnalytics" xml:space="preserve">
+    <value>ניתוח חופשות</value>
+  </data>
+  <data name="SwapAnalytics" xml:space="preserve">
+    <value>ניתוח בקשות החלפה</value>
+  </data>
+  <data name="AverageDaysOff" xml:space="preserve">
+    <value>ממוצע ימי חופש/עובד</value>
+  </data>
+  <data name="TimeOffTrend" xml:space="preserve">
+    <value>מגמת חופשות</value>
+  </data>
+  <data name="Last12Months" xml:space="preserve">
+    <value>12 חודשים אחרונים</value>
+  </data>
+  <data name="DaysOff" xml:space="preserve">
+    <value>ימי חופש</value>
+  </data>
+
+  <!-- Audit Log -->
+  <data name="Filters" xml:space="preserve">
+    <value>מסננים</value>
+  </data>
+  <data name="ApplyFilters" xml:space="preserve">
+    <value>החל מסננים</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>נקה</value>
+  </data>
+  <data name="ExportCSV" xml:space="preserve">
+    <value>ייצא CSV</value>
+  </data>
+  <data name="Timestamp" xml:space="preserve">
+    <value>חותמת זמן</value>
+  </data>
+  <data name="User" xml:space="preserve">
+    <value>משתמש</value>
+  </data>
+  <data name="Action" xml:space="preserve">
+    <value>פעולה</value>
+  </data>
+  <data name="EntityType" xml:space="preserve">
+    <value>סוג ישות</value>
+  </data>
+  <data name="EntityID" xml:space="preserve">
+    <value>מזהה ישות</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>תיאור</value>
+  </data>
+  <data name="IPAddress" xml:space="preserve">
+    <value>כתובת IP</value>
+  </data>
+  <data name="AllUsers" xml:space="preserve">
+    <value>כל המשתמשים</value>
+  </data>
+  <data name="AllActions" xml:space="preserve">
+    <value>כל הפעולות</value>
+  </data>
+  <data name="AllTypes" xml:space="preserve">
+    <value>כל הסוגים</value>
+  </data>
+  <data name="ShowDetails" xml:space="preserve">
+    <value>הצג פרטים</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>קודם</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>הבא</value>
+  </data>
+  <data name="Page" xml:space="preserve">
+    <value>עמוד</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>מתוך</value>
+  </data>
+  <data name="Showing" xml:space="preserve">
+    <value>מציג</value>
+  </data>
+  <data name="Records" xml:space="preserve">
+    <value>רשומות</value>
+  </data>
+
+  <!-- Calendar Table View -->
+  <data name="ShiftAssignmentTable" xml:space="preserve">
+    <value>טבלת שיבוץ משמרות</value>
+  </data>
+  <data name="PreviousTwoWeeks" xml:space="preserve">
+    <value>שבועיים קודמים</value>
+  </data>
+  <data name="NextTwoWeeks" xml:space="preserve">
+    <value>שבועיים הבאים</value>
+  </data>
+  <data name="CurrentWeek" xml:space="preserve">
+    <value>שבוע נוכחי</value>
+  </data>
+  <data name="Shift" xml:space="preserve">
+    <value>משמרת</value>
+  </data>
+  <data name="Trainee" xml:space="preserve">
+    <value>מתלמד</value>
+  </data>
+  <data name="ClickToAssign" xml:space="preserve">
+    <value>לחץ לשיבוץ</value>
+  </data>
+  <data name="AddTrainee" xml:space="preserve">
+    <value>הוסף מתלמד</value>
+  </data>
+  <data name="ChangeTrainee" xml:space="preserve">
+    <value>שנה מתלמד</value>
+  </data>
+  <data name="RemoveTrainee" xml:space="preserve">
+    <value>הסר מתלמד</value>
+  </data>
+  <data name="ChangePrimaryUser" xml:space="preserve">
+    <value>שנה משתמש ראשי</value>
+  </data>
+  <data name="RemoveUser" xml:space="preserve">
+    <value>הסר משתמש</value>
+  </data>
+  <data name="AssignUser" xml:space="preserve">
+    <value>שבץ משתמש</value>
+  </data>
+
+  <!-- Assignments Management -->
+  <data name="Assignments" xml:space="preserve">
+    <value>שיבוצים</value>
+  </data>
+  <data name="BackToCalendar" xml:space="preserve">
+    <value>חזרה ללוח שנה</value>
+  </data>
+  <data name="AddPerson" xml:space="preserve">
+    <value>הוסף אדם</value>
+  </data>
+  <data name="ChooseActiveUser" xml:space="preserve">
+    <value>-- בחר משתמש פעיל --</value>
+  </data>
+  <data name="OnTimeOff" xml:space="preserve">
+    <value>בחופש</value>
+  </data>
+  <data name="AttachTrainee" xml:space="preserve">
+    <value>-- צרף מתלמד --</value>
+  </data>
+  <data name="AssignTrainee" xml:space="preserve">
+    <value>שבץ מתלמד</value>
+  </data>
+  <data name="ShiftNameOptional" xml:space="preserve">
+    <value>שם משמרת (אופציונלי)</value>
+  </data>
+
+  <!-- Pending Requests -->
+  <data name="PendingRequests" xml:space="preserve">
+    <value>בקשות ממתינות</value>
+  </data>
+  <data name="ManageApprovedTimeOff" xml:space="preserve">
+    <value>נהל חופשות מאושרות</value>
+  </data>
+  <data name="PendingTimeOff" xml:space="preserve">
+    <value>חופשות ממתינות</value>
+  </data>
+  <data name="PendingSwaps" xml:space="preserve">
+    <value>החלפות ממתינות</value>
+  </data>
+
+  <!-- Common UI Elements -->
+  <data name="SaveChanges" xml:space="preserve">
+    <value>שמור שינויים</value>
+  </data>
+  <data name="UploadNewAvatar" xml:space="preserve">
+    <value>העלה תמונת פרופיל חדשה</value>
+  </data>
+  <data name="ManagerOnlyFields" xml:space="preserve">
+    <value>שדות אלו ניתנים לעדכון רק על ידי המנהל</value>
+  </data>
+  <data name="WeeklyCap" xml:space="preserve">
+    <value>מכסה שבועית</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>בחר הכל</value>
+  </data>
+  <data name="Selected" xml:space="preserve">
+    <value>נבחרו</value>
+  </data>
+  <data name="AssignRole" xml:space="preserve">
+    <value>הקצאת תפקיד</value>
+  </data>
+  <data name="ApproveSelected" xml:space="preserve">
+    <value>אשר את הנבחרים</value>
+  </data>
+  <data name="ConfirmBatchApproval" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לאשר את בקשות ההצטרפות שנבחרו? משתמשים ייווצרו עם התפקידים שהוקצו.</value>
+  </data>
+
+  <!-- Enhanced UI/UX Localization - Hebrew -->
+  <data name="Breadcrumb" xml:space="preserve">
+    <value>נתיב ניווט</value>
+  </data>
+  <data name="ToggleDarkMode" xml:space="preserve">
+    <value>החלף למצב כהה/בהיר</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>חזור</value>
+  </data>
+  <data name="BackToPreviousPage" xml:space="preserve">
+    <value>חזור לעמוד הקודם</value>
+  </data>
+  <data name="SystemDiagnostics" xml:space="preserve">
+    <value>אבחון מערכת</value>
+  </data>
+  <data name="MultiTenantDebugInfo" xml:space="preserve">
+    <value>דף זה מציג מידע אבחון רב-דייר</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>סינון</value>
+  </data>
+  <data name="SelectUser" xml:space="preserve">
+    <value>בחר משתמש</value>
+  </data>
+  <data name="SelectUserPlaceholder" xml:space="preserve">
+    <value>-- בחר משתמש --</value>
+  </data>
+  <data name="ActiveFilters" xml:space="preserve">
+    <value>מסננים פעילים</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>היום</value>
+  </data>
+  <data name="Last7Days" xml:space="preserve">
+    <value>7 ימים אחרונים</value>
+  </data>
+  <data name="Last30Days" xml:space="preserve">
+    <value>30 ימים אחרונים</value>
+  </data>
+  <data name="Last90Days" xml:space="preserve">
+    <value>90 ימים אחרונים</value>
+  </data>
+  <data name="InvalidDateRange" xml:space="preserve">
+    <value>תאריך התחלה חייב להיות לפני תאריך סיום</value>
+  </data>
+  <data name="HideDetails" xml:space="preserve">
+    <value>הסתר פרטים</value>
+  </data>
+  <data name="CopiedToClipboard" xml:space="preserve">
+    <value>הועתק ללוח</value>
+  </data>
+  <data name="ExportingData" xml:space="preserve">
+    <value>מייצא נתונים...</value>
+  </data>
+  <data name="SkillsPlaceholder" xml:space="preserve">
+    <value>לדוגמה: גריל, הכנה, ניקיון</value>
+  </data>
+  <data name="CertificationsPlaceholder" xml:space="preserve">
+    <value>לדוגמה: בטיחות מזון, עזרה ראשונה</value>
+  </data>
+
+  <!-- Profile Update Authorization Messages -->
+  <data name="EditorUserNotFound" xml:space="preserve">
+    <value>משתמש עורך לא נמצא</value>
+  </data>
+  <data name="TargetUserNotFound" xml:space="preserve">
+    <value>משתמש יעד לא נמצא</value>
+  </data>
+  <data name="UnauthorizedAccess" xml:space="preserve">
+    <value>גישה לא מורשית</value>
+  </data>
+  <data name="OnlyManagersCanChangeEmail" xml:space="preserve">
+    <value>רק מנהלים יכולים לשנות כתובות אימייל</value>
+  </data>
+  <data name="UnauthorizedToChangeDisplayName" xml:space="preserve">
+    <value>אין הרשאה לשנות שם תצוגה</value>
+  </data>
+  <data name="UnauthorizedToChangePreferredName" xml:space="preserve">
+    <value>אין הרשאה לשנות שם מועדף</value>
+  </data>
+  <data name="UnauthorizedToChangePhone" xml:space="preserve">
+    <value>אין הרשאה לשנות טלפון</value>
+  </data>
+  <data name="UnauthorizedToChangeCity" xml:space="preserve">
+    <value>אין הרשאה לשנות עיר</value>
+  </data>
+  <data name="UnauthorizedToChangeDateOfBirth" xml:space="preserve">
+    <value>אין הרשאה לשנות תאריך לידה</value>
+  </data>
+  <data name="OnlyManagersCanChangeDepartment" xml:space="preserve">
+    <value>רק מנהלים יכולים לשנות מחלקה</value>
+  </data>
+  <data name="OnlyManagersCanChangeJobTitle" xml:space="preserve">
+    <value>רק מנהלים יכולים לשנות תפקיד</value>
+  </data>
+  <data name="OnlyManagersCanChangeHireDate" xml:space="preserve">
+    <value>רק מנהלים יכולים לשנות תאריך התחלה</value>
+  </data>
+  <data name="UnauthorizedToChangeSkills" xml:space="preserve">
+    <value>אין הרשאה לשנות כישורים</value>
+  </data>
+  <data name="UnauthorizedToChangeCertifications" xml:space="preserve">
+    <value>אין הרשאה לשנות הסמכות</value>
+  </data>
+  <data name="UnauthorizedToChangeEmergencyContact" xml:space="preserve">
+    <value>אין הרשאה לשנות איש קשר לשעת חירום</value>
+  </data>
+  <data name="OnlyManagersCanChangeUserRoles" xml:space="preserve">
+    <value>רק מנהלים יכולים לשנות תפקידי משתמש</value>
+  </data>
+  <data name="OnlyManagersCanChangeActiveStatus" xml:space="preserve">
+    <value>רק מנהלים יכולים לשנות סטטוס פעיל</value>
+  </data>
+  <data name="ErrorUpdatingProfile" xml:space="preserve">
+    <value>אירעה שגיאה בעדכון הפרופיל</value>
+  </data>
+  <data name="ShiftAssignmentTable" xml:space="preserve">
+    <value>טבלת הקצאת משמרות</value>
+  </data>
+  <data name="NumberOfPeopleNeeded" xml:space="preserve">
+    <value>מספר אנשים נדרשים</value>
+  </data>
+  <data name="AdjustRequiredHeadcount" xml:space="preserve">
+    <value>התאמת כמות אנשים נדרשת</value>
+  </data>
+  <data name="AdjustStaffing" xml:space="preserve">
+    <value>התאמת כוח אדם</value>
+  </data>
+  <data name="AddAssignment" xml:space="preserve">
+    <value>הוספת הקצאה</value>
+  </data>
+  <data name="SelectEmployee" xml:space="preserve">
+    <value>בחר עובד...</value>
+  </data>
+  <data name="AssignEmployeeToSlot" xml:space="preserve">
+    <value>הקצה עובד למשבצת זו</value>
+  </data>
+  <data name="ChangeTrainee" xml:space="preserve">
+    <value>שינוי מתלמד</value>
+  </data>
+  <data name="ChangePrimaryUser" xml:space="preserve">
+    <value>שינוי משתמש ראשי</value>
+  </data>
+  <data name="CreateSlots" xml:space="preserve">
+    <value>צור משבצות</value>
+  </data>
+  <data name="AddCustomShiftRow" xml:space="preserve">
+    <value>הוסף שורת משמרת מותאמת אישית</value>
+  </data>
+  <data name="FailedToAddTrainee" xml:space="preserve">
+    <value>נכשל להוסיף מתלמד. נסה שנית.</value>
+  </data>
+  <data name="RemoveTraineeConfirm" xml:space="preserve">
+    <value>להסיר מתלמד ממשמרת זו?</value>
+  </data>
+  <data name="FailedToRemoveTrainee" xml:space="preserve">
+    <value>נכשל להסיר מתלמד. נסה שנית.</value>
+  </data>
+  <data name="FailedToChangeUser" xml:space="preserve">
+    <value>נכשל לשנות משתמש. נסה שנית.</value>
+  </data>
+  <data name="RemoveUserConfirm" xml:space="preserve">
+    <value>להסיר משתמש ממשמרת זו? פעולה זו תסיר גם את המתלמד.</value>
+  </data>
+  <data name="FailedToRemoveUser" xml:space="preserve">
+    <value>נכשל להסיר משתמש. נסה שנית.</value>
+  </data>
+  <data name="DeleteShift" xml:space="preserve">
+    <value>מחיקת משמרת</value>
+  </data>
+  <data name="DeleteShiftConfirm" xml:space="preserve">
+    <value>פעולה זו תמחק לצמיתות את מופע המשמרת עבור תאריך זה (וכל ההקצאות שלו). להמשיך?</value>
+  </data>
+  <data name="FailedToDeleteShift" xml:space="preserve">
+    <value>נכשל למחוק משמרת. נסה שנית.</value>
+  </data>
+  <data name="ThisWeek" xml:space="preserve">
+    <value>השבוע</value>
+  </data>
+  <data name="Month" xml:space="preserve">
+    <value>חודש</value>
+  </data>
+  <data name="Week" xml:space="preserve">
+    <value>שבוע</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>יום</value>
+  </data>
+  <data name="ClickShiftBadgeHelp" xml:space="preserve">
+    <value>לחץ על תג משמרת לניהול הקצאות.</value>
+  </data>
+  <data name="UseButtonsToAdjustStaffing" xml:space="preserve">
+    <value>השתמש ב-+ / − להתאמת כוח אדם נדרש.</value>
+  </data>
+  <data name="ViewAssignedShiftsHelp" xml:space="preserve">
+    <value>צפה במשמרות המוקצות לך ובלוח הזמנים של הצוות.</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>היום</value>
+  </data>
+  <data name="ViewDetailedScheduleHelp" xml:space="preserve">
+    <value>צפה במשמרות המוקצות לך ובלוח הזמנים המפורט.</value>
+  </data>
+  <data name="ConfirmRejectJoinRequest" xml:space="preserve">
+    <value>לדחות את בקשת ההצטרפות מ-{0}?</value>
+  </data>
+  <data name="ConfirmDeleteUser" xml:space="preserve">
+    <value>⚠️ אזהרה: פעולה זו תמחק לצמיתות את {0} ותסיר את כל הקצאות המשמרות, בקשות החופש ובקשות החלפת המשמרות שלו. לא ניתן לבטל פעולה זו.
+
+האם אתה בטוח לחלוטין שברצונך למחוק משתמש זה?</value>
+  </data>
+  <data name="ConfirmRevokeDirectorAccess" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לשלול הרשאת מנהל מ-{0} מחברה {1}?</value>
+  </data>
+  <data name="ConfirmDeleteTimeOff" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק את החופש המאושר עבור {0}? לא ניתן לבטל פעולה זו.</value>
+  </data>
+
+  <!-- Home Page -->
+  <data name="WelcomeToShiftManager" xml:space="preserve">
+    <value>ברוכים הבאים למנהל משמרות</value>
+  </data>
+  <data name="HomePageDescription" xml:space="preserve">
+    <value>השתמש בלוח השנה לתכנון כיסוי, בלשונית הבקשות לטיפול בחופשות והחלפות, או במשמרות שלי לצפייה בלוח הזמנים שלך.</value>
+  </data>
+  <data name="GoToCalendar" xml:space="preserve">
+    <value>עבור ללוח שנה</value>
+  </data>
+
+  <!-- My Shifts Page -->
+  <data name="Upcoming" xml:space="preserve">
+    <value>קרובות</value>
+  </data>
+  <data name="Totals" xml:space="preserve">
+    <value>סיכום</value>
+  </data>
+  <data name="Next4Weeks" xml:space="preserve">
+    <value>4 השבועות הבאים</value>
+  </data>
+  <data name="Hours" xml:space="preserve">
+    <value>שעות</value>
+  </data>
+  <data name="Shadowing" xml:space="preserve">
+    <value>צל</value>
+  </data>
+  <data name="TraineeLabel" xml:space="preserve">
+    <value>מתלמד</value>
+  </data>
+
+  <!-- My Requests Page -->
+  <data name="MyRequests" xml:space="preserve">
+    <value>הבקשות שלי</value>
+  </data>
+  <data name="RequestTimeOff" xml:space="preserve">
+    <value>בקשת חופשה</value>
+  </data>
+  <data name="SubmitTimeOffRequest" xml:space="preserve">
+    <value>שלח בקשת חופשה</value>
+  </data>
+  <data name="RequestShiftSwap" xml:space="preserve">
+    <value>בקשת החלפת משמרת</value>
+  </data>
+  <data name="SelectYourShiftToSwap" xml:space="preserve">
+    <value>בחר את המשמרת שלך להחלפה</value>
+  </data>
+  <data name="ChooseAShift" xml:space="preserve">
+    <value>בחר משמרת...</value>
+  </data>
+  <data name="SwapRequestDescription" xml:space="preserve">
+    <value>פעולה זו תיצור בקשת החלפה פתוחה שעובדים אחרים יכולים לקבל, או שמנהל יכול להקצות למישהו.</value>
+  </data>
+  <data name="NoUpcomingShiftsForSwapping" xml:space="preserve">
+    <value>אין לך משמרות קרובות זמינות להחלפה.</value>
+  </data>
+  <data name="MyTimeOffRequests" xml:space="preserve">
+    <value>בקשות החופשה שלי</value>
+  </data>
+  <data name="Dates" xml:space="preserve">
+    <value>תאריכים</value>
+  </data>
+  <data name="MySwapRequests" xml:space="preserve">
+    <value>בקשות ההחלפה שלי</value>
+  </data>
+  <data name="NoTimeOffRequestsYet" xml:space="preserve">
+    <value>אין בקשות חופשה עדיין.</value>
+  </data>
+  <data name="NoSwapRequestsYet" xml:space="preserve">
+    <value>אין בקשות החלפה עדיין.</value>
+  </data>
+  <data name="TimeOffReasonPlaceholder" xml:space="preserve">
+    <value>אנא ציין סיבה לבקשת החופשה שלך...</value>
+  </data>
+
+  <!-- Error Page -->
+  <data name="SomethingWentWrong" xml:space="preserve">
+    <value>משהו השתבש</value>
+  </data>
+  <data name="UnexpectedErrorOccurred" xml:space="preserve">
+    <value>מצטערים - אירעה שגיאה בלתי צפויה.</value>
+  </data>
+
+  <!-- Chores Feature -->
+  <data name="Chores" xml:space="preserve">
+    <value>מטלות</value>
+  </data>
+  <data name="ChoresCalendar" xml:space="preserve">
+    <value>לוח מטלות</value>
+  </data>
+  <data name="Chore" xml:space="preserve">
+    <value>מטלה</value>
+  </data>
+  <data name="CreateChore" xml:space="preserve">
+    <value>צור מטלה</value>
+  </data>
+  <data name="ChoreDetails" xml:space="preserve">
+    <value>פרטי מטלה</value>
+  </data>
+  <data name="ChoresList" xml:space="preserve">
+    <value>רשימת מטלות</value>
+  </data>
+  <data name="NoChoresThisMonth" xml:space="preserve">
+    <value>אין מטלות לחודש זה</value>
+  </data>
+  <data name="SelectAssignee" xml:space="preserve">
+    <value>בחר מבצע...</value>
+  </data>
+  <data name="AreYouSureDeleteChore" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק את המטלה</value>
+  </data>
+  <data name="ShiftConflictDetected" xml:space="preserve">
+    <value>זוהתה התנגשות עם משמרת</value>
+  </data>
+  <data name="UserHasShiftOnThisDate" xml:space="preserve">
+    <value>למשתמש זה כבר יש משמרת מוקצית בתאריך זה.</value>
+  </data>
+  <data name="DoYouWantToReplaceShift" xml:space="preserve">
+    <value>האם ברצונך להחליף את המשמרת במטלה זו?</value>
+  </data>
+  <data name="ReplaceShift" xml:space="preserve">
+    <value>החלף משמרת</value>
+  </data>
+  <data name="ChoreConflictDetected" xml:space="preserve">
+    <value>זוהתה התנגשות עם מטלה</value>
+  </data>
+  <data name="UserHasChoreOnThisDate" xml:space="preserve">
+    <value>למשתמש זה כבר יש מטלה מוקצית בתאריך זה.</value>
+  </data>
+  <data name="DoYouWantToReplaceChore" xml:space="preserve">
+    <value>האם ברצונך להחליף את המטלה במשמרת זו?</value>
+  </data>
+  <data name="ReplaceChore" xml:space="preserve">
+    <value>החלף מטלה</value>
+  </data>
+  <data name="More" xml:space="preserve">
+    <value>נוספים</value>
   </data>
 </root>

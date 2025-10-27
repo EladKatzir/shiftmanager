@@ -1,0 +1,174 @@
+@page
+@model ShiftManager.Pages.Admin.EditProfileModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = "Edit Profile", IsActive = true }
+})
+
+<h2>Edit Employee Profile</h2>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
+        ✓ @Model.SuccessMessage
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
+        ✗ @Model.ErrorMessage
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="card">
+        <h3 style="margin-top:0">Avatar</h3>
+
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+            {
+                <img src="@Model.AvatarUrl" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;" />
+            }
+            else
+            {
+                <div style="width: 100px; height: 100px; border-radius: 50%; background-color: var(--primary); color: var(--primary-text); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold;">
+                    @Model.InitialsForAvatar
+                </div>
+            }
+
+            <div style="flex: 1;">
+                <label>Upload New Avatar (max 5MB, JPEG/PNG)</label>
+                <input type="file" name="AvatarFile" accept=".jpg,.jpeg,.png" />
+
+                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                {
+                    <button type="submit" asp-page-handler="DeleteAvatar" class="btn-secondary" style="margin-top: 0.5rem;">
+                        Delete Avatar
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">Account Settings</h3>
+
+        <label>Email *</label>
+        <input type="email" asp-for="Email" required />
+
+        <label>Role *</label>
+        <select asp-for="Role" required>
+            <option value="@UserRole.Employee">Employee</option>
+            <option value="@UserRole.Manager">Manager</option>
+            <option value="@UserRole.Owner">Owner</option>
+            <option value="@UserRole.Director">Director</option>
+            <option value="@UserRole.Trainee">Trainee</option>
+        </select>
+
+        <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" asp-for="IsActive" style="width: auto; margin: 0;" />
+            Active Account
+        </label>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">Personal Information</h3>
+
+        <label>Display Name *</label>
+        <input type="text" asp-for="DisplayName" required />
+
+        <label>Preferred Name</label>
+        <input type="text" asp-for="PreferredName" placeholder="What they prefer to be called" />
+
+        <label>Phone</label>
+        <input type="tel" asp-for="Phone" placeholder="e.g., 050-1234567" />
+
+        <label>City</label>
+        <input type="text" asp-for="City" placeholder="City of residence" />
+
+        <label>Date of Birth</label>
+        <input type="date" asp-for="DateOfBirth" />
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">Professional Information</h3>
+
+        <label>Department</label>
+        <input type="text" asp-for="Department" placeholder="e.g., Kitchen, Front of House, Management" />
+
+        <label>Job Title</label>
+        <input type="text" asp-for="JobTitle" placeholder="e.g., Line Cook, Server, Shift Manager" />
+
+        <label>Hire Date</label>
+        <input type="date" asp-for="HireDate" />
+
+        <label>Skills (comma-separated)</label>
+        <input type="text" asp-for="Skills" placeholder="e.g., Grill, Prep, Cleaning" />
+        <small style="color: #666; display: block; margin-top: 0.25rem;">Enter skills separated by commas</small>
+
+        <label>Certifications (comma-separated)</label>
+        <input type="text" asp-for="Certifications" placeholder="e.g., Food Safety, First Aid" />
+        <small style="color: #666; display: block; margin-top: 0.25rem;">Enter certifications separated by commas</small>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">Emergency Contact</h3>
+
+        <label>Emergency Contact Name</label>
+        <input type="text" asp-for="EmergencyContactName" placeholder="Full name" />
+
+        <label>Emergency Contact Phone</label>
+        <input type="tel" asp-for="EmergencyContactPhone" placeholder="e.g., 050-1234567" />
+
+        <label>Relationship</label>
+        <input type="text" asp-for="EmergencyContactRelation" placeholder="e.g., Spouse, Parent, Friend" />
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn-primary">Save Changes</button>
+        <a href="/Admin/Users" class="btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@if (Model.RecentChanges.Any())
+{
+    <div class="card" style="margin-top: 1rem;">
+        <h3 style="margin-top:0">Recent Profile Changes (Last 30 Days)</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Field</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                    <th>Changed By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var change in Model.RecentChanges)
+                {
+                    <tr>
+                        <td>@change.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@change.FieldName</td>
+                        <td><small style="color: #666;">@(change.OldValue ?? "(empty)")</small></td>
+                        <td><small style="font-weight: bold;">@(change.NewValue ?? "(empty)")</small></td>
+                        <td>@(change.ChangedByUser?.DisplayName ?? "Unknown")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

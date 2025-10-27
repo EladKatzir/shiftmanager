@@ -1,11 +1,20 @@
 @page
 @model ShiftManager.Pages.My.RequestsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
 
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyRequests"], IsActive = true }
+})
+
 <div style="max-width: 1000px; margin: 0 auto;">
-    <h2 style="color: var(--text); margin-bottom: 2rem;">My Requests</h2>
+    <h2 style="color: var(--text); margin-bottom: 2rem;">@Localizer["MyRequests"]</h2>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
@@ -24,41 +33,41 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
         <!-- Time Off Request Form -->
         <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">Request Time Off</h3>
+            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RequestTimeOff"]</h3>
             <form method="post" asp-page-handler="TimeOff">
                 @Html.AntiForgeryToken()
                 <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
                 <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.StartDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Start Date</label>
+                    <label asp-for="TimeOffRequest.StartDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["StartDate"]</label>
                     <input asp-for="TimeOffRequest.StartDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
                     <span asp-validation-for="TimeOffRequest.StartDate" style="color: var(--danger); font-size: 0.8rem;"></span>
                 </div>
                 <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.EndDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">End Date</label>
+                    <label asp-for="TimeOffRequest.EndDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["EndDate"]</label>
                     <input asp-for="TimeOffRequest.EndDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
                     <span asp-validation-for="TimeOffRequest.EndDate" style="color: var(--danger); font-size: 0.8rem;"></span>
                 </div>
                 <div style="margin-bottom: 1.5rem;">
-                    <label asp-for="TimeOffRequest.Reason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Reason</label>
-                    <textarea asp-for="TimeOffRequest.Reason" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="Please provide a reason for your time off request..."></textarea>
+                    <label asp-for="TimeOffRequest.Reason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["Reason"]</label>
+                    <textarea asp-for="TimeOffRequest.Reason" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>
                     <span asp-validation-for="TimeOffRequest.Reason" style="color: var(--danger); font-size: 0.8rem;"></span>
                 </div>
-                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">Submit Time Off Request</button>
+                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">@Localizer["SubmitTimeOffRequest"]</button>
             </form>
         </div>
 
         <!-- Shift Swap Request Form -->
         <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">Request Shift Swap</h3>
+            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RequestShiftSwap"]</h3>
             @if (Model.AvailableShifts.Any())
             {
                 <form method="post" asp-page-handler="Swap">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
                     <div style="margin-bottom: 1.5rem;">
-                        <label asp-for="SwapRequest.ShiftId" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Select Your Shift to Swap</label>
+                        <label asp-for="SwapRequest.ShiftId" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["SelectYourShiftToSwap"]</label>
                         <select asp-for="SwapRequest.ShiftId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
-                            <option value="0">Choose a shift...</option>
+                            <option value="0">@Localizer["ChooseAShift"]</option>
                             @foreach (var shift in Model.AvailableShifts)
                             {
                                 <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>
@@ -67,14 +76,14 @@
                         <span asp-validation-for="SwapRequest.ShiftId" style="color: var(--danger); font-size: 0.8rem;"></span>
                     </div>
                     <div style="margin-bottom: 1.5rem;">
-                        <p style="color: var(--muted); font-size: 0.9rem; margin: 0;">This will create an open swap request that other employees can accept, or a manager can assign to someone.</p>
+                        <p style="color: var(--muted); font-size: 0.9rem; margin: 0;">@Localizer["SwapRequestDescription"]</p>
                     </div>
-                    <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">Request Shift Swap</button>
+                    <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">@Localizer["RequestShiftSwap"]</button>
                 </form>
             }
             else
             {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">You have no upcoming shifts available for swapping.</p>
+                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">@Localizer["NoUpcomingShiftsForSwapping"]</p>
             }
         </div>
     </div>
@@ -83,15 +92,15 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
         <!-- Time Off Requests -->
         <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">My Time Off Requests</h3>
+            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["MyTimeOffRequests"]</h3>
             @if (Model.MyTimeOffRequests.Any())
             {
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Dates</th>
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Status</th>
+                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Dates"]</th>
+                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Status"]</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,21 +124,21 @@
             }
             else
             {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">No time off requests yet.</p>
+                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">@Localizer["NoTimeOffRequestsYet"]</p>
             }
         </div>
 
         <!-- Swap Requests -->
         <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">My Swap Requests</h3>
+            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["MySwapRequests"]</h3>
             @if (Model.MySwapRequests.Any())
             {
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Shift</th>
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Status</th>
+                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Shift"]</th>
+                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Status"]</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -153,7 +162,7 @@
             }
             else
             {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">No swap requests yet.</p>
+                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">@Localizer["NoSwapRequestsYet"]</p>
             }
         </div>
     </div>

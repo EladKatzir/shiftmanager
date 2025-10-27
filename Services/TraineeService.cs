@@ -70,14 +70,18 @@ public class TraineeService : ITraineeService
                 "ShiftAssignment"
             );
 
-            await _notificationService.CreateNotificationAsync(
-                assignment.UserId,
-                NotificationType.EmployeeTraineeAdded,
-                "Trainee Assigned",
-                $"{trainee.DisplayName} will shadow your shift: {shiftInfo}",
-                shiftAssignmentId,
-                "ShiftAssignment"
-            );
+            // Notify primary user if assigned
+            if (assignment.UserId.HasValue)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    assignment.UserId.Value,
+                    NotificationType.EmployeeTraineeAdded,
+                    "Trainee Assigned",
+                    $"{trainee.DisplayName} will shadow your shift: {shiftInfo}",
+                    shiftAssignmentId,
+                    "ShiftAssignment"
+                );
+            }
 
             _logger.LogInformation("Trainee {TraineeId} assigned to shift assignment {ShiftAssignmentId} by user {AssignedById}",
                 traineeUserId, shiftAssignmentId, assignedByUserId);
@@ -130,14 +134,18 @@ public class TraineeService : ITraineeService
                 "ShiftAssignment"
             );
 
-            await _notificationService.CreateNotificationAsync(
-                assignment.UserId,
-                NotificationType.EmployeeTraineeRemoved,
-                "Trainee Removed",
-                $"{traineeName} is no longer shadowing your shift: {shiftInfo}",
-                shiftAssignmentId,
-                "ShiftAssignment"
-            );
+            // Notify primary employee if assigned
+            if (assignment.UserId.HasValue)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    assignment.UserId.Value,
+                    NotificationType.EmployeeTraineeRemoved,
+                    "Trainee Removed",
+                    $"{traineeName} is no longer shadowing your shift: {shiftInfo}",
+                    shiftAssignmentId,
+                    "ShiftAssignment"
+                );
+            }
 
             _logger.LogInformation("Trainee removed from shift assignment {ShiftAssignmentId}. Reason: {Reason}",
                 shiftAssignmentId, reason);
@@ -256,15 +264,18 @@ public class TraineeService : ITraineeService
 
                 assignment.TraineeUserId = null;
 
-                // Notify the primary employee
-                await _notificationService.CreateNotificationAsync(
-                    assignment.UserId,
-                    NotificationType.EmployeeTraineeRemoved,
-                    "Trainee Removed",
-                    $"{traineeName} is no longer shadowing your shift: {shiftInfo} (Reason: {reason})",
-                    assignment.Id,
-                    "ShiftAssignment"
-                );
+                // Notify the primary employee if assigned
+                if (assignment.UserId.HasValue)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        assignment.UserId.Value,
+                        NotificationType.EmployeeTraineeRemoved,
+                        "Trainee Removed",
+                        $"{traineeName} is no longer shadowing your shift: {shiftInfo} (Reason: {reason})",
+                        assignment.Id,
+                        "ShiftAssignment"
+                    );
+                }
             }
 
             // Send a single notification to the former trainee
@@ -335,15 +346,18 @@ public class TraineeService : ITraineeService
                     "ShiftAssignment"
                 );
 
-                // Notify primary employee
-                await _notificationService.CreateNotificationAsync(
-                    assignment.UserId,
-                    NotificationType.EmployeeTraineeRemoved,
-                    "Trainee Removed",
-                    $"{traineeName}'s shadowing for {shiftInfo} was canceled due to approved time off",
-                    assignment.Id,
-                    "ShiftAssignment"
-                );
+                // Notify primary employee if assigned
+                if (assignment.UserId.HasValue)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        assignment.UserId.Value,
+                        NotificationType.EmployeeTraineeRemoved,
+                        "Trainee Removed",
+                        $"{traineeName}'s shadowing for {shiftInfo} was canceled due to approved time off",
+                        assignment.Id,
+                        "ShiftAssignment"
+                    );
+                }
             }
 
             await _db.SaveChangesAsync();

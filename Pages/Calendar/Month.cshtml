@@ -2,11 +2,19 @@
 @model ShiftManager.Pages.Calendar.MonthModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
     var weeks = Model.Weeks;
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["MonthView"], IsActive = true }
+})
+
 <div class="calendar-header">
     <div class="header-main">
         <h2>@Model.CurrentMonth.ToString("MMMM yyyy")</h2>

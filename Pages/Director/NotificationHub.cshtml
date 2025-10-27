@@ -1,11 +1,19 @@
 @page
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @model ShiftManager.Pages.Director.NotificationHubModel
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Director"], Url = "/Director/NotificationHub" },
+    new BreadcrumbItem { Label = Localizer["NotificationHub"], IsActive = true }
+})
+
 <h2>@Localizer["NotificationHub"]</h2>
 <p style="color: var(--muted); margin-bottom: 2rem;">
     @Localizer["NotificationHubDescription"]

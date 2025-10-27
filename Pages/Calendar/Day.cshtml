@@ -2,10 +2,17 @@
 @model ShiftManager.Pages.Calendar.DayModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["DayView"], IsActive = true }
+})
 
 <div class="calendar-header">
     <div>
@@ -17,7 +24,7 @@
         <a class="btn btn-ghost" href="/Calendar/Day?year=@Model.Previous.Date.Year&month=@Model.Previous.Date.Month&day=@Model.Previous.Date.Day">
             ← @Model.Previous.Label
         </a>
-        <a class="btn btn-primary" href="/Calendar/Day">Today</a>
+        <a class="btn btn-primary" href="/Calendar/Day">@Localizer["Today"]</a>
         <a class="btn btn-ghost" href="/Calendar/Day?year=@Model.Next.Date.Year&month=@Model.Next.Date.Month&day=@Model.Next.Date.Day">
             @Model.Next.Label →
         </a>
@@ -25,22 +32,22 @@
     @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
     {
         <div class="calendar-help">
-            Click a shift badge to manage assignments.<br>
-            Use + / − to adjust required staffing.
+            @Localizer["ClickShiftBadgeHelp"]<br>
+            @Localizer["UseButtonsToAdjustStaffing"]
         </div>
     }
     else
     {
         <div class="calendar-help">
-            View your assigned shifts and detailed schedule.
+            @Localizer["ViewDetailedScheduleHelp"]
         </div>
     }
 </div>
 
 <div class="calendar-view-switcher">
-    <a class="btn btn-ghost" href="/Calendar/Month">Month</a>
-    <a class="btn btn-ghost" href="/Calendar/Week">Week</a>
-    <a class="btn btn-primary" href="/Calendar/Day">Day</a>
+    <a class="btn btn-ghost" href="/Calendar/Month">@Localizer["Month"]</a>
+    <a class="btn btn-ghost" href="/Calendar/Week">@Localizer["Week"]</a>
+    <a class="btn btn-primary" href="/Calendar/Day">@Localizer["Day"]</a>
 </div>
 
 <div class="day-view">

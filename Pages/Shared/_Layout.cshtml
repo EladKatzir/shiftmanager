@@ -67,10 +67,17 @@
                     <a href="/Calendar/Month">@Localizer["MonthView"]</a>
                     <a href="/Calendar/Week">@Localizer["WeekView"]</a>
                     <a href="/Calendar/Day">@Localizer["DayView"]</a>
+                    <a href="/Calendar/Table">📊 @Localizer["TableView"]</a>
                 </div>
             </div>
             <a href="/Requests/Index">@Localizer["Requests"]</a>
+            <a href="/Chores/Calendar">@Localizer["Chores"]</a>
             <a href="/My/Index">@Localizer["MyShifts"]</a>
+            <a href="/My/Profile">@Localizer["MyProfile"]</a>
+            <a href="/My/NotificationCenter" class="notification-nav" style="position: relative;">
+                🔔 @Localizer["Notifications"]
+                @await Component.InvokeAsync("UnreadNotificationCount")
+            </a>
             @if (isDirector)
             {
                 <div class="dropdown">
@@ -95,6 +102,8 @@
                     <a href="/Admin/ShiftTypes">@Localizer["ShiftTypes"]</a>
                     <a href="/Admin/TimeOff">@Localizer["TimeOffManagement"]</a>
                     <a href="/Admin/Config">@Localizer["Config"]</a>
+                    <a href="/Admin/Analytics">📊 @Localizer["Analytics"]</a>
+                    <a href="/Admin/AuditLog">📋 @Localizer["AuditLog"]</a>
                 </div>
             </div>
         }
@@ -111,6 +120,10 @@
             <a href="/My/Requests" class="nav-item">
                 <span class="nav-icon">📝</span>
                 <span class="nav-text">@Localizer["Requests"]</span>
+            </a>
+            <a href="/My/Profile" class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span class="nav-text">@Localizer["MyProfile"]</span>
             </a>
             <a href="/My/NotificationCenter" class="nav-item notification-nav" style="position: relative;">
                 <span class="nav-icon">🔔</span>

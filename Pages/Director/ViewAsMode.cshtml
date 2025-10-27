@@ -1,11 +1,19 @@
 @page
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @model ShiftManager.Pages.Director.ViewAsModeModel
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Director"], Url = "/Director/NotificationHub" },
+    new BreadcrumbItem { Label = Localizer["ViewAsManager"], IsActive = true }
+})
+
 <h2>@Localizer["ViewAsManagerMode"]</h2>
 <p style="color: var(--muted); margin-bottom: 2rem;">
     @Localizer["ViewAsModeDescription"]

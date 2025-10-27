@@ -1,0 +1,1516 @@
+@page
+@model ShiftManager.Pages.Calendar.TableModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["TableView"], IsActive = true }
+})
+
+<style>
+.table-view-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.shift-table {
+    border-collapse: collapse;
+    min-width: 100%;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.shift-table th,
+.shift-table td {
+    border: 1px solid var(--border);
+    padding: 0.75rem;
+    text-align: center;
+    min-width: 140px;
+}
+
+.shift-table th {
+    background-color: var(--primary);
+    color: var(--primary-text);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.shift-table .shift-name-col {
+    background-color: var(--surface);
+    font-weight: 600;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+.shift-table .day-row {
+    background-color: var(--bg);
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.assignment-cell {
+    cursor: pointer;
+    position: relative;
+    min-height: 50px;
+    transition: background-color 0.2s;
+    vertical-align: top;
+    padding: 0.5rem;
+}
+
+.assignment-cell:hover {
+    background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.assignment-cell.empty {
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.assignment-content {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.assignment-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.assignment-slot {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.assignment-slot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.assignment-slot.unassigned {
+    background: var(--surface);
+    color: var(--muted);
+    border: 2px dashed var(--border);
+}
+
+.assignment-slot-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.primary-user {
+    font-weight: 600;
+}
+
+.trainee-user {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.slot-actions {
+    margin-left: 0.5rem;
+    font-size: 1rem;
+}
+
+.add-assignment-btn {
+    background: transparent;
+    border: 2px dashed #007bff;
+    color: #007bff;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.add-assignment-btn:hover {
+    background: #007bff;
+    color: white;
+    border-style: solid;
+}
+
+.shift-actions-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.adjust-headcount-btn {
+    background: var(--primary);
+    color: white;
+    padding: 0.375rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 1.125rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+}
+
+.adjust-headcount-btn:hover {
+    background: var(--primary);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.action-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: none;
+    min-width: 200px;
+    margin-top: 0.25rem;
+}
+
+.action-menu.show {
+    display: block;
+}
+
+.action-menu-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.action-menu-item:last-child {
+    border-bottom: none;
+}
+
+.action-menu-item:hover {
+    background-color: var(--bg);
+}
+
+.action-menu-item.danger:hover {
+    background-color: #fee;
+    color: var(--danger);
+}
+
+.employee-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1001;
+    display: none;
+    min-width: 200px;
+    margin-top: 0.25rem;
+}
+
+.employee-dropdown.show {
+    display: block;
+}
+
+.employee-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.employee-option:last-child {
+    border-bottom: none;
+}
+
+.employee-option:hover {
+    background-color: var(--bg);
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* Shift Row Controls */
+.shift-row-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shift-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.shift-metadata input,
+.shift-metadata select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.shift-metadata input:focus,
+.shift-metadata select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+}
+
+.add-shift-row-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.add-shift-row-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.shift-edit-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #666;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.shift-edit-btn:hover {
+    background: var(--bg);
+    border-color: var(--muted);
+    color: var(--text);
+}
+
+.shift-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    opacity: 0.6;
+}
+
+.shift-delete-btn:hover {
+    background: var(--danger);
+    color: white;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Amount Picker Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+}
+
+.amount-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.amount-btn {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--primary);
+    background: var(--surface);
+    color: var(--primary);
+    font-size: 1.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.amount-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.amount-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.amount-display {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 60px;
+    text-align: center;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+.modal-btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.modal-btn-secondary:hover {
+    background: var(--surface);
+}
+</style>
+
+<h2>@Localizer["ShiftAssignmentTable"]</h2>
+
+<div class="nav-buttons">
+    <a href="/Calendar/Table?start=@Model.StartDate.AddDays(-14).ToString("yyyy-MM-dd")" class="btn-secondary">
+        ← Previous 2 Weeks
+    </a>
+    <span style="font-weight: 600;">
+        @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
+    </span>
+    <a href="/Calendar/Table?start=@Model.StartDate.AddDays(14).ToString("yyyy-MM-dd")" class="btn-secondary">
+        Next 2 Weeks →
+    </a>
+    <a href="/Calendar/Table" class="btn btn-primary">
+        @Localizer["CurrentWeek"]
+    </a>
+</div>
+
+<button class="add-shift-row-btn" onclick="showAddShiftRowModal()">
+    <span>➕</span>
+    <span>@Localizer["AddCustomShiftRow"]</span>
+</button>
+
+<div class="table-view-container">
+    <table class="shift-table">
+        <thead>
+            <tr>
+                <th class="shift-name-col">Shift</th>
+                @foreach (var date in Model.Dates)
+                {
+                    <th>
+                        @date.ToString("MMM dd")<br/>
+                        <small>@date.ToString("yyyy")</small>
+                    </th>
+                }
+            </tr>
+            <tr class="day-row">
+                <td class="shift-name-col">@Localizer["Day"]</td>
+                @foreach (var date in Model.Dates)
+                {
+                    <td>@date.DayOfWeek</td>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var shiftType in Model.ShiftTypes)
+            {
+                <tr data-shift-type-id="@shiftType.Id">
+                    <td class="shift-name-col">
+                        <div class="shift-row-header">
+                            <div class="shift-metadata" id="metadata-@shiftType.Id">
+                                <strong>@shiftType.Name</strong>
+                                <small style="color: #666;">@shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")</small>
+                            </div>
+                            <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
+                                <input type="text"
+                                       id="name-@shiftType.Id"
+                                       value="@shiftType.Name"
+                                       placeholder="Shift Name"
+                                       style="font-weight: 600;" />
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <input type="time"
+                                           id="start-@shiftType.Id"
+                                           value="@shiftType.Start.ToString("HH:mm")"
+                                           style="width: 80px;" />
+                                    <span style="align-self: center;">-</span>
+                                    <input type="time"
+                                           id="end-@shiftType.Id"
+                                           value="@shiftType.End.ToString("HH:mm")"
+                                           style="width: 80px;" />
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.25rem; margin-top: 0.5rem;">
+                            <button class="shift-edit-btn" id="edit-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, true)">✏️ Edit</button>
+                            <button class="shift-edit-btn" id="save-btn-@shiftType.Id" onclick="saveShiftMetadata(@shiftType.Id)" style="display: none;">💾 Save</button>
+                            <button class="shift-edit-btn" id="cancel-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, false)" style="display: none;">❌ Cancel</button>
+                        </div>
+                    </td>
+                    @foreach (var date in Model.Dates)
+                    {
+                        var assignments = Model.AssignmentGrid[shiftType.Id][date];
+                        var hasAssignments = assignments.Any();
+                        var instanceId = assignments.FirstOrDefault()?.ShiftInstanceId ?? 0;
+
+                        <td class="assignment-cell @(!hasAssignments ? "empty" : "")"
+                            data-shift-type="@shiftType.Id"
+                            data-date="@date.ToString("yyyy-MM-dd")"
+                            data-instance-id="@instanceId">
+
+                            @if (hasAssignments)
+                            {
+                                <div class="assignment-slots" data-instance-id="@instanceId">
+                                    @foreach (var assignment in assignments)
+                                    {
+                                        @if (assignment.UserId.HasValue)
+                                        {
+                                            <div class="assignment-slot"
+                                                 role="button"
+                                                 tabindex="0"
+                                                 aria-haspopup="menu"
+                                                 id="slot-@assignment.AssignmentId"
+                                                 data-assignment-id="@assignment.AssignmentId"
+                                                 data-user-id="@assignment.UserId"
+                                                 data-has-trainee="@(assignment.TraineeUserId.HasValue ? "true" : "false")"
+                                                 data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
+                                                 onclick="handleSlotClick(this, event)">
+                                                <div class="assignment-slot-content">
+                                                    <div>
+                                                        <div class="primary-user">@assignment.EmployeeName</div>
+                                                        @if (!string.IsNullOrEmpty(assignment.TraineeName))
+                                                        {
+                                                            <div class="trainee-user">Trainee: @assignment.TraineeName</div>
+                                                        }
+                                                    </div>
+                                                    <div class="slot-actions">⋮</div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="assignment-slot unassigned"
+                                                 role="button"
+                                                 tabindex="0"
+                                                 aria-label="@Localizer["AssignEmployeeToSlot"]"
+                                                 data-assignment-id="@assignment.AssignmentId"
+                                                 data-instance-id="@assignment.ShiftInstanceId"
+                                                 onclick="handleUnassignedSlotClick(this, event)">
+                                                <div class="assignment-slot-content">
+                                                    <div>@Localizer["SelectEmployee"]</div>
+                                                    <div class="slot-actions">👤</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    <div class="shift-actions-row">
+                                        <div class="adjust-headcount-btn" onclick="showAdjustHeadcount(@instanceId, event)" title="@Localizer["AdjustRequiredHeadcount"]">
+                                            ⚙️
+                                        </div>
+                                        <button class="shift-delete-btn" onclick="confirmDeleteShift(@instanceId, event)" aria-label="@Localizer["DeleteShift"]" title="@Localizer["DeleteShift"]">
+                                            <span>🗑️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="add-assignment-btn" onclick="showAmountPicker(this, event)">
+                                    <span>➕ @Localizer["AddAssignment"]</span>
+                                </div>
+                            }
+
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Amount Picker Modal -->
+<div class="modal-overlay" id="amountPickerModal">
+    <div class="modal-content">
+        <div class="modal-header">@Localizer["NumberOfPeopleNeeded"]</div>
+        <div class="amount-picker">
+            <button class="amount-btn" id="decreaseBtn" onclick="adjustAmount(-1)">−</button>
+            <div class="amount-display" id="amountDisplay">1</div>
+            <button class="amount-btn" id="increaseBtn" onclick="adjustAmount(1)">+</button>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeAmountPicker()">@Localizer["Cancel"]</button>
+            <button class="modal-btn modal-btn-primary" onclick="createAssignmentSlots()">@Localizer["CreateSlots"]</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Shift Row Modal -->
+<div class="modal-overlay" id="addShiftRowModal">
+    <div class="modal-content">
+        <div class="modal-header">Add Custom Shift Row</div>
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin: 1rem 0;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Shift Name</label>
+                <input type="text" id="newShiftName" placeholder="e.g., Evening Shift" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Start Time</label>
+                    <input type="time" id="newShiftStart" value="09:00" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;" />
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">End Time</label>
+                    <input type="time" id="newShiftEnd" value="17:00" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;" />
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeAddShiftRowModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="createCustomShiftRow()">Create Shift Row</button>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu for Slots -->
+<div class="action-menu" id="slotContextMenu" role="menu">
+    <div class="action-menu-item" role="menuitem" onclick="showAddTraineeMenu(event)">
+        <span>👤</span>
+        <span id="traineeMenuLabel">@Localizer["AddTrainee"]</span>
+    </div>
+    <div class="action-menu-item" role="menuitem" id="removeTraineeItem" onclick="removeTrainee(event)" style="display: none;">
+        <span>🚫</span>
+        <span>@Localizer["RemoveTrainee"]</span>
+    </div>
+    <div class="action-menu-item" role="menuitem" onclick="showChangeUserMenu(event)">
+        <span>🔄</span>
+        <span>@Localizer["ChangePrimaryUser"]</span>
+    </div>
+    <div class="action-menu-item danger" role="menuitem" onclick="removeUser(event)">
+        <span>❌</span>
+        <span>@Localizer["RemoveUser"]</span>
+    </div>
+</div>
+
+<!-- Employee Dropdown -->
+<div class="employee-dropdown" id="employeeDropdown">
+    @foreach (var employee in Model.Employees)
+    {
+        <div class="employee-option" data-employee-id="@employee.Id" data-employee-name="@employee.DisplayName">
+            @employee.DisplayName
+        </div>
+    }
+</div>
+
+<script>
+let currentSlot = null;
+let currentAmount = 1;
+let currentCell = null;
+const MAX_AMOUNT = 10;
+const MIN_AMOUNT = 1;
+
+// Localized strings (using Html.Raw to prevent HTML encoding of Hebrew/special characters)
+const i18n = {
+    numberOfPeopleNeeded: '@Html.Raw(Localizer["NumberOfPeopleNeeded"])',
+    adjustRequiredHeadcount: '@Html.Raw(Localizer["AdjustRequiredHeadcount"])',
+    addTrainee: '@Html.Raw(Localizer["AddTrainee"])',
+    changeTrainee: '@Html.Raw(Localizer["ChangeTrainee"])',
+    selectEmployee: '@Html.Raw(Localizer["SelectEmployee"])',
+    assignEmployeeToSlot: '@Html.Raw(Localizer["AssignEmployeeToSlot"])',
+    failedToAddTrainee: '@Html.Raw(Localizer["FailedToAddTrainee"])',
+    removeTraineeConfirm: '@Html.Raw(Localizer["RemoveTraineeConfirm"])',
+    failedToRemoveTrainee: '@Html.Raw(Localizer["FailedToRemoveTrainee"])',
+    failedToChangeUser: '@Html.Raw(Localizer["FailedToChangeUser"])',
+    removeUserConfirm: '@Html.Raw(Localizer["RemoveUserConfirm"])',
+    failedToRemoveUser: '@Html.Raw(Localizer["FailedToRemoveUser"])',
+    deleteShift: '@Html.Raw(Localizer["DeleteShift"])',
+    deleteShiftConfirm: '@Html.Raw(Localizer["DeleteShiftConfirm"])',
+    failedToDeleteShift: '@Html.Raw(Localizer["FailedToDeleteShift"])'
+};
+
+// Shift Row Editing Functions
+function toggleEditMode(shiftTypeId, isEdit) {
+    const displayElem = document.getElementById(`metadata-${shiftTypeId}`);
+    const editElem = document.getElementById(`metadata-edit-${shiftTypeId}`);
+    const editBtn = document.getElementById(`edit-btn-${shiftTypeId}`);
+    const saveBtn = document.getElementById(`save-btn-${shiftTypeId}`);
+    const cancelBtn = document.getElementById(`cancel-btn-${shiftTypeId}`);
+
+    if (isEdit) {
+        displayElem.style.display = 'none';
+        editElem.style.display = 'flex';
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+    } else {
+        displayElem.style.display = 'flex';
+        editElem.style.display = 'none';
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    }
+}
+
+async function saveShiftMetadata(shiftTypeId) {
+    const name = document.getElementById(`name-${shiftTypeId}`).value;
+    const start = document.getElementById(`start-${shiftTypeId}`).value;
+    const end = document.getElementById(`end-${shiftTypeId}`).value;
+
+    if (!name || !start || !end) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=UpdateShiftMetadata', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftTypeId: shiftTypeId,
+                name: name,
+                startTime: start,
+                endTime: end
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error updating shift metadata:', error);
+        alert('Failed to update shift metadata. Please try again.');
+    }
+}
+
+// Add Shift Row Modal Functions
+function showAddShiftRowModal() {
+    document.getElementById('addShiftRowModal').classList.add('show');
+}
+
+function closeAddShiftRowModal() {
+    document.getElementById('addShiftRowModal').classList.remove('show');
+    document.getElementById('newShiftName').value = '';
+    document.getElementById('newShiftStart').value = '09:00';
+    document.getElementById('newShiftEnd').value = '17:00';
+}
+
+async function createCustomShiftRow() {
+    const name = document.getElementById('newShiftName').value;
+    const start = document.getElementById('newShiftStart').value;
+    const end = document.getElementById('newShiftEnd').value;
+
+    if (!name || !start || !end) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=CreateCustomShiftType', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                name: name,
+                startTime: start,
+                endTime: end
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            closeAddShiftRowModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error creating custom shift row:', error);
+        alert('Failed to create shift row. Please try again.');
+    }
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', function(event) {
+    const contextMenu = document.getElementById('slotContextMenu');
+    const dropdown = document.getElementById('employeeDropdown');
+    const modal = document.getElementById('amountPickerModal');
+
+    if (contextMenu && !event.target.closest('#slotContextMenu') && !event.target.closest('.assignment-slot')) {
+        contextMenu.classList.remove('show');
+    }
+    if (dropdown && !event.target.closest('#employeeDropdown') && !event.target.closest('#slotContextMenu')) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// Amount Picker Functions
+let currentInstanceId = null;
+
+function showAmountPicker(btn, event) {
+    event.stopPropagation();
+    currentCell = btn.closest('.assignment-cell');
+    currentInstanceId = null; // New shift instance
+    currentAmount = 1;
+    document.getElementById('amountDisplay').textContent = currentAmount;
+    document.getElementById('amountPickerModal').querySelector('.modal-header').textContent = i18n.numberOfPeopleNeeded;
+    updateAmountButtons();
+    document.getElementById('amountPickerModal').classList.add('show');
+}
+
+function showAdjustHeadcount(instanceId, event) {
+    event.stopPropagation();
+
+    // Find the cell containing this instance
+    const slotsDiv = event.target.closest('.assignment-slots');
+    currentCell = slotsDiv.closest('.assignment-cell');
+    currentInstanceId = instanceId;
+
+    // Count current slots
+    const currentSlots = slotsDiv.querySelectorAll('.assignment-slot').length;
+    currentAmount = currentSlots;
+
+    document.getElementById('amountDisplay').textContent = currentAmount;
+    document.getElementById('amountPickerModal').querySelector('.modal-header').textContent = i18n.adjustRequiredHeadcount;
+    updateAmountButtons();
+    document.getElementById('amountPickerModal').classList.add('show');
+}
+
+function closeAmountPicker() {
+    document.getElementById('amountPickerModal').classList.remove('show');
+    currentCell = null;
+    currentInstanceId = null;
+}
+
+function adjustAmount(delta) {
+    currentAmount = Math.max(MIN_AMOUNT, Math.min(MAX_AMOUNT, currentAmount + delta));
+    document.getElementById('amountDisplay').textContent = currentAmount;
+    updateAmountButtons();
+}
+
+function updateAmountButtons() {
+    document.getElementById('decreaseBtn').disabled = currentAmount <= MIN_AMOUNT;
+    document.getElementById('increaseBtn').disabled = currentAmount >= MAX_AMOUNT;
+}
+
+async function createAssignmentSlots(forceRemoval = false) {
+    if (!currentCell) return;
+
+    const shiftTypeId = currentCell.getAttribute('data-shift-type');
+    const date = currentCell.getAttribute('data-date');
+
+    try {
+        let response;
+
+        if (currentInstanceId) {
+            // Update existing shift instance
+            response = await fetch('/Calendar/Table?handler=UpdateShiftStaffing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({
+                    shiftInstanceId: currentInstanceId,
+                    staffingRequired: currentAmount,
+                    forceRemoval: forceRemoval
+                })
+            });
+        } else {
+            // Get-or-create shift instance (idempotent - no "already exists" error)
+            response = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({
+                    shiftTypeId: parseInt(shiftTypeId),
+                    date: date,
+                    staffingRequired: currentAmount
+                })
+            });
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            closeAmountPicker();
+            location.reload();
+        } else if (result.requiresConfirmation) {
+            // Show confirmation dialog for removing assigned employees
+            if (confirm(result.message)) {
+                // User confirmed - retry with force removal
+                await createAssignmentSlots(true);
+            }
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error updating shift slots:', error);
+        alert('Failed to update shift slots. Please try again.');
+    }
+}
+
+// Slot Click Handlers
+function handleSlotClick(slot, event) {
+    event.stopPropagation();
+    currentSlot = slot;
+
+    const contextMenu = document.getElementById('slotContextMenu');
+    const hasTrainee = slot.getAttribute('data-has-trainee') === 'true';
+
+    // Update menu items based on slot state
+    document.getElementById('traineeMenuLabel').textContent = hasTrainee ? i18n.changeTrainee : i18n.addTrainee;
+    document.getElementById('removeTraineeItem').style.display = hasTrainee ? 'block' : 'none';
+
+    // Close dropdown if open
+    document.getElementById('employeeDropdown').classList.remove('show');
+
+    // Position and show menu
+    positionMenuNearSlot(contextMenu, slot);
+    contextMenu.classList.add('show');
+}
+
+function handleUnassignedSlotClick(slot, event) {
+    event.stopPropagation();
+    currentSlot = slot;
+
+    const assignmentId = slot.getAttribute('data-assignment-id');
+    showEmployeeDropdown((employeeId, employeeName) => {
+        assignUserToSlot(assignmentId, employeeId);
+    });
+}
+
+function positionMenuNearSlot(menu, slot) {
+    const rect = slot.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (rect.bottom + 5) + 'px';
+    menu.style.left = rect.left + 'px';
+}
+
+// Employee Dropdown Functions
+function showAddTraineeMenu(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+    showEmployeeDropdown((employeeId, employeeName) => {
+        addTrainee(assignmentId, employeeId, employeeName);
+    });
+}
+
+function showChangeUserMenu(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+    showEmployeeDropdown((employeeId, employeeName) => {
+        changeUser(assignmentId, employeeId, employeeName);
+    });
+}
+
+function showEmployeeDropdown(callback) {
+    const contextMenu = document.getElementById('slotContextMenu');
+    const dropdown = document.getElementById('employeeDropdown');
+
+    // Close context menu
+    contextMenu.classList.remove('show');
+
+    // Position dropdown near current slot
+    if (currentSlot) {
+        positionMenuNearSlot(dropdown, currentSlot);
+    }
+
+    // Get already assigned users in this cell to filter them out
+    const cell = currentSlot ? currentSlot.closest('.assignment-cell') : null;
+    const assignedUserIds = new Set();
+
+    if (cell) {
+        const slots = cell.querySelectorAll('.assignment-slot[data-user-id]');
+        slots.forEach(slot => {
+            const userId = slot.getAttribute('data-user-id');
+            if (userId && userId !== 'null' && userId !== '') {
+                assignedUserIds.add(userId);
+            }
+        });
+    }
+
+    // Set up click handlers for employee options
+    const options = dropdown.querySelectorAll('.employee-option');
+    options.forEach(option => {
+        const newOption = option.cloneNode(true);
+        option.parentNode.replaceChild(newOption, option);
+
+        const employeeId = newOption.getAttribute('data-employee-id');
+
+        // Hide options for users already assigned in this cell
+        if (assignedUserIds.has(employeeId)) {
+            newOption.style.display = 'none';
+        } else {
+            newOption.style.display = 'block';
+
+            newOption.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const employeeName = this.getAttribute('data-employee-name');
+                dropdown.classList.remove('show');
+                callback(parseInt(employeeId), employeeName);
+            });
+        }
+    });
+
+    dropdown.classList.add('show');
+}
+
+async function addTrainee(assignmentId, traineeId, traineeName) {
+    const contextMenu = document.getElementById('slotContextMenu');
+    contextMenu.classList.remove('show');
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=AddTrainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId),
+                traineeUserId: traineeId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update DOM immediately
+            if (currentSlot) {
+                currentSlot.setAttribute('data-has-trainee', 'true');
+                currentSlot.setAttribute('data-trainee-id', traineeId);
+
+                const contentDiv = currentSlot.querySelector('.assignment-slot-content > div:first-child');
+                if (contentDiv) {
+                    // Find existing trainee div or create new one
+                    let traineeDiv = contentDiv.querySelector('.trainee-user');
+                    if (!traineeDiv) {
+                        // Add comma and trainee
+                        const primaryUserDiv = contentDiv.querySelector('.primary-user');
+                        if (primaryUserDiv) {
+                            const comma = document.createTextNode(', ');
+                            traineeDiv = document.createElement('div');
+                            traineeDiv.className = 'trainee-user';
+                            traineeDiv.textContent = traineeName;
+
+                            contentDiv.appendChild(comma);
+                            contentDiv.appendChild(traineeDiv);
+                        }
+                    } else {
+                        // Update existing trainee
+                        traineeDiv.textContent = traineeName;
+                    }
+                }
+
+                // Update context menu label
+                document.getElementById('traineeMenuLabel').textContent = i18n.changeTrainee;
+                document.getElementById('removeTraineeItem').style.display = 'block';
+            }
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error adding trainee:', error);
+        alert(i18n.failedToAddTrainee);
+    }
+}
+
+async function removeTrainee(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    if (!confirm(i18n.removeTraineeConfirm)) {
+        return;
+    }
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=RemoveTrainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error removing trainee:', error);
+        alert(i18n.failedToRemoveTrainee);
+    }
+}
+
+async function assignUserToSlot(assignmentId, userId) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=AssignUserToSlot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId),
+                userId: userId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error assigning user to slot:', error);
+        alert('Failed to assign user. Please try again.');
+    }
+}
+
+async function changeUser(assignmentId, newUserId, newUserName) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=ChangeUser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId),
+                newUserId: newUserId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error changing user:', error);
+        alert(i18n.failedToChangeUser);
+    }
+}
+
+async function removeUser(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    if (!confirm(i18n.removeUserConfirm)) {
+        return;
+    }
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+    const contextMenu = document.getElementById('slotContextMenu');
+    contextMenu.classList.remove('show');
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=ClearAssignment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update DOM immediately - convert to unassigned slot
+            currentSlot.classList.add('unassigned');
+            currentSlot.removeAttribute('data-user-id');
+            currentSlot.removeAttribute('data-has-trainee');
+            currentSlot.removeAttribute('data-trainee-id');
+            currentSlot.setAttribute('aria-label', i18n.assignEmployeeToSlot);
+            currentSlot.setAttribute('onclick', 'handleUnassignedSlotClick(this, event)');
+
+            const content = currentSlot.querySelector('.assignment-slot-content');
+            content.innerHTML = `<div>${i18n.selectEmployee}</div><div class="slot-actions">👤</div>`;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error removing user:', error);
+        alert(i18n.failedToRemoveUser);
+    }
+}
+
+async function confirmDeleteShift(instanceId, event) {
+    event.stopPropagation();
+
+    if (!confirm(i18n.deleteShiftConfirm)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=DeleteShiftInstance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Reload page to show updated state
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error deleting shift instance:', error);
+        alert(i18n.failedToDeleteShift);
+    }
+}
+
+// ============= KEYBOARD NAVIGATION =============
+
+// Track currently focused cell for keyboard navigation
+let focusedCell = null;
+
+// Initialize keyboard navigation
+document.addEventListener('DOMContentLoaded', function() {
+    initializeKeyboardNavigation();
+});
+
+function initializeKeyboardNavigation() {
+    const cells = document.querySelectorAll('.assignment-cell');
+
+    cells.forEach(cell => {
+        // Make cells focusable
+        cell.setAttribute('tabindex', '0');
+
+        // Add focus styling
+        cell.addEventListener('focus', function() {
+            focusedCell = this;
+            this.style.outline = '2px solid var(--primary)';
+            this.style.outlineOffset = '-2px';
+        });
+
+        cell.addEventListener('blur', function() {
+            this.style.outline = '';
+            this.style.outlineOffset = '';
+        });
+
+        // Handle keyboard events on cells
+        cell.addEventListener('keydown', handleCellKeydown);
+    });
+
+    // Also handle keyboard on slots
+    const slots = document.querySelectorAll('.assignment-slot');
+    slots.forEach(slot => {
+        slot.addEventListener('keydown', handleSlotKeydown);
+    });
+}
+
+function handleCellKeydown(event) {
+    const cell = event.currentTarget;
+
+    // Handle arrow keys
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        navigateCell(cell, event.key);
+        return;
+    }
+
+    // Handle Enter key on cells
+    if (event.key === 'Enter') {
+        event.preventDefault();
+
+        // Check if cell is empty (has add-assignment-btn)
+        const addBtn = cell.querySelector('.add-assignment-btn');
+        if (addBtn) {
+            showAmountPicker(addBtn, event);
+        } else {
+            // Cell has slots - focus first slot
+            const firstSlot = cell.querySelector('.assignment-slot');
+            if (firstSlot) {
+                firstSlot.focus();
+            }
+        }
+    }
+}
+
+function handleSlotKeydown(event) {
+    const slot = event.currentTarget;
+
+    // Handle Enter key on slots
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+
+        if (slot.classList.contains('unassigned')) {
+            handleUnassignedSlotClick(slot, event);
+        } else {
+            handleSlotClick(slot, event);
+        }
+        return;
+    }
+
+    // Handle Escape key to go back to cell
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        const cell = slot.closest('.assignment-cell');
+        if (cell) {
+            cell.focus();
+        }
+
+        // Close any open menus
+        document.getElementById('slotContextMenu')?.classList.remove('show');
+        document.getElementById('employeeDropdown')?.classList.remove('show');
+        return;
+    }
+
+    // Handle arrow keys within slots
+    if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        navigateSlots(slot, event.key);
+        return;
+    }
+
+    // Arrow left/right go back to cell navigation
+    if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        const cell = slot.closest('.assignment-cell');
+        if (cell) {
+            cell.focus();
+            navigateCell(cell, event.key);
+        }
+    }
+}
+
+function navigateCell(currentCell, direction) {
+    const allCells = Array.from(document.querySelectorAll('.assignment-cell'));
+    const currentIndex = allCells.indexOf(currentCell);
+
+    if (currentIndex === -1) return;
+
+    let targetCell = null;
+
+    if (direction === 'ArrowLeft') {
+        // Move to previous cell in row
+        targetCell = allCells[currentIndex - 1];
+    } else if (direction === 'ArrowRight') {
+        // Move to next cell in row
+        targetCell = allCells[currentIndex + 1];
+    } else if (direction === 'ArrowUp' || direction === 'ArrowDown') {
+        // Calculate grid dimensions
+        const currentRow = currentCell.closest('tr');
+        const currentCellIndex = Array.from(currentRow.cells).indexOf(currentCell);
+
+        // Find target row
+        const allRows = Array.from(document.querySelectorAll('.shift-table tbody tr'));
+        const currentRowIndex = allRows.indexOf(currentRow);
+
+        const targetRowIndex = direction === 'ArrowUp'
+            ? currentRowIndex - 1
+            : currentRowIndex + 1;
+
+        if (targetRowIndex >= 0 && targetRowIndex < allRows.length) {
+            const targetRow = allRows[targetRowIndex];
+            targetCell = targetRow.cells[currentCellIndex];
+        }
+    }
+
+    if (targetCell && targetCell.classList.contains('assignment-cell')) {
+        targetCell.focus();
+    }
+}
+
+function navigateSlots(currentSlot, direction) {
+    const slotsContainer = currentSlot.closest('.assignment-slots');
+    if (!slotsContainer) return;
+
+    const allSlots = Array.from(slotsContainer.querySelectorAll('.assignment-slot'));
+    const currentIndex = allSlots.indexOf(currentSlot);
+
+    if (currentIndex === -1) return;
+
+    let targetSlot = null;
+
+    if (direction === 'ArrowUp' && currentIndex > 0) {
+        targetSlot = allSlots[currentIndex - 1];
+    } else if (direction === 'ArrowDown' && currentIndex < allSlots.length - 1) {
+        targetSlot = allSlots[currentIndex + 1];
+    }
+
+    if (targetSlot) {
+        targetSlot.focus();
+    }
+}
+
+// Add Escape key handler for modals
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        // Close amount picker modal
+        const amountModal = document.getElementById('amountPickerModal');
+        if (amountModal && amountModal.classList.contains('show')) {
+            closeAmountPicker();
+        }
+
+        // Close add shift row modal
+        const addShiftModal = document.getElementById('addShiftRowModal');
+        if (addShiftModal && addShiftModal.classList.contains('show')) {
+            closeAddShiftRowModal();
+        }
+
+        // Close context menu
+        const contextMenu = document.getElementById('slotContextMenu');
+        if (contextMenu && contextMenu.classList.contains('show')) {
+            contextMenu.classList.remove('show');
+        }
+
+        // Close employee dropdown
+        const dropdown = document.getElementById('employeeDropdown');
+        if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+        }
+    }
+});
+
+</script>
+
+@Html.AntiForgeryToken()

@@ -45,8 +45,23 @@ namespace ShiftManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AvatarFileName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Certifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("City")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("CompanyId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("DateOfBirth")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Department")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
@@ -56,8 +71,23 @@ namespace ShiftManager.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("EmergencyContactName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmergencyContactPhone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmergencyContactRelation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HireDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("JobTitle")
+                        .HasColumnType("TEXT");
 
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
@@ -67,8 +97,23 @@ namespace ShiftManager.Migrations
                         .IsRequired()
                         .HasColumnType("BLOB");
 
+                    b.Property<string>("Phone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PreferredName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ProfileLastUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ProfileLastUpdatedBy")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Role")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Skills")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -76,6 +121,122 @@ namespace ShiftManager.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserAgent")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserDisplayName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CompanyId", "Action");
+
+                    b.HasIndex("CompanyId", "Timestamp");
+
+                    b.HasIndex("CompanyId", "UserId", "Timestamp");
+
+                    b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.Chore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CanceledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CanceledBy")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Date")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CanceledBy");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CompanyId", "Date");
+
+                    b.HasIndex("CompanyId", "UserId", "Date");
+
+                    b.HasIndex("CompanyId", "UserId", "Date", "CanceledAt")
+                        .IsUnique()
+                        .HasFilter("[CanceledAt] IS NULL");
+
+                    b.ToTable("Chores");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.Company", b =>
@@ -144,6 +305,47 @@ namespace ShiftManager.Migrations
                     b.ToTable("DirectorCompanies");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.ProfileChangeAudit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChangedBy")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FieldName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TargetUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedBy");
+
+                    b.HasIndex("TargetUserId");
+
+                    b.HasIndex("CompanyId", "ChangedBy", "Timestamp");
+
+                    b.HasIndex("CompanyId", "TargetUserId", "Timestamp");
+
+                    b.ToTable("ProfileChangeAudits");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.RoleAssignmentAudit", b =>
                 {
                     b.Property<int>("Id")
@@ -198,7 +400,7 @@ namespace ShiftManager.Migrations
                     b.Property<int?>("TraineeUserId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -453,6 +655,58 @@ namespace ShiftManager.Migrations
                     b.ToTable("UserNotifications");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.AuditLog", b =>
+                {
+                    b.HasOne("ShiftManager.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.Chore", b =>
+                {
+                    b.HasOne("ShiftManager.Models.AppUser", "Canceler")
+                        .WithMany()
+                        .HasForeignKey("CanceledBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShiftManager.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.AppUser", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Canceler");
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.DirectorCompany", b =>
                 {
                     b.HasOne("ShiftManager.Models.Company", "Company")
@@ -480,6 +734,33 @@ namespace ShiftManager.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.ProfileChangeAudit", b =>
+                {
+                    b.HasOne("ShiftManager.Models.AppUser", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.AppUser", "TargetUser")
+                        .WithMany()
+                        .HasForeignKey("TargetUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("Company");
+
+                    b.Navigation("TargetUser");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.ShiftAssignment", b =>
                 {
                     b.HasOne("ShiftManager.Models.ShiftInstance", "ShiftInstance")
@@ -494,9 +775,7 @@ namespace ShiftManager.Migrations
 
                     b.HasOne("ShiftManager.Models.AppUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("ShiftInstance");
 

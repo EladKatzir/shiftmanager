@@ -1,0 +1,592 @@
+@page
+@model ShiftManager.Pages.Admin.AnalyticsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.Models.Support
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["AnalyticsDashboard"];
+}
+
+<div class="analytics-modern-wrapper" data-theme="light">
+    <!-- Custom Modern Breadcrumbs with Theme Toggle -->
+    <div class="analytics-modern-breadcrumb">
+        <div class="breadcrumb-nav">
+            <a href="/Admin/Users" class="breadcrumb-link">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5z"/>
+                </svg>
+                @Localizer["Admin"]
+            </a>
+            <svg class="breadcrumb-separator" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="breadcrumb-current">@Localizer["Analytics"]</span>
+        </div>
+        <button class="analytics-theme-toggle" onclick="toggleAnalyticsTheme()" type="button" aria-label="Toggle dark mode">
+            <svg class="theme-icon-sun" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+            </svg>
+            <svg class="theme-icon-moon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+            </svg>
+        </button>
+    </div>
+
+    <h2 class="analytics-page-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="20" x2="12" y2="10"></line>
+            <line x1="18" y1="20" x2="18" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="16"></line>
+        </svg>
+        @Localizer["AnalyticsDashboard"]
+    </h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
+        ✓ @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+{
+    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
+        ✗ @(TempData["ErrorMessage"] ?? TempData["Error"])
+    </div>
+}
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["DateRange"]</h3>
+    <form method="get" style="display:grid; grid-template-columns: 1fr auto; gap:.5rem; align-items:end">
+        <label>@Localizer["SelectPeriod"]<br />
+            <select class="input" name="dateRange" onchange="this.form.submit()">
+                <option value="7" selected="@(Model.DateRange == 7)">@Localizer["Last7Days"]</option>
+                <option value="30" selected="@(Model.DateRange == 30)">@Localizer["Last30Days"]</option>
+                <option value="90" selected="@(Model.DateRange == 90)">@Localizer["Last90Days"]</option>
+                <option value="365" selected="@(Model.DateRange == 365)">@Localizer["LastYear"]</option>
+            </select>
+        </label>
+        <a asp-page-handler="ExportCsv" asp-route-dateRange="@Model.DateRange" class="btn btn-primary">@Localizer["ExportReport"]</a>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["Summary"]</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>@Localizer["Metric"]</th>
+                <th>@Localizer["Value"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@Localizer["CoverageRate"]</td>
+                <td><strong>@Model.CoverageRate.ToString("F1")%</strong> - @Localizer["ShiftCoverage"]</td>
+            </tr>
+            <tr>
+                <td>@Localizer["SwapRequests"]</td>
+                <td><strong>@Model.SwapStats.TotalRequests</strong> (@Model.SwapStats.ApprovalRate.ToString("F1")% @Localizer["ApprovalRate"])</td>
+            </tr>
+            <tr>
+                <td>@Localizer["TimeOffRequests"]</td>
+                <td><strong>@Model.TimeOffStats.TotalRequests</strong> (@Model.TimeOffStats.ApprovalRate.ToString("F1")% @Localizer["ApprovalRate"])</td>
+            </tr>
+            <tr>
+                <td>@Localizer["BackToBackShifts"]</td>
+                <td><strong>@Model.BackToBackShifts.Count</strong> @Localizer["BackToBackShiftWarnings"]</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["EmployeeHours"]</h3>
+    @if (Model.EmployeeHours.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Employee"]</th>
+                    <th>@Localizer["TotalHours"]</th>
+                    <th>@Localizer["AverageHoursPerWeek"]</th>
+                    <th>@Localizer["ShiftCount"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var emp in Model.EmployeeHours)
+                {
+                    <tr>
+                        <td>@emp.EmployeeName</td>
+                        <td>@emp.TotalHours.ToString("F1")</td>
+                        <td>@emp.AverageHoursPerWeek.ToString("F1")</td>
+                        <td>@emp.ShiftCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoDataAvailable"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["UpcomingShifts"] (@Localizer["Next7Days"])</h3>
+    @if (Model.UpcomingShifts.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Employee"]</th>
+                    <th>@Localizer["ShiftCount"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var emp in Model.UpcomingShifts)
+                {
+                    <tr>
+                        <td>@emp.EmployeeName</td>
+                        <td>@emp.UpcomingShiftCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoDataAvailable"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["BackToBackShiftWarnings"]</h3>
+    @if (Model.BackToBackShifts.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Employee"]</th>
+                    <th>@Localizer["Date"]</th>
+                    <th>@Localizer["FirstShift"]</th>
+                    <th>@Localizer["SecondShift"]</th>
+                    <th>@Localizer["RestHours"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.BackToBackShifts)
+                {
+                    <tr>
+                        <td>@item.EmployeeName</td>
+                        <td>@item.FirstShiftDate.ToString("yyyy-MM-dd")</td>
+                        <td>@item.FirstShiftType</td>
+                        <td>@item.SecondShiftType</td>
+                        <td>@item.RestHours.ToString("F1")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoBackToBackIssues"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["HoursByRole"]</h3>
+    @if (Model.HoursByRole.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Role"]</th>
+                    <th>@Localizer["TotalHours"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var role in Model.HoursByRole)
+                {
+                    <tr>
+                        <td>@role.Key</td>
+                        <td>@role.Value.ToString("F1")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoDataAvailable"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["UnderstaffingIssues"]</h3>
+    @if (Model.UnderstaffingReport.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Date"]</th>
+                    <th>@Localizer["Shift"]</th>
+                    <th>@Localizer["Assigned"]</th>
+                    <th>@Localizer["Required"]</th>
+                    <th>@Localizer["Deficit"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var issue in Model.UnderstaffingReport)
+                {
+                    <tr>
+                        <td>@issue.WorkDate.ToString("yyyy-MM-dd")</td>
+                        <td>@issue.ShiftType</td>
+                        <td>@issue.AssignedCount</td>
+                        <td>@issue.RequiredCount</td>
+                        <td style="color: var(--danger); font-weight: 600;">-@issue.Difference</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoUnderstaffingIssues"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["OverstaffingIssues"]</h3>
+    @if (Model.OverstaffingReport.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Date"]</th>
+                    <th>@Localizer["Shift"]</th>
+                    <th>@Localizer["Assigned"]</th>
+                    <th>@Localizer["Required"]</th>
+                    <th>@Localizer["Surplus"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var issue in Model.OverstaffingReport)
+                {
+                    <tr>
+                        <td>@issue.WorkDate.ToString("yyyy-MM-dd")</td>
+                        <td>@issue.ShiftType</td>
+                        <td>@issue.AssignedCount</td>
+                        <td>@issue.RequiredCount</td>
+                        <td style="color: var(--warning); font-weight: 600;">+@issue.Difference</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoOverstaffingIssues"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["SwapStatistics"]</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>@Localizer["Metric"]</th>
+                <th>@Localizer["Value"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@Localizer["TotalRequests"]</td>
+                <td>@Model.SwapStats.TotalRequests</td>
+            </tr>
+            <tr>
+                <td>@Localizer["Approved"]</td>
+                <td>@Model.SwapStats.ApprovedCount</td>
+            </tr>
+            <tr>
+                <td>@Localizer["Declined"]</td>
+                <td>@Model.SwapStats.DeclinedCount</td>
+            </tr>
+            <tr>
+                <td>@Localizer["Pending"]</td>
+                <td>@Model.SwapStats.PendingCount</td>
+            </tr>
+            <tr>
+                <td>@Localizer["ApprovalRate"]</td>
+                <td>@Model.SwapStats.ApprovalRate.ToString("F1")%</td>
+            </tr>
+            <tr>
+                <td>@Localizer["AverageApprovalTime"]</td>
+                <td>@Model.AverageSwapApprovalTime.TotalHours.ToString("F1") @Localizer["Hours"]</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["TopSwapRequesters"]</h3>
+    @if (Model.TopSwappers.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Employee"]</th>
+                    <th>@Localizer["RequestCount"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var swapper in Model.TopSwappers)
+                {
+                    <tr>
+                        <td>@swapper.EmployeeName</td>
+                        <td>@swapper.SwapRequestCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoDataAvailable"]</p>
+    }
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["TimeOffStatistics"]</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>@Localizer["Metric"]</th>
+                <th>@Localizer["Value"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@Localizer["TotalRequests"]</td>
+                <td>@Model.TimeOffStats.TotalRequests</td>
+            </tr>
+            <tr>
+                <td>@Localizer["Approved"]</td>
+                <td>@Model.TimeOffStats.ApprovedCount</td>
+            </tr>
+            <tr>
+                <td>@Localizer["Declined"]</td>
+                <td>@Model.TimeOffStats.DeclinedCount</td>
+            </tr>
+            <tr>
+                <td>@Localizer["Pending"]</td>
+                <td>@Model.TimeOffStats.PendingCount</td>
+            </tr>
+            <tr>
+                <td>@Localizer["ApprovalRate"]</td>
+                <td>@Model.TimeOffStats.ApprovalRate.ToString("F1")%</td>
+            </tr>
+            <tr>
+                <td>@Localizer["AverageDaysOff"]</td>
+                <td>@Model.AverageDaysOffPerEmployee.ToString("F1") @Localizer["Days"]</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0">@Localizer["TimeOffTrend"] (@Localizer["Last12Months"])</h3>
+    @if (Model.TimeOffByMonth.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>@Localizer["Month"]</th>
+                    <th>@Localizer["Days"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var month in Model.TimeOffByMonth)
+                {
+                    <tr>
+                        <td>@month.Key</td>
+                        <td>@month.Value</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoDataAvailable"]</p>
+    }
+</div>
+
+</div> <!-- Close analytics-modern-wrapper -->
+
+<style>
+/* ============================================
+   SCOPED STYLES FOR ANALYTICS PAGE ONLY
+   ============================================ */
+
+/* Wrapper - Contains all analytics page content */
+.analytics-modern-wrapper {
+    --analytics-primary: #3b82f6;
+    --analytics-bg-light: #ffffff;
+    --analytics-surface-light: #f9fafb;
+    --analytics-border-light: #e5e7eb;
+    --analytics-text-light: #111827;
+    --analytics-muted-light: #6b7280;
+
+    --analytics-bg-dark: #0f172a;
+    --analytics-surface-dark: #1e293b;
+    --analytics-border-dark: #334155;
+    --analytics-text-dark: #f1f5f9;
+    --analytics-muted-dark: #94a3b8;
+
+    --analytics-bg: var(--analytics-bg-light);
+    --analytics-surface: var(--analytics-surface-light);
+    --analytics-border: var(--analytics-border-light);
+    --analytics-text: var(--analytics-text-light);
+    --analytics-muted: var(--analytics-muted-light);
+}
+
+.analytics-modern-wrapper[data-theme="dark"] {
+    --analytics-bg: var(--analytics-bg-dark);
+    --analytics-surface: var(--analytics-surface-dark);
+    --analytics-border: var(--analytics-border-dark);
+    --analytics-text: var(--analytics-text-dark);
+    --analytics-muted: var(--analytics-muted-dark);
+}
+
+/* Modern Breadcrumb */
+.analytics-modern-breadcrumb {
+    background: var(--analytics-surface);
+    border: 2px solid var(--analytics-border);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-modern-wrapper[data-theme="dark"] .analytics-modern-breadcrumb {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--analytics-primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    background: var(--analytics-bg);
+    transform: translateX(-2px);
+}
+
+.breadcrumb-separator {
+    color: var(--analytics-border);
+    flex-shrink: 0;
+}
+
+.breadcrumb-current {
+    color: var(--analytics-text);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Theme Toggle Button */
+.analytics-theme-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--analytics-bg);
+    border: 2px solid var(--analytics-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--analytics-text);
+}
+
+.analytics-theme-toggle:hover {
+    transform: rotate(180deg) scale(1.1);
+    background: var(--analytics-primary);
+    border-color: var(--analytics-primary);
+    color: white;
+}
+
+.analytics-modern-wrapper[data-theme="light"] .theme-icon-moon {
+    display: none;
+}
+
+.analytics-modern-wrapper[data-theme="dark"] .theme-icon-sun {
+    display: none;
+}
+
+/* Page Title */
+.analytics-page-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--analytics-text);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.analytics-page-title svg {
+    color: var(--analytics-primary);
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+    .analytics-modern-breadcrumb {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .analytics-theme-toggle {
+        align-self: flex-end;
+    }
+}
+</style>
+
+<script>
+function toggleAnalyticsTheme() {
+    const wrapper = document.querySelector('.analytics-modern-wrapper');
+    const currentTheme = wrapper.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    wrapper.setAttribute('data-theme', newTheme);
+    localStorage.setItem('analytics-theme', newTheme);
+}
+
+// Load saved theme on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('analytics-theme') || 'light';
+    const wrapper = document.querySelector('.analytics-modern-wrapper');
+    if (wrapper) {
+        wrapper.setAttribute('data-theme', savedTheme);
+    }
+});
+</script>

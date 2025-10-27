@@ -3,23 +3,30 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @using ShiftManager.Models.Support
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], IsActive = true }
+})
+
 <h2>@Localizer["UserManagement"]</h2>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
-        @TempData["SuccessMessage"]
+    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
+        ✓ @TempData["SuccessMessage"]
     </div>
 }
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
-        @TempData["ErrorMessage"]
+    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
+        ✗ @TempData["ErrorMessage"]
     </div>
 }
 
@@ -71,67 +78,209 @@
 
     @if (Model.JoinRequests.Any())
     {
-        <table>
-            <thead>
-                <tr>
-                    <th>@Localizer["Submitted"]</th>
-                    <th>@Localizer["Name"]</th>
-                    <th>@Localizer["Email"]</th>
-                    <th>@Localizer["Company"]</th>
-                    <th>@Localizer["RequestedRole"]</th>
-                    <th>@Localizer["Status"]</th>
-                    <th style="width:1%">@Localizer["Actions"]</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var request in Model.JoinRequests)
-            {
-                <tr>
-                    <td>@request.CreatedAt.ToLocalTime().ToString("MM/dd/yy HH:mm")</td>
-                    <td>@request.DisplayName</td>
-                    <td>@request.Email</td>
-                    <td>@request.CompanyName</td>
-                    <td>@request.RequestedRole</td>
-                    <td>
-                        @if (request.Status == JoinRequestStatus.Pending)
-                        {
-                            <span style="color: var(--warning, #ffc107)">⏳ @Localizer["Pending"]</span>
-                        }
-                        else if (request.Status == JoinRequestStatus.Approved)
-                        {
-                            <span style="color: var(--success, #28a745)">✓ @Localizer["Approved"]</span>
-                        }
-                        else
-                        {
-                            <span style="color: var(--danger, #dc3545)">✗ @Localizer["Rejected"]</span>
-                        }
-                    </td>
-                    <td>
-                        @if (request.Status == JoinRequestStatus.Pending)
-                        {
-                            <div style="display: flex; gap: 0.5rem; white-space: nowrap">
-                                <form method="post" asp-page-handler="ApproveJoinRequest" style="display:inline">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@request.Id" />
-                                    <button class="btn btn-success" type="submit" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                                        ✓ @Localizer["Approve"]
+        @if (Model.FilterStatus == JoinRequestStatus.Pending)
+        {
+            <!-- Batch approval form for pending requests -->
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--info, #e7f3ff); border-radius: 0.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="selectAllRequests" onclick="toggleAllRequests(this)" />
+                        <strong>@Localizer["SelectAll"]</strong>
+                    </label>
+                    <span id="selectedCount" style="color: var(--muted); font-size: 0.9rem;"></span>
+                </div>
+                <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchApprovalForm" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary" id="batchApproveBtn" disabled
+                            onclick="return confirm('@Localizer["ConfirmBatchApproval"]');">
+                        ✓ @Localizer["ApproveSelected"]
+                    </button>
+                </form>
+            </div>
+
+            <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchDataForm">
+                @Html.AntiForgeryToken()
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:1%">
+                                <span style="visibility: hidden;">☑</span>
+                            </th>
+                            <th>@Localizer["Submitted"]</th>
+                            <th>@Localizer["Name"]</th>
+                            <th>@Localizer["Email"]</th>
+                            <th>@Localizer["Company"]</th>
+                            <th>@Localizer["RequestedRole"]</th>
+                            <th>@Localizer["AssignRole"]</th>
+                            <th style="width:1%">@Localizer["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var request in Model.JoinRequests)
+                    {
+                        <tr class="request-row">
+                            <td>
+                                <input type="checkbox" name="SelectedRequests" value="@request.Id"
+                                       class="request-checkbox" onchange="updateSelectedCount()" />
+                            </td>
+                            <td>@request.CreatedAt.ToLocalTime().ToString("MM/dd/yy HH:mm")</td>
+                            <td>@request.DisplayName</td>
+                            <td>@request.Email</td>
+                            <td>@request.CompanyName</td>
+                            <td>
+                                <span style="color: var(--muted);">@request.RequestedRole</span>
+                            </td>
+                            <td>
+                                <select name="RequestRoles[@request.Id]" class="input" style="padding: 0.3rem; font-size: 0.9rem; min-width: 120px;">
+                                    @foreach (var role in Model.AssignableRoles)
+                                    {
+                                        <option value="@((int)role)" selected="@(role.ToString() == request.RequestedRole)">
+                                            @Localizer[role.ToString()]
+                                        </option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; white-space: nowrap">
+                                    <button class="btn btn-success single-approve-btn" type="button"
+                                            data-request-id="@request.Id"
+                                            onclick="approveSingleRequest(@request.Id)"
+                                            style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                        ✓
                                     </button>
-                                </form>
-                                <form method="post" asp-page-handler="RejectJoinRequest" style="display:inline"
-                                      onsubmit="return confirm('Reject this join request from @request.DisplayName?');">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@request.Id" />
-                                    <button class="btn btn-danger" type="submit" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                                        ✗ @Localizer["Reject"]
+                                    <button class="btn btn-danger single-reject-btn" type="button"
+                                            data-request-id="@request.Id"
+                                            onclick="rejectSingleRequest(@request.Id, '@request.DisplayName')"
+                                            style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                        ✗
                                     </button>
-                                </form>
-                            </div>
-                        }
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </form>
+
+            <script>
+                const selectedText = '@Localizer["Selected"]';
+
+                function toggleAllRequests(selectAllCheckbox) {
+                    const checkboxes = document.querySelectorAll('.request-checkbox');
+                    checkboxes.forEach(cb => {
+                        cb.checked = selectAllCheckbox.checked;
+                    });
+                    updateSelectedCount();
+                }
+
+                function updateSelectedCount() {
+                    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+                    const count = checkboxes.length;
+                    const countElement = document.getElementById('selectedCount');
+                    const batchApproveBtn = document.getElementById('batchApproveBtn');
+                    const selectAllCheckbox = document.getElementById('selectAllRequests');
+
+                    countElement.textContent = `(${count} ${selectedText})`;
+                    batchApproveBtn.disabled = count === 0;
+
+                    // Update select all checkbox state
+                    const totalCheckboxes = document.querySelectorAll('.request-checkbox').length;
+                    selectAllCheckbox.checked = count > 0 && count === totalCheckboxes;
+                    selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
+                }
+
+                function approveSingleRequest(requestId) {
+                    const form = document.createElement('form');
+                    form.method = 'post';
+                    form.action = '/Admin/Users?handler=ApproveJoinRequest';
+
+                    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode();
+                    const idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'id';
+                    idInput.value = requestId;
+
+                    form.appendChild(tokenInput);
+                    form.appendChild(idInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+
+                function rejectSingleRequest(requestId, displayName) {
+                    const confirmMsg = '@Localizer["ConfirmRejectJoinRequest"]'.replace('{0}', displayName);
+                    if (!confirm(confirmMsg)) return;
+
+                    const form = document.createElement('form');
+                    form.method = 'post';
+                    form.action = '/Admin/Users?handler=RejectJoinRequest';
+
+                    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode();
+                    const idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'id';
+                    idInput.value = requestId;
+
+                    form.appendChild(tokenInput);
+                    form.appendChild(idInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+
+                // Sync batch form submission with checkboxes
+                document.getElementById('batchApprovalForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+                    const batchDataForm = document.getElementById('batchDataForm');
+
+                    // Submit the form that contains the checkboxes
+                    batchDataForm.submit();
+                });
+
+                // Initialize on page load
+                document.addEventListener('DOMContentLoaded', function() {
+                    updateSelectedCount();
+                });
+            </script>
+        }
+        else
+        {
+            <!-- Regular table for approved/rejected requests (non-pending) -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>@Localizer["Submitted"]</th>
+                        <th>@Localizer["Name"]</th>
+                        <th>@Localizer["Email"]</th>
+                        <th>@Localizer["Company"]</th>
+                        <th>@Localizer["RequestedRole"]</th>
+                        <th>@Localizer["Status"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var request in Model.JoinRequests)
+                {
+                    <tr>
+                        <td>@request.CreatedAt.ToLocalTime().ToString("MM/dd/yy HH:mm")</td>
+                        <td>@request.DisplayName</td>
+                        <td>@request.Email</td>
+                        <td>@request.CompanyName</td>
+                        <td>@request.RequestedRole</td>
+                        <td>
+                            @if (request.Status == JoinRequestStatus.Approved)
+                            {
+                                <span style="color: var(--success, #28a745)">✓ @Localizer["Approved"]</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--danger, #dc3545)">✗ @Localizer["Rejected"]</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
     }
     else
     {
@@ -226,14 +375,19 @@
                     </form>
                 </td>
                 <td>
-                    <form method="post" asp-page-handler="DeleteUser" style="display:inline"
-                          onsubmit="return confirm('⚠️ WARNING: This will permanently delete @u.DisplayName and remove all their shift assignments, time-off requests, and swap requests. This action cannot be undone.\n\nAre you absolutely sure you want to delete this user?');">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@u.Id" />
-                        <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                            🗑️ @Localizer["Delete"]
-                        </button>
-                    </form>
+                    <div style="display: flex; gap: 0.5rem; white-space: nowrap;">
+                        <a href="/Admin/EditProfile?UserId=@u.Id" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                            ✏️ @Localizer["EditProfile"]
+                        </a>
+                        <form method="post" asp-page-handler="DeleteUser" style="display:inline"
+                              onsubmit="return confirm('@Localizer["ConfirmDeleteUser"]'.replace('{0}', '@u.DisplayName'));">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                🗑️ @Localizer["Delete"]
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         }

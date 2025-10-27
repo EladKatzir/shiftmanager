@@ -153,9 +153,12 @@ public class IndexModel : PageModel
         await _db.SaveChangesAsync();
         await trx.CommitAsync();
 
-        // Send notification to original user
-        var shiftInfo = $"{shiftType.Name} on {si.WorkDate:MMM dd, yyyy} ({shiftType.Start:HH:mm} - {shiftType.End:HH:mm})";
-        await _notificationService.CreateSwapRequestNotificationAsync(originalUserId, RequestStatus.Approved, shiftInfo, s.Id);
+        // Send notification to original user (if there was one)
+        if (originalUserId.HasValue)
+        {
+            var shiftInfo = $"{shiftType.Name} on {si.WorkDate:MMM dd, yyyy} ({shiftType.Start:HH:mm} - {shiftType.End:HH:mm})";
+            await _notificationService.CreateSwapRequestNotificationAsync(originalUserId.Value, RequestStatus.Approved, shiftInfo, s.Id);
+        }
 
         return RedirectToPage();
     }
@@ -177,10 +180,10 @@ public class IndexModel : PageModel
         s.Status = RequestStatus.Declined;
         await _db.SaveChangesAsync();
 
-        // Send notification to user
-        if (shiftInfo != null)
+        // Send notification to user (if there was one)
+        if (shiftInfo != null && shiftInfo.UserId.HasValue)
         {
-            await _notificationService.CreateSwapRequestNotificationAsync(shiftInfo.UserId, RequestStatus.Declined, shiftInfo.ShiftInfo, s.Id);
+            await _notificationService.CreateSwapRequestNotificationAsync(shiftInfo.UserId.Value, RequestStatus.Declined, shiftInfo.ShiftInfo, s.Id);
         }
 
         return RedirectToPage();

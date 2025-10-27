@@ -1,8 +1,19 @@
 @page
 @model ShiftManager.Pages.Requests.Swaps.CreateModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Requests"], Url = "/Requests/Index" },
+    new BreadcrumbItem { Label = Localizer["ProposeSwap"], IsActive = true }
+})
+
 <h2>Propose Swap</h2>
 
 <div class="card" style="max-width:680px">

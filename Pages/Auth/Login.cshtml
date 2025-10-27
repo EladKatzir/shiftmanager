@@ -17,6 +17,13 @@
     <div style="display:grid; gap:.75rem; margin-top:.75rem">
         <label>@Localizer["Email"]<br /><input class="input" asp-for="Email" /></label>
         <label>@Localizer["Password"]<br /><input class="input" asp-for="Password" type="password" /></label>
+
+        <div style="text-align: right; margin-top: -0.5rem;">
+            <a href="/Auth/ForgotPassword" style="font-size: 0.875rem; color: var(--primary);">
+                @Localizer["ForgotPassword"]?
+            </a>
+        </div>
+
         <button class="btn btn-primary" type="submit">@Localizer["Login"]</button>
     </div>
 </form>

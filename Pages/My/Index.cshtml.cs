@@ -13,7 +13,7 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     public IndexModel(AppDbContext db) => _db = db;
 
-    public record UpcomingVM(DateOnly Date, string ShiftName, double Hours, bool IsTimeOff = false, bool IsShadowing = false, string? ShadowingEmployee = null, string? TraineeName = null);
+    public record UpcomingVM(DateOnly Date, string ShiftName, double Hours, bool IsTimeOff = false, bool IsShadowing = false, string? ShadowingEmployee = null, string? TraineeName = null, bool IsChore = false);
     public List<UpcomingVM> Upcoming { get; set; } = new();
 
     public double Next4WeeksHours { get; set; }
@@ -45,7 +45,7 @@ public class IndexModel : PageModel
         upcomingShifts.AddRange(regularShifts.Select(u =>
         {
             var hours = TimeHelpers.Hours(new ShiftManager.Models.ShiftType { Start = u.Start, End = u.End });
-            return new UpcomingVM(u.WorkDate, u.Key, hours, false, false, null, u.TraineeName);
+            return new UpcomingVM(u.WorkDate, u.Key, hours, false, false, null, u.TraineeName, false);
         }));
 
         // If user is a trainee, also load shifts they are shadowing
@@ -68,7 +68,7 @@ public class IndexModel : PageModel
             upcomingShifts.AddRange(shadowingShifts.Select(u =>
             {
                 var hours = TimeHelpers.Hours(new ShiftManager.Models.ShiftType { Start = u.Start, End = u.End });
-                return new UpcomingVM(u.WorkDate, u.Key, hours, false, true, u.EmployeeName, null);
+                return new UpcomingVM(u.WorkDate, u.Key, hours, false, true, u.EmployeeName, null, false);
             }));
         }
 
@@ -86,15 +86,34 @@ public class IndexModel : PageModel
             var currentDate = timeOff.StartDate;
             while (currentDate <= timeOff.EndDate)
             {
-                timeOffEntries.Add(new UpcomingVM(currentDate, "Time Off", 0, true));
+                timeOffEntries.Add(new UpcomingVM(currentDate, "Time Off", 0, true, false, null, null, false));
                 currentDate = currentDate.AddDays(1);
             }
         }
 
+        // Get active chores (not canceled)
+        var chores = await _db.Chores
+            .Where(c => c.UserId == userId &&
+                       c.Date >= DateOnly.FromDateTime(DateTime.Today) &&
+                       c.CanceledAt == null)
+            .ToListAsync();
+
+        System.Diagnostics.Debug.WriteLine($"[MY/INDEX DEBUG] UserId={userId}, Chores found={chores.Count}");
+        foreach (var chore in chores)
+        {
+            System.Diagnostics.Debug.WriteLine($"  - Chore: {chore.Title}, Date={chore.Date}, UserId={chore.UserId}");
+        }
+
+        var choreEntries = chores.Select(c =>
+            new UpcomingVM(c.Date, c.Title, 0, false, false, null, null, true));
+
         // Combine and sort by date
-        Upcoming = upcomingShifts.Concat(timeOffEntries)
+        Upcoming = upcomingShifts.Concat(timeOffEntries).Concat(choreEntries)
             .OrderBy(u => u.Date)
             .ToList();
+
+        System.Diagnostics.Debug.WriteLine($"[MY/INDEX DEBUG] Total upcoming items={Upcoming.Count}, Chores in list={Upcoming.Count(u => u.IsChore)}");
+
 
         // Next 4 weeks summary
         var start = DateOnly.FromDateTime(DateTime.Today);

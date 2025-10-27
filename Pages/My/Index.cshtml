@@ -1,14 +1,24 @@
 @page
 @model ShiftManager.Pages.My.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
     var chartId = "hoursChart";
 }
-<h2>My Shifts</h2>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyShifts"], IsActive = true }
+})
+
+<h2>@Localizer["MyShifts"]</h2>
 <div class="card">
-    <h3 style="margin-top:0">Upcoming</h3>
+    <h3 style="margin-top:0">@Localizer["Upcoming"]</h3>
     <table>
-        <thead><tr><th>Date</th><th>Shift</th><th>Hours</th></tr></thead>
+        <thead><tr><th>@Localizer["Date"]</th><th>@Localizer["Shift"]</th><th>@Localizer["Hours"]</th></tr></thead>
         <tbody>
             @foreach (var s in Model.Upcoming)
             {
@@ -27,9 +37,21 @@
                         <td style="color: var(--info-text);">
                             👤 @s.ShiftName
                             <br />
-                            <small style="opacity: 0.9;">Shadowing: @s.ShadowingEmployee</small>
+                            <small style="opacity: 0.9;">@Localizer["Shadowing"]: @s.ShadowingEmployee</small>
                         </td>
                         <td style="color: var(--info-text);">@s.Hours</td>
+                    </tr>
+                }
+                else if (s.IsChore)
+                {
+                    <tr style="background-color: var(--success); color: var(--success-text);">
+                        <td style="color: var(--success-text);">@s.Date.ToString("yyyy-MM-dd")</td>
+                        <td style="color: var(--success-text);">
+                            🧹 @s.ShiftName
+                            <br />
+                            <small style="opacity: 0.9;">@Localizer["Chore"]</small>
+                        </td>
+                        <td style="color: var(--success-text);">-</td>
                     </tr>
                 }
                 else
@@ -42,7 +64,7 @@
                             {
                                 <br />
                                 <small style="padding: 0.125rem 0.375rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem;">
-                                    👤 Trainee: @s.TraineeName
+                                    👤 @Localizer["TraineeLabel"]: @s.TraineeName
                                 </small>
                             }
                         </td>
@@ -55,37 +77,160 @@
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">Totals</h3>
-    <div>Next 4 weeks: <b>@Model.Next4WeeksHours</b> hours</div>
-    <canvas id="@chartId" width="600" height="220" aria-label="Hours by week"></canvas>
+    <h3 style="margin-top:0">@Localizer["Totals"]</h3>
+    <div style="margin-bottom: 1rem; font-size: 1.1rem;">
+        @Localizer["Next4Weeks"]: <b style="color: var(--primary); font-size: 1.25rem;">@Model.Next4WeeksHours</b> @Localizer["Hours"]
+    </div>
+    <div style="position: relative; width: 100%; height: 280px;">
+        <canvas id="@chartId" aria-label="@Localizer["HoursByWeek"]" style="max-width: 100%;"></canvas>
+    </div>
 </div>
+
+<style>
+#@chartId {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+</style>
 
 <script>
 (function(){
     const data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ChartWeeks));
-    const c = document.getElementById("@chartId");
-    const ctx = c.getContext('2d');
+    const canvas = document.getElementById("@chartId");
 
-    const padding = 24;
-    const w = c.width - padding * 2;
-    const h = c.height - padding * 2;
-    const max = Math.max(...data.map(d => d.hours), 40);
+    if (!canvas || !data || data.length === 0) {
+        console.warn('Chart data not available');
+        return;
+    }
 
-    // axes
-    ctx.translate(padding, padding);
+    const ctx = canvas.getContext('2d');
+
+    // Get CSS variable values for theming
+    const getColor = (varName) => {
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    };
+
+    const primaryColor = getColor('--primary') || '#007bff';
+    const textColor = getColor('--text') || '#000';
+    const mutedColor = getColor('--muted') || '#666';
+    const borderColor = getColor('--border') || '#ddd';
+
+    // Set canvas size based on container
+    const container = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    const padding = { top: 20, right: 20, bottom: 50, left: 60 };
+    const chartWidth = w - padding.left - padding.right;
+    const chartHeight = h - padding.top - padding.bottom;
+
+    // Calculate max value for y-axis
+    const maxHours = Math.max(...data.map(d => d.hours), 40);
+    const yAxisMax = Math.ceil(maxHours / 10) * 10;
+
+    // Set font
+    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    // Draw y-axis gridlines and labels
+    ctx.strokeStyle = borderColor;
+    ctx.fillStyle = mutedColor;
+    ctx.lineWidth = 1;
+
+    const ySteps = 5;
+    for (let i = 0; i <= ySteps; i++) {
+        const value = (yAxisMax / ySteps) * i;
+        const y = padding.top + chartHeight - (value / yAxisMax) * chartHeight;
+
+        // Grid line
+        ctx.beginPath();
+        ctx.globalAlpha = 0.2;
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + chartWidth, y);
+        ctx.stroke();
+
+        // Label
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(value.toString(), padding.left - 10, y);
+    }
+
+    // Draw bars
+    const barWidth = chartWidth / data.length * 0.7;
+    const barGap = chartWidth / data.length * 0.3;
+
+    data.forEach((item, i) => {
+        const x = padding.left + (i * chartWidth / data.length) + barGap / 2;
+        const barHeight = (item.hours / yAxisMax) * chartHeight;
+        const y = padding.top + chartHeight - barHeight;
+
+        // Draw bar with gradient
+        const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
+        gradient.addColorStop(0, primaryColor);
+        gradient.addColorStop(1, primaryColor + 'cc');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, barWidth, barHeight);
+
+        // Draw bar border
+        ctx.strokeStyle = primaryColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, barWidth, barHeight);
+
+        // Draw value on top of bar
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+        ctx.fillText(item.hours.toString(), x + barWidth / 2, y - 5);
+
+        // Draw label below x-axis
+        ctx.font = '12px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = mutedColor;
+        ctx.textBaseline = 'top';
+        ctx.fillText(item.label, x + barWidth / 2, padding.top + chartHeight + 10);
+    });
+
+    // Draw x-axis
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, 0); ctx.lineTo(0, h); ctx.lineTo(w, h);
+    ctx.moveTo(padding.left, padding.top + chartHeight);
+    ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
     ctx.stroke();
 
-    // bars
-    const bw = w / data.length * 0.6;
-    for (let i = 0; i < data.length; i++) {
-        const x = (i + 0.2) * (w / data.length);
-        const y = h - (data[i].hours / max) * h;
-        const bh = h - y;
-        ctx.fillRect(x, y, bw, bh);
-        ctx.fillText(data[i].label, x, h + 14);
-        ctx.fillText(data[i].hours.toString(), x, y - 4);
-    }
+    // Draw y-axis
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left, padding.top + chartHeight);
+    ctx.stroke();
+
+    // Y-axis label
+    ctx.save();
+    ctx.translate(15, padding.top + chartHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = textColor;
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+    ctx.fillText('@Localizer["Hours"]', 0, 0);
+    ctx.restore();
+
+    // Redraw on window resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            location.reload(); // Simple solution for responsive redraw
+        }, 250);
+    });
 })();
 </script>

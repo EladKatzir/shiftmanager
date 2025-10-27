@@ -20,18 +20,27 @@ public class UsersModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly IDirectorService _directorService;
     private readonly ITraineeService _traineeService;
+    private readonly IAuditLogService _auditLogService;
 
-    public UsersModel(AppDbContext db, ILogger<UsersModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService)
+    public UsersModel(AppDbContext db, ILogger<UsersModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IAuditLogService auditLogService)
     {
         _db = db;
         _logger = logger;
         _companyContext = companyContext;
         _directorService = directorService;
         _traineeService = traineeService;
+        _auditLogService = auditLogService;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, DateTime CreatedAt, JoinRequestStatus Status);
+
+    // Batch approval support
+    public class BatchApprovalItem
+    {
+        public int RequestId { get; set; }
+        public UserRole AssignedRole { get; set; }
+    }
 
     public List<UserVM> Users { get; set; } = new();
     public List<JoinRequestVM> JoinRequests { get; set; } = new();
@@ -74,6 +83,12 @@ public class UsersModel : PageModel
     [BindProperty] public string NewPassword { get; set; } = string.Empty;
     [BindProperty] public string NewRole { get; set; } = "Employee";
     public string? Error { get; set; }
+
+    // Batch approval properties
+    [BindProperty]
+    public List<int> SelectedRequests { get; set; } = new();
+
+    public Dictionary<int, UserRole> RequestRoles { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -267,7 +282,7 @@ public class UsersModel : PageModel
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
 
-        // Audit logging
+        // Audit logging (RoleAssignmentAudit)
         var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
         {
@@ -280,6 +295,13 @@ public class UsersModel : PageModel
         });
         await _db.SaveChangesAsync();
 
+        // Audit logging (general audit log)
+        await _auditLogService.LogAsync(
+            "UserCreated",
+            "User",
+            newUser.Id,
+            $"Created new user '{newUser.DisplayName}' ({newUser.Email}) with role {targetRole}");
+
         TempData["SuccessMessage"] = $"User {NewDisplayName} created successfully as {targetRole}.";
         return RedirectToPage();
     }
@@ -287,7 +309,18 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostToggleAsync(int id)
     {
         var u = await _db.Users.FindAsync(id);
-        if (u != null) { u.IsActive = !u.IsActive; await _db.SaveChangesAsync(); }
+        if (u != null)
+        {
+            // Check if current user has permission to modify this user
+            if (!CanModifyUser(u.Role))
+            {
+                TempData["ErrorMessage"] = $"You do not have permission to modify users with the {u.Role} role.";
+                return RedirectToPage();
+            }
+
+            u.IsActive = !u.IsActive;
+            await _db.SaveChangesAsync();
+        }
         return RedirectToPage();
     }
 
@@ -386,9 +419,28 @@ public class UsersModel : PageModel
         var u = await _db.Users.FindAsync(id);
         if (u != null && !string.IsNullOrWhiteSpace(newPassword))
         {
+            // Check if current user has permission to modify this user
+            if (!CanModifyUser(u.Role))
+            {
+                TempData["ErrorMessage"] = $"You do not have permission to reset passwords for users with the {u.Role} role.";
+                return RedirectToPage();
+            }
+
             var (h, s) = PasswordHasher.CreateHash(newPassword);
             u.PasswordHash = h; u.PasswordSalt = s;
             await _db.SaveChangesAsync();
+
+            // Log the password reset for security audit
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            await _auditLogService.LogUserActionAsync(
+                userId: currentUserId,
+                action: "PasswordReset",
+                entityType: "User",
+                entityId: u.Id,
+                description: $"Password reset for user {u.DisplayName} ({u.Email})"
+            );
+
+            TempData["SuccessMessage"] = $"Password updated successfully for {u.DisplayName}.";
         }
         return RedirectToPage();
     }
@@ -426,6 +478,15 @@ public class UsersModel : PageModel
                 Error = "You can only delete users from your own company.";
                 await OnGetAsync();
                 return Page();
+            }
+
+            // Check if current user has permission to delete this user based on role hierarchy
+            if (!CanModifyUser(user.Role))
+            {
+                _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} with higher role {TargetRole}",
+                    currentUserId, id, user.Role);
+                TempData["ErrorMessage"] = $"You do not have permission to delete users with the {user.Role} role.";
+                return RedirectToPage();
             }
 
             _logger.LogInformation("Starting deletion of user {UserId} ({UserName}) by admin {CurrentUserId}", id, user.DisplayName, currentUserId);
@@ -627,5 +688,205 @@ public class UsersModel : PageModel
 
         TempData["SuccessMessage"] = $"Rejected join request from {joinRequest.DisplayName} ({joinRequest.Email}).";
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostBatchApproveJoinRequestsAsync()
+    {
+        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var currentUser = await _db.Users.FindAsync(currentUserId);
+
+        if (SelectedRequests == null || !SelectedRequests.Any())
+        {
+            TempData["ErrorMessage"] = "No requests selected for approval.";
+            return RedirectToPage();
+        }
+
+        // Manually bind RequestRoles dictionary from form data
+        RequestRoles = new Dictionary<int, UserRole>();
+        foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("RequestRoles[")))
+        {
+            // Extract the ID from "RequestRoles[123]"
+            var idString = key.Substring(13, key.Length - 14); // Remove "RequestRoles[" and "]"
+            if (int.TryParse(idString, out var requestId) &&
+                int.TryParse(Request.Form[key].ToString(), out var roleInt) &&
+                Enum.IsDefined(typeof(UserRole), roleInt))
+            {
+                RequestRoles[requestId] = (UserRole)roleInt;
+            }
+        }
+
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var approvedCount = 0;
+            var skippedCount = 0;
+            var errors = new List<string>();
+
+            // Get all selected join requests
+            var joinRequests = await _db.UserJoinRequests
+                .Include(jr => jr.Company)
+                .Where(jr => SelectedRequests.Contains(jr.Id))
+                .ToListAsync();
+
+            // Get accessible company IDs for permission check
+            List<int> accessibleCompanyIds;
+            if (currentUser!.Role == UserRole.Owner)
+            {
+                accessibleCompanyIds = await _db.Companies.Select(c => c.Id).ToListAsync();
+            }
+            else if (currentUser.Role == UserRole.Director)
+            {
+                accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
+            }
+            else if (currentUser.Role == UserRole.Manager)
+            {
+                accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "You don't have permission to approve requests.";
+                return RedirectToPage();
+            }
+
+            foreach (var joinRequest in joinRequests)
+            {
+                // Check permission for this specific request
+                if (!accessibleCompanyIds.Contains(joinRequest.CompanyId))
+                {
+                    errors.Add($"No permission to approve {joinRequest.DisplayName} (different company)");
+                    skippedCount++;
+                    continue;
+                }
+
+                // Check if already reviewed
+                if (joinRequest.Status != JoinRequestStatus.Pending)
+                {
+                    errors.Add($"{joinRequest.DisplayName} already reviewed");
+                    skippedCount++;
+                    continue;
+                }
+
+                // Check if user already exists
+                if (await _db.Users.AnyAsync(u => u.Email == joinRequest.Email))
+                {
+                    errors.Add($"User with email {joinRequest.Email} already exists");
+                    skippedCount++;
+                    continue;
+                }
+
+                // Get assigned role from form (default to requested role if not specified)
+                var assignedRole = RequestRoles.ContainsKey(joinRequest.Id)
+                    ? RequestRoles[joinRequest.Id]
+                    : joinRequest.RequestedRole;
+
+                // Validate permission to assign the role
+                if (!_directorService.CanAssignRole(assignedRole))
+                {
+                    errors.Add($"No permission to assign {assignedRole} role to {joinRequest.DisplayName}");
+                    skippedCount++;
+                    continue;
+                }
+
+                // Create the user account
+                var newUser = new AppUser
+                {
+                    Email = joinRequest.Email,
+                    DisplayName = joinRequest.DisplayName,
+                    PasswordHash = joinRequest.PasswordHash,
+                    PasswordSalt = joinRequest.PasswordSalt,
+                    CompanyId = joinRequest.CompanyId,
+                    Role = assignedRole,
+                    IsActive = true
+                };
+
+                _db.Users.Add(newUser);
+
+                // Update join request status
+                joinRequest.Status = JoinRequestStatus.Approved;
+                joinRequest.ReviewedBy = currentUserId;
+                joinRequest.ReviewedAt = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync(); // Save to get newUser.Id
+
+                // Link the created user to the join request
+                joinRequest.CreatedUserId = newUser.Id;
+
+                _logger.LogInformation(
+                    "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} for company {CompanyId}",
+                    joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, joinRequest.CompanyId);
+
+                // Log to audit log
+                await _auditLogService.LogUserActionAsync(
+                    userId: currentUserId,
+                    action: "BatchApproveJoinRequest",
+                    entityType: "UserJoinRequest",
+                    entityId: joinRequest.Id,
+                    description: $"Approved join request for {newUser.DisplayName} ({newUser.Email}) with role {assignedRole}"
+                );
+
+                approvedCount++;
+            }
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Build success message
+            var successMessage = $"Successfully approved {approvedCount} user(s).";
+            if (skippedCount > 0)
+            {
+                successMessage += $" Skipped {skippedCount} request(s).";
+            }
+
+            TempData["SuccessMessage"] = successMessage;
+
+            if (errors.Any())
+            {
+                TempData["ErrorMessage"] = "Some requests had issues: " + string.Join("; ", errors.Take(3));
+            }
+
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error during batch approval of join requests");
+            TempData["ErrorMessage"] = "An error occurred during batch approval. Please try again.";
+            return RedirectToPage();
+        }
+    }
+
+    /// <summary>
+    /// Check if current user has permission to modify a user with the specified role.
+    /// Uses the same role hierarchy as CanAssignRole.
+    /// </summary>
+    private bool CanModifyUser(UserRole targetUserRole)
+    {
+        var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(currentUserRole))
+            return false;
+
+        // Owner can modify anyone
+        if (currentUserRole == nameof(UserRole.Owner))
+            return true;
+
+        // Director can modify Employee, Manager, Director, Trainee (but NOT Owner)
+        if (currentUserRole == nameof(UserRole.Director))
+        {
+            return targetUserRole == UserRole.Employee
+                || targetUserRole == UserRole.Manager
+                || targetUserRole == UserRole.Director
+                || targetUserRole == UserRole.Trainee;
+        }
+
+        // Manager can modify Employee and Trainee ONLY (NOT Owner, Director, or other Managers)
+        if (currentUserRole == nameof(UserRole.Manager))
+        {
+            return targetUserRole == UserRole.Employee
+                || targetUserRole == UserRole.Trainee;
+        }
+
+        // Employees and Trainees cannot modify anyone
+        return false;
     }
 }

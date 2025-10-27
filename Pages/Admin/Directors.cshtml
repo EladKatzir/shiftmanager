@@ -2,23 +2,31 @@
 @model ShiftManager.Pages.Admin.DirectorsModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["DirectorAssignments"], IsActive = true }
+})
+
 <h2>@Localizer["DirectorAssignments"]</h2>
 
 @if (!string.IsNullOrEmpty(Model.Success))
 {
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
-        @Model.Success
+    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
+        ✓ @Model.Success
     </div>
 }
 
 @if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="alert alert-error" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
-        @Model.Error
+    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
+        ✗ @Model.Error
     </div>
 }
 
@@ -78,7 +86,7 @@
                         <td>@assignment.GrantedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
                             <form method="post" asp-page-handler="Revoke" style="display:inline"
-                                  onsubmit="return confirm('Are you sure you want to revoke Director access for @assignment.DirectorName from @assignment.CompanyName?');">
+                                  onsubmit="return confirm('@Localizer["ConfirmRevokeDirectorAccess"]'.replace('{0}', '@assignment.DirectorName').replace('{1}', '@assignment.CompanyName'));">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@assignment.Id" />
                                 <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">

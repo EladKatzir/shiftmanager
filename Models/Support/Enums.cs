@@ -29,7 +29,9 @@ public enum NotificationType
     EmployeeTraineeAdded = 8,
     EmployeeTraineeRemoved = 9,
     TraineeShadowingCanceledTimeOff = 10,
-    TraineeShadowingCanceledRoleChange = 11
+    TraineeShadowingCanceledRoleChange = 11,
+    ChoreAssigned = 12,
+    ChoreCanceled = 13
 }
 
 public enum JoinRequestStatus

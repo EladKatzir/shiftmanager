@@ -81,12 +81,19 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("IsOwnerOrDirector", policy => policy.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Director)));
 });
 
+builder.Services.AddHttpClient(); // Required for MailService
+builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<ICompanyFilterService, CompanyFilterService>();
 builder.Services.AddScoped<IViewAsModeService, ViewAsModeService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IAvatarService, AvatarService>();
+builder.Services.AddScoped<IChoreService, ChoreService>();
 
 // Add health checks for container orchestration
 builder.Services.AddHealthChecks()

@@ -1,0 +1,39 @@
+@model List<ShiftManager.ViewComponents.BreadcrumbItem>
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@if (Model != null && Model.Any())
+{
+    <nav class="breadcrumb-nav" aria-label="@Localizer["Breadcrumb"]" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <ol class="breadcrumb">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                var item = Model[i];
+                @if (item.IsActive)
+                {
+                    <li class="breadcrumb-item active" aria-current="page" title="@item.Label" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                        <span itemprop="name">@item.Label</span>
+                        <meta itemprop="position" content="@(i + 1)" />
+                    </li>
+                }
+                else if (!string.IsNullOrEmpty(item.Url))
+                {
+                    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                        <a href="@item.Url" title="@item.Label" itemprop="item">
+                            <span itemprop="name">@item.Label</span>
+                        </a>
+                        <meta itemprop="position" content="@(i + 1)" />
+                    </li>
+                }
+                else
+                {
+                    <li class="breadcrumb-item" title="@item.Label" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                        <span itemprop="name">@item.Label</span>
+                        <meta itemprop="position" content="@(i + 1)" />
+                    </li>
+                }
+            }
+        </ol>
+    </nav>
+}

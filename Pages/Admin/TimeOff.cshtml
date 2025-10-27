@@ -1,22 +1,32 @@
 @page
 @model ShiftManager.Pages.Admin.TimeOffModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = "Time-Off", IsActive = true }
+})
 
 <h2>Manage Approved Time-Off</h2>
 
 @if (!string.IsNullOrEmpty(Model.Message))
 {
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
-        @Model.Message
+    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
+        ✓ @Model.Message
     </div>
 }
 
 @if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
-        @Model.Error
+    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
+        ✗ @Model.Error
     </div>
 }
 
@@ -76,10 +86,10 @@
                                 @if (timeOff.StartDate > DateOnly.FromDateTime(DateTime.Today))
                                 {
                                     <form method="post" asp-page-handler="Delete" style="display: inline;"
-                                          onsubmit="return confirm('Are you sure you want to delete this approved time-off for @timeOff.UserName? This action cannot be undone.');">
+                                          onsubmit="return confirm('@Localizer["ConfirmDeleteTimeOff"]'.replace('{0}', '@timeOff.UserName'));">
                                         <input type="hidden" name="id" value="@timeOff.Id" />
                                         <button type="submit" class="btn btn-danger" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
-                                            🗑️ Delete
+                                            🗑️ @Localizer["Delete"]
                                         </button>
                                     </form>
                                 }
