@@ -144,7 +144,7 @@ using (var scope = app.Services.CreateScope())
     var company = db.Companies.First();
 
     // Seed shift types (fixed keys) - company-specific
-    if (!db.ShiftTypes.Any())
+    if (!db.ShiftTypes.IgnoreQueryFilters().Any())
     {
         db.ShiftTypes.AddRange(new[] {
             new ShiftType{ CompanyId=company.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
@@ -156,7 +156,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Seed config
-    if (!db.Configs.Any())
+    if (!db.Configs.IgnoreQueryFilters().Any())
     {
         db.Configs.AddRange(new[] {
             new AppConfig{ CompanyId = company.Id, Key = "RestHours", Value = "8" },
@@ -166,7 +166,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Seed owner user
-    if (!db.Users.Any())
+    if (!db.Users.IgnoreQueryFilters().Any())
     {
         var (hash, salt) = PasswordHasher.CreateHash(seedAdminPassword);
         db.Users.Add(new AppUser
@@ -211,7 +211,7 @@ using (var scope = app.Services.CreateScope())
         }
 
         // Create Director user if doesn't exist
-        if (!db.Users.Any(u => u.Role == UserRole.Director))
+        if (!db.Users.IgnoreQueryFilters().Any(u => u.Role == UserRole.Director))
         {
             var (dirHash, dirSalt) = PasswordHasher.CreateHash(seedDirectorPassword);
             var director = new AppUser
@@ -228,7 +228,7 @@ using (var scope = app.Services.CreateScope())
             await db.SaveChangesAsync();
 
             // Assign Director to both companies
-            var ownerUser = db.Users.First(u => u.Role == UserRole.Owner);
+            var ownerUser = db.Users.IgnoreQueryFilters().First(u => u.Role == UserRole.Owner);
             var allCompanies = db.Companies.ToList();
 
             foreach (var comp in allCompanies)
