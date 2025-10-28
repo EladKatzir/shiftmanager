@@ -33,6 +33,7 @@
     {
         <link rel="stylesheet" href="~/css/rtl.css" />
     }
+    @await RenderSectionAsync("Styles", required: false)
     <script defer src="~/js/site.js"></script>
     @if (isHebrew)
     {
