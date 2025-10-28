@@ -312,5 +312,9 @@ app.UseMiddleware<CompanyContextMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
-app.MapHealthChecks("/health");
+
+// Health check endpoints for container orchestration
+app.MapHealthChecks("/health");  // Liveness probe - is the app alive?
+app.MapHealthChecks("/ready");   // Readiness probe - is the app ready to receive traffic?
+
 app.Run();

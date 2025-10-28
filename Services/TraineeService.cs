@@ -60,12 +60,13 @@ public class TraineeService : ITraineeService
 
             // Send notifications
             var shiftInfo = $"{assignment.ShiftInstance.ShiftType.Name} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+            var primaryUserName = assignment.User?.DisplayName ?? "an employee";
 
             await _notificationService.CreateNotificationAsync(
                 traineeUserId,
                 NotificationType.TraineeShadowingAdded,
                 "Shadowing Assignment",
-                $"You are now shadowing {assignment.User.DisplayName} for {shiftInfo}",
+                $"You are now shadowing {primaryUserName} for {shiftInfo}",
                 shiftAssignmentId,
                 "ShiftAssignment"
             );

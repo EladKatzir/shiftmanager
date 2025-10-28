@@ -1,51 +1,51 @@
-<?xml version="1.0" encoding="utf-8"?>
-<root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
-              </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="assembly">
-            <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="metadata">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" />
+              </xs:sequence>
+              <xs:attribute name="name" use="required" type="xsd:string" />
+              <xs:attribute name="type" type="xsd:string" />
+              <xs:attribute name="mimetype" type="xsd:string" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="assembly">
+            <xs:complexType>
+              <xs:attribute name="alias" type="xsd:string" />
+              <xs:attribute name="name" type="xsd:string" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" ns1:Ordinal="1" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -59,7 +59,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
-  <!-- Navigation and Layout -->
+  
   <data name="ShiftManager" xml:space="preserve">
     <value>Shift Manager</value>
   </data>
@@ -121,7 +121,7 @@
     <value>Logout</value>
   </data>
 
-  <!-- Time-based greetings -->
+  
   <data name="GoodMorning" xml:space="preserve">
     <value>Good morning, {0}!</value>
   </data>
@@ -135,7 +135,7 @@
     <value>Here's your schedule and shift information</value>
   </data>
 
-  <!-- Common Actions -->
+  
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
@@ -170,7 +170,7 @@
     <value>Filter</value>
   </data>
 
-  <!-- Date and Time -->
+  
   <data name="Date" xml:space="preserve">
     <value>Date</value>
   </data>
@@ -187,7 +187,7 @@
     <value>Duration</value>
   </data>
 
-  <!-- Status -->
+  
   <data name="Active" xml:space="preserve">
     <value>Active</value>
   </data>
@@ -204,7 +204,7 @@
     <value>Declined</value>
   </data>
 
-  <!-- Language Toggle -->
+  
   <data name="Language" xml:space="preserve">
     <value>Language</value>
   </data>
@@ -215,7 +215,7 @@
     <value>עברית</value>
   </data>
 
-  <!-- Notifications -->
+  
   <data name="NotificationCenter" xml:space="preserve">
     <value>Notification Center</value>
   </data>
@@ -238,7 +238,7 @@
     <value>Read</value>
   </data>
 
-  <!-- Calendar and Shift -->
+  
   <data name="AssignShift" xml:space="preserve">
     <value>Assign Shift</value>
   </data>
@@ -255,7 +255,7 @@
     <value>Assigned Users</value>
   </data>
 
-  <!-- Time Off -->
+  
   <data name="TimeOffRequest" xml:space="preserve">
     <value>Time Off Request</value>
   </data>
@@ -275,7 +275,7 @@
     <value>Decline</value>
   </data>
 
-  <!-- Error Messages -->
+  
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred. Please try again.</value>
   </data>
@@ -283,7 +283,7 @@
     <value>Operation completed successfully.</value>
   </data>
 
-  <!-- Shift Types -->
+  
   <data name="MORNING" xml:space="preserve">
     <value>Morning</value>
   </data>
@@ -297,7 +297,7 @@
     <value>Afternoon</value>
   </data>
 
-  <!-- Days of Week -->
+  
   <data name="Monday" xml:space="preserve">
     <value>Monday</value>
   </data>
@@ -320,7 +320,7 @@
     <value>Sunday</value>
   </data>
 
-  <!-- Months -->
+  
   <data name="January" xml:space="preserve">
     <value>January</value>
   </data>
@@ -358,7 +358,7 @@
     <value>December</value>
   </data>
 
-  <!-- General Terms -->
+  
   <data name="Today" xml:space="preserve">
     <value>Today</value>
   </data>
@@ -381,7 +381,7 @@
     <value>Next Month</value>
   </data>
 
-  <!-- User Roles -->
+  
   <data name="AdminRole" xml:space="preserve">
     <value>Admin</value>
   </data>
@@ -392,7 +392,7 @@
     <value>Employee</value>
   </data>
 
-  <!-- Access Control -->
+  
   <data name="AccessDenied" xml:space="preserve">
     <value>Access Denied</value>
   </data>
@@ -412,7 +412,7 @@
     <value>Redirecting you back...</value>
   </data>
 
-  <!-- Additional UI Elements -->
+  
   <data name="RestHours" xml:space="preserve">
     <value>Rest hours (between shifts)</value>
   </data>
@@ -453,7 +453,7 @@
     <value>Demo</value>
   </data>
 
-  <!-- Calendar Page Text -->
+  
   <data name="ClickShiftBadges" xml:space="preserve">
     <value>Click shift badges to manage assignments</value>
   </data>
@@ -512,7 +512,7 @@
     <value>Empty</value>
   </data>
 
-  <!-- Shift Types Page -->
+  
   <data name="Key" xml:space="preserve">
     <value>Key</value>
   </data>
@@ -526,7 +526,7 @@
     <value>End</value>
   </data>
 
-  <!-- Shift Type Names -->
+  
   <data name="ShiftType_MORNING" xml:space="preserve">
     <value>Morning</value>
   </data>
@@ -540,7 +540,7 @@
     <value>Middle</value>
   </data>
 
-  <!-- Companies Page -->
+  
   <data name="Companies" xml:space="preserve">
     <value>Companies</value>
   </data>
@@ -632,7 +632,7 @@
     <value>If a Director is selected, they will be assigned to this company instead of creating a new Manager.</value>
   </data>
 
-  <!-- Directors Page -->
+  
   <data name="DirectorAssignments" xml:space="preserve">
     <value>Director Assignments</value>
   </data>
@@ -685,7 +685,7 @@
     <value>Directors cannot create/delete companies or assign the Owner role.</value>
   </data>
 
-  <!-- Signup Page -->
+  
   <data name="RequestAccess" xml:space="preserve">
     <value>Request Access</value>
   </data>
@@ -717,7 +717,7 @@
     <value>Your request to join {0} as {1} has been submitted. We'll notify you once it's reviewed.</value>
   </data>
 
-  <!-- Users Page - Join Requests -->
+  
   <data name="JoinRequests" xml:space="preserve">
     <value>Join Requests</value>
   </data>
@@ -770,7 +770,7 @@
     <value>Set</value>
   </data>
 
-  <!-- Director Section -->
+  
   <data name="Director" xml:space="preserve">
     <value>Director</value>
   </data>
@@ -784,7 +784,7 @@
     <value>View as Manager</value>
   </data>
 
-  <!-- Admin Dropdown Items -->
+  
   <data name="Directors" xml:space="preserve">
     <value>Directors</value>
   </data>
@@ -792,7 +792,7 @@
     <value>Diagnostic</value>
   </data>
 
-  <!-- Diagnostic Page -->
+  
   <data name="SystemDiagnostics" xml:space="preserve">
     <value>System Diagnostics</value>
   </data>
@@ -848,7 +848,7 @@
     <value>Select a user above to view their assignments</value>
   </data>
 
-  <!-- Director - View As Mode Page -->
+  
   <data name="ViewAsManagerMode" xml:space="preserve">
     <value>View as Manager Mode</value>
   </data>
@@ -895,7 +895,7 @@
     <value>View as Manager mode is for demonstration and troubleshooting purposes. The mode will automatically expire after 8 hours or when you explicitly exit.</value>
   </data>
 
-  <!-- Director - Company Filter Page -->
+  
   <data name="CompanyFilterDescription" xml:space="preserve">
     <value>Select which companies you want to see in calendars, requests, and dashboards. Leave all unchecked to see all assigned companies.</value>
   </data>
@@ -924,7 +924,7 @@
     <value>This filter is saved in your browser and persists across sessions.</value>
   </data>
 
-  <!-- Director - Notification Hub Page -->
+  
   <data name="NotificationHubDescription" xml:space="preserve">
     <value>Cross-company overview of all notifications and pending requests from your assigned companies.</value>
   </data>
@@ -974,7 +974,7 @@
     <value>This hub aggregates data from all companies you oversee as a Director. Company slugs are shown inline with full names on hover.</value>
   </data>
 
-  <!-- Profile Management -->
+  
   <data name="MyProfile" xml:space="preserve">
     <value>My Profile</value>
   </data>
@@ -1063,7 +1063,7 @@
     <value>Changed By</value>
   </data>
 
-  <!-- Forgot Password -->
+  
   <data name="ForgotPassword" xml:space="preserve">
     <value>Forgot Password</value>
   </data>
@@ -1074,12 +1074,12 @@
     <value>Back to Login</value>
   </data>
 
-  <!-- Breadcrumb -->
+  
   <data name="Breadcrumb" xml:space="preserve">
     <value>Breadcrumb</value>
   </data>
 
-  <!-- Analytics Dashboard -->
+  
   <data name="AnalyticsDashboard" xml:space="preserve">
     <value>Analytics Dashboard</value>
   </data>
@@ -1134,9 +1134,6 @@
   <data name="ShiftCount" xml:space="preserve">
     <value>Shift Count</value>
   </data>
-  <data name="Employee" xml:space="preserve">
-    <value>Employee</value>
-  </data>
   <data name="NoDataAvailable" xml:space="preserve">
     <value>No data available</value>
   </data>
@@ -1148,9 +1145,6 @@
   </data>
   <data name="SecondShift" xml:space="preserve">
     <value>Second Shift</value>
-  </data>
-  <data name="RestHours" xml:space="preserve">
-    <value>Rest Hours</value>
   </data>
   <data name="HoursByRole" xml:space="preserve">
     <value>Hours by Role</value>
@@ -1213,7 +1207,7 @@
     <value>Days Off</value>
   </data>
 
-  <!-- Audit Log -->
+  
   <data name="Filters" xml:space="preserve">
     <value>Filters</value>
   </data>
@@ -1228,9 +1222,6 @@
   </data>
   <data name="Timestamp" xml:space="preserve">
     <value>Timestamp</value>
-  </data>
-  <data name="User" xml:space="preserve">
-    <value>User</value>
   </data>
   <data name="Action" xml:space="preserve">
     <value>Action</value>
@@ -1278,7 +1269,7 @@
     <value>records</value>
   </data>
 
-  <!-- Calendar Table View -->
+  
   <data name="ShiftAssignmentTable" xml:space="preserve">
     <value>Shift Assignment Table</value>
   </data>
@@ -1319,7 +1310,7 @@
     <value>Assign User</value>
   </data>
 
-  <!-- Assignments Management -->
+  
   <data name="Assignments" xml:space="preserve">
     <value>Assignments</value>
   </data>
@@ -1345,7 +1336,7 @@
     <value>Shift Name (optional)</value>
   </data>
 
-  <!-- Pending Requests -->
+  
   <data name="PendingRequests" xml:space="preserve">
     <value>Pending Requests</value>
   </data>
@@ -1359,7 +1350,7 @@
     <value>Pending Swaps</value>
   </data>
 
-  <!-- Common UI Elements -->
+  
   <data name="SaveChanges" xml:space="preserve">
     <value>Save Changes</value>
   </data>
@@ -1368,9 +1359,6 @@
   </data>
   <data name="ManagerOnlyFields" xml:space="preserve">
     <value>These fields can only be updated by your manager</value>
-  </data>
-  <data name="WeeklyCap" xml:space="preserve">
-    <value>Weekly Cap</value>
   </data>
   <data name="SelectAll" xml:space="preserve">
     <value>Select All</value>
@@ -1388,48 +1376,9 @@
     <value>Are you sure you want to approve the selected join requests? Users will be created with the assigned roles.</value>
   </data>
 
-  <!-- Enhanced UI/UX Localization -->
-  <data name="Breadcrumb" xml:space="preserve">
-    <value>Breadcrumb</value>
-  </data>
-  <data name="ToggleDarkMode" xml:space="preserve">
-    <value>Toggle Dark Mode</value>
-  </data>
-  <data name="Back" xml:space="preserve">
-    <value>Back</value>
-  </data>
-  <data name="BackToPreviousPage" xml:space="preserve">
-    <value>Back to Previous Page</value>
-  </data>
-  <data name="SystemDiagnostics" xml:space="preserve">
-    <value>System Diagnostics</value>
-  </data>
-  <data name="MultiTenantDebugInfo" xml:space="preserve">
-    <value>This page displays multi-tenant diagnostic information</value>
-  </data>
-  <data name="Filter" xml:space="preserve">
-    <value>Filter</value>
-  </data>
-  <data name="SelectUser" xml:space="preserve">
-    <value>Select User</value>
-  </data>
-  <data name="SelectUserPlaceholder" xml:space="preserve">
-    <value>-- Select a user --</value>
-  </data>
+  
   <data name="ActiveFilters" xml:space="preserve">
     <value>Active Filters</value>
-  </data>
-  <data name="Today" xml:space="preserve">
-    <value>Today</value>
-  </data>
-  <data name="Last7Days" xml:space="preserve">
-    <value>Last 7 Days</value>
-  </data>
-  <data name="Last30Days" xml:space="preserve">
-    <value>Last 30 Days</value>
-  </data>
-  <data name="Last90Days" xml:space="preserve">
-    <value>Last 90 Days</value>
   </data>
   <data name="InvalidDateRange" xml:space="preserve">
     <value>Start date must be before end date</value>
@@ -1450,7 +1399,7 @@
     <value>e.g., Food Safety, First Aid</value>
   </data>
 
-  <!-- Profile Update Authorization Messages -->
+  
   <data name="EditorUserNotFound" xml:space="preserve">
     <value>Editor user not found</value>
   </data>
@@ -1505,9 +1454,6 @@
   <data name="ErrorUpdatingProfile" xml:space="preserve">
     <value>An error occurred while updating the profile</value>
   </data>
-  <data name="ShiftAssignmentTable" xml:space="preserve">
-    <value>Shift Assignment Table</value>
-  </data>
   <data name="NumberOfPeopleNeeded" xml:space="preserve">
     <value>Number of people needed</value>
   </data>
@@ -1525,12 +1471,6 @@
   </data>
   <data name="AssignEmployeeToSlot" xml:space="preserve">
     <value>Assign employee to this slot</value>
-  </data>
-  <data name="ChangeTrainee" xml:space="preserve">
-    <value>Change Trainee</value>
-  </data>
-  <data name="ChangePrimaryUser" xml:space="preserve">
-    <value>Change Primary User</value>
   </data>
   <data name="CreateSlots" xml:space="preserve">
     <value>Create Slots</value>
@@ -1565,18 +1505,6 @@
   <data name="FailedToDeleteShift" xml:space="preserve">
     <value>Failed to delete shift. Please try again.</value>
   </data>
-  <data name="ThisWeek" xml:space="preserve">
-    <value>This Week</value>
-  </data>
-  <data name="Month" xml:space="preserve">
-    <value>Month</value>
-  </data>
-  <data name="Week" xml:space="preserve">
-    <value>Week</value>
-  </data>
-  <data name="Day" xml:space="preserve">
-    <value>Day</value>
-  </data>
   <data name="ClickShiftBadgeHelp" xml:space="preserve">
     <value>Click a shift badge to manage assignments.</value>
   </data>
@@ -1585,9 +1513,6 @@
   </data>
   <data name="ViewAssignedShiftsHelp" xml:space="preserve">
     <value>View your assigned shifts and team schedule.</value>
-  </data>
-  <data name="Today" xml:space="preserve">
-    <value>Today</value>
   </data>
   <data name="ViewDetailedScheduleHelp" xml:space="preserve">
     <value>View your assigned shifts and detailed schedule.</value>
@@ -1607,7 +1532,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Are you sure you want to delete this approved time-off for {0}? This action cannot be undone.</value>
   </data>
 
-  <!-- Home Page -->
+  
   <data name="WelcomeToShiftManager" xml:space="preserve">
     <value>Welcome to Shift Manager</value>
   </data>
@@ -1618,7 +1543,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Go to Calendar</value>
   </data>
 
-  <!-- My Shifts Page -->
+  
   <data name="Upcoming" xml:space="preserve">
     <value>Upcoming</value>
   </data>
@@ -1638,7 +1563,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Trainee</value>
   </data>
 
-  <!-- My Requests Page -->
+  
   <data name="MyRequests" xml:space="preserve">
     <value>My Requests</value>
   </data>
@@ -1682,7 +1607,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Please provide a reason for your time off request...</value>
   </data>
 
-  <!-- Error Page -->
+  
   <data name="SomethingWentWrong" xml:space="preserve">
     <value>Something went wrong</value>
   </data>
@@ -1690,7 +1615,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Sorry—an unexpected error occurred.</value>
   </data>
 
-  <!-- Chores Feature -->
+  
   <data name="Chores" xml:space="preserve">
     <value>Chores</value>
   </data>

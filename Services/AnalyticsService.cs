@@ -468,7 +468,8 @@ public class AnalyticsService : IAnalyticsService
                 .ToListAsync();
 
             var results = swaps
-                .GroupBy(x => new { x.User.Id, x.User.DisplayName })
+                .Where(x => x.User != null)  // Filter out null users
+                .GroupBy(x => new { x.User!.Id, x.User.DisplayName })
                 .Select(g => new TopSwapperDto
                 {
                     UserId = g.Key.Id,
