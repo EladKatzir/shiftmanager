@@ -445,10 +445,21 @@
 - **Pages/Assignments/Manage.cshtml**: Adjust staffing levels (+/- buttons) with concurrency control, trainee assignment
 
 #### Employee Self-Service
-- **Pages/My/Index.cshtml**: Employee dashboard (upcoming shifts, chores, time-off, hours chart, trainee info)
+- **Pages/My/Index.cshtml**: My Overview dashboard - unified timeline feed showing all user's Vacations, On-duty, Shifts, and Chores
+  - **Features**:
+    - Sticky top bar with time range switcher (Week/Month)
+    - Client-side type filters with color-coded legend (Vacations=Blue, On-duty=Red, Shifts=Purple, Chores=Yellow)
+    - Grouped timeline: Today, Tomorrow, This Week, Later
+    - View modes: Upcoming, All, Past 30 days
+    - Interactive stats bar chart with Count/Hours toggle
+    - Read-only detail drawer for item inspection
+    - Conflict detection with warning badges (⚠) on overlapping items
+    - Full Hebrew localization with dark mode support
+  - **Visual Design**: Modern card-based layout with smooth animations and hover effects
 - **Pages/My/Requests.cshtml**: Submit and view time-off and swap requests
 - **Pages/My/NotificationCenter.cshtml**: In-app notification inbox with mark as read (accessible to all roles)
 - **Pages/My/Profile.cshtml**: Employee profile page with avatar upload, personal info, and change history
+- **Pages/My/_TimelineItem.cshtml**: Partial view for rendering timeline items in My Overview feed
 
 #### Request Workflows
 - **Pages/Requests/Index.cshtml**: Manager view of pending requests (time-off, swaps)
@@ -1453,12 +1464,93 @@ curl http://localhost:5000/health
 - Localization: 4 new resource strings with English and Hebrew translations
 - Message: "There isn't a chore/on-duty for this day. Contact your team manager if you think that's wrong."
 
+### 2025-11-11 - My Overview Page Redesign + Calendar Bug Fixes + UI Improvements
+**Added:**
+- ✅ **Complete My Overview Page Redesign** (/My/Index):
+  - Modern unified timeline feed showing Vacations, On-duty, Shifts, and Chores in one view
+  - Sticky top bar with time range switcher (Week/Month) and type filters
+  - Color-coded legend: Vacations=Blue, On-duty=Red, Shifts=Purple, Chores=Yellow
+  - Grouped timeline sections: Today, Tomorrow, This Week, Later
+  - View mode toggles: Upcoming, All, Past 30 days
+  - Interactive stats bar chart with Count ↔ Hours toggle
+  - Read-only detail drawer for item inspection (no edit affordances)
+  - Conflict detection with warning badges (⚠) on overlapping items
+  - Client-side filtering with empty state handling
+  - Full Hebrew localization (40+ new keys)
+  - Dark mode compatible design with smooth animations
+  - Responsive layout with mobile support
+- ✅ New partial view: Pages/My/_TimelineItem.cshtml for timeline rendering
+- ✅ Complete backend rewrite: Pages/My/Index.cshtml.cs with 300 lines of query logic
+  - TimelineItem record type with conflict detection
+  - StatsData record type for analytics
+  - Support for all 4 data types (Vacations, OnDuty, Shifts, Chores)
+  - Trainee shadowing shift support
+  - Date range and view mode filtering
+
+**Fixed:**
+- ✅ **Zero-Assignment Shift Visibility Bug** (all calendar views):
+  - Shifts with 0 required staff now remain visible in Month, Week, and Day calendars
+  - Changed visibility filter from `Required > 0 || Assigned > 0` to `InstanceId > 0`
+  - Users can now bump shift counts back up without recreating shifts
+  - Fixed "Concurrent update detected" error caused by invisible ghost shifts
+  - Applied fix consistently across Pages/Calendar/Month.cshtml, Week.cshtml, and Day.cshtml
+
+- ✅ **Shift Type Localization Bug** (all calendar views):
+  - Fixed custom shift types showing localization keys (e.g., "ShiftType_CUSTOM") instead of names
+  - Implemented conditional logic: Built-in types use Localizer, custom types use ShiftTypeName
+  - Applied to all shift type displays in Month, Week, Day, Table calendars and Assignments page
+  - Fixed tooltip titles, badge displays, and shift name displays across all views
+
+- ✅ **Dropdown Menu Z-Index Issue** (global fix):
+  - Fixed admin dropdown menu being hidden behind page content (overview-topbar)
+  - Updated z-index hierarchy: topbar=1000, dropdown=10001, dropdown menu=10002
+  - Dropdowns now always visible above all page content including sticky elements
+  - Fixed stacking context conflicts across entire application
+
+- ✅ **Code Quality**:
+  - Fixed Razor syntax error in Index.cshtml (removed nested @{ } in else block)
+  - Removed unused variables in Services/ConflictChecker.cs (hasOverlap, overlappingShiftName)
+  - Clean build: 0 warnings, 0 errors
+
+**Changed:**
+- ✅ Pages/My/Index.cshtml: Complete redesign (814 lines with styling & JavaScript)
+- ✅ Pages/My/Index.cshtml.cs: Complete rewrite (300 lines of backend logic)
+- ✅ Pages/Calendar/Month.cshtml: Fixed shift visibility filter (line 109)
+- ✅ Pages/Calendar/Week.cshtml: Fixed shift visibility filter (line 87)
+- ✅ Pages/Calendar/Day.cshtml: Fixed shift visibility filter (line 77)
+- ✅ Pages/Calendar/Month.cshtml: Fixed shift type localization (lines 117, 122, 130, 134)
+- ✅ Pages/Calendar/Week.cshtml: Fixed shift type localization (lines 95, 100, 108, 112)
+- ✅ Pages/Calendar/Day.cshtml: Fixed shift type localization (lines 87, 92, 100, 104, 168)
+- ✅ Pages/Calendar/Table.cshtml: Fixed shift type localization (line 563)
+- ✅ Pages/Assignments/Manage.cshtml: Fixed shift type localization (line 17)
+- ✅ wwwroot/css/site.css: Updated z-index hierarchy (topbar=1000, dropdown=10001/10002)
+- ✅ Services/ConflictChecker.cs: Removed unused variables (lines 54-55)
+- ✅ Resources/SharedResources.resx: Added 40 new localization keys for My Overview
+- ✅ Resources/SharedResources.he-IL.resx: Added 40 Hebrew translations
+
+**New Localization Keys:**
+- MyOverview, Week, Custom, TimeRangeSwitcher, Filters, Vacations, OnDuty, Chores
+- Today, Tomorrow, ThisWeek, Later, Past, Upcoming, All, Past30Days
+- MyStatsForThisPeriod, Count, Hours, ToggleCountHours
+- NothingHereYet, NoItemsMatch, ClearFilters, Details, Conflict, ViewDetails
+- Legend, Showing, Items, InDateRange, Vacation, After
+- OnDutyHakam, OnDutyLead, Shadowing, Days, Day
+
+**Technical Details:**
+- Backend: Complete data aggregation for 4 entity types with conflict detection
+- Frontend: Canvas-based chart rendering with dark mode support
+- JavaScript: Client-side filtering, drawer functionality, responsive chart resizing
+- Localization: Full bilingual support (English/Hebrew) for all new UI elements
+- Performance: Efficient LINQ queries with proper includes and date range filtering
+- Security: User ID validation with TryParse to prevent crashes
+- UX: Grouped timeline, empty states, loading indicators, responsive design
+
 ---
 
-**Document Generated**: 2025-11-02
-**Project Version**: Production-Ready+ (Enhanced with profiles, audit, analytics, localization, chores, API layer, public section employee access)
-**Total Context Lines**: 1,400+
+**Document Generated**: 2025-11-11
+**Project Version**: Production-Ready+ (Enhanced with redesigned My Overview, calendar bug fixes, and improved UI)
+**Total Context Lines**: 1,500+
 **Database Tables**: 17 tables
 **Migrations**: 17 applied
 **Validation Status**: ✅ All sections complete and cross-referenced
-**Last Updated**: 2025-11-02 - Added employee access to Public section with view/edit authorization separation
+**Last Updated**: 2025-11-11 - My Overview page redesign + Zero-assignment shift visibility fix + Shift type localization fix + Dropdown z-index fix
