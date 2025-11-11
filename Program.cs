@@ -84,6 +84,17 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("IsAdmin", policy => policy.RequireRole(nameof(UserRole.Owner)));
     options.AddPolicy("IsDirector", policy => policy.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Director)));
     options.AddPolicy("IsOwnerOrDirector", policy => policy.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Director)));
+
+    // Public section policies
+    // View policies - all authenticated users can view
+    options.AddPolicy("CanViewChores", policy => policy.RequireAuthenticatedUser());
+    options.AddPolicy("CanViewOnDuty", policy => policy.RequireAuthenticatedUser());
+
+    // Edit policies - only admin roles can edit
+    options.AddPolicy("CanEditChores",
+        policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director), nameof(UserRole.Assigner)));
+    options.AddPolicy("CanEditOnDuty",
+        policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director)));
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
@@ -99,9 +110,26 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IChoreService, ChoreService>();
+builder.Services.AddScoped<IOnDutyService, OnDutyService>();
+builder.Services.AddScoped<IBusyUserService, BusyUserService>();
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
 builder.Services.AddSingleton<IValidationService, ValidationService>();
 builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
+
+// API Layer Services
+builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.ShiftApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.TimeOffApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.NotificationApiService>();
+
+// Add Controllers for API endpoints
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // Add health checks for container orchestration
 builder.Services.AddHealthChecks()
@@ -144,19 +172,20 @@ using (var scope = app.Services.CreateScope())
     var company = db.Companies.First();
 
     // Seed shift types (fixed keys) - company-specific
-    if (!db.ShiftTypes.IgnoreQueryFilters().Any())
+    if (!db.ShiftTypes.IgnoreQueryFilters().Any(st => st.CompanyId == company.Id))
     {
         db.ShiftTypes.AddRange(new[] {
             new ShiftType{ CompanyId=company.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
             new ShiftType{ CompanyId=company.Id, Key="NOON", Start=new TimeOnly(16,0), End=new TimeOnly(0,0)},
             new ShiftType{ CompanyId=company.Id, Key="NIGHT", Start=new TimeOnly(0,0), End=new TimeOnly(8,0)},
             new ShiftType{ CompanyId=company.Id, Key="MIDDLE", Start=new TimeOnly(12,0), End=new TimeOnly(20,0)},
+            new ShiftType{ CompanyId=company.Id, Key="OFFLINE", Start=new TimeOnly(0,0), End=new TimeOnly(0,0)}, // Special shift type that can overlap
         });
         await db.SaveChangesAsync();
     }
 
     // Seed config
-    if (!db.Configs.IgnoreQueryFilters().Any())
+    if (!db.Configs.IgnoreQueryFilters().Any(c => c.CompanyId == company.Id))
     {
         db.Configs.AddRange(new[] {
             new AppConfig{ CompanyId = company.Id, Key = "RestHours", Value = "8" },
@@ -194,20 +223,26 @@ using (var scope = app.Services.CreateScope())
             await db.SaveChangesAsync();
 
             // Seed shift types for second company
-            db.ShiftTypes.AddRange(new[] {
-                new ShiftType{ CompanyId=company2.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
-                new ShiftType{ CompanyId=company2.Id, Key="NOON", Start=new TimeOnly(16,0), End=new TimeOnly(0,0)},
-                new ShiftType{ CompanyId=company2.Id, Key="NIGHT", Start=new TimeOnly(0,0), End=new TimeOnly(8,0)},
-                new ShiftType{ CompanyId=company2.Id, Key="MIDDLE", Start=new TimeOnly(12,0), End=new TimeOnly(20,0)},
-            });
-            await db.SaveChangesAsync();
+            if (!db.ShiftTypes.IgnoreQueryFilters().Any(st => st.CompanyId == company2.Id))
+            {
+                db.ShiftTypes.AddRange(new[] {
+                    new ShiftType{ CompanyId=company2.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
+                    new ShiftType{ CompanyId=company2.Id, Key="NOON", Start=new TimeOnly(16,0), End=new TimeOnly(0,0)},
+                    new ShiftType{ CompanyId=company2.Id, Key="NIGHT", Start=new TimeOnly(0,0), End=new TimeOnly(8,0)},
+                    new ShiftType{ CompanyId=company2.Id, Key="MIDDLE", Start=new TimeOnly(12,0), End=new TimeOnly(20,0)},
+                });
+                await db.SaveChangesAsync();
+            }
 
             // Seed config for second company
-            db.Configs.AddRange(new[] {
-                new AppConfig{ CompanyId = company2.Id, Key = "RestHours", Value = "8" },
-                new AppConfig{ CompanyId = company2.Id, Key = "WeeklyHoursCap", Value = "40" },
-            });
-            await db.SaveChangesAsync();
+            if (!db.Configs.IgnoreQueryFilters().Any(c => c.CompanyId == company2.Id))
+            {
+                db.Configs.AddRange(new[] {
+                    new AppConfig{ CompanyId = company2.Id, Key = "RestHours", Value = "8" },
+                    new AppConfig{ CompanyId = company2.Id, Key = "WeeklyHoursCap", Value = "40" },
+                });
+                await db.SaveChangesAsync();
+            }
         }
 
         // Create Director user if doesn't exist
@@ -309,8 +344,14 @@ app.UseRequestLocalization();
 // Multitenancy Phase 2: Add company context middleware
 app.UseMiddleware<CompanyContextMiddleware>();
 
+// API Middleware (only for /api routes)
+app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
+app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
+app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers(); // Map API controllers
 app.MapRazorPages();
 
 // Health check endpoints for container orchestration

@@ -14,7 +14,7 @@
     new BreadcrumbItem { Label = Localizer["ManageAssignments"], IsActive = true }
 })
 
-<h2>Assignments — @Model.Date.ToString("ddd, MMM d") — @(Model.Type != null ? Localizer[$"ShiftType_{Model.Type.Key}"] : "")</h2>
+<h2>Assignments — @Model.Date.ToString("ddd, MMM d") — @(Model.Type != null ? (Model.Type.Key.StartsWith("CUSTOM_") ? Model.Type.Name : Localizer[$"ShiftType_{Model.Type.Key}"].Value) : "")</h2>
 
 <div class="card">
     <div style="display:flex; gap:1rem; align-items:center; justify-content:space-between">
@@ -113,13 +113,27 @@
             </div>
         }
 
-        <select class="input" asp-for="SelectedUserId">
+        <select class="input" asp-for="SelectedUserId" style="font-family: var(--font-sans);">
             <option value="">@Localizer["ChooseActiveUser"]</option>
             @foreach (var u in Model.ActiveUsers)
             {
-                @if (Model.UsersOnTimeOff.Contains(u.Id))
+                var busyStatus = Model.BusyUsers.ContainsKey(u.Id) ? Model.BusyUsers[u.Id] : null;
+
+                @if (busyStatus != null && busyStatus.HasVacation)
                 {
-                    <option value="@u.Id" style="background-color: var(--warning); color: var(--warning-text);">🏖️ @u.DisplayName (@u.Email) - @Localizer["OnTimeOff"]</option>
+                    <option value="@u.Id" style="background-color: #cce5ff; color: #004085;">🏖️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                }
+                else if (busyStatus != null && busyStatus.HasShift)
+                {
+                    <option value="@u.Id" style="background-color: #f8d7da; color: #721c24;">⚠️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                }
+                else if (busyStatus != null && busyStatus.HasChore)
+                {
+                    <option value="@u.Id" style="background-color: #fff3cd; color: #856404;">📋 @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                }
+                else if (Model.UsersOnTimeOff.Contains(u.Id))
+                {
+                    <option value="@u.Id" style="background-color: #cce5ff; color: #004085;">🏖️ @u.DisplayName (@u.Email) - @Localizer["OnTimeOff"]</option>
                 }
                 else
                 {

@@ -11,6 +11,8 @@
 - **Request Workflows**: Employee-initiated shift swap and time-off requests with manager approval (including batch approval)
 - **Trainee Shadowing**: Assign trainees to shadow experienced employees on shifts
 - **Chore Management**: Assign non-shift tasks to employees with calendar view, conflict detection, and shift replacement
+- **API Key Management**: Full API key lifecycle with approval workflow, rate limiting, and scope-based access control
+- **RESTful API Layer**: Additive API endpoints for users, shifts, time-off, and notifications (feature-complete, non-breaking)
 - **Localization**: Full support for English (en-US) and Hebrew (he-IL) with RTL layout - 100% coverage
 - **In-App Notifications**: Real-time notifications for shift changes, approvals, trainee assignments, and chore assignments
 - **Employee Profiles**: Rich profiles with avatars, contact info, skills, certifications, and emergency contacts
@@ -20,11 +22,11 @@
 - **Batch Operations**: Bulk approve/decline requests with audit logging
 
 ### Current Status
-- **Version**: Production-ready+ (as of 2025-10-27)
-- **Database**: SQLite with 15 migrations applied, 15 tables
+- **Version**: Production-ready+ (as of 2025-10-29)
+- **Database**: SQLite with 17 migrations applied, 17 tables
 - **Test Coverage**: 15 unit tests (DirectorService only - 0% for other services)
 - **Production Readiness**: ✅ All critical security issues resolved, health checks added, audit logging enabled
-- **Recent Updates**: Chore management system, employee profiles, audit log, analytics, full localization, UI/UX enhancements
+- **Recent Updates**: API key management system with approval workflow, RESTful API endpoints, shift type deletion, seeding fixes
 
 ### Technology Stack
 - **Framework**: ASP.NET Core 8.0 (Razor Pages)
@@ -51,10 +53,15 @@
 - **Important Sections**:
   - Lines 23-34: Localization setup (en-US, he-IL)
   - Lines 49-62: Multi-tenant infrastructure (TenantResolver, CompanyContext, CompanyIdInterceptor)
-  - Lines 64-82: Authorization policies (IsManagerOrAdmin, IsAdmin, IsDirector)
-  - Lines 84-95: Service registrations (IMailService, IConflictChecker, INotificationService, IDirectorService, ITraineeService, ICompanyFilterService, IViewAsModeService, IAuditLogService, IAnalyticsService, IProfileService, IAvatarService, IChoreService)
+  - Lines 64-97: Authorization policies
+    - IsManagerOrAdmin, IsAdmin, IsDirector, IsOwnerOrDirector (existing policies)
+    - CanViewChores, CanViewOnDuty: All authenticated users can view (added for employee access)
+    - CanEditChores, CanEditOnDuty: Manager+ roles only (admin-level editing)
+  - Lines 84-112: Service registrations (IMailService, IConflictChecker, INotificationService, IDirectorService, ITraineeService, ICompanyFilterService, IViewAsModeService, IAuditLogService, IAnalyticsService, IProfileService, IAvatarService, IChoreService, IApiKeyService, IRateLimitingService, IValidationService, ISecurityLogger, API layer services)
+  - Lines 114-121: Controller configuration for API endpoints with JSON options
+  - Lines 134-171: Database seeding with company-specific checks (fixed duplicate ShiftTypes issue)
   - Lines 104-121: Production password security (requires SEED_ADMIN_PASSWORD env var)
-  - Lines 171-234: Development-only Director role seeding
+  - Lines 327-331: API middleware registration (ApiRequestLoggingMiddleware, ApiAuthenticationMiddleware, ApiRateLimitingMiddleware)
 
 #### **ShiftManager.csproj**
 - **Purpose**: Project configuration and NuGet package references
@@ -172,6 +179,26 @@
 - **Purpose**: Marker interface for multi-tenant entities
 - **Implementation**: All tenant-scoped entities implement this interface
 - **Usage**: CompanyIdInterceptor uses this to auto-inject CompanyId
+
+#### **Models/Api/ApiKey.cs**
+- **Purpose**: API key entity for external integrations and programmatic access
+- **Fields**:
+  - Id, CompanyId, KeyHash (SHA256), PlainTextKey (nullable, Owner-only)
+  - Name, Scopes (comma-separated), IsActive, RateLimitPerMinute
+  - CreatedBy, CreatedAt, ExpiresAt, LastUsedAt
+- **Key Methods**:
+  - `HasScope(string scope)`: Check if API key has specific permission scope
+  - `IsValid()`: Validate active status and expiration date
+- **Security**: PlainTextKey stored temporarily for Owner retrieval post-creation, KeyHash used for authentication
+
+#### **Models/Api/ApiKeyRequest.cs**
+- **Purpose**: API key approval workflow entity (request → review → approval)
+- **Fields**:
+  - Id, CompanyId, RequestedBy, Name, Description
+  - RequestedScopes (comma-separated), Status (Pending/Approved/Rejected)
+  - ReviewedBy, ReviewedAt, ReviewNotes, CreatedAt
+  - GeneratedApiKeyId (FK, nullable), ApprovedScopes, ApprovedRateLimit, ApprovedExpiresAt
+- **Workflow**: User submits request → Admin reviews → Approval generates ApiKey entity → User retrieves plain text key once
 
 ---
 
@@ -320,6 +347,49 @@
 - **Purpose**: Culture-aware formatting for dates, times, and currency
 - **Localization**: Supports en-US and he-IL cultures
 
+#### **Services/Api/ApiKeyService.cs** (IApiKeyService)
+- **Purpose**: Manage API key lifecycle with approval workflow
+- **Key Methods** (11 methods total):
+  - **Request Management**: `CreateRequestAsync()`, `GetPendingRequestsAsync()`, `GetUserRequestsAsync()`
+  - **Approval Workflow**: `ApproveRequestAsync()` (generates ApiKey + 32-char random key), `RejectRequestAsync()`
+  - **Key Management**: `GetApiKeysAsync()`, `GetApiKeyByIdAsync()`, `RefreshApiKeyAsync()` (regenerate key), `RevokeApiKeyAsync()`, `DeleteApiKeyAsync()`
+  - **Authentication**: `ValidateApiKeyAsync()` (SHA256 hash comparison)
+- **Features**:
+  - Role-based visibility (Owner sees PlainTextKey, others see masked version)
+  - SHA256 key hashing for secure storage
+  - Expiration date validation
+  - Rate limit enforcement per key
+  - Scope-based permission system
+  - Audit logging for all operations
+
+#### **Services/Api/RateLimitingService.cs** (IRateLimitingService)
+- **Purpose**: Per-API-key rate limiting with sliding window
+- **Key Methods**:
+  - `CheckRateLimitAsync(int apiKeyId, int limit)`: Verify request within rate limit
+  - `RecordRequestAsync(int apiKeyId)`: Log request timestamp
+- **Features**:
+  - In-memory request tracking (sliding 1-minute window)
+  - Automatic cleanup of expired entries
+  - Per-key limit enforcement
+  - Returns remaining requests count
+
+#### **Services/Api/ValidationService.cs** (IValidationService)
+- **Purpose**: Input validation for API requests
+- **Key Methods**:
+  - `ValidateScopesAsync(string scopes)`: Validate requested permission scopes
+  - `ValidateRateLimitAsync(int rateLimit)`: Ensure rate limit within bounds (1-1000 req/min)
+- **Supported Scopes**: users:read, users:write, shifts:read, shifts:write, requests:read, requests:write, notifications:read
+
+#### **Services/Api/SecurityLogger.cs** (ISecurityLogger)
+- **Purpose**: Security event logging for API operations
+- **Key Methods**:
+  - `LogApiKeyCreatedAsync()`, `LogApiKeyRevokedAsync()`, `LogApiKeyRefreshedAsync()`
+  - `LogUnauthorizedAccessAsync()`, `LogRateLimitExceededAsync()`
+- **Features**:
+  - Integration with AuditLogService
+  - IP address and user agent tracking
+  - JSON details for structured logging
+
 ---
 
 ### Middleware
@@ -328,6 +398,33 @@
 - **Purpose**: Ensure CompanyContext is resolved early in request pipeline
 - **Functionality** (lines 19-26): Forces CompanyContext.CompanyId property access to cache tenant resolution
 - **Registration**: Program.cs:262
+
+#### **Middleware/Api/ApiRequestLoggingMiddleware.cs**
+- **Purpose**: Log all API requests for audit trail
+- **Functionality**:
+  - Captures request method, path, query string, and IP address
+  - Logs response status code and duration
+  - Integration with AuditLogService
+- **Registration**: Program.cs:327 (API endpoints only)
+
+#### **Middleware/Api/ApiAuthenticationMiddleware.cs**
+- **Purpose**: Authenticate API requests using X-API-Key header
+- **Functionality**:
+  - Reads X-API-Key header from request
+  - Validates API key via ApiKeyService.ValidateApiKeyAsync()
+  - Returns HTTP 401 (Unauthorized) if invalid
+  - Returns HTTP 403 (Forbidden) if expired or inactive
+  - Sets CompanyId claim for multi-tenant scoping
+- **Registration**: Program.cs:328
+
+#### **Middleware/Api/ApiRateLimitingMiddleware.cs**
+- **Purpose**: Enforce per-API-key rate limits
+- **Functionality**:
+  - Checks rate limit via RateLimitingService.CheckRateLimitAsync()
+  - Returns HTTP 429 (Too Many Requests) if limit exceeded
+  - Adds X-RateLimit-Limit and X-RateLimit-Remaining headers
+  - Logs rate limit violations
+- **Registration**: Program.cs:329
 
 ---
 
@@ -358,13 +455,33 @@
 - **Pages/Requests/TimeOff/Create.cshtml**: Submit time-off request
 - **Pages/Requests/Swaps/Create.cshtml**: Initiate shift swap request
 
-#### Chore Management
-- **Pages/Chores/Calendar.cshtml**: Monthly calendar view for chore assignments (Manager+ only)
-  - Create chores with assignee selection and date picker
-  - Shift conflict detection with optional replacement workflow
-  - Cancel/delete chores with audit logging
-  - Modal-based UI for create, details, and conflict resolution
-  - Visual design: Green styling with 🧹 icon, gradients, and hover effects
+#### Public Pages (All Authenticated Users)
+- **Pages/Public/Chores.cshtml**: Monthly calendar view for chore assignments
+  - **Authorization**: CanViewChores policy (all authenticated users can view)
+  - **Manager+ Features**:
+    - Create chores with assignee selection and date picker
+    - Shift conflict detection with optional replacement workflow
+    - Cancel/delete chores with audit logging
+    - Full edit controls in modals and table view
+  - **Employee Experience**:
+    - View-only calendar with all chores visible
+    - Clicking on dates with chores shows details modal (no delete button for employees)
+    - Clicking on empty dates shows info modal: "There isn't a chore for this day. Contact your team manager if you think that's wrong."
+    - Delete buttons hidden from employees in table view and detail modals
+  - **Visual Design**: Green styling with 🧹 icon, gradients, and hover effects
+
+- **Pages/Public/OnDuty.cshtml**: Monthly calendar view for on-duty assignments
+  - **Authorization**: CanViewOnDuty policy (all authenticated users can view)
+  - **Manager+ Features**:
+    - Create on-duty assignments with assignee and type selection
+    - Cancel/delete on-duty assignments with audit logging
+    - Full edit controls in modals and table view
+  - **Employee Experience**:
+    - View-only calendar with all on-duty assignments visible
+    - Clicking on dates with assignments shows details modal (no delete button for employees)
+    - Clicking on empty dates shows info modal: "There isn't an on-duty assignment for this day. Contact your team manager if you think that's wrong."
+    - Delete buttons hidden from employees in table view and detail modals
+  - **Visual Design**: Purple/amber gradients by type (Hakam 🛡️ / Lead ⭐)
 
 #### Admin Pages (Manager+ only)
 - **Pages/Admin/Users.cshtml**: User management (create, edit roles, deactivate, batch approval)
@@ -376,6 +493,7 @@
 - **Pages/Admin/EditProfile.cshtml**: Manager full-edit employee profile page (all fields editable)
 - **Pages/Admin/AuditLog.cshtml**: Comprehensive audit log viewer with filtering and CSV export
 - **Pages/Admin/Analytics.cshtml**: Workforce analytics dashboard with charts and reports
+- **Pages/Admin/ApiKeys.cshtml**: API key management (request, approve, revoke, refresh)
 
 #### Director Pages
 - **Pages/Director/CompanyFilter.cshtml**: Select active company for cross-tenant operations
@@ -384,6 +502,50 @@
 
 #### Diagnostic Page
 - **Pages/Diagnostic.cshtml**: Admin-only page showing cross-tenant data (SECURED: line 8 has [Authorize(Policy = "IsAdmin")])
+
+#### API Controllers (RESTful Endpoints)
+- **Controllers/Api/UsersController.cs**: User management API endpoints
+  - GET /api/users - List users with pagination and filtering
+  - GET /api/users/{id} - Get user details
+  - POST /api/users - Create new user
+  - PUT /api/users/{id} - Update user
+  - DELETE /api/users/{id} - Deactivate user
+  - Required scopes: users:read, users:write
+
+- **Controllers/Api/ShiftsController.cs**: Shift management API endpoints
+  - GET /api/shifts - List shifts for date range
+  - GET /api/shifts/{id} - Get shift details with assignments
+  - POST /api/shifts - Create shift instance
+  - PUT /api/shifts/{id} - Update shift
+  - DELETE /api/shifts/{id} - Delete shift
+  - POST /api/shifts/{id}/assign - Assign employee to shift
+  - DELETE /api/shifts/{id}/assign/{userId} - Remove assignment
+  - Required scopes: shifts:read, shifts:write
+
+- **Controllers/Api/RequestsController.cs**: Request workflow API endpoints
+  - GET /api/requests/timeoff - List time-off requests with filtering
+  - GET /api/requests/swaps - List swap requests with filtering
+  - POST /api/requests/timeoff - Submit time-off request
+  - POST /api/requests/swaps - Submit swap request
+  - PUT /api/requests/timeoff/{id}/approve - Approve time-off
+  - PUT /api/requests/timeoff/{id}/decline - Decline time-off
+  - PUT /api/requests/swaps/{id}/approve - Approve swap
+  - PUT /api/requests/swaps/{id}/decline - Decline swap
+  - Required scopes: requests:read, requests:write
+
+- **Controllers/Api/NotificationsController.cs**: Notification API endpoints
+  - GET /api/notifications - List notifications for authenticated user
+  - PUT /api/notifications/{id}/read - Mark notification as read
+  - DELETE /api/notifications/{id} - Delete notification
+  - Required scopes: notifications:read
+
+- **Features**:
+  - RFC-7807 Problem Details for error responses
+  - Multi-tenant scoping via ApiAuthenticationMiddleware
+  - Rate limiting per API key
+  - Audit logging for all operations
+  - JSON responses with consistent structure
+  - Scope-based authorization
 
 ---
 
@@ -401,7 +563,7 @@
 
 ### Migrations
 
-#### Migration History (15 migrations)
+#### Migration History (17 migrations)
 1. **20250927202116_InitialCreate**: Base schema (Users, Companies, ShiftTypes, ShiftInstances, ShiftAssignments)
 2. **20250928195641_AddUserNotifications**: UserNotifications table
 3. **20250928201142_AddNavigationProperties**: Foreign key relationships (⚠️ contains PRAGMA operations)
@@ -417,10 +579,12 @@
 13. **20251019202014_AddEmployeeProfileEnhancements**: Extended AppUser fields (15+ new fields for profiles, avatar support)
 14. **20251021055915_MakeUserIdNullableInShiftAssignment**: Allow null UserId in ShiftAssignment for unassigned shifts
 15. **20251023003948_AddChoresFeature**: Chores table with soft delete support (CanceledAt)
+16. **20251029XXXXXX_AddApiKeyManagement**: ApiKeys and ApiKeyRequests tables for API key lifecycle management
+17. **20251029XXXXXX_AddPlainTextKeyToApiKey**: Add PlainTextKey column to ApiKeys table (nullable, Owner-only visibility)
 
 #### Rollback Scripts
 - **Location**: `Migrations/rollback/`
-- **Coverage**: 12 of 15 migrations have corresponding rollback SQL scripts (migrations 13, 14, 15 need rollback scripts)
+- **Coverage**: 12 of 17 migrations have corresponding rollback SQL scripts (migrations 13, 14, 15, 16, 17 need rollback scripts)
 - **Documentation**: `Migrations/rollback/README.md` contains complete rollback procedures
 
 #### Known Issue (ISSUE-005)
@@ -478,7 +642,7 @@
 
 ## 4. Database Structure
 
-### Schema Overview (15 Tables)
+### Schema Overview (17 Tables)
 
 #### Core Tables
 1. **Companies**: Multi-tenant company entities
@@ -556,6 +720,20 @@
     - Features: Soft delete (CanceledAt), shift conflict detection, calendar view
     - Integration: Displayed in My/Index dashboard and Chores/Calendar page
 
+#### API & Integration Tables
+16. **ApiKeys**: API key entities for external integrations
+    - Columns: Id (PK), CompanyId (FK), KeyHash (SHA256), PlainTextKey (nullable), Name, Scopes, IsActive, RateLimitPerMinute, CreatedBy (FK), CreatedAt, ExpiresAt, LastUsedAt
+    - Indexes: Unique on KeyHash, Composite on (CompanyId, IsActive), (CompanyId, CreatedBy)
+    - Purpose: Authenticate external API requests with scope-based permissions
+    - Features: SHA256 hashing, rate limiting, expiration dates, scope-based authorization
+    - Security: PlainTextKey visible to Owner only (role-based visibility)
+
+17. **ApiKeyRequests**: API key approval workflow
+    - Columns: Id (PK), CompanyId (FK), RequestedBy (FK), Name, Description, RequestedScopes, Status (Pending/Approved/Rejected), ReviewedBy (FK), ReviewedAt, ReviewNotes, CreatedAt, GeneratedApiKeyId (FK, nullable), ApprovedScopes, ApprovedRateLimit, ApprovedExpiresAt
+    - Indexes: Composite on (CompanyId, Status, CreatedAt), (CompanyId, RequestedBy)
+    - Purpose: Request-approval workflow for API key creation
+    - Workflow: User request → Admin review → Approval generates ApiKey entity
+
 ### Entity Relationships
 
 ```
@@ -573,6 +751,8 @@ Company (1) ──< (many) Configs
 Company (1) ──< (many) AuditLog
 Company (1) ──< (many) ProfileChangeAudit
 Company (1) ──< (many) Chores
+Company (1) ──< (many) ApiKeys
+Company (1) ──< (many) ApiKeyRequests
 
 ShiftType (1) ──< (many) ShiftInstances
 ShiftInstance (1) ──< (many) ShiftAssignments
@@ -588,6 +768,10 @@ Users (1) ──< (many) ProfileChangeAudit (as subject)
 Users (1) ──< (many) ProfileChangeAudit (as changer)
 Users (1) ──< (many) Users (as manager - self-referencing FK)
 Users (1) ──< (many) Chores
+Users (1) ──< (many) ApiKeys (as creator)
+Users (1) ──< (many) ApiKeyRequests (as requester)
+
+ApiKeyRequest (1) ──> (optional) ApiKey (via GeneratedApiKeyId)
 ```
 
 ### Notable Indexes & Constraints
@@ -690,6 +874,24 @@ Users (1) ──< (many) Chores
 - **Pages Localized**: Home, My Shifts, My Requests, My Notification Center, Error page, Access Denied, Assignment Management
 - **RTL Support**: Full right-to-left layout for Hebrew
 - **Resources**: 1,600+ localized strings in SharedResources.resx
+
+#### Phase 10: API Key Management & RESTful API Layer ✅ (Complete - 2025-10-29)
+- **Features**:
+  - API key lifecycle management (request → approval → activation → refresh → revoke)
+  - Role-based key visibility (Owner sees PlainTextKey, others see masked version)
+  - SHA256 key hashing for secure storage
+  - Per-key rate limiting with sliding window (1-1000 req/min)
+  - Scope-based authorization (users:read/write, shifts:read/write, requests:read/write, notifications:read)
+  - RESTful API endpoints (Users, Shifts, Requests, Notifications)
+  - Three-tier API middleware (logging, authentication, rate limiting)
+  - RFC-7807 Problem Details for error responses
+  - Comprehensive audit logging for all API operations
+- **Migrations**: #16 (AddApiKeyManagement), #17 (AddPlainTextKeyToApiKey)
+- **Models**: ApiKey, ApiKeyRequest
+- **Services**: ApiKeyService (11 methods), RateLimitingService, ValidationService, SecurityLogger
+- **Controllers**: UsersController, ShiftsController, RequestsController, NotificationsController
+- **Admin Page**: /Admin/ApiKeys for request approval and key management
+- **Bug Fixes**: Fixed duplicate ShiftTypes seeding issue, added shift type deletion functionality
 
 ### Upcoming Features (Planned)
 
@@ -1148,11 +1350,13 @@ curl http://localhost:5000/health
 ### Important File Locations
 - **Database**: `app.db` (SQLite)
 - **Seed Data**: `seed.db` (clean baseline)
-- **Migrations**: `Migrations/` (15 migrations)
-- **Rollback Scripts**: `Migrations/rollback/` (12 files, 3 pending)
-- **Services**: `Services/` (16 services)
-- **Models**: `Models/` (19 entities + Analytics DTOs)
+- **Migrations**: `Migrations/` (17 migrations)
+- **Rollback Scripts**: `Migrations/rollback/` (12 files, 5 pending)
+- **Services**: `Services/` (20 services, including 4 API services)
+- **Models**: `Models/` (21 entities + Analytics DTOs + API models)
 - **Pages**: `Pages/` (40+ Razor Pages)
+- **Controllers**: `Controllers/Api/` (4 API controllers)
+- **Middleware**: `Middleware/` (4 middleware components)
 - **Resources**: `Resources/` (English + Hebrew .resx files)
 - **View Components**: `ViewComponents/` + `Views/Shared/Components/`
 - **Avatars**: `wwwroot/avatars/{companyId}/` (user-uploaded, git-ignored)
@@ -1181,8 +1385,80 @@ curl http://localhost:5000/health
 
 ---
 
-**Document Generated**: 2025-10-27
-**Project Version**: Production-Ready+ (Enhanced with profiles, audit, analytics, localization, chores)
-**Total Context Lines**: 1,180+
+## Changelog (Recent)
+
+### 2025-10-29 - API Key Management & RESTful API Layer
+**Added:**
+- ✅ API key lifecycle management system (request → approval → activation → refresh → revoke)
+- ✅ RESTful API endpoints for Users, Shifts, Requests, and Notifications
+- ✅ Three-tier API middleware (request logging, authentication, rate limiting)
+- ✅ ApiKeyService with 11 methods for complete key management
+- ✅ RateLimitingService with sliding window rate limiting (1-1000 req/min)
+- ✅ ValidationService for scope and rate limit validation
+- ✅ SecurityLogger for API security event tracking
+- ✅ ApiKeys and ApiKeyRequests database tables
+- ✅ Admin page for API key management (/Admin/ApiKeys)
+- ✅ Role-based key visibility (Owner sees PlainTextKey, others see masked)
+- ✅ SHA256 key hashing for secure storage
+- ✅ Scope-based authorization system (users, shifts, requests, notifications)
+- ✅ RFC-7807 Problem Details for standardized error responses
+- ✅ Comprehensive audit logging for all API operations
+
+**Fixed:**
+- ✅ Duplicate ShiftTypes seeding bug (added company-specific validation in Program.cs:134-171)
+- ✅ Added shift type deletion functionality to Admin/ShiftTypes page
+- ✅ Fixed HTTP 400 error from nested forms (separate delete form for shift types)
+
+**Database:**
+- ✅ Migration #16: AddApiKeyManagement (ApiKeys and ApiKeyRequests tables)
+- ✅ Migration #17: AddPlainTextKeyToApiKey (nullable PlainTextKey column)
+
+**Technical Details:**
+- 4 new API controllers with comprehensive CRUD operations
+- 4 new API services (ApiKeyService, RateLimitingService, ValidationService, SecurityLogger)
+- 3 new middleware components (ApiRequestLoggingMiddleware, ApiAuthenticationMiddleware, ApiRateLimitingMiddleware)
+- 2 new database tables (ApiKeys with 11 columns, ApiKeyRequests with 13 columns)
+- 7 supported scopes (users:read/write, shifts:read/write, requests:read/write, notifications:read)
+- Multi-tenant isolation via X-API-Key header authentication
+- Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining)
+
+### 2025-11-02 - Public Section Employee Access & Authorization Updates
+**Added:**
+- ✅ Employee access to Public section (Chores and OnDuty pages)
+- ✅ Separate view/edit authorization policies (CanViewChores, CanViewOnDuty, CanEditChores, CanEditOnDuty)
+- ✅ Employee-friendly info modals for empty calendar dates
+- ✅ Conditional UI rendering based on user permissions (delete buttons hidden for employees)
+- ✅ JavaScript permission checks with canEdit variable
+- ✅ Localization strings for employee info messages (English & Hebrew)
+
+**Changed:**
+- ✅ Pages/Public/OnDuty.cshtml: Changed authorization from CanEditOnDuty to CanViewOnDuty
+- ✅ Pages/Public/Chores.cshtml: Changed authorization from CanEditChores to CanViewChores
+- ✅ Program.cs: Added 4 new authorization policies (CanViewChores, CanViewOnDuty, CanEditChores, CanEditOnDuty)
+- ✅ Calendar cell onclick handlers: Changed from direct modal opening to permission-aware handleCellClick()
+- ✅ Resources/SharedResources.resx: Added Information, OK, NoOnDutyContactManager, NoChoreContactManager keys
+- ✅ Resources/SharedResources.he-IL.resx: Added Hebrew translations for new localization keys
+
+**Features:**
+- Employee users can now view Chores and OnDuty calendars (previously got Access Denied)
+- Clicking on empty dates shows informational message instead of create modal for employees
+- Clicking on existing chores/on-duty shows details modal without delete buttons for employees
+- Manager+ users retain full create/edit/delete capabilities
+- Graceful UX degradation based on role permissions
+
+**Technical Details:**
+- Authorization: Implemented view/edit policy separation pattern
+- UI: Added IAuthorizationService injection in views for permission-based rendering
+- JavaScript: Added canEdit boolean variable and conditional modal opening logic
+- Localization: 4 new resource strings with English and Hebrew translations
+- Message: "There isn't a chore/on-duty for this day. Contact your team manager if you think that's wrong."
+
+---
+
+**Document Generated**: 2025-11-02
+**Project Version**: Production-Ready+ (Enhanced with profiles, audit, analytics, localization, chores, API layer, public section employee access)
+**Total Context Lines**: 1,400+
+**Database Tables**: 17 tables
+**Migrations**: 17 applied
 **Validation Status**: ✅ All sections complete and cross-referenced
-**Last Updated**: 2025-10-27 - Corrected MailService implementation details, updated ImageSharp version, added Email configuration, updated notification types
+**Last Updated**: 2025-11-02 - Added employee access to Public section with view/edit authorization separation

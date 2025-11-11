@@ -370,7 +370,7 @@
                     <form method="post" asp-page-handler="ResetPassword" style="display:inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@u.Id" />
-                    <input class="input" type="password" name="newPassword" placeholder="new password" />
+                    <input class="input" type="password" name="newPassword" placeholder="new password" minlength="6" />
                     <button class="btn btn-ghost">@Localizer["Set"]</button>
                     </form>
                 </td>
@@ -426,7 +426,7 @@
                     }
                 </select>
             </label>
-            <label>@Localizer["Password"]<br /><input class="input" asp-for="NewPassword" type="password" /></label>
+            <label>@Localizer["Password"]<br /><input class="input" asp-for="NewPassword" type="password" minlength="6" /></label>
             <button class="btn btn-primary" type="submit">@Localizer["Add"]</button>
         </div>
     </form>

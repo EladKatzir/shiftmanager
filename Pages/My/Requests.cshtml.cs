@@ -31,6 +31,7 @@ public class RequestsModel : PageModel
     public List<MyTimeOffRequest> MyTimeOffRequests { get; set; } = new();
     public List<MySwapRequest> MySwapRequests { get; set; } = new();
     public List<AvailableShift> AvailableShifts { get; set; } = new();
+    public List<ManagerUser> AvailableApprovers { get; set; } = new();
 
     public string? Message { get; set; }
     public string? Error { get; set; }
@@ -114,6 +115,27 @@ public class RequestsModel : PageModel
                 .OrderBy(s => s.Date)
                 .ToListAsync();
             _logger.LogInformation("Loaded {Count} available shifts for user {UserId}", AvailableShifts.Count, userId);
+
+            // Load available approvers (managers, directors, owners in the same company)
+            _logger.LogInformation("Loading available approvers for user {UserId}", userId);
+            var currentUser = await _db.Users.FindAsync(userId);
+            if (currentUser != null)
+            {
+                AvailableApprovers = await _db.Users
+                    .Where(u => u.CompanyId == currentUser.CompanyId &&
+                               u.IsActive &&
+                               (u.Role == UserRole.Manager || u.Role == UserRole.Director || u.Role == UserRole.Owner))
+                    .OrderBy(u => u.DisplayName)
+                    .Select(u => new ManagerUser
+                    {
+                        Id = u.Id,
+                        Name = u.DisplayName,
+                        Role = u.Role.ToString()
+                    })
+                    .ToListAsync();
+                _logger.LogInformation("Loaded {Count} available approvers for user {UserId}", AvailableApprovers.Count, userId);
+            }
+
             _logger.LogInformation("OnGetAsync completed successfully for user {UserId}", userId);
         }
         catch (Exception ex)
@@ -132,8 +154,14 @@ public class RequestsModel : PageModel
             // Clear validation errors for other forms (since both models are on the same page)
             ModelState.ClearValidationState(nameof(SwapRequest));
 
-            // Custom validation for date range
-            if (TimeOffRequest.EndDate < TimeOffRequest.StartDate)
+            // For After-duty vacation, EndDate should equal StartDate
+            if (TimeOffRequest.Type == TimeOffType.After)
+            {
+                TimeOffRequest.EndDate = TimeOffRequest.StartDate;
+            }
+
+            // Custom validation for date range (only for regular vacation)
+            if (TimeOffRequest.Type == TimeOffType.Vacation && TimeOffRequest.EndDate < TimeOffRequest.StartDate)
             {
                 ModelState.AddModelError("TimeOffRequest.EndDate", "End date cannot be before start date.");
                 _logger.LogWarning("Time off request validation failed: End date {EndDate} is before start date {StartDate}", TimeOffRequest.EndDate, TimeOffRequest.StartDate);
@@ -157,12 +185,27 @@ public class RequestsModel : PageModel
             }
             _logger.LogInformation("Time off request for user {UserId}, dates {StartDate} to {EndDate}", userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
 
+            // Validate approver if specified
+            if (TimeOffRequest.ApproverId.HasValue && TimeOffRequest.ApproverId.Value > 0)
+            {
+                var approver = await _db.Users.FindAsync(TimeOffRequest.ApproverId.Value);
+                if (approver == null || !approver.IsActive ||
+                    (approver.Role != UserRole.Manager && approver.Role != UserRole.Director && approver.Role != UserRole.Owner))
+                {
+                    Error = "Invalid approver selected. Please select a valid manager.";
+                    await OnGetAsync();
+                    return Page();
+                }
+            }
+
             var request = new TimeOffRequest
             {
                 UserId = userId,
                 StartDate = TimeOffRequest.StartDate,
                 EndDate = TimeOffRequest.EndDate,
+                Type = TimeOffRequest.Type,
                 Reason = TimeOffRequest.Reason,
+                ApproverId = TimeOffRequest.ApproverId > 0 ? TimeOffRequest.ApproverId : null,
                 Status = RequestStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
@@ -170,7 +213,8 @@ public class RequestsModel : PageModel
             _db.TimeOffRequests.Add(request);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}", request.Id, userId);
+            _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}, Type: {Type}, Approver: {ApproverId}",
+                request.Id, userId, request.Type, request.ApproverId);
             Message = "Time off request submitted successfully!";
             return RedirectToPage();
         }
@@ -264,8 +308,13 @@ public class RequestsModel : PageModel
         [DataType(DataType.Date)]
         public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
 
+        [Required]
+        public TimeOffType Type { get; set; } = TimeOffType.Vacation;
+
         [StringLength(500)]
         public string Reason { get; set; } = "";
+
+        public int? ApproverId { get; set; }
     }
 
     public class SwapRequestForm
@@ -302,5 +351,12 @@ public class RequestsModel : PageModel
         public string ShiftTypeName { get; set; } = "";
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+    }
+
+    public class ManagerUser
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Role { get; set; } = "";
     }
 }

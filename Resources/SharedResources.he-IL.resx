@@ -539,8 +539,11 @@
   <data name="ShiftType_MIDDLE" xml:space="preserve">
     <value>אמצע</value>
   </data>
+  <data name="ShiftType_OFFLINE" xml:space="preserve">
+    <value>אופליין</value>
+  </data>
 
-  
+
   <data name="Companies" xml:space="preserve">
     <value>חברות</value>
   </data>
@@ -1617,7 +1620,7 @@
 
   
   <data name="Chores" xml:space="preserve">
-    <value>מטלות</value>
+    <value>תורנויות</value>
   </data>
   <data name="ChoresCalendar" xml:space="preserve">
     <value>לוח מטלות</value>
@@ -1669,5 +1672,300 @@
   </data>
   <data name="More" xml:space="preserve">
     <value>נוספים</value>
+  </data>
+
+  <!-- Audit Log Page Strings -->
+  <data name="AuditLogDescription" xml:space="preserve">
+    <value>צפייה וחיפוש ב-{0} רשומות יומן ביקורת המתעדות את כל הפעולות והשינויים במערכת</value>
+  </data>
+  <data name="ShowingResults" xml:space="preserve">
+    <value>מציג {0}-{1} מתוך {2} תוצאות</value>
+  </data>
+  <data name="AllEntityTypes" xml:space="preserve">
+    <value>כל סוגי הישויות</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>חפש תיאורים, משתמשים, אימיילים...</value>
+  </data>
+  <data name="AdditionalDetails" xml:space="preserve">
+    <value>פרטים נוספים</value>
+  </data>
+  <data name="UserAgent" xml:space="preserve">
+    <value>סוכן משתמש</value>
+  </data>
+  <data name="First" xml:space="preserve">
+    <value>ראשון</value>
+  </data>
+  <data name="Last" xml:space="preserve">
+    <value>אחרון</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>מתוך</value>
+  </data>
+  <data name="NoAuditLogs" xml:space="preserve">
+    <value>לא נמצאו יומני ביקורת</value>
+  </data>
+  <data name="NoAuditLogsMessage" xml:space="preserve">
+    <value>אין רשומות יומן ביקורת התואמות את המסננים הנוכחיים. נסה להתאים את קריטריוני החיפוש או נקה את המסננים כדי לראות את כל הרשומות.</value>
+  </data>
+  <data name="TimeOffType" xml:space="preserve">
+    <value>סוג חופשה</value>
+  </data>
+  <data name="After" xml:space="preserve">
+    <value>אפטר</value>
+  </data>
+  <data name="VacationDescription" xml:space="preserve">
+    <value>חופשה מלאה: פעילה מהתאריך שנבחר עד השעה 13:00 ביום שאחרי תאריך הסיום</value>
+  </data>
+  <data name="AfterDescription" xml:space="preserve">
+    <value>חצי יום: פעיל מהשעה 16:00 בתאריך שנבחר עד השעה 13:00 למחרת</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>תאריך</value>
+  </data>
+  <data name="ReasonOptional" xml:space="preserve">
+    <value>סיבה (אופציונלי)</value>
+  </data>
+
+  <!-- Public Section & On-Duty -->
+  <data name="Public" xml:space="preserve">
+    <value>ציבורי</value>
+  </data>
+  <data name="Assigner" xml:space="preserve">
+    <value>פקשיסט</value>
+  </data>
+  <data name="OnDuty" xml:space="preserve">
+    <value>תפקידנים</value>
+  </data>
+  <data name="OnDutyCalendar" xml:space="preserve">
+    <value>לוח תפקידנים</value>
+  </data>
+  <data name="OnDutyHakam" xml:space="preserve">
+    <value>חק״מכו</value>
+  </data>
+  <data name="OnDutyLead" xml:space="preserve">
+    <value>מובילתו</value>
+  </data>
+  <data name="Hakam" xml:space="preserve">
+    <value>חק״מכו</value>
+  </data>
+  <data name="Lead" xml:space="preserve">
+    <value>מובילתו</value>
+  </data>
+  <data name="OnDutyType" xml:space="preserve">
+    <value>סוג תפקידן</value>
+  </data>
+  <data name="CreateOnDuty" xml:space="preserve">
+    <value>יצירת תפקידן</value>
+  </data>
+  <data name="CancelOnDuty" xml:space="preserve">
+    <value>ביטול תפקידן</value>
+  </data>
+  <data name="OnDutyList" xml:space="preserve">
+    <value>רשימת תפקידנים</value>
+  </data>
+  <data name="NoOnDutyThisMonth" xml:space="preserve">
+    <value>אין תפקידנים החודש</value>
+  </data>
+  <data name="VacationConflict" xml:space="preserve">
+    <value>לא ניתן להקצות תפקידן: למשתמש יש חופשה מאושרת בתאריך זה</value>
+  </data>
+  <data name="SelectType" xml:space="preserve">
+    <value>בחר סוג</value>
+  </data>
+  <data name="CompanySettings" xml:space="preserve">
+    <value>הגדרות חברה</value>
+  </data>
+  <data name="OnDutyTypes" xml:space="preserve">
+    <value>סוגי תפקידנים</value>
+  </data>
+  <data name="OnDutyTypesDescription" xml:space="preserve">
+    <value>ניהול סוגי תפקידנים מותאמים אישית. לא ניתן לשנות את סוגי ברירת המחדל (חק״מכו ומובילתו).</value>
+  </data>
+  <data name="DefaultTypes" xml:space="preserve">
+    <value>סוגי ברירת מחדל</value>
+  </data>
+  <data name="CustomTypes" xml:space="preserve">
+    <value>סוגים מותאמים אישית</value>
+  </data>
+  <data name="ValueLabel" xml:space="preserve">
+    <value>ערך</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>ברירת מחדל</value>
+  </data>
+  <data name="Custom" xml:space="preserve">
+    <value>מותאם אישית</value>
+  </data>
+  <data name="AddNewOnDutyType" xml:space="preserve">
+    <value>הוסף סוג תפקידן חדש</value>
+  </data>
+  <data name="TypeValue" xml:space="preserve">
+    <value>ערך הסוג</value>
+  </data>
+  <data name="MustBe2OrGreater" xml:space="preserve">
+    <value>חייב להיות 2 או יותר</value>
+  </data>
+  <data name="NameEnglish" xml:space="preserve">
+    <value>שם (אנגלית)</value>
+  </data>
+  <data name="NameHebrew" xml:space="preserve">
+    <value>שם (עברית)</value>
+  </data>
+  <data name="Emoji" xml:space="preserve">
+    <value>אימוג'י</value>
+  </data>
+  <data name="HexColor" xml:space="preserve">
+    <value>צבע הקס</value>
+  </data>
+  <data name="ConfirmDeleteOnDutyType" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק את סוג התפקידן '{0}'?</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>הוסף</value>
+  </data>
+  <data name="VacationType" xml:space="preserve">
+    <value>סוג חופשה</value>
+  </data>
+  <data name="RegularVacation" xml:space="preserve">
+    <value>חופשה רגילה</value>
+  </data>
+  <data name="AfterDutyVacation" xml:space="preserve">
+    <value>אפטר</value>
+  </data>
+  <data name="VacationTypeDescription" xml:space="preserve">
+    <value>חופשה רגילה מתחילה בחצות, חופשה אחרי תורנות מתחילה ב-16:00</value>
+  </data>
+  <data name="SpecificApprover" xml:space="preserve">
+    <value>מאשר ספציפי</value>
+  </data>
+  <data name="AnyManager" xml:space="preserve">
+    <value>כל מנהל</value>
+  </data>
+  <data name="ApproverDescription" xml:space="preserve">
+    <value>אופציונלי: בחר מנהל ספציפי לאישור הבקשה לשמירה על פרטיות</value>
+  </data>
+  <data name="TimeOffReasonPlaceholder" xml:space="preserve">
+    <value>סיבה אופציונלית לבקשת החופשה</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>מידע</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>אישור</value>
+  </data>
+  <data name="NoOnDutyContactManager" xml:space="preserve">
+    <value>אין תפקידן ביום זה. צור קשר עם מנהל הצוות שלך אם אתה חושב שזה לא נכון.</value>
+  </data>
+  <data name="NoChoreContactManager" xml:space="preserve">
+    <value>אין תפקיד ביום זה. צור קשר עם מנהל הצוות שלך אם אתה חושב שזה לא נכון.</value>
+  </data>
+  <data name="MyOverview" xml:space="preserve">
+    <value>הסקירה שלי</value>
+  </data>
+  <data name="Week" xml:space="preserve">
+    <value>שבוע</value>
+  </data>
+  <data name="Custom" xml:space="preserve">
+    <value>מותאם אישית</value>
+  </data>
+  <data name="TimeRangeSwitcher" xml:space="preserve">
+    <value>טווח זמן</value>
+  </data>
+  <data name="Filters" xml:space="preserve">
+    <value>מסננים</value>
+  </data>
+  <data name="Vacations" xml:space="preserve">
+    <value>חופשות</value>
+  </data>
+  <data name="OnDuty" xml:space="preserve">
+    <value>תורנות</value>
+  </data>
+  <data name="Chores" xml:space="preserve">
+    <value>תפקידים</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>היום</value>
+  </data>
+  <data name="Tomorrow" xml:space="preserve">
+    <value>מחר</value>
+  </data>
+  <data name="ThisWeek" xml:space="preserve">
+    <value>השבוע</value>
+  </data>
+  <data name="Later" xml:space="preserve">
+    <value>מאוחר יותר</value>
+  </data>
+  <data name="Past" xml:space="preserve">
+    <value>עבר</value>
+  </data>
+  <data name="Upcoming" xml:space="preserve">
+    <value>קרוב</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>הכל</value>
+  </data>
+  <data name="Past30Days" xml:space="preserve">
+    <value>30 הימים האחרונים</value>
+  </data>
+  <data name="MyStatsForThisPeriod" xml:space="preserve">
+    <value>הסטטיסטיקה שלי לתקופה זו</value>
+  </data>
+  <data name="Count" xml:space="preserve">
+    <value>כמות</value>
+  </data>
+  <data name="NothingHereYet" xml:space="preserve">
+    <value>אין כאן כלום עדיין לתקופה זו.</value>
+  </data>
+  <data name="NoItemsMatch" xml:space="preserve">
+    <value>אין פריטים התואמים את המסננים שלך.</value>
+  </data>
+  <data name="ClearFilters" xml:space="preserve">
+    <value>נקה מסננים</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>פרטים</value>
+  </data>
+  <data name="Conflict" xml:space="preserve">
+    <value>התנגשות</value>
+  </data>
+  <data name="ViewDetails" xml:space="preserve">
+    <value>הצג פרטים</value>
+  </data>
+  <data name="Legend" xml:space="preserve">
+    <value>מקרא</value>
+  </data>
+  <data name="ToggleCountHours" xml:space="preserve">
+    <value>החלף כמות/שעות</value>
+  </data>
+  <data name="Showing" xml:space="preserve">
+    <value>מציג</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>פריטים</value>
+  </data>
+  <data name="InDateRange" xml:space="preserve">
+    <value>בטווח תאריכים</value>
+  </data>
+  <data name="Vacation" xml:space="preserve">
+    <value>חופשה</value>
+  </data>
+  <data name="After" xml:space="preserve">
+    <value>אחרי</value>
+  </data>
+  <data name="OnDutyHakam" xml:space="preserve">
+    <value>תורנות חק״מכו</value>
+  </data>
+  <data name="OnDutyLead" xml:space="preserve">
+    <value>תורנות מוביל</value>
+  </data>
+  <data name="Shadowing" xml:space="preserve">
+    <value>הדרכה</value>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>ימים</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>יום</value>
   </data>
 </root>

@@ -72,7 +72,13 @@
                 </div>
             </div>
             <a href="/Requests/Index">@Localizer["Requests"]</a>
-            <a href="/Chores/Calendar">@Localizer["Chores"]</a>
+            <div class="dropdown">
+                <button class="linklike">@Localizer["Public"] ▾</button>
+                <div class="menu">
+                    <a href="/Public/Chores">@Localizer["Chores"]</a>
+                    <a href="/Public/OnDuty">@Localizer["OnDuty"]</a>
+                </div>
+            </div>
             <a href="/My/Index">@Localizer["MyShifts"]</a>
             <a href="/My/Profile">@Localizer["MyProfile"]</a>
             <a href="/My/NotificationCenter" class="notification-nav" style="position: relative;">
@@ -105,6 +111,7 @@
                     <a href="/Admin/Config">@Localizer["Config"]</a>
                     <a href="/Admin/Analytics">📊 @Localizer["Analytics"]</a>
                     <a href="/Admin/AuditLog">📋 @Localizer["AuditLog"]</a>
+                    <a href="/My/ApiKeys">🔑 @Localizer["ApiKeys"]</a>
                 </div>
             </div>
         }
@@ -118,6 +125,16 @@
                 <span class="nav-icon">📅</span>
                 <span class="nav-text">@Localizer["Schedule"]</span>
             </a>
+            <div class="dropdown">
+                <button class="linklike nav-item">
+                    <span class="nav-icon">🌐</span>
+                    <span class="nav-text">@Localizer["Public"] ▾</span>
+                </button>
+                <div class="menu">
+                    <a href="/Public/Chores">@Localizer["Chores"]</a>
+                    <a href="/Public/OnDuty">@Localizer["OnDuty"]</a>
+                </div>
+            </div>
             <a href="/My/Requests" class="nav-item">
                 <span class="nav-icon">📝</span>
                 <span class="nav-text">@Localizer["Requests"]</span>
@@ -125,6 +142,10 @@
             <a href="/My/Profile" class="nav-item">
                 <span class="nav-icon">👤</span>
                 <span class="nav-text">@Localizer["MyProfile"]</span>
+            </a>
+            <a href="/My/ApiKeys" class="nav-item">
+                <span class="nav-icon">🔑</span>
+                <span class="nav-text">@Localizer["ApiKeys"]</span>
             </a>
             <a href="/My/NotificationCenter" class="nav-item notification-nav" style="position: relative;">
                 <span class="nav-icon">🔔</span>

@@ -20,9 +20,12 @@
     <title>Access Denied - Shift Manager</title>
     <link rel="stylesheet" href="~/css/site.css" />
     <script>
-        // Automatically redirect with popup after 2 seconds
+        // Automatically redirect after 2 seconds
         setTimeout(() => {
-            window.location.href = '@Model.ReturnUrl?accessDenied=true';
+            const returnUrl = '@Model.ReturnUrl';
+            // Properly append query parameter based on whether URL already has parameters
+            const separator = returnUrl.includes('?') ? '&' : '?';
+            window.location.href = returnUrl + separator + 'accessDenied=true';
         }, 2000);
     </script>
 </head>

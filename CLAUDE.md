@@ -1,0 +1,1 @@
+- whenever you fail due to background shell still running, just take a temporary pause and ask the user to terminate the run on his own. after he does, continue working

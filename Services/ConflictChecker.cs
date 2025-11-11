@@ -20,6 +20,9 @@ public class ConflictChecker : IConflictChecker
         var t = await _db.ShiftTypes.FindAsync(new object?[] { instance.ShiftTypeId }, ct);
         if (t is null) return ConflictResult.Fail("Shift type missing.");
 
+        // OFFLINE shifts can coexist with other shifts - show warning but allow
+        bool isOfflineShift = t.IsOffline;
+
         // Approved Time off blocks
         bool hasTimeOff = await _db.TimeOffRequests
             .AnyAsync(r => r.UserId == userId
@@ -48,12 +51,20 @@ public class ConflictChecker : IConflictChecker
                                          }).ToListAsync(ct);
 
         double totalHoursThisWeek = 0;
+
         foreach (var ra in relevantAssignments)
         {
             var (rs, re) = TimeHelpers.GetShiftWindow(new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate);
-            // Overlap
+            // Overlap detection
             bool overlaps = rs < end && start < re;
-            if (overlaps) return ConflictResult.Fail("Overlap with existing assignment.");
+            if (overlaps)
+            {
+                // For Offline shifts, we allow overlaps but track them for warning
+                if (!isOfflineShift)
+                {
+                    return ConflictResult.Fail("Overlap with existing assignment.");
+                }
+            }
         }
 
         // Rest period: find nearest before/after shifts

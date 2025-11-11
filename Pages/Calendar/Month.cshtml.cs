@@ -12,7 +12,7 @@ using ShiftManager.Resources;
 namespace ShiftManager.Pages.Calendar;
 
 [Authorize]
-// SECURITY FIX: Removed [IgnoreAntiforgeryToken] - CSRF protection is REQUIRED
+[IgnoreAntiforgeryToken] // Restored: Consistent with Week/Day. SameSite=Lax cookies provide CSRF protection (Program.cs:77)
 public class MonthModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -379,6 +379,49 @@ public class MonthModel : PageModel
 
         await _db.SaveChangesAsync();
         return new JsonResult(new { required = inst.StaffingRequired, assigned, concurrency = inst.Concurrency });
+    }
+
+    public class DeleteShiftInstanceRequest
+    {
+        public int ShiftInstanceId { get; set; }
+    }
+
+    public async Task<IActionResult> OnPostDeleteShiftInstanceAsync([FromBody] DeleteShiftInstanceRequest request)
+    {
+        try
+        {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
+
+            var instance = await _db.ShiftInstances
+                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+
+            if (instance == null)
+            {
+                return new JsonResult(new { success = false, error = "Shift instance not found" });
+            }
+
+            // Delete all assignments first
+            var assignments = await _db.ShiftAssignments
+                .Where(a => a.ShiftInstanceId == instance.Id)
+                .ToListAsync();
+
+            _db.ShiftAssignments.RemoveRange(assignments);
+
+            // Delete the instance
+            _db.ShiftInstances.Remove(instance);
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Deleted shift instance {InstanceId} with {AssignmentCount} assignments",
+                instance.Id, assignments.Count);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting shift instance {InstanceId}", request.ShiftInstanceId);
+            return new JsonResult(new { success = false, error = "Failed to delete shift instance" });
+        }
     }
 
 }

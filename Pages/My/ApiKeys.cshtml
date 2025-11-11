@@ -1,0 +1,631 @@
+@page
+@model ShiftManager.Pages.My.ApiKeysModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.Api
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyApiKeys"], IsActive = true }
+})
+
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="color: var(--text); margin: 0;">@Localizer["MyApiKeys"]</h2>
+        <button type="button" onclick="showRequestModal()" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+            @Localizer["RequestNewApiKey"]
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
+            @Model.Message
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
+            @Model.Error
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.GeneratedApiKey))
+    {
+        <div class="card" style="padding: 2rem; margin-bottom: 2rem; background: var(--warning-light); border: 2px solid var(--warning);">
+            <h3 style="color: var(--warning); margin-top: 0; margin-bottom: 1rem;">⚠️ @Localizer["ApiKeyGenerated"]</h3>
+            <p style="margin-bottom: 1rem; color: var(--text);">@Localizer["ApiKeySaveWarning"]</p>
+            <div style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); font-family: monospace; word-break: break-all; margin-bottom: 1rem;">
+                @Model.GeneratedApiKey
+            </div>
+            <button type="button" onclick="copyToClipboard('@Model.GeneratedApiKey')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
+                @Localizer["CopyToClipboard"]
+            </button>
+        </div>
+    }
+
+    <!-- Active Keys Tab -->
+    <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
+        <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["ActiveApiKeys"]</h3>
+
+        @if (!Model.ActiveKeys.Any())
+        {
+            <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoActiveApiKeys"]</p>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Name"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Scopes"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Created"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["LastUsed"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var key in Model.ActiveKeys)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1rem; color: var(--text);">
+                                    <div style="font-weight: 600;">@key.Name</div>
+                                    @if (Model.IsOwner && !string.IsNullOrEmpty(key.PlainTextKey))
+                                    {
+                                        <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="user-select: all;">@key.PlainTextKey</span>
+                                            <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
+                                                📋 Copy
+                                            </button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace;">sk_••••••••</div>
+                                    }
+                                </td>
+                                <td style="padding: 1rem;">
+                                    @foreach (var scope in key.Scopes.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <span style="display: inline-block; background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; margin: 0.1rem;">@scope.Trim()</span>
+                                    }
+                                </td>
+                                <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                    @key.CreatedAt.ToString("MMM dd, yyyy")
+                                </td>
+                                <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                    @(key.LastUsedAt.HasValue ? key.LastUsedAt.Value.ToString("MMM dd, yyyy") : Localizer["Never"])
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <form method="post" asp-page-handler="Refresh" style="display: inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="keyId" value="@key.Id" />
+                                            <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                                🔄 Refresh
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Revoke" style="display: inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="keyId" value="@key.Id" />
+                                            <button type="submit" onclick="return confirm('@Localizer["ConfirmRevokeKey"]')" style="background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                                @Localizer["Revoke"]
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Pending Requests Tab -->
+    <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
+        <h3 style="color: var(--warning); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["PendingRequests"]</h3>
+
+        @if (!Model.PendingRequests.Any())
+        {
+            <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoPendingRequests"]</p>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Name"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["RequestedScopes"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["RequestedDate"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Status"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model.PendingRequests)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1rem; color: var(--text);">
+                                    <div style="font-weight: 600;">@request.Name</div>
+                                    <div style="font-size: 0.85rem; color: var(--muted);">@request.Description</div>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    @foreach (var scope in request.RequestedScopes.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <span style="display: inline-block; background: var(--muted-light); color: var(--muted); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; margin: 0.1rem;">@scope.Trim()</span>
+                                    }
+                                </td>
+                                <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                    @request.RequestedAt.ToString("MMM dd, yyyy HH:mm")
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <span style="display: inline-block; background: var(--warning-light); color: var(--warning); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.85rem; font-weight: 600;">
+                                        @Localizer["Pending"]
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Request History Tab -->
+    <div class="card" style="padding: 2rem;">
+        <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RequestHistory"]</h3>
+
+        @if (!Model.AllRequests.Any())
+        {
+            <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoRequestHistory"]</p>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Name"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["RequestedDate"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["ReviewedDate"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Status"]</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Notes"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model.AllRequests)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1rem; color: var(--text);">
+                                    <div style="font-weight: 600;">@request.Name</div>
+                                </td>
+                                <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                    @request.RequestedAt.ToString("MMM dd, yyyy")
+                                </td>
+                                <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                    @(request.ReviewedAt.HasValue ? request.ReviewedAt.Value.ToString("MMM dd, yyyy") : "-")
+                                </td>
+                                <td style="padding: 1rem;">
+                                    @{
+                                        var (bgColor, textColor, statusText) = request.Status switch
+                                        {
+                                            ApiKeyRequestStatus.Approved => ("var(--success-light)", "var(--success)", Localizer["Approved"].Value),
+                                            ApiKeyRequestStatus.Rejected => ("var(--danger-light)", "var(--danger)", Localizer["Rejected"].Value),
+                                            ApiKeyRequestStatus.Pending => ("var(--warning-light)", "var(--warning)", Localizer["Pending"].Value),
+                                            _ => ("var(--muted-light)", "var(--muted)", request.Status.ToString())
+                                        };
+                                    }
+                                    <span style="display: inline-block; background: @bgColor; color: @textColor; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.85rem; font-weight: 600;">
+                                        @statusText
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem; color: var(--muted); font-size: 0.9rem;">
+                                    @(request.ReviewNotes ?? "-")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Admin Section (Only visible to Owner/Manager/Director) -->
+    @if (Model.IsAdmin)
+    {
+        <div style="margin-top: 3rem; padding-top: 3rem; border-top: 3px solid var(--border);">
+            <h2 style="color: var(--primary); margin-bottom: 1.5rem;">🔐 @Localizer["AdminPanel"]</h2>
+            <p style="color: var(--muted); margin-bottom: 2rem;">@Localizer["AdminApiKeyManagementDescription"]</p>
+
+            <!-- Pending Requests for Review -->
+            <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
+                <h3 style="color: var(--warning); margin-top: 0; margin-bottom: 1.5rem;">
+                    @Localizer["PendingRequestsReview"] (@Model.AllPendingRequests.Count)
+                </h3>
+
+                @if (!Model.AllPendingRequests.Any())
+                {
+                    <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoPendingRequests"]</p>
+                }
+                else
+                {
+                    @foreach (var request in Model.AllPendingRequests)
+                    {
+                        <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--warning); background: var(--warning-light);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <div>
+                                    <h4 style="color: var(--text); margin: 0 0 0.5rem 0;">@request.Name</h4>
+                                    <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
+                                        Requested by <strong>@request.RequestedByUser?.DisplayName</strong> (@request.RequestedByUser?.Email)
+                                    </p>
+                                    <p style="color: var(--muted); margin: 0.25rem 0 0 0; font-size: 0.85rem;">
+                                        @request.RequestedAt.ToString("MMM dd, yyyy HH:mm")
+                                    </p>
+                                </div>
+                                <span style="background: var(--warning); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                                    @Localizer["Pending"]
+                                </span>
+                            </div>
+
+                            <div style="margin-bottom: 1rem;">
+                                <strong style="color: var(--text); display: block; margin-bottom: 0.5rem;">@Localizer["Description"]:</strong>
+                                <p style="color: var(--text); margin: 0; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; border: 1px solid var(--border);">
+                                    @request.Description
+                                </p>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <strong style="color: var(--text); display: block; margin-bottom: 0.5rem;">@Localizer["RequestedScopes"]:</strong>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    @foreach (var scope in request.RequestedScopes.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <span style="background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.85rem;">@scope.Trim()</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" onclick="showApproveModal(@request.Id, '@request.Name', '@request.RequestedScopes')" style="flex: 1; background: var(--success); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                                    ✓ @Localizer["Approve"]
+                                </button>
+                                <button type="button" onclick="showRejectModal(@request.Id, '@request.Name')" style="flex: 1; background: var(--danger); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                                    ✗ @Localizer["Reject"]
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <!-- All Company Keys -->
+            <div class="card" style="padding: 2rem;">
+                <h3 style="color: var(--success); margin-top: 0; margin-bottom: 1.5rem;">
+                    @Localizer["AllCompanyApiKeys"] (@Model.AllKeys.Count(k => k.IsActive))
+                </h3>
+
+                @if (!Model.AllKeys.Any(k => k.IsActive))
+                {
+                    <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoActiveApiKeys"]</p>
+                }
+                else
+                {
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border);">
+                                    <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Name"]</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["ApiKey"]</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Owner"]</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Scopes"]</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Created"]</th>
+                                    <th style="text-align: left; padding: 1rem; color: var(--text); font-weight: 600;">@Localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var key in Model.AllKeys.Where(k => k.IsActive))
+                                {
+                                    <tr style="border-bottom: 1px solid var(--border);">
+                                        <td style="padding: 1rem; color: var(--text);">
+                                            <div style="font-weight: 600;">@key.Name</div>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            @if (Model.IsOwner && !string.IsNullOrEmpty(key.PlainTextKey))
+                                            {
+                                                <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
+                                                    <span style="user-select: all; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@key.PlainTextKey</span>
+                                                    <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;">
+                                                        📋 Copy
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace;">sk_••••••••</div>
+                                            }
+                                        </td>
+                                        <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                            @key.CreatedByUser?.DisplayName
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            @foreach (var scope in key.Scopes.Split(',', StringSplitOptions.RemoveEmptyEntries).Take(3))
+                                            {
+                                                <span style="display: inline-block; background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; margin: 0.1rem;">@scope.Trim()</span>
+                                            }
+                                            @if (key.Scopes.Split(',', StringSplitOptions.RemoveEmptyEntries).Length > 3)
+                                            {
+                                                <span style="display: inline-block; color: var(--muted); font-size: 0.8rem; margin-left: 0.25rem;">+@(key.Scopes.Split(',', StringSplitOptions.RemoveEmptyEntries).Length - 3)</span>
+                                            }
+                                        </td>
+                                        <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
+                                            @key.CreatedAt.ToString("MMM dd, yyyy")
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            <button type="button" onclick="showRevokeAdminModal(@key.Id, '@key.Name')" style="background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                                @Localizer["Revoke"]
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Request Modal -->
+<div id="requestModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; padding: 2rem; position: relative;">
+        <button type="button" onclick="hideRequestModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">&times;</button>
+
+        <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RequestNewApiKey"]</h3>
+
+        <form method="post" asp-page-handler="Request">
+            @Html.AntiForgeryToken()
+            <div style="margin-bottom: 1rem;">
+                <label for="name" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["KeyName"]</label>
+                <input type="text" name="name" id="name" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" placeholder="@Localizer["KeyNamePlaceholder"]" />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="description" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["Description"]</label>
+                <textarea name="description" id="description" required rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="@Localizer["ApiKeyDescriptionPlaceholder"]"></textarea>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["RequestedScopes"]</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="user:read" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">user:read</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="user:write" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">user:write</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="shift:read" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">shift:read</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="time-off-request:read" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">time-off:read</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="time-off-request:write" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">time-off:write</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="notification:read" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">notification:read</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="notification:write" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">notification:write</span>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="scopes" value="analytics:read" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--text);">analytics:read</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    @Localizer["SubmitRequest"]
+                </button>
+                <button type="button" onclick="hideRequestModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    @Localizer["Cancel"]
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Admin Approve Modal -->
+<div id="approveModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; padding: 2rem; position: relative;">
+        <button type="button" onclick="hideApproveModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">&times;</button>
+
+        <h3 style="color: var(--success); margin-top: 0; margin-bottom: 1.5rem;">✓ @Localizer["ApproveApiKeyRequest"]</h3>
+
+        <form method="post" asp-page-handler="Approve">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="approve-requestId" name="requestId" />
+
+            <div style="margin-bottom: 1rem; padding: 1rem; background: var(--success-light); border-radius: 0.5rem;">
+                <strong style="color: var(--text);">@Localizer["KeyName"]:</strong> <span id="approve-keyName" style="color: var(--text);"></span>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="approve-scopes" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["ApprovedScopes"]</label>
+                <input type="text" name="approvedScopes" id="approve-scopes" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" placeholder="user:read,shift:read" />
+                <small style="color: var(--muted); font-size: 0.85rem;">@Localizer["ScopesEditableHint"]</small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="rateLimitPerMinute" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["RateLimitPerMinute"]</label>
+                <input type="number" name="rateLimitPerMinute" id="rateLimitPerMinute" value="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="expiresInDays" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["ExpiresInDays"]</label>
+                <input type="number" name="expiresInDays" id="expiresInDays" placeholder="Never expires" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="approve-reviewNotes" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["ReviewNotes"]</label>
+                <textarea name="reviewNotes" id="approve-reviewNotes" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="Optional notes about the approval"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: var(--success); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    ✓ @Localizer["ApproveAndGenerateKey"]
+                </button>
+                <button type="button" onclick="hideApproveModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    @Localizer["Cancel"]
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Admin Reject Modal -->
+<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; padding: 2rem; position: relative;">
+        <button type="button" onclick="hideRejectModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">&times;</button>
+
+        <h3 style="color: var(--danger); margin-top: 0; margin-bottom: 1.5rem;">✗ @Localizer["RejectApiKeyRequest"]</h3>
+
+        <form method="post" asp-page-handler="Reject">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="reject-requestId" name="requestId" />
+
+            <div style="margin-bottom: 1rem; padding: 1rem; background: var(--danger-light); border-radius: 0.5rem;">
+                <strong style="color: var(--text);">@Localizer["KeyName"]:</strong> <span id="reject-keyName" style="color: var(--text);"></span>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="reject-reviewNotes" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["RejectionReason"] *</label>
+                <textarea name="reviewNotes" id="reject-reviewNotes" required rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="Why is this request being rejected?"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: var(--danger); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    ✗ @Localizer["RejectRequest"]
+                </button>
+                <button type="button" onclick="hideRejectModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    @Localizer["Cancel"]
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Admin Revoke Modal -->
+<div id="revokeAdminModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; padding: 2rem; position: relative;">
+        <button type="button" onclick="hideRevokeAdminModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">&times;</button>
+
+        <h3 style="color: var(--danger); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RevokeApiKey"]</h3>
+
+        <form method="post" asp-page-handler="RevokeAdmin">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="revoke-admin-keyId" name="keyId" />
+
+            <div style="margin-bottom: 1rem; padding: 1rem; background: var(--danger-light); border-radius: 0.5rem;">
+                <strong style="color: var(--text);">@Localizer["KeyName"]:</strong> <span id="revoke-admin-keyName" style="color: var(--text);"></span>
+            </div>
+
+            <p style="color: var(--text); margin-bottom: 1.5rem;">@Localizer["RevokeApiKeyWarning"]</p>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="revoke-admin-reason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["Reason"]</label>
+                <textarea name="reason" id="revoke-admin-reason" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="Why is this key being revoked?"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: var(--danger); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    @Localizer["RevokeKey"]
+                </button>
+                <button type="button" onclick="hideRevokeAdminModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                    @Localizer["Cancel"]
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showRequestModal() {
+        document.getElementById('requestModal').style.display = 'flex';
+    }
+
+    function hideRequestModal() {
+        document.getElementById('requestModal').style.display = 'none';
+    }
+
+    // Admin modal functions
+    function showApproveModal(requestId, keyName, scopes) {
+        document.getElementById('approve-requestId').value = requestId;
+        document.getElementById('approve-keyName').textContent = keyName;
+        document.getElementById('approve-scopes').value = scopes;
+        document.getElementById('approveModal').style.display = 'flex';
+    }
+
+    function hideApproveModal() {
+        document.getElementById('approveModal').style.display = 'none';
+    }
+
+    function showRejectModal(requestId, keyName) {
+        document.getElementById('reject-requestId').value = requestId;
+        document.getElementById('reject-keyName').textContent = keyName;
+        document.getElementById('rejectModal').style.display = 'flex';
+    }
+
+    function hideRejectModal() {
+        document.getElementById('rejectModal').style.display = 'none';
+    }
+
+    function showRevokeAdminModal(keyId, keyName) {
+        document.getElementById('revoke-admin-keyId').value = keyId;
+        document.getElementById('revoke-admin-keyName').textContent = keyName;
+        document.getElementById('revokeAdminModal').style.display = 'flex';
+    }
+
+    function hideRevokeAdminModal() {
+        document.getElementById('revokeAdminModal').style.display = 'none';
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('@Localizer["CopiedToClipboard"]');
+        }, function(err) {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            hideRequestModal();
+        }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('requestModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            hideRequestModal();
+        }
+    });
+</script>

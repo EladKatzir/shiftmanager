@@ -274,8 +274,8 @@ public class UsersModel : PageModel
         if (NewDisplayName.Length > 200)
         { Error = "Display name must not exceed 200 characters."; return Page(); }
 
-        if (NewPassword.Length < 8)
-        { Error = "Password must be at least 8 characters."; return Page(); }
+        if (NewPassword.Length < 6)
+        { Error = "Password must be at least 6 characters."; return Page(); }
 
         if (NewPassword.Length > 128)
         { Error = "Password must not exceed 128 characters."; return Page(); }
@@ -494,9 +494,9 @@ public class UsersModel : PageModel
             return RedirectToPage();
         }
 
-        if (newPassword.Length < 8)
+        if (newPassword.Length < 6)
         {
-            TempData["ErrorMessage"] = "Password must be at least 8 characters.";
+            TempData["ErrorMessage"] = "Password must be at least 6 characters.";
             return RedirectToPage();
         }
 

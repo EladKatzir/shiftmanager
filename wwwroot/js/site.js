@@ -41,7 +41,18 @@ async function adjustStaffing(url, payload, onOk, onError) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
+
+    // Try to parse as JSON, fallback to text if it fails
+    let data;
+    const contentType = res.headers.get('content-type');
+    try {
+      data = contentType && contentType.includes('application/json')
+        ? await res.json()
+        : { message: await res.text() };
+    } catch (parseError) {
+      console.warn('Failed to parse response, using text:', parseError);
+      data = { message: await res.text() };
+    }
 
     if (res.ok) {
       // Success animation
@@ -155,6 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(tooltipPortal);
 
   document.addEventListener('mouseenter', (e) => {
+    // Ensure e.target is an Element before calling closest()
+    if (!(e.target instanceof Element)) return;
+
     const tooltip = e.target.closest('.assignment-tooltip');
     if (!tooltip) return;
 
@@ -454,12 +468,21 @@ async function createShift() {
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || 'Failed to create shift');
+    // Try to parse as JSON, fallback to text if it fails
+    let data;
+    const contentType = res.headers.get('content-type');
+    try {
+      data = contentType && contentType.includes('application/json')
+        ? await res.json()
+        : { message: await res.text() };
+    } catch (parseError) {
+      console.warn('Failed to parse response, using text:', parseError);
+      data = { message: await res.text() };
     }
 
-    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to create shift');
+    }
 
     // If shift name is provided, update it through assignment
     if (shiftName) {
@@ -632,4 +655,44 @@ function showAccessDeniedPopup() {
 
   // Auto-close after 5 seconds
   setTimeout(closePopup, 5000);
+}
+
+// ============= SHIFT INSTANCE DELETION =============
+
+/**
+ * Delete a shift instance and all its assignments
+ * @param {string} pageUrl - The page URL (e.g., '/Calendar/Month', '/Calendar/Week', '/Calendar/Day')
+ * @param {number} instanceId - The shift instance ID to delete
+ * @param {Event} event - The click event
+ */
+async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
+    event.stopPropagation();
+
+    if (!confirm('Are you sure you want to delete this shift? All assignments will be removed.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${pageUrl}?handler=DeleteShiftInstance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Reload page to show updated state
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error deleting shift instance:', error);
+        alert('Failed to delete shift. Please try again.');
+    }
 }

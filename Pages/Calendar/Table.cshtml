@@ -263,6 +263,38 @@
     background-color: var(--bg);
 }
 
+/* Busy user indicators with color coding */
+.employee-option.busy-vacation {
+    background-color: #cce5ff !important;
+    color: #004085 !important;
+    border-left: 4px solid #007bff;
+}
+
+.employee-option.busy-shift {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border-left: 4px solid #dc3545;
+}
+
+.employee-option.busy-chore {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border-left: 4px solid #ffc107;
+}
+
+/* Hover states for busy indicators (slightly darker) */
+.employee-option.busy-vacation:hover {
+    background-color: #b3d7ff !important;
+}
+
+.employee-option.busy-shift:hover {
+    background-color: #f5c6cb !important;
+}
+
+.employee-option.busy-chore:hover {
+    background-color: #ffe69c !important;
+}
+
 .nav-buttons {
     display: flex;
     gap: 0.5rem;
@@ -528,7 +560,7 @@
                     <td class="shift-name-col">
                         <div class="shift-row-header">
                             <div class="shift-metadata" id="metadata-@shiftType.Id">
-                                <strong>@shiftType.Name</strong>
+                                <strong>@(shiftType.Key.StartsWith("CUSTOM_") ? shiftType.Name : Localizer[$"ShiftType_{shiftType.Key}"].Value)</strong>
                                 <small style="color: #666;">@shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")</small>
                             </div>
                             <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
@@ -716,6 +748,9 @@ let currentAmount = 1;
 let currentCell = null;
 const MAX_AMOUNT = 10;
 const MIN_AMOUNT = 1;
+
+// Busy users data per date (serialized from server)
+const busyUsersByDate = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BusyUsersByDate));
 
 // Localized strings (using Html.Raw to prevent HTML encoding of Hebrew/special characters)
 const i18n = {
@@ -1066,6 +1101,23 @@ function showEmployeeDropdown(callback) {
             newOption.style.display = 'none';
         } else {
             newOption.style.display = 'block';
+
+            // Apply busy status if we have date information
+            const cellDate = cell ? cell.getAttribute('data-date') : null;
+            if (cellDate && busyUsersByDate[cellDate]) {
+                const busyStatus = busyUsersByDate[cellDate][employeeId];
+                if (busyStatus) {
+                    // Apply CSS class based on busy reason
+                    if (busyStatus.CssClass) {
+                        newOption.classList.add(busyStatus.CssClass);
+                    }
+                    // Update display text to show busy status
+                    const employeeName = newOption.getAttribute('data-employee-name');
+                    if (busyStatus.DisplayText) {
+                        newOption.textContent = `${employeeName} (${busyStatus.DisplayText})`;
+                    }
+                }
+            }
 
             newOption.addEventListener('click', function(e) {
                 e.stopPropagation();

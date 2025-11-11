@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Models;
+using ShiftManager.Models.Api;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
 
@@ -31,6 +32,15 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
     public DbSet<Chore> Chores => Set<Chore>();
+
+    // Public/Global Tables (no CompanyId, visible across all tenancies)
+    public DbSet<OnDuty> OnDuties => Set<OnDuty>();
+    public DbSet<OnDutyTypeConfig> OnDutyTypeConfigs => Set<OnDutyTypeConfig>();
+
+    // API Sidecar Tables (no query filters - not tenant-scoped in traditional sense)
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<ApiKeyRequest> ApiKeyRequests => Set<ApiKeyRequest>();
+    public DbSet<ApiRequestLog> ApiRequestLogs => Set<ApiRequestLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -103,23 +113,29 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<DirectorCompany>()
             .HasIndex(dc => dc.UserId); // For querying companies of a director
 
+        // Configure DirectorCompany relationships as optional to avoid EF10622 warning
+        // Since AppUser has a global query filter and DirectorCompany is cross-tenant,
+        // we mark navigations as optional to acknowledge they might be filtered
         modelBuilder.Entity<DirectorCompany>()
             .HasOne(dc => dc.User)
             .WithMany()
             .HasForeignKey(dc => dc.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters
 
         modelBuilder.Entity<DirectorCompany>()
             .HasOne(dc => dc.Company)
             .WithMany()
             .HasForeignKey(dc => dc.CompanyId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters
 
         modelBuilder.Entity<DirectorCompany>()
             .HasOne(dc => dc.GrantedByUser)
             .WithMany()
             .HasForeignKey(dc => dc.GrantedBy)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters
 
         // Configure UserJoinRequest
         modelBuilder.Entity<UserJoinRequest>()
@@ -244,6 +260,51 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Configure OnDuty (Global/Public Table - No CompanyId)
+        modelBuilder.Entity<OnDuty>()
+            .Property(o => o.Date).HasConversion(dateConverter);
+
+        // Index for querying on-duty by user and date
+        modelBuilder.Entity<OnDuty>()
+            .HasIndex(o => new { o.UserId, o.Date });
+
+        // Index for querying by date (for calendar views)
+        modelBuilder.Entity<OnDuty>()
+            .HasIndex(o => o.Date);
+
+        // Index for querying by date and type
+        modelBuilder.Entity<OnDuty>()
+            .HasIndex(o => new { o.Date, o.Type });
+
+        // Unique constraint: Only one active on-duty per user per day per type
+        // Filter ensures canceled on-duty assignments don't count toward uniqueness
+        modelBuilder.Entity<OnDuty>()
+            .HasIndex(o => new { o.UserId, o.Date, o.Type, o.CanceledAt })
+            .IsUnique()
+            .HasFilter("[CanceledAt] IS NULL");
+
+        // Configure relationships
+        modelBuilder.Entity<OnDuty>()
+            .HasOne(o => o.User)
+            .WithMany()
+            .HasForeignKey(o => o.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters on AppUser
+
+        modelBuilder.Entity<OnDuty>()
+            .HasOne(o => o.Creator)
+            .WithMany()
+            .HasForeignKey(o => o.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters on AppUser
+
+        modelBuilder.Entity<OnDuty>()
+            .HasOne(o => o.Canceler)
+            .WithMany()
+            .HasForeignKey(o => o.CanceledBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters on AppUser
+
         // Multitenancy Phase 2: Global query filters for automatic tenant scoping
         if (_tenantResolver != null)
         {
@@ -288,7 +349,85 @@ public class AppDbContext : DbContext
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
+            // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
         }
+
+        // Configure OnDutyTypeConfig (Global Table - No query filter)
+        modelBuilder.Entity<OnDutyTypeConfig>()
+            .HasIndex(c => c.TypeValue)
+            .IsUnique();
+
+        modelBuilder.Entity<OnDutyTypeConfig>()
+            .HasIndex(c => new { c.TypeValue, c.IsActive });
+
+        // API Tables Configuration
+        modelBuilder.Entity<ApiKey>()
+            .HasIndex(k => k.CompanyId);
+
+        modelBuilder.Entity<ApiKey>()
+            .HasIndex(k => k.KeyHash).IsUnique();
+
+        modelBuilder.Entity<ApiKey>()
+            .HasOne(k => k.Company)
+            .WithMany()
+            .HasForeignKey(k => k.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ApiKey>()
+            .HasOne(k => k.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(k => k.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters
+
+        modelBuilder.Entity<ApiRequestLog>()
+            .HasIndex(l => new { l.CompanyId, l.Timestamp });
+
+        modelBuilder.Entity<ApiRequestLog>()
+            .HasIndex(l => new { l.ApiKeyId, l.Timestamp });
+
+        modelBuilder.Entity<ApiRequestLog>()
+            .HasIndex(l => l.CorrelationId);
+
+        modelBuilder.Entity<ApiRequestLog>()
+            .HasOne(l => l.ApiKey)
+            .WithMany()
+            .HasForeignKey(l => l.ApiKeyId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure ApiKeyRequest
+        modelBuilder.Entity<ApiKeyRequest>()
+            .HasIndex(r => new { r.CompanyId, r.Status, r.RequestedAt });
+
+        modelBuilder.Entity<ApiKeyRequest>()
+            .HasIndex(r => new { r.RequestedBy, r.Status });
+
+        modelBuilder.Entity<ApiKeyRequest>()
+            .HasOne(r => r.Company)
+            .WithMany()
+            .HasForeignKey(r => r.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ApiKeyRequest>()
+            .HasOne(r => r.RequestedByUser)
+            .WithMany()
+            .HasForeignKey(r => r.RequestedBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Optional due to query filters on AppUser
+
+        modelBuilder.Entity<ApiKeyRequest>()
+            .HasOne(r => r.ReviewedByUser)
+            .WithMany()
+            .HasForeignKey(r => r.ReviewedBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<ApiKeyRequest>()
+            .HasOne(r => r.GeneratedApiKey)
+            .WithMany()
+            .HasForeignKey(r => r.GeneratedApiKeyId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
 
         base.OnModelCreating(modelBuilder);
     }

@@ -14,13 +14,218 @@
     new BreadcrumbItem { Label = Localizer["Config"], IsActive = true }
 })
 
+<style>
+.config-section {
+    margin-bottom: 2rem;
+}
+.config-section h3 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+.type-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.type-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.type-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.type-icon {
+    font-size: 2rem;
+}
+.type-names {
+    display: flex;
+    flex-direction: column;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal.active {
+    display: flex;
+}
+.modal-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.5rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+</style>
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert alert-success">@Model.Success</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
 <h2>@Localizer["Config"]</h2>
-<div class="card" style="max-width:580px">
-    <form method="post">
-        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:.5rem; align-items:end">
-            <label>@Localizer["RestHours"]<br /><input class="input" asp-for="RestHours" type="number" min="0" /></label>
-            <label>@Localizer["WeeklyCap"]<br /><input class="input" asp-for="WeeklyCap" type="number" min="0" /></label>
-            <button class="btn btn-primary" type="submit">@Localizer["Save"]</button>
-        </div>
-    </form>
+
+<!-- Company Settings Section -->
+<div class="config-section">
+    <h3>⚙️ @Localizer["CompanySettings"]</h3>
+    <div class="card" style="max-width:680px">
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:.5rem; align-items:end">
+                <label>@Localizer["RestHours"]<br /><input class="input" asp-for="RestHours" type="number" min="0" /></label>
+                <label>@Localizer["WeeklyCap"]<br /><input class="input" asp-for="WeeklyCap" type="number" min="0" /></label>
+                <button class="btn btn-primary" type="submit">@Localizer["Save"]</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<!-- OnDuty Types Section -->
+<div class="config-section">
+    <h3>📋 @Localizer["OnDutyTypes"]</h3>
+    <div class="card">
+        <p style="color: var(--muted); margin-bottom: 1rem;">
+            @Localizer["OnDutyTypesDescription"]
+        </p>
+
+        <!-- Default Types (Read-only) -->
+        <h4 style="margin-bottom: 0.5rem;">@Localizer["DefaultTypes"]</h4>
+        <div style="margin-bottom: 1.5rem;">
+            <div class="type-item">
+                <div class="type-info">
+                    <span class="type-icon">🛡️</span>
+                    <div class="type-names">
+                        <strong>@Localizer["OnDutyHakam"]</strong>
+                        <span style="color: var(--muted);">@Localizer["ValueLabel"]: 0</span>
+                    </div>
+                </div>
+                <span class="type-badge" style="background: #8b5cf6; color: white;">@Localizer["Default"]</span>
+            </div>
+            <div class="type-item">
+                <div class="type-info">
+                    <span class="type-icon">⭐</span>
+                    <div class="type-names">
+                        <strong>@Localizer["OnDutyLead"]</strong>
+                        <span style="color: var(--muted);">@Localizer["ValueLabel"]: 1</span>
+                    </div>
+                </div>
+                <span class="type-badge" style="background: #f59e0b; color: white;">@Localizer["Default"]</span>
+            </div>
+        </div>
+
+        <!-- Custom Types -->
+        @if (Model.OnDutyTypes.Any())
+        {
+            <h4 style="margin-bottom: 0.5rem;">@Localizer["CustomTypes"]</h4>
+            @foreach (var type in Model.OnDutyTypes)
+            {
+                <div class="type-item">
+                    <div class="type-info">
+                        <span class="type-icon">@type.Icon</span>
+                        <div class="type-names">
+                            <strong>@type.NameEn / @type.NameHe</strong>
+                            <span style="color: var(--muted);">@Localizer["ValueLabel"]: @type.TypeValue</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="type-badge" style="background: @type.Color; color: white;">@Localizer["Custom"]</span>
+                        <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;"
+                              onsubmit="return confirm('@Localizer["ConfirmDeleteOnDutyType", type.NameEn]');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="typeId" value="@type.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">@Localizer["Delete"]</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- Add New Type Button -->
+        <button class="btn btn-success" style="margin-top: 1rem;" onclick="openAddTypeModal()">
+            ➕ @Localizer["AddNewOnDutyType"]
+        </button>
+    </div>
+</div>
+
+<!-- Add OnDuty Type Modal -->
+<div id="addTypeModal" class="modal">
+    <div class="modal-content">
+        <h3>@Localizer["AddNewOnDutyType"]</h3>
+        <form method="post" asp-page-handler="AddOnDutyType">
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">@Localizer["TypeValue"] (@Localizer["MustBe2OrGreater"])</label>
+                <input type="number" name="TypeValue" class="input" min="2" required />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">@Localizer["NameEnglish"]</label>
+                <input type="text" name="NameEn" class="input" maxlength="100" required />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">@Localizer["NameHebrew"]</label>
+                <input type="text" name="NameHe" class="input" maxlength="100" required />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">@Localizer["Icon"] (@Localizer["Emoji"])</label>
+                <input type="text" name="Icon" class="input" value="📌" maxlength="10" />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">@Localizer["Color"] (@Localizer["HexColor"])</label>
+                <input type="color" name="Color" class="input" value="#6366f1" />
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeAddTypeModal()">@Localizer["Cancel"]</button>
+                <button type="submit" class="btn btn-primary">@Localizer["Add"]</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAddTypeModal() {
+    document.getElementById('addTypeModal').classList.add('active');
+}
+
+function closeAddTypeModal() {
+    document.getElementById('addTypeModal').classList.remove('active');
+}
+
+// Close modal on backdrop click
+document.getElementById('addTypeModal').addEventListener('click', (e) => {
+    if (e.target.id === 'addTypeModal') {
+        closeAddTypeModal();
+    }
+});
+</script>

@@ -14,6 +14,26 @@
     new BreadcrumbItem { Label = Localizer["DayView"], IsActive = true }
 })
 
+<style>
+.shift-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 16px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.shift-delete-btn:hover {
+    background: var(--danger);
+    color: white;
+    opacity: 1;
+    border-radius: 4px;
+}
+</style>
+
 <div class="calendar-header">
     <div>
         <h2 style="margin: 0; font-size: 1.5rem; color: var(--text);">
@@ -54,7 +74,7 @@
     @foreach (var l in Model.Lines)
     {
         var badgeClass = l.Assigned >= l.Required ? "ok" : "warn";
-        var hasActivity = l.Required > 0 || l.Assigned > 0;
+        var hasActivity = l.InstanceId > 0; // Show all shifts with instances, including zero-assignment shifts
         var shiftClass = hasActivity ? "day-shift active" : "day-shift";
 
         <div class="@shiftClass">
@@ -64,12 +84,12 @@
                         @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
                         {
                             <a href="/Assignments/Manage?date=@Model.CurrentDate.ToString("yyyy-MM-dd")&shiftTypeId=@l.ShiftTypeId&returnUrl=@Uri.EscapeDataString("/Calendar/Day?year=" + Model.CurrentDate.Year + "&month=" + Model.CurrentDate.Month + "&day=" + Model.CurrentDate.Day)">
-                                <span class="shift-badge @l.ShiftTypeKey large">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"]</span>
+                                <span class="shift-badge @l.ShiftTypeKey large">@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value)</span>
                             </a>
                         }
                         else
                         {
-                            <span class="shift-badge @l.ShiftTypeKey large employee-badge">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"]</span>
+                            <span class="shift-badge @l.ShiftTypeKey large employee-badge">@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value)</span>
                         }
                         <div class="tooltip-content">
                             <div class="tooltip-header">
@@ -77,11 +97,11 @@
                                     @if (!string.IsNullOrEmpty(l.ShiftName))
                                     {
                                         @l.ShiftName
-                                        <span class="tooltip-custom-name">(@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"])</span>
+                                        <span class="tooltip-custom-name">(@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value))</span>
                                     }
                                     else
                                     {
-                                        @Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"]
+                                        @(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value)
                                     }
                                 </div>
                                 <div class="tooltip-hours">@l.StartTimeString - @l.EndTimeString</div>
@@ -145,7 +165,7 @@
                         {
                             <div class="shift-name-display">
                                 <h4 style="margin: 0; color: var(--primary); font-size: 1.1rem;">
-                                    @Localizer[$"ShiftType_{l.ShiftTypeKey}"].Value.ToLower()-'@l.ShiftName'
+                                    @(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName.ToLower() : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.ToLower())-'@l.ShiftName'
                                 </h4>
                             </div>
                         }
@@ -179,6 +199,12 @@
                                     <button class="counter-btn large" aria-label="Increase required staffing"
                                         onclick="window.adjustStaffing('@Url.Page("Day", "Adjust")', { date: '@Model.CurrentDate.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:1, concurrency:@l.Concurrency, companyId: (window.shiftTypes.find(t => t.id === @l.ShiftTypeId) || {}).companyId }, (d)=>{ location.reload(); }, (e)=>alert(e.message))">+</button>
                                 </div>
+                                @if (l.InstanceId > 0)
+                                {
+                                    <button class="shift-delete-btn" onclick="confirmDeleteShiftInstance('/Calendar/Day', @l.InstanceId, event)" aria-label="Delete Shift" title="Delete this shift and all assignments">
+                                        🗑️
+                                    </button>
+                                }
                             }
 
                             @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))

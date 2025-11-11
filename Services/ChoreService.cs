@@ -56,7 +56,7 @@ public class ChoreService : IChoreService
     }
 
     /// <summary>
-    /// Check if current user can manage chores (Manager+)
+    /// Check if current user can manage chores (Manager+, Assigner)
     /// </summary>
     public async Task<bool> CanUserManageChoresAsync(int userId)
     {
@@ -65,7 +65,8 @@ public class ChoreService : IChoreService
 
         return user.Role == UserRole.Owner ||
                user.Role == UserRole.Director ||
-               user.Role == UserRole.Manager;
+               user.Role == UserRole.Manager ||
+               user.Role == UserRole.Assigner;
     }
 
     /// <summary>
@@ -73,6 +74,7 @@ public class ChoreService : IChoreService
     /// - Manager can assign to employees and other managers in their company
     /// - Directors cannot be assigned chores
     /// - Directors can assign across companies they manage
+    /// - Assigner can only assign within their own company
     /// </summary>
     public async Task<bool> CanUserManageChoreForAssigneeAsync(int managerId, int assigneeId)
     {
@@ -93,8 +95,8 @@ public class ChoreService : IChoreService
             return await _directorService.CanManageCompanyAsync(assignee.CompanyId);
         }
 
-        // Manager can only assign within their own company
-        if (manager.Role == UserRole.Manager)
+        // Manager and Assigner can only assign within their own company
+        if (manager.Role == UserRole.Manager || manager.Role == UserRole.Assigner)
         {
             return manager.CompanyId == assignee.CompanyId;
         }
@@ -129,9 +131,9 @@ public class ChoreService : IChoreService
             query = _db.Users.IgnoreQueryFilters()
                 .Where(u => u.IsActive && u.Role != UserRole.Director && companyIds.Contains(u.CompanyId));
         }
-        else if (currentUser.Role == UserRole.Manager)
+        else if (currentUser.Role == UserRole.Manager || currentUser.Role == UserRole.Assigner)
         {
-            // Managers see users in their own company only
+            // Managers and Assigners see users in their own company only
             // Note: AppUser doesn't have query filter, so we must explicitly filter by CompanyId
             query = _db.Users
                 .Where(u => u.IsActive && u.Role != UserRole.Director && u.CompanyId == currentUser.CompanyId);

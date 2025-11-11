@@ -15,6 +15,26 @@
     new BreadcrumbItem { Label = Localizer["MonthView"], IsActive = true }
 })
 
+<style>
+.shift-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 16px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.shift-delete-btn:hover {
+    background: var(--danger);
+    color: white;
+    opacity: 1;
+    border-radius: 4px;
+}
+</style>
+
 <div class="calendar-header">
     <div class="header-main">
         <h2>@Model.CurrentMonth.ToString("MMMM yyyy")</h2>
@@ -86,7 +106,7 @@
                 <div class="cell-date">@day.Date.Day</div>
                 @foreach (var l in day.Lines)
                 {
-                    if (l.Required > 0 || l.Assigned > 0) // Only show shifts that have activity
+                    if (l.InstanceId > 0) // Show all shifts with instances, including zero-assignment shifts
                     {
                         var badgeClass = l.Assigned >= l.Required ? "ok" : "warn";
                         <div class="shift-line">
@@ -94,12 +114,12 @@
                                 @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
                                 {
                                     <a href="/Assignments/Manage?date=@day.Date.ToString("yyyy-MM-dd")&shiftTypeId=@l.ShiftTypeId&returnUrl=@Uri.EscapeDataString("/Calendar/Month?year=" + Model.CurrentMonth.Year + "&month=" + Model.CurrentMonth.Month)">
-                                        <span class="shift-badge @l.ShiftTypeKey">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length))</span>
+                                        <span class="shift-badge @l.ShiftTypeKey">@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName.Substring(0, Math.Min(3, l.ShiftTypeName.Length)) : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length)))</span>
                                     </a>
                                 }
                                 else
                                 {
-                                    <span class="shift-badge @l.ShiftTypeKey employee-badge">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length))</span>
+                                    <span class="shift-badge @l.ShiftTypeKey employee-badge">@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName.Substring(0, Math.Min(3, l.ShiftTypeName.Length)) : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length)))</span>
                                 }
                                 <div class="tooltip-content">
                                     <div class="tooltip-header">
@@ -107,11 +127,11 @@
                                             @if (!string.IsNullOrEmpty(l.ShiftName))
                                             {
                                                 @l.ShiftName
-                                                <span class="tooltip-custom-name">(@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"])</span>
+                                                <span class="tooltip-custom-name">(@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value))</span>
                                             }
                                             else
                                             {
-                                                @Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"]
+                                                @(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value)
                                             }
                                         </div>
                                         <div class="tooltip-hours">@l.StartTime - @l.EndTime</div>
@@ -179,10 +199,16 @@
                             {
                                 <div class="shift-counter" data-si="@l.InstanceId" data-conc="@l.Concurrency">
                                     <button class="counter-btn" aria-label="@Localizer["DecreaseStaffing"]"
-                                        onclick="window.adjustStaffing('@Url.Page("Month", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:-1, concurrency:@l.Concurrency }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">−</button>
+                                        onclick="window.adjustStaffing('@Url.Page("Month", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:-1, concurrency:parseInt(this.parentElement.dataset.conc) }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">−</button>
                                     <button class="counter-btn" aria-label="@Localizer["IncreaseStaffing"]"
-                                        onclick="window.adjustStaffing('@Url.Page("Month", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:1, concurrency:@l.Concurrency }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">+</button>
+                                        onclick="window.adjustStaffing('@Url.Page("Month", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:1, concurrency:parseInt(this.parentElement.dataset.conc) }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">+</button>
                                 </div>
+                                @if (l.InstanceId > 0)
+                                {
+                                    <button class="shift-delete-btn" onclick="confirmDeleteShiftInstance('/Calendar/Month', @l.InstanceId, event)" aria-label="Delete Shift" title="Delete this shift and all assignments">
+                                        🗑️
+                                    </button>
+                                }
                             }
                             <span class="staffing-badge @badgeClass">@l.Assigned/@l.Required</span>
                         </div>

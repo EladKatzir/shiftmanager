@@ -16,12 +16,14 @@ public class TableModel : PageModel
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
     private readonly ILogger<TableModel> _logger;
+    private readonly IBusyUserService _busyUserService;
 
-    public TableModel(AppDbContext db, ICompanyContext companyContext, ILogger<TableModel> logger)
+    public TableModel(AppDbContext db, ICompanyContext companyContext, ILogger<TableModel> logger, IBusyUserService busyUserService)
     {
         _db = db;
         _companyContext = companyContext;
         _logger = logger;
+        _busyUserService = busyUserService;
     }
 
     public DateOnly StartDate { get; set; }
@@ -32,6 +34,9 @@ public class TableModel : PageModel
 
     // Map: [ShiftTypeId][Date] => List of assignments
     public Dictionary<int, Dictionary<DateOnly, List<AssignmentInfo>>> AssignmentGrid { get; set; } = new();
+
+    // Busy user status per date: [Date][UserId] => BusyStatus
+    public Dictionary<DateOnly, Dictionary<int, BusyStatus>> BusyUsersByDate { get; set; } = new();
 
     public class AssignmentInfo
     {
@@ -67,15 +72,26 @@ public class TableModel : PageModel
         }
 
         // Load shift types for this company
-        ShiftTypes = await _db.ShiftTypes
-            .OrderBy(st => st.Key)
-            .ToListAsync();
+        // Sort by start time (chronological order), with Offline always last
+        ShiftTypes = (await _db.ShiftTypes.ToListAsync())
+            .OrderBy(st => st.IsOffline ? 1 : 0) // Offline last
+            .ThenBy(st => st.Start) // Then by start time (chronological)
+            .ThenBy(st => st.CustomName ?? st.Name) // Then by name for same start time
+            .ToList();
 
         // Load active employees for this company
         Employees = await _db.Users
             .Where(u => u.IsActive)
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
+
+        // Load busy user status per date (not aggregated)
+        // This will show if users are busy on each specific date
+        foreach (var date in Dates)
+        {
+            var busyForDate = await _busyUserService.GetBusyUsersAsync(date, TimeOnly.MinValue, TimeOnly.MaxValue);
+            BusyUsersByDate[date] = busyForDate;
+        }
 
         // Load shift instances for date range
         var instances = await _db.ShiftInstances
@@ -697,10 +713,17 @@ public class TableModel : PageModel
     {
         try
         {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
             var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
-            if (shiftType == null)
+            if (shiftType == null || shiftType.CompanyId != companyId)
             {
                 return new JsonResult(new { success = false, error = "Shift type not found" });
+            }
+
+            // Validate name
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return new JsonResult(new { success = false, error = "Shift name cannot be empty" });
             }
 
             // Parse time strings
@@ -710,9 +733,8 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Invalid time format" });
             }
 
-            // Update metadata (note: we're updating display properties, not the Key)
-            // For custom shifts, we can store the name in a custom field if needed
-            // For now, updating start/end times only
+            // Update metadata (company-scoped rename via CustomName)
+            shiftType.CustomName = request.Name.Trim();
             shiftType.Start = startTime;
             shiftType.End = endTime;
 
@@ -733,6 +755,12 @@ public class TableModel : PageModel
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
+            // Validate name
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return new JsonResult(new { success = false, error = "Shift name cannot be empty" });
+            }
+
             // Parse time strings
             if (!TimeOnly.TryParse(request.StartTime, out var startTime) ||
                 !TimeOnly.TryParse(request.EndTime, out var endTime))
@@ -740,13 +768,14 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Invalid time format" });
             }
 
-            // Create custom shift type with a unique key
+            // Create custom shift type with a unique internal key but user-visible name
             var customKey = $"CUSTOM_{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
 
             var shiftType = new ShiftType
             {
                 CompanyId = companyId,
                 Key = customKey,
+                CustomName = request.Name.Trim(), // User-provided name (NO KEY LEAKAGE)
                 Start = startTime,
                 End = endTime
             };
@@ -754,10 +783,14 @@ public class TableModel : PageModel
             _db.ShiftTypes.Add(shiftType);
             await _db.SaveChangesAsync();
 
+            _logger.LogInformation("Created custom shift type {ShiftTypeId} with name '{Name}' for company {CompanyId}",
+                shiftType.Id, shiftType.CustomName, companyId);
+
             return new JsonResult(new
             {
                 success = true,
-                shiftTypeId = shiftType.Id
+                shiftTypeId = shiftType.Id,
+                shiftName = shiftType.Name // Returns the user-friendly name
             });
         }
         catch (Exception ex)

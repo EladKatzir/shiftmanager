@@ -96,4 +96,34 @@ public class ShiftTypesModel : PageModel
         await _db.SaveChangesAsync();
         return RedirectToPage();
     }
+
+    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    {
+        var companyId = _companyContext.GetCompanyIdOrThrow();
+
+        // Query filter ensures we only get ShiftType for current company
+        var shiftType = await _db.ShiftTypes.FirstOrDefaultAsync(s => s.Id == id);
+
+        if (shiftType == null)
+        {
+            ModelState.AddModelError("", "Shift type not found or unauthorized");
+            await OnGetAsync();
+            return Page();
+        }
+
+        // Check if any shift instances are using this shift type
+        var hasInstances = await _db.ShiftInstances.AnyAsync(si => si.ShiftTypeId == id);
+
+        if (hasInstances)
+        {
+            ModelState.AddModelError("", $"Cannot delete shift type '{shiftType.Name}' because it is being used in shift instances");
+            await OnGetAsync();
+            return Page();
+        }
+
+        _db.ShiftTypes.Remove(shiftType);
+        await _db.SaveChangesAsync();
+
+        return RedirectToPage();
+    }
 }

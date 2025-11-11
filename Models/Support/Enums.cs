@@ -6,7 +6,8 @@ public enum UserRole
     Manager = 1,
     Employee = 2,
     Director = 3,
-    Trainee = 4
+    Trainee = 4,
+    Assigner = 5  // Can edit Chores only, not On-Duty
 }
 
 public enum RequestStatus
@@ -39,4 +40,16 @@ public enum JoinRequestStatus
     Pending = 0,
     Approved = 1,
     Rejected = 2
+}
+
+public enum TimeOffType
+{
+    Vacation = 0,  // Full vacation: StartDate 00:00 to EndDate+1 13:00
+    After = 1      // Half day: StartDate 16:00 to StartDate+1 13:00
+}
+
+public enum OnDutyType
+{
+    Hakam = 0,  // חק"מכו - On-Duty Hakam
+    Lead = 1    // מובילתו - On-Duty Lead
 }

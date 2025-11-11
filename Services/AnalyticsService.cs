@@ -256,6 +256,7 @@ public class AnalyticsService : IAnalyticsService
                 .ToListAsync();
 
             var results = assignments
+                .Where(a => a.User != null)  // Filter out unassigned shifts
                 .GroupBy(a => a.User!.Role)
                 .ToDictionary(
                     g => g.Key,

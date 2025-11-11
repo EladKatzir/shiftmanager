@@ -20,8 +20,9 @@ public class ManageModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly IDirectorService _directorService;
     private readonly ITraineeService _traineeService;
+    private readonly IBusyUserService _busyUserService;
 
-    public ManageModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService)
+    public ManageModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService)
     {
         _db = db;
         _checker = checker;
@@ -30,6 +31,7 @@ public class ManageModel : PageModel
         _companyContext = companyContext;
         _directorService = directorService;
         _traineeService = traineeService;
+        _busyUserService = busyUserService;
     }
 
 
@@ -46,6 +48,7 @@ public class ManageModel : PageModel
     public List<AppUser> ActiveUsers { get; set; } = new();
     public List<AppUser> Trainees { get; set; } = new();
     public HashSet<int> UsersOnTimeOff { get; set; } = new();
+    public Dictionary<int, BusyStatus> BusyUsers { get; set; } = new();
     public string? Error { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
@@ -157,6 +160,14 @@ public class ManageModel : PageModel
             .Select(r => r.UserId)
             .ToListAsync())
             .ToHashSet();
+
+        // Load busy user status (vacation, shift, chore) for this date
+        BusyUsers = await _busyUserService.GetBusyUsersAsync(
+            Date,
+            Type.Start,
+            Type.End,
+            excludeShiftTypeId: ShiftTypeId // Exclude current shift type from busy check
+        );
 
         return Page();
     }

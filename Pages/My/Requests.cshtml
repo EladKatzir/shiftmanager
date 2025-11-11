@@ -38,14 +38,35 @@
                 @Html.AntiForgeryToken()
                 <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
                 <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.StartDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["StartDate"]</label>
-                    <input asp-for="TimeOffRequest.StartDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
-                    <span asp-validation-for="TimeOffRequest.StartDate" style="color: var(--danger); font-size: 0.8rem;"></span>
+                    <label asp-for="TimeOffRequest.Type" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["VacationType"]</label>
+                    <select asp-for="TimeOffRequest.Type" id="vacationType" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
+                        <option value="0">@Localizer["RegularVacation"]</option>
+                        <option value="1">@Localizer["AfterDutyVacation"]</option>
+                    </select>
+                    <span asp-validation-for="TimeOffRequest.Type" style="color: var(--danger); font-size: 0.8rem;"></span>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem;">@Localizer["VacationTypeDescription"]</p>
                 </div>
                 <div style="margin-bottom: 1rem;">
+                    <label asp-for="TimeOffRequest.StartDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["StartDate"]</label>
+                    <input asp-for="TimeOffRequest.StartDate" id="startDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
+                    <span asp-validation-for="TimeOffRequest.StartDate" style="color: var(--danger); font-size: 0.8rem;"></span>
+                </div>
+                <div id="endDateContainer" style="margin-bottom: 1rem;">
                     <label asp-for="TimeOffRequest.EndDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["EndDate"]</label>
-                    <input asp-for="TimeOffRequest.EndDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
+                    <input asp-for="TimeOffRequest.EndDate" id="endDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
                     <span asp-validation-for="TimeOffRequest.EndDate" style="color: var(--danger); font-size: 0.8rem;"></span>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label asp-for="TimeOffRequest.ApproverId" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["SpecificApprover"] (@Localizer["Optional"])</label>
+                    <select asp-for="TimeOffRequest.ApproverId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
+                        <option value="">@Localizer["AnyManager"]</option>
+                        @foreach (var approver in Model.AvailableApprovers)
+                        {
+                            <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
+                        }
+                    </select>
+                    <span asp-validation-for="TimeOffRequest.ApproverId" style="color: var(--danger); font-size: 0.8rem;"></span>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem;">@Localizer["ApproverDescription"]</p>
                 </div>
                 <div style="margin-bottom: 1.5rem;">
                     <label asp-for="TimeOffRequest.Reason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["Reason"]</label>
@@ -167,4 +188,39 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Handle vacation type change to show/hide end date
+    document.addEventListener('DOMContentLoaded', function() {
+        const vacationType = document.getElementById('vacationType');
+        const endDateContainer = document.getElementById('endDateContainer');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+
+        function updateEndDateVisibility() {
+            if (vacationType.value === '1') { // After-duty vacation
+                endDateContainer.style.display = 'none';
+                // Set end date to same as start date for After type
+                if (startDate.value) {
+                    endDate.value = startDate.value;
+                }
+            } else { // Regular vacation
+                endDateContainer.style.display = 'block';
+            }
+        }
+
+        // Update visibility on page load
+        updateEndDateVisibility();
+
+        // Update visibility when type changes
+        vacationType.addEventListener('change', updateEndDateVisibility);
+
+        // Keep end date synced with start date for After type
+        startDate.addEventListener('change', function() {
+            if (vacationType.value === '1') { // After-duty vacation
+                endDate.value = startDate.value;
+            }
+        });
+    });
+</script>
 

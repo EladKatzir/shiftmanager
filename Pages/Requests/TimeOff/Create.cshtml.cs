@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Pages.Requests.TimeOff;
 
@@ -14,12 +15,19 @@ public class CreateModel : PageModel
 
     [BindProperty] public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     [BindProperty] public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    [BindProperty] public TimeOffType Type { get; set; } = TimeOffType.Vacation;
     [BindProperty] public string? Reason { get; set; }
 
     public void OnGet() { }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // For "After" type, set EndDate to StartDate
+        if (Type == TimeOffType.After)
+        {
+            EndDate = StartDate;
+        }
+
         // ✅ SECURITY FIX: Input validation
         if (EndDate < StartDate)
         {
@@ -43,12 +51,15 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        // Validate time-off duration is reasonable (max 1 year)
-        var daysDifference = EndDate.DayNumber - StartDate.DayNumber;
-        if (daysDifference > 365)
+        // Validate time-off duration is reasonable (max 1 year for Vacation)
+        if (Type == TimeOffType.Vacation)
         {
-            ModelState.AddModelError("", "Time off request cannot exceed 365 days. Please split into multiple requests.");
-            return Page();
+            var daysDifference = EndDate.DayNumber - StartDate.DayNumber;
+            if (daysDifference > 365)
+            {
+                ModelState.AddModelError("", "Time off request cannot exceed 365 days. Please split into multiple requests.");
+                return Page();
+            }
         }
 
         // Validate reason length
@@ -65,7 +76,14 @@ public class CreateModel : PageModel
             return RedirectToPage("/Auth/Login");
         }
 
-        _db.TimeOffRequests.Add(new TimeOffRequest { UserId = userId, StartDate = StartDate, EndDate = EndDate, Reason = Reason });
+        _db.TimeOffRequests.Add(new TimeOffRequest
+        {
+            UserId = userId,
+            StartDate = StartDate,
+            EndDate = EndDate,
+            Type = Type,
+            Reason = Reason
+        });
         await _db.SaveChangesAsync();
         return RedirectToPage("/Requests/Index");
     }
