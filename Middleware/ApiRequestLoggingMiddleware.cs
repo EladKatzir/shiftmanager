@@ -28,6 +28,13 @@ public class ApiRequestLoggingMiddleware
             return;
         }
 
+        // Skip logging for internal team-calendars API (uses cookie auth, not API keys)
+        if (context.Request.Path.StartsWithSegments("/api/team-calendars"))
+        {
+            await _next(context);
+            return;
+        }
+
         var stopwatch = Stopwatch.StartNew();
         var correlationId = context.Items["CorrelationId"]?.ToString() ?? Guid.NewGuid().ToString();
 

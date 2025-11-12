@@ -6,13 +6,15 @@
 
 ### Key Features
 - **Multi-Tenant Architecture**: Fully isolated company data with automatic CompanyId scoping via EF Core query filters
-- **Role-Based Access Control**: 5 roles (Owner, Director, Manager, Employee, Trainee) with granular permissions
+- **Role-Based Access Control**: 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee) with granular permissions
 - **Shift Management**: Month/Week/Day/Table calendar views with drag-and-drop assignments and conflict detection
 - **Request Workflows**: Employee-initiated shift swap and time-off requests with manager approval (including batch approval)
 - **Trainee Shadowing**: Assign trainees to shadow experienced employees on shifts
 - **Chore Management**: Assign non-shift tasks to employees with calendar view, conflict detection, and shift replacement
+- **On-Duty Management**: Schedule Hakam (🛡️) and Lead (⭐) responsibilities with calendar view and soft delete
+- **My Team Calendars**: Personal week-view calendars for tracking team availability with priority-based status aggregation
 - **API Key Management**: Full API key lifecycle with approval workflow, rate limiting, and scope-based access control
-- **RESTful API Layer**: Additive API endpoints for users, shifts, time-off, and notifications (feature-complete, non-breaking)
+- **RESTful API Layer**: Additive API endpoints for users, shifts, time-off, notifications, and team calendars
 - **Localization**: Full support for English (en-US) and Hebrew (he-IL) with RTL layout - 100% coverage
 - **In-App Notifications**: Real-time notifications for shift changes, approvals, trainee assignments, and chore assignments
 - **Employee Profiles**: Rich profiles with avatars, contact info, skills, certifications, and emergency contacts
@@ -22,11 +24,11 @@
 - **Batch Operations**: Bulk approve/decline requests with audit logging
 
 ### Current Status
-- **Version**: Production-ready+ (as of 2025-10-29)
-- **Database**: SQLite with 17 migrations applied, 17 tables
+- **Version**: Production-ready+ (as of 2025-11-12)
+- **Database**: SQLite with 22 migrations applied, 21 tables
 - **Test Coverage**: 15 unit tests (DirectorService only - 0% for other services)
 - **Production Readiness**: ✅ All critical security issues resolved, health checks added, audit logging enabled
-- **Recent Updates**: API key management system with approval workflow, RESTful API endpoints, shift type deletion, seeding fixes
+- **Recent Updates**: My Team Calendars feature with priority-based event aggregation, On-Duty management, role-based navigation, modern card-based UI
 
 ### Technology Stack
 - **Framework**: ASP.NET Core 8.0 (Razor Pages)
@@ -390,6 +392,74 @@
   - IP address and user agent tracking
   - JSON details for structured logging
 
+#### **Services/TeamCalendarService.cs**
+- **Purpose**: Manage personal team calendars and member lists
+- **Key Methods**:
+  - `GetCalendarsForOwnerAsync(int userId)`: Get all calendars owned by user
+  - `GetCalendarByIdAsync(int calendarId, int userId)`: Get specific calendar with ownership validation
+  - `CreateCalendarAsync(int userId, string name)`: Create new calendar
+  - `RenameCalendarAsync(int calendarId, int userId, string newName)`: Rename existing calendar
+  - `DeleteCalendarAsync(int calendarId, int userId)`: Delete calendar (cascade deletes members)
+  - `GetMembersAsync(int calendarId, int userId)`: Get current members and available users
+  - `SetMembersAsync(int calendarId, int userId, List<int> memberUserIds)`: Update member list
+- **Features**:
+  - Ownership validation (users can only manage their own calendars)
+  - Name uniqueness per owner
+  - Cascade deletion of members
+  - Two-pane member management (current vs available)
+- **Authorization**: User-owned resources, no role restrictions
+
+#### **Services/TeamCalendarEventAggregator.cs**
+- **Purpose**: Aggregate events from multiple sources and compute priority-based status for each member/day
+- **Key Methods**:
+  - `GetWeekViewAsync(List<int> memberUserIds, DateOnly weekStart)`: Get week view data with status badges
+- **Priority System** (highest to lowest):
+  1. Vacation (full day or partial "until 1 PM")
+  2. After/אפטֵר (4 PM start → 1 PM next day)
+  3. On-Duty
+  4. Shift
+  5. Chore
+  6. Free (default when nothing scheduled)
+- **Vacation Semantics**:
+  - Full vacation days: `StartDate` through `EndDate`
+  - Extension day: `EndDate + 1 day` marked as "Vacation until 1PM" (busy until 13:00)
+- **After/אפטֵר Semantics**:
+  - Start day: `StartDate` from 4 PM marked as "After from 4PM"
+  - Extension day: `StartDate + 1 day` until 1 PM marked as "After until 1PM"
+- **Features**:
+  - Fetches data from 4 sources: TimeOffRequests, OnDuty, ShiftAssignments, Chores
+  - Computes single highest-priority status per member per day
+  - Returns targetUrl for navigation (later filtered by role)
+  - Handles multiple shifts/chores with count indicators
+- **Integration**: Used by TeamCalendarsController to build week view API response
+
+#### **Services/OnDutyService.cs**
+- **Purpose**: Manage on-duty/Hakam assignments
+- **Key Methods**:
+  - `GetOnDutiesAsync(DateOnly start, DateOnly end, bool? includeCanceled)`: Get on-duty assignments for date range
+  - `CreateOnDutyAsync(int userId, DateOnly date, OnDutyType type)`: Create new on-duty assignment
+  - `CancelOnDutyAsync(int onDutyId)`: Soft-delete on-duty assignment
+  - `GetOnDutyByIdAsync(int onDutyId)`: Retrieve specific on-duty assignment
+  - `CanUserManageOnDutyAsync()`: Permission check (Manager+ only)
+- **Features**:
+  - Soft delete pattern (CanceledAt timestamp)
+  - Two types: Hakam (🛡️) and Lead (⭐)
+  - Integrated with BusyUserService for conflict detection
+  - Displayed in Public/OnDuty calendar and My Team view
+- **Authorization**: Manager/Owner/Director can create, all users can view
+
+#### **Services/BusyUserService.cs**
+- **Purpose**: Check user availability across all event types (shifts, chores, on-duty, vacations)
+- **Key Methods**:
+  - `IsUserBusyAsync(int userId, DateOnly date)`: Check if user has any events on date
+  - `GetBusyDatesAsync(int userId, DateOnly start, DateOnly end)`: Get all dates user is busy in range
+- **Features**:
+  - Aggregates across 4 event sources
+  - Respects soft deletes (CanceledAt)
+  - Handles vacation extension days (until 1 PM next day)
+  - Handles after/אפטֵר semantics (4 PM → 1 PM next day)
+- **Integration**: Used by conflict detection when creating chores and on-duty assignments
+
 ---
 
 ### Middleware
@@ -443,6 +513,23 @@
 
 #### Shift Assignment
 - **Pages/Assignments/Manage.cshtml**: Adjust staffing levels (+/- buttons) with concurrency control, trainee assignment
+
+#### My Team Pages
+- **Pages/MyTeam/Index.cshtml**: Personal team calendars feature
+  - **Features**:
+    - Create/rename/delete named calendars (e.g., "Project X Team", "QA Crew")
+    - Calendar switcher dropdown with inline rename and delete
+    - Two-pane member management modal (current members ↔ available users)
+    - Week navigation (previous/next/this week buttons)
+    - Modern card-based layout with member avatars showing initials
+    - Status badges with icons: 🧳 vacation, 🌙 after, 🛡️ on-duty, ⏱️ shift, 🔧 chore, － free
+    - Role-based click navigation (Regular: view-only, Assigner: chores, Manager+: all)
+    - Informative tooltips showing event details and navigation info
+    - Responsive design (desktop grid → mobile stacked cards)
+  - **Authorization**: All authenticated users (user-owned calendars)
+  - **API Integration**: Uses /api/team-calendars endpoints with cookie authentication
+  - **Visual Design**: Card-based with hover effects, smooth transitions, and CSS Grid layout
+  - **Mobile**: Adaptive layout at 968px breakpoint with day labels inside cards
 
 #### Employee Self-Service
 - **Pages/My/Index.cshtml**: My Overview dashboard - unified timeline feed showing all user's Vacations, On-duty, Shifts, and Chores
@@ -550,13 +637,32 @@
   - DELETE /api/notifications/{id} - Delete notification
   - Required scopes: notifications:read
 
-- **Features**:
+- **Controllers/TeamCalendarsController.cs**: My Team Calendars API endpoints (cookie auth, not API keys)
+  - GET /api/team-calendars - List user's calendars with member counts
+  - GET /api/team-calendars/{id} - Get calendar with members
+  - POST /api/team-calendars - Create new calendar
+  - PUT /api/team-calendars/{id} - Rename calendar
+  - DELETE /api/team-calendars/{id} - Delete calendar (cascade deletes members)
+  - GET /api/team-calendars/{id}/week?date=YYYY-MM-DD - Get week view with status badges
+  - GET /api/team-calendars/{id}/members - Get current and available members for two-pane selector
+  - PUT /api/team-calendars/{id}/members - Update member list (replaces existing)
+  - **Authentication**: Cookie-based (not API keys) - for logged-in web users only
+  - **Authorization**: User ownership validation - users can only access their own calendars
+  - **Features**:
+    - Priority-based event aggregation (Vacation > After > On-Duty > Shift > Chore > Free)
+    - Role-based targetUrl filtering (Regular: no nav, Assigner: chores, Manager+: all)
+    - Vacation semantics (until 1 PM next day)
+    - After/אפטֵר semantics (4 PM → 1 PM next day)
+    - Member search and filtering
+    - Week start calculation (always Sunday)
+
+- **Features** (All API Controllers):
   - RFC-7807 Problem Details for error responses
-  - Multi-tenant scoping via ApiAuthenticationMiddleware
-  - Rate limiting per API key
+  - Multi-tenant scoping via ApiAuthenticationMiddleware (or cookie auth for team-calendars)
+  - Rate limiting per API key (external APIs only)
   - Audit logging for all operations
   - JSON responses with consistent structure
-  - Scope-based authorization
+  - Scope-based authorization (external APIs) or ownership validation (team-calendars)
 
 ---
 
@@ -653,7 +759,7 @@
 
 ## 4. Database Structure
 
-### Schema Overview (17 Tables)
+### Schema Overview (21 Tables)
 
 #### Core Tables
 1. **Companies**: Multi-tenant company entities
@@ -731,15 +837,42 @@
     - Features: Soft delete (CanceledAt), shift conflict detection, calendar view
     - Integration: Displayed in My/Index dashboard and Chores/Calendar page
 
+#### Team Collaboration Tables
+16. **TeamCalendar**: Personal week-view calendars for tracking team availability
+    - Columns: Id (PK), CompanyId (FK), OwnerUserId (FK), Name, CreatedAt, UpdatedAt
+    - Indexes: Composite on (CompanyId, OwnerUserId), (CompanyId, Name)
+    - Purpose: Allow users to create multiple named calendars for different teams/projects
+    - Features: Private to owner (unshareable), supports multiple calendars per user
+    - Integration: Used by My Team Calendars feature at /MyTeam/Index
+
+17. **TeamCalendarMember**: Members included in a team calendar
+    - Columns: Id (PK), TeamCalendarId (FK), MemberUserId (FK), AddedAt
+    - Indexes: Composite on (TeamCalendarId, MemberUserId), unique constraint
+    - Purpose: Many-to-many relationship between calendars and users
+    - Features: Track when members were added, prevent duplicates
+
+18. **OnDuty**: On-duty/Hakam assignments
+    - Columns: Id (PK), CompanyId (FK), UserId (FK), Date (DateOnly), Type (OnDutyType enum), CreatedAt, CanceledAt (nullable)
+    - Indexes: Composite on (CompanyId, UserId, Date), (CompanyId, Date)
+    - Purpose: Assign on-duty responsibilities (Hakam, Lead) to employees
+    - Features: Soft delete (CanceledAt), type-based differentiation, calendar view
+    - Integration: Displayed in Public/OnDuty page and My Team Calendars
+
+19. **OnDutyTypeConfig**: Configurable on-duty type definitions
+    - Columns: Id (PK), CompanyId (FK), TypeKey, DisplayName, IconEmoji, ColorHex, SortOrder, IsActive
+    - Indexes: Composite on (CompanyId, TypeKey)
+    - Purpose: Allow companies to customize on-duty types with names, icons, and colors
+    - Seed Data: Hakam (🛡️, #8B0000) and Lead (⭐, #FF8C00)
+
 #### API & Integration Tables
-16. **ApiKeys**: API key entities for external integrations
+20. **ApiKeys**: API key entities for external integrations
     - Columns: Id (PK), CompanyId (FK), KeyHash (SHA256), PlainTextKey (nullable), Name, Scopes, IsActive, RateLimitPerMinute, CreatedBy (FK), CreatedAt, ExpiresAt, LastUsedAt
     - Indexes: Unique on KeyHash, Composite on (CompanyId, IsActive), (CompanyId, CreatedBy)
     - Purpose: Authenticate external API requests with scope-based permissions
     - Features: SHA256 hashing, rate limiting, expiration dates, scope-based authorization
     - Security: PlainTextKey visible to Owner only (role-based visibility)
 
-17. **ApiKeyRequests**: API key approval workflow
+21. **ApiKeyRequests**: API key approval workflow
     - Columns: Id (PK), CompanyId (FK), RequestedBy (FK), Name, Description, RequestedScopes, Status (Pending/Approved/Rejected), ReviewedBy (FK), ReviewedAt, ReviewNotes, CreatedAt, GeneratedApiKeyId (FK, nullable), ApprovedScopes, ApprovedRateLimit, ApprovedExpiresAt
     - Indexes: Composite on (CompanyId, Status, CreatedAt), (CompanyId, RequestedBy)
     - Purpose: Request-approval workflow for API key creation
@@ -762,11 +895,16 @@ Company (1) ──< (many) Configs
 Company (1) ──< (many) AuditLog
 Company (1) ──< (many) ProfileChangeAudit
 Company (1) ──< (many) Chores
+Company (1) ──< (many) TeamCalendar
+Company (1) ──< (many) OnDuty
+Company (1) ──< (many) OnDutyTypeConfig
 Company (1) ──< (many) ApiKeys
 Company (1) ──< (many) ApiKeyRequests
 
 ShiftType (1) ──< (many) ShiftInstances
 ShiftInstance (1) ──< (many) ShiftAssignments
+
+TeamCalendar (1) ──< (many) TeamCalendarMember
 
 Users (1) ──< (many) ShiftAssignments (as employee)
 Users (1) ──< (many) ShiftAssignments (as trainee, optional)
@@ -779,6 +917,9 @@ Users (1) ──< (many) ProfileChangeAudit (as subject)
 Users (1) ──< (many) ProfileChangeAudit (as changer)
 Users (1) ──< (many) Users (as manager - self-referencing FK)
 Users (1) ──< (many) Chores
+Users (1) ──< (many) TeamCalendar (as owner)
+Users (1) ──< (many) TeamCalendarMember (as member)
+Users (1) ──< (many) OnDuty
 Users (1) ──< (many) ApiKeys (as creator)
 Users (1) ──< (many) ApiKeyRequests (as requester)
 
@@ -1464,6 +1605,84 @@ curl http://localhost:5000/health
 - Localization: 4 new resource strings with English and Hebrew translations
 - Message: "There isn't a chore/on-duty for this day. Contact your team manager if you think that's wrong."
 
+### 2025-11-12 - My Team Calendars Feature (Complete Implementation)
+**Added:**
+- ✅ **My Team Calendars** - Personal week-view calendars for tracking team member availability:
+  - Create/rename/delete named calendars (e.g., "Project X Team", "QA Crew")
+  - Two-pane member management with search functionality
+  - Week navigation (previous/next/this week)
+  - Modern card-based UI with member avatars and initials
+  - Status priority system: Vacation > After > On-Duty > Shift > Chore > Free
+  - Role-based navigation restrictions (Regular users: no clicks, Assigners: chores only, Manager+: full access)
+  - Visual icons for status types (🧳 vacation, 🌙 after, 🛡️ on-duty, ⏱️ shift, 🔧 chore)
+  - Informative tooltips showing event details and navigation destination
+  - Responsive design (desktop to mobile with adaptive layouts)
+  - Full localization support (English/Hebrew)
+- ✅ **On-Duty Management**: Public/OnDuty.cshtml page with calendar view
+  - Two types: Hakam (🛡️) and Lead (⭐)
+  - Manager+ create/edit/delete capabilities
+  - Employee view-only access
+  - OnDutyTypeConfig table for configurable on-duty types
+- ✅ **Database Tables**:
+  - TeamCalendar (Id, OwnerUserId, Name, CompanyId, CreatedAt, UpdatedAt)
+  - TeamCalendarMember (Id, TeamCalendarId, MemberUserId, AddedAt)
+  - OnDuty (Id, CompanyId, UserId, Date, Type, CreatedAt, CanceledAt)
+  - OnDutyTypeConfig (Id, CompanyId, TypeKey, DisplayName, IconEmoji, ColorHex, SortOrder, IsActive)
+- ✅ **Services**:
+  - TeamCalendarService: CRUD operations for calendars and member management
+  - TeamCalendarEventAggregator: Priority-based event aggregation with vacation/after semantics
+  - OnDutyService: On-duty assignment management
+  - BusyUserService: User availability checking across all event types
+- ✅ **API Endpoints** (TeamCalendarsController):
+  - GET /api/team-calendars - List user's calendars
+  - POST /api/team-calendars - Create calendar
+  - PUT /api/team-calendars/{id} - Rename calendar
+  - DELETE /api/team-calendars/{id} - Delete calendar
+  - GET /api/team-calendars/{id}/week?date=YYYY-MM-DD - Get week view with status badges
+  - GET /api/team-calendars/{id}/members - Get current/available members
+  - PUT /api/team-calendars/{id}/members - Update member list
+  - Uses cookie authentication (not API keys)
+
+**Features:**
+- **Vacation Semantics**: Extends until 1 PM the day after end date
+- **After/אפטֵר Semantics**: 4 PM start day → 1 PM next day (two-day span)
+- **Priority System**: Vacation > After > On-Duty > Shift > Chore > Free
+- **Role-Based Navigation Matrix**:
+  - Regular User: No navigation (view-only)
+  - Assigner: Can only navigate to /Public/Chores
+  - Manager/Director/Owner: Full navigation (all event types)
+- **Target URLs**:
+  - Vacations/After → /Admin/TimeOff
+  - On-Duty → /Public/OnDuty
+  - Shifts → /Calendar/Table
+  - Chores → /Public/Chores
+- **Modern UI**: Card-based design with member avatars, hover effects, and smooth transitions
+- **Mobile Responsive**: Adaptive layout that switches to mobile-friendly grid on smaller screens
+
+**Changed:**
+- ✅ Pages/Shared/_Layout.cshtml: Added "👥 My Team" navigation for all users
+- ✅ Middleware/ApiRequestLoggingMiddleware.cs: Skip logging for /api/team-calendars
+- ✅ Middleware/ApiAuthenticationMiddleware.cs: Allow cookie auth for /api/team-calendars
+- ✅ Program.cs: Added TeamCalendarService, TeamCalendarEventAggregator, OnDutyService, BusyUserService
+
+**Technical Details:**
+- 4 new database tables with multi-tenant isolation
+- 4 new services with full business logic
+- 1 API controller with 7 RESTful endpoints
+- Priority-based event aggregation algorithm
+- Vacation "until 1 PM next day" rule correctly implemented
+- After/אפטֵר two-day span (4 PM → 1 PM next day)
+- Role-based targetUrl filtering in GetTargetUrlForRole()
+- Client-side tooltip generation with role-aware messaging
+- CSS Grid layout with responsive breakpoints (1200px, 968px, 768px, 480px)
+
+**Migrations:**
+- ✅ 20251101000000_AddCustomNameToShiftType: Added CustomName and SortOrder to ShiftType
+- ✅ 20251101160411_AddTimeOffTypeToTimeOffRequest: Added Type column to TimeOffRequest
+- ✅ 20251101165051_AddOnDutyAndAssignerRole: Added OnDuty table and Assigner role
+- ✅ 20251101221554_AddOnDutyTypeConfig: Added OnDutyTypeConfig table
+- ✅ 20251101232438_AddApproverIdToTimeOffRequest: Added ApproverId to TimeOffRequest
+
 ### 2025-11-11 - My Overview Page Redesign + Calendar Bug Fixes + UI Improvements
 **Added:**
 - ✅ **Complete My Overview Page Redesign** (/My/Index):
@@ -1547,10 +1766,10 @@ curl http://localhost:5000/health
 
 ---
 
-**Document Generated**: 2025-11-11
-**Project Version**: Production-Ready+ (Enhanced with redesigned My Overview, calendar bug fixes, and improved UI)
-**Total Context Lines**: 1,500+
-**Database Tables**: 17 tables
-**Migrations**: 17 applied
+**Document Generated**: 2025-11-12
+**Project Version**: Production-Ready+ (Enhanced with My Team Calendars, On-Duty management, and priority-based event aggregation)
+**Total Context Lines**: 1,650+
+**Database Tables**: 21 tables
+**Migrations**: 22 applied
 **Validation Status**: ✅ All sections complete and cross-referenced
-**Last Updated**: 2025-11-11 - My Overview page redesign + Zero-assignment shift visibility fix + Shift type localization fix + Dropdown z-index fix
+**Last Updated**: 2025-11-12 - My Team Calendars feature complete (priority aggregation, role-based nav, modern UI, responsive design)

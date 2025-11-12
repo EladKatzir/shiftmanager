@@ -1,0 +1,939 @@
+@page
+@model ShiftManager.Pages.MyTeam.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyTeam"], IsActive = true }
+})
+
+<style>
+/* My Team Page Styles */
+.myteam-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Top Action Bar */
+.myteam-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.calendar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn:hover {
+    border-color: var(--primary);
+    background: var(--surface);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+/* Week Navigation */
+.week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.week-range {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 250px;
+    text-align: center;
+}
+
+/* Modern Card-Based Week View */
+.week-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Day Headers Row */
+.day-headers {
+    display: grid;
+    grid-template-columns: 200px repeat(7, 1fr);
+    gap: 0.75rem;
+    padding: 0 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.day-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.day-header:first-child {
+    text-align: left;
+}
+
+/* Member Card */
+.member-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.member-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.member-card-content {
+    display: grid;
+    grid-template-columns: 200px repeat(7, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Member Info Section */
+.member-info-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-right: 1rem;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.member-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.member-role {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+/* Day Cell */
+.day-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px;
+}
+
+.status-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    min-height: 50px;
+    width: 100%;
+    text-align: center;
+}
+
+.status-badge.clickable {
+    cursor: pointer;
+}
+
+.status-badge.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.status-badge-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.status-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.status-label {
+    line-height: 1.2;
+}
+
+.status-badge.free {
+    background: var(--surface);
+    color: var(--muted);
+    border-color: var(--border);
+}
+
+.status-badge.vacation {
+    background: #e3f2fd;
+    color: #1565c0;
+    border-color: #90caf9;
+}
+
+[data-theme="dark"] .status-badge.vacation {
+    background: #0d47a1;
+    color: #90caf9;
+    border-color: #1565c0;
+}
+
+.status-badge.vacation-partial {
+    background: #e3f2fd;
+    color: #1565c0;
+    border-color: #90caf9;
+    font-size: 0.8rem;
+}
+
+[data-theme="dark"] .status-badge.vacation-partial {
+    background: #0d47a1;
+    color: #90caf9;
+    border-color: #1565c0;
+}
+
+.status-badge.after-partial {
+    background: #fff3e0;
+    color: #e65100;
+    border-color: #ffb74d;
+    font-size: 0.8rem;
+}
+
+[data-theme="dark"] .status-badge.after-partial {
+    background: #e65100;
+    color: #ffb74d;
+    border-color: #ff9800;
+}
+
+.status-badge.onduty {
+    background: #ffebee;
+    color: #c62828;
+    border-color: #ef9a9a;
+}
+
+[data-theme="dark"] .status-badge.onduty {
+    background: #b71c1c;
+    color: #ef9a9a;
+    border-color: #c62828;
+}
+
+.status-badge.shift {
+    background: #f3e5f5;
+    color: #6a1b9a;
+    border-color: #ce93d8;
+}
+
+[data-theme="dark"] .status-badge.shift {
+    background: #4a148c;
+    color: #ce93d8;
+    border-color: #6a1b9a;
+}
+
+.status-badge.chore {
+    background: #fff9c4;
+    color: #f57f17;
+    border-color: #fff176;
+}
+
+[data-theme="dark"] .status-badge.chore {
+    background: #f57f17;
+    color: #fff176;
+    border-color: #fbc02d;
+}
+
+.status-time {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content.large {
+    max-width: 900px;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+}
+
+.modal-close:hover {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+/* Calendar Cards (for switcher) */
+.calendar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.calendar-card {
+    padding: 1rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.calendar-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-card.active {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.calendar-info h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.calendar-meta {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.calendar-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    padding: 0.5rem;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Member Selector - Two Pane */
+.member-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.member-pane {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.pane-header {
+    padding: 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pane-search {
+    padding: 0.75rem;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+}
+
+.member-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.member-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.member-item:hover {
+    background: var(--surface);
+}
+
+.member-item.selected {
+    background: var(--primary-bg);
+    border-left: 3px solid var(--primary);
+}
+
+.member-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.member-email {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+/* Loading State */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--muted);
+}
+
+.spinner {
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    animation: spin 1s linear infinite;
+}
+
+@@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Desktop/Mobile visibility helpers */
+.desktop-only {
+    display: contents;
+}
+
+.mobile-only {
+    display: none;
+}
+
+/* Responsive */
+@@media (max-width: 1200px) {
+    .day-headers,
+    .member-card-content {
+        grid-template-columns: 160px repeat(7, 1fr);
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.5rem;
+        min-height: 45px;
+    }
+
+    .day-header {
+        font-size: 0.8rem;
+    }
+}
+
+@@media (max-width: 968px) {
+    /* Switch to mobile layout */
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: grid;
+    }
+
+    .day-headers {
+        display: none; /* Hide static headers on smaller screens */
+    }
+
+    .member-card-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .member-info-section {
+        padding-right: 0;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1rem;
+    }
+
+    .day-cell {
+        min-height: auto;
+    }
+
+    /* Create a mini-grid for days on mobile */
+    .days-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .day-cell-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .day-label-mobile {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        min-height: 55px;
+    }
+}
+
+@@media (max-width: 768px) {
+    .member-selector {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar-actions {
+        width: 100%;
+    }
+
+    .btn {
+        flex: 1;
+    }
+
+    .days-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .myteam-topbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .calendar-title {
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@@media (max-width: 480px) {
+    .member-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+
+    .member-name {
+        font-size: 0.95rem;
+    }
+
+    .days-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="myteam-container">
+    <!-- Top Action Bar -->
+    <div class="myteam-topbar">
+        <h1 class="calendar-title" id="calendarName">@Localizer["Loading"]...</h1>
+        <div class="topbar-actions">
+            <button class="btn" id="btnSwitchCalendar">
+                <span>⟳</span>
+                <span>@Localizer["SwitchCalendar"]</span>
+            </button>
+            <button class="btn" id="btnConfigureMembers">
+                <span>⚙️</span>
+                <span>@Localizer["ConfigureMembers"]</span>
+            </button>
+            <button class="btn btn-primary" id="btnNewCalendar">
+                <span>+</span>
+                <span>@Localizer["NewCalendar"]</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Week Navigation -->
+    <div class="week-nav">
+        <button class="btn" id="btnPrevWeek">&larr; @Localizer["PreviousWeek"]</button>
+        <div class="week-range" id="weekRange">@Localizer["Loading"]...</div>
+        <button class="btn" id="btnThisWeek">@Localizer["ThisWeek"]</button>
+        <button class="btn" id="btnNextWeek">@Localizer["NextWeek"] &rarr;</button>
+    </div>
+
+    <!-- Week Grid -->
+    <div id="weekGridContainer">
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-state-icon">📅</div>
+        <h3>@Localizer["NoTeamMembers"]</h3>
+        <p>@Localizer["AddTeamMembersToStart"]</p>
+        <button class="btn btn-primary" onclick="document.getElementById('btnConfigureMembers').click()">
+            @Localizer["ConfigureMembers"]
+        </button>
+    </div>
+</div>
+
+<!-- Calendar Switcher Modal -->
+<div class="modal" id="modalSwitchCalendar">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>@Localizer["MyCalendars"]</h2>
+            <button class="modal-close" onclick="closeModal('modalSwitchCalendar')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="calendarListContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Rename Calendar Modal -->
+<div class="modal" id="modalCalendarForm">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="calendarFormTitle">@Localizer["NewCalendar"]</h2>
+            <button class="modal-close" onclick="closeModal('modalCalendarForm')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label" for="inputCalendarName">@Localizer["CalendarName"]</label>
+                <input type="text" id="inputCalendarName" class="form-input"
+                       placeholder="@Localizer["CalendarNamePlaceholder"]" maxlength="60">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('modalCalendarForm')">@Localizer["Cancel"]</button>
+            <button class="btn btn-primary" id="btnSaveCalendar">@Localizer["Save"]</button>
+        </div>
+    </div>
+</div>
+
+<!-- Configure Members Modal -->
+<div class="modal" id="modalConfigureMembers">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2>@Localizer["ConfigureTeamMembers"]</h2>
+            <button class="modal-close" onclick="closeModal('modalConfigureMembers')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="memberSelectorContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('modalConfigureMembers')">@Localizer["Cancel"]</button>
+            <button class="btn btn-primary" id="btnSaveMembers">@Localizer["SaveChanges"]</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="modalDeleteConfirm">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>@Localizer["DeleteCalendar"]</h2>
+            <button class="modal-close" onclick="closeModal('modalDeleteConfirm')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>@Localizer["ConfirmDeleteCalendar"] "<span id="deleteCalendarName"></span>"?</p>
+            <p style="color: var(--muted); font-size: 0.9rem;">@Localizer["DeleteCalendarNote"]</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('modalDeleteConfirm')">@Localizer["Cancel"]</button>
+            <button class="btn" style="background: var(--danger); color: white; border-color: var(--danger);"
+                    id="btnConfirmDelete">@Localizer["Delete"]</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Inject localized strings for JavaScript
+        window.MyTeamLocalization = {
+            // Day names (full)
+            dayNames: [
+                @Html.Raw(Json.Serialize(Localizer["Sunday"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Monday"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Tuesday"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Wednesday"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Thursday"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Friday"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Saturday"].Value))
+            ],
+            // Day names (short)
+            dayNamesShort: [
+                @Html.Raw(Json.Serialize(Localizer["SunShort"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["MonShort"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["TueShort"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["WedShort"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["ThuShort"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["FriShort"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["SatShort"].Value))
+            ],
+            // Month names (short)
+            monthNames: [
+                @Html.Raw(Json.Serialize(Localizer["Jan"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Feb"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Mar"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Apr"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["May"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Jun"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Jul"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Aug"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Sep"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Oct"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Nov"].Value)),
+                @Html.Raw(Json.Serialize(Localizer["Dec"].Value))
+            ],
+            // UI strings
+            teamMember: @Html.Raw(Json.Serialize(Localizer["TeamMember"].Value)),
+            noCalendars: @Html.Raw(Json.Serialize(Localizer["NoCalendars"].Value)),
+            noTeamCalendars: @Html.Raw(Json.Serialize(Localizer["NoTeamCalendars"].Value)),
+            createFirstCalendar: @Html.Raw(Json.Serialize(Localizer["CreateFirstCalendar"].Value)),
+            createCalendar: @Html.Raw(Json.Serialize(Localizer["CreateCalendar"].Value)),
+            failedToLoadCalendars: @Html.Raw(Json.Serialize(Localizer["FailedToLoadCalendars"].Value)),
+            failedToLoadWeekView: @Html.Raw(Json.Serialize(Localizer["FailedToLoadWeekView"].Value)),
+            noCalendarsAvailable: @Html.Raw(Json.Serialize(Localizer["NoCalendarsAvailable"].Value)),
+            members: @Html.Raw(Json.Serialize(Localizer["Members"].Value)),
+            rename: @Html.Raw(Json.Serialize(Localizer["Rename"].Value)),
+            delete: @Html.Raw(Json.Serialize(Localizer["Delete"].Value)),
+            renameCalendarTitle: @Html.Raw(Json.Serialize(Localizer["RenameCalendarTitle"].Value)),
+            newCalendar: @Html.Raw(Json.Serialize(Localizer["NewCalendar"].Value)),
+            pleaseEnterCalendarName: @Html.Raw(Json.Serialize(Localizer["PleaseEnterCalendarName"].Value)),
+            calendarNameMaxLength: @Html.Raw(Json.Serialize(Localizer["CalendarNameMaxLength"].Value)),
+            calendarRenamedSuccessfully: @Html.Raw(Json.Serialize(Localizer["CalendarRenamedSuccessfully"].Value)),
+            calendarDeletedSuccessfully: @Html.Raw(Json.Serialize(Localizer["CalendarDeletedSuccessfully"].Value)),
+            pleaseSelectCalendar: @Html.Raw(Json.Serialize(Localizer["PleaseSelectCalendar"].Value)),
+            membersUpdatedSuccessfully: @Html.Raw(Json.Serialize(Localizer["MembersUpdatedSuccessfully"].Value)),
+            noUsers: @Html.Raw(Json.Serialize(Localizer["NoUsers"].Value)),
+            errorLoadingMembers: @Html.Raw(Json.Serialize(Localizer["ErrorLoadingMembers"].Value)),
+            // Status labels
+            statusLabels: {
+                'Free': @Html.Raw(Json.Serialize(Localizer["StatusFree"].Value)),
+                'Vacation': @Html.Raw(Json.Serialize(Localizer["StatusVacation"].Value)),
+                'On Duty': @Html.Raw(Json.Serialize(Localizer["StatusOnDuty"].Value)),
+                'Shift': @Html.Raw(Json.Serialize(Localizer["StatusShift"].Value)),
+                'Chore': @Html.Raw(Json.Serialize(Localizer["StatusChore"].Value))
+            }
+        };
+    </script>
+    <script src="~/js/myteam.js"></script>
+}

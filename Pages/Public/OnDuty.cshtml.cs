@@ -176,11 +176,17 @@ public class OnDutyModel : PageModel
                 return await OnGetAsync(OnDutyDate.Year, OnDutyDate.Month);
             }
 
-            // Success - audit log (notifications not needed for on-duty as it's publicly visible)
+            // Success - notify user and audit log
+            await _notificationService.CreateOnDutyAssignedNotificationAsync(
+                userId: AssigneeId,
+                onDutyType: OnDutyType,
+                onDutyDate: OnDutyDate,
+                onDutyId: result.OnDuty!.Id);
+
             await _auditLogService.LogAsync(
                 action: "OnDutyCreated",
                 entityType: "OnDuty",
-                entityId: result.OnDuty!.Id,
+                entityId: result.OnDuty.Id,
                 description: $"Created on-duty {OnDutyType} for user {AssigneeId} on {OnDutyDate:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { OnDutyId = result.OnDuty.Id, AssigneeId, OnDutyDate, OnDutyType, OnDutyNotes }));
 
@@ -235,7 +241,13 @@ public class OnDutyModel : PageModel
                 return await OnGetAsync();
             }
 
-            // Audit log
+            // Notify user and audit log
+            await _notificationService.CreateOnDutyCanceledNotificationAsync(
+                userId: onDuty.UserId,
+                onDutyType: onDuty.Type,
+                onDutyDate: onDuty.Date,
+                onDutyId: OnDutyId);
+
             await _auditLogService.LogAsync(
                 action: "OnDutyCanceled",
                 entityType: "OnDuty",

@@ -15,12 +15,14 @@ public class TimeOffModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<TimeOffModel> _logger;
 
-    public TimeOffModel(AppDbContext db, ICompanyContext companyContext, ILogger<TimeOffModel> logger)
+    public TimeOffModel(AppDbContext db, ICompanyContext companyContext, INotificationService notificationService, ILogger<TimeOffModel> logger)
     {
         _db = db;
         _companyContext = companyContext;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -112,6 +114,12 @@ public class TimeOffModel : PageModel
             // If you want to restore assignments, you'd need to track what was removed or have a more complex system
 
             await _db.SaveChangesAsync();
+
+            // Notify the user that their time-off was deleted
+            await _notificationService.CreateTimeOffDeletedNotificationAsync(
+                userId: request.UserId,
+                startDate: request.StartDate,
+                endDate: request.EndDate);
 
             _logger.LogInformation("Successfully deleted time-off request {RequestId} for user {UserName}", id, userName);
             Message = $"Time-off for {userName} ({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}) has been deleted.";

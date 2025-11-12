@@ -32,7 +32,10 @@ public enum NotificationType
     TraineeShadowingCanceledTimeOff = 10,
     TraineeShadowingCanceledRoleChange = 11,
     ChoreAssigned = 12,
-    ChoreCanceled = 13
+    ChoreCanceled = 13,
+    OnDutyAssigned = 14,
+    OnDutyCanceled = 15,
+    TimeOffDeleted = 16
 }
 
 public enum JoinRequestStatus

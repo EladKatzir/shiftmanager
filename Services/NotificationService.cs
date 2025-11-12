@@ -15,6 +15,9 @@ public interface INotificationService
     Task CreateSwapRequestNotificationAsync(int userId, RequestStatus status, string shiftInfo, int requestId);
     Task CreateChoreAssignedNotificationAsync(int userId, string choreTitle, DateOnly choreDate, int choreId);
     Task CreateChoreCanceledNotificationAsync(int userId, string choreTitle, DateOnly choreDate, int choreId);
+    Task CreateOnDutyAssignedNotificationAsync(int userId, OnDutyType onDutyType, DateOnly onDutyDate, int onDutyId);
+    Task CreateOnDutyCanceledNotificationAsync(int userId, OnDutyType onDutyType, DateOnly onDutyDate, int onDutyId);
+    Task CreateTimeOffDeletedNotificationAsync(int userId, DateOnly startDate, DateOnly endDate);
 }
 
 public class NotificationService : INotificationService
@@ -193,5 +196,32 @@ public class NotificationService : INotificationService
             _logger.LogError(ex, "Error sending chore canceled email to user {UserId}", userId);
             // Don't throw - email failure should not block notification creation
         }
+    }
+
+    public async Task CreateOnDutyAssignedNotificationAsync(int userId, OnDutyType onDutyType, DateOnly onDutyDate, int onDutyId)
+    {
+        var onDutyTypeName = onDutyType == OnDutyType.Hakam ? "Hakam" : "Lead";
+        var title = "New On-Duty Assignment";
+        var message = $"You have been assigned to on-duty {onDutyTypeName} on {onDutyDate:MMM dd, yyyy}.";
+
+        await CreateNotificationAsync(userId, NotificationType.OnDutyAssigned, title, message, onDutyId, "OnDuty");
+    }
+
+    public async Task CreateOnDutyCanceledNotificationAsync(int userId, OnDutyType onDutyType, DateOnly onDutyDate, int onDutyId)
+    {
+        var onDutyTypeName = onDutyType == OnDutyType.Hakam ? "Hakam" : "Lead";
+        var title = "On-Duty Assignment Canceled";
+        var message = $"Your on-duty {onDutyTypeName} assignment on {onDutyDate:MMM dd, yyyy} has been canceled.";
+
+        await CreateNotificationAsync(userId, NotificationType.OnDutyCanceled, title, message, onDutyId, "OnDuty");
+    }
+
+    public async Task CreateTimeOffDeletedNotificationAsync(int userId, DateOnly startDate, DateOnly endDate)
+    {
+        var title = "Time-Off Request Deleted";
+        var dateRange = startDate == endDate ? startDate.ToString("MMM dd, yyyy") : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+        var message = $"Your approved time-off for {dateRange} has been deleted by management.";
+
+        await CreateNotificationAsync(userId, NotificationType.TimeOffDeleted, title, message, null, "TimeOffRequest");
     }
 }

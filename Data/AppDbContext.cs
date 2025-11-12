@@ -32,6 +32,8 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
     public DbSet<Chore> Chores => Set<Chore>();
+    public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
+    public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
 
     // Public/Global Tables (no CompanyId, visible across all tenancies)
     public DbSet<OnDuty> OnDuties => Set<OnDuty>();
@@ -348,6 +350,9 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<UserJoinRequest>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            modelBuilder.Entity<TeamCalendar>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
         }
@@ -428,6 +433,47 @@ public class AppDbContext : DbContext
             .HasForeignKey(r => r.GeneratedApiKeyId)
             .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
+
+        // Configure TeamCalendar
+        modelBuilder.Entity<TeamCalendar>()
+            .HasIndex(tc => new { tc.CompanyId, tc.OwnerId, tc.Name })
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0"); // Unique name per owner when not deleted
+
+        modelBuilder.Entity<TeamCalendar>()
+            .HasIndex(tc => new { tc.CompanyId, tc.OwnerId, tc.CreatedAt });
+
+        modelBuilder.Entity<TeamCalendar>()
+            .HasOne(tc => tc.Company)
+            .WithMany()
+            .HasForeignKey(tc => tc.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TeamCalendar>()
+            .HasOne(tc => tc.Owner)
+            .WithMany()
+            .HasForeignKey(tc => tc.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure TeamCalendarMember
+        modelBuilder.Entity<TeamCalendarMember>()
+            .HasIndex(tcm => new { tcm.TeamCalendarId, tcm.MemberUserId })
+            .IsUnique(); // One member per calendar
+
+        modelBuilder.Entity<TeamCalendarMember>()
+            .HasIndex(tcm => tcm.MemberUserId); // For querying member's calendars
+
+        modelBuilder.Entity<TeamCalendarMember>()
+            .HasOne(tcm => tcm.TeamCalendar)
+            .WithMany(tc => tc.Members)
+            .HasForeignKey(tcm => tcm.TeamCalendarId)
+            .OnDelete(DeleteBehavior.Cascade); // Delete members when calendar deleted
+
+        modelBuilder.Entity<TeamCalendarMember>()
+            .HasOne(tcm => tcm.Member)
+            .WithMany()
+            .HasForeignKey(tcm => tcm.MemberUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         base.OnModelCreating(modelBuilder);
     }

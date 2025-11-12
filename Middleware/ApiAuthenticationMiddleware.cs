@@ -31,6 +31,22 @@ public class ApiAuthenticationMiddleware
             return;
         }
 
+        // Allow internal API endpoints (team-calendars) to use cookie authentication
+        // These are for authenticated web UI users, not external API consumers
+        if (context.Request.Path.StartsWithSegments("/api/team-calendars"))
+        {
+            // If user is already authenticated via cookies, allow request
+            if (context.User?.Identity?.IsAuthenticated == true)
+            {
+                await _next(context);
+                return;
+            }
+            // If not authenticated via cookies, return 401 (no API key support for this endpoint)
+            context.Response.StatusCode = 401;
+            await context.Response.WriteAsync("Unauthorized");
+            return;
+        }
+
         var apiKeyHeader = context.Request.Headers["X-API-Key"].FirstOrDefault();
 
         // Missing API key

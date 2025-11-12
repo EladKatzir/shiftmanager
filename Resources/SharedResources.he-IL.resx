@@ -1968,4 +1968,264 @@
   <data name="Day" xml:space="preserve">
     <value>יום</value>
   </data>
+
+  <!-- My Team Calendars -->
+  <data name="MyTeam" xml:space="preserve">
+    <value>הצוות שלי</value>
+  </data>
+  <data name="ConfigureMembers" xml:space="preserve">
+    <value>הגדרת חברי צוות</value>
+  </data>
+  <data name="SwitchCalendar" xml:space="preserve">
+    <value>החלפת לוח</value>
+  </data>
+  <data name="NewCalendar" xml:space="preserve">
+    <value>לוח צוות חדש</value>
+  </data>
+  <data name="PreviousWeek" xml:space="preserve">
+    <value>שבוע קודם</value>
+  </data>
+  <data name="NextWeek" xml:space="preserve">
+    <value>שבוע הבא</value>
+  </data>
+  <data name="ThisWeek" xml:space="preserve">
+    <value>השבוע</value>
+  </data>
+  <data name="TeamMember" xml:space="preserve">
+    <value>חבר צוות</value>
+  </data>
+  <data name="NoTeamMembers" xml:space="preserve">
+    <value>אין חברים בלוח זה</value>
+  </data>
+  <data name="AddTeamMembersToStart" xml:space="preserve">
+    <value>הוסיפו חברים כדי להתחיל לראות את מצב הצוות בשבוע</value>
+  </data>
+  <data name="CalendarName" xml:space="preserve">
+    <value>שם הלוח</value>
+  </data>
+  <data name="CreateNewCalendar" xml:space="preserve">
+    <value>יצירת לוח חדש</value>
+  </data>
+  <data name="CalendarNamePlaceholder" xml:space="preserve">
+    <value>למשל: צוות פרויקט X</value>
+  </data>
+  <data name="ConfigureTeamMembers" xml:space="preserve">
+    <value>הגדרת חברי צוות</value>
+  </data>
+  <data name="CurrentMembers" xml:space="preserve">
+    <value>חברי הצוות הנוכחיים</value>
+  </data>
+  <data name="AvailableUsers" xml:space="preserve">
+    <value>משתמשי החברה שלא בצוות</value>
+  </data>
+  <data name="SearchByName" xml:space="preserve">
+    <value>חיפוש לפי שם...</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>שמור שינויים</value>
+  </data>
+  <data name="DeleteCalendar" xml:space="preserve">
+    <value>מחק לוח</value>
+  </data>
+  <data name="RenameCalendar" xml:space="preserve">
+    <value>שנה שם לוח</value>
+  </data>
+  <data name="ConfirmDeleteCalendar" xml:space="preserve">
+    <value>למחוק את "{0}"? המחיקה תסיר רק את התצוגה האישית שלך. אין השפעה על הנתונים.</value>
+  </data>
+  <data name="EnterNewName" xml:space="preserve">
+    <value>הקלידו שם חדש</value>
+  </data>
+  <data name="NoMembersYet" xml:space="preserve">
+    <value>אין עדיין חברים בלוח</value>
+  </data>
+  <data name="NoUsersFound" xml:space="preserve">
+    <value>לא נמצאו משתמשים</value>
+  </data>
+  <data name="MembersInCalendar" xml:space="preserve">
+    <value>חברים בלוח: {0}</value>
+  </data>
+  <data name="NotInTeam" xml:space="preserve">
+    <value>לא בצוות: {0}</value>
+  </data>
+  <data name="MyCalendars" xml:space="preserve">
+    <value>הלוחות שלי</value>
+  </data>
+  <data name="Switch" xml:space="preserve">
+    <value>בחר</value>
+  </data>
+  <data name="CalendarNameRequired" xml:space="preserve">
+    <value>נדרש שם ללוח</value>
+  </data>
+  <data name="CalendarNameLength" xml:space="preserve">
+    <value>השם חייב להיות באורך 1–60 תווים</value>
+  </data>
+  <data name="DuplicateCalendarName" xml:space="preserve">
+    <value>כבר קיים לוח בשם זה</value>
+  </data>
+  <data name="ErrorLoadingMembers" xml:space="preserve">
+    <value>לא הצלחנו לטעון את רשימות המשתמשים</value>
+  </data>
+  <data name="ErrorLoadingWeek" xml:space="preserve">
+    <value>לא הצלחנו לטעון את מצב השבוע</value>
+  </data>
+  <data name="LoadingWeek" xml:space="preserve">
+    <value>טוען את מצב השבוע...</value>
+  </data>
+  <data name="ClickToView" xml:space="preserve">
+    <value>לחץ לצפייה</value>
+  </data>
+  <data name="ViewOnlyNoNavigation" xml:space="preserve">
+    <value>(צפייה בלבד - אין ניווט זמין לתפקיד שלך)</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>מחק</value>
+  </data>
+  <data name="DeleteCalendarNote" xml:space="preserve">
+    <value>המחיקה תסיר רק את התצוגה האישית שלך. אין השפעה על הנתונים.</value>
+  </data>
+  <data name="Sunday" xml:space="preserve">
+    <value>יום ראשון</value>
+  </data>
+  <data name="Monday" xml:space="preserve">
+    <value>יום שני</value>
+  </data>
+  <data name="Tuesday" xml:space="preserve">
+    <value>יום שלישי</value>
+  </data>
+  <data name="Wednesday" xml:space="preserve">
+    <value>יום רביעי</value>
+  </data>
+  <data name="Thursday" xml:space="preserve">
+    <value>יום חמישי</value>
+  </data>
+  <data name="Friday" xml:space="preserve">
+    <value>יום שישי</value>
+  </data>
+  <data name="Saturday" xml:space="preserve">
+    <value>שבת</value>
+  </data>
+  <data name="SunShort" xml:space="preserve">
+    <value>א׳</value>
+  </data>
+  <data name="MonShort" xml:space="preserve">
+    <value>ב׳</value>
+  </data>
+  <data name="TueShort" xml:space="preserve">
+    <value>ג׳</value>
+  </data>
+  <data name="WedShort" xml:space="preserve">
+    <value>ד׳</value>
+  </data>
+  <data name="ThuShort" xml:space="preserve">
+    <value>ה׳</value>
+  </data>
+  <data name="FriShort" xml:space="preserve">
+    <value>ו׳</value>
+  </data>
+  <data name="SatShort" xml:space="preserve">
+    <value>ש׳</value>
+  </data>
+  <data name="NoCalendars" xml:space="preserve">
+    <value>אין לוחות</value>
+  </data>
+  <data name="NoTeamCalendars" xml:space="preserve">
+    <value>אין לוחות צוות</value>
+  </data>
+  <data name="CreateFirstCalendar" xml:space="preserve">
+    <value>צרו את לוח הצוות הראשון שלכם כדי להתחיל לעקוב אחרי לוח הזמנים של הצוות</value>
+  </data>
+  <data name="CreateCalendar" xml:space="preserve">
+    <value>צור לוח</value>
+  </data>
+  <data name="FailedToLoadCalendars" xml:space="preserve">
+    <value>נכשל בטעינת לוחות</value>
+  </data>
+  <data name="FailedToLoadWeekView" xml:space="preserve">
+    <value>נכשל בטעינת תצוגת שבוע</value>
+  </data>
+  <data name="NoCalendarsAvailable" xml:space="preserve">
+    <value>אין לוחות זמינים</value>
+  </data>
+  <data name="Members" xml:space="preserve">
+    <value>חברים</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>שנה שם</value>
+  </data>
+  <data name="RenameCalendarTitle" xml:space="preserve">
+    <value>שינוי שם לוח</value>
+  </data>
+  <data name="PleaseEnterCalendarName" xml:space="preserve">
+    <value>אנא הזינו שם לוח</value>
+  </data>
+  <data name="CalendarNameMaxLength" xml:space="preserve">
+    <value>שם הלוח חייב להיות באורך של 60 תווים או פחות</value>
+  </data>
+  <data name="CalendarRenamedSuccessfully" xml:space="preserve">
+    <value>הלוח שונה בהצלחה</value>
+  </data>
+  <data name="CalendarDeletedSuccessfully" xml:space="preserve">
+    <value>הלוח נמחק בהצלחה</value>
+  </data>
+  <data name="PleaseSelectCalendar" xml:space="preserve">
+    <value>אנא בחרו לוח תחילה</value>
+  </data>
+  <data name="MembersUpdatedSuccessfully" xml:space="preserve">
+    <value>החברים עודכנו בהצלחה</value>
+  </data>
+  <data name="NoUsers" xml:space="preserve">
+    <value>אין משתמשים</value>
+  </data>
+  <data name="Jan" xml:space="preserve">
+    <value>ינו׳</value>
+  </data>
+  <data name="Feb" xml:space="preserve">
+    <value>פבר׳</value>
+  </data>
+  <data name="Mar" xml:space="preserve">
+    <value>מרץ</value>
+  </data>
+  <data name="Apr" xml:space="preserve">
+    <value>אפר׳</value>
+  </data>
+  <data name="May" xml:space="preserve">
+    <value>מאי</value>
+  </data>
+  <data name="Jun" xml:space="preserve">
+    <value>יוני</value>
+  </data>
+  <data name="Jul" xml:space="preserve">
+    <value>יולי</value>
+  </data>
+  <data name="Aug" xml:space="preserve">
+    <value>אוג׳</value>
+  </data>
+  <data name="Sep" xml:space="preserve">
+    <value>ספט׳</value>
+  </data>
+  <data name="Oct" xml:space="preserve">
+    <value>אוק׳</value>
+  </data>
+  <data name="Nov" xml:space="preserve">
+    <value>נוב׳</value>
+  </data>
+  <data name="Dec" xml:space="preserve">
+    <value>דצמ׳</value>
+  </data>
+  <data name="StatusFree" xml:space="preserve">
+    <value>פנוי</value>
+  </data>
+  <data name="StatusVacation" xml:space="preserve">
+    <value>חופשה</value>
+  </data>
+  <data name="StatusOnDuty" xml:space="preserve">
+    <value>כוננות</value>
+  </data>
+  <data name="StatusShift" xml:space="preserve">
+    <value>משמרת</value>
+  </data>
+  <data name="StatusChore" xml:space="preserve">
+    <value>מטלה</value>
+  </data>
 </root>

@@ -117,6 +117,10 @@ builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
 builder.Services.AddSingleton<IValidationService, ValidationService>();
 builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
 
+// My Team Calendars Services
+builder.Services.AddScoped<TeamCalendarService>();
+builder.Services.AddScoped<TeamCalendarEventAggregator>();
+
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.ShiftApiService>();
@@ -344,13 +348,14 @@ app.UseRequestLocalization();
 // Multitenancy Phase 2: Add company context middleware
 app.UseMiddleware<CompanyContextMiddleware>();
 
+// Authentication must come before API middleware so cookie auth is available
+app.UseAuthentication();
+app.UseAuthorization();
+
 // API Middleware (only for /api routes)
 app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>();
-
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers(); // Map API controllers
 app.MapRazorPages();
 
