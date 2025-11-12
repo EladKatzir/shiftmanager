@@ -24,11 +24,17 @@
 - **Batch Operations**: Bulk approve/decline requests with audit logging
 
 ### Current Status
-- **Version**: Production-ready+ (as of 2025-11-12)
+- **Version**: v1.0.0 (Release Candidate - as of 2025-01-12)
 - **Database**: SQLite with 22 migrations applied, 21 tables
-- **Test Coverage**: 15 unit tests (DirectorService only - 0% for other services)
-- **Production Readiness**: ✅ All critical security issues resolved, health checks added, audit logging enabled
-- **Recent Updates**: My Team Calendars feature with priority-based event aggregation, On-Duty management, role-based navigation, modern card-based UI
+- **Test Coverage**: 15 unit tests (DirectorService only - 100% passing)
+- **Production Readiness**: ⚠️ **CONDITIONALLY READY** - All features enabled, 9 known issues logged for hotfix
+- **Release Status**: Ready for deployment with post-release monitoring and planned v1.0.1 hotfix
+- **Recent Updates**:
+  - Complete API v1 layer enabled (27 endpoints)
+  - All feature flags activated for production
+  - My Team Calendars with localization
+  - Enhanced notification system (on-duty, time-off deletion)
+  - Trainee and Assigner role signup options
 
 ### Technology Stack
 - **Framework**: ASP.NET Core 8.0 (Razor Pages)

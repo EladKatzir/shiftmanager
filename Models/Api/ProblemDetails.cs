@@ -150,4 +150,19 @@ public class ApiProblemDetails
 
         return problem;
     }
+
+    /// <summary>
+    /// Helper method to create an internal server error problem
+    /// </summary>
+    public static ApiProblemDetails InternalError(string detail = "An unexpected error occurred", string? instance = null)
+    {
+        return new ApiProblemDetails
+        {
+            Type = "about:blank",
+            Title = "Internal Server Error",
+            Status = 500,
+            Detail = detail,
+            Instance = instance
+        };
+    }
 }

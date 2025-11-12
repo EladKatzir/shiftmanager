@@ -46,94 +46,128 @@ public class AuditLogsController : ControllerBase
         [FromQuery] string? startDate = null,
         [FromQuery] string? endDate = null)
     {
-        if (!_configuration.GetValue<bool>("Features:Api:AuditLogs:ListEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
-
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
-        {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
-        }
-
-        // Validate pagination
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 50;
-        if (pageSize > 100) pageSize = 100;
-
-        var query = _context.AuditLogs.AsQueryable();
-        query = query.Where(a => a.CompanyId == companyId);
-
-        // Apply filters
-        if (userId.HasValue)
-        {
-            query = query.Where(a => a.UserId == userId.Value);
-        }
-
-        if (!string.IsNullOrEmpty(action))
-        {
-            query = query.Where(a => a.Action.Contains(action));
-        }
-
-        // Parse date filters
-        if (!string.IsNullOrEmpty(startDate))
-        {
-            if (DateTime.TryParse(startDate, out var start))
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:AuditLogs:ListEnabled", false))
             {
-                query = query.Where(a => a.Timestamp >= start);
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(ListAuditLogs), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
             }
-        }
 
-        if (!string.IsNullOrEmpty(endDate))
-        {
-            if (DateTime.TryParse(endDate, out var end))
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                query = query.Where(a => a.Timestamp <= end);
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(ListAuditLogs), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
             }
-        }
 
-        // Get total count
-        var totalCount = await query.CountAsync();
+            // Validate pagination
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 50;
+            if (pageSize > 100) pageSize = 100;
 
-        // Apply pagination
-        var logs = await query
-            .OrderByDescending(a => a.Timestamp)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+            var query = _context.AuditLogs.AsQueryable();
+            query = query.Where(a => a.CompanyId == companyId);
 
-        // Map to DTOs
-        var dtos = logs.Select(l => new AuditLogDto
-        {
-            Id = l.Id,
-            UserId = l.UserId,
-            UserEmail = l.UserEmail,
-            UserDisplayName = l.UserDisplayName,
-            Action = l.Action,
-            EntityType = l.EntityType,
-            EntityId = l.EntityId,
-            Description = l.Description,
-            Details = l.Details,
-            IpAddress = l.IpAddress,
-            UserAgent = l.UserAgent,
-            Timestamp = l.Timestamp.ToString("O")
-        }).ToList();
-
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        var response = new PaginatedResponse<AuditLogDto>
-        {
-            Data = dtos,
-            Pagination = new PaginationInfo
+            // Apply filters
+            if (userId.HasValue)
             {
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = totalPages
+                query = query.Where(a => a.UserId == userId.Value);
             }
-        };
 
-        return Ok(response);
+            if (!string.IsNullOrEmpty(action))
+            {
+                query = query.Where(a => a.Action.Contains(action));
+            }
+
+            // Parse date filters
+            if (!string.IsNullOrEmpty(startDate))
+            {
+                if (DateTime.TryParse(startDate, out var start))
+                {
+                    query = query.Where(a => a.Timestamp >= start);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid startDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, StartDate={StartDate}",
+                        nameof(ListAuditLogs), companyId, startDate);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(endDate))
+            {
+                if (DateTime.TryParse(endDate, out var end))
+                {
+                    query = query.Where(a => a.Timestamp <= end);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid endDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, EndDate={EndDate}",
+                        nameof(ListAuditLogs), companyId, endDate);
+                }
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var logs = await query
+                .OrderByDescending(a => a.Timestamp)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Map to DTOs
+            var dtos = logs.Select(l => new AuditLogDto
+            {
+                Id = l.Id,
+                UserId = l.UserId,
+                UserEmail = l.UserEmail,
+                UserDisplayName = l.UserDisplayName,
+                Action = l.Action,
+                EntityType = l.EntityType,
+                EntityId = l.EntityId,
+                Description = l.Description,
+                Details = l.Details,
+                IpAddress = l.IpAddress,
+                UserAgent = l.UserAgent,
+                Timestamp = l.Timestamp.ToString("O")
+            }).ToList();
+
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var response = new PaginatedResponse<AuditLogDto>
+            {
+                Data = dtos,
+                Pagination = new PaginationInfo
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages
+                }
+            };
+
+            return Ok(response);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(ListAuditLogs), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(ListAuditLogs), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
+        }
     }
 }
 

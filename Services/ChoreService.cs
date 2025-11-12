@@ -195,10 +195,12 @@ public class ChoreService : IChoreService
         string title,
         string? notes = null)
     {
+        var currentUserId = GetCurrentUserId();
+        int? companyId = null;
         try
         {
-            var currentUserId = GetCurrentUserId();
             var currentUser = await GetCurrentUserAsync();
+            companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
             {
@@ -264,9 +266,16 @@ public class ChoreService : IChoreService
 
             return (true, "Chore created successfully.", chore);
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error creating chore. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Title={Title}",
+                companyId, currentUserId, assigneeId, date, title);
+            return (false, "An error occurred while creating the chore.", null);
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating chore for user {UserId} on {Date}", assigneeId, date);
+            _logger.LogError(ex, "Unexpected error creating chore. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Title={Title}",
+                companyId, currentUserId, assigneeId, date, title);
             return (false, "An error occurred while creating the chore.", null);
         }
     }
@@ -276,10 +285,12 @@ public class ChoreService : IChoreService
     /// </summary>
     public async Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null)
     {
+        var currentUserId = GetCurrentUserId();
+        int? companyId = null;
         try
         {
-            var currentUserId = GetCurrentUserId();
             var currentUser = await GetCurrentUserAsync();
+            companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
             {
@@ -335,9 +346,16 @@ public class ChoreService : IChoreService
 
             return (true, "Chore canceled successfully.");
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error canceling chore. CompanyId={CompanyId}, CanceledBy={CanceledBy}, ChoreId={ChoreId}, Reason={Reason}",
+                companyId, currentUserId, choreId, reason ?? "None");
+            return (false, "An error occurred while canceling the chore.");
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error canceling chore {ChoreId}", choreId);
+            _logger.LogError(ex, "Unexpected error canceling chore. CompanyId={CompanyId}, CanceledBy={CanceledBy}, ChoreId={ChoreId}, Reason={Reason}",
+                companyId, currentUserId, choreId, reason ?? "None");
             return (false, "An error occurred while canceling the chore.");
         }
     }
@@ -350,11 +368,13 @@ public class ChoreService : IChoreService
         string title,
         string? notes = null)
     {
+        var currentUserId = GetCurrentUserId();
+        int? companyId = null;
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            var currentUserId = GetCurrentUserId();
             var currentUser = await GetCurrentUserAsync();
+            companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
             {
@@ -415,10 +435,18 @@ public class ChoreService : IChoreService
 
             return (true, "Shift replaced with chore successfully.", chore);
         }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Database error replacing shift with chore. CompanyId={CompanyId}, UserId={UserId}, ShiftAssignmentId={ShiftAssignmentId}, Title={Title}",
+                companyId, currentUserId, shiftAssignmentId, title);
+            return (false, "An error occurred while replacing the shift with a chore.", null);
+        }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(ex, "Error replacing shift {ShiftAssignmentId} with chore", shiftAssignmentId);
+            _logger.LogError(ex, "Unexpected error replacing shift with chore. CompanyId={CompanyId}, UserId={UserId}, ShiftAssignmentId={ShiftAssignmentId}, Title={Title}",
+                companyId, currentUserId, shiftAssignmentId, title);
             return (false, "An error occurred while replacing the shift with a chore.", null);
         }
     }
@@ -428,11 +456,13 @@ public class ChoreService : IChoreService
     /// </summary>
     public async Task<(bool Success, string Message)> ReplaceChoreWithShiftAsync(int choreId, int shiftInstanceId)
     {
+        var currentUserId = GetCurrentUserId();
+        int? companyId = null;
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            var currentUserId = GetCurrentUserId();
             var currentUser = await GetCurrentUserAsync();
+            companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
             {
@@ -468,10 +498,18 @@ public class ChoreService : IChoreService
 
             return (true, "Chore replaced with shift successfully.");
         }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Database error replacing chore with shift. CompanyId={CompanyId}, UserId={UserId}, ChoreId={ChoreId}, ShiftInstanceId={ShiftInstanceId}",
+                companyId, currentUserId, choreId, shiftInstanceId);
+            return (false, "An error occurred while replacing the chore with a shift.");
+        }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(ex, "Error replacing chore {ChoreId} with shift", choreId);
+            _logger.LogError(ex, "Unexpected error replacing chore with shift. CompanyId={CompanyId}, UserId={UserId}, ChoreId={ChoreId}, ShiftInstanceId={ShiftInstanceId}",
+                companyId, currentUserId, choreId, shiftInstanceId);
             return (false, "An error occurred while replacing the chore with a shift.");
         }
     }

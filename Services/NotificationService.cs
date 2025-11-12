@@ -8,7 +8,7 @@ namespace ShiftManager.Services;
 
 public interface INotificationService
 {
-    Task CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null);
+    Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null);
     Task CreateShiftAddedNotificationAsync(int userId, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime);
     Task CreateShiftRemovedNotificationAsync(int userId, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime);
     Task CreateTimeOffNotificationAsync(int userId, RequestStatus status, DateOnly startDate, DateOnly endDate, int requestId);
@@ -35,13 +35,14 @@ public class NotificationService : INotificationService
         _mailService = mailService;
     }
 
-    public async Task CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
+    public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
     {
         try
         {
+            var companyId = _tenantResolver.GetCurrentTenantId(); // Multitenancy Phase 2
             var notification = new UserNotification
             {
-                CompanyId = _tenantResolver.GetCurrentTenantId(), // Multitenancy Phase 2
+                CompanyId = companyId,
                 UserId = userId,
                 Type = type,
                 Title = title,
@@ -56,10 +57,19 @@ public class NotificationService : INotificationService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Created notification {Type} for user {UserId}: {Title}", type, userId, title);
+            return true;
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error creating notification. CompanyId={CompanyId}, Type={Type}, UserId={UserId}, Title={Title}",
+                _tenantResolver.GetCurrentTenantId(), type, userId, title);
+            return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating notification {Type} for user {UserId}", type, userId);
+            _logger.LogError(ex, "Unexpected error creating notification. CompanyId={CompanyId}, Type={Type}, UserId={UserId}, Title={Title}",
+                _tenantResolver.GetCurrentTenantId(), type, userId, title);
+            return false;
         }
     }
 

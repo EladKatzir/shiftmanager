@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Services.Api;
@@ -50,38 +51,60 @@ public class UsersController : ControllerBase
         [FromQuery] bool? isActive = null,
         [FromQuery] string? search = null)
     {
-        // Check feature flag
-        if (!_configuration.GetValue<bool>("Features:Api:Users:ListEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
-
-        // Get CompanyId from claims (set by ApiAuthenticationMiddleware)
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
-        {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
-        }
-
-        // Call service
-        var (users, totalCount) = await _userService.ListUsersAsync(
-            companyId, page, pageSize, role, isActive, search);
-
-        // Build pagination info
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        var response = new PaginatedResponse<UserDto>
-        {
-            Data = users,
-            Pagination = new PaginationInfo
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Users:ListEnabled", false))
             {
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = totalPages
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(ListUsers), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
             }
-        };
 
-        return Ok(response);
+            // Get CompanyId from claims (set by ApiAuthenticationMiddleware)
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(ListUsers), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            // Call service
+            var (users, totalCount) = await _userService.ListUsersAsync(
+                companyId, page, pageSize, role, isActive, search);
+
+            // Build pagination info
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var response = new PaginatedResponse<UserDto>
+            {
+                Data = users,
+                Pagination = new PaginationInfo
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages
+                }
+            };
+
+            return Ok(response);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(ListUsers), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(ListUsers), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
+        }
     }
 
     /// <summary>
@@ -98,28 +121,52 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ApiProblemDetails), 429)]
     public async Task<IActionResult> GetUser(int id)
     {
-        // Check feature flag
-        if (!_configuration.GetValue<bool>("Features:Api:Users:GetEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Users:GetEnabled", false))
+            {
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(GetUser), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+            }
 
-        // Get CompanyId from claims
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, UserId={UserId}, HasCompanyClaim={HasClaim}",
+                    nameof(GetUser), HttpContext.Request.Path, id, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            // Call service
+            var user = await _userService.GetUserAsync(companyId, id);
+
+            if (user == null)
+            {
+                _logger.LogWarning("User not found. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}",
+                    nameof(GetUser), companyId, id);
+                return NotFound(ApiProblemDetails.NotFound($"User {id} not found", HttpContext.Request.Path));
+            }
+
+            return Ok(user);
+        }
+        catch (DbUpdateException ex)
         {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
+                nameof(GetUser), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
         }
-
-        // Call service
-        var user = await _userService.GetUserAsync(companyId, id);
-
-        if (user == null)
+        catch (Exception ex)
         {
-            return NotFound(ApiProblemDetails.NotFound($"User {id} not found", HttpContext.Request.Path));
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
+                nameof(GetUser), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
         }
-
-        return Ok(user);
     }
 
     /// <summary>
@@ -137,56 +184,90 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ApiProblemDetails), 429)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
-        // Check feature flag
-        if (!_configuration.GetValue<bool>("Features:Api:Users:CreateEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
-
-        // Get CompanyId from claims
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
-        {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
-        }
-
-        // Validate request
-        if (string.IsNullOrEmpty(request.Email))
-        {
-            return BadRequest(ApiProblemDetails.ValidationError("Email is required", HttpContext.Request.Path));
-        }
-
-        if (string.IsNullOrEmpty(request.DisplayName))
-        {
-            return BadRequest(ApiProblemDetails.ValidationError("DisplayName is required", HttpContext.Request.Path));
-        }
-
-        if (string.IsNullOrEmpty(request.Role))
-        {
-            return BadRequest(ApiProblemDetails.ValidationError("Role is required", HttpContext.Request.Path));
-        }
-
-        // Call service
-        var (user, error) = await _userService.CreateUserAsync(
-            companyId,
-            request.Email,
-            request.DisplayName,
-            request.Role,
-            request.Password,
-            request.Department,
-            request.JobTitle);
-
-        if (error != null)
-        {
-            // Check if it's a conflict (duplicate email)
-            if (error.Contains("already exists"))
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Users:CreateEnabled", false))
             {
-                return Conflict(ApiProblemDetails.Conflict(error, HttpContext.Request.Path));
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(CreateUser), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
             }
-            return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
-        }
 
-        return CreatedAtAction(nameof(GetUser), new { id = user!.Id }, user);
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(CreateUser), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            // Validate request
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                _logger.LogWarning("Validation error in {Endpoint}. CompanyId={CompanyId}, Error={Error}",
+                    nameof(CreateUser), companyId, "Email is required");
+                return BadRequest(ApiProblemDetails.ValidationError("Email is required", HttpContext.Request.Path));
+            }
+
+            if (string.IsNullOrEmpty(request.DisplayName))
+            {
+                _logger.LogWarning("Validation error in {Endpoint}. CompanyId={CompanyId}, Error={Error}",
+                    nameof(CreateUser), companyId, "DisplayName is required");
+                return BadRequest(ApiProblemDetails.ValidationError("DisplayName is required", HttpContext.Request.Path));
+            }
+
+            if (string.IsNullOrEmpty(request.Role))
+            {
+                _logger.LogWarning("Validation error in {Endpoint}. CompanyId={CompanyId}, Error={Error}",
+                    nameof(CreateUser), companyId, "Role is required");
+                return BadRequest(ApiProblemDetails.ValidationError("Role is required", HttpContext.Request.Path));
+            }
+
+            // Call service
+            var (user, error) = await _userService.CreateUserAsync(
+                companyId,
+                request.Email,
+                request.DisplayName,
+                request.Role,
+                request.Password,
+                request.Department,
+                request.JobTitle);
+
+            if (error != null)
+            {
+                // Check if it's a conflict (duplicate email)
+                if (error.Contains("already exists"))
+                {
+                    _logger.LogWarning("User creation conflict in {Endpoint}. CompanyId={CompanyId}, Error={Error}",
+                        nameof(CreateUser), companyId, error);
+                    return Conflict(ApiProblemDetails.Conflict(error, HttpContext.Request.Path));
+                }
+                _logger.LogWarning("User creation validation error in {Endpoint}. CompanyId={CompanyId}, Error={Error}",
+                    nameof(CreateUser), companyId, error);
+                return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
+            }
+
+            _logger.LogInformation("User created successfully. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}",
+                nameof(CreateUser), companyId, user!.Id);
+            return CreatedAtAction(nameof(GetUser), new { id = user!.Id }, user);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(CreateUser), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(CreateUser), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
+        }
     }
 
     /// <summary>
@@ -205,40 +286,68 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ApiProblemDetails), 429)]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
     {
-        // Check feature flag
-        if (!_configuration.GetValue<bool>("Features:Api:Users:UpdateEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
-
-        // Get CompanyId from claims
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
-        {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
-        }
-
-        // Call service
-        var (user, error) = await _userService.UpdateUserAsync(
-            companyId,
-            id,
-            request.DisplayName,
-            request.Role,
-            request.IsActive,
-            request.Department,
-            request.JobTitle,
-            request.Phone);
-
-        if (error != null)
-        {
-            if (error.Contains("not found"))
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Users:UpdateEnabled", false))
             {
-                return NotFound(ApiProblemDetails.NotFound(error, HttpContext.Request.Path));
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(UpdateUser), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
             }
-            return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
-        }
 
-        return Ok(user);
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, UserId={UserId}, HasCompanyClaim={HasClaim}",
+                    nameof(UpdateUser), HttpContext.Request.Path, id, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            // Call service
+            var (user, error) = await _userService.UpdateUserAsync(
+                companyId,
+                id,
+                request.DisplayName,
+                request.Role,
+                request.IsActive,
+                request.Department,
+                request.JobTitle,
+                request.Phone);
+
+            if (error != null)
+            {
+                if (error.Contains("not found"))
+                {
+                    _logger.LogWarning("User not found for update. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}",
+                        nameof(UpdateUser), companyId, id);
+                    return NotFound(ApiProblemDetails.NotFound(error, HttpContext.Request.Path));
+                }
+                _logger.LogWarning("User update validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}, Error={Error}",
+                    nameof(UpdateUser), companyId, id, error);
+                return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
+            }
+
+            _logger.LogInformation("User updated successfully. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}",
+                nameof(UpdateUser), companyId, id);
+            return Ok(user);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
+                nameof(UpdateUser), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
+                nameof(UpdateUser), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
+        }
     }
 }
 

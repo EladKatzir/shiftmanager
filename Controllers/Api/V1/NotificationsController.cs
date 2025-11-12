@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Services.Api;
@@ -44,34 +45,58 @@ public class NotificationsController : ControllerBase
         [FromQuery] bool? isRead = null,
         [FromQuery] string? type = null)
     {
-        if (!_configuration.GetValue<bool>("Features:Api:Notifications:ListEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
-
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
-        {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
-        }
-
-        var (notifications, totalCount) = await _notificationService.ListNotificationsAsync(
-            companyId, page, pageSize, userId, isRead, type);
-
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        var response = new PaginatedResponse<NotificationDto>
-        {
-            Data = notifications,
-            Pagination = new PaginationInfo
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Notifications:ListEnabled", false))
             {
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = totalPages
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(ListNotifications), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
             }
-        };
 
-        return Ok(response);
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(ListNotifications), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            var (notifications, totalCount) = await _notificationService.ListNotificationsAsync(
+                companyId, page, pageSize, userId, isRead, type);
+
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var response = new PaginatedResponse<NotificationDto>
+            {
+                Data = notifications,
+                Pagination = new PaginationInfo
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages
+                }
+            };
+
+            return Ok(response);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(ListNotifications), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
+                nameof(ListNotifications), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
+        }
     }
 
     /// <summary>
@@ -86,25 +111,51 @@ public class NotificationsController : ControllerBase
     [ProducesResponseType(typeof(ApiProblemDetails), 429)]
     public async Task<IActionResult> GetNotification(int id)
     {
-        if (!_configuration.GetValue<bool>("Features:Api:Notifications:GetEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Notifications:GetEnabled", false))
+            {
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(GetNotification), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+            }
 
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(GetNotification), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            var notification = await _notificationService.GetNotificationAsync(companyId, id);
+
+            if (notification == null)
+            {
+                _logger.LogWarning("Notification not found. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}",
+                    nameof(GetNotification), companyId, id);
+                return NotFound(ApiProblemDetails.NotFound($"Notification {id} not found", HttpContext.Request.Path));
+            }
+
+            return Ok(notification);
+        }
+        catch (DbUpdateException ex)
         {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
+                nameof(GetNotification), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
         }
-
-        var notification = await _notificationService.GetNotificationAsync(companyId, id);
-
-        if (notification == null)
+        catch (Exception ex)
         {
-            return NotFound(ApiProblemDetails.NotFound($"Notification {id} not found", HttpContext.Request.Path));
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
+                nameof(GetNotification), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
         }
-
-        return Ok(notification);
     }
 
     /// <summary>
@@ -120,30 +171,61 @@ public class NotificationsController : ControllerBase
     [ProducesResponseType(typeof(ApiProblemDetails), 429)]
     public async Task<IActionResult> MarkAsRead(int id, [FromBody] MarkAsReadRequest? request = null)
     {
-        if (!_configuration.GetValue<bool>("Features:Api:Notifications:MarkReadEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
-
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
-        {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
-        }
-
-        var (notification, error) = await _notificationService.MarkAsReadAsync(
-            companyId, id, request?.UserId);
-
-        if (error != null)
-        {
-            if (error.Contains("not found"))
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Notifications:MarkReadEnabled", false))
             {
-                return NotFound(ApiProblemDetails.NotFound(error, HttpContext.Request.Path));
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(MarkAsRead), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
             }
-            return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
-        }
 
-        return Ok(notification);
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(MarkAsRead), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            var (notification, error) = await _notificationService.MarkAsReadAsync(
+                companyId, id, request?.UserId);
+
+            if (error != null)
+            {
+                if (error.Contains("not found"))
+                {
+                    _logger.LogWarning("Notification not found for mark as read. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}",
+                        nameof(MarkAsRead), companyId, id);
+                    return NotFound(ApiProblemDetails.NotFound(error, HttpContext.Request.Path));
+                }
+                _logger.LogWarning("Mark as read validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}, Error={Error}",
+                    nameof(MarkAsRead), companyId, id, error);
+                return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
+            }
+
+            _logger.LogInformation("Notification marked as read. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}",
+                nameof(MarkAsRead), companyId, id);
+
+            return Ok(notification);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
+                nameof(MarkAsRead), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
+                nameof(MarkAsRead), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
+        }
     }
 
     /// <summary>
@@ -158,25 +240,54 @@ public class NotificationsController : ControllerBase
     [ProducesResponseType(typeof(ApiProblemDetails), 429)]
     public async Task<IActionResult> MarkAllAsRead([FromBody] MarkAllAsReadRequest request)
     {
-        if (!_configuration.GetValue<bool>("Features:Api:Notifications:MarkAllReadEnabled", false))
+        try
         {
-            return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
-        }
+            // Check feature flag
+            if (!_configuration.GetValue<bool>("Features:Api:Notifications:MarkAllReadEnabled", false))
+            {
+                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
+                    nameof(MarkAllAsRead), HttpContext.Request.Path);
+                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+            }
 
-        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
-        if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            // Get CompanyId from claims
+            var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+            if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                // ERR-003: Log authorization failure
+                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
+                    nameof(MarkAllAsRead), HttpContext.Request.Path, companyIdClaim != null);
+                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            }
+
+            if (request.UserId <= 0)
+            {
+                _logger.LogWarning("Validation error: UserId required. Endpoint={Endpoint}, CompanyId={CompanyId}",
+                    nameof(MarkAllAsRead), companyId);
+                return BadRequest(ApiProblemDetails.ValidationError("UserId is required", HttpContext.Request.Path));
+            }
+
+            var count = await _notificationService.MarkAllAsReadAsync(companyId, request.UserId);
+
+            _logger.LogInformation("All notifications marked as read. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}, MarkedCount={MarkedCount}",
+                nameof(MarkAllAsRead), companyId, request.UserId, count);
+
+            return Ok(new MarkAllReadResponse { MarkedCount = count });
+        }
+        catch (DbUpdateException ex)
         {
-            return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
+                nameof(MarkAllAsRead), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An error occurred while processing your request", HttpContext.Request.Path));
         }
-
-        if (request.UserId <= 0)
+        catch (Exception ex)
         {
-            return BadRequest(ApiProblemDetails.ValidationError("UserId is required", HttpContext.Request.Path));
+            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
+                nameof(MarkAllAsRead), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
+            return StatusCode(500, ApiProblemDetails.InternalError(
+                "An unexpected error occurred", HttpContext.Request.Path));
         }
-
-        var count = await _notificationService.MarkAllAsReadAsync(companyId, request.UserId);
-
-        return Ok(new MarkAllReadResponse { MarkedCount = count });
     }
 }
 

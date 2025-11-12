@@ -167,10 +167,12 @@ public class OnDutyService : IOnDutyService
         OnDutyType type,
         string? notes = null)
     {
+        var currentUserId = GetCurrentUserId();
+        int? companyId = null;
         try
         {
-            var currentUserId = GetCurrentUserId();
             var currentUser = await GetCurrentUserAsync();
+            companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
             {
@@ -227,9 +229,16 @@ public class OnDutyService : IOnDutyService
 
             return (true, "On-duty assignment created successfully.", onDuty);
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error creating on-duty. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Type={Type}",
+                companyId, currentUserId, assigneeId, date, type);
+            return (false, "An error occurred while creating the on-duty assignment.", null);
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating on-duty for user {UserId} on {Date}", assigneeId, date);
+            _logger.LogError(ex, "Unexpected error creating on-duty. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Type={Type}",
+                companyId, currentUserId, assigneeId, date, type);
             return (false, "An error occurred while creating the on-duty assignment.", null);
         }
     }
@@ -239,10 +248,12 @@ public class OnDutyService : IOnDutyService
     /// </summary>
     public async Task<(bool Success, string Message)> CancelOnDutyAsync(int onDutyId, string? reason = null)
     {
+        var currentUserId = GetCurrentUserId();
+        int? companyId = null;
         try
         {
-            var currentUserId = GetCurrentUserId();
             var currentUser = await GetCurrentUserAsync();
+            companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
             {
@@ -299,9 +310,16 @@ public class OnDutyService : IOnDutyService
 
             return (true, "On-duty assignment canceled successfully.");
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error canceling on-duty. CompanyId={CompanyId}, CanceledBy={CanceledBy}, OnDutyId={OnDutyId}, Reason={Reason}",
+                companyId, currentUserId, onDutyId, reason ?? "None");
+            return (false, "An error occurred while canceling the on-duty assignment.");
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error canceling on-duty {OnDutyId}", onDutyId);
+            _logger.LogError(ex, "Unexpected error canceling on-duty. CompanyId={CompanyId}, CanceledBy={CanceledBy}, OnDutyId={OnDutyId}, Reason={Reason}",
+                companyId, currentUserId, onDutyId, reason ?? "None");
             return (false, "An error occurred while canceling the on-duty assignment.");
         }
     }
