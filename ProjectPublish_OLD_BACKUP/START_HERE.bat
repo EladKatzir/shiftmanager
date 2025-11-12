@@ -1,7 +1,6 @@
 @echo off
 echo ================================================================================
-echo            SHIFTMANAGER v1.0.0 - First Time Setup Check
-echo                      Build Date: 2025-11-12
+echo            SHIFTMANAGER - First Time Setup Check
 echo ================================================================================
 echo.
 
@@ -45,7 +44,7 @@ if not exist ShiftManager.exe (
     pause
     exit /b 1
 )
-echo [OK] ShiftManager.exe found (v1.0.0)
+echo [OK] ShiftManager.exe found
 echo.
 
 REM Check if SQLite DLL exists
@@ -58,39 +57,11 @@ if not exist e_sqlite3.dll (
 echo [OK] SQLite library found
 echo.
 
-REM Check if wwwroot folder exists
-if not exist wwwroot (
-    echo [WARNING] wwwroot folder not found!
-    echo Web assets may be missing.
-    echo.
-) else (
-    echo [OK] Web assets folder found
-    echo.
-)
-
-REM Check if Hebrew localization exists
-if not exist he-IL (
-    echo [WARNING] Hebrew localization folder not found!
-    echo.
-) else (
-    echo [OK] Hebrew localization found
-    echo.
-)
-
 echo ================================================================================
-echo All checks passed! Starting ShiftManager v1.0.0...
+echo All checks passed! Starting ShiftManager...
 echo ================================================================================
 echo.
 echo The application will start in a few seconds.
-echo.
-echo What happens on first run:
-echo   - Creates SQLite database (app.db)
-echo   - Runs 22 database migrations
-echo   - Seeds company "Demo Co"
-echo   - Seeds 5 shift types: MORNING, NOON, NIGHT, MIDDLE, OFFLINE
-echo   - Activates On-Duty types: Hakam (Chak"mko), Lead (Movilto)
-echo   - Creates admin user with your password
-echo   - Starts web server on port 5000
 echo.
 echo Once you see "Now listening on: http://localhost:5000"
 echo Open your browser to: http://localhost:5000
@@ -98,13 +69,6 @@ echo.
 echo Login with:
 echo   Email: admin@local
 echo   Password: [whatever you set in appsettings.json]
-echo.
-echo NEW FEATURES in v1.0.0:
-echo   - OFFLINE shift type (automatically seeded)
-echo   - On-Duty types: Hakam (shield) and Lead (star) - built-in, ready to use
-echo   - Team Calendars
-echo   - Hebrew language support with RTL
-echo   - Complete API layer (27 endpoints)
 echo.
 echo Press CTRL+C to stop the application.
 echo ================================================================================

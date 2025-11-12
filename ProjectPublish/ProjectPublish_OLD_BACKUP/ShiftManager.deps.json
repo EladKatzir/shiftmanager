@@ -12,7 +12,6 @@
           "Microsoft.EntityFrameworkCore.Design": "9.0.9",
           "Microsoft.EntityFrameworkCore.Sqlite": "9.0.9",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "8.0.0",
-          "SixLabors.ImageSharp": "3.1.11",
           "runtimepack.Microsoft.NETCore.App.Runtime.win-x64": "8.0.20",
           "runtimepack.Microsoft.AspNetCore.App.Runtime.win-x64": "8.0.20"
         },
@@ -1562,14 +1561,6 @@
           "System.CodeDom": "6.0.0"
         }
       },
-      "SixLabors.ImageSharp/3.1.11": {
-        "runtime": {
-          "lib/net6.0/SixLabors.ImageSharp.dll": {
-            "assemblyVersion": "3.0.0.0",
-            "fileVersion": "3.1.11.0"
-          }
-        }
-      },
       "SQLitePCLRaw.bundle_e_sqlite3/2.1.10": {
         "dependencies": {
           "SQLitePCLRaw.lib.e_sqlite3": "2.1.10",
@@ -1947,13 +1938,6 @@
       "sha512": "sha512-YqueG52R/Xej4VVbKuRIodjiAhV0HR/XVbLbNrJhCZnzjnSjgMJ/dCdV0akQQxavX6hp/LC6rqLGLcXeQYU7XA==",
       "path": "mono.texttemplating/3.0.0",
       "hashPath": "mono.texttemplating.3.0.0.nupkg.sha512"
-    },
-    "SixLabors.ImageSharp/3.1.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-JfPLyigLthuE50yi6tMt7Amrenr/fA31t2CvJyhy/kQmfulIBAqo5T/YFUSRHtuYPXRSaUHygFeh6Qd933EoSw==",
-      "path": "sixlabors.imagesharp/3.1.11",
-      "hashPath": "sixlabors.imagesharp.3.1.11.nupkg.sha512"
     },
     "SQLitePCLRaw.bundle_e_sqlite3/2.1.10": {
       "type": "package",

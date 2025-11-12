@@ -48,7 +48,6 @@ FILES IN THIS FOLDER:
 
 📄 Documentation:
    README.txt                    ← You are here!
-   VERSION.txt                  ← Version info and changelog
    QUICK_START.txt              ← 3-step quick start guide
    DEPLOYMENT_GUIDE.txt         ← Complete deployment manual
    VERIFICATION_CHECKLIST.txt   ← Deployment verification results
@@ -73,8 +72,8 @@ FILES IN THIS FOLDER:
    he-IL/                       ← Hebrew language resources
 
 📦 Runtime & Dependencies:
-   347 files                    ← .NET runtime + all dependencies
-   Total size: 109 MB
+   334 DLL files                ← .NET runtime + all dependencies
+   Total size: 106 MB
 
 ================================================================================
 DEFAULT CREDENTIALS:
@@ -108,14 +107,12 @@ DEPLOYMENT CONFIDENCE: 99.9%
 ================================================================================
 
 ✅ Complete self-contained package verified
-✅ All 347 dependencies included
+✅ All 334 dependencies included
 ✅ SQLite database library present
 ✅ All runtime files included
 ✅ Configuration files ready
 ✅ Localization resources present
 ✅ Web files ready
-✅ OFFLINE shift type automatically seeded
-✅ On-Duty types (Hakam, Lead) built-in
 
 ⚠️ Only potential issue: Environment variable/password configuration
 ✅ SOLVED: Added SEED_ADMIN_PASSWORD to appsettings.json
@@ -166,7 +163,6 @@ All documentation is included in this folder:
   - QUICK_START.txt              → Get running in 3 steps
   - DEPLOYMENT_GUIDE.txt         → Complete manual (all scenarios)
   - VERIFICATION_CHECKLIST.txt   → Technical verification details
-  - VERSION.txt                  → Version info and changelog
   - README.txt                   → This file
 
 If you encounter issues:
@@ -182,7 +178,7 @@ The application will automatically:
   1. Create app.db SQLite database
   2. Run all database migrations
   3. Create initial company: "Demo Co"
-  4. Create shift types: MORNING, NOON, NIGHT, MIDDLE, OFFLINE
+  4. Create shift types: MORNING, NOON, NIGHT, MIDDLE
   5. Set default config: 8 hours rest, 40 hours/week cap
   6. Create admin user with your password
   7. Start web server on port 5000
@@ -194,17 +190,13 @@ FEATURES:
 ================================================================================
 
 ✓ Multi-tenant (multiple companies)
-✓ Role-based access (Owner, Director, Manager, Assigner, Employee, Trainee)
+✓ Role-based access (Owner, Director, Manager, Employee, Trainee)
 ✓ Shift scheduling with conflict detection
-✓ OFFLINE shift type (for non-working days)
-✓ On-Duty assignments (Hakam 🛡️, Lead ⭐)
 ✓ Rest hours enforcement
 ✓ Weekly hours caps
 ✓ Notifications system
 ✓ Multi-language (English, Hebrew)
-✓ RTL support for Hebrew
 ✓ Cookie-based authentication
-✓ Complete API layer with 27 endpoints
 
 ================================================================================
 NEXT STEPS:
@@ -229,9 +221,9 @@ All dependencies are included. No internet connection required.
 
 Questions? See DEPLOYMENT_GUIDE.txt for comprehensive documentation.
 
-Version: v1.0.0 (Release Candidate)
-Package Date: 2025-11-12
-Package Size: 109 MB
+Version: .NET 8.0
+Package Date: 2025-10-09
+Package Size: 106 MB
 Deployment Type: Self-Contained
 
 ================================================================================
