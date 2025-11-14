@@ -11,6 +11,7 @@ namespace ShiftManager.Services;
 /// <summary>
 /// Service for sending email notifications via company mail API.
 /// Sends emails for shift assignments, changes, and deletions.
+/// Supports database configuration (per-company) with fallback to appsettings.json.
 /// Follows ShiftManager architecture patterns with dependency injection and structured logging.
 /// </summary>
 public class MailService : IMailService
@@ -18,10 +19,7 @@ public class MailService : IMailService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<MailService> _logger;
     private readonly IConfiguration _configuration;
-    private readonly string _apiKey;
-    private readonly string _apiUrl;
-    private readonly string _fromEmail;
-    private readonly bool _emailEnabled;
+    private readonly IEmailConfigService _emailConfigService;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, and configuration.
@@ -29,28 +27,44 @@ public class MailService : IMailService
     public MailService(
         IHttpClientFactory httpClientFactory,
         ILogger<MailService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IEmailConfigService emailConfigService)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _emailConfigService = emailConfigService ?? throw new ArgumentNullException(nameof(emailConfigService));
+    }
 
-        // Load configuration from appsettings.json
-        _apiKey = _configuration["Email:ApiKey"] ?? string.Empty;
-        _apiUrl = _configuration["Email:ApiUrl"] ?? string.Empty;
-        _fromEmail = _configuration["Email:FromAddress"] ?? "noreply@shiftmanager.local";
-        _emailEnabled = _configuration.GetValue<bool>("Email:Enabled", false);
-
-        // Validate configuration on startup
-        if (_emailEnabled && string.IsNullOrWhiteSpace(_apiKey))
+    /// <summary>
+    /// Loads email configuration from database (per-company) with fallback to appsettings.json
+    /// </summary>
+    private async Task<(bool enabled, string? apiKey, string? apiUrl, string? fromAddress, string source)> LoadConfigurationAsync()
+    {
+        try
         {
-            _logger.LogWarning("Email service enabled but Email:ApiKey is not configured. Email sending will fail.");
+            // Try to load from database first (company-specific configuration)
+            var dbConfig = await _emailConfigService.GetEmailConfigAsync();
+            if (dbConfig != null)
+            {
+                var decryptedApiKey = await _emailConfigService.GetDecryptedApiKeyAsync();
+                _logger.LogDebug("Loaded email configuration from database for company {CompanyId}", dbConfig.CompanyId);
+                return (dbConfig.Enabled, decryptedApiKey, dbConfig.ApiUrl, dbConfig.FromAddress, "database");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load email configuration from database, falling back to appsettings.json");
         }
 
-        if (_emailEnabled && string.IsNullOrWhiteSpace(_apiUrl))
-        {
-            _logger.LogWarning("Email service enabled but Email:ApiUrl is not configured. Email sending will fail.");
-        }
+        // Fallback to appsettings.json
+        var apiKey = _configuration["Email:ApiKey"];
+        var apiUrl = _configuration["Email:ApiUrl"];
+        var fromAddress = _configuration["Email:FromAddress"] ?? "noreply@shiftmanager.local";
+        var enabled = _configuration.GetValue<bool>("Email:Enabled", false);
+
+        _logger.LogDebug("Loaded email configuration from appsettings.json");
+        return (enabled, apiKey, apiUrl, fromAddress, "appsettings.json");
     }
 
     /// <summary>
@@ -75,19 +89,22 @@ public class MailService : IMailService
             return false;
         }
 
+        // Load configuration (database first, then fallback to appsettings.json)
+        var (emailEnabled, apiKey, apiUrl, fromAddress, source) = await LoadConfigurationAsync();
+
         // Check if email is enabled in configuration
-        if (!_emailEnabled)
+        if (!emailEnabled)
         {
-            _logger.LogInformation("Email service disabled. Skipping email to {Recipient} with subject: {Subject}",
-                recipient, subject);
+            _logger.LogInformation("Email service disabled (source: {Source}). Skipping email to {Recipient} with subject: {Subject}",
+                source, recipient, subject);
             return true; // Return true to avoid blocking workflow
         }
 
         // Validate configuration
-        if (string.IsNullOrWhiteSpace(_apiKey) || string.IsNullOrWhiteSpace(_apiUrl))
+        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(apiUrl))
         {
-            _logger.LogError("Email service misconfigured. ApiKey or ApiUrl is missing. Cannot send email to {Recipient}",
-                recipient);
+            _logger.LogError("Email service misconfigured (source: {Source}). ApiKey or ApiUrl is missing. Cannot send email to {Recipient}",
+                source, recipient);
             return false;
         }
 
@@ -99,7 +116,7 @@ public class MailService : IMailService
             // Build email payload matching company API format
             var payload = new
             {
-                from = _fromEmail,
+                from = fromAddress,
                 to = recipient,
                 subject = subject,
                 html = htmlBody
@@ -116,15 +133,16 @@ public class MailService : IMailService
 
             // Add API key header
             httpClient.DefaultRequestHeaders.Clear();
-            httpClient.DefaultRequestHeaders.Add("Apikey", _apiKey);
+            httpClient.DefaultRequestHeaders.Add("Apikey", apiKey);
 
             // Set reasonable timeout (30 seconds)
             httpClient.Timeout = TimeSpan.FromSeconds(30);
 
-            _logger.LogInformation("Sending email to {Recipient} with subject: {Subject}", recipient, subject);
+            _logger.LogInformation("Sending email to {Recipient} with subject: {Subject} (config source: {Source})",
+                recipient, subject, source);
 
             // Send POST request to mail API
-            HttpResponseMessage response = await httpClient.PostAsync(_apiUrl, content);
+            HttpResponseMessage response = await httpClient.PostAsync(apiUrl, content);
 
             // Read response content
             string responseContent = await response.Content.ReadAsStringAsync();

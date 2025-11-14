@@ -51,7 +51,11 @@ FILES IN THIS FOLDER:
    VERSION.txt                  ← Version info and changelog
    QUICK_START.txt              ← 3-step quick start guide
    DEPLOYMENT_GUIDE.txt         ← Complete deployment manual
+   UPGRADE_GUIDE.txt            ← Upgrading from old versions
    VERIFICATION_CHECKLIST.txt   ← Deployment verification results
+   DEPLOYMENT_READINESS_REPORT.txt ← Automated test results
+   FINAL_CERTIFICATION.txt      ← Production certification
+   API_DOCUMENTATION.md         ← Complete API reference (offline)
 
 🚀 Startup:
    START_HERE.bat               ← Automated startup script with checks
@@ -72,9 +76,16 @@ FILES IN THIS FOLDER:
 🌍 Localization:
    he-IL/                       ← Hebrew language resources
 
+📦 API Clients:
+   clients/javascript/          ← JavaScript client library
+   clients/python/              ← Python client library
+
+📁 Upload Directories:
+   wwwroot/feedback/            ← User-uploaded feedback screenshots (must be writable)
+
 📦 Runtime & Dependencies:
-   347 files                    ← .NET runtime + all dependencies
-   Total size: 109 MB
+   380 files                    ← .NET runtime + all dependencies
+   Total size: 110 MB
 
 ================================================================================
 DEFAULT CREDENTIALS:
@@ -108,7 +119,7 @@ DEPLOYMENT CONFIDENCE: 99.9%
 ================================================================================
 
 ✅ Complete self-contained package verified
-✅ All 347 dependencies included
+✅ All 380 dependencies included
 ✅ SQLite database library present
 ✅ All runtime files included
 ✅ Configuration files ready
@@ -139,6 +150,12 @@ QUICK TROUBLESHOOTING:
 ❌ Can't access from other computers
 ✅ Configure firewall (see DEPLOYMENT_GUIDE.txt Step 6)
 
+❌ Feedback image upload fails
+✅ Ensure wwwroot/feedback/ folder exists and is writable
+
+❌ Email config encryption fails
+✅ Check Data Protection keys at: %LOCALAPPDATA%\ASP.NET\DataProtection-Keys
+
 For more help, see DEPLOYMENT_GUIDE.txt Troubleshooting section.
 
 ================================================================================
@@ -156,6 +173,34 @@ Before going to production:
 7. ✓ Run as Windows Service (not as user)
 
 See DEPLOYMENT_GUIDE.txt for detailed instructions.
+
+================================================================================
+SPECIAL FEATURES & NOTES:
+================================================================================
+
+🎮 EASTER EGG:
+This version includes a hidden Match-3 puzzle game for fun!
+- Trigger: Ctrl+Click on the "ShiftManager" brand logo
+- Purpose: Harmless entertainment, does not affect operations
+- Security: Entirely client-side, no data collection
+
+🔐 EMAIL ENCRYPTION:
+Email configuration uses ASP.NET Data Protection for API key encryption.
+- Keys auto-generated on first run
+- Location: %LOCALAPPDATA%\ASP.NET\DataProtection-Keys
+- If running as Windows Service, ensure service account has access to key directory
+
+📁 FEEDBACK SYSTEM:
+Users can submit feedback with screenshot uploads.
+- Uploads saved to: wwwroot/feedback/
+- Ensure directory has write permissions
+- Images are stored locally (not sent externally)
+
+📦 API CLIENTS:
+Ready-to-use client libraries for API integration.
+- JavaScript: clients/javascript/shiftmanager-client.js
+- Python: clients/python/shiftmanager_client.py
+- Full documentation: API_DOCUMENTATION.md
 
 ================================================================================
 SUPPORT:
@@ -205,6 +250,10 @@ FEATURES:
 ✓ RTL support for Hebrew
 ✓ Cookie-based authentication
 ✓ Complete API layer with 27 endpoints
+✓ Feedback system with image uploads
+✓ Email configuration with encryption
+✓ API client libraries (JavaScript, Python)
+✓ Easter egg: Shift Swap Match-3 game (Ctrl+Click on brand)
 
 ================================================================================
 NEXT STEPS:
@@ -229,9 +278,9 @@ All dependencies are included. No internet connection required.
 
 Questions? See DEPLOYMENT_GUIDE.txt for comprehensive documentation.
 
-Version: v1.0.0 (Release Candidate)
-Package Date: 2025-11-12
-Package Size: 109 MB
+Version: v1.1.0
+Package Date: 2025-11-14
+Package Size: 110 MB
 Deployment Type: Self-Contained
 
 ================================================================================

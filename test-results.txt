@@ -1,0 +1,227 @@
+
+========================================
+Checking Database for API Keys
+========================================
+[INFO] dotnet-script not available, creating key with EF Core tool...
+[INFO] Using API Key: hakamot (ID: 2)
+
+========================================
+Testing Swap Requests API (6 endpoints)
+========================================
+[PASS] GET /api/v1/swap-requests (List) - Status: 200
+[INFO]   Response: {"data":[],"pagination":{"page":1,"pageSize":10,"totalCount":0,"totalPages":0}}...
+
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[],"pagination":{"page":1,"pageSize":10,"totalCount":0,"totalPages":0}}
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 79
+
+[PASS] GET /api/v1/swap-requests (With filters) - Status: 200
+[INFO]   Response: {"data":[],"pagination":{"page":1,"pageSize":50,"totalCount":0,"totalPages":0}}...
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[],"pagination":{"page":1,"pageSize":50,"totalCount":0,"totalPages":0}}
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 79
+
+[PASS] GET /api/v1/swap-requests/1 (Single) - Status: 404 (Expected)
+[PASS] POST /api/v1/swap-requests (Create) - Status: 400 (Expected)
+[PASS] POST /api/v1/swap-requests/1/approve (Approve) - Status: 404 (Expected)
+[PASS] POST /api/v1/swap-requests/1/decline (Decline) - Status: 404 (Expected)
+[PASS] DELETE /api/v1/swap-requests/1 (Delete) - Status: 404 (Expected)
+
+========================================
+Testing Chores API (5 endpoints)
+========================================
+[PASS] GET /api/v1/chores (List) - Status: 200
+[INFO]   Response: 1 items returned
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[{"id":5,"userId":6,"date":"2025-10-30","title":"??\"?","createdBy":1,"createdAt":"2025-10-
+                    29T00:01:13.4185789","isActive":true}],"pagination":{"page":1,"pageSize":10,"totalCount":1,"totalPa
+                    ge...
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 209
+
+[PASS] GET /api/v1/chores (With filters) - Status: 200
+[INFO]   Response: 1 items returned
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[{"id":5,"userId":6,"date":"2025-10-30","title":"??\"?","createdBy":1,"createdAt":"2025-10-
+                    29T00:01:13.4185789","isActive":true,"user":{"id":6,"email":"123o@d","displayName":"ori","role":"Ma
+                    na...
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 389
+
+[FAIL] GET /api/v1/chores/1 (Single) - Expected 404 but got 200
+[FAIL] POST /api/v1/chores (Create) - Expected 200 but got 201
+[FAIL] POST /api/v1/chores (Create for update test) - Expected 200 but got 201
+
+========================================
+Testing On-Duty API (5 endpoints)
+========================================
+[PASS] GET /api/v1/on-duty (List) - Status: 200
+[INFO]   Response: 2 items returned
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[{"id":1,"userId":9,"date":"2025-11-14","type":"Hakam","createdBy":9,"createdAt":"2025-11-1
+                    2T08:00:09.745392","isActive":true},{"id":2,"userId":11,"date":"2025-11-15","type":"Hakam","created
+                    By...
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 332
+
+[PASS] GET /api/v1/on-duty (With filters) - Status: 200
+[INFO]   Response: 2 items returned
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[{"id":1,"userId":9,"date":"2025-11-14","type":"Hakam","createdBy":9,"createdAt":"2025-11-1
+                    2T08:00:09.745392","isActive":true,"user":{"id":9,"email":"man@t","displayName":"mant","role":"Mana
+                    ge...
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 688
+
+[FAIL] GET /api/v1/on-duty/1 (Single) - Expected 404 but got 200
+[FAIL] POST /api/v1/on-duty (Create) - Expected 200 but got 201
+
+========================================
+Testing Feedback API (5 endpoints)
+========================================
+[PASS] GET /api/v1/feedback (List) - Status: 200
+[INFO]   Response: {"data":[],"pagination":{"page":1,"pageSize":10,"totalCount":0,"totalPages":0}}...
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[],"pagination":{"page":1,"pageSize":10,"totalCount":0,"totalPages":0}}
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 79
+
+[PASS] GET /api/v1/feedback (With filters) - Status: 200
+[INFO]   Response: {"data":[],"pagination":{"page":1,"pageSize":50,"totalCount":0,"totalPages":0}}...
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"data":[],"pagination":{"page":1,"pageSize":50,"totalCount":0,"totalPages":0}}
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    X-Frame-Options: DENY
+                    X-Content-Type-Options: nosniff
+                    Referrer-Policy: strict-origin-when-cross-origin
+                    Content-Security-Policy: default-src 'self'; scri...
+Forms             : 
+Headers           : {[Transfer-Encoding, chunked], [X-Frame-Options, DENY], [X-Content-Type-Options, nosniff], 
+                    [Referrer-Policy, strict-origin-when-cross-origin]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 79
+
+[PASS] GET /api/v1/feedback/1 (Single) - Status: 404 (Expected)
+[FAIL] POST /api/v1/feedback (Create) - Expected 200 but got 201
+
+========================================
+Testing Authentication & Error Handling
+========================================
+[PASS] GET without API key (401 expected) - Status: 401 (Expected)
+[PASS] GET with invalid API key (401 expected) - Status: 401 (Expected)
+[FAIL] GET with invalid page (400 expected) - Expected 400 but got 200
+[FAIL] GET with invalid pageSize (400 expected) - Expected 400 but got 200
+
+========================================
+Test Summary
+========================================
+
+Total Tests:  24
+Passed:       16
+Failed:       8
+
+Some tests failed. Review the output above for details.
+
+Note: 404 errors for specific resources are expected when testing against an empty database.
+
+
+

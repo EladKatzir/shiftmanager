@@ -192,6 +192,89 @@ curl https://your-domain.com/health
 
 ---
 
+## Email Configuration
+
+ShiftManager supports **encrypted email notifications** for shift assignments, changes, and chore assignments. Email configuration is managed per-company with database storage and fallback to `appsettings.json`.
+
+### Configuration Methods
+
+#### Option 1: Admin UI (Recommended for Multi-Tenant)
+1. Navigate to **Admin → Config** (`/Admin/Config`)
+2. Scroll to **Email Configuration** section
+3. Fill in the form:
+   - ✅ **Enable Email Notifications** - Toggle on/off
+   - 🔑 **API Key** - Stored encrypted using ASP.NET Data Protection
+   - 🌐 **API URL** - Your email service endpoint
+   - ✉️ **From Address** - Sender email address
+4. Click **Save Email Configuration**
+
+**Features:**
+- ✅ API keys encrypted at rest (ASP.NET Data Protection API)
+- ✅ Per-company configuration (multi-tenant support)
+- ✅ Configuration priority: Database → appsettings.json
+- ✅ Audit logging for configuration changes
+
+#### Option 2: Configuration File (Fallback)
+Edit `appsettings.Production.json` (see `appsettings.Production.template.json` for template):
+
+```json
+{
+  "Email": {
+    "Enabled": true,
+    "ApiKey": "your-api-key-here",
+    "ApiUrl": "https://api.yourcompany.com/v1/mail/send",
+    "FromAddress": "noreply@yourcompany.com"
+  }
+}
+```
+
+#### Option 3: Environment Variables (Most Secure for Production)
+```bash
+# Linux/macOS
+export EMAIL__ENABLED=true
+export EMAIL__APIKEY="your-api-key-here"
+export EMAIL__APIURL="https://api.yourcompany.com/v1/mail/send"
+export EMAIL__FROMADDRESS="noreply@yourcompany.com"
+
+# Windows
+set EMAIL__ENABLED=true
+set EMAIL__APIKEY=your-api-key-here
+set EMAIL__APIURL=https://api.yourcompany.com/v1/mail/send
+set EMAIL__FROMADDRESS=noreply@yourcompany.com
+
+# Docker
+docker run -e EMAIL__ENABLED=true \
+           -e EMAIL__APIKEY="your-api-key-here" \
+           yourimage
+```
+
+### Email Types
+- **Shift Assigned** - Notify employee when assigned to a shift
+- **Shift Changed** - Notify when shift details are modified
+- **Shift Deleted** - Notify when removed from a shift
+- **Chore Assigned** - Notify when assigned a chore
+- **Chore Canceled** - Notify when a chore is canceled
+
+### Configuration Priority
+1. **Database** (per-company, via Admin UI) → Highest priority
+2. **Environment Variables** → Overrides appsettings.json
+3. **appsettings.Production.json** → Fallback
+
+### Security Features
+- 🔐 API keys encrypted using ASP.NET Data Protection API
+- 🔒 Purpose-based encryption (`ShiftManager.EmailConfig.v1`)
+- 📝 Audit logging for configuration changes
+- 🚫 Password input fields (never display API key in UI)
+- ✅ Validation: URL format, email format, required fields
+
+### Testing Email Configuration
+After configuration, test by:
+1. Assigning an employee to a shift
+2. Check logs for email send attempts
+3. Verify employee receives email notification
+
+---
+
 ## Roadmap
 
 ### Completed ✅
@@ -203,6 +286,7 @@ curl https://your-domain.com/health
 - Trainee shadowing functionality
 - Localization (English, Hebrew)
 - In-app notification system
+- **Email notifications with encrypted configuration**
 
 ### Upcoming 🚀 (See [next week plan.md](next%20week%20plan.md))
 1. **Export & Print Schedules** - Excel, PDF, print-friendly views
@@ -212,7 +296,6 @@ curl https://your-domain.com/health
 5. **Shift Analytics & Reporting** - Workforce analytics and back-to-back shift detection
 
 ### Future Enhancements
-- Email notifications (in addition to in-app)
 - Mobile app (iOS/Android)
 - Auto-scheduling algorithm (AI-based)
 - Time tracking & attendance (clock in/out)

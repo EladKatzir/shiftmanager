@@ -100,6 +100,7 @@ public class ApiAuthenticationMiddleware
             new Claim("ApiKeyId", apiKey.Id.ToString()),
             new Claim("CompanyId", apiKey.CompanyId.ToString()),
             new Claim("ApiKeyName", apiKey.Name),
+            new Claim("UserId", apiKey.CreatedBy.ToString()), // Add UserId for controllers that need it
             new Claim("AuthenticationType", "ApiKey")
         };
 

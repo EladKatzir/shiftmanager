@@ -35,7 +35,8 @@ public enum NotificationType
     ChoreCanceled = 13,
     OnDutyAssigned = 14,
     OnDutyCanceled = 15,
-    TimeOffDeleted = 16
+    TimeOffDeleted = 16,
+    FeedbackSubmitted = 17
 }
 
 public enum JoinRequestStatus

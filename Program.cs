@@ -98,6 +98,9 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
+builder.Services.AddDataProtection(); // Required for EncryptionService
+builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -126,6 +129,10 @@ builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.ShiftApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.TimeOffApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.NotificationApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.SwapRequestApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.ChoreApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.OnDutyApiService>();
+builder.Services.AddScoped<ShiftManager.Services.Api.FeedbackApiService>();
 
 // Add Controllers for API endpoints
 builder.Services.AddControllers()

@@ -244,7 +244,9 @@ public class IndexModel : PageModel
         var shiftType = await _db.ShiftTypes.FindAsync(si.ShiftTypeId);
         if (shiftType == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
 
-        var conflict = await _checker.CanAssignAsync(s.ToUserId, si);
+        if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
+
+        var conflict = await _checker.CanAssignAsync(s.ToUserId.Value, si);
         if (!conflict.Allowed)
         {
             Error = "Cannot approve swap: " + string.Join(" ", conflict.Reasons);

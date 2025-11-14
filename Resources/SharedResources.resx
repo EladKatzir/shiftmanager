@@ -2438,4 +2438,70 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="StatusChore" xml:space="preserve">
     <value>Chore</value>
   </data>
+  <data name="Feedback" xml:space="preserve">
+    <value>Feedback</value>
+  </data>
+  <data name="SubmitFeedback" xml:space="preserve">
+    <value>Submit Feedback</value>
+  </data>
+  <data name="FeedbackType" xml:space="preserve">
+    <value>Feedback Type</value>
+  </data>
+  <data name="FeedbackTypeError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="FeedbackTypeSuggestion" xml:space="preserve">
+    <value>Suggestion / Improvement</value>
+  </data>
+  <data name="FeedbackContent" xml:space="preserve">
+    <value>Feedback Content</value>
+  </data>
+  <data name="FeedbackContentPlaceholder" xml:space="preserve">
+    <value>Describe the issue or suggestion in detail...</value>
+  </data>
+  <data name="AddPicture" xml:space="preserve">
+    <value>Add picture (optional)</value>
+  </data>
+  <data name="FeedbackSubmitted" xml:space="preserve">
+    <value>Feedback submitted successfully. Thank you!</value>
+  </data>
+  <data name="FeedbackList" xml:space="preserve">
+    <value>Feedback List</value>
+  </data>
+  <data name="SubmittedBy" xml:space="preserve">
+    <value>Submitted by</value>
+  </data>
+  <data name="MarkToWorkOn" xml:space="preserve">
+    <value>Mark as to work on</value>
+  </data>
+  <data name="ToWorkOn" xml:space="preserve">
+    <value>To Work On</value>
+  </data>
+  <data name="NewFeedback" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="DeleteFeedback" xml:space="preserve">
+    <value>Delete feedback</value>
+  </data>
+  <data name="ConfirmDeleteFeedback" xml:space="preserve">
+    <value>Are you sure you want to delete this feedback?</value>
+  </data>
+  <data name="FeedbackDeleted" xml:space="preserve">
+    <value>Feedback deleted successfully.</value>
+  </data>
+  <data name="FeedbackMarkedToWorkOn" xml:space="preserve">
+    <value>Feedback marked as "To Work On".</value>
+  </data>
+  <data name="NoFeedback" xml:space="preserve">
+    <value>No feedback submitted yet.</value>
+  </data>
+  <data name="NewFeedbackNotificationTitle" xml:space="preserve">
+    <value>New Feedback Submitted</value>
+  </data>
+  <data name="FeedbackTypeRequired" xml:space="preserve">
+    <value>Please select a feedback type.</value>
+  </data>
+  <data name="FeedbackContentRequired" xml:space="preserve">
+    <value>Please enter feedback content.</value>
+  </data>
 </root>

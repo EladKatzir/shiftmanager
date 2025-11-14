@@ -33,7 +33,9 @@
     {
         <link rel="stylesheet" href="~/css/rtl.css" />
     }
+    <link rel="stylesheet" href="~/css/shift-swap-game.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
     @if (isHebrew)
     {
@@ -77,6 +79,7 @@
                 <div class="menu">
                     <a href="/Public/Chores">@Localizer["Chores"]</a>
                     <a href="/Public/OnDuty">@Localizer["OnDuty"]</a>
+                    <a href="/Public/Feedback">@Localizer["Feedback"]</a>
                 </div>
             </div>
             <a href="/My/Index">@Localizer["MyShifts"]</a>
@@ -138,6 +141,7 @@
                 <div class="menu">
                     <a href="/Public/Chores">@Localizer["Chores"]</a>
                     <a href="/Public/OnDuty">@Localizer["OnDuty"]</a>
+                    <a href="/Public/Feedback">@Localizer["Feedback"]</a>
                 </div>
             </div>
             <a href="/My/Requests" class="nav-item">

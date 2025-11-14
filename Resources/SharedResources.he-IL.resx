@@ -2228,4 +2228,70 @@
   <data name="StatusChore" xml:space="preserve">
     <value>מטלה</value>
   </data>
+  <data name="Feedback" xml:space="preserve">
+    <value>משוב</value>
+  </data>
+  <data name="SubmitFeedback" xml:space="preserve">
+    <value>שליחת משוב</value>
+  </data>
+  <data name="FeedbackType" xml:space="preserve">
+    <value>סוג המשוב</value>
+  </data>
+  <data name="FeedbackTypeError" xml:space="preserve">
+    <value>שגיאה</value>
+  </data>
+  <data name="FeedbackTypeSuggestion" xml:space="preserve">
+    <value>הצעה לייעול</value>
+  </data>
+  <data name="FeedbackContent" xml:space="preserve">
+    <value>תוכן המשוב</value>
+  </data>
+  <data name="FeedbackContentPlaceholder" xml:space="preserve">
+    <value>תאר את הבעיה או ההצעה בפירוט...</value>
+  </data>
+  <data name="AddPicture" xml:space="preserve">
+    <value>הוספת תמונה (אופציונלי)</value>
+  </data>
+  <data name="FeedbackSubmitted" xml:space="preserve">
+    <value>המשוב נשלח בהצלחה. תודה!</value>
+  </data>
+  <data name="FeedbackList" xml:space="preserve">
+    <value>רשימת משובים</value>
+  </data>
+  <data name="SubmittedBy" xml:space="preserve">
+    <value>נשלח על ידי</value>
+  </data>
+  <data name="MarkToWorkOn" xml:space="preserve">
+    <value>סמן לטיפול</value>
+  </data>
+  <data name="ToWorkOn" xml:space="preserve">
+    <value>לטיפול</value>
+  </data>
+  <data name="NewFeedback" xml:space="preserve">
+    <value>חדש</value>
+  </data>
+  <data name="DeleteFeedback" xml:space="preserve">
+    <value>מחק משוב</value>
+  </data>
+  <data name="ConfirmDeleteFeedback" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק משוב זה?</value>
+  </data>
+  <data name="FeedbackDeleted" xml:space="preserve">
+    <value>המשוב נמחק בהצלחה.</value>
+  </data>
+  <data name="FeedbackMarkedToWorkOn" xml:space="preserve">
+    <value>המשוב סומן "לטיפול".</value>
+  </data>
+  <data name="NoFeedback" xml:space="preserve">
+    <value>עדיין לא נשלחו משובים.</value>
+  </data>
+  <data name="NewFeedbackNotificationTitle" xml:space="preserve">
+    <value>משוב חדש נשלח</value>
+  </data>
+  <data name="FeedbackTypeRequired" xml:space="preserve">
+    <value>אנא בחר סוג משוב.</value>
+  </data>
+  <data name="FeedbackContentRequired" xml:space="preserve">
+    <value>אנא הזן תוכן משוב.</value>
+  </data>
 </root>

@@ -1,0 +1,297 @@
+@page
+@model ShiftManager.Pages.Public.FeedbackModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Feedback"], IsActive = true }
+})
+
+<style>
+.feedback-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+.feedback-form {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.5rem;
+}
+.form-group {
+    margin-bottom: 1.5rem;
+}
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.feedback-list {
+    margin-top: 2rem;
+}
+.feedback-item {
+    background: var(--surface);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--primary);
+}
+.feedback-item.to-work-on {
+    border-left-color: var(--warning);
+}
+.feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.feedback-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.feedback-type {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.feedback-type.error {
+    background: #fee;
+    color: #c00;
+}
+.feedback-type.suggestion {
+    background: #eff6ff;
+    color: #1e40af;
+}
+.feedback-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+.feedback-status.new {
+    background: #dcfce7;
+    color: #166534;
+}
+.feedback-status.to-work-on {
+    background: #fef3c7;
+    color: #92400e;
+}
+.feedback-content {
+    margin: 1rem 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+.feedback-image {
+    margin: 1rem 0;
+}
+.feedback-image img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.feedback-image img:hover {
+    transform: scale(1.02);
+}
+.feedback-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+.feedback-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+.image-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.image-modal.active {
+    display: flex;
+}
+.image-modal img {
+    max-width: 90%;
+    max-height: 90%;
+}
+</style>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="feedback-container">
+    @if (Model.IsOwner)
+    {
+        <!-- Owner View: Feedback List -->
+        <h2>@Localizer["FeedbackList"]</h2>
+
+        @if (Model.FeedbackList.Any())
+        {
+            <div class="feedback-list">
+                @foreach (var feedback in Model.FeedbackList)
+                {
+                    <div class="feedback-item @(feedback.Status == FeedbackStatus.ToWorkOn ? "to-work-on" : "")">
+                        <div class="feedback-header">
+                            <div class="feedback-meta">
+                                <div>
+                                    <span class="feedback-type @(feedback.Type == FeedbackType.Error ? "error" : "suggestion")">
+                                        @if (feedback.Type == FeedbackType.Error)
+                                        {
+                                            <text>@Localizer["FeedbackTypeError"] (@Localizer["FeedbackTypeError"])</text>
+                                        }
+                                        else
+                                        {
+                                            <text>@Localizer["FeedbackTypeSuggestion"] (@Localizer["FeedbackTypeSuggestion"])</text>
+                                        }
+                                    </span>
+                                    <span class="feedback-status @(feedback.Status == FeedbackStatus.New ? "new" : "to-work-on")">
+                                        @(feedback.Status == FeedbackStatus.New ? Localizer["NewFeedback"] : Localizer["ToWorkOn"])
+                                    </span>
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <strong>@Localizer["SubmittedBy"]:</strong> @(feedback.Submitter?.DisplayName ?? "Unknown")
+                                </div>
+                            </div>
+                            <div class="feedback-actions">
+                                @if (feedback.Status == FeedbackStatus.New)
+                                {
+                                    <form method="post" asp-page-handler="MarkToWorkOn" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="feedbackId" value="@feedback.Id" />
+                                        <button type="submit" class="btn btn-sm btn-warning" title="@Localizer["MarkToWorkOn"]">
+                                            ✓
+                                        </button>
+                                    </form>
+                                }
+                                <form method="post" asp-page-handler="Delete" style="display: inline;"
+                                      onsubmit="return confirm('@Localizer["ConfirmDeleteFeedback"]');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="feedbackId" value="@feedback.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger" title="@Localizer["DeleteFeedback"]">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="feedback-content">
+                            @feedback.Content
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(feedback.ImageFileName))
+                        {
+                            <div class="feedback-image">
+                                <img src="@Model.GetImageUrl(feedback.ImageFileName)"
+                                     alt="Feedback image"
+                                     onclick="openImageModal(this.src)" />
+                            </div>
+                        }
+                        <div class="feedback-footer">
+                            <span>@feedback.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <p style="text-align: center; color: var(--muted); padding: 2rem;">
+                    @Localizer["NoFeedback"]
+                </p>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Non-Owner View: Submit Feedback Form -->
+        <h2>@Localizer["SubmitFeedback"]</h2>
+
+        <div class="card feedback-form">
+            <form method="post" asp-page-handler="Submit" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    <label class="form-label">@Localizer["FeedbackType"] <span style="color: red;">*</span></label>
+                    <select asp-for="SelectedType" class="input" required>
+                        <option value="">-- @Localizer["Select"] --</option>
+                        <option value="@((int)FeedbackType.Error)">@Localizer["FeedbackTypeError"]</option>
+                        <option value="@((int)FeedbackType.Suggestion)">@Localizer["FeedbackTypeSuggestion"]</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@Localizer["FeedbackContent"] <span style="color: red;">*</span></label>
+                    <textarea asp-for="FeedbackContent"
+                              class="input"
+                              rows="6"
+                              placeholder="@Localizer["FeedbackContentPlaceholder"]"
+                              required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@Localizer["AddPicture"]</label>
+                    <input type="file"
+                           asp-for="Picture"
+                           class="input"
+                           accept="image/jpeg,image/png" />
+                    <small style="color: var(--muted); display: block; margin-top: 0.5rem;">
+                        @Localizer["Formats"]: JPEG, PNG. @Localizer["MaxSize"]: 5 MB
+                    </small>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    📤 @Localizer["Submit"]
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<!-- Image Modal for fullscreen view -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <img id="modalImage" src="" alt="Feedback image" />
+</div>
+
+<script>
+function openImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('imageModal').classList.add('active');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.remove('active');
+}
+</script>

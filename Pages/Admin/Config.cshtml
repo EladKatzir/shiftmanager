@@ -106,6 +106,88 @@
     </div>
 </div>
 
+<!-- Email Configuration Section -->
+<div class="config-section">
+    <h3>📧 Email Configuration</h3>
+    <div class="card" style="max-width:800px">
+        <p style="color: var(--muted); margin-bottom: 1rem;">
+            Configure email notifications for shift assignments, changes, and chores.
+            Settings are stored encrypted in the database and override appsettings.json.
+        </p>
+
+        <form method="post" asp-page-handler="SaveEmailConfig">
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" asp-for="EmailEnabled" style="width: auto;" />
+                    <strong>Enable Email Notifications</strong>
+                </label>
+                <small style="color: var(--muted); display: block; margin-top: 0.25rem;">
+                    When enabled, employees will receive email notifications for shift and chore assignments
+                </small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">
+                    API Key
+                    @if (Model.HasExistingEmailConfig)
+                    {
+                        <span style="color: var(--success); font-size: 0.875rem;">(✓ Currently set)</span>
+                    }
+                </label>
+                <input type="password"
+                       asp-for="EmailApiKey"
+                       class="input"
+                       placeholder="@(Model.HasExistingEmailConfig ? "Leave empty to keep existing key" : "Enter API key")"
+                       autocomplete="new-password" />
+                <small style="color: var(--muted); display: block; margin-top: 0.25rem;">
+                    The API key for authenticating with your email service. Stored encrypted in the database.
+                </small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">API URL</label>
+                <input type="url"
+                       asp-for="EmailApiUrl"
+                       class="input"
+                       placeholder="https://api.yourcompany.com/v1/mail/send" />
+                <small style="color: var(--muted); display: block; margin-top: 0.25rem;">
+                    The endpoint URL for your email API service
+                </small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">From Address</label>
+                <input type="email"
+                       asp-for="EmailFromAddress"
+                       class="input"
+                       placeholder="noreply@yourcompany.com" />
+                <small style="color: var(--muted); display: block; margin-top: 0.25rem;">
+                    The email address that will appear as the sender
+                </small>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">💾 Save Email Configuration</button>
+            </div>
+        </form>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+            <details>
+                <summary style="cursor: pointer; font-weight: 600; color: var(--text);">
+                    ℹ️ Configuration Priority
+                </summary>
+                <div style="margin-top: 0.5rem; padding-left: 1.5rem; color: var(--muted); font-size: 0.875rem;">
+                    <p><strong>Priority:</strong> Database configuration → appsettings.json</p>
+                    <p>If database configuration is not set, the system will fall back to appsettings.json.</p>
+                    <p>Database configuration allows per-company email settings for multi-tenant deployments.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+
 <!-- OnDuty Types Section -->
 <div class="config-section">
     <h3>📋 @Localizer["OnDutyTypes"]</h3>

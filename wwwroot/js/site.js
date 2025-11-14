@@ -23,6 +23,38 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     console.warn('Theme toggle button not found');
   }
+
+  // Easter egg: Shift Swap game (Ctrl+Click on .brand)
+  // Using event delegation to catch clicks anywhere within .brand
+  document.addEventListener('click', function(e) {
+    // Check if the click (or any parent of the clicked element) is within .brand
+    const brandElement = e.target.closest('.brand');
+
+    // If not clicking within .brand area, ignore
+    if (!brandElement) return;
+
+    console.log('Brand area clicked! Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Clicked element:', e.target.tagName, e.target.className);
+
+    // Only trigger game if Ctrl/Cmd key is pressed
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log('Ctrl+click detected on .brand! ShiftSwapGame available:', !!window.ShiftSwapGame);
+
+      // Open the Shift Swap game
+      if (window.ShiftSwapGame) {
+        console.log('Opening Shift Swap game...');
+        window.ShiftSwapGame.open();
+      } else {
+        console.error('ShiftSwapGame not loaded!');
+      }
+    }
+    // Normal clicks work as usual (no special handling needed)
+  });
+
+  console.log('Easter egg Ctrl+click handler initialized for .brand');
+
 });
 
 // Enhanced staffing adjustments with better UX

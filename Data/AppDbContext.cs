@@ -34,6 +34,8 @@ public class AppDbContext : DbContext
     public DbSet<Chore> Chores => Set<Chore>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
+    public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
     // Public/Global Tables (no CompanyId, visible across all tenancies)
     public DbSet<OnDuty> OnDuties => Set<OnDuty>();
@@ -353,6 +355,12 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<TeamCalendar>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            modelBuilder.Entity<EmailConfig>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<Feedback>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
         }
@@ -364,6 +372,38 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<OnDutyTypeConfig>()
             .HasIndex(c => new { c.TypeValue, c.IsActive });
+
+        // Configure EmailConfig
+        // Unique constraint: Only one email configuration per company
+        modelBuilder.Entity<EmailConfig>()
+            .HasIndex(ec => ec.CompanyId)
+            .IsUnique();
+
+        modelBuilder.Entity<EmailConfig>()
+            .HasOne<Company>()
+            .WithMany()
+            .HasForeignKey(ec => ec.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure Feedback
+        modelBuilder.Entity<Feedback>()
+            .HasIndex(f => new { f.CompanyId, f.CreatedAt });
+
+        modelBuilder.Entity<Feedback>()
+            .HasIndex(f => new { f.CompanyId, f.Status, f.CreatedAt });
+
+        modelBuilder.Entity<Feedback>()
+            .HasOne(f => f.Submitter)
+            .WithMany()
+            .HasForeignKey(f => f.SubmittedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Feedback>()
+            .HasOne(f => f.StatusUpdater)
+            .WithMany()
+            .HasForeignKey(f => f.StatusUpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         // API Tables Configuration
         modelBuilder.Entity<ApiKey>()
