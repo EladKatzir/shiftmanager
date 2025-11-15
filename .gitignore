@@ -1,10 +1,15 @@
 # EXCEPTION: ProjectPublish directory - commit everything inside it
-# This ensures ALL files and subdirectories within ProjectPublish are tracked
+# This ensures ALL files and subdirectories within ProjectPublish are tracked - actually the one down should do it, this one just for saftey
 !ProjectPublish/
 !ProjectPublish/**
 !ProjectPublish/**/*.json
 !ProjectPublish/**/*wwwroot/
 !ProjectPublish/**/*wwwroot/**
+!FinalProductPublish/
+!FinalProductPublish/**
+!FinalProductPublish/**/*.json
+!FinalProductPublish/**/*wwwroot/
+!FinalProductPublish/**/*wwwroot/**
 
 # Build results
 bin/
@@ -115,3 +120,11 @@ _ReSharper*/
 .DS_Store
 Thumbs.db
 
+# --------------------------------
+# ALWAYS COMMIT THESE DIRECTORIES (override all rules above)
+# --------------------------------
+!ProjectPublish/
+!ProjectPublish/**
+
+!FinalProductPublish/
+!FinalProductPublish/**

@@ -1,0 +1,1325 @@
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
+      Entity 'AppUser' has a global query filter defined and is the required end of a relationship with the entity 'TeamCalendarMember'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA journal_mode = 'wal';
+info: Microsoft.EntityFrameworkCore.Migrations[20411]
+      Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsLock' AND "type" = 'table';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS "__EFMigrationsLock" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK___EFMigrationsLock" PRIMARY KEY,
+          "Timestamp" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT OR IGNORE INTO "__EFMigrationsLock"("Id", "Timestamp") VALUES(1, '2025-11-15 06:02:11.9844767+00:00');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+          "MigrationId" TEXT NOT NULL CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY,
+          "ProductVersion" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsHistory' AND "type" = 'table';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250927202116_InitialCreate'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Companies" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Companies" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Configs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Configs" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "Key" TEXT NOT NULL,
+          "Value" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ShiftAssignments" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftAssignments" PRIMARY KEY AUTOINCREMENT,
+          "ShiftInstanceId" INTEGER NOT NULL,
+          "UserId" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ShiftInstances" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftInstances" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "ShiftTypeId" INTEGER NOT NULL,
+          "WorkDate" TEXT NOT NULL,
+          "Name" TEXT NOT NULL,
+          "StaffingRequired" INTEGER NOT NULL,
+          "Concurrency" INTEGER NOT NULL,
+          "UpdatedAt" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ShiftTypes" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftTypes" PRIMARY KEY AUTOINCREMENT,
+          "Key" TEXT NOT NULL,
+          "Start" TEXT NOT NULL,
+          "End" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "SwapRequests" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_SwapRequests" PRIMARY KEY AUTOINCREMENT,
+          "FromAssignmentId" INTEGER NOT NULL,
+          "ToUserId" INTEGER NOT NULL,
+          "Status" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "TimeOffRequests" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_TimeOffRequests" PRIMARY KEY AUTOINCREMENT,
+          "UserId" INTEGER NOT NULL,
+          "StartDate" TEXT NOT NULL,
+          "EndDate" TEXT NOT NULL,
+          "Reason" TEXT NULL,
+          "Status" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Users" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Users" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "Email" TEXT NOT NULL,
+          "DisplayName" TEXT NOT NULL,
+          "Role" INTEGER NOT NULL,
+          "IsActive" INTEGER NOT NULL,
+          "PasswordHash" BLOB NOT NULL,
+          "PasswordSalt" BLOB NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_ShiftAssignments_ShiftInstanceId_UserId" ON "ShiftAssignments" ("ShiftInstanceId", "UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_Users_Email" ON "Users" ("Email");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250927202116_InitialCreate', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250928195641_AddUserNotifications'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "UserNotifications" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_UserNotifications" PRIMARY KEY AUTOINCREMENT,
+          "UserId" INTEGER NOT NULL,
+          "Type" INTEGER NOT NULL,
+          "Title" TEXT NOT NULL,
+          "Message" TEXT NOT NULL,
+          "IsRead" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "ReadAt" TEXT NULL,
+          "RelatedEntityId" INTEGER NULL,
+          "RelatedEntityType" TEXT NULL,
+          CONSTRAINT "FK_UserNotifications_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserNotifications_UserId_CreatedAt" ON "UserNotifications" ("UserId", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250928195641_AddUserNotifications', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250928201142_AddNavigationProperties'.
+warn: Microsoft.EntityFrameworkCore.Migrations[20410]
+      The migration operation 'PRAGMA foreign_keys = 0;
+      ' from migration 'AddNavigationProperties' cannot be executed in a transaction. If the app is terminated or an unrecoverable error occurs while this operation is being executed then the migration will be left in a partially applied state and would need to be reverted manually before it can be applied again. Create a separate migration that contains just this operation.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftInstances_ShiftTypeId" ON "ShiftInstances" ("ShiftTypeId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_UserId" ON "ShiftAssignments" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ef_temp_ShiftAssignments" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftAssignments" PRIMARY KEY AUTOINCREMENT,
+          "CreatedAt" TEXT NOT NULL,
+          "ShiftInstanceId" INTEGER NOT NULL,
+          "UserId" INTEGER NOT NULL,
+          CONSTRAINT "FK_ShiftAssignments_ShiftInstances_ShiftInstanceId" FOREIGN KEY ("ShiftInstanceId") REFERENCES "ShiftInstances" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_ShiftAssignments_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ef_temp_ShiftAssignments" ("Id", "CreatedAt", "ShiftInstanceId", "UserId")
+      SELECT "Id", "CreatedAt", "ShiftInstanceId", "UserId"
+      FROM "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ef_temp_ShiftInstances" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftInstances" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "Concurrency" INTEGER NOT NULL,
+          "Name" TEXT NOT NULL,
+          "ShiftTypeId" INTEGER NOT NULL,
+          "StaffingRequired" INTEGER NOT NULL,
+          "UpdatedAt" TEXT NOT NULL,
+          "WorkDate" TEXT NOT NULL,
+          CONSTRAINT "FK_ShiftInstances_ShiftTypes_ShiftTypeId" FOREIGN KEY ("ShiftTypeId") REFERENCES "ShiftTypes" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ef_temp_ShiftInstances" ("Id", "CompanyId", "Concurrency", "Name", "ShiftTypeId", "StaffingRequired", "UpdatedAt", "WorkDate")
+      SELECT "Id", "CompanyId", "Concurrency", "Name", "ShiftTypeId", "StaffingRequired", "UpdatedAt", "WorkDate"
+      FROM "ShiftInstances";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP TABLE "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ef_temp_ShiftAssignments" RENAME TO "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP TABLE "ShiftInstances";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ef_temp_ShiftInstances" RENAME TO "ShiftInstances";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_ShiftAssignments_ShiftInstanceId_UserId" ON "ShiftAssignments" ("ShiftInstanceId", "UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_UserId" ON "ShiftAssignments" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftInstances_ShiftTypeId" ON "ShiftInstances" ("ShiftTypeId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250928201142_AddNavigationProperties', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250930114957_MultitenancyPhase1'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP INDEX "IX_UserNotifications_UserId_CreatedAt";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP INDEX "IX_ShiftAssignments_ShiftInstanceId_UserId";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "UserNotifications" ADD "CompanyId" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "TimeOffRequests" ADD "CompanyId" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "CompanyId" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ShiftAssignments" ADD "CompanyId" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Companies" ADD "DisplayName" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Companies" ADD "SettingsJson" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Companies" ADD "Slug" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE Companies
+                      SET Slug = lower(replace(trim(Name), ' ', '-')),
+                          DisplayName = Name,
+                          SettingsJson = '{}'
+                      WHERE Slug IS NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE UserNotifications
+                      SET CompanyId = (
+                          SELECT u.CompanyId
+                          FROM Users u
+                          WHERE u.Id = UserNotifications.UserId
+                      )
+                      WHERE CompanyId = 0
+                        AND EXISTS (SELECT 1 FROM Users u WHERE u.Id = UserNotifications.UserId);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE TimeOffRequests
+                      SET CompanyId = (
+                          SELECT u.CompanyId
+                          FROM Users u
+                          WHERE u.Id = TimeOffRequests.UserId
+                      )
+                      WHERE CompanyId = 0
+                        AND EXISTS (SELECT 1 FROM Users u WHERE u.Id = TimeOffRequests.UserId);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE ShiftAssignments
+                      SET CompanyId = (
+                          SELECT si.CompanyId
+                          FROM ShiftInstances si
+                          WHERE si.Id = ShiftAssignments.ShiftInstanceId
+                      )
+                      WHERE CompanyId = 0
+                        AND EXISTS (SELECT 1 FROM ShiftInstances si WHERE si.Id = ShiftAssignments.ShiftInstanceId);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE SwapRequests
+                      SET CompanyId = (
+                          SELECT si.CompanyId
+                          FROM ShiftAssignments sa
+                          INNER JOIN ShiftInstances si ON sa.ShiftInstanceId = si.Id
+                          WHERE sa.Id = SwapRequests.FromAssignmentId
+                      )
+                      WHERE CompanyId = 0
+                        AND EXISTS (
+                            SELECT 1
+                            FROM ShiftAssignments sa
+                            INNER JOIN ShiftInstances si ON sa.ShiftInstanceId = si.Id
+                            WHERE sa.Id = SwapRequests.FromAssignmentId
+                        );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE UserNotifications
+                      SET CompanyId = (SELECT MIN(Id) FROM Companies)
+                      WHERE CompanyId = 0;
+      
+                      UPDATE TimeOffRequests
+                      SET CompanyId = (SELECT MIN(Id) FROM Companies)
+                      WHERE CompanyId = 0;
+      
+                      UPDATE ShiftAssignments
+                      SET CompanyId = (SELECT MIN(Id) FROM Companies)
+                      WHERE CompanyId = 0;
+      
+                      UPDATE SwapRequests
+                      SET CompanyId = (SELECT MIN(Id) FROM Companies)
+                      WHERE CompanyId = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserNotifications_CompanyId_UserId_CreatedAt" ON "UserNotifications" ("CompanyId", "UserId", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserNotifications_UserId" ON "UserNotifications" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TimeOffRequests_CompanyId_UserId_StartDate" ON "TimeOffRequests" ("CompanyId", "UserId", "StartDate");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_CompanyId_Status_CreatedAt" ON "SwapRequests" ("CompanyId", "Status", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_ShiftAssignments_CompanyId_ShiftInstanceId_UserId" ON "ShiftAssignments" ("CompanyId", "ShiftInstanceId", "UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_ShiftInstanceId" ON "ShiftAssignments" ("ShiftInstanceId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_Companies_Slug" ON "Companies" ("Slug");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250930114957_MultitenancyPhase1', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250930194706_AddCompanyIdToShiftTypes'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ShiftTypes" ADD "CompanyId" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      -- Create company-specific copies of each shift type
+                      INSERT INTO ShiftTypes (CompanyId, Key, Start, End)
+                      SELECT c.Id, st.Key, st.Start, st.End
+                      FROM Companies c
+                      CROSS JOIN (SELECT DISTINCT Key, Start, End FROM ShiftTypes WHERE CompanyId = 0) st;
+      
+                      -- Update ShiftInstances to reference the new company-specific ShiftTypes
+                      -- For each ShiftInstance, find the matching ShiftType for its company
+                      UPDATE ShiftInstances
+                      SET ShiftTypeId = (
+                          SELECT st_new.Id
+                          FROM ShiftTypes st_new
+                          INNER JOIN ShiftTypes st_old ON st_new.Key = st_old.Key
+                          WHERE st_old.Id = ShiftInstances.ShiftTypeId
+                            AND st_new.CompanyId = ShiftInstances.CompanyId
+                          LIMIT 1
+                      )
+                      WHERE EXISTS (
+                          SELECT 1 FROM ShiftTypes st WHERE st.Id = ShiftInstances.ShiftTypeId AND st.CompanyId = 0
+                      );
+      
+                      -- Delete the old ShiftTypes with CompanyId=0
+                      DELETE FROM ShiftTypes WHERE CompanyId = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftTypes_CompanyId_Key" ON "ShiftTypes" ("CompanyId", "Key");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250930194706_AddCompanyIdToShiftTypes', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250930210753_AddDirectorRole'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "DirectorCompanies" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_DirectorCompanies" PRIMARY KEY AUTOINCREMENT,
+          "UserId" INTEGER NOT NULL,
+          "CompanyId" INTEGER NOT NULL,
+          "GrantedBy" INTEGER NOT NULL,
+          "GrantedAt" TEXT NOT NULL,
+          "IsDeleted" INTEGER NOT NULL,
+          "DeletedAt" TEXT NULL,
+          CONSTRAINT "FK_DirectorCompanies_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_DirectorCompanies_Users_GrantedBy" FOREIGN KEY ("GrantedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_DirectorCompanies_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_DirectorCompanies_CompanyId" ON "DirectorCompanies" ("CompanyId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_DirectorCompanies_GrantedBy" ON "DirectorCompanies" ("GrantedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_DirectorCompanies_UserId" ON "DirectorCompanies" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_DirectorCompanies_UserId_CompanyId" ON "DirectorCompanies" ("UserId", "CompanyId") WHERE [IsDeleted] = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250930210753_AddDirectorRole', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250930221748_AddUserJoinRequests'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "UserJoinRequests" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_UserJoinRequests" PRIMARY KEY AUTOINCREMENT,
+          "Email" TEXT NOT NULL,
+          "DisplayName" TEXT NOT NULL,
+          "PasswordHash" TEXT NOT NULL,
+          "PasswordSalt" TEXT NOT NULL,
+          "CompanyId" INTEGER NOT NULL,
+          "RequestedRole" INTEGER NOT NULL,
+          "Status" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "ReviewedBy" INTEGER NULL,
+          "ReviewedAt" TEXT NULL,
+          "RejectionReason" TEXT NULL,
+          "CreatedUserId" INTEGER NULL,
+          CONSTRAINT "FK_UserJoinRequests_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_UserJoinRequests_Users_CreatedUserId" FOREIGN KEY ("CreatedUserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_UserJoinRequests_Users_ReviewedBy" FOREIGN KEY ("ReviewedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_CompanyId_Status_CreatedAt" ON "UserJoinRequests" ("CompanyId", "Status", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_CreatedUserId" ON "UserJoinRequests" ("CreatedUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_Email_CompanyId_Status" ON "UserJoinRequests" ("Email", "CompanyId", "Status");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_ReviewedBy" ON "UserJoinRequests" ("ReviewedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250930221748_AddUserJoinRequests', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20250930222145_UpdateJoinRequestPasswordTypes'.
+warn: Microsoft.EntityFrameworkCore.Migrations[20410]
+      The migration operation 'PRAGMA foreign_keys = 0;
+      ' from migration 'UpdateJoinRequestPasswordTypes' cannot be executed in a transaction. If the app is terminated or an unrecoverable error occurs while this operation is being executed then the migration will be left in a partially applied state and would need to be reverted manually before it can be applied again. Create a separate migration that contains just this operation.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ef_temp_UserJoinRequests" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_UserJoinRequests" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "CreatedUserId" INTEGER NULL,
+          "DisplayName" TEXT NOT NULL,
+          "Email" TEXT NOT NULL,
+          "PasswordHash" BLOB NOT NULL,
+          "PasswordSalt" BLOB NOT NULL,
+          "RejectionReason" TEXT NULL,
+          "RequestedRole" INTEGER NOT NULL,
+          "ReviewedAt" TEXT NULL,
+          "ReviewedBy" INTEGER NULL,
+          "Status" INTEGER NOT NULL,
+          CONSTRAINT "FK_UserJoinRequests_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_UserJoinRequests_Users_CreatedUserId" FOREIGN KEY ("CreatedUserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_UserJoinRequests_Users_ReviewedBy" FOREIGN KEY ("ReviewedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ef_temp_UserJoinRequests" ("Id", "CompanyId", "CreatedAt", "CreatedUserId", "DisplayName", "Email", "PasswordHash", "PasswordSalt", "RejectionReason", "RequestedRole", "ReviewedAt", "ReviewedBy", "Status")
+      SELECT "Id", "CompanyId", "CreatedAt", "CreatedUserId", "DisplayName", "Email", "PasswordHash", "PasswordSalt", "RejectionReason", "RequestedRole", "ReviewedAt", "ReviewedBy", "Status"
+      FROM "UserJoinRequests";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP TABLE "UserJoinRequests";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ef_temp_UserJoinRequests" RENAME TO "UserJoinRequests";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_CompanyId_Status_CreatedAt" ON "UserJoinRequests" ("CompanyId", "Status", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_CreatedUserId" ON "UserJoinRequests" ("CreatedUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_Email_CompanyId_Status" ON "UserJoinRequests" ("Email", "CompanyId", "Status");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserJoinRequests_ReviewedBy" ON "UserJoinRequests" ("ReviewedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20250930222145_UpdateJoinRequestPasswordTypes', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251003185234_FixShiftTypeKeys'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+                      UPDATE ShiftTypes
+                      SET Key = REPLACE(Key, 'SHIFTTYPE_', '')
+                      WHERE Key LIKE 'SHIFTTYPE_%'
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251003185234_FixShiftTypeKeys', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251003232434_AuditRoleAssignments'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "RoleAssignmentAudits" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_RoleAssignmentAudits" PRIMARY KEY AUTOINCREMENT,
+          "ChangedBy" INTEGER NOT NULL,
+          "TargetUserId" INTEGER NOT NULL,
+          "FromRole" INTEGER NULL,
+          "ToRole" INTEGER NOT NULL,
+          "CompanyId" INTEGER NOT NULL,
+          "Timestamp" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_RoleAssignmentAudits_ChangedBy_Timestamp" ON "RoleAssignmentAudits" ("ChangedBy", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_RoleAssignmentAudits_CompanyId_TargetUserId_Timestamp" ON "RoleAssignmentAudits" ("CompanyId", "TargetUserId", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251003232434_AuditRoleAssignments', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251004215820_AddTraineeRoleAndShadowing'.
+warn: Microsoft.EntityFrameworkCore.Migrations[20410]
+      The migration operation 'PRAGMA foreign_keys = 0;
+      ' from migration 'AddTraineeRoleAndShadowing' cannot be executed in a transaction. If the app is terminated or an unrecoverable error occurs while this operation is being executed then the migration will be left in a partially applied state and would need to be reverted manually before it can be applied again. Create a separate migration that contains just this operation.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ShiftAssignments" ADD "TraineeId" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ShiftAssignments" ADD "TraineeUserId" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_TraineeId" ON "ShiftAssignments" ("TraineeId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ef_temp_ShiftAssignments" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftAssignments" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "ShiftInstanceId" INTEGER NOT NULL,
+          "TraineeId" INTEGER NULL,
+          "TraineeUserId" INTEGER NULL,
+          "UserId" INTEGER NOT NULL,
+          CONSTRAINT "FK_ShiftAssignments_ShiftInstances_ShiftInstanceId" FOREIGN KEY ("ShiftInstanceId") REFERENCES "ShiftInstances" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_ShiftAssignments_Users_TraineeId" FOREIGN KEY ("TraineeId") REFERENCES "Users" ("Id"),
+          CONSTRAINT "FK_ShiftAssignments_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ef_temp_ShiftAssignments" ("Id", "CompanyId", "CreatedAt", "ShiftInstanceId", "TraineeId", "TraineeUserId", "UserId")
+      SELECT "Id", "CompanyId", "CreatedAt", "ShiftInstanceId", "TraineeId", "TraineeUserId", "UserId"
+      FROM "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP TABLE "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ef_temp_ShiftAssignments" RENAME TO "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_ShiftAssignments_CompanyId_ShiftInstanceId_UserId" ON "ShiftAssignments" ("CompanyId", "ShiftInstanceId", "UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_ShiftInstanceId" ON "ShiftAssignments" ("ShiftInstanceId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_TraineeId" ON "ShiftAssignments" ("TraineeId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_UserId" ON "ShiftAssignments" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251004215820_AddTraineeRoleAndShadowing', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251019195032_AddAuditLogAndAnalytics'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "AuditLogs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_AuditLogs" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "UserId" INTEGER NULL,
+          "UserEmail" TEXT NOT NULL,
+          "UserDisplayName" TEXT NOT NULL,
+          "Action" TEXT NOT NULL,
+          "EntityType" TEXT NOT NULL,
+          "EntityId" INTEGER NULL,
+          "Description" TEXT NOT NULL,
+          "Details" TEXT NULL,
+          "Timestamp" TEXT NOT NULL,
+          "IpAddress" TEXT NOT NULL,
+          "UserAgent" TEXT NOT NULL,
+          CONSTRAINT "FK_AuditLogs_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_AuditLogs_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE SET NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_AuditLogs_CompanyId_Action" ON "AuditLogs" ("CompanyId", "Action");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_AuditLogs_CompanyId_Timestamp" ON "AuditLogs" ("CompanyId", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_AuditLogs_CompanyId_UserId_Timestamp" ON "AuditLogs" ("CompanyId", "UserId", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_AuditLogs_UserId" ON "AuditLogs" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251019195032_AddAuditLogAndAnalytics', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251019202014_AddEmployeeProfileEnhancements'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "AvatarFileName" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "Certifications" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "City" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "DateOfBirth" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "Department" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "EmergencyContactName" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "EmergencyContactPhone" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "EmergencyContactRelation" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "HireDate" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "JobTitle" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "Phone" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "PreferredName" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "ProfileLastUpdated" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "ProfileLastUpdatedBy" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "Skills" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ProfileChangeAudits" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ProfileChangeAudits" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "TargetUserId" INTEGER NOT NULL,
+          "ChangedBy" INTEGER NOT NULL,
+          "Timestamp" TEXT NOT NULL,
+          "FieldName" TEXT NOT NULL,
+          "OldValue" TEXT NULL,
+          "NewValue" TEXT NULL,
+          CONSTRAINT "FK_ProfileChangeAudits_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_ProfileChangeAudits_Users_ChangedBy" FOREIGN KEY ("ChangedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_ProfileChangeAudits_Users_TargetUserId" FOREIGN KEY ("TargetUserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ProfileChangeAudits_ChangedBy" ON "ProfileChangeAudits" ("ChangedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ProfileChangeAudits_CompanyId_ChangedBy_Timestamp" ON "ProfileChangeAudits" ("CompanyId", "ChangedBy", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ProfileChangeAudits_CompanyId_TargetUserId_Timestamp" ON "ProfileChangeAudits" ("CompanyId", "TargetUserId", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ProfileChangeAudits_TargetUserId" ON "ProfileChangeAudits" ("TargetUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251019202014_AddEmployeeProfileEnhancements', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251021055915_MakeUserIdNullableInShiftAssignment'.
+warn: Microsoft.EntityFrameworkCore.Migrations[20410]
+      The migration operation 'PRAGMA foreign_keys = 0;
+      ' from migration 'MakeUserIdNullableInShiftAssignment' cannot be executed in a transaction. If the app is terminated or an unrecoverable error occurs while this operation is being executed then the migration will be left in a partially applied state and would need to be reverted manually before it can be applied again. Create a separate migration that contains just this operation.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ef_temp_ShiftAssignments" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ShiftAssignments" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "ShiftInstanceId" INTEGER NOT NULL,
+          "TraineeId" INTEGER NULL,
+          "TraineeUserId" INTEGER NULL,
+          "UserId" INTEGER NULL,
+          CONSTRAINT "FK_ShiftAssignments_ShiftInstances_ShiftInstanceId" FOREIGN KEY ("ShiftInstanceId") REFERENCES "ShiftInstances" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_ShiftAssignments_Users_TraineeId" FOREIGN KEY ("TraineeId") REFERENCES "Users" ("Id"),
+          CONSTRAINT "FK_ShiftAssignments_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ef_temp_ShiftAssignments" ("Id", "CompanyId", "CreatedAt", "ShiftInstanceId", "TraineeId", "TraineeUserId", "UserId")
+      SELECT "Id", "CompanyId", "CreatedAt", "ShiftInstanceId", "TraineeId", "TraineeUserId", "UserId"
+      FROM "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP TABLE "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ef_temp_ShiftAssignments" RENAME TO "ShiftAssignments";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_ShiftAssignments_CompanyId_ShiftInstanceId_UserId" ON "ShiftAssignments" ("CompanyId", "ShiftInstanceId", "UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_ShiftInstanceId" ON "ShiftAssignments" ("ShiftInstanceId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_TraineeId" ON "ShiftAssignments" ("TraineeId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ShiftAssignments_UserId" ON "ShiftAssignments" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251021055915_MakeUserIdNullableInShiftAssignment', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251023003948_AddChoresFeature'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Chores" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Chores" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "UserId" INTEGER NOT NULL,
+          "Date" TEXT NOT NULL,
+          "Title" TEXT NOT NULL,
+          "Notes" TEXT NULL,
+          "CreatedBy" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "CanceledAt" TEXT NULL,
+          "CanceledBy" INTEGER NULL,
+          CONSTRAINT "FK_Chores_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_Chores_Users_CanceledBy" FOREIGN KEY ("CanceledBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_Chores_Users_CreatedBy" FOREIGN KEY ("CreatedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_Chores_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Chores_CanceledBy" ON "Chores" ("CanceledBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Chores_CompanyId_Date" ON "Chores" ("CompanyId", "Date");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Chores_CompanyId_UserId_Date" ON "Chores" ("CompanyId", "UserId", "Date");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_Chores_CompanyId_UserId_Date_CanceledAt" ON "Chores" ("CompanyId", "UserId", "Date", "CanceledAt") WHERE [CanceledAt] IS NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Chores_CreatedBy" ON "Chores" ("CreatedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Chores_UserId" ON "Chores" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251023003948_AddChoresFeature', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251027201852_AddAccountLockoutFields'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "FailedLoginAttempts" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "LastLoginAttempt" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "Users" ADD "LockoutEnd" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251027201852_AddAccountLockoutFields', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251028151738_AddApiInfrastructure'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ApiKeys" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ApiKeys" PRIMARY KEY AUTOINCREMENT,
+          "KeyHash" TEXT NOT NULL,
+          "CompanyId" INTEGER NOT NULL,
+          "Name" TEXT NOT NULL,
+          "Scopes" TEXT NOT NULL,
+          "IsActive" INTEGER NOT NULL,
+          "RateLimitPerMinute" INTEGER NOT NULL,
+          "CreatedBy" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "ExpiresAt" TEXT NULL,
+          "LastUsedAt" TEXT NULL,
+          CONSTRAINT "FK_ApiKeys_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_ApiKeys_Users_CreatedBy" FOREIGN KEY ("CreatedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ApiRequestLogs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ApiRequestLogs" PRIMARY KEY AUTOINCREMENT,
+          "ApiKeyId" INTEGER NULL,
+          "CompanyId" INTEGER NULL,
+          "Method" TEXT NOT NULL,
+          "Path" TEXT NOT NULL,
+          "QueryString" TEXT NULL,
+          "StatusCode" INTEGER NOT NULL,
+          "DurationMs" INTEGER NOT NULL,
+          "IpAddress" TEXT NOT NULL,
+          "UserAgent" TEXT NOT NULL,
+          "CorrelationId" TEXT NOT NULL,
+          "ErrorMessage" TEXT NULL,
+          "Timestamp" TEXT NOT NULL,
+          CONSTRAINT "FK_ApiRequestLogs_ApiKeys_ApiKeyId" FOREIGN KEY ("ApiKeyId") REFERENCES "ApiKeys" ("Id") ON DELETE SET NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiKeys_CompanyId" ON "ApiKeys" ("CompanyId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiKeys_CreatedBy" ON "ApiKeys" ("CreatedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_ApiKeys_KeyHash" ON "ApiKeys" ("KeyHash");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiRequestLogs_ApiKeyId_Timestamp" ON "ApiRequestLogs" ("ApiKeyId", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiRequestLogs_CompanyId_Timestamp" ON "ApiRequestLogs" ("CompanyId", "Timestamp");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiRequestLogs_CorrelationId" ON "ApiRequestLogs" ("CorrelationId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251028151738_AddApiInfrastructure', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251028200042_AddApiKeyRequestTable'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ApiKeyRequests" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_ApiKeyRequests" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "RequestedBy" INTEGER NOT NULL,
+          "Name" TEXT NOT NULL,
+          "Description" TEXT NOT NULL,
+          "RequestedScopes" TEXT NOT NULL,
+          "Status" INTEGER NOT NULL,
+          "RequestedAt" TEXT NOT NULL,
+          "ReviewedBy" INTEGER NULL,
+          "ReviewedAt" TEXT NULL,
+          "ReviewNotes" TEXT NULL,
+          "GeneratedApiKeyId" INTEGER NULL,
+          "ApprovedRateLimit" INTEGER NULL,
+          "ApprovedScopes" TEXT NULL,
+          "ApprovedExpiresAt" TEXT NULL,
+          CONSTRAINT "FK_ApiKeyRequests_ApiKeys_GeneratedApiKeyId" FOREIGN KEY ("GeneratedApiKeyId") REFERENCES "ApiKeys" ("Id") ON DELETE SET NULL,
+          CONSTRAINT "FK_ApiKeyRequests_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_ApiKeyRequests_Users_RequestedBy" FOREIGN KEY ("RequestedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_ApiKeyRequests_Users_ReviewedBy" FOREIGN KEY ("ReviewedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiKeyRequests_CompanyId_Status_RequestedAt" ON "ApiKeyRequests" ("CompanyId", "Status", "RequestedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiKeyRequests_GeneratedApiKeyId" ON "ApiKeyRequests" ("GeneratedApiKeyId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiKeyRequests_RequestedBy_Status" ON "ApiKeyRequests" ("RequestedBy", "Status");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ApiKeyRequests_ReviewedBy" ON "ApiKeyRequests" ("ReviewedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251028200042_AddApiKeyRequestTable', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251029003445_AddPlainTextKeyToApiKey'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ApiKeys" ADD "PlainTextKey" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251029003445_AddPlainTextKeyToApiKey', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251101145541_AddCustomNameAndSortOrderToShiftType'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ShiftTypes" ADD "CustomName" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251101145541_AddCustomNameAndSortOrderToShiftType', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251101160411_AddTimeOffTypeToTimeOffRequest'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "TimeOffRequests" ADD "Type" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251101160411_AddTimeOffTypeToTimeOffRequest', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251101165051_AddOnDutyAndAssignerRole'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "OnDuties" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_OnDuties" PRIMARY KEY AUTOINCREMENT,
+          "UserId" INTEGER NOT NULL,
+          "Date" TEXT NOT NULL,
+          "Type" INTEGER NOT NULL,
+          "Notes" TEXT NULL,
+          "CreatedBy" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "CanceledAt" TEXT NULL,
+          "CanceledBy" INTEGER NULL,
+          CONSTRAINT "FK_OnDuties_Users_CanceledBy" FOREIGN KEY ("CanceledBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_OnDuties_Users_CreatedBy" FOREIGN KEY ("CreatedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_OnDuties_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_OnDuties_CanceledBy" ON "OnDuties" ("CanceledBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_OnDuties_CreatedBy" ON "OnDuties" ("CreatedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_OnDuties_Date" ON "OnDuties" ("Date");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_OnDuties_Date_Type" ON "OnDuties" ("Date", "Type");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_OnDuties_UserId_Date" ON "OnDuties" ("UserId", "Date");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_OnDuties_UserId_Date_Type_CanceledAt" ON "OnDuties" ("UserId", "Date", "Type", "CanceledAt") WHERE [CanceledAt] IS NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251101165051_AddOnDutyAndAssignerRole', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251101221554_AddOnDutyTypeConfig'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "OnDutyTypeConfigs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_OnDutyTypeConfigs" PRIMARY KEY AUTOINCREMENT,
+          "TypeValue" INTEGER NOT NULL,
+          "NameEn" TEXT NOT NULL,
+          "NameHe" TEXT NOT NULL,
+          "Icon" TEXT NOT NULL,
+          "Color" TEXT NOT NULL,
+          "IsActive" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "CreatedBy" INTEGER NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_OnDutyTypeConfigs_TypeValue" ON "OnDutyTypeConfigs" ("TypeValue");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_OnDutyTypeConfigs_TypeValue_IsActive" ON "OnDutyTypeConfigs" ("TypeValue", "IsActive");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251101221554_AddOnDutyTypeConfig', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251101232438_AddApproverIdToTimeOffRequest'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "TimeOffRequests" ADD "ApproverId" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251101232438_AddApproverIdToTimeOffRequest', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251111234014_AddMyTeamCalendars'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "TeamCalendars" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_TeamCalendars" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "OwnerId" INTEGER NOT NULL,
+          "Name" TEXT NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "UpdatedAt" TEXT NOT NULL,
+          "IsDeleted" INTEGER NOT NULL,
+          CONSTRAINT "FK_TeamCalendars_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_TeamCalendars_Users_OwnerId" FOREIGN KEY ("OwnerId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "TeamCalendarMembers" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_TeamCalendarMembers" PRIMARY KEY AUTOINCREMENT,
+          "TeamCalendarId" INTEGER NOT NULL,
+          "MemberUserId" INTEGER NOT NULL,
+          "AddedAt" TEXT NOT NULL,
+          "SortOrder" INTEGER NULL,
+          CONSTRAINT "FK_TeamCalendarMembers_TeamCalendars_TeamCalendarId" FOREIGN KEY ("TeamCalendarId") REFERENCES "TeamCalendars" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_TeamCalendarMembers_Users_MemberUserId" FOREIGN KEY ("MemberUserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TeamCalendarMembers_MemberUserId" ON "TeamCalendarMembers" ("MemberUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_TeamCalendarMembers_TeamCalendarId_MemberUserId" ON "TeamCalendarMembers" ("TeamCalendarId", "MemberUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TeamCalendars_CompanyId_OwnerId_CreatedAt" ON "TeamCalendars" ("CompanyId", "OwnerId", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_TeamCalendars_CompanyId_OwnerId_Name" ON "TeamCalendars" ("CompanyId", "OwnerId", "Name") WHERE [IsDeleted] = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TeamCalendars_OwnerId" ON "TeamCalendars" ("OwnerId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251111234014_AddMyTeamCalendars', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251113150759_AddEmailConfig'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "EmailConfigs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_EmailConfigs" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "Enabled" INTEGER NOT NULL,
+          "EncryptedApiKey" TEXT NULL,
+          "ApiUrl" TEXT NULL,
+          "FromAddress" TEXT NULL,
+          "LastUpdated" TEXT NOT NULL,
+          "LastUpdatedBy" TEXT NULL,
+          CONSTRAINT "FK_EmailConfigs_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE UNIQUE INDEX "IX_EmailConfigs_CompanyId" ON "EmailConfigs" ("CompanyId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251113150759_AddEmailConfig', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251113180644_AddFeedback'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Feedbacks" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Feedbacks" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "SubmittedBy" INTEGER NOT NULL,
+          "Type" INTEGER NOT NULL,
+          "Content" TEXT NOT NULL,
+          "ImageFileName" TEXT NULL,
+          "Status" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "StatusUpdatedAt" TEXT NULL,
+          "StatusUpdatedBy" INTEGER NULL,
+          CONSTRAINT "FK_Feedbacks_Users_StatusUpdatedBy" FOREIGN KEY ("StatusUpdatedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+          CONSTRAINT "FK_Feedbacks_Users_SubmittedBy" FOREIGN KEY ("SubmittedBy") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Feedbacks_CompanyId_CreatedAt" ON "Feedbacks" ("CompanyId", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Feedbacks_CompanyId_Status_CreatedAt" ON "Feedbacks" ("CompanyId", "Status", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Feedbacks_StatusUpdatedBy" ON "Feedbacks" ("StatusUpdatedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Feedbacks_SubmittedBy" ON "Feedbacks" ("SubmittedBy");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251113180644_AddFeedback', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20251113185301_ExtendSwapRequestModel'.
+warn: Microsoft.EntityFrameworkCore.Migrations[20410]
+      The migration operation 'PRAGMA foreign_keys = 0;
+      ' from migration 'ExtendSwapRequestModel' cannot be executed in a transaction. If the app is terminated or an unrecoverable error occurs while this operation is being executed then the migration will be left in a partially applied state and would need to be reverted manually before it can be applied again. Create a separate migration that contains just this operation.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "DeclineReason" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "FromUserId" INTEGER NOT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "Reason" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "ReviewedAt" TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "ReviewedBy" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "ReviewerId" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "SwapRequests" ADD "ToAssignmentId" INTEGER NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_FromAssignmentId" ON "SwapRequests" ("FromAssignmentId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_FromUserId" ON "SwapRequests" ("FromUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_ReviewerId" ON "SwapRequests" ("ReviewerId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_ToAssignmentId" ON "SwapRequests" ("ToAssignmentId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_ToUserId" ON "SwapRequests" ("ToUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ef_temp_SwapRequests" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_SwapRequests" PRIMARY KEY AUTOINCREMENT,
+          "CompanyId" INTEGER NOT NULL,
+          "CreatedAt" TEXT NOT NULL,
+          "DeclineReason" TEXT NULL,
+          "FromAssignmentId" INTEGER NOT NULL,
+          "FromUserId" INTEGER NOT NULL,
+          "Reason" TEXT NULL,
+          "ReviewedAt" TEXT NULL,
+          "ReviewedBy" INTEGER NULL,
+          "ReviewerId" INTEGER NULL,
+          "Status" INTEGER NOT NULL,
+          "ToAssignmentId" INTEGER NULL,
+          "ToUserId" INTEGER NULL,
+          CONSTRAINT "FK_SwapRequests_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_SwapRequests_ShiftAssignments_FromAssignmentId" FOREIGN KEY ("FromAssignmentId") REFERENCES "ShiftAssignments" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_SwapRequests_ShiftAssignments_ToAssignmentId" FOREIGN KEY ("ToAssignmentId") REFERENCES "ShiftAssignments" ("Id"),
+          CONSTRAINT "FK_SwapRequests_Users_FromUserId" FOREIGN KEY ("FromUserId") REFERENCES "Users" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_SwapRequests_Users_ReviewerId" FOREIGN KEY ("ReviewerId") REFERENCES "Users" ("Id"),
+          CONSTRAINT "FK_SwapRequests_Users_ToUserId" FOREIGN KEY ("ToUserId") REFERENCES "Users" ("Id")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ef_temp_SwapRequests" ("Id", "CompanyId", "CreatedAt", "DeclineReason", "FromAssignmentId", "FromUserId", "Reason", "ReviewedAt", "ReviewedBy", "ReviewerId", "Status", "ToAssignmentId", "ToUserId")
+      SELECT "Id", "CompanyId", "CreatedAt", "DeclineReason", "FromAssignmentId", "FromUserId", "Reason", "ReviewedAt", "ReviewedBy", "ReviewerId", "Status", "ToAssignmentId", "ToUserId"
+      FROM "SwapRequests";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DROP TABLE "SwapRequests";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE "ef_temp_SwapRequests" RENAME TO "SwapRequests";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA foreign_keys = 1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_CompanyId_Status_CreatedAt" ON "SwapRequests" ("CompanyId", "Status", "CreatedAt");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_FromAssignmentId" ON "SwapRequests" ("FromAssignmentId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_FromUserId" ON "SwapRequests" ("FromUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_ReviewerId" ON "SwapRequests" ("ReviewerId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_ToAssignmentId" ON "SwapRequests" ("ToAssignmentId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_SwapRequests_ToUserId" ON "SwapRequests" ("ToUserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20251113185301_ExtendSwapRequestModel', '9.0.9');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DELETE FROM "__EFMigrationsLock";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "Companies" AS "c")
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p0='?', @p1='?' (Size = 7), @p2='?', @p3='?'], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Companies" ("DisplayName", "Name", "SettingsJson", "Slug")
+      VALUES (@p0, @p1, @p2, @p3)
+      RETURNING "Id";
+warn: Microsoft.EntityFrameworkCore.Query[10103]
+      The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "c"."Id", "c"."DisplayName", "c"."Name", "c"."SettingsJson", "c"."Slug"
+      FROM "Companies" AS "c"
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__company_Id_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "ShiftTypes" AS "s"
+          WHERE "s"."CompanyId" = @__company_Id_0)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?', @p2='?' (Size = 5), @p3='?' (Size = 7), @p4='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ShiftTypes" ("CompanyId", "CustomName", "End", "Key", "Start")
+      VALUES (@p0, @p1, @p2, @p3, @p4)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?', @p2='?' (Size = 5), @p3='?' (Size = 4), @p4='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ShiftTypes" ("CompanyId", "CustomName", "End", "Key", "Start")
+      VALUES (@p0, @p1, @p2, @p3, @p4)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?', @p2='?' (Size = 5), @p3='?' (Size = 5), @p4='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ShiftTypes" ("CompanyId", "CustomName", "End", "Key", "Start")
+      VALUES (@p0, @p1, @p2, @p3, @p4)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?', @p2='?' (Size = 5), @p3='?' (Size = 6), @p4='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ShiftTypes" ("CompanyId", "CustomName", "End", "Key", "Start")
+      VALUES (@p0, @p1, @p2, @p3, @p4)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?', @p2='?' (Size = 5), @p3='?' (Size = 7), @p4='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "ShiftTypes" ("CompanyId", "CustomName", "End", "Key", "Start")
+      VALUES (@p0, @p1, @p2, @p3, @p4)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__company_Id_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "Configs" AS "c"
+          WHERE "c"."CompanyId" = @__company_Id_0)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?' (Size = 9), @p2='?' (Size = 1)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Configs" ("CompanyId", "Key", "Value")
+      VALUES (@p0, @p1, @p2)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?' (Size = 14), @p2='?' (Size = 2)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Configs" ("CompanyId", "Key", "Value")
+      VALUES (@p0, @p1, @p2)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "Users" AS "u")
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?', @p1='?', @p2='?', @p3='?' (DbType = Int32), @p4='?', @p5='?', @p6='?' (Size = 5), @p7='?' (Size = 11), @p8='?', @p9='?', @p10='?', @p11='?' (DbType = Int32), @p12='?', @p13='?' (DbType = Boolean), @p14='?', @p15='?' (DbType = DateTime), @p16='?' (DbType = DateTime), @p17='?' (Size = 32) (DbType = Binary), @p18='?' (Size = 16) (DbType = Binary), @p19='?', @p20='?', @p21='?' (DbType = DateTime), @p22='?' (DbType = Int32), @p23='?' (DbType = Int32), @p24='?'], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Users" ("AvatarFileName", "Certifications", "City", "CompanyId", "DateOfBirth", "Department", "DisplayName", "Email", "EmergencyContactName", "EmergencyContactPhone", "EmergencyContactRelation", "FailedLoginAttempts", "HireDate", "IsActive", "JobTitle", "LastLoginAttempt", "LockoutEnd", "PasswordHash", "PasswordSalt", "Phone", "PreferredName", "ProfileLastUpdated", "ProfileLastUpdatedBy", "Role", "Skills")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23, @p24)
+      RETURNING "Id";
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5000
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\katzi\Downloads\ShiftManager\FinalProductPublish
