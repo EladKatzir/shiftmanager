@@ -299,6 +299,39 @@ function Invoke-Build {
     if ($missingRequired.Count -gt 0) {
         throw "Missing required deployment scripts: $($missingRequired -join ', '). Air-gapped deployments will fail without these!"
     }
+
+    # Copy API documentation and client libraries
+    Write-Info "Adding API documentation and client libraries..."
+
+    $apiAssets = @(
+        @{Name = "API_DOCUMENTATION.md"; Required = $true; Type = "File"},
+        @{Name = "appsettings.Production.template.json"; Required = $true; Type = "File"},
+        @{Name = "clients"; Required = $true; Type = "Directory"}
+    )
+
+    foreach ($asset in $apiAssets) {
+        $assetPath = Join-Path $ScriptRoot $asset.Name
+        if (Test-Path $assetPath) {
+            if ($asset.Type -eq "Directory") {
+                Copy-Item -Path $assetPath -Destination $OutputFolder -Recurse -Force
+                Write-Success "$($asset.Name)/ folder added (API client libraries)"
+            } else {
+                Copy-Item -Path $assetPath -Destination $OutputFolder -Force
+                Write-Success "$($asset.Name) added"
+            }
+        } else {
+            if ($asset.Required) {
+                Write-ErrorMsg "$($asset.Name) NOT FOUND - REQUIRED for complete deployment!"
+                $missingRequired += $asset.Name
+            } else {
+                Write-WarningMsg "$($asset.Name) not found (optional)"
+            }
+        }
+    }
+
+    if ($missingRequired.Count -gt 0) {
+        throw "Missing required API assets: $($missingRequired -join ', ')"
+    }
 }
 
 function Invoke-Rollback {
