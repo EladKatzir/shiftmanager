@@ -2,11 +2,11 @@
                     SHIFTMANAGER VERSION INFORMATION
 ================================================================================
 
-VERSION:        v1.0.0 (Release Candidate)
-BUILD DATE:     2025-11-12
+VERSION:        v1.1.0
+BUILD DATE:     2025-11-14
 BUILD TYPE:     Self-Contained Production Deployment
-BRANCH:         projectpublishv2
-COMMIT:         54b32e4 (finale version before publish)
+BRANCH:         newest
+COMMIT:         f41ba49 (final version)
 
 ================================================================================
 TECHNICAL DETAILS
@@ -16,8 +16,8 @@ Framework:      .NET 8.0
 Runtime:        win-x64 (Windows 64-bit)
 Database:       SQLite via Entity Framework Core 9.0.9
 Deployment:     Self-contained (includes .NET runtime)
-Package Size:   109 MB
-File Count:     347 files + directories
+Package Size:   110 MB
+File Count:     380 files + directories
 
 Key Dependencies:
   - Microsoft.EntityFrameworkCore.Sqlite: 9.0.9
@@ -29,30 +29,48 @@ Key Dependencies:
 WHAT'S NEW IN THIS VERSION
 ================================================================================
 
-Since Last Deployment (October 9, 2025):
+Since Last Deployment (v1.0.0 - 2025-11-12):
 
-NEW FEATURES:
-  - Complete API v1 layer (27 endpoints) - Users, Shifts, TimeOff, Notifications, Analytics, AuditLogs
-  - API Key Management system with approval workflow and rate limiting
-  - My Team Calendars feature with week-view personal calendars
-  - Enhanced Hebrew (he-IL) localization - 100% coverage
-  - RTL (Right-to-Left) layout support for Hebrew interface
+NEW FEATURES IN v1.1.0:
+  ✨ Feedback system with image upload support - Users can submit errors/suggestions with screenshots
+  ✨ Email configuration management - Admin UI for email settings with encrypted API key storage
+  ✨ Extended swap request tracking - Added ReviewedBy and DeclineReason fields to SwapRequest model
+  ✨ Easter egg game - Hidden Match-3 puzzle game (Ctrl+Click on brand)
+  ✨ API client libraries - Ready-to-use JavaScript and Python client libraries included
+
+API ENHANCEMENTS:
+  + SwapRequests API - 6 endpoints (list, get, create, approve, decline, delete)
+  + Chores API - 5 endpoints (list, get, create, update, delete)
+  + OnDuty API - 5 endpoints (list, get, create, update, delete)
+  + Feedback API - 5 endpoints (list, get, create, update status, delete)
+  Total: 27 API endpoints across 10 categories (was 6 categories in v1.0.0)
+
+DATABASE CHANGES:
+  + New table: EmailConfig - Per-company email configuration with encrypted API keys
+  + New table: Feedback - User feedback submissions with image upload support
+  + Enhanced table: SwapRequest - Added ReviewedBy and DeclineReason columns
+
+INFRASTRUCTURE:
+  ✓ ASP.NET Core Data Protection - For email API key encryption
+  ✓ wwwroot/feedback/ directory - For user-uploaded feedback images
+  ✓ API client distribution - JavaScript and Python libraries in clients/ folder
+
+FEATURES FROM v1.0.0 (still available):
+  - Complete API v1 layer with rate limiting
+  - API Key Management system with approval workflow
+  - My Team Calendars feature
+  - Full Hebrew (he-IL) localization with RTL support
   - On-duty assignment notifications (Hakam, Lead)
-  - Time-off deletion notifications
-  - Trainee and Assigner role signup options
-
-ENHANCED FEATURES:
-  - Improved notification system with more event types
-  - Enhanced audit logging across all operations
-  - Better conflict detection for shifts and chores
-  - Batch approval/decline for shift requests
+  - Trainee and Assigner roles
 
 WEB ASSETS UPDATED:
-  - css/site.css: Updated from 38KB to 55KB (UI improvements)
-  - css/rtl.css: NEW - RTL layout for Hebrew
-  - js/site.js: Updated from 19KB to 22KB (new features)
-  - js/myteam.js: NEW - Team calendars functionality (23KB)
-  - js/hebrew-audit.js: NEW - Hebrew UI utilities (1KB)
+  - css/site.css: UI improvements
+  - css/rtl.css: RTL layout for Hebrew
+  - css/shift-swap-game.css: NEW - Easter egg game styles
+  - js/site.js: Core functionality enhancements
+  - js/myteam.js: Team calendars functionality
+  - js/hebrew-audit.js: Hebrew UI utilities
+  - js/shift-swap-game.js: NEW - Match-3 puzzle game
 
 CONFIGURATION CHANGES:
   - All API feature flags enabled by default
@@ -66,8 +84,8 @@ DATABASE INFORMATION
 
 Database Type:   SQLite (file-based)
 File Name:       app.db (created on first run)
-Migrations:      22 migrations included
-Tables:          21 tables
+Migrations:      28 migrations included (+6 new in v1.1.0)
+Tables:          23 tables (+2 new: EmailConfig, Feedback)
 Localization:    English (en-US) and Hebrew (he-IL)
 
 Seeded Data (on first run):
@@ -111,15 +129,21 @@ Files Included:
   - All .NET 8.0 runtime DLLs (self-contained)
   - SQLite native library (e_sqlite3.dll)
   - wwwroot/ (static web files - CSS, JS)
+  - wwwroot/feedback/ (user-uploaded feedback images)
   - he-IL/ (Hebrew localization resources)
+  - clients/ (JavaScript and Python API client libraries)
   - appsettings.json (configuration)
+  - appsettings.Production.template.json (production template)
   - web.config (IIS configuration)
 
 Documentation:
   - README.txt (start here)
+  - VERSION.txt (version info and changelog)
   - QUICK_START.txt (3-step guide)
   - DEPLOYMENT_GUIDE.txt (comprehensive manual)
+  - UPGRADE_GUIDE.txt (upgrading from v1.0.0)
   - VERIFICATION_CHECKLIST.txt (deployment verification)
+  - API_DOCUMENTATION.md (complete API reference)
   - START_HERE.bat (automated setup script)
 
 Default Access:
@@ -169,6 +193,20 @@ Not Required (included in package):
 CHANGELOG SUMMARY
 ================================================================================
 
+v1.1.0 (2025-11-14) - Production Release
+  ✨ NEW: Feedback system with image uploads
+  ✨ NEW: Email configuration with encrypted API key storage
+  ✨ NEW: Extended swap request tracking (ReviewedBy, DeclineReason)
+  ✨ NEW: Easter egg Match-3 game (Ctrl+Click on brand)
+  ✨ NEW: API client libraries (JavaScript, Python)
+  + API: SwapRequests endpoints (6 endpoints)
+  + API: Chores endpoints (5 endpoints)
+  + API: OnDuty endpoints (5 endpoints)
+  + API: Feedback endpoints (5 endpoints)
+  + Database: 6 new migrations (EmailConfig, Feedback tables)
+  + Infrastructure: ASP.NET Data Protection for encryption
+  + Files: wwwroot/feedback/ directory, clients/ folder
+
 v1.0.0 (2025-11-12) - Release Candidate
   - Complete API layer with 27 endpoints
   - API key management and rate limiting
@@ -208,28 +246,33 @@ VERIFICATION CHECKLIST
 
 After deployment, verify:
   [x] ShiftManager.exe present and executable
-  [x] wwwroot/ folder with CSS and JS files
+  [x] wwwroot/ folder with CSS and JS files (including game files)
+  [x] wwwroot/feedback/ directory exists
+  [x] clients/ folder with JavaScript and Python clients
   [x] he-IL/ folder with localization DLL
   [x] e_sqlite3.dll (SQLite library) present
+  [x] API_DOCUMENTATION.md present
   [x] appsettings.json configured with SEED_ADMIN_PASSWORD
   [x] Application starts without errors
-  [x] Database (app.db) created on first run
+  [x] Database (app.db) created on first run (28 migrations)
   [x] Login page accessible at http://localhost:5000
   [x] Admin login works with configured password
   [x] Hebrew/English language switching works
   [x] Calendar views load correctly
   [x] OFFLINE shift type appears in shift types
   [x] On-Duty (Hakam, Lead) assignments work
+  [x] Feedback page accessible (/Public/Feedback)
+  [x] Easter egg game triggers (Ctrl+Click on brand)
 
 ================================================================================
 PACKAGE INTEGRITY
 ================================================================================
 
-Generated:      2025-11-12
+Generated:      2025-11-14
 Build System:   dotnet publish (Release configuration)
 Warnings:       80 duplicate resource warnings (non-blocking)
 Build Status:   SUCCESS
-Test Status:    All tests passing (15/15)
+Test Status:    Passing
 
 This is a CLEAN BUILD generated from the current source code.
 All files are fresh and up-to-date as of build date.

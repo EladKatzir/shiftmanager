@@ -1,10 +1,51 @@
 ================================================================================
-                    UPGRADE GUIDE - ShiftManager v1.0.0
-                Upgrading from Previous Versions to v1.0.0
+                    UPGRADE GUIDE - ShiftManager v1.1.0
+                Upgrading from Previous Versions to v1.1.0
 ================================================================================
 
 This guide covers upgrading from an older version of ShiftManager to the new
-v1.0.0 deployment package.
+v1.1.0 deployment package.
+
+================================================================================
+NEW IN v1.1.0 - WHAT'S CHANGED FROM v1.0.0
+================================================================================
+
+Database Changes:
+  ✓ 6 new migrations added (total: 28 migrations, was 22)
+  ✓ New tables: EmailConfig, Feedback
+  ✓ Enhanced table: SwapRequest (added ReviewedBy, DeclineReason fields)
+
+Configuration Changes:
+  ✓ Added 4 new API sections in appsettings.json:
+    - Features.Api.SwapRequests
+    - Features.Api.Chores
+    - Features.Api.OnDuty
+    - Features.Api.Feedback
+  ⚠️ If you have custom appsettings.json, you MUST add these sections manually
+
+New Directories:
+  ✓ wwwroot/feedback/ - Required for feedback image uploads
+    (START_HERE.bat will auto-create if missing)
+  ✓ clients/ - Optional API client libraries (JavaScript, Python)
+
+New Features:
+  ✓ Feedback system with screenshot uploads
+  ✓ Email configuration UI with encrypted API key storage
+  ✓ Extended swap request review tracking
+  ✓ Easter egg game (Ctrl+Click on brand)
+  ✓ API client libraries included
+
+Data Protection Encryption:
+  ✓ Email config uses ASP.NET Data Protection for encryption
+  ✓ Encryption keys auto-generated on first run
+  ✓ Key location: %LOCALAPPDATA%\ASP.NET\DataProtection-Keys
+  ⚠️ If running as Windows Service, ensure service account has access to this path
+
+Upgrade Impact:
+  ✓ Database: Will auto-migrate (6 new migrations run on startup)
+  ✓ Downtime: ~5-10 seconds for migration execution
+  ✓ Compatibility: Fully backward compatible with v1.0.0 data
+  ✓ Rollback: Possible (keep v1.0.0 backup)
 
 ================================================================================
 SCENARIO 1: UPGRADING WHILE OLD VERSION IS RUNNING

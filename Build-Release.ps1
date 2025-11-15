@@ -266,6 +266,39 @@ function Invoke-Build {
 
     $buildTime = ((Get-Date) - $buildStart).TotalSeconds
     Write-Success "Build successful ($($buildTime.ToString('F1'))s)"
+
+    # Copy air-gapped deployment helper scripts (MANDATORY for production)
+    Write-Info "Adding air-gapped deployment helper scripts..."
+
+    $requiredScripts = @(
+        @{Name = "UNBLOCK_FILES.bat"; Required = $true},
+        @{Name = "VERIFY_FILES.bat"; Required = $true},
+        @{Name = "QUICK_FIX.bat"; Required = $true},
+        @{Name = "CRITICAL_BEFORE_DEMO.txt"; Required = $true},
+        @{Name = "AIR_GAPPED_DEPLOYMENT_GUIDE.txt"; Required = $true},
+        @{Name = "PRE_DEMO_CHECKLIST.txt"; Required = $false},
+        @{Name = "TROUBLESHOOT_DEMO.txt"; Required = $false}
+    )
+
+    $missingRequired = @()
+    foreach ($script in $requiredScripts) {
+        $scriptPath = Join-Path $ScriptRoot $script.Name
+        if (Test-Path $scriptPath) {
+            Copy-Item -Path $scriptPath -Destination $OutputFolder -Force
+            Write-Success "$($script.Name) added"
+        } else {
+            if ($script.Required) {
+                Write-ErrorMsg "$($script.Name) NOT FOUND - REQUIRED for air-gapped deployment!"
+                $missingRequired += $script.Name
+            } else {
+                Write-WarningMsg "$($script.Name) not found (optional)"
+            }
+        }
+    }
+
+    if ($missingRequired.Count -gt 0) {
+        throw "Missing required deployment scripts: $($missingRequired -join ', '). Air-gapped deployments will fail without these!"
+    }
 }
 
 function Invoke-Rollback {
@@ -329,12 +362,12 @@ function Show-SuccessSummary {
 
     Write-Host ""
     Write-Host "Distribution Files:" -ForegroundColor Cyan
-    Write-Host "  📦 ProjectPublish/ (ready for USB transfer)"
+    Write-Host "  [*] ProjectPublish/ (ready for USB transfer)"
     if ($PackageInfo.ZipFile) {
-        Write-Host "  📦 $($PackageInfo.ZipFile)"
+        Write-Host "  [*] $($PackageInfo.ZipFile)"
     }
     if ($PackageInfo.ReportFile) {
-        Write-Host "  📄 $($PackageInfo.ReportFile)"
+        Write-Host "  [*] $($PackageInfo.ReportFile)"
     }
 
     Write-Host ""
@@ -342,7 +375,7 @@ function Show-SuccessSummary {
     Write-Host "$($totalTime.Minutes) minutes $($totalTime.Seconds) seconds" -ForegroundColor Cyan
 
     Write-Host ""
-    Write-Host "🎉 Ready for production deployment!" -ForegroundColor Green
+    Write-Host "Ready for production deployment!" -ForegroundColor Green
     Write-Host ""
 }
 

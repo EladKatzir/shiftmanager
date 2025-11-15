@@ -1,7 +1,7 @@
 @echo off
 echo ================================================================================
-echo            SHIFTMANAGER v1.0.0 - First Time Setup Check
-echo                      Build Date: 2025-11-12
+echo            SHIFTMANAGER v1.1.0 - First Time Setup Check
+echo                      Build Date: 2025-11-14
 echo ================================================================================
 echo.
 
@@ -116,7 +116,7 @@ if not exist ShiftManager.exe (
     pause
     exit /b 1
 )
-echo [OK] ShiftManager.exe found (v1.0.0)
+echo [OK] ShiftManager.exe found (v1.1.0)
 echo.
 
 REM Check if SQLite DLL exists
@@ -148,15 +148,26 @@ if not exist he-IL (
     echo.
 )
 
+REM Check/create wwwroot/feedback folder
+if not exist wwwroot\feedback (
+    echo [INFO] Creating feedback upload directory...
+    mkdir wwwroot\feedback
+    echo [OK] Feedback directory created
+    echo.
+) else (
+    echo [OK] Feedback upload directory found
+    echo.
+)
+
 echo ================================================================================
-echo All checks passed! Starting ShiftManager v1.0.0...
+echo All checks passed! Starting ShiftManager v1.1.0...
 echo ================================================================================
 echo.
 echo The application will start in a few seconds.
 echo.
 echo What happens on first run:
 echo   - Creates SQLite database (app.db)
-echo   - Runs 22 database migrations
+echo   - Runs 28 database migrations
 echo   - Seeds company "Demo Co"
 echo   - Seeds 5 shift types: MORNING, NOON, NIGHT, MIDDLE, OFFLINE
 echo   - Activates On-Duty types: Hakam (Chak"mko), Lead (Movilto)
@@ -170,12 +181,16 @@ echo Login with:
 echo   Email: admin@local
 echo   Password: [whatever you set in appsettings.json]
 echo.
-echo NEW FEATURES in v1.0.0:
+echo NEW FEATURES in v1.1.0:
 echo   - OFFLINE shift type (automatically seeded)
 echo   - On-Duty types: Hakam (shield) and Lead (star) - built-in, ready to use
 echo   - Team Calendars
 echo   - Hebrew language support with RTL
 echo   - Complete API layer (27 endpoints)
+echo   - Feedback system with image uploads
+echo   - Email configuration with encryption
+echo   - Easter egg game (Ctrl+Click on brand)
+echo   - API client libraries (JavaScript, Python)
 echo.
 echo Press CTRL+C to stop the application.
 echo ================================================================================
