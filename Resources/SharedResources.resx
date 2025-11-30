@@ -88,7 +88,7 @@
     <value>Requests</value>
   </data>
   <data name="MyShifts" xml:space="preserve">
-    <value>My Shifts</value>
+    <value>My Scheduled Shifts</value>
   </data>
   <data name="Admin" xml:space="preserve">
     <value>Admin</value>
@@ -97,7 +97,19 @@
     <value>Users</value>
   </data>
   <data name="ShiftTypes" xml:space="preserve">
-    <value>Shift Types</value>
+    <value>Scheduled Shift Types</value>
+  </data>
+  <data name="ScheduledShifts" xml:space="preserve">
+    <value>Scheduled Shifts</value>
+  </data>
+  <data name="DayShifts" xml:space="preserve">
+    <value>Day Shifts</value>
+  </data>
+  <data name="MyWorkSchedule" xml:space="preserve">
+    <value>My Work Schedule</value>
+  </data>
+  <data name="WorkScheduleManagement" xml:space="preserve">
+    <value>Work Schedule Management</value>
   </data>
   <data name="TimeOffManagement" xml:space="preserve">
     <value>Time-Off Management</value>
@@ -120,8 +132,17 @@
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>
   </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="People" xml:space="preserve">
+    <value>People</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
 
-  
+
   <data name="GoodMorning" xml:space="preserve">
     <value>Good morning, {0}!</value>
   </data>
@@ -135,7 +156,153 @@
     <value>Here's your schedule and shift information</value>
   </data>
 
-  
+
+  <!-- Home Page Dashboard -->
+  <data name="NextShift" xml:space="preserve">
+    <value>Next Shift</value>
+  </data>
+  <data name="NoUpcomingShifts" xml:space="preserve">
+    <value>No upcoming shifts</value>
+  </data>
+  <data name="ViewAllNotifications" xml:space="preserve">
+    <value>View all notifications</value>
+  </data>
+  <data name="Unread" xml:space="preserve">
+    <value>Unread</value>
+  </data>
+  <data name="HoursThisWeek" xml:space="preserve">
+    <value>Hours This Week</value>
+  </data>
+  <data name="DaysWithShifts" xml:space="preserve">
+    <value>Days with Shifts</value>
+  </data>
+  <data name="DaysOff" xml:space="preserve">
+    <value>Days Off</value>
+  </data>
+  <data name="ViewFullSchedule" xml:space="preserve">
+    <value>View Full Schedule</value>
+  </data>
+  <data name="MyRequests" xml:space="preserve">
+    <value>My Requests</value>
+  </data>
+  <data name="GoToMyRequests" xml:space="preserve">
+    <value>Go to My Requests</value>
+  </data>
+  <data name="PendingRequests" xml:space="preserve">
+    <value>Pending Requests</value>
+  </data>
+  <data name="ApprovedRequests" xml:space="preserve">
+    <value>Approved Requests</value>
+  </data>
+  <data name="DeclinedRequests" xml:space="preserve">
+    <value>Declined Requests</value>
+  </data>
+  <data name="StaffingOverview" xml:space="preserve">
+    <value>Staffing Overview</value>
+  </data>
+  <data name="UnassignedShifts" xml:space="preserve">
+    <value>Unassigned Shifts</value>
+  </data>
+  <data name="UnderstaffedDays" xml:space="preserve">
+    <value>Understaffed Days</value>
+  </data>
+  <data name="OpenSchedulingWorkspace" xml:space="preserve">
+    <value>Open Scheduling Workspace</value>
+  </data>
+  <data name="Approvals" xml:space="preserve">
+    <value>Approvals</value>
+  </data>
+  <data name="PendingTimeOff" xml:space="preserve">
+    <value>Pending Time Off</value>
+  </data>
+  <data name="PendingSwaps" xml:space="preserve">
+    <value>Pending Swaps</value>
+  </data>
+  <data name="OpenApprovals" xml:space="preserve">
+    <value>Open Approvals</value>
+  </data>
+  <data name="CompaniesOverview" xml:space="preserve">
+    <value>Companies Overview</value>
+  </data>
+  <data name="NextDayOff" xml:space="preserve">
+    <value>Next Day Off</value>
+  </data>
+  <data name="TotalCompanies" xml:space="preserve">
+    <value>Total Companies</value>
+  </data>
+  <data name="ActiveCompanies" xml:space="preserve">
+    <value>Active Companies</value>
+  </data>
+  <data name="ManageCompanies" xml:space="preserve">
+    <value>Manage Companies</value>
+  </data>
+
+  <!-- Priority 2: Schedule Workspace Keys -->
+  <data name="Calendars" xml:space="preserve">
+    <value>Calendars</value>
+  </data>
+  <data name="CompanyShifts" xml:space="preserve">
+    <value>Company Shifts</value>
+  </data>
+  <data name="Table" xml:space="preserve">
+    <value>Table</value>
+  </data>
+  <data name="AssignShifts" xml:space="preserve">
+    <value>Assign Shifts</value>
+  </data>
+  <data name="OpenSchedule" xml:space="preserve">
+    <value>Open Schedule</value>
+  </data>
+  <data name="NewRequest" xml:space="preserve">
+    <value>New Request</value>
+  </data>
+  <data name="ManageYourTimeOffAndShiftSwaps" xml:space="preserve">
+    <value>Manage your time-off requests and shift swaps</value>
+  </data>
+  <data name="ViewYourTeamScheduleAndAvailability" xml:space="preserve">
+    <value>View your team's schedule and availability at a glance</value>
+  </data>
+  <data name="ManageYourPersonalAndProfessionalInformation" xml:space="preserve">
+    <value>Manage your personal and professional information</value>
+  </data>
+  <data name="ReviewAndApproveTeamRequests" xml:space="preserve">
+    <value>Review and approve time-off and shift swap requests from your team</value>
+  </data>
+  <data name="ManageUsersJoinRequestsAndPermissions" xml:space="preserve">
+    <value>Manage users, join requests, and permissions across your organization</value>
+  </data>
+  <data name="ViewInsightsMetricsAndReports" xml:space="preserve">
+    <value>View insights, metrics, and reports about your team's performance and scheduling</value>
+  </data>
+  <data name="ConfigureSystemSettings" xml:space="preserve">
+    <value>Configure company settings, email notifications, and on-duty types</value>
+  </data>
+  <data name="ManageShiftTypesAndSchedules" xml:space="preserve">
+    <value>Define and manage shift types with their time ranges</value>
+  </data>
+  <data name="ManageApprovedTimeOffRequests" xml:space="preserve">
+    <value>View and manage approved time-off requests for your team</value>
+  </data>
+  <data name="ManageCompaniesAndOrganizations" xml:space="preserve">
+    <value>Create and manage companies, assign managers, and configure multi-tenant settings</value>
+  </data>
+  <data name="ManageDirectorAssignments" xml:space="preserve">
+    <value>Assign directors to companies and manage cross-company oversight permissions</value>
+  </data>
+  <data name="ViewSystemAuditLog" xml:space="preserve">
+    <value>Track all system changes, user actions, and security events for compliance and debugging</value>
+  </data>
+  <data name="CommandPaletteSearch" xml:space="preserve">
+    <value>Search for pages...</value>
+  </data>
+  <data name="CommandPaletteRecent" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+  <data name="CommandPaletteNoResults" xml:space="preserve">
+    <value>No results found</value>
+  </data>
+
+
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
@@ -1009,7 +1176,7 @@
     <value>Phone</value>
   </data>
   <data name="City" xml:space="preserve">
-    <value>City</value>
+    <value>Living Place</value>
   </data>
   <data name="DateOfBirth" xml:space="preserve">
     <value>Date of Birth</value>
@@ -1945,16 +2112,16 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Assigner</value>
   </data>
   <data name="OnDuty" xml:space="preserve">
-    <value>On-Duty</value>
+    <value>Day Shift</value>
   </data>
   <data name="OnDutyCalendar" xml:space="preserve">
-    <value>On-Duty Calendar</value>
+    <value>Day Shift Calendar</value>
   </data>
   <data name="OnDutyHakam" xml:space="preserve">
-    <value>On-Duty Hakam</value>
+    <value>Day Shift - Hakam</value>
   </data>
   <data name="OnDutyLead" xml:space="preserve">
-    <value>On-Duty Lead</value>
+    <value>Day Shift - Lead</value>
   </data>
   <data name="Hakam" xml:space="preserve">
     <value>Hakam</value>
@@ -1963,22 +2130,22 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Lead</value>
   </data>
   <data name="OnDutyType" xml:space="preserve">
-    <value>On-Duty Type</value>
+    <value>Day Shift Type</value>
   </data>
   <data name="CreateOnDuty" xml:space="preserve">
-    <value>Create On-Duty</value>
+    <value>Create Day Shift</value>
   </data>
   <data name="CancelOnDuty" xml:space="preserve">
-    <value>Cancel On-Duty</value>
+    <value>Cancel Day Shift</value>
   </data>
   <data name="OnDutyList" xml:space="preserve">
-    <value>On-Duty List</value>
+    <value>Day Shift List</value>
   </data>
   <data name="NoOnDutyThisMonth" xml:space="preserve">
-    <value>No on-duty assignments this month</value>
+    <value>No day shift assignments this month</value>
   </data>
   <data name="VacationConflict" xml:space="preserve">
-    <value>Cannot assign on-duty: User has an approved vacation on this date</value>
+    <value>Cannot assign day shift: User has an approved vacation on this date</value>
   </data>
   <data name="SelectType" xml:space="preserve">
     <value>Select Type</value>
@@ -1987,10 +2154,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Company Settings</value>
   </data>
   <data name="OnDutyTypes" xml:space="preserve">
-    <value>On-Duty Types</value>
+    <value>Day Shift Types</value>
   </data>
   <data name="OnDutyTypesDescription" xml:space="preserve">
-    <value>Manage custom on-duty types. Default types (Hakam and Lead) cannot be modified.</value>
+    <value>Manage custom day shift types. Default types (Hakam and Lead) cannot be modified.</value>
   </data>
   <data name="DefaultTypes" xml:space="preserve">
     <value>Default Types</value>
@@ -2008,7 +2175,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Custom</value>
   </data>
   <data name="AddNewOnDutyType" xml:space="preserve">
-    <value>Add New On-Duty Type</value>
+    <value>Add New Day Shift Type</value>
   </data>
   <data name="TypeValue" xml:space="preserve">
     <value>Type Value</value>
@@ -2029,7 +2196,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>hex color</value>
   </data>
   <data name="ConfirmDeleteOnDutyType" xml:space="preserve">
-    <value>Are you sure you want to delete the on-duty type '{0}'?</value>
+    <value>Are you sure you want to delete the day shift type '{0}'?</value>
   </data>
   <data name="Add" xml:space="preserve">
     <value>Add</value>
@@ -2065,7 +2232,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>OK</value>
   </data>
   <data name="NoOnDutyContactManager" xml:space="preserve">
-    <value>There isn't an on-duty assignment for this day. Contact your team manager if you think that's wrong.</value>
+    <value>There isn't a day shift assignment for this day. Contact your team manager if you think that's wrong.</value>
   </data>
   <data name="NoChoreContactManager" xml:space="preserve">
     <value>There isn't a chore for this day. Contact your team manager if you think that's wrong.</value>
@@ -2089,7 +2256,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Vacations</value>
   </data>
   <data name="OnDuty" xml:space="preserve">
-    <value>On-Duty</value>
+    <value>Day Shift</value>
   </data>
   <data name="Chores" xml:space="preserve">
     <value>Chores</value>
@@ -2164,10 +2331,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>After</value>
   </data>
   <data name="OnDutyHakam" xml:space="preserve">
-    <value>On-Duty Hakam</value>
+    <value>Day Shift - Hakam</value>
   </data>
   <data name="OnDutyLead" xml:space="preserve">
-    <value>On-Duty Lead</value>
+    <value>Day Shift - Lead</value>
   </data>
   <data name="Shadowing" xml:space="preserve">
     <value>Shadowing</value>
@@ -2430,10 +2597,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Vacation</value>
   </data>
   <data name="StatusOnDuty" xml:space="preserve">
-    <value>On Duty</value>
+    <value>Day Shift</value>
   </data>
   <data name="StatusShift" xml:space="preserve">
-    <value>Shift</value>
+    <value>Scheduled Shift</value>
   </data>
   <data name="StatusChore" xml:space="preserve">
     <value>Chore</value>
@@ -2503,5 +2670,882 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="FeedbackContentRequired" xml:space="preserve">
     <value>Please enter feedback content.</value>
+  </data>
+  <data name="ManageChoresAndTaskAssignments" xml:space="preserve">
+    <value>Assign and track task responsibilities for your team members</value>
+  </data>
+  <data name="ManageOnDutyRotationsAndAssignments" xml:space="preserve">
+    <value>Manage day shift schedules and special role assignments</value>
+  </data>
+  <data name="PleaseSignInToContinue" xml:space="preserve">
+    <value>Please sign in to continue</value>
+    <comment>Phase 18 - Authentication prompt message</comment>
+  </data>
+  <data name="Login_RequestAccessPrompt" xml:space="preserve">
+    <value>Don't have an account? <a href="/Auth/Signup">Request access here</a></value>
+    <comment>Phase 18 - Login page signup prompt</comment>
+  </data>
+  <data name="ForgotPassword_Description" xml:space="preserve">
+    <value>Enter your email address and phone number to receive a temporary password.</value>
+    <comment>Phase 18 - Forgot password page description</comment>
+  </data>
+  <data name="TemporaryPasswordGenerated" xml:space="preserve">
+    <value>Temporary Password Generated</value>
+    <comment>Phase 18 - Temp password card title</comment>
+  </data>
+  <data name="TemporaryPasswordInstructions" xml:space="preserve">
+    <value>Your temporary password has been generated and sent to your email. You can also copy it below:</value>
+    <comment>Phase 18 - Temp password instructions</comment>
+  </data>
+  <data name="YourTemporaryPassword" xml:space="preserve">
+    <value>Your Temporary Password</value>
+    <comment>Phase 18 - Temp password label</comment>
+  </data>
+  <data name="CopyPassword" xml:space="preserve">
+    <value>Copy Password</value>
+    <comment>Phase 18 - Copy button text</comment>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Copied</value>
+    <comment>Phase 18 - Copy success message</comment>
+  </data>
+  <data name="Important" xml:space="preserve">
+    <value>Important</value>
+    <comment>Phase 18 - Important label</comment>
+  </data>
+  <data name="ChangePasswordAfterLogin" xml:space="preserve">
+    <value>This is a temporary password. Please log in and change it immediately in your profile settings.</value>
+    <comment>Phase 18 - Change password reminder</comment>
+  </data>
+  <data name="SecurityNote" xml:space="preserve">
+    <value>Security Note</value>
+    <comment>Phase 18 - Security note label</comment>
+  </data>
+  <data name="ForgotPassword_SecurityNote" xml:space="preserve">
+    <value>Both your email and phone number must match our records exactly. A temporary password will be sent to your registered email address.</value>
+    <comment>Phase 18 - Forgot password security note</comment>
+  </data>
+  <data name="Sidebar_CtrlKTooltip" xml:space="preserve">
+    <value>Press Ctrl+K (or Cmd+K on Mac) to open quick navigation</value>
+    <comment>Phase 18 - Sidebar Ctrl+K tooltip</comment>
+  </data>
+  <data name="Sidebar_CtrlKLabel" xml:space="preserve">
+    <value>Ctrl+K</value>
+    <comment>Phase 18 - Sidebar Ctrl+K label</comment>
+  </data>
+  <data name="AnalyticsSummary" xml:space="preserve">
+    <value>Analytics Summary</value>
+    <comment>Phase 18 - Owner dashboard analytics section</comment>
+  </data>
+  <data name="TotalActiveUsers" xml:space="preserve">
+    <value>Total Active Users</value>
+    <comment>Phase 18 - Owner dashboard metric</comment>
+  </data>
+  <data name="ShiftsThisMonth" xml:space="preserve">
+    <value>Shifts This Month</value>
+    <comment>Phase 18 - Owner dashboard metric</comment>
+  </data>
+  <data name="AverageStaffingRate" xml:space="preserve">
+    <value>Average Staffing Rate</value>
+    <comment>Phase 18 - Owner dashboard metric</comment>
+  </data>
+  <data name="ViewFullAnalytics" xml:space="preserve">
+    <value>View Full Analytics</value>
+    <comment>Phase 18 - Owner dashboard button</comment>
+  </data>
+  <data name="SystemHealth" xml:space="preserve">
+    <value>System Health</value>
+    <comment>Phase 18 - Owner dashboard section</comment>
+  </data>
+  <data name="DiagnosticsAndMonitoring" xml:space="preserve">
+    <value>Diagnostics and Monitoring</value>
+    <comment>Phase 18 - Owner dashboard card title</comment>
+  </data>
+  <data name="ViewSystemStatusAndLogs" xml:space="preserve">
+    <value>View system status, logs, and performance metrics</value>
+    <comment>Phase 18 - Owner dashboard card description</comment>
+  </data>
+  <data name="OpenDiagnostics" xml:space="preserve">
+    <value>Open Diagnostics</value>
+    <comment>Phase 18 - Owner dashboard button</comment>
+  </data>
+  <data name="Calendar_TableView" xml:space="preserve">
+    <value>Table View</value>
+    <comment>Phase 18 - Calendar table view button</comment>
+  </data>
+  <data name="ChoresMetrics" xml:space="preserve">
+    <value>Chores Metrics</value>
+    <comment>Phase 18 - Analytics section title</comment>
+  </data>
+  <data name="CompletedThisWeek" xml:space="preserve">
+    <value>Completed This Week</value>
+    <comment>Phase 18 - Chores metric</comment>
+  </data>
+  <data name="PendingThisWeek" xml:space="preserve">
+    <value>Pending This Week</value>
+    <comment>Phase 18 - Chores metric</comment>
+  </data>
+  <data name="OverdueChores" xml:space="preserve">
+    <value>Overdue Chores</value>
+    <comment>Phase 18 - Chores metric</comment>
+  </data>
+  <data name="OnDutyMetrics" xml:space="preserve">
+    <value>Day Shift Metrics</value>
+    <comment>Phase 18 - Analytics section title</comment>
+  </data>
+  <data name="OnDutyAssignmentsThisWeek" xml:space="preserve">
+    <value>Assignments This Week</value>
+    <comment>Phase 18 - Day Shift metric</comment>
+  </data>
+  <data name="DaysWithoutOnDuty" xml:space="preserve">
+    <value>Days Without Day Shift</value>
+    <comment>Phase 18 - Day Shift metric</comment>
+  </data>
+  <data name="OnDutyCoverageRate" xml:space="preserve">
+    <value>Coverage Rate</value>
+    <comment>Phase 18 - Day Shift metric</comment>
+  </data>
+  <data name="TimeOff" xml:space="preserve">
+    <value>Time-Off</value>
+    <comment>Phase 18 - TimeOff page breadcrumb</comment>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>day</value>
+    <comment>Phase 18 - Singular day</comment>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>days</value>
+    <comment>Phase 18 - Plural days</comment>
+  </data>
+  <data name="NoReasonProvided" xml:space="preserve">
+    <value>No reason provided</value>
+    <comment>Phase 18 - TimeOff page empty reason</comment>
+  </data>
+  <data name="ActiveToday" xml:space="preserve">
+    <value>Active Today</value>
+    <comment>Phase 18 - TimeOff status badge</comment>
+  </data>
+  <data name="Past" xml:space="preserve">
+    <value>Past</value>
+    <comment>Phase 18 - TimeOff status badge</comment>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>Note</value>
+    <comment>Phase 18 - General note label</comment>
+  </data>
+  <data name="TimeOffDeletionNote" xml:space="preserve">
+    <value>You can only delete future time-off requests. Requests that have already started or are in the past cannot be deleted. Deleting a time-off request will not automatically restore any shift assignments that were removed when it was approved.</value>
+    <comment>Phase 18 - TimeOff deletion info</comment>
+  </data>
+  <data name="NoApprovedTimeOffRequestsTitle" xml:space="preserve">
+    <value>No Approved Time-Off Requests</value>
+    <comment>Phase 18 - TimeOff empty state title</comment>
+  </data>
+  <data name="NoApprovedTimeOffRequestsMessage" xml:space="preserve">
+    <value>There are currently no approved time-off requests in the system.</value>
+    <comment>Phase 18 - TimeOff empty state message</comment>
+  </data>
+  <data name="ViewPendingRequests" xml:space="preserve">
+    <value>View Pending Requests</value>
+    <comment>Phase 18 - TimeOff button text</comment>
+  </data>
+  <data name="BackToPendingRequests" xml:space="preserve">
+    <value>Back to Pending Requests</value>
+    <comment>Phase 18 - TimeOff navigation</comment>
+  </data>
+  <data name="ManageUsers" xml:space="preserve">
+    <value>Manage Users</value>
+    <comment>Phase 18 - TimeOff navigation</comment>
+  </data>
+  <data name="NotificationShiftAddedTitle" xml:space="preserve">
+    <value>New Shift Assignment</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationShiftAddedMessage" xml:space="preserve">
+    <value>You have been assigned to work {0} on {1} from {2} to {3}.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftType, {1}=date, {2}=startTime, {3}=endTime</comment>
+  </data>
+  <data name="NotificationShiftRemovedTitle" xml:space="preserve">
+    <value>Shift Assignment Removed</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationShiftRemovedMessage" xml:space="preserve">
+    <value>Your {0} shift on {1} from {2} to {3} has been removed.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftType, {1}=date, {2}=startTime, {3}=endTime</comment>
+  </data>
+  <data name="NotificationTimeOffApprovedTitle" xml:space="preserve">
+    <value>Time-Off Request Approved</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationTimeOffApprovedMessage" xml:space="preserve">
+    <value>Your time-off request for {0} has been approved.</value>
+    <comment>Phase 18 - Notification message: {0}=dateRange</comment>
+  </data>
+  <data name="NotificationTimeOffDeclinedTitle" xml:space="preserve">
+    <value>Time-Off Request Declined</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationTimeOffDeclinedMessage" xml:space="preserve">
+    <value>Your time-off request for {0} has been declined.</value>
+    <comment>Phase 18 - Notification message: {0}=dateRange</comment>
+  </data>
+  <data name="NotificationSwapRequestApprovedTitle" xml:space="preserve">
+    <value>Shift Swap Request Approved</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationSwapRequestApprovedMessage" xml:space="preserve">
+    <value>Your shift swap request for {0} has been approved.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftInfo</comment>
+  </data>
+  <data name="NotificationSwapRequestDeclinedTitle" xml:space="preserve">
+    <value>Shift Swap Request Declined</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationSwapRequestDeclinedMessage" xml:space="preserve">
+    <value>Your shift swap request for {0} has been declined.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftInfo</comment>
+  </data>
+  <data name="NotificationChoreAssignedTitle" xml:space="preserve">
+    <value>New Chore Assignment</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationChoreAssignedMessage" xml:space="preserve">
+    <value>You have been assigned a chore: "{0}" on {1}.</value>
+    <comment>Phase 18 - Notification message: {0}=choreTitle, {1}=date</comment>
+  </data>
+  <data name="NotificationChoreCanceledTitle" xml:space="preserve">
+    <value>Chore Canceled</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationChoreCanceledMessage" xml:space="preserve">
+    <value>Your chore "{0}" on {1} has been canceled.</value>
+    <comment>Phase 18 - Notification message: {0}=choreTitle, {1}=date</comment>
+  </data>
+  <data name="NotificationOnDutyAssignedTitle" xml:space="preserve">
+    <value>New On-Duty Assignment</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationOnDutyAssignedMessage" xml:space="preserve">
+    <value>You have been assigned to on-duty {0} on {1}.</value>
+    <comment>Phase 18 - Notification message: {0}=onDutyType, {1}=date</comment>
+  </data>
+  <data name="NotificationOnDutyCanceledTitle" xml:space="preserve">
+    <value>On-Duty Assignment Canceled</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationOnDutyCanceledMessage" xml:space="preserve">
+    <value>Your on-duty {0} assignment on {1} has been canceled.</value>
+    <comment>Phase 18 - Notification message: {0}=onDutyType, {1}=date</comment>
+  </data>
+  <data name="NotificationTimeOffDeletedTitle" xml:space="preserve">
+    <value>Time-Off Request Deleted</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationTimeOffDeletedMessage" xml:space="preserve">
+    <value>Your approved time-off for {0} has been deleted by management.</value>
+    <comment>Phase 18 - Notification message: {0}=dateRange</comment>
+  </data>
+  <data name="OnDutyTypeHakam" xml:space="preserve">
+    <value>Hakam</value>
+    <comment>Phase 18 - On-Duty type name</comment>
+  </data>
+  <data name="OnDutyTypeLead" xml:space="preserve">
+    <value>Lead</value>
+    <comment>Phase 18 - On-Duty type name</comment>
+  </data>
+  <data name="PendingTimeOffTab" xml:space="preserve">
+    <value>Pending Time-Off</value>
+    <comment>Phase 18 - Requests page tab</comment>
+  </data>
+  <data name="PendingSwapsTab" xml:space="preserve">
+    <value>Pending Swaps</value>
+    <comment>Phase 18 - Requests page tab</comment>
+  </data>
+  <data name="ApprovedTimeOffTab" xml:space="preserve">
+    <value>Approved Time-Off</value>
+    <comment>Phase 18 - Requests page tab</comment>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Change Password</value>
+    <comment>Phase 18 - Password change feature</comment>
+  </data>
+  <data name="OldPassword" xml:space="preserve">
+    <value>Current Password</value>
+    <comment>Phase 18 - Password change field</comment>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>New Password</value>
+    <comment>Phase 18 - Password change field</comment>
+  </data>
+  <data name="ChangePasswordButton" xml:space="preserve">
+    <value>Change Password</value>
+    <comment>Phase 18 - Password change button</comment>
+  </data>
+  <data name="PasswordChangedSuccessfully" xml:space="preserve">
+    <value>Password changed successfully! You can now log in with your new password.</value>
+    <comment>Phase 18 - Password change success message</comment>
+  </data>
+  <data name="PasswordChangeFailed" xml:space="preserve">
+    <value>Failed to change password. Please check your current password and try again.</value>
+    <comment>Phase 18 - Password change error message</comment>
+  </data>
+  <data name="NewPasswordTooShort" xml:space="preserve">
+    <value>New password must be at least 6 characters long.</value>
+    <comment>Phase 18 - Password validation message</comment>
+  </data>
+  <data name="OldPasswordIncorrect" xml:space="preserve">
+    <value>Current password is incorrect.</value>
+    <comment>Phase 18 - Password verification error</comment>
+  </data>
+  <data name="ChangePasswordAfterLogin_WithForm" xml:space="preserve">
+    <value>The temporary password will also be shown here for your convenience. You can change it at any time using the form below.</value>
+    <comment>Phase 18 - Updated security note with password change form</comment>
+  </data>
+  <data name="PasswordManagement" xml:space="preserve">
+    <value>Password Management</value>
+    <comment>Sub-Phase 18.14 - Page title for combined Reset/Change password page</comment>
+  </data>
+  <data name="RequestAccess" xml:space="preserve">
+    <value>Request Access</value>
+    <comment>Sub-Phase 18.14 - Button on login page to request access/signup</comment>
+  </data>
+  <data name="Game_Title" xml:space="preserve">
+    <value>Shift Swap</value>
+    <comment>Phase 19 - Easter egg game title</comment>
+  </data>
+  <data name="Game_Instructions" xml:space="preserve">
+    <value>Swap adjacent icons to line up 3+ in a row</value>
+    <comment>Phase 19 - Game instructions subtitle</comment>
+  </data>
+  <data name="Game_Score" xml:space="preserve">
+    <value>Score:</value>
+    <comment>Phase 19 - Score label</comment>
+  </data>
+  <data name="Game_Trophy" xml:space="preserve">
+    <value>Leaderboard</value>
+    <comment>Phase 19 - Trophy button tooltip</comment>
+  </data>
+  <data name="Game_PlayAgain" xml:space="preserve">
+    <value>Play Again</value>
+    <comment>Phase 19 - Play again button text</comment>
+  </data>
+  <data name="Game_ViewLeaderboard" xml:space="preserve">
+    <value>View Leaderboard</value>
+    <comment>Phase 19 - View leaderboard button text</comment>
+  </data>
+  <data name="Game_ScoreSaved" xml:space="preserve">
+    <value>Score saved!</value>
+    <comment>Phase 19 - Toast notification on score save</comment>
+  </data>
+  <data name="Game_MilestoneReached" xml:space="preserve">
+    <value>New milestone reached! 🎉</value>
+    <comment>Phase 19 - Toast notification on milestone</comment>
+  </data>
+  <data name="Game_Roast_1000_A" xml:space="preserve">
+    <value>What? Is there no work?</value>
+    <comment>Phase 19 - Roasting message for 1,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_1000_B" xml:space="preserve">
+    <value>Should we assign you more shifts?</value>
+    <comment>Phase 19 - Roasting message for 1,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_1000_C" xml:space="preserve">
+    <value>Is the real shift schedule not challenging enough?</value>
+    <comment>Phase 19 - Roasting message for 1,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_2500_A" xml:space="preserve">
+    <value>I know your next chore: practicing the game!</value>
+    <comment>Phase 19 - Roasting message for 2,500 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_2500_B" xml:space="preserve">
+    <value>Your dedication is... concerning.</value>
+    <comment>Phase 19 - Roasting message for 2,500 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_2500_C" xml:space="preserve">
+    <value>Is this why the shifts are piling up?</value>
+    <comment>Phase 19 - Roasting message for 2,500 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_5000_A" xml:space="preserve">
+    <value>The CEO of Shift Swapping.</value>
+    <comment>Phase 19 - Roasting message for 5,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_5000_B" xml:space="preserve">
+    <value>the boss is watching... just kidding, keep going!</value>
+    <comment>Phase 19 - Roasting message for 5,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_5000_C" xml:space="preserve">
+    <value>Shift Swapping Level: Expert. Productivity Level: We need to talk.</value>
+    <comment>Phase 19 - Roasting message for 5,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_7500_A" xml:space="preserve">
+    <value>Someone's trying to get a promotion through gaming.</value>
+    <comment>Phase 19 - Roasting message for 7,500 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_7500_B" xml:space="preserve">
+    <value>The servers are now 10% your saved shifts.</value>
+    <comment>Phase 19 - Roasting message for 7,500 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_7500_C" xml:space="preserve">
+    <value>We're adding this to your performance review.</value>
+    <comment>Phase 19 - Roasting message for 7,500 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_10000_A" xml:space="preserve">
+    <value>Ive low-key ran out of jokes, or maybe not!</value>
+    <comment>Phase 19 - Roasting message for 10,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_10000_B" xml:space="preserve">
+    <value>You've officially swapped more virtual shifts than real ones.</value>
+    <comment>Phase 19 - Roasting message for 10,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_10000_C" xml:space="preserve">
+    <value>The ultimate power is not controlling time, but controlling the schedule.</value>
+    <comment>Phase 19 - Roasting message for 10,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_15000_A" xml:space="preserve">
+    <value>Okay, we might need to add you to the on-duty schedule... inside the game.</value>
+    <comment>Phase 19 - Roasting message for 15,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_15000_B" xml:space="preserve">
+    <value>You've achieved a state of perpetual shift-ness.</value>
+    <comment>Phase 19 - Roasting message for 15,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_15000_C" xml:space="preserve">
+    <value>At this point, you're not playing a game, you're conducting an orchestra of shifts.</value>
+    <comment>Phase 19 - Roasting message for 15,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_20000_A" xml:space="preserve">
+    <value>We've run out of jokes. Please go touch grass.</value>
+    <comment>Phase 19 - Roasting message for 20,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_20000_B" xml:space="preserve">
+    <value>You have transcended. The game now plays you.</value>
+    <comment>Phase 19 - Roasting message for 20,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_20000_C" xml:space="preserve">
+    <value>Congratulations! You have officially completed all the work. You may now retire.</value>
+    <comment>Phase 19 - Roasting message for 20,000 score - Variant C</comment>
+  </data>
+  <data name="Game_LeaderboardTitle" xml:space="preserve">
+    <value>Game Leaderboard</value>
+    <comment>Phase 19 - Leaderboard page title</comment>
+  </data>
+  <data name="Game_AllTime" xml:space="preserve">
+    <value>All-Time</value>
+    <comment>Phase 19 - All-time leaderboard tab</comment>
+  </data>
+  <data name="Game_Monthly" xml:space="preserve">
+    <value>This Month</value>
+    <comment>Phase 19 - Monthly leaderboard tab</comment>
+  </data>
+  <data name="Game_Rank" xml:space="preserve">
+    <value>Rank</value>
+    <comment>Phase 19 - Leaderboard rank column header</comment>
+  </data>
+  <data name="Game_Player" xml:space="preserve">
+    <value>Player</value>
+    <comment>Phase 19 - Leaderboard player column header</comment>
+  </data>
+  <data name="Game_YourBest" xml:space="preserve">
+    <value>Your Best</value>
+    <comment>Phase 19 - User's personal best label</comment>
+  </data>
+  <data name="Game_NoScoresYet" xml:space="preserve">
+    <value>No scores yet! Be the first to play!</value>
+    <comment>Phase 19 - Empty state message for leaderboard</comment>
+  </data>
+  <data name="Game_BackToGame" xml:space="preserve">
+    <value>Back to Game</value>
+    <comment>Phase 19 - Back to game button on leaderboard</comment>
+  </data>
+  <data name="Game_You" xml:space="preserve">
+    <value>(You)</value>
+    <comment>Phase 19 - Indicator for current user in leaderboard</comment>
+  </data>
+  <data name="Calendar_ToggleMyItems" xml:space="preserve">
+    <value>Toggle item visibility</value>
+    <comment>Phase 20 - Toggle button aria-label for showing my items only vs all items</comment>
+  </data>
+  <data name="Calendar_MyItemsOnly" xml:space="preserve">
+    <value>My Items</value>
+    <comment>Phase 20 - Button text when showing only user's items</comment>
+  </data>
+  <data name="Calendar_ShowAll" xml:space="preserve">
+    <value>Show All</value>
+    <comment>Phase 20 - Button text when showing all items</comment>
+  </data>
+  <data name="Calendar_AddChore" xml:space="preserve">
+    <value>Add Chore</value>
+    <comment>Phase 20 - Quick-add button for chores</comment>
+  </data>
+  <data name="Calendar_AddOnDuty" xml:space="preserve">
+    <value>Add Day Shift</value>
+    <comment>Phase 20 - Quick-add button for day shifts</comment>
+  </data>
+  <data name="Calendar_SelectAssignee" xml:space="preserve">
+    <value>Select assignee...</value>
+    <comment>Phase 20 - Placeholder for assignee dropdown</comment>
+  </data>
+  <data name="Calendar_ChoreTitle" xml:space="preserve">
+    <value>Chore title</value>
+    <comment>Phase 20 - Placeholder for chore title input</comment>
+  </data>
+  <data name="Calendar_MyCalendar" xml:space="preserve">
+    <value>📅 My Shifty</value>
+    <comment>Phase 20 - My Calendar section title (Shifty is a brand name)</comment>
+  </data>
+  <data name="Calendar_Management" xml:space="preserve">
+    <value>Management</value>
+    <comment>Phase 20 - Management section title</comment>
+  </data>
+  <data name="Calendar_ShiftsManagement" xml:space="preserve">
+    <value>Scheduled Shifts</value>
+    <comment>Phase 20 - Scheduled Shifts management link</comment>
+  </data>
+  <data name="Calendar_ChoresManagement" xml:space="preserve">
+    <value>Chores</value>
+    <comment>Phase 20 - Chores management link</comment>
+  </data>
+  <data name="Calendar_OnDutyManagement" xml:space="preserve">
+    <value>Day Shifts</value>
+    <comment>Phase 20 - Day Shifts management link</comment>
+  </data>
+  <data name="Calendar_QuickActions" xml:space="preserve">
+    <value>Quick actions</value>
+    <comment>Phase 20 - Quick actions label</comment>
+  </data>
+  <data name="Calendar_ManageShifts" xml:space="preserve">
+    <value>Manage Scheduled Shifts</value>
+    <comment>Phase 20 - Link to scheduled shift management</comment>
+  </data>
+  <data name="Calendar_ManageChores" xml:space="preserve">
+    <value>Manage Chores</value>
+    <comment>Phase 20 - Link to chore management</comment>
+  </data>
+  <data name="Calendar_ManageOnDuty" xml:space="preserve">
+    <value>Manage Day Shifts</value>
+    <comment>Phase 20 - Link to day shifts management</comment>
+  </data>
+  <data name="Calendar_ManageItem" xml:space="preserve">
+    <value>Manage</value>
+    <comment>Phase 20 - Generic manage link</comment>
+  </data>
+  <data name="Calendar_ManageShift" xml:space="preserve">
+    <value>Manage in Table</value>
+    <comment>Phase 20 - Manage shift in table view</comment>
+  </data>
+  <data name="Calendar_MoreItems" xml:space="preserve">
+    <value>more</value>
+    <comment>Phase 20 - Show more items button</comment>
+  </data>
+  <data name="Calendar_ShowLess" xml:space="preserve">
+    <value>Show less</value>
+    <comment>Phase 20 - Show less items button</comment>
+  </data>
+  <data name="Calendar_NoItems" xml:space="preserve">
+    <value>No items</value>
+    <comment>Phase 20 - Empty state title</comment>
+  </data>
+  <data name="Calendar_NoItemsForDay" xml:space="preserve">
+    <value>No shifts, chores, or on-duty assignments for this day</value>
+    <comment>Phase 20 - Empty state subtitle</comment>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+    <comment>Phase 20 - Add button</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Phase 20 - Cancel button</comment>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>Phase 20 - Delete button</comment>
+  </data>
+  <data name="Owner_AdminPanel" xml:space="preserve">
+    <value>Owner Administration</value>
+  </data>
+  <data name="Owner_AdminPanel_Subtitle" xml:space="preserve">
+    <value>Developer and system owner tools</value>
+  </data>
+  <data name="Owner_TotalUsers" xml:space="preserve">
+    <value>Total Users</value>
+  </data>
+  <data name="Owner_TotalCompanies" xml:space="preserve">
+    <value>Total Companies</value>
+  </data>
+  <data name="Owner_DatabaseSize" xml:space="preserve">
+    <value>Database Size</value>
+  </data>
+  <data name="Owner_Uptime" xml:space="preserve">
+    <value>Uptime</value>
+  </data>
+  <data name="Owner_FeatureFlags" xml:space="preserve">
+    <value>Feature Flags</value>
+  </data>
+  <data name="Owner_FeatureFlags_Desc" xml:space="preserve">
+    <value>Manage system feature toggles</value>
+  </data>
+  <data name="Owner_DatabaseConsole" xml:space="preserve">
+    <value>Database Console</value>
+  </data>
+  <data name="Owner_DatabaseConsole_Desc" xml:space="preserve">
+    <value>Execute database operations</value>
+  </data>
+  <data name="Owner_EmailConfig" xml:space="preserve">
+    <value>Email Configuration</value>
+  </data>
+  <data name="Owner_EmailConfig_Desc" xml:space="preserve">
+    <value>Configure email notifications</value>
+  </data>
+  <data name="Owner_SystemHealth" xml:space="preserve">
+    <value>System Health</value>
+  </data>
+  <data name="Owner_SystemHealth_Desc" xml:space="preserve">
+    <value>Monitor system status</value>
+  </data>
+  <data name="Owner_Backup" xml:space="preserve">
+    <value>Backup &amp; Restore</value>
+  </data>
+  <data name="Owner_Backup_Desc" xml:space="preserve">
+    <value>Manage database backups</value>
+  </data>
+  <data name="Owner_SecurityAudit" xml:space="preserve">
+    <value>Security Audit</value>
+  </data>
+  <data name="Owner_SecurityAudit_Desc" xml:space="preserve">
+    <value>View security audit logs</value>
+  </data>
+  <data name="Owner_RecentActivity" xml:space="preserve">
+    <value>Recent Activity</value>
+  </data>
+  <data name="Owner_ConfigureEmail" xml:space="preserve">
+    <value>Configure Email Settings</value>
+  </data>
+  <data name="Owner_GameConfig" xml:space="preserve">
+    <value>Game Configuration</value>
+  </data>
+  <data name="Owner_GameConfig_Desc" xml:space="preserve">
+    <value>Configure Shift Swap game settings and scoring</value>
+  </data>
+  <data name="GameConfig_Title" xml:space="preserve">
+    <value>Game Configuration</value>
+  </data>
+  <data name="GameConfig_Subtitle" xml:space="preserve">
+    <value>Configure Shift Swap match-3 game settings and scoring</value>
+  </data>
+  <data name="GameConfig_GameStatus" xml:space="preserve">
+    <value>Game Status</value>
+  </data>
+  <data name="GameConfig_GameEnabled" xml:space="preserve">
+    <value>Game Enabled</value>
+  </data>
+  <data name="GameConfig_GameEnabled_Desc" xml:space="preserve">
+    <value>Enable or disable the Shift Swap match-3 game for all users</value>
+  </data>
+  <data name="GameConfig_Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="GameConfig_Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="GameConfig_ScoringConfiguration" xml:space="preserve">
+    <value>Scoring Configuration</value>
+  </data>
+  <data name="GameConfig_Points3Match" xml:space="preserve">
+    <value>Points for 3-Match</value>
+  </data>
+  <data name="GameConfig_Points3Match_Desc" xml:space="preserve">
+    <value>Points awarded for matching 3 tiles in a row (default: 40)</value>
+  </data>
+  <data name="GameConfig_Points4Match" xml:space="preserve">
+    <value>Points for 4-Match</value>
+  </data>
+  <data name="GameConfig_Points4Match_Desc" xml:space="preserve">
+    <value>Points for 4-in-a-row combo (default: 100)</value>
+  </data>
+  <data name="GameConfig_Points5Match" xml:space="preserve">
+    <value>Points for 5+ Match</value>
+  </data>
+  <data name="GameConfig_Points5Match_Desc" xml:space="preserve">
+    <value>Points for 5+ in-a-row, clears entire row/column (default: 200)</value>
+  </data>
+  <data name="GameConfig_MegaComboSettings" xml:space="preserve">
+    <value>Mega Combo Settings</value>
+  </data>
+  <data name="GameConfig_MegaCombo_HowItWorks" xml:space="preserve">
+    <value>How it works:</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Explanation" xml:space="preserve">
+    <value>Mega combo triggers when ANY of the configured thresholds is met. For example, if you set "2+ lines of 4-match", getting 2 or more 4-in-a-row lines in one move will trigger mega combo. Set to 0 to disable that trigger type.</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Multiplier" xml:space="preserve">
+    <value>Score Multiplier</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Multiplier_Desc" xml:space="preserve">
+    <value>Multiplier applied when mega combo triggers (default: 2x)</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min3Lines" xml:space="preserve">
+    <value>Min Lines of 3-Match</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min3Lines_Desc" xml:space="preserve">
+    <value>Minimum 3-in-a-row lines needed (0 = disabled, default: 0)</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min4Lines" xml:space="preserve">
+    <value>Min Lines of 4-Match</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min4Lines_Desc" xml:space="preserve">
+    <value>Minimum 4-in-a-row lines needed (0 = disabled, default: 2)</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min5Lines" xml:space="preserve">
+    <value>Min Lines of 5+ Match</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min5Lines_Desc" xml:space="preserve">
+    <value>Minimum 5+ in-a-row lines needed (0 = disabled, default: 0)</value>
+  </data>
+  <data name="GameConfig_GridSettings" xml:space="preserve">
+    <value>Grid Settings</value>
+  </data>
+  <data name="GameConfig_GridSize" xml:space="preserve">
+    <value>Grid Size</value>
+  </data>
+  <data name="GameConfig_GridSize_Desc" xml:space="preserve">
+    <value>Size of the game grid (4-10). Default is 6x6. Warning: Changing this may affect game balance.</value>
+  </data>
+  <data name="GameConfig_Milestones" xml:space="preserve">
+    <value>Milestones &amp; Roasting Messages</value>
+  </data>
+  <data name="GameConfig_Milestones_Label" xml:space="preserve">
+    <value>Milestone Scores (comma-separated)</value>
+  </data>
+  <data name="GameConfig_Milestones_Desc" xml:space="preserve">
+    <value>Score thresholds where roasting messages appear. Enter positive integers separated by commas.</value>
+  </data>
+  <data name="GameConfig_Preview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="GameConfig_SaveConfiguration" xml:space="preserve">
+    <value>Save Configuration</value>
+  </data>
+  <data name="GameConfig_BackToAdmin" xml:space="preserve">
+    <value>Back to Admin Panel</value>
+  </data>
+  <data name="Calendar_ToggleShowAll_Tooltip" xml:space="preserve">
+    <value>Click to show all items</value>
+  </data>
+  <data name="Calendar_ToggleMyItems_Tooltip" xml:space="preserve">
+    <value>Click to show only your items</value>
+  </data>
+  <data name="Calendar_ShowingAll" xml:space="preserve">
+    <value>Showing All Items</value>
+  </data>
+  <data name="Calendar_ClickToFilterMine" xml:space="preserve">
+    <value>Click to filter your items</value>
+  </data>
+  <data name="Calendar_ClickToShowAll" xml:space="preserve">
+    <value>Click to show all items</value>
+  </data>
+  <data name="My_Settings" xml:space="preserve">
+    <value>My Settings</value>
+  </data>
+  <data name="My_Settings_Subtitle" xml:space="preserve">
+    <value>Manage your notification preferences and account settings</value>
+  </data>
+  <data name="Settings_DailyDigest" xml:space="preserve">
+    <value>Daily Digest Notifications</value>
+  </data>
+  <data name="Settings_DailyDigest_InfoTitle" xml:space="preserve">
+    <value>About Daily Digest</value>
+  </data>
+  <data name="Settings_DailyDigest_InfoDesc" xml:space="preserve">
+    <value>Receive a daily email summary with your upcoming shifts, pending requests, chores, and on-duty assignments. Customize what information you want to receive and when.</value>
+  </data>
+  <data name="Settings_ReceiveDailyDigest" xml:space="preserve">
+    <value>Receive Daily Digest Emails</value>
+  </data>
+  <data name="Settings_ReceiveDailyDigest_Desc" xml:space="preserve">
+    <value>Get a daily email summary of your schedule and tasks</value>
+  </data>
+  <data name="Settings_PreferredTime" xml:space="preserve">
+    <value>Preferred Delivery Time (UTC)</value>
+  </data>
+  <data name="Settings_PreferredTime_Help" xml:space="preserve">
+    <value>Choose when you want to receive your daily digest. Time is in UTC (Coordinated Universal Time).</value>
+  </data>
+  <data name="Settings_IncludeContent" xml:space="preserve">
+    <value>Include in Daily Digest</value>
+  </data>
+  <data name="Settings_IncludeShifts" xml:space="preserve">
+    <value>Upcoming Shifts</value>
+  </data>
+  <data name="Settings_IncludeShifts_Desc" xml:space="preserve">
+    <value>Your shift assignments for the next 7 days</value>
+  </data>
+  <data name="Settings_IncludeRequests" xml:space="preserve">
+    <value>Pending Requests</value>
+  </data>
+  <data name="Settings_IncludeRequests_Desc" xml:space="preserve">
+    <value>Your pending time-off and swap requests awaiting approval</value>
+  </data>
+  <data name="Settings_IncludeChores" xml:space="preserve">
+    <value>Assigned Chores</value>
+  </data>
+  <data name="Settings_IncludeChores_Desc" xml:space="preserve">
+    <value>Chores assigned to you in the next 7 days</value>
+  </data>
+  <data name="Settings_IncludeOnDuty" xml:space="preserve">
+    <value>OnDuty Assignments</value>
+  </data>
+  <data name="Settings_IncludeOnDuty_Desc" xml:space="preserve">
+    <value>Your on-duty responsibilities for the next 7 days</value>
+  </data>
+  <data name="SaveSettings" xml:space="preserve">
+    <value>Save Settings</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <!-- Phase 6 Extension: Day-Before Reminders -->
+  <data name="Settings_DayBeforeReminders" xml:space="preserve">
+    <value>Day-Before Reminders</value>
+  </data>
+  <data name="Settings_DayBeforeReminders_InfoTitle" xml:space="preserve">
+    <value>Automatic Reminders</value>
+  </data>
+  <data name="Settings_DayBeforeReminders_InfoDesc" xml:space="preserve">
+    <value>Receive reminders 1 day before your assignments at your preferred digest time</value>
+  </data>
+  <data name="Settings_RemindBeforeShifts" xml:space="preserve">
+    <value>Remind me before my shifts</value>
+  </data>
+  <data name="Settings_RemindBeforeShifts_Desc" xml:space="preserve">
+    <value>Get a reminder the day before you have a scheduled shift</value>
+  </data>
+  <data name="Settings_RemindBeforeChores" xml:space="preserve">
+    <value>Remind me before my chores</value>
+  </data>
+  <data name="Settings_RemindBeforeChores_Desc" xml:space="preserve">
+    <value>Get a reminder the day before you have an assigned chore</value>
+  </data>
+  <data name="Settings_RemindBeforeOnDuty" xml:space="preserve">
+    <value>Remind me before my on-duty</value>
+  </data>
+  <data name="Settings_RemindBeforeOnDuty_Desc" xml:space="preserve">
+    <value>Get a reminder the day before you have an on-duty assignment</value>
+  </data>
+  <!-- Phase 6 Extension: OnDuty Role Subscriptions -->
+  <data name="Settings_OnDutySubscriptions" xml:space="preserve">
+    <value>Today's On-Duty Notifications</value>
+  </data>
+  <data name="Settings_OnDutySubscriptions_InfoTitle" xml:space="preserve">
+    <value>Track Specific Roles</value>
+  </data>
+  <data name="Settings_OnDutySubscriptions_InfoDesc" xml:space="preserve">
+    <value>Select which on-duty roles you want to see in your daily digest</value>
+  </data>
+  <data name="Settings_SelectOnDutyRoles" xml:space="preserve">
+    <value>Roles to track</value>
+  </data>
+  <data name="Settings_NoOnDutyTypes" xml:space="preserve">
+    <value>No on-duty types are currently configured</value>
   </data>
 </root>

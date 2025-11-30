@@ -451,6 +451,66 @@ namespace ShiftManager.Migrations
                     b.ToTable("Companies");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.DailyNotificationPreference", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IncludeChores")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IncludeOnDuty")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IncludePendingRequests")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IncludeUpcomingShifts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PreferredTime")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ReceiveDailyDigest")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RemindBeforeChores")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RemindBeforeOnDuty")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RemindBeforeShifts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CompanyId", "UserId")
+                        .IsUnique()
+                        .HasFilter("[IsActive] = 1");
+
+                    b.ToTable("DailyNotificationPreferences");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.DirectorCompany", b =>
                 {
                     b.Property<int>("Id")
@@ -572,6 +632,42 @@ namespace ShiftManager.Migrations
                     b.ToTable("Feedbacks");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.GameScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CurrentMonth")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("PlayedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Score")
+                        .IsDescending(false, true);
+
+                    b.HasIndex("UserId", "PlayedAt");
+
+                    b.HasIndex("CompanyId", "CurrentMonth", "Score")
+                        .IsDescending(false, false, true);
+
+                    b.ToTable("GameScores");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.OnDuty", b =>
                 {
                     b.Property<int>("Id")
@@ -620,6 +716,38 @@ namespace ShiftManager.Migrations
                         .HasFilter("[CanceledAt] IS NULL");
 
                     b.ToTable("OnDuties");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.OnDutyRoleSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OnDutyTypeValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CompanyId", "UserId", "OnDutyTypeValue")
+                        .IsUnique()
+                        .HasFilter("[IsActive] = 1");
+
+                    b.ToTable("OnDutyRoleSubscriptions");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.OnDutyTypeConfig", b =>
@@ -1235,6 +1363,17 @@ namespace ShiftManager.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.DailyNotificationPreference", b =>
+                {
+                    b.HasOne("ShiftManager.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.DirectorCompany", b =>
                 {
                     b.HasOne("ShiftManager.Models.Company", "Company")
@@ -1286,6 +1425,25 @@ namespace ShiftManager.Migrations
                     b.Navigation("Submitter");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.GameScore", b =>
+                {
+                    b.HasOne("ShiftManager.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.OnDuty", b =>
                 {
                     b.HasOne("ShiftManager.Models.AppUser", "Canceler")
@@ -1306,6 +1464,17 @@ namespace ShiftManager.Migrations
                     b.Navigation("Canceler");
 
                     b.Navigation("Creator");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.OnDutyRoleSubscription", b =>
+                {
+                    b.HasOne("ShiftManager.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

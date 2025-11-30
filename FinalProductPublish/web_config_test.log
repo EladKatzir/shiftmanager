@@ -1323,3 +1323,112 @@ info: Microsoft.Hosting.Lifetime[0]
       Hosting environment: Production
 info: Microsoft.Hosting.Lifetime[0]
       Content root path: C:\Users\katzi\Downloads\ShiftManager\FinalProductPublish
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=4a14756c09b8 Method=GET Path=/Public/Chores UserId=anonymous IP=::1
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=4a14756c09b8 Method=GET Path=/Public/Chores StatusCode=302 Duration=37ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=d387469ad70b Method=GET Path=/Auth/Login UserId=anonymous IP=::1
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=d387469ad70b Method=GET Path=/Auth/Login StatusCode=200 Duration=190ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=5d823f2bb549 Method=GET Path=/favicon.ico UserId=anonymous IP=::1
+warn: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=5d823f2bb549 Method=GET Path=/favicon.ico StatusCode=404 Duration=3ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=42393d6ea276 Method=POST Path=/Auth/Login UserId=anonymous IP=::1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@__Email_0='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      SELECT "u"."Id", "u"."AvatarFileName", "u"."Certifications", "u"."City", "u"."CompanyId", "u"."DateOfBirth", "u"."Department", "u"."DisplayName", "u"."Email", "u"."EmergencyContactName", "u"."EmergencyContactPhone", "u"."EmergencyContactRelation", "u"."FailedLoginAttempts", "u"."HireDate", "u"."IsActive", "u"."JobTitle", "u"."LastLoginAttempt", "u"."LockoutEnd", "u"."PasswordHash", "u"."PasswordSalt", "u"."Phone", "u"."PreferredName", "u"."ProfileLastUpdated", "u"."ProfileLastUpdatedBy", "u"."Role", "u"."Skills"
+      FROM "Users" AS "u"
+      WHERE "u"."Email" = @__Email_0 AND "u"."IsActive"
+      LIMIT 1
+warn: ShiftManager.Pages.Auth.LoginModel[0]
+      Login failed for emp@t (user not found)
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=42393d6ea276 Method=POST Path=/Auth/Login StatusCode=200 Duration=263ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=a0d09c1db8cc Method=POST Path=/Auth/Login UserId=anonymous IP=::1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__Email_0='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      SELECT "u"."Id", "u"."AvatarFileName", "u"."Certifications", "u"."City", "u"."CompanyId", "u"."DateOfBirth", "u"."Department", "u"."DisplayName", "u"."Email", "u"."EmergencyContactName", "u"."EmergencyContactPhone", "u"."EmergencyContactRelation", "u"."FailedLoginAttempts", "u"."HireDate", "u"."IsActive", "u"."JobTitle", "u"."LastLoginAttempt", "u"."LockoutEnd", "u"."PasswordHash", "u"."PasswordSalt", "u"."Phone", "u"."PreferredName", "u"."ProfileLastUpdated", "u"."ProfileLastUpdatedBy", "u"."Role", "u"."Skills"
+      FROM "Users" AS "u"
+      WHERE "u"."Email" = @__Email_0 AND "u"."IsActive"
+      LIMIT 1
+warn: ShiftManager.Pages.Auth.LoginModel[0]
+      Login failed for emp@t (user not found)
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=a0d09c1db8cc Method=POST Path=/Auth/Login StatusCode=200 Duration=141ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=129d6bcb95c5 Method=GET Path=/Auth/ForgotPassword UserId=anonymous IP=::1
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=129d6bcb95c5 Method=GET Path=/Auth/ForgotPassword StatusCode=200 Duration=28ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=ed843d3a161b Method=GET Path=/Auth/Login UserId=anonymous IP=::1
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=ed843d3a161b Method=GET Path=/Auth/Login StatusCode=200 Duration=4ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=8b2afa4f635c Method=POST Path=/Auth/Login UserId=anonymous IP=::1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__Email_0='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+      SELECT "u"."Id", "u"."AvatarFileName", "u"."Certifications", "u"."City", "u"."CompanyId", "u"."DateOfBirth", "u"."Department", "u"."DisplayName", "u"."Email", "u"."EmergencyContactName", "u"."EmergencyContactPhone", "u"."EmergencyContactRelation", "u"."FailedLoginAttempts", "u"."HireDate", "u"."IsActive", "u"."JobTitle", "u"."LastLoginAttempt", "u"."LockoutEnd", "u"."PasswordHash", "u"."PasswordSalt", "u"."Phone", "u"."PreferredName", "u"."ProfileLastUpdated", "u"."ProfileLastUpdatedBy", "u"."Role", "u"."Skills"
+      FROM "Users" AS "u"
+      WHERE "u"."Email" = @__Email_0 AND "u"."IsActive"
+      LIMIT 1
+warn: ShiftManager.Pages.Auth.LoginModel[0]
+      Login failed for emp@t (user not found)
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=8b2afa4f635c Method=POST Path=/Auth/Login StatusCode=200 Duration=9ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=2cefcb374f73 Method=POST Path=/Auth/Login UserId=anonymous IP=::1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__Email_0='?' (Size = 11)], CommandType='Text', CommandTimeout='30']
+      SELECT "u"."Id", "u"."AvatarFileName", "u"."Certifications", "u"."City", "u"."CompanyId", "u"."DateOfBirth", "u"."Department", "u"."DisplayName", "u"."Email", "u"."EmergencyContactName", "u"."EmergencyContactPhone", "u"."EmergencyContactRelation", "u"."FailedLoginAttempts", "u"."HireDate", "u"."IsActive", "u"."JobTitle", "u"."LastLoginAttempt", "u"."LockoutEnd", "u"."PasswordHash", "u"."PasswordSalt", "u"."Phone", "u"."PreferredName", "u"."ProfileLastUpdated", "u"."ProfileLastUpdatedBy", "u"."Role", "u"."Skills"
+      FROM "Users" AS "u"
+      WHERE "u"."Email" = @__Email_0 AND "u"."IsActive"
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = Int32), @p1='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+      UPDATE "Users" SET "FailedLoginAttempts" = @p0, "LastLoginAttempt" = @p1
+      WHERE "Id" = @p2
+      RETURNING 1;
+warn: ShiftManager.Pages.Auth.LoginModel[0]
+      Login failed for admin@local (attempt 1/5)
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=2cefcb374f73 Method=POST Path=/Auth/Login StatusCode=200 Duration=113ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=3472242967f1 Method=POST Path=/Auth/Login UserId=anonymous IP=::1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@__Email_0='?' (Size = 11)], CommandType='Text', CommandTimeout='30']
+      SELECT "u"."Id", "u"."AvatarFileName", "u"."Certifications", "u"."City", "u"."CompanyId", "u"."DateOfBirth", "u"."Department", "u"."DisplayName", "u"."Email", "u"."EmergencyContactName", "u"."EmergencyContactPhone", "u"."EmergencyContactRelation", "u"."FailedLoginAttempts", "u"."HireDate", "u"."IsActive", "u"."JobTitle", "u"."LastLoginAttempt", "u"."LockoutEnd", "u"."PasswordHash", "u"."PasswordSalt", "u"."Phone", "u"."PreferredName", "u"."ProfileLastUpdated", "u"."ProfileLastUpdatedBy", "u"."Role", "u"."Skills"
+      FROM "Users" AS "u"
+      WHERE "u"."Email" = @__Email_0 AND "u"."IsActive"
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = Int32), @p1='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+      UPDATE "Users" SET "FailedLoginAttempts" = @p0, "LastLoginAttempt" = @p1
+      WHERE "Id" = @p2
+      RETURNING 1;
+warn: ShiftManager.Pages.Auth.LoginModel[0]
+      Login failed for admin@local (attempt 2/5)
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=3472242967f1 Method=POST Path=/Auth/Login StatusCode=200 Duration=91ms UserId=anonymous
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST START | CorrelationId=348e0298a2ee Method=POST Path=/Auth/Login UserId=anonymous IP=::1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__Email_0='?' (Size = 11)], CommandType='Text', CommandTimeout='30']
+      SELECT "u"."Id", "u"."AvatarFileName", "u"."Certifications", "u"."City", "u"."CompanyId", "u"."DateOfBirth", "u"."Department", "u"."DisplayName", "u"."Email", "u"."EmergencyContactName", "u"."EmergencyContactPhone", "u"."EmergencyContactRelation", "u"."FailedLoginAttempts", "u"."HireDate", "u"."IsActive", "u"."JobTitle", "u"."LastLoginAttempt", "u"."LockoutEnd", "u"."PasswordHash", "u"."PasswordSalt", "u"."Phone", "u"."PreferredName", "u"."ProfileLastUpdated", "u"."ProfileLastUpdatedBy", "u"."Role", "u"."Skills"
+      FROM "Users" AS "u"
+      WHERE "u"."Email" = @__Email_0 AND "u"."IsActive"
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = Int32), @p1='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+      UPDATE "Users" SET "FailedLoginAttempts" = @p0, "LastLoginAttempt" = @p1
+      WHERE "Id" = @p2
+      RETURNING 1;
+warn: ShiftManager.Pages.Auth.LoginModel[0]
+      Login failed for admin@local (attempt 3/5)
+info: ShiftManager.Middleware.RequestLoggingMiddleware[0]
+      REQUEST END | CorrelationId=348e0298a2ee Method=POST Path=/Auth/Login StatusCode=200 Duration=57ms UserId=anonymous

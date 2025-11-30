@@ -3,201 +3,508 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
+@using ShiftManager.Models.ViewModels
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["Calendar_MyCalendar"] + " - " + Localizer["Week"];
 }
 
+@* ✅ PHASE 20: Include calendar inline editing JavaScript *@
+<script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
+
+@* ✅ PHASE 20: Breadcrumb with "My Calendar" branding *@
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
-    new BreadcrumbItem { Label = Localizer["Calendar"], Url = "/Calendar/Month" },
-    new BreadcrumbItem { Label = Localizer["WeekView"], IsActive = true }
+    new BreadcrumbItem { Label = Localizer["Calendar_MyCalendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["Week"], IsActive = true }
 })
 
-<style>
-.shift-delete-btn {
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 4px 8px;
-    font-size: 16px;
-    transition: all 0.2s;
-    opacity: 0.6;
-}
-
-.shift-delete-btn:hover {
-    background: var(--danger);
-    color: white;
-    opacity: 1;
-    border-radius: 4px;
-}
-</style>
-
 <div class="calendar-header">
-    <div>
-        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text);">
-            Week of @Model.CurrentWeekStart.ToString("MMM dd") - @Model.CurrentWeekStart.AddDays(6).ToString("MMM dd, yyyy")
+    <div class="header-main">
+        <h2>
+            <span class="calendar-icon">📅</span>
+            Week of @Model.CurrentWeekStart.ToString("MMM dd, yyyy")
         </h2>
+        @* ✅ PHASE 20: Show My Items toggle *@
+        <div class="calendar-controls">
+            @await Component.InvokeAsync("ShowMyItemsToggle")
+        </div>
     </div>
+
+    @* ✅ PHASE 20: Navigation *@
     <div class="calendar-nav">
         <a class="btn btn-ghost" href="/Calendar/Week?year=@Model.Previous.WeekStart.Year&month=@Model.Previous.WeekStart.Month&day=@Model.Previous.WeekStart.Day">
-            ← @Model.Previous.Label
+            <span class="nav-icon">←</span>
+            <span class="nav-text">@Model.Previous.Label</span>
         </a>
-        <a class="btn btn-primary" href="/Calendar/Week">@Localizer["ThisWeek"]</a>
+        <a class="btn btn-primary" href="/Calendar/Week">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">@Localizer["ThisWeek"]</span>
+        </a>
         <a class="btn btn-ghost" href="/Calendar/Week?year=@Model.Next.WeekStart.Year&month=@Model.Next.WeekStart.Month&day=@Model.Next.WeekStart.Day">
-            @Model.Next.Label →
+            <span class="nav-text">@Model.Next.Label</span>
+            <span class="nav-icon">→</span>
         </a>
     </div>
-    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-    {
-        <div class="calendar-help">
-            @Localizer["ClickShiftBadgeHelp"]<br>
-            @Localizer["UseButtonsToAdjustStaffing"]
-        </div>
-    }
-    else
-    {
-        <div class="calendar-help">
-            @Localizer["ViewAssignedShiftsHelp"]
-        </div>
-    }
 </div>
 
+@* ✅ PHASE 20: View switcher (removed Table link) *@
 <div class="calendar-view-switcher">
     <a class="btn btn-ghost" href="/Calendar/Month">@Localizer["Month"]</a>
     <a class="btn btn-primary" href="/Calendar/Week">@Localizer["Week"]</a>
     <a class="btn btn-ghost" href="/Calendar/Day">@Localizer["Day"]</a>
 </div>
 
+@* ✅ PHASE 20: Quick actions for managers *@
+@if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+{
+    <div class="calendar-quick-actions">
+        <span class="quick-actions-label">@Localizer["Calendar_QuickActions"]:</span>
+        <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
+            <span>📊</span>
+            @Localizer["Calendar_ManageShifts"]
+        </a>
+        <a class="btn btn-secondary btn-sm" href="/Public/Chores">
+            <span>🧹</span>
+            @Localizer["Calendar_ManageChores"]
+        </a>
+        <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
+            <span>🛡️</span>
+            @Localizer["Calendar_ManageOnDuty"]
+        </a>
+    </div>
+}
+
+@* ✅ PHASE 20: Week view - 7 columns *@
 <div class="week-grid">
     @foreach (var day in Model.Days)
     {
-        var isToday = day.Date == DateOnly.FromDateTime(DateTime.Today);
-        var dayClass = isToday ? "week-day today" : "week-day";
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var isToday = day.Date == today;
+        var isPastDate = day.Date < today;
+        var columnClass = "week-column";
+        if (isToday) { columnClass += " today"; }
+        if (isPastDate) { columnClass += " past-date"; }
 
-        <div class="@dayClass">
-            <div class="day-header">
+        <div class="@columnClass" data-date="@day.Date.ToString("yyyy-MM-dd")">
+            <div class="column-header">
                 <div class="day-name">@day.DayName</div>
-                <div class="day-date">@day.Date.ToString("MMM dd")</div>
-            </div>
-            <div class="day-shifts">
-                @foreach (var l in day.Lines)
-                {
-                    if (l.InstanceId > 0) // Show all shifts with instances, including zero-assignment shifts
+                <div class="day-date">
+                    @day.Date.ToString("MMM dd")
+                    @if (isToday)
                     {
-                        var badgeClass = l.Assigned >= l.Required ? "ok" : "warn";
-                        <div class="shift-line">
-                            <div class="assignment-tooltip">
-                                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-                                {
-                                    <a href="/Assignments/Manage?date=@day.Date.ToString("yyyy-MM-dd")&shiftTypeId=@l.ShiftTypeId&returnUrl=@Uri.EscapeDataString("/Calendar/Week?year=" + Model.CurrentWeekStart.Year + "&month=" + Model.CurrentWeekStart.Month + "&day=" + Model.CurrentWeekStart.Day)">
-                                        <span class="shift-badge @l.ShiftTypeKey">@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName.Substring(0, Math.Min(3, l.ShiftTypeName.Length)) : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length)))</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="shift-badge @l.ShiftTypeKey employee-badge">@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName.Substring(0, Math.Min(3, l.ShiftTypeName.Length)) : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length)))</span>
-                                }
-                                <div class="tooltip-content">
-                                    <div class="tooltip-header">
-                                        <div class="tooltip-title">
-                                            @if (!string.IsNullOrEmpty(l.ShiftName))
-                                            {
-                                                @l.ShiftName
-                                                <span class="tooltip-custom-name">(@(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value))</span>
-                                            }
-                                            else
-                                            {
-                                                @(l.ShiftTypeKey.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase) ? l.ShiftTypeName : Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value)
-                                            }
-                                        </div>
-                                        <div class="tooltip-hours">@l.StartTime - @l.EndTime</div>
-                                    </div>
+                        <span class="today-indicator">•</span>
+                    }
+                </div>
+            </div>
 
-                                    <div class="tooltip-section">
-                                        <div class="tooltip-section-title">Staffing</div>
-                                        <div class="tooltip-names">
-                                            @if (l.AssignedNames.Any())
-                                            {
-                                                @foreach (var name in l.AssignedNames)
-                                                {
-                                                    <span class="tooltip-name @l.ShiftTypeKey">@name</span>
-                                                }
-                                            }
-                                            @if (l.EmptySlots.Any())
-                                            {
-                                                @foreach (var empty in l.EmptySlots)
-                                                {
-                                                    <span class="tooltip-empty">@empty</span>
-                                                }
-                                            }
-                                            @if (!l.AssignedNames.Any() && !l.EmptySlots.Any())
-                                            {
-                                                <span class="tooltip-empty">No staffing required</span>
-                                            }
-                                        </div>
-                                    </div>
+            @* ✅ PHASE 20: Render items with density control *@
+            <div class="column-items">
+                @{
+                    var visibleItems = day.Items.Take(3).ToList();
+                    var hiddenCount = Math.Max(0, day.Items.Count - 3);
+                }
 
-                                    <div class="tooltip-stats">
-                                        <span class="tooltip-stat">
-                                            @l.Assigned/@l.Required staffed
-                                            @if (l.TraineeCount > 0)
-                                            {
-                                                <span style="margin-left: 0.5rem; padding: 0.125rem 0.375rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem; font-size: 0.75rem;">
-                                                    +@l.TraineeCount 👤
-                                                </span>
-                                            }
-                                        </span>
-                                        @if (l.Assigned >= l.Required)
-                                        {
-                                            <span class="tooltip-status-ok">✓ Fully Staffed</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="tooltip-status-warn">⚠ Needs @(l.Required - l.Assigned) more</span>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
+                @foreach (var item in visibleItems)
+                {
+                    <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
+                         title="@item.Details"
+                         data-item-type="@item.Type.ToString().ToLower()"
+                         data-item-id="@item.EntityId">
+                        <div class="item-header">
+                            <span class="item-icon">@item.Icon</span>
+                            <span class="item-title">@item.Title</span>
+                            @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
                             @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
                             {
-                                <div class="shift-counter" data-si="@l.InstanceId" data-conc="@l.Concurrency">
-                                    <button class="counter-btn" aria-label="Decrease required staffing"
-                                        onclick="window.adjustStaffing('@Url.Page("Week", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:-1, concurrency:parseInt(this.parentElement.dataset.conc) }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">−</button>
-                                    <button class="counter-btn" aria-label="Increase required staffing"
-                                        onclick="window.adjustStaffing('@Url.Page("Week", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:1, concurrency:parseInt(this.parentElement.dataset.conc) }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">+</button>
-                                </div>
-                                @if (l.InstanceId > 0)
+                                @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
                                 {
-                                    <button class="shift-delete-btn" onclick="confirmDeleteShiftInstance('/Calendar/Week', @l.InstanceId, event)" aria-label="Delete Shift" title="Delete this shift and all assignments">
-                                        🗑️
+                                    <button class="btn-delete-item"
+                                            onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                            title="@Localizer["Delete"]">
+                                        ×
                                     </button>
                                 }
+                                else if (item.Type == CalendarItemType.Shift)
+                                {
+                                    <a href="@item.ManagementUrl" class="item-manage-link" title="@Localizer["Calendar_ManageShift"]">
+                                        <span class="manage-icon">⚙️</span>
+                                    </a>
+                                }
                             }
-                            <span class="staffing-badge @badgeClass">@l.Assigned/@l.Required</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(l.ShiftName))
+                        <div class="item-assignee">@item.AssigneeName</div>
+                        @if (!string.IsNullOrEmpty(item.TimeRange))
                         {
-                            <div class="shift-display-name">
-                                @l.ShortName.ToLower()-'@l.ShiftName'
+                            <div class="item-time">@item.TimeRange</div>
+                        }
+                        @if (!string.IsNullOrEmpty(item.StaffingInfo))
+                        {
+                            <div class="item-staffing">@item.StaffingInfo</div>
+                        }
+                    </div>
+                }
+
+                @* ✅ PHASE 20: Show more button if > 3 items *@
+                @if (hiddenCount > 0)
+                {
+                    <button class="show-more-btn"
+                            onclick="toggleShowAll(this, '@day.Date.ToString("yyyy-MM-dd")')">
+                        <span class="show-more-text">+@hiddenCount @Localizer["Calendar_MoreItems"]</span>
+                    </button>
+
+                    @* Hidden items *@
+                    <div class="hidden-items" style="display: none;">
+                        @foreach (var item in day.Items.Skip(3))
+                        {
+                            <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
+                                 title="@item.Details"
+                                 data-item-type="@item.Type.ToString().ToLower()"
+                                 data-item-id="@item.EntityId">
+                                <div class="item-header">
+                                    <span class="item-icon">@item.Icon</span>
+                                    <span class="item-title">@item.Title</span>
+                                    @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
+                                    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                                    {
+                                        @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
+                                        {
+                                            <button class="btn-delete-item"
+                                                    onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                                    title="@Localizer["Delete"]">
+                                                ×
+                                            </button>
+                                        }
+                                        else if (item.Type == CalendarItemType.Shift)
+                                        {
+                                            <a href="@item.ManagementUrl" class="item-manage-link" title="@Localizer["Calendar_ManageShift"]">
+                                                <span class="manage-icon">⚙️</span>
+                                            </a>
+                                        }
+                                    }
+                                </div>
+                                <div class="item-assignee">@item.AssigneeName</div>
+                                @if (!string.IsNullOrEmpty(item.TimeRange))
+                                {
+                                    <div class="item-time">@item.TimeRange</div>
+                                }
+                                @if (!string.IsNullOrEmpty(item.StaffingInfo))
+                                {
+                                    <div class="item-staffing">@item.StaffingInfo</div>
+                                }
                             </div>
                         }
-                    }
+                    </div>
                 }
+
+                @* ✅ PHASE 20: Quick-add form (managers only) *@
                 @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
                 {
-                    <button class="add-shift-btn" onclick="openShiftModal('@day.Date.ToString("yyyy-MM-dd")')">
-                        <span>+</span>
-                        <span>Add Shift</span>
-                    </button>
+                    <div class="quick-add-container">
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + @Localizer["Calendar_AddChore"]
+                        </button>
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('onduty', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + @Localizer["Calendar_AddOnDuty"]
+                        </button>
+                    </div>
+
+                    <div id="quickAddForm-@day.Date.ToString("yyyy-MM-dd")" class="quick-add-form hidden" data-type="">
+                        <select id="assigneeSelect-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
+                            <option value="">@Localizer["Calendar_SelectAssignee"]</option>
+                            @foreach (var user in Model.EligibleAssignees)
+                            {
+                                <option value="@user.Id">@user.DisplayName</option>
+                            }
+                        </select>
+
+                        <div id="choreFields-@day.Date.ToString("yyyy-MM-dd")" class="hidden">
+                            <input type="text"
+                                   id="choreTitle-@day.Date.ToString("yyyy-MM-dd")"
+                                   placeholder="@Localizer["Calendar_ChoreTitle"]"
+                                   class="form-control form-control-sm"
+                                   maxlength="200" />
+                        </div>
+
+                        <div id="ondutyFields-@day.Date.ToString("yyyy-MM-dd")" class="hidden">
+                            <select id="ondutyType-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
+                                <option value="0">@Localizer["OnDuty_Hakam"]</option>
+                                <option value="1">@Localizer["OnDuty_Lead"]</option>
+                                @foreach (var customType in Model.CustomOnDutyTypes)
+                                {
+                                    var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                                    var displayName = cultureName.StartsWith("he") ? customType.NameHe : customType.NameEn;
+                                    <option value="@customType.TypeValue">@displayName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="quick-add-actions">
+                            <button class="btn btn-sm btn-primary" onclick="submitQuickAdd('@day.Date.ToString("yyyy-MM-dd")')">
+                                @Localizer["Add"]
+                            </button>
+                            <button class="btn btn-sm btn-ghost" onclick="toggleQuickAdd('', '@day.Date.ToString("yyyy-MM-dd")')">
+                                @Localizer["Cancel"]
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!day.Items.Any())
+                {
+                    <div class="empty-day">
+                        <span class="empty-icon">📭</span>
+                        <span class="empty-text">@Localizer["Calendar_NoItems"]</span>
+                    </div>
                 }
             </div>
         </div>
     }
 </div>
 
-<script>
-window.shiftTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["ShiftTypes"]));
-window.companies = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["Companies"]));
-</script>
+@* ✅ PHASE 20: JavaScript for show more/less functionality *@
+@section Scripts {
+    <script>
+        // ✅ PHASE 20: Toggle showing all items in a day column
+        function toggleShowAll(button, dateStr) {
+            const column = document.querySelector(`[data-date="${dateStr}"]`);
+            if (!column) return;
+
+            const hiddenItems = column.querySelector('.hidden-items');
+            const btnText = button.querySelector('.show-more-text');
+
+            if (hiddenItems.style.display === 'none') {
+                // Show all
+                hiddenItems.style.display = 'block';
+                button.classList.add('expanded');
+                btnText.textContent = '@Localizer["Calendar_ShowLess"]';
+            } else {
+                // Hide extra items
+                hiddenItems.style.display = 'none';
+                button.classList.remove('expanded');
+                const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
+                btnText.textContent = `+${hiddenCount} @Localizer["Calendar_MoreItems"]`;
+            }
+        }
+    </script>
+}
+
+@* ✅ PHASE 20: Week-specific styles *@
+@section Styles {
+    <style>
+        /* ✅ PHASE 20: Week grid layout */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .week-column {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 400px;
+        }
+
+        .week-column.today {
+            border: 2px solid var(--primary);
+            background: linear-gradient(135deg, var(--surface), rgba(var(--primary-rgb), 0.05));
+        }
+
+        .column-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .day-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .day-date {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 0.25rem;
+        }
+
+        .column-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Reuse calendar-item styles from Month view */
+        .calendar-item {
+            position: relative;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-item.personal {
+            border-width: 3px;
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--bg), rgba(var(--primary-rgb), 0.05));
+            font-weight: 600;
+        }
+
+        .calendar-item.other {
+            opacity: 0.7;
+        }
+
+        /* Type-specific colors */
+        .calendar-item.shift-morning { border-left: 4px solid #FF6B6B; }
+        .calendar-item.shift-middle { border-left: 4px solid #4ECDC4; }
+        .calendar-item.shift-noon { border-left: 4px solid #FFE66D; }
+        .calendar-item.shift-night { border-left: 4px solid #95E1D3; }
+        .calendar-item.chore-green { border-left: 4px solid #51CF66; }
+        .calendar-item.onduty-hakam { border-left: 4px solid #845EC2; }
+        .calendar-item.onduty-lead { border-left: 4px solid #FF9671; }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .item-icon {
+            font-size: 1rem;
+        }
+
+        .item-title {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .item-assignee {
+            color: var(--text);
+            font-size: 0.8rem;
+        }
+
+        .item-time, .item-staffing {
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .item-manage-link {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .calendar-item:hover .item-manage-link {
+            opacity: 1;
+        }
+
+        .manage-icon {
+            font-size: 0.9rem;
+        }
+
+        .show-more-btn {
+            width: 100%;
+            padding: 6px;
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .show-more-btn:hover {
+            background: var(--surface-soft);
+            border-color: var(--primary);
+        }
+
+        .show-more-btn.expanded {
+            background: var(--primary);
+            color: white;
+            border-style: solid;
+        }
+
+        .empty-day {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--muted);
+        }
+
+        .empty-icon {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-text {
+            font-size: 0.85rem;
+        }
+
+        /* Quick actions */
+        .calendar-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .quick-actions-label {
+            font-weight: 600;
+            color: var(--muted);
+            margin-right: 0.5rem;
+        }
+
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .today-indicator {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-left: 4px;
+        }
+
+        /* Responsive */
+        @@media (max-width: 1200px) {
+            .week-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .week-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .week-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}

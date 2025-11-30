@@ -1,0 +1,368 @@
+@page
+@model ShiftManager.Pages.Owner.FeatureFlagsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_FeatureFlags"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_FeatureFlags"], IsActive = true }
+})
+
+<div class="feature-flags-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">🚩</span>
+            @Localizer["Owner_FeatureFlags"]
+        </h1>
+        <p class="page-subtitle">Toggle system features without redeploying</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">
+            <strong>ℹ️ Note:</strong> @Model.Message
+        </div>
+    }
+
+    <form method="post">
+        @* Core Features *@
+        <div class="feature-category">
+            <h2>🔧 Core Features</h2>
+            <div class="feature-flags-grid">
+                <div class="feature-flag-card">
+                    <div class="flag-header">
+                        <div>
+                            <h3>EnforceCompanyScope</h3>
+                            <p>Enforce multi-tenant company scoping for data isolation</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" asp-for="EnforceCompanyScope" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flag-meta">
+                        <span class="flag-status">@(Model.EnforceCompanyScope ? "✅ Enabled" : "❌ Disabled")</span>
+                        <span class="flag-impact impact-critical">Critical</span>
+                    </div>
+                </div>
+
+                <div class="feature-flag-card">
+                    <div class="flag-header">
+                        <div>
+                            <h3>EnableDirectorRole</h3>
+                            <p>Enable Director role with cross-company permissions</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" asp-for="EnableDirectorRole" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flag-meta">
+                        <span class="flag-status">@(Model.EnableDirectorRole ? "✅ Enabled" : "❌ Disabled")</span>
+                        <span class="flag-impact impact-high">High</span>
+                    </div>
+                </div>
+
+                <div class="feature-flag-card">
+                    <div class="flag-header">
+                        <div>
+                            <h3>AllowPublicSignup</h3>
+                            <p>Allow users to self-register without invitation</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" asp-for="AllowPublicSignup" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flag-meta">
+                        <span class="flag-status">@(Model.AllowPublicSignup ? "✅ Enabled" : "❌ Disabled")</span>
+                        <span class="flag-impact impact-medium">Medium</span>
+                    </div>
+                </div>
+
+                <div class="feature-flag-card">
+                    <div class="flag-header">
+                        <div>
+                            <h3>EnableApiKeyManagement</h3>
+                            <p>Allow users to generate and manage API keys</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" asp-for="EnableApiKeyManagement" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flag-meta">
+                        <span class="flag-status">@(Model.EnableApiKeyManagement ? "✅ Enabled" : "❌ Disabled")</span>
+                        <span class="flag-impact impact-medium">Medium</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* API Features *@
+        <div class="feature-category">
+            <h2>🔌 API Endpoints</h2>
+            <div class="api-categories">
+                @foreach (var category in Model.ApiCategories)
+                {
+                    <div class="api-category-card">
+                        <h3>@category.Key</h3>
+                        <div class="api-endpoints">
+                            @foreach (var endpoint in category.Value)
+                            {
+                                <div class="api-endpoint">
+                                    <span class="endpoint-name">@endpoint.Key</span>
+                                    <label class="toggle-switch-sm">
+                                        <input type="checkbox" name="Api_@(category.Key)_@endpoint.Key" checked="@endpoint.Value" />
+                                        <span class="toggle-slider-sm"></span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+            <button type="button" class="btn btn-ghost" onclick="location.reload()">🔄 Reset</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.feature-flags-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.feature-category {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.feature-category h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+}
+
+.feature-flags-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.feature-flag-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.flag-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.flag-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.flag-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 30px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary, #3b82f6);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+.flag-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flag-status {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.flag-impact {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.impact-critical {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger, #ef4444);
+}
+
+.impact-high {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning, #f59e0b);
+}
+
+.impact-medium {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary, #3b82f6);
+}
+
+.api-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.api-category-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.api-category-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.api-endpoints {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.api-endpoint {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.endpoint-name {
+    font-size: 0.875rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.toggle-switch-sm {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch-sm input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider-sm {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.toggle-slider-sm:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider-sm {
+    background-color: var(--primary, #3b82f6);
+}
+
+input:checked + .toggle-slider-sm:before {
+    transform: translateX(20px);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--primary, #3b82f6);
+    color: var(--primary, #3b82f6);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+</style>

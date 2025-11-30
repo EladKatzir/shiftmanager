@@ -75,6 +75,18 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         opt.Cookie.HttpOnly = true; // Prevent XSS attacks from accessing cookie
         opt.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Use Secure flag when HTTPS is available
         opt.Cookie.SameSite = SameSiteMode.Lax; // Prevent CSRF attacks while allowing normal navigation
+
+        // ✅ PHASE 18: Add auth required prompt when redirecting unauthorized users
+        opt.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                // Add reason=authRequired query parameter to inform user why they're seeing login
+                var returnUrl = context.Request.Path + context.Request.QueryString;
+                context.Response.Redirect($"/Auth/Login?reason=authRequired&returnUrl={Uri.EscapeDataString(returnUrl)}");
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -108,6 +120,7 @@ builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<ICompanyFilterService, CompanyFilterService>();
 builder.Services.AddScoped<IViewAsModeService, ViewAsModeService>();
+builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>(); // ✅ PHASE 20: User preference service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
@@ -119,6 +132,9 @@ builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
 builder.Services.AddSingleton<IValidationService, ValidationService>();
 builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
+
+// Phase 6: Daily Notification Background Service
+builder.Services.AddHostedService<DailyNotificationJob>();
 
 // My Team Calendars Services
 builder.Services.AddScoped<TeamCalendarService>();
@@ -201,6 +217,18 @@ using (var scope = app.Services.CreateScope())
         db.Configs.AddRange(new[] {
             new AppConfig{ CompanyId = company.Id, Key = "RestHours", Value = "8" },
             new AppConfig{ CompanyId = company.Id, Key = "WeeklyHoursCap", Value = "40" },
+
+            // Game Configuration Defaults
+            new AppConfig{ CompanyId = company.Id, Key = "GameEnabled", Value = "true" },
+            new AppConfig{ CompanyId = company.Id, Key = "GameGridSize", Value = "6" },
+            new AppConfig{ CompanyId = company.Id, Key = "GamePointsPer3Match", Value = "40" },
+            new AppConfig{ CompanyId = company.Id, Key = "GamePointsPer4Match", Value = "100" },
+            new AppConfig{ CompanyId = company.Id, Key = "GamePointsPer5PlusMatch", Value = "200" },
+            new AppConfig{ CompanyId = company.Id, Key = "GameMegaComboMultiplier", Value = "2" },
+            new AppConfig{ CompanyId = company.Id, Key = "GameMegaCombo3MatchMinLines", Value = "0" },
+            new AppConfig{ CompanyId = company.Id, Key = "GameMegaCombo4MatchMinLines", Value = "2" },
+            new AppConfig{ CompanyId = company.Id, Key = "GameMegaCombo5MatchMinLines", Value = "0" },
+            new AppConfig{ CompanyId = company.Id, Key = "GameMilestones", Value = "1000,2500,5000,7500,10000,15000,20000" },
         });
         await db.SaveChangesAsync();
     }

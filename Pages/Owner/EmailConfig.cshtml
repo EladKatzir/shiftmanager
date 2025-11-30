@@ -1,0 +1,275 @@
+@page
+@model ShiftManager.Pages.Owner.EmailConfigModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_EmailConfig"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_EmailConfig"], IsActive = true }
+})
+
+<div class="email-config-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">📧</span>
+            @Localizer["Owner_EmailConfig"]
+        </h1>
+        <p class="page-subtitle">Configure email notifications for the system</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>✅ Success:</strong> @Model.Success
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-error">
+            <strong>❌ Error:</strong> @Model.Error
+        </div>
+    }
+
+    <form method="post">
+        <div class="config-card">
+            <div class="card-header">
+                <h2>📧 Email Service Configuration</h2>
+                <div class="form-group-inline">
+                    <label class="toggle-label">
+                        <input type="checkbox" asp-for="EmailEnabled" class="toggle-checkbox" />
+                        <span class="toggle-text">@(Model.EmailEnabled ? "Enabled" : "Disabled")</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label asp-for="EmailApiUrl">API URL</label>
+                    <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" />
+                    <small class="form-text">The endpoint URL for your email service API</small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="EmailApiKey">
+                        API Key
+                        @if (Model.HasExistingKey)
+                        {
+                            <span class="badge badge-success">✅ Configured</span>
+                        }
+                    </label>
+                    <input asp-for="EmailApiKey" type="password" class="form-control"
+                           placeholder="@(Model.HasExistingKey ? "••••••••••••" : "Enter API key")" />
+                    <small class="form-text">
+                        @if (Model.HasExistingKey)
+                        {
+                            <span>Leave blank to keep existing key. Enter new key to update.</span>
+                        }
+                        else
+                        {
+                            <span>Your email service API key (stored encrypted)</span>
+                        }
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="EmailFromAddress">From Address</label>
+                    <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" />
+                    <small class="form-text">The email address that will appear as the sender</small>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                <button type="button" class="btn btn-secondary" onclick="location.href='/Owner/EmailConfig?handler=Test'">
+                    📨 Send Test Email
+                </button>
+            </div>
+        </div>
+    </form>
+
+    @* Test Email Section *@
+    @if (Model.EmailEnabled && Model.HasExistingKey)
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🧪 Test Email</h2>
+            </div>
+            <div class="card-body">
+                <p>Send a test email to verify your configuration is working correctly.</p>
+                <form method="post" asp-page-handler="SendTest">
+                    <div class="form-group">
+                        <label for="testEmail">Recipient Email</label>
+                        <input type="email" name="testEmail" class="form-control" placeholder="test@example.com" required />
+                    </div>
+                    <button type="submit" class="btn btn-secondary">📨 Send Test Email</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    @* Email Status *@
+    <div class="config-card">
+        <div class="card-header">
+            <h2>📊 Email Statistics</h2>
+        </div>
+        <div class="card-body">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">@Model.TotalEmailsSent</div>
+                    <div class="stat-label">Total Sent</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">@Model.EmailsToday</div>
+                    <div class="stat-label">Sent Today</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">@Model.FailedEmails</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">@(Model.LastEmailSent?.ToString("g") ?? "Never")</div>
+                    <div class="stat-label">Last Sent</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.email-config-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.config-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--background);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.toggle-checkbox {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+.toggle-text {
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success, #10b981);
+    color: var(--success, #10b981);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger, #ef4444);
+    color: var(--danger, #ef4444);
+}
+</style>

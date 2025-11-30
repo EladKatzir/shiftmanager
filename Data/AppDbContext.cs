@@ -25,6 +25,8 @@ public class AppDbContext : DbContext
     public DbSet<TimeOffRequest> TimeOffRequests => Set<TimeOffRequest>();
     public DbSet<SwapRequest> SwapRequests => Set<SwapRequest>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<DailyNotificationPreference> DailyNotificationPreferences => Set<DailyNotificationPreference>();
+    public DbSet<OnDutyRoleSubscription> OnDutyRoleSubscriptions => Set<OnDutyRoleSubscription>();
     public DbSet<AppConfig> Configs => Set<AppConfig>();
     public DbSet<DirectorCompany> DirectorCompanies => Set<DirectorCompany>();
     public DbSet<UserJoinRequest> UserJoinRequests => Set<UserJoinRequest>();
@@ -45,6 +47,9 @@ public class AppDbContext : DbContext
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<ApiKeyRequest> ApiKeyRequests => Set<ApiKeyRequest>();
     public DbSet<ApiRequestLog> ApiRequestLogs => Set<ApiRequestLog>();
+
+    // ✅ PHASE 19: Game leaderboard scores (tenant-scoped)
+    public DbSet<GameScore> GameScores => Set<GameScore>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +80,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<AppUser>()
             .Property(p => p.HireDate).HasConversion(dateConverter);
 
+        // Phase 6: DailyNotificationPreference TimeOnly field
+        modelBuilder.Entity<DailyNotificationPreference>()
+            .Property(p => p.PreferredTime).HasConversion(timeConverter);
+
         modelBuilder.Entity<ShiftInstance>()
             .Property(p => p.Concurrency).IsConcurrencyToken();
 
@@ -104,6 +113,18 @@ public class AppDbContext : DbContext
         // Multitenancy Phase 1: Update UserNotification index to include CompanyId
         modelBuilder.Entity<UserNotification>()
             .HasIndex(n => new { n.CompanyId, n.UserId, n.CreatedAt });
+
+        // Phase 6: DailyNotificationPreference - one preference per user
+        modelBuilder.Entity<DailyNotificationPreference>()
+            .HasIndex(p => new { p.CompanyId, p.UserId })
+            .IsUnique()
+            .HasFilter("[IsActive] = 1"); // Unique only for active records
+
+        // OnDutyRoleSubscription - unique subscription per user per role type
+        modelBuilder.Entity<OnDutyRoleSubscription>()
+            .HasIndex(s => new { s.CompanyId, s.UserId, s.OnDutyTypeValue })
+            .IsUnique()
+            .HasFilter("[IsActive] = 1");
 
         // Director role: Configure DirectorCompany mappings
         modelBuilder.Entity<DirectorCompany>()
@@ -361,6 +382,10 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<Feedback>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // ✅ PHASE 19: Game scores query filter for tenant scoping
+            modelBuilder.Entity<GameScore>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
         }
@@ -513,6 +538,30 @@ public class AppDbContext : DbContext
             .HasOne(tcm => tcm.Member)
             .WithMany()
             .HasForeignKey(tcm => tcm.MemberUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ✅ PHASE 19: Configure GameScore entity
+        modelBuilder.Entity<GameScore>()
+            .HasIndex(gs => new { gs.CompanyId, gs.Score })
+            .IsDescending(false, true); // CompanyId ascending, Score descending for leaderboard
+
+        modelBuilder.Entity<GameScore>()
+            .HasIndex(gs => new { gs.CompanyId, gs.CurrentMonth, gs.Score })
+            .IsDescending(false, false, true); // For monthly leaderboard
+
+        modelBuilder.Entity<GameScore>()
+            .HasIndex(gs => new { gs.UserId, gs.PlayedAt }); // For user's score history
+
+        modelBuilder.Entity<GameScore>()
+            .HasOne(gs => gs.User)
+            .WithMany()
+            .HasForeignKey(gs => gs.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GameScore>()
+            .HasOne(gs => gs.Company)
+            .WithMany()
+            .HasForeignKey(gs => gs.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         base.OnModelCreating(modelBuilder);

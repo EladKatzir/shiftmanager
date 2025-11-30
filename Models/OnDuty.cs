@@ -3,8 +3,17 @@ using ShiftManager.Models.Support;
 namespace ShiftManager.Models;
 
 /// <summary>
-/// On-Duty assignment (global, not company-scoped).
-/// Supports cross-company assignments.
+/// "Day Shift" assignment (user-facing term: "משמרות יומיות" / "Day Shifts").
+///
+/// TERMINOLOGY NOTE: Class named "OnDuty" for historical reasons.
+/// In the UI, these are presented as "Day Shifts" to be inclusive of all workers.
+///
+/// Characteristics:
+/// - Global (not company-scoped), supports cross-company assignments
+/// - Full day-length (no specific start/end times, just dates)
+/// - One person per type per date
+///
+/// See TERMINOLOGY.md for complete terminology mapping.
 /// </summary>
 public class OnDuty
 {

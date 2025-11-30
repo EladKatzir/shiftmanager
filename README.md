@@ -64,6 +64,18 @@ Navigate to: **http://localhost:5000**
 🗺️ **[Next Week Plan](next%20week%20plan.md)** - Implementation plan for upcoming features
 🔄 **[Migration Guide](MIGRATIONS.md)** - Database migration safety guidelines
 📋 **[Task Tracker](tasks.md)** - Issues and enhancements tracker
+📝 **[Terminology Guide](TERMINOLOGY.md)** - UI vs. code terminology mapping
+
+---
+
+## Terminology Note
+
+**User Interface vs. Code:**
+- UI refers to **"Scheduled Shifts"** and **"Day Shifts"**
+- Backend code uses **"Shifts"** and **"OnDuty"** (historical names preserved for stability)
+- See **[TERMINOLOGY.md](TERMINOLOGY.md)** for full mapping
+
+This distinction exists to maintain backward compatibility while providing inclusive, clear terminology to end users.
 
 ---
 

@@ -1,0 +1,327 @@
+@page
+@model ShiftManager.Pages.Owner.DatabaseConsoleModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_DatabaseConsole"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_DatabaseConsole"], IsActive = true }
+})
+
+<div class="db-console-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">💾</span>
+            @Localizer["Owner_DatabaseConsole"]
+        </h1>
+        <p class="page-subtitle">Execute SQL queries and view database schema</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-error">
+            <strong>❌ Error:</strong> @Model.Error
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.QueryResult))
+    {
+        <div class="alert alert-success">
+            <strong>✅ Success:</strong> @Model.QueryResult
+        </div>
+    }
+
+    <div class="console-layout">
+        <div class="console-sidebar">
+            <h3>📋 Database Tables</h3>
+            <div class="tables-list">
+                @foreach (var table in Model.Tables)
+                {
+                    <div class="table-item" onclick="insertTableName('@table')">
+                        <span class="table-icon">📊</span>
+                        <span class="table-name">@table</span>
+                    </div>
+                }
+            </div>
+
+            <div class="quick-queries">
+                <h3>⚡ Quick Queries</h3>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM Users LIMIT 10')">
+                    List Users
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM Companies')">
+                    List Companies
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM ShiftInstances WHERE WorkDate >= date(\'now\') LIMIT 20')">
+                    Upcoming Shifts
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM AuditLogs ORDER BY Timestamp DESC LIMIT 20')">
+                    Recent Audit Logs
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT u.DisplayName, u.Email, u.Role FROM Users u WHERE u.IsActive = 1 ORDER BY u.DisplayName LIMIT 50')">
+                    Active Users
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT sa.Id, u.DisplayName, COALESCE(st.CustomName, st.Key) as ShiftType, si.WorkDate FROM ShiftAssignments sa JOIN Users u ON sa.UserId = u.Id JOIN ShiftInstances si ON sa.ShiftInstanceId = si.Id JOIN ShiftTypes st ON si.ShiftTypeId = st.Id WHERE si.WorkDate >= date(\'now\') ORDER BY si.WorkDate LIMIT 30')">
+                    Upcoming Assignments
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT tor.Id, u.DisplayName, tor.StartDate, tor.EndDate, tor.Status FROM TimeOffRequests tor JOIN Users u ON tor.UserId = u.Id WHERE tor.Status = 0 ORDER BY tor.StartDate LIMIT 20')">
+                    Pending Time Off
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT c.Title, u.DisplayName, c.Date, c.CompletedAt FROM Chores c LEFT JOIN Users u ON c.AssignedToUserId = u.Id WHERE c.Date >= date(\'now\') AND c.CompletedAt IS NULL ORDER BY c.Date LIMIT 20')">
+                    Incomplete Chores
+                </button>
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT od.Id, u.DisplayName, od.Type, od.Date FROM OnDuties od JOIN Users u ON od.UserId = u.Id WHERE od.Date >= date(\'now\') ORDER BY od.Date LIMIT 20')">
+                    Upcoming OnDuty
+                </button>
+            </div>
+        </div>
+
+        <div class="console-main">
+            <form method="post">
+                <div class="query-editor">
+                    <label asp-for="Query">SQL Query</label>
+                    <textarea asp-for="Query" class="query-textarea" rows="8"
+                              placeholder="SELECT * FROM Users WHERE Role = 3 LIMIT 10&#10;&#10;Note: Only SELECT queries are allowed for safety."></textarea>
+                    <div class="query-actions">
+                        <button type="submit" class="btn btn-primary">▶️ Execute Query</button>
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('Query').value = ''">🗑️ Clear</button>
+                    </div>
+                </div>
+            </form>
+
+            @if (Model.ResultRows.Any())
+            {
+                <div class="results-container">
+                    <h3>📊 Query Results</h3>
+                    <div class="results-table-wrapper">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    @foreach (var column in Model.ResultColumns)
+                                    {
+                                        <th>@column</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.ResultRows)
+                                {
+                                    <tr>
+                                        @foreach (var column in Model.ResultColumns)
+                                        {
+                                            <td>@(row[column]?.ToString() ?? "NULL")</td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+.db-console-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.console-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.console-sidebar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-height: 800px;
+    overflow-y: auto;
+}
+
+.console-sidebar h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.tables-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.table-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.table-item:hover {
+    background: var(--background);
+}
+
+.table-name {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+}
+
+.quick-queries {
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+}
+
+.quick-query-btn {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.quick-query-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.console-main {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.query-editor {
+    margin-bottom: 2rem;
+}
+
+.query-editor label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.query-textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+    background: var(--background);
+    resize: vertical;
+}
+
+.query-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.query-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.results-container {
+    margin-top: 2rem;
+}
+
+.results-container h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.125rem;
+}
+
+.results-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.results-table thead {
+    background: var(--background);
+}
+
+.results-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.results-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.results-table tbody tr:hover {
+    background: var(--background);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success, #10b981);
+    color: var(--success, #10b981);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger, #ef4444);
+    color: var(--danger, #ef4444);
+}
+</style>
+
+<script>
+function setQuery(query) {
+    document.getElementById('Query').value = query;
+}
+
+function insertTableName(tableName) {
+    var textarea = document.getElementById('Query');
+    var cursorPos = textarea.selectionStart;
+    var textBefore = textarea.value.substring(0, cursorPos);
+    var textAfter = textarea.value.substring(cursorPos);
+    textarea.value = textBefore + tableName + textAfter;
+    textarea.focus();
+    textarea.setSelectionRange(cursorPos + tableName.length, cursorPos + tableName.length);
+}
+</script>

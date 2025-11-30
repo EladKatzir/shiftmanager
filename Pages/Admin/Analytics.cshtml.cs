@@ -54,6 +54,16 @@ public class AnalyticsModel : PageModel
     public decimal AverageDaysOffPerEmployee { get; set; }
     public Dictionary<string, int> TimeOffByMonth { get; set; } = new();
 
+    // ✅ PHASE 18: Chores Analytics
+    public int ChoresCompletedThisWeek { get; set; }
+    public int ChoresPendingThisWeek { get; set; }
+    public int ChoresOverdue { get; set; }
+
+    // ✅ PHASE 18: On-Duty Analytics
+    public int OnDutyAssignmentsThisWeek { get; set; }
+    public int DaysWithoutOnDuty { get; set; }
+    public decimal OnDutyCoverageRate { get; set; }
+
     public async Task OnGetAsync()
     {
         try
@@ -78,6 +88,43 @@ public class AnalyticsModel : PageModel
             TimeOffStats = await _analyticsService.GetTimeOffStatsAsync(startDate, endDate);
             AverageDaysOffPerEmployee = await _analyticsService.GetAverageDaysOffPerEmployeeAsync(DateRange);
             TimeOffByMonth = await _analyticsService.GetTimeOffByMonthAsync(12);
+
+            // ✅ PHASE 18: Load Chores analytics
+            var weekStart = DateOnly.FromDateTime(DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek));
+            var weekEnd = weekStart.AddDays(6);
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            // Chores completed this week (past dates that haven't been canceled)
+            ChoresCompletedThisWeek = await _db.Chores
+                .Where(c => c.Date >= weekStart && c.Date <= weekEnd && c.Date < today && c.CanceledAt == null)
+                .CountAsync();
+
+            // Chores pending this week (future/today dates, not canceled)
+            ChoresPendingThisWeek = await _db.Chores
+                .Where(c => c.Date >= today && c.Date <= weekEnd && c.CanceledAt == null)
+                .CountAsync();
+
+            // Chores overdue (before today, not canceled)
+            ChoresOverdue = await _db.Chores
+                .Where(c => c.Date < today && c.Date < weekStart && c.CanceledAt == null)
+                .CountAsync();
+
+            // ✅ PHASE 18: Load On-Duty analytics
+            // On-Duty assignments this week
+            OnDutyAssignmentsThisWeek = await _db.OnDuties
+                .Where(od => od.Date >= weekStart && od.Date <= weekEnd && od.CanceledAt == null)
+                .CountAsync();
+
+            // Days without On-Duty this week
+            var daysWithOnDuty = await _db.OnDuties
+                .Where(od => od.Date >= weekStart && od.Date <= weekEnd && od.CanceledAt == null)
+                .Select(od => od.Date)
+                .Distinct()
+                .CountAsync();
+            DaysWithoutOnDuty = 7 - daysWithOnDuty;
+
+            // On-Duty coverage rate (% of days with at least one assignment)
+            OnDutyCoverageRate = daysWithOnDuty > 0 ? (daysWithOnDuty / 7.0m) * 100 : 0;
         }
         catch (Exception ex)
         {

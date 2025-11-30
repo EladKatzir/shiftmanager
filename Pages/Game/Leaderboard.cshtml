@@ -1,0 +1,281 @@
+@page
+@model ShiftManager.Pages.Game.LeaderboardModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Game_LeaderboardTitle"];
+    Layout = "_Layout";
+}
+
+<div class="card">
+    <h2 class="card-title">@Localizer["Game_LeaderboardTitle"] 🏆</h2>
+
+    @* ✅ PHASE 19: Tabbed navigation for All-Time vs Monthly *@
+    <div class="tab-nav" style="margin-top: 1.5rem;">
+        <button class="tab-btn active" onclick="switchTab('allTime', this)">
+            🏆 @Localizer["Game_AllTime"]
+        </button>
+        <button class="tab-btn" onclick="switchTab('monthly', this)">
+            📅 @Localizer["Game_Monthly"]
+        </button>
+    </div>
+
+    @* All-Time Leaderboard Tab *@
+    <div id="allTimeTab" class="tab-content active">
+        @if (Model.AllTimeLeaderboard.Any())
+        {
+            <table class="table" style="margin-top: 1.5rem;">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; text-align: center;">@Localizer["Game_Rank"]</th>
+                        <th>@Localizer["Game_Player"]</th>
+                        <th style="width: 120px; text-align: right;">@Localizer["Game_Score"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model.AllTimeLeaderboard)
+                    {
+                        <tr class="@(entry.IsCurrentUser ? "highlight-row" : "")">
+                            <td style="text-align: center; font-weight: 600;">
+                                @if (entry.Rank == 1)
+                                {
+                                    <span style="font-size: 1.5rem;">🥇</span>
+                                }
+                                else if (entry.Rank == 2)
+                                {
+                                    <span style="font-size: 1.5rem;">🥈</span>
+                                }
+                                else if (entry.Rank == 3)
+                                {
+                                    <span style="font-size: 1.5rem;">🥉</span>
+                                }
+                                else
+                                {
+                                    <span>#@entry.Rank</span>
+                                }
+                            </td>
+                            <td>
+                                <strong>@entry.DisplayName</strong>
+                                @if (entry.IsCurrentUser)
+                                {
+                                    <span style="color: var(--primary); margin-left: 0.5rem;">@Localizer["Game_You"]</span>
+                                }
+                            </td>
+                            <td style="text-align: right; font-weight: 600;">
+                                @entry.Score.ToString("N0")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @* Show user's best if not in top 10 *@
+            @if (Model.UserBestAllTime != null && !Model.AllTimeLeaderboard.Any(l => l.IsCurrentUser))
+            {
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase;">
+                        @Localizer["Game_YourBest"]
+                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--primary);">#@Model.UserBestAllTime.Rank</span>
+                            <span style="margin-left: 1rem;">@Model.UserBestAllTime.DisplayName</span>
+                        </div>
+                        <span style="font-weight: 600; font-size: 1.125rem;">@Model.UserBestAllTime.Score.ToString("N0")</span>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+                <p style="font-size: 1.125rem; margin: 0;">@Localizer["Game_NoScoresYet"]</p>
+            </div>
+        }
+    </div>
+
+    @* Monthly Leaderboard Tab *@
+    <div id="monthlyTab" class="tab-content">
+        @if (Model.MonthlyLeaderboard.Any())
+        {
+            <table class="table" style="margin-top: 1.5rem;">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; text-align: center;">@Localizer["Game_Rank"]</th>
+                        <th>@Localizer["Game_Player"]</th>
+                        <th style="width: 120px; text-align: right;">@Localizer["Game_Score"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model.MonthlyLeaderboard)
+                    {
+                        <tr class="@(entry.IsCurrentUser ? "highlight-row" : "")">
+                            <td style="text-align: center; font-weight: 600;">
+                                @if (entry.Rank == 1)
+                                {
+                                    <span style="font-size: 1.5rem;">🥇</span>
+                                }
+                                else if (entry.Rank == 2)
+                                {
+                                    <span style="font-size: 1.5rem;">🥈</span>
+                                }
+                                else if (entry.Rank == 3)
+                                {
+                                    <span style="font-size: 1.5rem;">🥉</span>
+                                }
+                                else
+                                {
+                                    <span>#@entry.Rank</span>
+                                }
+                            </td>
+                            <td>
+                                <strong>@entry.DisplayName</strong>
+                                @if (entry.IsCurrentUser)
+                                {
+                                    <span style="color: var(--primary); margin-left: 0.5rem;">@Localizer["Game_You"]</span>
+                                }
+                            </td>
+                            <td style="text-align: right; font-weight: 600;">
+                                @entry.Score.ToString("N0")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @* Show user's best if not in top 10 *@
+            @if (Model.UserBestMonthly != null && !Model.MonthlyLeaderboard.Any(l => l.IsCurrentUser))
+            {
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase;">
+                        @Localizer["Game_YourBest"]
+                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--primary);">#@Model.UserBestMonthly.Rank</span>
+                            <span style="margin-left: 1rem;">@Model.UserBestMonthly.DisplayName</span>
+                        </div>
+                        <span style="font-weight: 600; font-size: 1.125rem;">@Model.UserBestMonthly.Score.ToString("N0")</span>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                <p style="font-size: 1.125rem; margin: 0;">@Localizer["Game_NoScoresYet"]</p>
+            </div>
+        }
+    </div>
+
+    @* Back to Game button *@
+    <div style="margin-top: 2rem; text-align: center;">
+        <button class="btn btn-secondary" onclick="window.close()">
+            @Localizer["Game_BackToGame"]
+        </button>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* ✅ PHASE 19: Leaderboard page styles */
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+            background: var(--surface-soft);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .highlight-row {
+            background: var(--primary-bg) !important;
+            border-left: 4px solid var(--primary);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table thead {
+            background: var(--surface-soft);
+        }
+
+        .table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .table tbody tr:hover {
+            background: var(--surface-soft);
+        }
+
+        .table td {
+            padding: 1rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // ✅ PHASE 19: Tab switching functionality
+        function switchTab(tabName, buttonElement) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // Activate clicked button
+            buttonElement.classList.add('active');
+        }
+    </script>
+}

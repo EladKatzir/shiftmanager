@@ -42,8 +42,28 @@ public class ForgotPasswordModel : PageModel
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
 
+    // ✅ PHASE 18: Store generated temp password for one-time display (not persisted)
+    public string? GeneratedTempPassword { get; set; }
+
+    // ✅ SUB-PHASE 18.14: Password change properties
+    [BindProperty]
+    public string ChangeEmail { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string OldPassword { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string NewPassword { get; set; } = string.Empty;
+
+    public string? PasswordChangeSuccess { get; set; }
+    public string? PasswordChangeError { get; set; }
+
     public void OnGet()
     {
+        // ✅ PHASE 18: Set no-cache headers to prevent password from being cached
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+        Response.Headers["Pragma"] = "no-cache";
+        Response.Headers["Expires"] = "0";
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -141,6 +161,14 @@ public class ForgotPasswordModel : PageModel
                 SuccessMessage = "A temporary password has been sent to your registered email address.";
                 _logger.LogInformation("Password recovery email sent to user: {Email}", user.Email);
 
+                // ✅ PHASE 18: Store temp password for one-time display (not logged, not persisted)
+                GeneratedTempPassword = temporaryPassword;
+
+                // ✅ PHASE 18: Set no-cache headers to prevent password from being cached
+                Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+                Response.Headers["Pragma"] = "no-cache";
+                Response.Headers["Expires"] = "0";
+
                 // Clear sensitive data from page
                 Email = string.Empty;
                 Phone = string.Empty;
@@ -158,6 +186,88 @@ public class ForgotPasswordModel : PageModel
         {
             _logger.LogError(ex, "Error during password recovery for email: {Email}", Email);
             ErrorMessage = "An error occurred. Please try again later.";
+            return Page();
+        }
+    }
+
+    // ✅ SUB-PHASE 18.14: Password change handler (requires email, old password, new password)
+    public async Task<IActionResult> OnPostChangePasswordAsync()
+    {
+        // ✅ SECURITY: Rate limiting (5 attempts per 15 minutes per IP)
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var rateLimitKey = $"change-password:{ipAddress}";
+
+        if (!_rateLimiting.IsAllowed(rateLimitKey, 5, 15))
+        {
+            _logger.LogWarning("Rate limit exceeded for password change from IP: {IP}", ipAddress);
+            PasswordChangeError = "Too many password change attempts. Please try again in 15 minutes.";
+            return Page();
+        }
+
+        // ✅ VALIDATION: Input validation
+        if (string.IsNullOrWhiteSpace(ChangeEmail) || string.IsNullOrWhiteSpace(OldPassword) || string.IsNullOrWhiteSpace(NewPassword))
+        {
+            PasswordChangeError = "Please provide email, current password, and new password.";
+            return Page();
+        }
+
+        // ✅ VALIDATION: Email format validation
+        if (!_validation.IsValidEmail(ChangeEmail))
+        {
+            PasswordChangeError = "Invalid email format.";
+            return Page();
+        }
+
+        // ✅ VALIDATION: New password length check
+        if (NewPassword.Length < 6)
+        {
+            PasswordChangeError = "New password must be at least 6 characters long.";
+            return Page();
+        }
+
+        try
+        {
+            // Find user by email (case-insensitive)
+            var user = await _db.Users
+                .IgnoreQueryFilters() // Allow searching across all companies
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == ChangeEmail.ToLower());
+
+            if (user == null)
+            {
+                // Don't reveal if user exists or not (security)
+                PasswordChangeError = "Failed to change password. Please check your current password and try again.";
+                _logger.LogWarning("Password change attempt for non-existent email: {Email}", ChangeEmail);
+                return Page();
+            }
+
+            // ✅ SECURITY: Verify old password using PasswordHasher
+            if (!PasswordHasher.Verify(OldPassword, user.PasswordHash, user.PasswordSalt))
+            {
+                PasswordChangeError = "Current password is incorrect.";
+                _logger.LogWarning("Password change attempt with incorrect old password for user: {Email}", user.Email);
+                return Page();
+            }
+
+            // ✅ UPDATE: Create hash for new password and update user
+            var (newHash, newSalt) = PasswordHasher.CreateHash(NewPassword);
+            user.PasswordHash = newHash;
+            user.PasswordSalt = newSalt;
+            await _db.SaveChangesAsync();
+
+            PasswordChangeSuccess = "Password changed successfully! You can now log in with your new password.";
+            _logger.LogInformation("Password changed successfully for user: {Email}", user.Email);
+
+            // Clear sensitive data from page
+            ChangeEmail = string.Empty;
+            OldPassword = string.Empty;
+            NewPassword = string.Empty;
+
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during password change for email: {Email}", ChangeEmail);
+            PasswordChangeError = "An error occurred. Please try again later.";
             return Page();
         }
     }

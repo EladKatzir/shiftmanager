@@ -33,7 +33,10 @@ public class RequestsModel : PageModel
     public List<AvailableShift> AvailableShifts { get; set; } = new();
     public List<ManagerUser> AvailableApprovers { get; set; } = new();
 
+    [TempData]
     public string? Message { get; set; }
+
+    [TempData]
     public string? Error { get; set; }
 
     public async Task OnGetAsync()

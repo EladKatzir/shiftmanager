@@ -13,67 +13,729 @@
     new BreadcrumbItem { Label = Localizer["Requests"], IsActive = true }
 })
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <h2 style="margin: 0;">@Localizer["PendingRequests"]</h2>
-    <a href="/Admin/TimeOff" class="btn btn-ghost" style="font-size: 0.9rem;">
-        📋 @Localizer["ManageApprovedTimeOff"]
-    </a>
-</div>
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["PendingTimeOff"]</h3>
-    <table>
-        <thead><tr><th>@Localizer["User"]</th><th>@Localizer["Dates"]</th><th>@Localizer["Reason"]</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var r in Model.TimeOff)
-        {
-            <tr>
-                <td>@r.UserName</td>
-                <td>@r.StartDate.ToString("yyyy-MM-dd") → @r.EndDate.ToString("yyyy-MM-dd")</td>
-                <td>@r.Reason</td>
-                <td style="white-space:nowrap">
-                    <form method="post" asp-page-handler="ApproveTimeOff" style="display:inline">
-                        <input type="hidden" name="id" value="@r.Id" />
-                        <button class="btn btn-primary">@Localizer["Approve"]</button>
-                    </form>
-                    <form method="post" asp-page-handler="DeclineTimeOff" style="display:inline">
-                        <input type="hidden" name="id" value="@r.Id" />
-                        <button class="btn btn-ghost">@Localizer["Decline"]</button>
-                    </form>
-                </td>
-            </tr>
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
         }
-        </tbody>
-    </table>
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .page-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .page-header-content {
+            flex: 1;
+        }
+
+        /* Error Alert */
+        .alert-error {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        /* Section */
+        .requests-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.75rem;
+            height: 1.75rem;
+            padding: 0 0.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        /* ✅ Phase 18: Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            padding: 0.875rem 1.5rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            margin-bottom: -2px;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary);
+            background: var(--surface-soft);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Request Card */
+        .request-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .request-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .request-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .request-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+
+        .request-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .request-user {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .user-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .request-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .request-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .request-info-item .icon {
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .request-info-item .label {
+            font-weight: 500;
+        }
+
+        .request-reason {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Actions */
+        .request-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-approve {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-approve:hover {
+            background: var(--success-hover);
+            border-color: var(--success-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-decline {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-decline:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-elevated);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .request-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .request-actions {
+                flex-direction: row;
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+            }
+
+            .page-header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .request-card {
+                padding: 1.25rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .request-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">@Localizer["Requests"]</h1>
+    <p class="page-subtitle">@Localizer["ReviewAndApproveTeamRequests"]</p>
 </div>
 
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["PendingSwaps"]</h3>
-    <table>
-        <thead><tr><th>@Localizer["From"]</th><th>@Localizer["Shift"]</th><th>@Localizer["ProposedTo"]</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var s in Model.Swaps)
-        {
-            <tr>
-                <td>@s.FromUser</td>
-                <td>@s.When</td>
-                <td>@s.ToUser</td>
-                <td style="white-space:nowrap">
-                    <form method="post" asp-page-handler="ApproveSwap" style="display:inline">
-                        <input type="hidden" name="id" value="@s.Id" />
-                        <button class="btn btn-primary">@Localizer["Approve"]</button>
-                    </form>
-                    <form method="post" asp-page-handler="DeclineSwap" style="display:inline">
-                        <input type="hidden" name="id" value="@s.Id" />
-                        <button class="btn btn-ghost">@Localizer["Decline"]</button>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
-
+<!-- Error/Success Messages -->
 @if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="card" style="color:var(--danger)">@Model.Error</div>
+    <div class="alert-error">
+        <span style="font-size: 1.25rem;">✗</span>
+        <span>@Model.Error</span>
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div style="padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; background: var(--success); color: var(--success-text); border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3);">
+        <span style="font-size: 1.25rem;">✓</span>
+        <span>@Model.Message</span>
+    </div>
+}
+
+<!-- ✅ Phase 18: Tab Navigation -->
+<div class="tab-navigation">
+    <button class="tab-button active" data-tab="timeoff">
+        @Localizer["PendingTimeOffTab"]
+        @if (Model.TimeOff.Any())
+        {
+            <span class="count-badge" style="margin-left: 0.5rem;">@Model.TimeOff.Count</span>
+        }
+    </button>
+    <button class="tab-button" data-tab="swaps">
+        @Localizer["PendingSwapsTab"]
+        @if (Model.Swaps.Any())
+        {
+            <span class="count-badge" style="margin-left: 0.5rem;">@Model.Swaps.Count</span>
+        }
+    </button>
+    <button class="tab-button" data-tab="approved">
+        @Localizer["ApprovedTimeOffTab"]
+        @if (Model.ApprovedTimeOffs.Any())
+        {
+            <span class="count-badge" style="margin-left: 0.5rem;">@Model.ApprovedTimeOffs.Count</span>
+        }
+    </button>
+</div>
+
+<!-- ✅ Phase 18: Tab Panel 1 - Pending Time-Off -->
+<div class="tab-panel active" id="tab-timeoff">
+    <div class="requests-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span>📅</span>
+                <span>@Localizer["PendingTimeOff"]</span>
+                @if (Model.TimeOff.Any())
+                {
+                    <span class="count-badge">@Model.TimeOff.Count</span>
+                }
+            </h2>
+        </div>
+
+    @if (Model.TimeOff.Any())
+    {
+        foreach (var r in Model.TimeOff)
+        {
+            <div class="request-card">
+                <div class="request-content">
+                    <div class="request-details">
+                        <div class="request-user">
+                            <div class="user-icon">
+                                @r.UserName.Substring(0, Math.Min(2, r.UserName.Length)).ToUpper()
+                            </div>
+                            <span>@r.UserName</span>
+                        </div>
+
+                        <div class="request-info">
+                            <div class="request-info-item">
+                                <span class="icon">📅</span>
+                                <span class="label">@Localizer["Dates"]:</span>
+                                <span>@r.StartDate.ToString("MMM dd, yyyy") → @r.EndDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="request-info-item">
+                                <span class="icon">⏱️</span>
+                                <span class="label">@Localizer["Duration"]:</span>
+                                <span>@((r.EndDate.DayNumber - r.StartDate.DayNumber + 1)) @Localizer["Days"]</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(r.Reason))
+                        {
+                            <div class="request-reason">
+                                <strong>@Localizer["Reason"]:</strong> @r.Reason
+                            </div>
+                        }
+                    </div>
+
+                    <div class="request-actions">
+                        <form method="post" asp-page-handler="ApproveTimeOff" style="margin: 0;">
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <button type="submit" class="btn btn-approve">
+                                <span>✓</span>
+                                <span>@Localizer["Approve"]</span>
+                            </button>
+                        </form>
+                        <form method="post" asp-page-handler="DeclineTimeOff" style="margin: 0;">
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <button type="submit" class="btn btn-decline">
+                                <span>✗</span>
+                                <span>@Localizer["Decline"]</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-title">@Localizer["NoTimeOffRequests"]</div>
+            <div class="empty-state-text">@Localizer["AllCaughtUp"]</div>
+        </div>
+    }
+    </div>
+</div>
+
+<!-- ✅ Phase 18: Tab Panel 2 - Pending Swaps -->
+<div class="tab-panel" id="tab-swaps">
+    <div class="requests-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span>🔄</span>
+                <span>@Localizer["PendingSwaps"]</span>
+                @if (Model.Swaps.Any())
+                {
+                    <span class="count-badge">@Model.Swaps.Count</span>
+                }
+            </h2>
+        </div>
+
+    @if (Model.Swaps.Any())
+    {
+        foreach (var s in Model.Swaps)
+        {
+            <div class="request-card">
+                <div class="request-content">
+                    <div class="request-details">
+                        <div class="request-user">
+                            <div class="user-icon">
+                                @s.FromUser.Substring(0, Math.Min(2, s.FromUser.Length)).ToUpper()
+                            </div>
+                            <span>@s.FromUser</span>
+                        </div>
+
+                        <div class="request-info">
+                            <div class="request-info-item">
+                                <span class="icon">📅</span>
+                                <span class="label">@Localizer["Shift"]:</span>
+                                <span>@s.When</span>
+                            </div>
+                            <div class="request-info-item">
+                                <span class="icon">→</span>
+                                <span class="label">@Localizer["ProposedTo"]:</span>
+                                <span>@s.ToUser</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="request-actions">
+                        <form method="post" asp-page-handler="ApproveSwap" style="margin: 0;">
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <button type="submit" class="btn btn-approve">
+                                <span>✓</span>
+                                <span>@Localizer["Approve"]</span>
+                            </button>
+                        </form>
+                        <form method="post" asp-page-handler="DeclineSwap" style="margin: 0;">
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <button type="submit" class="btn btn-decline">
+                                <span>✗</span>
+                                <span>@Localizer["Decline"]</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-title">@Localizer["NoSwapRequests"]</div>
+            <div class="empty-state-text">@Localizer["AllCaughtUp"]</div>
+        </div>
+    }
+    </div>
+</div>
+
+<!-- ✅ Phase 18: Tab Panel 3 - Approved Time-Off -->
+<div class="tab-panel" id="tab-approved">
+    <div class="requests-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span>📋</span>
+                <span>@Localizer["ApprovedTimeOffRequests"]</span>
+                @if (Model.ApprovedTimeOffs.Any())
+                {
+                    <span class="count-badge">@Model.ApprovedTimeOffs.Count</span>
+                }
+            </h2>
+        </div>
+
+        @if (Model.ApprovedTimeOffs.Any())
+        {
+            foreach (var timeOff in Model.ApprovedTimeOffs)
+            {
+                var days = timeOff.EndDate.DayNumber - timeOff.StartDate.DayNumber + 1;
+                var isPast = timeOff.StartDate < DateOnly.FromDateTime(DateTime.Today);
+                var isToday = timeOff.StartDate == DateOnly.FromDateTime(DateTime.Today);
+                var isFuture = timeOff.StartDate > DateOnly.FromDateTime(DateTime.Today);
+
+                <div class="request-card">
+                    <div class="request-content">
+                        <div class="request-details">
+                            <div class="request-user">
+                                <div class="user-icon">
+                                    @timeOff.UserName.Substring(0, Math.Min(2, timeOff.UserName.Length)).ToUpper()
+                                </div>
+                                <span>@timeOff.UserName</span>
+                            </div>
+
+                            <div class="request-info">
+                                <div class="request-info-item">
+                                    <span class="icon">📅</span>
+                                    <span class="label">@Localizer["Dates"]:</span>
+                                    <span>
+                                        @timeOff.StartDate.ToString("MMM dd, yyyy")
+                                        @if (timeOff.StartDate != timeOff.EndDate)
+                                        {
+                                            <text> → @timeOff.EndDate.ToString("MMM dd, yyyy")</text>
+                                        }
+                                    </span>
+                                </div>
+                                <div class="request-info-item">
+                                    <span class="icon">⏱️</span>
+                                    <span class="label">@Localizer["Duration"]:</span>
+                                    <span>@days @(days == 1 ? Localizer["Day"] : Localizer["Days"])</span>
+                                </div>
+                                <div class="request-info-item">
+                                    <span class="icon">📝</span>
+                                    <span class="label">@Localizer["RequestedOn"]:</span>
+                                    <span>@timeOff.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(timeOff.Reason))
+                            {
+                                <div class="request-reason">
+                                    <strong>@Localizer["Reason"]:</strong> @timeOff.Reason
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="request-reason" style="font-style: italic; color: var(--text-muted);">
+                                    @Localizer["NoReasonProvided"]
+                                </div>
+                            }
+                        </div>
+
+                        <div class="request-actions">
+                            @if (isFuture)
+                            {
+                                <form method="post" asp-page-handler="DeleteTimeOff" style="margin: 0;"
+                                      onsubmit="return confirm('@Localizer["ConfirmDeleteTimeOff"]'.replace('{0}', '@timeOff.UserName'));">
+                                    <input type="hidden" name="id" value="@timeOff.Id" />
+                                    <button type="submit" class="btn btn-decline">
+                                        <span>🗑️</span>
+                                        <span>@Localizer["Delete"]</span>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <div style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; text-align: center;
+                                            @(isToday ? "background: rgba(16, 185, 129, 0.1); color: #10b981;" : "background: rgba(107, 114, 128, 0.1); color: #6b7280;")">
+                                    @if (isToday)
+                                    {
+                                        @Localizer["ActiveToday"]
+                                    }
+                                    else
+                                    {
+                                        @Localizer["Past"]
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-left: 4px solid var(--primary); border-radius: 8px;">
+                <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">
+                    <strong style="color: var(--text-primary);">@Localizer["Note"]:</strong> @Localizer["TimeOffDeletionNote"]
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-title">@Localizer["NoApprovedTimeOffRequestsTitle"]</div>
+                <div class="empty-state-text">@Localizer["NoApprovedTimeOffRequestsMessage"]</div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ✅ Phase 18: Tab switching with URL hash support
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            function showTab(tabName) {
+                // Update buttons
+                tabButtons.forEach(btn => {
+                    if (btn.dataset.tab === tabName) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update panels
+                tabPanels.forEach(panel => {
+                    if (panel.id === 'tab-' + tabName) {
+                        panel.classList.add('active');
+                    } else {
+                        panel.classList.remove('active');
+                    }
+                });
+
+                // Update URL hash
+                window.location.hash = tabName;
+            }
+
+            // Handle tab button clicks
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    showTab(this.dataset.tab);
+                });
+            });
+
+            // Handle initial hash or default to first tab
+            const hash = window.location.hash.substring(1);
+            if (hash && ['timeoff', 'swaps', 'approved'].includes(hash)) {
+                showTab(hash);
+            }
+
+            // Handle browser back/forward buttons
+            window.addEventListener('hashchange', function() {
+                const hash = window.location.hash.substring(1);
+                if (hash && ['timeoff', 'swaps', 'approved'].includes(hash)) {
+                    showTab(hash);
+                }
+            });
+        });
+    </script>
 }

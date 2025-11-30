@@ -197,7 +197,7 @@
 | key | he |
 |---|---|
 | cell.multiple_items | ועוד {count} פריטים |
-| cell.free.tooltip | אין משימות ליום זה |
+| cell.free.tooltip | אין מטלות ליום זה |
 
 ---
 

@@ -88,7 +88,7 @@
     <value>בקשות</value>
   </data>
   <data name="MyShifts" xml:space="preserve">
-    <value>המשמרות שלי</value>
+    <value>המשמרות המתוזמנות שלי</value>
   </data>
   <data name="Admin" xml:space="preserve">
     <value>ניהול</value>
@@ -97,7 +97,19 @@
     <value>משתמשים</value>
   </data>
   <data name="ShiftTypes" xml:space="preserve">
-    <value>סוגי משמרות</value>
+    <value>סוגי משמרות הפקה וב"ר</value>
+  </data>
+  <data name="ScheduledShifts" xml:space="preserve">
+    <value>משמרות הפקה וב"ר</value>
+  </data>
+  <data name="DayShifts" xml:space="preserve">
+    <value>משמרות רוחב</value>
+  </data>
+  <data name="MyWorkSchedule" xml:space="preserve">
+    <value>סידור העבודה שלי</value>
+  </data>
+  <data name="WorkScheduleManagement" xml:space="preserve">
+    <value>ניהול סידור עבודה</value>
   </data>
   <data name="TimeOffManagement" xml:space="preserve">
     <value>ניהול חופשות</value>
@@ -120,8 +132,17 @@
   <data name="Logout" xml:space="preserve">
     <value>התנתקות</value>
   </data>
+  <data name="Home" xml:space="preserve">
+    <value>בית</value>
+  </data>
+  <data name="People" xml:space="preserve">
+    <value>אנשים</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
 
-  
+
   <data name="GoodMorning" xml:space="preserve">
     <value>בוקר טוב, {0}!</value>
   </data>
@@ -135,7 +156,149 @@
     <value>הנה לוח הזמנים ומידע על המשמרות שלך</value>
   </data>
 
-  
+  <!-- Priority 3: Home Dashboard Keys -->
+  <data name="NextShift" xml:space="preserve">
+    <value>המשמרת הבאה</value>
+  </data>
+  <data name="NoUpcomingShifts" xml:space="preserve">
+    <value>אין משמרות קרובות</value>
+  </data>
+  <data name="ViewAllNotifications" xml:space="preserve">
+    <value>הצג את כל ההתראות</value>
+  </data>
+  <data name="Unread" xml:space="preserve">
+    <value>לא נקרא</value>
+  </data>
+  <data name="HoursThisWeek" xml:space="preserve">
+    <value>שעות השבוע</value>
+  </data>
+  <data name="DaysWithShifts" xml:space="preserve">
+    <value>ימים עם משמרות</value>
+  </data>
+  <data name="DaysOff" xml:space="preserve">
+    <value>ימי חופש</value>
+  </data>
+  <data name="ViewFullSchedule" xml:space="preserve">
+    <value>הצג לוח זמנים מלא</value>
+  </data>
+  <data name="GoToMyRequests" xml:space="preserve">
+    <value>עבור לבקשות שלי</value>
+  </data>
+  <data name="PendingRequests" xml:space="preserve">
+    <value>בקשות ממתינות</value>
+  </data>
+  <data name="ApprovedRequests" xml:space="preserve">
+    <value>בקשות מאושרות</value>
+  </data>
+  <data name="DeclinedRequests" xml:space="preserve">
+    <value>בקשות שנדחו</value>
+  </data>
+  <data name="StaffingOverview" xml:space="preserve">
+    <value>סקירת כוח אדם</value>
+  </data>
+  <data name="UnassignedShifts" xml:space="preserve">
+    <value>משמרות לא משויכות</value>
+  </data>
+  <data name="UnderstaffedDays" xml:space="preserve">
+    <value>ימים עם חסר כוח אדם</value>
+  </data>
+  <data name="OpenSchedulingWorkspace" xml:space="preserve">
+    <value>פתח סביבת עבודה לתזמון</value>
+  </data>
+  <data name="Approvals" xml:space="preserve">
+    <value>אישורים</value>
+  </data>
+  <data name="PendingTimeOff" xml:space="preserve">
+    <value>בקשות חופש ממתינות</value>
+  </data>
+  <data name="PendingSwaps" xml:space="preserve">
+    <value>החלפות ממתינות</value>
+  </data>
+  <data name="OpenApprovals" xml:space="preserve">
+    <value>פתח אישורים</value>
+  </data>
+  <data name="CompaniesOverview" xml:space="preserve">
+    <value>סקירת חברות</value>
+  </data>
+  <data name="NextDayOff" xml:space="preserve">
+    <value>יום חופש הבא</value>
+  </data>
+  <data name="TotalCompanies" xml:space="preserve">
+    <value>סך כל החברות</value>
+  </data>
+  <data name="ActiveCompanies" xml:space="preserve">
+    <value>חברות פעילות</value>
+  </data>
+  <data name="ManageCompanies" xml:space="preserve">
+    <value>נהל חברות</value>
+  </data>
+
+  <!-- Priority 2: Schedule Workspace Keys -->
+  <data name="Calendars" xml:space="preserve">
+    <value>לוחות שנה</value>
+  </data>
+  <data name="CompanyShifts" xml:space="preserve">
+    <value>משמרות החברה</value>
+  </data>
+  <data name="Table" xml:space="preserve">
+    <value>טבלה</value>
+  </data>
+  <data name="AssignShifts" xml:space="preserve">
+    <value>שבץ משמרות</value>
+  </data>
+  <data name="OpenSchedule" xml:space="preserve">
+    <value>פתח לוח זמנים</value>
+  </data>
+  <data name="NewRequest" xml:space="preserve">
+    <value>בקשה חדשה</value>
+  </data>
+  <data name="ManageYourTimeOffAndShiftSwaps" xml:space="preserve">
+    <value>נהל את בקשות החופש והחלפות המשמרות שלך</value>
+  </data>
+  <data name="ViewYourTeamScheduleAndAvailability" xml:space="preserve">
+    <value>צפה בלוח הזמנים והזמינות של הצוות שלך במבט אחד</value>
+  </data>
+  <data name="ManageYourPersonalAndProfessionalInformation" xml:space="preserve">
+    <value>נהל את המידע האישי והמקצועי שלך</value>
+  </data>
+  <data name="ReviewAndApproveTeamRequests" xml:space="preserve">
+    <value>סקור ואשר בקשות חופש והחלפות משמרות מהצוות שלך</value>
+  </data>
+  <data name="ManageUsersJoinRequestsAndPermissions" xml:space="preserve">
+    <value>נהל משתמשים, בקשות הצטרפות והרשאות בארגון שלך</value>
+  </data>
+  <data name="ViewInsightsMetricsAndReports" xml:space="preserve">
+    <value>צפה בתובנות, מדדים ודוחות על הביצועים ותזמון הצוות שלך</value>
+  </data>
+  <data name="ConfigureSystemSettings" xml:space="preserve">
+    <value>הגדר הגדרות חברה, התראות אימייל וסוגי תורנות</value>
+  </data>
+  <data name="ManageShiftTypesAndSchedules" xml:space="preserve">
+    <value>הגדר ונהל סוגי משמרות עם טווחי הזמן שלהם</value>
+  </data>
+  <data name="ManageApprovedTimeOffRequests" xml:space="preserve">
+    <value>צפה ונהל בקשות חופש מאושרות עבור הצוות שלך</value>
+  </data>
+  <data name="ManageCompaniesAndOrganizations" xml:space="preserve">
+    <value>צור ונהל חברות, הקצה מנהלים והגדר הגדרות רב-דיירות</value>
+  </data>
+  <data name="ManageDirectorAssignments" xml:space="preserve">
+    <value>הקצה דירקטורים לחברות ונהל הרשאות פיקוח בין חברות</value>
+  </data>
+  <data name="ViewSystemAuditLog" xml:space="preserve">
+    <value>עקוב אחר כל השינויים במערכת, פעולות משתמשים ואירועי אבטחה לצורך ציות ואיתור באגים</value>
+  </data>
+  <data name="CommandPaletteSearch" xml:space="preserve">
+    <value>חיפוש דפים...</value>
+  </data>
+  <data name="CommandPaletteRecent" xml:space="preserve">
+    <value>אחרונים</value>
+  </data>
+  <data name="CommandPaletteNoResults" xml:space="preserve">
+    <value>לא נמצאו תוצאות</value>
+  </data>
+
+
   <data name="Save" xml:space="preserve">
     <value>שמור</value>
   </data>
@@ -1009,7 +1172,7 @@
     <value>טלפון</value>
   </data>
   <data name="City" xml:space="preserve">
-    <value>עיר</value>
+    <value>מגורים</value>
   </data>
   <data name="DateOfBirth" xml:space="preserve">
     <value>תאריך לידה</value>
@@ -1620,7 +1783,7 @@
 
   
   <data name="Chores" xml:space="preserve">
-    <value>תורנויות</value>
+    <value>מטלות</value>
   </data>
   <data name="ChoresCalendar" xml:space="preserve">
     <value>לוח מטלות</value>
@@ -1735,16 +1898,16 @@
     <value>פקשיסט</value>
   </data>
   <data name="OnDuty" xml:space="preserve">
-    <value>תפקידנים</value>
+    <value>משמרת יומית</value>
   </data>
   <data name="OnDutyCalendar" xml:space="preserve">
-    <value>לוח תפקידנים</value>
+    <value>לוח משמרות רוחב</value>
   </data>
   <data name="OnDutyHakam" xml:space="preserve">
-    <value>חק״מכו</value>
+    <value>משמרת יומית - חק״מכו</value>
   </data>
   <data name="OnDutyLead" xml:space="preserve">
-    <value>מובילתו</value>
+    <value>משמרת יומית - מובילתו</value>
   </data>
   <data name="Hakam" xml:space="preserve">
     <value>חק״מכו</value>
@@ -1753,22 +1916,22 @@
     <value>מובילתו</value>
   </data>
   <data name="OnDutyType" xml:space="preserve">
-    <value>סוג תפקידן</value>
+    <value>סוג משמרת יומית</value>
   </data>
   <data name="CreateOnDuty" xml:space="preserve">
-    <value>יצירת תפקידן</value>
+    <value>יצירת משמרת יומית</value>
   </data>
   <data name="CancelOnDuty" xml:space="preserve">
-    <value>ביטול תפקידן</value>
+    <value>ביטול משמרת יומית</value>
   </data>
   <data name="OnDutyList" xml:space="preserve">
-    <value>רשימת תפקידנים</value>
+    <value>רשימת משמרות רוחב</value>
   </data>
   <data name="NoOnDutyThisMonth" xml:space="preserve">
-    <value>אין תפקידנים החודש</value>
+    <value>אין משמרות רוחב החודש</value>
   </data>
   <data name="VacationConflict" xml:space="preserve">
-    <value>לא ניתן להקצות תפקידן: למשתמש יש חופשה מאושרת בתאריך זה</value>
+    <value>לא ניתן להקצות משמרת יומית: למשתמש יש חופשה מאושרת בתאריך זה</value>
   </data>
   <data name="SelectType" xml:space="preserve">
     <value>בחר סוג</value>
@@ -1777,10 +1940,10 @@
     <value>הגדרות חברה</value>
   </data>
   <data name="OnDutyTypes" xml:space="preserve">
-    <value>סוגי תפקידנים</value>
+    <value>סוגי משמרות רוחב</value>
   </data>
   <data name="OnDutyTypesDescription" xml:space="preserve">
-    <value>ניהול סוגי תפקידנים מותאמים אישית. לא ניתן לשנות את סוגי ברירת המחדל (חק״מכו ומובילתו).</value>
+    <value>ניהול סוגי משמרות רוחב מותאמות אישית. לא ניתן לשנות את סוגי ברירת המחדל (חק״מכו ומובילתו).</value>
   </data>
   <data name="DefaultTypes" xml:space="preserve">
     <value>סוגי ברירת מחדל</value>
@@ -1798,7 +1961,7 @@
     <value>מותאם אישית</value>
   </data>
   <data name="AddNewOnDutyType" xml:space="preserve">
-    <value>הוסף סוג תפקידן חדש</value>
+    <value>הוסף סוג משמרת יומית חדש</value>
   </data>
   <data name="TypeValue" xml:space="preserve">
     <value>ערך הסוג</value>
@@ -1819,7 +1982,7 @@
     <value>צבע הקס</value>
   </data>
   <data name="ConfirmDeleteOnDutyType" xml:space="preserve">
-    <value>האם אתה בטוח שברצונך למחוק את סוג התפקידן '{0}'?</value>
+    <value>האם אתה בטוח שברצונך למחוק את סוג המשמרת היומית '{0}'?</value>
   </data>
   <data name="Add" xml:space="preserve">
     <value>הוסף</value>
@@ -1855,7 +2018,7 @@
     <value>אישור</value>
   </data>
   <data name="NoOnDutyContactManager" xml:space="preserve">
-    <value>אין תפקידן ביום זה. צור קשר עם מנהל הצוות שלך אם אתה חושב שזה לא נכון.</value>
+    <value>אין משמרת יומית ביום זה. צור קשר עם מנהל הצוות שלך אם אתה חושב שזה לא נכון.</value>
   </data>
   <data name="NoChoreContactManager" xml:space="preserve">
     <value>אין תפקיד ביום זה. צור קשר עם מנהל הצוות שלך אם אתה חושב שזה לא נכון.</value>
@@ -1879,10 +2042,10 @@
     <value>חופשות</value>
   </data>
   <data name="OnDuty" xml:space="preserve">
-    <value>תורנות</value>
+    <value>משמרת יומית</value>
   </data>
   <data name="Chores" xml:space="preserve">
-    <value>תפקידים</value>
+    <value>מטלות</value>
   </data>
   <data name="Today" xml:space="preserve">
     <value>היום</value>
@@ -1954,10 +2117,10 @@
     <value>אחרי</value>
   </data>
   <data name="OnDutyHakam" xml:space="preserve">
-    <value>תורנות חק״מכו</value>
+    <value>משמרת יומית - חק״מכו</value>
   </data>
   <data name="OnDutyLead" xml:space="preserve">
-    <value>תורנות מוביל</value>
+    <value>משמרת יומית - מובילתו</value>
   </data>
   <data name="Shadowing" xml:space="preserve">
     <value>הדרכה</value>
@@ -2220,10 +2383,10 @@
     <value>חופשה</value>
   </data>
   <data name="StatusOnDuty" xml:space="preserve">
-    <value>כוננות</value>
+    <value>משמרת יומית</value>
   </data>
   <data name="StatusShift" xml:space="preserve">
-    <value>משמרת</value>
+    <value>משמרת מתוזמנת</value>
   </data>
   <data name="StatusChore" xml:space="preserve">
     <value>מטלה</value>
@@ -2293,5 +2456,882 @@
   </data>
   <data name="FeedbackContentRequired" xml:space="preserve">
     <value>אנא הזן תוכן משוב.</value>
+  </data>
+  <data name="ManageChoresAndTaskAssignments" xml:space="preserve">
+    <value>הקצאה ומעקב אחר אחריות למטלות עבור חברי הצוות</value>
+  </data>
+  <data name="ManageOnDutyRotationsAndAssignments" xml:space="preserve">
+    <value>ניהול לוחות משמרות רוחב והקצאות תפקידים מיוחדים</value>
+  </data>
+  <data name="PleaseSignInToContinue" xml:space="preserve">
+    <value>נא להתחבר כדי להמשיך</value>
+    <comment>Phase 18 - Authentication prompt message</comment>
+  </data>
+  <data name="Login_RequestAccessPrompt" xml:space="preserve">
+    <value>אין לך חשבון? <a href="/Auth/Signup">בקש גישה כאן</a></value>
+    <comment>Phase 18 - Login page signup prompt</comment>
+  </data>
+  <data name="ForgotPassword_Description" xml:space="preserve">
+    <value>הזן את כתובת הדוא\"ל ומספר הטלפון שלך כדי לקבל סיסמה זמנית.</value>
+    <comment>Phase 18 - Forgot password page description</comment>
+  </data>
+  <data name="TemporaryPasswordGenerated" xml:space="preserve">
+    <value>סיסמה זמנית נוצרה</value>
+    <comment>Phase 18 - Temp password card title</comment>
+  </data>
+  <data name="TemporaryPasswordInstructions" xml:space="preserve">
+    <value>הסיסמה הזמנית שלך נוצרה ונשלחה לדוא\"ל שלך. אתה יכול גם להעתיק אותה למטה:</value>
+    <comment>Phase 18 - Temp password instructions</comment>
+  </data>
+  <data name="YourTemporaryPassword" xml:space="preserve">
+    <value>הסיסמה הזמנית שלך</value>
+    <comment>Phase 18 - Temp password label</comment>
+  </data>
+  <data name="CopyPassword" xml:space="preserve">
+    <value>העתק סיסמה</value>
+    <comment>Phase 18 - Copy button text</comment>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>הועתק</value>
+    <comment>Phase 18 - Copy success message</comment>
+  </data>
+  <data name="Important" xml:space="preserve">
+    <value>חשוב</value>
+    <comment>Phase 18 - Important label</comment>
+  </data>
+  <data name="ChangePasswordAfterLogin" xml:space="preserve">
+    <value>זוהי סיסמה זמנית. נא להתחבר ולשנות אותה מיד בהגדרות הפרופיל שלך.</value>
+    <comment>Phase 18 - Change password reminder</comment>
+  </data>
+  <data name="SecurityNote" xml:space="preserve">
+    <value>הערת אבטחה</value>
+    <comment>Phase 18 - Security note label</comment>
+  </data>
+  <data name="ForgotPassword_SecurityNote" xml:space="preserve">
+    <value>הדוא\"ל ומספר הטלפון שלך חייבים להתאים בדיוק לרשומות שלנו. סיסמה זמנית תישלח לכתובת הדוא\"ל הרשומה שלך.</value>
+    <comment>Phase 18 - Forgot password security note</comment>
+  </data>
+  <data name="Sidebar_CtrlKTooltip" xml:space="preserve">
+    <value>לחץ Ctrl+K (או Cmd+K על Mac) לפתיחת ניווט מהיר</value>
+    <comment>Phase 18 - Sidebar Ctrl+K tooltip</comment>
+  </data>
+  <data name="Sidebar_CtrlKLabel" xml:space="preserve">
+    <value>Ctrl+K</value>
+    <comment>Phase 18 - Sidebar Ctrl+K label</comment>
+  </data>
+  <data name="AnalyticsSummary" xml:space="preserve">
+    <value>סיכום אנליטיקה</value>
+    <comment>Phase 18 - Owner dashboard analytics section</comment>
+  </data>
+  <data name="TotalActiveUsers" xml:space="preserve">
+    <value>סה\"כ משתמשים פעילים</value>
+    <comment>Phase 18 - Owner dashboard metric</comment>
+  </data>
+  <data name="ShiftsThisMonth" xml:space="preserve">
+    <value>משמרות החודש</value>
+    <comment>Phase 18 - Owner dashboard metric</comment>
+  </data>
+  <data name="AverageStaffingRate" xml:space="preserve">
+    <value>אחוז איוש ממוצע</value>
+    <comment>Phase 18 - Owner dashboard metric</comment>
+  </data>
+  <data name="ViewFullAnalytics" xml:space="preserve">
+    <value>צפייה באנליטיקה מלאה</value>
+    <comment>Phase 18 - Owner dashboard button</comment>
+  </data>
+  <data name="SystemHealth" xml:space="preserve">
+    <value>תקינות המערכת</value>
+    <comment>Phase 18 - Owner dashboard section</comment>
+  </data>
+  <data name="DiagnosticsAndMonitoring" xml:space="preserve">
+    <value>אבחון וניטור</value>
+    <comment>Phase 18 - Owner dashboard card title</comment>
+  </data>
+  <data name="ViewSystemStatusAndLogs" xml:space="preserve">
+    <value>צפייה במצב המערכת, לוגים ומדדי ביצועים</value>
+    <comment>Phase 18 - Owner dashboard card description</comment>
+  </data>
+  <data name="OpenDiagnostics" xml:space="preserve">
+    <value>פתיחת אבחון</value>
+    <comment>Phase 18 - Owner dashboard button</comment>
+  </data>
+  <data name="Calendar_TableView" xml:space="preserve">
+    <value>תצוגת טבלה</value>
+    <comment>Phase 18 - Calendar table view button</comment>
+  </data>
+  <data name="ChoresMetrics" xml:space="preserve">
+    <value>מדדי מטלות</value>
+    <comment>Phase 18 - Analytics section title</comment>
+  </data>
+  <data name="CompletedThisWeek" xml:space="preserve">
+    <value>הושלמו השבוע</value>
+    <comment>Phase 18 - Chores metric</comment>
+  </data>
+  <data name="PendingThisWeek" xml:space="preserve">
+    <value>ממתינות השבוע</value>
+    <comment>Phase 18 - Chores metric</comment>
+  </data>
+  <data name="OverdueChores" xml:space="preserve">
+    <value>מטלות באיחור</value>
+    <comment>Phase 18 - Chores metric</comment>
+  </data>
+  <data name="OnDutyMetrics" xml:space="preserve">
+    <value>מדדי משמרות רוחב</value>
+    <comment>Phase 18 - Analytics section title</comment>
+  </data>
+  <data name="OnDutyAssignmentsThisWeek" xml:space="preserve">
+    <value>שיבוצים השבוע</value>
+    <comment>Phase 18 - Day Shift metric</comment>
+  </data>
+  <data name="DaysWithoutOnDuty" xml:space="preserve">
+    <value>ימים ללא משמרת יומית</value>
+    <comment>Phase 18 - Day Shift metric</comment>
+  </data>
+  <data name="OnDutyCoverageRate" xml:space="preserve">
+    <value>שיעור כיסוי</value>
+    <comment>Phase 18 - Day Shift metric</comment>
+  </data>
+  <data name="TimeOff" xml:space="preserve">
+    <value>חופשה</value>
+    <comment>Phase 18 - TimeOff page breadcrumb</comment>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>יום</value>
+    <comment>Phase 18 - Singular day</comment>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>ימים</value>
+    <comment>Phase 18 - Plural days</comment>
+  </data>
+  <data name="NoReasonProvided" xml:space="preserve">
+    <value>לא צוינה סיבה</value>
+    <comment>Phase 18 - TimeOff page empty reason</comment>
+  </data>
+  <data name="ActiveToday" xml:space="preserve">
+    <value>פעיל היום</value>
+    <comment>Phase 18 - TimeOff status badge</comment>
+  </data>
+  <data name="Past" xml:space="preserve">
+    <value>עבר</value>
+    <comment>Phase 18 - TimeOff status badge</comment>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>הערה</value>
+    <comment>Phase 18 - General note label</comment>
+  </data>
+  <data name="TimeOffDeletionNote" xml:space="preserve">
+    <value>ניתן למחוק רק בקשות חופשה עתידיות. לא ניתן למחוק בקשות שכבר החלו או שעברו. מחיקת בקשת חופשה לא תשחזר אוטומטית משמרות שהוסרו כשהבקשה אושרה.</value>
+    <comment>Phase 18 - TimeOff deletion info</comment>
+  </data>
+  <data name="NoApprovedTimeOffRequestsTitle" xml:space="preserve">
+    <value>אין בקשות חופשה מאושרות</value>
+    <comment>Phase 18 - TimeOff empty state title</comment>
+  </data>
+  <data name="NoApprovedTimeOffRequestsMessage" xml:space="preserve">
+    <value>אין כרגע בקשות חופשה מאושרות במערכת.</value>
+    <comment>Phase 18 - TimeOff empty state message</comment>
+  </data>
+  <data name="ViewPendingRequests" xml:space="preserve">
+    <value>הצג בקשות ממתינות</value>
+    <comment>Phase 18 - TimeOff button text</comment>
+  </data>
+  <data name="BackToPendingRequests" xml:space="preserve">
+    <value>חזרה לבקשות ממתינות</value>
+    <comment>Phase 18 - TimeOff navigation</comment>
+  </data>
+  <data name="ManageUsers" xml:space="preserve">
+    <value>ניהול משתמשים</value>
+    <comment>Phase 18 - TimeOff navigation</comment>
+  </data>
+  <data name="NotificationShiftAddedTitle" xml:space="preserve">
+    <value>שיבוץ למשמרת חדשה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationShiftAddedMessage" xml:space="preserve">
+    <value>שובצת לעבוד {0} ב-{1} מ-{2} עד {3}.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftType, {1}=date, {2}=startTime, {3}=endTime</comment>
+  </data>
+  <data name="NotificationShiftRemovedTitle" xml:space="preserve">
+    <value>שיבוץ למשמרת הוסר</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationShiftRemovedMessage" xml:space="preserve">
+    <value>משמרת {0} שלך ב-{1} מ-{2} עד {3} הוסרה.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftType, {1}=date, {2}=startTime, {3}=endTime</comment>
+  </data>
+  <data name="NotificationTimeOffApprovedTitle" xml:space="preserve">
+    <value>בקשת חופשה אושרה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationTimeOffApprovedMessage" xml:space="preserve">
+    <value>בקשת החופשה שלך ל-{0} אושרה.</value>
+    <comment>Phase 18 - Notification message: {0}=dateRange</comment>
+  </data>
+  <data name="NotificationTimeOffDeclinedTitle" xml:space="preserve">
+    <value>בקשת חופשה נדחתה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationTimeOffDeclinedMessage" xml:space="preserve">
+    <value>בקשת החופשה שלך ל-{0} נדחתה.</value>
+    <comment>Phase 18 - Notification message: {0}=dateRange</comment>
+  </data>
+  <data name="NotificationSwapRequestApprovedTitle" xml:space="preserve">
+    <value>בקשת החלפת משמרת אושרה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationSwapRequestApprovedMessage" xml:space="preserve">
+    <value>בקשת ההחלפה שלך עבור {0} אושרה.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftInfo</comment>
+  </data>
+  <data name="NotificationSwapRequestDeclinedTitle" xml:space="preserve">
+    <value>בקשת החלפת משמרת נדחתה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationSwapRequestDeclinedMessage" xml:space="preserve">
+    <value>בקשת ההחלפה שלך עבור {0} נדחתה.</value>
+    <comment>Phase 18 - Notification message: {0}=shiftInfo</comment>
+  </data>
+  <data name="NotificationChoreAssignedTitle" xml:space="preserve">
+    <value>שיבוץ למטלה חדשה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationChoreAssignedMessage" xml:space="preserve">
+    <value>שובצת למטלה: "{0}" ב-{1}.</value>
+    <comment>Phase 18 - Notification message: {0}=choreTitle, {1}=date</comment>
+  </data>
+  <data name="NotificationChoreCanceledTitle" xml:space="preserve">
+    <value>מטלה בוטלה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationChoreCanceledMessage" xml:space="preserve">
+    <value>המטלה שלך "{0}" ב-{1} בוטלה.</value>
+    <comment>Phase 18 - Notification message: {0}=choreTitle, {1}=date</comment>
+  </data>
+  <data name="NotificationOnDutyAssignedTitle" xml:space="preserve">
+    <value>שיבוץ לתורנות חדשה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationOnDutyAssignedMessage" xml:space="preserve">
+    <value>שובצת לתורנות {0} ב-{1}.</value>
+    <comment>Phase 18 - Notification message: {0}=onDutyType, {1}=date</comment>
+  </data>
+  <data name="NotificationOnDutyCanceledTitle" xml:space="preserve">
+    <value>תורנות בוטלה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationOnDutyCanceledMessage" xml:space="preserve">
+    <value>התורנות שלך ל-{0} ב-{1} בוטלה.</value>
+    <comment>Phase 18 - Notification message: {0}=onDutyType, {1}=date</comment>
+  </data>
+  <data name="NotificationTimeOffDeletedTitle" xml:space="preserve">
+    <value>בקשת חופשה נמחקה</value>
+    <comment>Phase 18 - Notification title</comment>
+  </data>
+  <data name="NotificationTimeOffDeletedMessage" xml:space="preserve">
+    <value>החופשה המאושרת שלך ל-{0} נמחקה על ידי ההנהלה.</value>
+    <comment>Phase 18 - Notification message: {0}=dateRange</comment>
+  </data>
+  <data name="OnDutyTypeHakam" xml:space="preserve">
+    <value>חק"מ</value>
+    <comment>Phase 18 - On-Duty type name</comment>
+  </data>
+  <data name="OnDutyTypeLead" xml:space="preserve">
+    <value>מוביל</value>
+    <comment>Phase 18 - On-Duty type name</comment>
+  </data>
+  <data name="PendingTimeOffTab" xml:space="preserve">
+    <value>חופשות ממתינות</value>
+    <comment>Phase 18 - Requests page tab</comment>
+  </data>
+  <data name="PendingSwapsTab" xml:space="preserve">
+    <value>החלפות ממתינות</value>
+    <comment>Phase 18 - Requests page tab</comment>
+  </data>
+  <data name="ApprovedTimeOffTab" xml:space="preserve">
+    <value>חופשות מאושרות</value>
+    <comment>Phase 18 - Requests page tab</comment>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>שינוי סיסמה</value>
+    <comment>Phase 18 - Password change feature</comment>
+  </data>
+  <data name="OldPassword" xml:space="preserve">
+    <value>סיסמה נוכחית</value>
+    <comment>Phase 18 - Password change field</comment>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>סיסמה חדשה</value>
+    <comment>Phase 18 - Password change field</comment>
+  </data>
+  <data name="ChangePasswordButton" xml:space="preserve">
+    <value>שנה סיסמה</value>
+    <comment>Phase 18 - Password change button</comment>
+  </data>
+  <data name="PasswordChangedSuccessfully" xml:space="preserve">
+    <value>הסיסמה שונתה בהצלחה! כעת תוכל להתחבר עם הסיסמה החדשה.</value>
+    <comment>Phase 18 - Password change success message</comment>
+  </data>
+  <data name="PasswordChangeFailed" xml:space="preserve">
+    <value>שינוי הסיסמה נכשל. אנא בדוק את הסיסמה הנוכחית ונסה שוב.</value>
+    <comment>Phase 18 - Password change error message</comment>
+  </data>
+  <data name="NewPasswordTooShort" xml:space="preserve">
+    <value>הסיסמה החדשה חייבת להיות לפחות 6 תווים.</value>
+    <comment>Phase 18 - Password validation message</comment>
+  </data>
+  <data name="OldPasswordIncorrect" xml:space="preserve">
+    <value>הסיסמה הנוכחית שגויה.</value>
+    <comment>Phase 18 - Password verification error</comment>
+  </data>
+  <data name="ChangePasswordAfterLogin_WithForm" xml:space="preserve">
+    <value>הסיסמה הזמנית תוצג כאן לנוחותך. תוכל לשנות אותה בכל עת באמצעות הטופס למטה.</value>
+    <comment>Phase 18 - Updated security note with password change form</comment>
+  </data>
+  <data name="PasswordManagement" xml:space="preserve">
+    <value>ניהול סיסמאות</value>
+    <comment>Sub-Phase 18.14 - Page title for combined Reset/Change password page</comment>
+  </data>
+  <data name="RequestAccess" xml:space="preserve">
+    <value>בקש גישה לאתר</value>
+    <comment>Sub-Phase 18.14 - Button on login page to request access/signup</comment>
+  </data>
+  <data name="Game_Title" xml:space="preserve">
+    <value>החלפת משמרות</value>
+    <comment>Phase 19 - Easter egg game title</comment>
+  </data>
+  <data name="Game_Instructions" xml:space="preserve">
+    <value>החלף אייקונים סמוכים כדי ליצור שורה של 3 או יותר</value>
+    <comment>Phase 19 - Game instructions subtitle</comment>
+  </data>
+  <data name="Game_Score" xml:space="preserve">
+    <value>ניקוד:</value>
+    <comment>Phase 19 - Score label</comment>
+  </data>
+  <data name="Game_Trophy" xml:space="preserve">
+    <value>לוח מובילים</value>
+    <comment>Phase 19 - Trophy button tooltip</comment>
+  </data>
+  <data name="Game_PlayAgain" xml:space="preserve">
+    <value>שחק שוב</value>
+    <comment>Phase 19 - Play again button text</comment>
+  </data>
+  <data name="Game_ViewLeaderboard" xml:space="preserve">
+    <value>צפה בלוח המובילים</value>
+    <comment>Phase 19 - View leaderboard button text</comment>
+  </data>
+  <data name="Game_ScoreSaved" xml:space="preserve">
+    <value>הניקוד נשמר!</value>
+    <comment>Phase 19 - Toast notification on score save</comment>
+  </data>
+  <data name="Game_MilestoneReached" xml:space="preserve">
+    <value>אבן דרך חדשה! 🎉</value>
+    <comment>Phase 19 - Toast notification on milestone</comment>
+  </data>
+  <data name="Game_Roast_1000_A" xml:space="preserve">
+    <value>מה? אין בכלל עבודה?</value>
+    <comment>Phase 19 - Roasting message for 1,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_1000_B" xml:space="preserve">
+    <value>להקצות לך עוד משמרות?</value>
+    <comment>Phase 19 - Roasting message for 1,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_1000_C" xml:space="preserve">
+    <value>לוח המשמרות האמיתי לא מאתגר מספיק?</value>
+    <comment>Phase 19 - Roasting message for 1,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_2500_A" xml:space="preserve">
+    <value>אני יודע מה המטלה הבאה שלך! להתאמן במשחק!</value>
+    <comment>Phase 19 - Roasting message for 2,500 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_2500_B" xml:space="preserve">
+    <value>המסירות שלך... מדאיגה.</value>
+    <comment>Phase 19 - Roasting message for 2,500 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_2500_C" xml:space="preserve">
+    <value>זו הסיבה שהמשמרות והמטלות מצטברות?</value>
+    <comment>Phase 19 - Roasting message for 2,500 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_5000_A" xml:space="preserve">
+    <value>המנכ"ל של החלפת משמרות.</value>
+    <comment>Phase 19 - Roasting message for 5,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_5000_B" xml:space="preserve">
+    <value>המפקד שלך צופה...סתם חחח, תמשיך לשחק!</value>
+    <comment>Phase 19 - Roasting message for 5,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_5000_C" xml:space="preserve">
+    <value>רמה במשחק: מומחה, רמת פרודקטיביות: צריך לקבוע זימון</value>
+    <comment>Phase 19 - Roasting message for 5,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_7500_A" xml:space="preserve">
+    <value>מישהו מנסה לקבל קידום דרך המשחק.</value>
+    <comment>Phase 19 - Roasting message for 7,500 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_7500_B" xml:space="preserve">
+    <value>10% מהשרתים עכשיו מלאים במשמרות שהצלת.</value>
+    <comment>Phase 19 - Roasting message for 7,500 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_7500_C" xml:space="preserve">
+    <value>אנחנו מוסיפים את זה להערכת הביצועים שלך.</value>
+    <comment>Phase 19 - Roasting message for 7,500 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_10000_A" xml:space="preserve">
+    <value>נגמרו לי הבדיחות, או שאולי לא!</value>
+    <comment>Phase 19 - Roasting message for 10,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_10000_B" xml:space="preserve">
+    <value>החלפת יותר משמרות וירטואליות מאשר אמיתיות.</value>
+    <comment>Phase 19 - Roasting message for 10,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_10000_C" xml:space="preserve">
+    <value>הכוח האולטימטיבי הוא לא לשלוט בזמן, אלא בלוח הזמנים.</value>
+    <comment>Phase 19 - Roasting message for 10,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_15000_A" xml:space="preserve">
+    <value>אוקיי, אולי צריך להוסיף אותך לתור משמרות... בתוך המשחק.</value>
+    <comment>Phase 19 - Roasting message for 15,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_15000_B" xml:space="preserve">
+    <value>השגת מצב של 'משמרתיות' נצחית.</value>
+    <comment>Phase 19 - Roasting message for 15,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_15000_C" xml:space="preserve">
+    <value>בשלב הזה, אתה לא משחק - אתה מנצח על תזמורת של משמרות.</value>
+    <comment>Phase 19 - Roasting message for 15,000 score - Variant C</comment>
+  </data>
+  <data name="Game_Roast_20000_A" xml:space="preserve">
+    <value>נגמרו לנו הבדיחות. בבקשה לך לגעת בדשא.</value>
+    <comment>Phase 19 - Roasting message for 20,000 score - Variant A</comment>
+  </data>
+  <data name="Game_Roast_20000_B" xml:space="preserve">
+    <value>עברת התעלות. עכשיו המשחק משחק בך.</value>
+    <comment>Phase 19 - Roasting message for 20,000 score - Variant B</comment>
+  </data>
+  <data name="Game_Roast_20000_C" xml:space="preserve">
+    <value>מזל טוב! סיימת את כל העבודה. אתה יכול להשתחרר.</value>
+    <comment>Phase 19 - Roasting message for 20,000 score - Variant C</comment>
+  </data>
+  <data name="Game_LeaderboardTitle" xml:space="preserve">
+    <value>לוח מובילי המשחק</value>
+    <comment>Phase 19 - Leaderboard page title</comment>
+  </data>
+  <data name="Game_AllTime" xml:space="preserve">
+    <value>כל הזמנים</value>
+    <comment>Phase 19 - All-time leaderboard tab</comment>
+  </data>
+  <data name="Game_Monthly" xml:space="preserve">
+    <value>החודש</value>
+    <comment>Phase 19 - Monthly leaderboard tab</comment>
+  </data>
+  <data name="Game_Rank" xml:space="preserve">
+    <value>דירוג</value>
+    <comment>Phase 19 - Leaderboard rank column header</comment>
+  </data>
+  <data name="Game_Player" xml:space="preserve">
+    <value>שחקן</value>
+    <comment>Phase 19 - Leaderboard player column header</comment>
+  </data>
+  <data name="Game_YourBest" xml:space="preserve">
+    <value>השיא שלך</value>
+    <comment>Phase 19 - User's personal best label</comment>
+  </data>
+  <data name="Game_NoScoresYet" xml:space="preserve">
+    <value>אין ניקודים עדיין! היה הראשון לשחק!</value>
+    <comment>Phase 19 - Empty state message for leaderboard</comment>
+  </data>
+  <data name="Game_BackToGame" xml:space="preserve">
+    <value>חזור למשחק</value>
+    <comment>Phase 19 - Back to game button on leaderboard</comment>
+  </data>
+  <data name="Game_You" xml:space="preserve">
+    <value>(אתה)</value>
+    <comment>Phase 19 - Indicator for current user in leaderboard</comment>
+  </data>
+  <data name="Calendar_ToggleMyItems" xml:space="preserve">
+    <value>החלף תצוגת פריטים</value>
+    <comment>Phase 20 - Toggle button aria-label for showing my items only vs all items</comment>
+  </data>
+  <data name="Calendar_MyItemsOnly" xml:space="preserve">
+    <value>הפריטים שלי</value>
+    <comment>Phase 20 - Button text when showing only user's items</comment>
+  </data>
+  <data name="Calendar_ShowAll" xml:space="preserve">
+    <value>הצג הכל</value>
+    <comment>Phase 20 - Button text when showing all items</comment>
+  </data>
+  <data name="Calendar_AddChore" xml:space="preserve">
+    <value>הוסף משימה</value>
+    <comment>Phase 20 - Quick-add button for chores</comment>
+  </data>
+  <data name="Calendar_AddOnDuty" xml:space="preserve">
+    <value>הוסף משמרת יומית</value>
+    <comment>Phase 20 - Quick-add button for day shifts</comment>
+  </data>
+  <data name="Calendar_SelectAssignee" xml:space="preserve">
+    <value>בחר אדם...</value>
+    <comment>Phase 20 - Placeholder for assignee dropdown</comment>
+  </data>
+  <data name="Calendar_ChoreTitle" xml:space="preserve">
+    <value>כותרת משימה</value>
+    <comment>Phase 20 - Placeholder for chore title input</comment>
+  </data>
+  <data name="Calendar_MyCalendar" xml:space="preserve">
+    <value>📅 השיפטי שלי</value>
+    <comment>Phase 20 - My Calendar section title (Shifty is a brand name)</comment>
+  </data>
+  <data name="Calendar_Management" xml:space="preserve">
+    <value>ניהול</value>
+    <comment>Phase 20 - Management section title</comment>
+  </data>
+  <data name="Calendar_ShiftsManagement" xml:space="preserve">
+    <value>משמרות הפקה וב"ר</value>
+    <comment>Phase 20 - Scheduled Shifts management link</comment>
+  </data>
+  <data name="Calendar_ChoresManagement" xml:space="preserve">
+    <value>מטלות</value>
+    <comment>Phase 20 - Chores management link</comment>
+  </data>
+  <data name="Calendar_OnDutyManagement" xml:space="preserve">
+    <value>משמרות רוחב</value>
+    <comment>Phase 20 - Day Shifts management link</comment>
+  </data>
+  <data name="Calendar_QuickActions" xml:space="preserve">
+    <value>פעולות מהירות</value>
+    <comment>Phase 20 - Quick actions label</comment>
+  </data>
+  <data name="Calendar_ManageShifts" xml:space="preserve">
+    <value>נהל משמרות הפקה וב"ר</value>
+    <comment>Phase 20 - Link to scheduled shift management</comment>
+  </data>
+  <data name="Calendar_ManageChores" xml:space="preserve">
+    <value>נהל מטלות</value>
+    <comment>Phase 20 - Link to chore management</comment>
+  </data>
+  <data name="Calendar_ManageOnDuty" xml:space="preserve">
+    <value>נהל משמרות רוחב</value>
+    <comment>Phase 20 - Link to day shifts management</comment>
+  </data>
+  <data name="Calendar_ManageItem" xml:space="preserve">
+    <value>נהל</value>
+    <comment>Phase 20 - Generic manage link</comment>
+  </data>
+  <data name="Calendar_ManageShift" xml:space="preserve">
+    <value>נהל בטבלה</value>
+    <comment>Phase 20 - Manage shift in table view</comment>
+  </data>
+  <data name="Calendar_MoreItems" xml:space="preserve">
+    <value>נוספים</value>
+    <comment>Phase 20 - Show more items button</comment>
+  </data>
+  <data name="Calendar_ShowLess" xml:space="preserve">
+    <value>הצג פחות</value>
+    <comment>Phase 20 - Show less items button</comment>
+  </data>
+  <data name="Calendar_NoItems" xml:space="preserve">
+    <value>אין פריטים</value>
+    <comment>Phase 20 - Empty state title</comment>
+  </data>
+  <data name="Calendar_NoItemsForDay" xml:space="preserve">
+    <value>אין משמרות, מטלות או תורנויות ליום זה</value>
+    <comment>Phase 20 - Empty state subtitle</comment>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>הוסף</value>
+    <comment>Phase 20 - Add button</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>ביטול</value>
+    <comment>Phase 20 - Cancel button</comment>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>מחק</value>
+    <comment>Phase 20 - Delete button</comment>
+  </data>
+  <data name="Owner_AdminPanel" xml:space="preserve">
+    <value>ניהול מערכת - בעלים</value>
+  </data>
+  <data name="Owner_AdminPanel_Subtitle" xml:space="preserve">
+    <value>כלים למפתחים ובעלי המערכת</value>
+  </data>
+  <data name="Owner_TotalUsers" xml:space="preserve">
+    <value>סה"כ משתמשים</value>
+  </data>
+  <data name="Owner_TotalCompanies" xml:space="preserve">
+    <value>סה"כ חברות</value>
+  </data>
+  <data name="Owner_DatabaseSize" xml:space="preserve">
+    <value>גודל מסד נתונים</value>
+  </data>
+  <data name="Owner_Uptime" xml:space="preserve">
+    <value>זמן פעילות</value>
+  </data>
+  <data name="Owner_FeatureFlags" xml:space="preserve">
+    <value>דגלי תכונות</value>
+  </data>
+  <data name="Owner_FeatureFlags_Desc" xml:space="preserve">
+    <value>ניהול מתגי תכונות מערכת</value>
+  </data>
+  <data name="Owner_DatabaseConsole" xml:space="preserve">
+    <value>קונסולת מסד נתונים</value>
+  </data>
+  <data name="Owner_DatabaseConsole_Desc" xml:space="preserve">
+    <value>ביצוע פעולות במסד נתונים</value>
+  </data>
+  <data name="Owner_EmailConfig" xml:space="preserve">
+    <value>הגדרות דוא"ל</value>
+  </data>
+  <data name="Owner_EmailConfig_Desc" xml:space="preserve">
+    <value>הגדרת התראות דוא"ל</value>
+  </data>
+  <data name="Owner_SystemHealth" xml:space="preserve">
+    <value>בריאות המערכת</value>
+  </data>
+  <data name="Owner_SystemHealth_Desc" xml:space="preserve">
+    <value>מעקב אחר מצב המערכת</value>
+  </data>
+  <data name="Owner_Backup" xml:space="preserve">
+    <value>גיבוי &amp; שחזור</value>
+  </data>
+  <data name="Owner_Backup_Desc" xml:space="preserve">
+    <value>ניהול גיבויי מסד נתונים</value>
+  </data>
+  <data name="Owner_SecurityAudit" xml:space="preserve">
+    <value>ביקורת אבטחה</value>
+  </data>
+  <data name="Owner_SecurityAudit_Desc" xml:space="preserve">
+    <value>צפייה ברישומי ביקורת אבטחה</value>
+  </data>
+  <data name="Owner_RecentActivity" xml:space="preserve">
+    <value>פעילות אחרונה</value>
+  </data>
+  <data name="Owner_ConfigureEmail" xml:space="preserve">
+    <value>הגדר הגדרות דוא״ל</value>
+  </data>
+  <data name="Owner_GameConfig" xml:space="preserve">
+    <value>הגדרות משחק</value>
+  </data>
+  <data name="Owner_GameConfig_Desc" xml:space="preserve">
+    <value>הגדר את הגדרות משחק החלפת משמרות והניקוד</value>
+  </data>
+  <data name="GameConfig_Title" xml:space="preserve">
+    <value>הגדרות משחק</value>
+  </data>
+  <data name="GameConfig_Subtitle" xml:space="preserve">
+    <value>הגדר את הגדרות משחק החלפת משמרות Match-3 והניקוד</value>
+  </data>
+  <data name="GameConfig_GameStatus" xml:space="preserve">
+    <value>סטטוס המשחק</value>
+  </data>
+  <data name="GameConfig_GameEnabled" xml:space="preserve">
+    <value>משחק מופעל</value>
+  </data>
+  <data name="GameConfig_GameEnabled_Desc" xml:space="preserve">
+    <value>הפעל או השבת את משחק החלפת משמרות Match-3 עבור כל המשתמשים</value>
+  </data>
+  <data name="GameConfig_Enabled" xml:space="preserve">
+    <value>מופעל</value>
+  </data>
+  <data name="GameConfig_Disabled" xml:space="preserve">
+    <value>מושבת</value>
+  </data>
+  <data name="GameConfig_ScoringConfiguration" xml:space="preserve">
+    <value>הגדרות ניקוד</value>
+  </data>
+  <data name="GameConfig_Points3Match" xml:space="preserve">
+    <value>נקודות עבור התאמת 3</value>
+  </data>
+  <data name="GameConfig_Points3Match_Desc" xml:space="preserve">
+    <value>נקודות שניתנות עבור התאמת 3 משבצות בשורה (ברירת מחדל: 40)</value>
+  </data>
+  <data name="GameConfig_Points4Match" xml:space="preserve">
+    <value>נקודות עבור התאמת 4</value>
+  </data>
+  <data name="GameConfig_Points4Match_Desc" xml:space="preserve">
+    <value>נקודות עבור קומבו של 4 בשורה (ברירת מחדל: 100)</value>
+  </data>
+  <data name="GameConfig_Points5Match" xml:space="preserve">
+    <value>נקודות עבור התאמת 5+</value>
+  </data>
+  <data name="GameConfig_Points5Match_Desc" xml:space="preserve">
+    <value>נקודות עבור 5+ בשורה, מנקה שורה/עמודה שלמה (ברירת מחדל: 200)</value>
+  </data>
+  <data name="GameConfig_MegaComboSettings" xml:space="preserve">
+    <value>הגדרות מגה קומבו</value>
+  </data>
+  <data name="GameConfig_MegaCombo_HowItWorks" xml:space="preserve">
+    <value>איך זה עובד:</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Explanation" xml:space="preserve">
+    <value>מגה קומבו מופעל כאשר אחד מהסיפים המוגדרים מושג. לדוגמה, אם הגדרת "2+ שורות של התאמת 4", קבלת 2 או יותר שורות של 4 בשורה במהלך אחד תפעיל מגה קומבו. הגדר ל-0 כדי להשבית סוג הפעלה זה.</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Multiplier" xml:space="preserve">
+    <value>מכפיל ניקוד</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Multiplier_Desc" xml:space="preserve">
+    <value>מכפיל שחל כאשר מגה קומבו מופעל (ברירת מחדל: 2x)</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min3Lines" xml:space="preserve">
+    <value>מינימום שורות של התאמת 3</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min3Lines_Desc" xml:space="preserve">
+    <value>מינימום שורות של 3 בשורה הנדרשות (0 = מושבת, ברירת מחדל: 0)</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min4Lines" xml:space="preserve">
+    <value>מינימום שורות של התאמת 4</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min4Lines_Desc" xml:space="preserve">
+    <value>מינימום שורות של 4 בשורה הנדרשות (0 = מושבת, ברירת מחדל: 2)</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min5Lines" xml:space="preserve">
+    <value>מינימום שורות של התאמת 5+</value>
+  </data>
+  <data name="GameConfig_MegaCombo_Min5Lines_Desc" xml:space="preserve">
+    <value>מינימום שורות של 5+ בשורה הנדרשות (0 = מושבת, ברירת מחדל: 0)</value>
+  </data>
+  <data name="GameConfig_GridSettings" xml:space="preserve">
+    <value>הגדרות רשת</value>
+  </data>
+  <data name="GameConfig_GridSize" xml:space="preserve">
+    <value>גודל רשת</value>
+  </data>
+  <data name="GameConfig_GridSize_Desc" xml:space="preserve">
+    <value>גודל רשת המשחק (4-10). ברירת מחדל היא 6x6. אזהרה: שינוי זה עלול להשפיע על איזון המשחק.</value>
+  </data>
+  <data name="GameConfig_Milestones" xml:space="preserve">
+    <value>אבני דרך והודעות לעג</value>
+  </data>
+  <data name="GameConfig_Milestones_Label" xml:space="preserve">
+    <value>ציוני אבני דרך (מופרדים בפסיקים)</value>
+  </data>
+  <data name="GameConfig_Milestones_Desc" xml:space="preserve">
+    <value>סיפי ניקוד שבהם מופיעות הודעות לעג. הזן מספרים שלמים חיוביים מופרדים בפסיקים.</value>
+  </data>
+  <data name="GameConfig_Preview" xml:space="preserve">
+    <value>תצוגה מקדימה</value>
+  </data>
+  <data name="GameConfig_SaveConfiguration" xml:space="preserve">
+    <value>שמור הגדרות</value>
+  </data>
+  <data name="GameConfig_BackToAdmin" xml:space="preserve">
+    <value>חזרה לפאנל ניהול</value>
+  </data>
+  <data name="Calendar_ToggleShowAll_Tooltip" xml:space="preserve">
+    <value>לחץ להצגת כל הפריטים</value>
+  </data>
+  <data name="Calendar_ToggleMyItems_Tooltip" xml:space="preserve">
+    <value>לחץ להצגת הפריטים שלך בלבד</value>
+  </data>
+  <data name="Calendar_ShowingAll" xml:space="preserve">
+    <value>מציג את כל הפריטים</value>
+  </data>
+  <data name="Calendar_ClickToFilterMine" xml:space="preserve">
+    <value>לחץ לסינון הפריטים שלך</value>
+  </data>
+  <data name="Calendar_ClickToShowAll" xml:space="preserve">
+    <value>לחץ להצגת כל הפריטים</value>
+  </data>
+  <data name="My_Settings" xml:space="preserve">
+    <value>ההגדרות שלי</value>
+  </data>
+  <data name="My_Settings_Subtitle" xml:space="preserve">
+    <value>נהל את העדפות ההתראות והגדרות החשבון שלך</value>
+  </data>
+  <data name="Settings_DailyDigest" xml:space="preserve">
+    <value>התראות סיכום יומי</value>
+  </data>
+  <data name="Settings_DailyDigest_InfoTitle" xml:space="preserve">
+    <value>אודות סיכום יומי</value>
+  </data>
+  <data name="Settings_DailyDigest_InfoDesc" xml:space="preserve">
+    <value>קבל סיכום יומי בדוא״ל עם המשמרות הקרובות, בקשות ממתינות, מטלות ותורנויות שלך. התאם אישית איזה מידע אתה רוצה לקבל ומתי.</value>
+  </data>
+  <data name="Settings_ReceiveDailyDigest" xml:space="preserve">
+    <value>קבל דוא״ל סיכום יומי</value>
+  </data>
+  <data name="Settings_ReceiveDailyDigest_Desc" xml:space="preserve">
+    <value>קבל סיכום יומי בדוא״ל של לוח הזמנים והמטלות שלך</value>
+  </data>
+  <data name="Settings_PreferredTime" xml:space="preserve">
+    <value>זמן משלוח מועדף (UTC)</value>
+  </data>
+  <data name="Settings_PreferredTime_Help" xml:space="preserve">
+    <value>בחר מתי אתה רוצה לקבל את הסיכום היומי שלך. הזמן הוא ב-UTC (זמן אוניברסלי מתואם).</value>
+  </data>
+  <data name="Settings_IncludeContent" xml:space="preserve">
+    <value>כלול בסיכום יומי</value>
+  </data>
+  <data name="Settings_IncludeShifts" xml:space="preserve">
+    <value>משמרות קרובות</value>
+  </data>
+  <data name="Settings_IncludeShifts_Desc" xml:space="preserve">
+    <value>שיבוצי המשמרות שלך ל-7 הימים הקרובים</value>
+  </data>
+  <data name="Settings_IncludeRequests" xml:space="preserve">
+    <value>בקשות ממתינות</value>
+  </data>
+  <data name="Settings_IncludeRequests_Desc" xml:space="preserve">
+    <value>בקשות חופשה והחלפות ממתינות לאישור</value>
+  </data>
+  <data name="Settings_IncludeChores" xml:space="preserve">
+    <value>מטלות משובצות</value>
+  </data>
+  <data name="Settings_IncludeChores_Desc" xml:space="preserve">
+    <value>מטלות שהוקצו לך ב-7 הימים הקרובים</value>
+  </data>
+  <data name="Settings_IncludeOnDuty" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="Settings_IncludeOnDuty_Desc" xml:space="preserve">
+    <value>התורנויות שלך ל-7 הימים הקרובים</value>
+  </data>
+  <data name="SaveSettings" xml:space="preserve">
+    <value>שמור הגדרות</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
+  <!-- Phase 6 Extension: Day-Before Reminders -->
+  <data name="Settings_DayBeforeReminders" xml:space="preserve">
+    <value>תזכורות יום מראש</value>
+  </data>
+  <data name="Settings_DayBeforeReminders_InfoTitle" xml:space="preserve">
+    <value>תזכורות אוטומטיות</value>
+  </data>
+  <data name="Settings_DayBeforeReminders_InfoDesc" xml:space="preserve">
+    <value>קבל תזכורות יום לפני השיבוצים שלך בשעת התקציר המועדפת</value>
+  </data>
+  <data name="Settings_RemindBeforeShifts" xml:space="preserve">
+    <value>הזכר לי לפני המשמרות שלי</value>
+  </data>
+  <data name="Settings_RemindBeforeShifts_Desc" xml:space="preserve">
+    <value>קבל תזכורת יום לפני משמרת מתוכננת</value>
+  </data>
+  <data name="Settings_RemindBeforeChores" xml:space="preserve">
+    <value>הזכר לי לפני התורנויות שלי</value>
+  </data>
+  <data name="Settings_RemindBeforeChores_Desc" xml:space="preserve">
+    <value>קבל תזכורת יום לפני תורנות משוייכת</value>
+  </data>
+  <data name="Settings_RemindBeforeOnDuty" xml:space="preserve">
+    <value>הזכר לי לפני התורנות היומית שלי</value>
+  </data>
+  <data name="Settings_RemindBeforeOnDuty_Desc" xml:space="preserve">
+    <value>קבל תזכורת יום לפני תורנות יומית</value>
+  </data>
+  <!-- Phase 6 Extension: OnDuty Role Subscriptions -->
+  <data name="Settings_OnDutySubscriptions" xml:space="preserve">
+    <value>התראות תורנות יומית להיום</value>
+  </data>
+  <data name="Settings_OnDutySubscriptions_InfoTitle" xml:space="preserve">
+    <value>עקוב אחר תפקידים ספציפיים</value>
+  </data>
+  <data name="Settings_OnDutySubscriptions_InfoDesc" xml:space="preserve">
+    <value>בחר אילו תפקידי תורנות יומית תרצה לראות בתקציר היומי שלך</value>
+  </data>
+  <data name="Settings_SelectOnDutyRoles" xml:space="preserve">
+    <value>תפקידים למעקב</value>
+  </data>
+  <data name="Settings_NoOnDutyTypes" xml:space="preserve">
+    <value>לא הוגדרו סוגי תורנות יומית</value>
   </data>
 </root>

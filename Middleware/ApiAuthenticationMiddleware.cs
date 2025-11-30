@@ -31,17 +31,26 @@ public class ApiAuthenticationMiddleware
             return;
         }
 
-        // Allow internal API endpoints (team-calendars) to use cookie authentication
-        // These are for authenticated web UI users, not external API consumers
-        if (context.Request.Path.StartsWithSegments("/api/team-calendars"))
+        // Check if this is an internal web UI endpoint (uses cookie auth, not API keys)
+        // These are Razor Page endpoints used by authenticated users in the browser
+        if (IsInternalWebUiEndpoint(context.Request.Path))
         {
+            // Game endpoints allow anonymous access (they handle auth internally)
+            if (context.Request.Path.StartsWithSegments("/Api/Game", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
+            // Other internal endpoints require authentication
             // If user is already authenticated via cookies, allow request
             if (context.User?.Identity?.IsAuthenticated == true)
             {
                 await _next(context);
                 return;
             }
-            // If not authenticated via cookies, return 401 (no API key support for this endpoint)
+            // If not authenticated via cookies, return 401
+            _logger.LogWarning("Unauthenticated request to internal API endpoint: {Path}", context.Request.Path);
             context.Response.StatusCode = 401;
             await context.Response.WriteAsync("Unauthorized");
             return;
@@ -171,6 +180,40 @@ public class ApiAuthenticationMiddleware
         // Standard resource:operation format (e.g., user:read, shift:write)
         var resourceName = resource.TrimEnd('s'); // users -> user
         return $"{resourceName}:{operation}";
+    }
+
+    /// <summary>
+    /// Determines if the path is an internal web UI API endpoint that should use cookie auth
+    /// rather than API key authentication.
+    /// These are Razor Page endpoints used by authenticated users in the browser.
+    /// </summary>
+    private bool IsInternalWebUiEndpoint(PathString path)
+    {
+        // Team calendars - existing endpoint
+        if (path.StartsWithSegments("/api/team-calendars", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Session status - used by session-check.js for browser session management
+        if (path.StartsWithSegments("/Api/SessionStatus", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Calendar quick-action endpoints - used by calendar-inline-edit.js for inline CRUD
+        if (path.StartsWithSegments("/Api/Calendar", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Game endpoints - used by shift-swap-game.js for browser-based game functionality
+        if (path.StartsWithSegments("/Api/Game", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>

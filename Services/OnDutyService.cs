@@ -5,18 +5,40 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+/// <summary>
+/// Interface for "Day Shifts" management (user-facing term: "משמרות יומיות" / "Day Shifts").
+///
+/// TERMINOLOGY NOTE: Named "IOnDutyService" for historical reasons.
+/// See TERMINOLOGY.md for UI vs. code terminology mapping.
+/// </summary>
 public interface IOnDutyService
 {
-    Task<(bool Success, string Message, OnDuty? OnDuty)> CreateOnDutyAsync(int assigneeId, DateOnly date, OnDutyType type, string? notes = null);
+    Task<(bool Success, string Message, OnDuty? OnDuty)> CreateOnDutyAsync(int assigneeId, DateOnly date, OnDutyType type, string? notes = null, bool forceAssign = false);
     Task<(bool Success, string Message)> CancelOnDutyAsync(int onDutyId, string? reason = null);
     Task<List<OnDuty>> GetOnDutiesAsync(DateOnly? startDate = null, DateOnly? endDate = null, int? userId = null, OnDutyType? type = null, bool? includeCanceled = false);
     Task<OnDuty?> GetOnDutyByIdAsync(int onDutyId);
     Task<bool> HasActiveOnDutyOnDateAsync(int userId, DateOnly date, OnDutyType type);
     Task<bool> HasVacationConflictAsync(int userId, DateOnly date);
+    Task<(bool HasConflict, DateOnly? StartDate, DateOnly? EndDate, TimeOffType? Type)> GetVacationConflictDetailsAsync(int userId, DateOnly date);
     Task<bool> CanUserManageOnDutyAsync(int userId);
     Task<List<AppUser>> GetEligibleAssigneesAsync();
 }
 
+/// <summary>
+/// Service for managing "Day Shifts" (user-facing term: "משמרות יומיות" / "Day Shifts").
+///
+/// TERMINOLOGY NOTE: The service is named "OnDutyService" for historical reasons.
+/// In the user interface, these are presented as "Day Shifts" to be more inclusive
+/// of all workers (not just official "on-duty" roles like Hakam/Lead).
+///
+/// Day shifts are:
+/// - Full day-length assignments (no specific start/end times, just dates)
+/// - Global/cross-company (unlike scheduled shifts which are company-scoped)
+/// - One person per type per date
+/// - Support types: Hakam, Lead, and custom types
+///
+/// See TERMINOLOGY.md for complete terminology mapping.
+/// </summary>
 public class OnDutyService : IOnDutyService
 {
     private readonly AppDbContext _db;
@@ -159,13 +181,38 @@ public class OnDutyService : IOnDutyService
     }
 
     /// <summary>
+    /// Get vacation details if user has an approved vacation that overlaps with the given date
+    /// Returns (hasConflict, startDate, endDate, type)
+    /// </summary>
+    public async Task<(bool HasConflict, DateOnly? StartDate, DateOnly? EndDate, TimeOffType? Type)>
+        GetVacationConflictDetailsAsync(int userId, DateOnly date)
+    {
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null) return (false, null, null, null);
+
+        var vacation = await _db.TimeOffRequests.IgnoreQueryFilters()
+            .Where(t => t.UserId == userId &&
+                       t.CompanyId == user.CompanyId &&
+                       t.Status == RequestStatus.Approved &&
+                       t.StartDate <= date &&
+                       t.EndDate >= date)
+            .FirstOrDefaultAsync();
+
+        if (vacation == null)
+            return (false, null, null, null);
+
+        return (true, vacation.StartDate, vacation.EndDate, vacation.Type);
+    }
+
+    /// <summary>
     /// Create a new on-duty assignment
     /// </summary>
     public async Task<(bool Success, string Message, OnDuty? OnDuty)> CreateOnDutyAsync(
         int assigneeId,
         DateOnly date,
         OnDutyType type,
-        string? notes = null)
+        string? notes = null,
+        bool forceAssign = false)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -204,10 +251,15 @@ public class OnDutyService : IOnDutyService
                 return (false, $"This user already has an active {type} on-duty assignment on this date.", null);
             }
 
-            // COLLISION RULE: Check for vacation conflict
-            if (await HasVacationConflictAsync(assigneeId, date))
+            // COLLISION RULE: Check for vacation conflict (unless force-assigning)
+            if (!forceAssign)
             {
-                return (false, "VACATION_CONFLICT", null); // Special message for UI to handle
+                var (hasConflict, vacationStart, vacationEnd, vacationType) = await GetVacationConflictDetailsAsync(assigneeId, date);
+                if (hasConflict)
+                {
+                    // Return vacation details for UI to display in confirmation dialog
+                    return (false, $"VACATION_CONFLICT|{vacationStart}|{vacationEnd}|{vacationType}", null);
+                }
             }
 
             // Create the on-duty assignment
@@ -226,6 +278,13 @@ public class OnDutyService : IOnDutyService
 
             _logger.LogInformation("OnDuty {OnDutyId} ({Type}) created by user {CreatedBy} for user {UserId} on {Date}",
                 onDuty.Id, type, currentUserId, assigneeId, date);
+
+            // Audit log for force-assignments (bypassing vacation conflict)
+            if (forceAssign)
+            {
+                _logger.LogWarning("OnDuty {OnDutyId} was FORCE-ASSIGNED by user {CreatedBy} despite vacation conflict for user {UserId} on {Date}",
+                    onDuty.Id, currentUserId, assigneeId, date);
+            }
 
             return (true, "On-duty assignment created successfully.", onDuty);
         }

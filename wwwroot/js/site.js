@@ -1,11 +1,30 @@
-// Dark mode toggle
+// Dark mode toggle with system preference support
 document.addEventListener('DOMContentLoaded', function() {
   const root = document.documentElement;
   const saved = localStorage.getItem('theme');
 
-  // Apply saved theme
+  // Apply saved theme or detect system preference
   if (saved) {
     root.setAttribute('data-theme', saved);
+    console.log('Using saved theme:', saved);
+  } else {
+    // Detect system preference
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const systemTheme = prefersDark ? 'dark' : 'light';
+    root.setAttribute('data-theme', systemTheme);
+    console.log('No saved theme, using system preference:', systemTheme);
+  }
+
+  // Listen for system theme changes
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      // Only auto-switch if user hasn't manually set a preference
+      if (!localStorage.getItem('theme')) {
+        const newTheme = e.matches ? 'dark' : 'light';
+        root.setAttribute('data-theme', newTheme);
+        console.log('System theme changed to:', newTheme);
+      }
+    });
   }
 
   // Set up toggle button
@@ -17,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
-      console.log('Theme switched to:', newTheme);
+      console.log('Theme manually switched to:', newTheme);
     });
     console.log('Dark mode toggle initialized');
   } else {
@@ -728,3 +747,333 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
         alert('Failed to delete shift. Please try again.');
     }
 }
+
+// ============= COMMAND PALETTE =============
+
+const commandPalettePages = [
+  // Manager/Admin Pages
+  { title: 'Home', subtitle: 'Dashboard overview', url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Calendar - Month View', subtitle: 'Monthly schedule', url: '/Calendar/Month', icon: '📅', roles: ['all'] },
+  { title: 'Calendar - Week View', subtitle: 'Weekly schedule', url: '/Calendar/Week', icon: '📆', roles: ['all'] },
+  { title: 'Calendar - Day View', subtitle: 'Daily schedule', url: '/Calendar/Day', icon: '📋', roles: ['all'] },
+  { title: 'Requests', subtitle: 'Manage time-off requests', url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Analytics', subtitle: 'View reports and statistics', url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Users', subtitle: 'Manage employees', url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Companies', subtitle: 'Manage organizations', url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
+  { title: 'Directors', subtitle: 'Assign directors to companies', url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
+  { title: 'Configuration', subtitle: 'System settings', url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Shift Types', subtitle: 'Manage shift definitions', url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Time Off', subtitle: 'Approved time-off requests', url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
+  { title: 'Audit Log', subtitle: 'System activity log', url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
+  { title: 'Chores', subtitle: 'Task management', url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
+  { title: 'On Duty', subtitle: 'Current duty roster', url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
+
+  // Employee Pages
+  { title: 'My Requests', subtitle: 'View my time-off requests', url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
+  { title: 'My Team', subtitle: 'View team members', url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+  { title: 'My Profile', subtitle: 'Update my information', url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
+  { title: 'Notifications', subtitle: 'View notifications', url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
+];
+
+let commandPaletteState = {
+  isOpen: false,
+  selectedIndex: -1,
+  filteredPages: [],
+  recentPages: []
+};
+
+// Initialize command palette
+document.addEventListener('DOMContentLoaded', function() {
+  // Load recent pages from localStorage
+  const stored = localStorage.getItem('commandPaletteRecent');
+  if (stored) {
+    try {
+      commandPaletteState.recentPages = JSON.parse(stored);
+    } catch (e) {
+      console.warn('Failed to parse recent pages:', e);
+      commandPaletteState.recentPages = [];
+    }
+  }
+
+  // Keyboard shortcut: Ctrl/Cmd + K
+  document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      toggleCommandPalette();
+    }
+
+    // Escape to close
+    if (e.key === 'Escape' && commandPaletteState.isOpen) {
+      closeCommandPalette();
+    }
+
+    // Arrow navigation when palette is open
+    if (commandPaletteState.isOpen) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateCommandPalette(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateCommandPalette(-1);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectCommandPaletteItem();
+      }
+    }
+  });
+
+  // Search input handler
+  const searchInput = document.getElementById('commandPaletteInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      filterCommandPalette(e.target.value);
+    });
+  }
+});
+
+function toggleCommandPalette() {
+  if (commandPaletteState.isOpen) {
+    closeCommandPalette();
+  } else {
+    openCommandPalette();
+  }
+}
+
+function openCommandPalette() {
+  const palette = document.getElementById('commandPalette');
+  if (!palette) return;
+
+  commandPaletteState.isOpen = true;
+  palette.style.display = 'flex';
+
+  // Focus search input
+  const searchInput = document.getElementById('commandPaletteInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+
+  // Show recent pages initially
+  filterCommandPalette('');
+
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCommandPalette() {
+  const palette = document.getElementById('commandPalette');
+  if (!palette) return;
+
+  commandPaletteState.isOpen = false;
+  commandPaletteState.selectedIndex = -1;
+  palette.style.display = 'none';
+
+  // Restore body scroll
+  document.body.style.overflow = '';
+}
+
+function filterCommandPalette(query) {
+  const resultsContainer = document.getElementById('commandPaletteResults');
+  if (!resultsContainer) return;
+
+  // Get user role from page (if available)
+  const userRole = getUserRole();
+
+  // Filter pages based on query and role
+  const lowerQuery = query.toLowerCase().trim();
+
+  if (lowerQuery === '') {
+    // Show recent pages
+    commandPaletteState.filteredPages = commandPaletteState.recentPages
+      .map(url => commandPalettePages.find(p => p.url === url))
+      .filter(p => p && canAccessPage(p, userRole))
+      .slice(0, 5);
+  } else {
+    // Search all pages
+    commandPaletteState.filteredPages = commandPalettePages
+      .filter(page => {
+        if (!canAccessPage(page, userRole)) return false;
+        const titleMatch = page.title.toLowerCase().includes(lowerQuery);
+        const subtitleMatch = page.subtitle.toLowerCase().includes(lowerQuery);
+        return titleMatch || subtitleMatch;
+      });
+  }
+
+  // Reset selection
+  commandPaletteState.selectedIndex = commandPaletteState.filteredPages.length > 0 ? 0 : -1;
+
+  // Render results
+  renderCommandPaletteResults(lowerQuery === '');
+}
+
+function renderCommandPaletteResults(showingRecent) {
+  const resultsContainer = document.getElementById('commandPaletteResults');
+  if (!resultsContainer) return;
+
+  resultsContainer.innerHTML = '';
+
+  if (commandPaletteState.filteredPages.length === 0) {
+    // Show empty state
+    resultsContainer.innerHTML = `
+      <div class="command-palette-empty">
+        <div class="command-palette-empty-icon">🔍</div>
+        <div class="command-palette-empty-text">No results found</div>
+      </div>
+    `;
+    return;
+  }
+
+  // Show section title if showing recent
+  if (showingRecent && commandPaletteState.filteredPages.length > 0) {
+    const sectionTitle = document.createElement('div');
+    sectionTitle.className = 'command-palette-section-title';
+    sectionTitle.textContent = 'Recent';
+    resultsContainer.appendChild(sectionTitle);
+  }
+
+  // Render items
+  commandPaletteState.filteredPages.forEach((page, index) => {
+    const item = document.createElement('a');
+    item.className = 'command-palette-item';
+    item.href = page.url;
+    if (index === commandPaletteState.selectedIndex) {
+      item.classList.add('selected');
+    }
+
+    item.innerHTML = `
+      <div class="command-palette-item-icon">${page.icon}</div>
+      <div class="command-palette-item-content">
+        <div class="command-palette-item-title">${page.title}</div>
+        <div class="command-palette-item-subtitle">${page.subtitle}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      navigateToPage(page.url);
+    });
+
+    item.addEventListener('mouseenter', function() {
+      commandPaletteState.selectedIndex = index;
+      updateSelectedItem();
+    });
+
+    resultsContainer.appendChild(item);
+  });
+}
+
+function navigateCommandPalette(direction) {
+  if (commandPaletteState.filteredPages.length === 0) return;
+
+  commandPaletteState.selectedIndex += direction;
+
+  // Wrap around
+  if (commandPaletteState.selectedIndex < 0) {
+    commandPaletteState.selectedIndex = commandPaletteState.filteredPages.length - 1;
+  } else if (commandPaletteState.selectedIndex >= commandPaletteState.filteredPages.length) {
+    commandPaletteState.selectedIndex = 0;
+  }
+
+  updateSelectedItem();
+}
+
+function updateSelectedItem() {
+  const items = document.querySelectorAll('.command-palette-item');
+  items.forEach((item, index) => {
+    if (index === commandPaletteState.selectedIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+}
+
+function selectCommandPaletteItem() {
+  if (commandPaletteState.selectedIndex < 0 ||
+      commandPaletteState.selectedIndex >= commandPaletteState.filteredPages.length) {
+    return;
+  }
+
+  const selectedPage = commandPaletteState.filteredPages[commandPaletteState.selectedIndex];
+  navigateToPage(selectedPage.url);
+}
+
+function navigateToPage(url) {
+  // Add to recent pages
+  addToRecentPages(url);
+
+  // Close palette
+  closeCommandPalette();
+
+  // Navigate
+  window.location.href = url;
+}
+
+function addToRecentPages(url) {
+  // Remove if already exists
+  commandPaletteState.recentPages = commandPaletteState.recentPages.filter(u => u !== url);
+
+  // Add to front
+  commandPaletteState.recentPages.unshift(url);
+
+  // Keep only last 10
+  commandPaletteState.recentPages = commandPaletteState.recentPages.slice(0, 10);
+
+  // Save to localStorage
+  try {
+    localStorage.setItem('commandPaletteRecent', JSON.stringify(commandPaletteState.recentPages));
+  } catch (e) {
+    console.warn('Failed to save recent pages:', e);
+  }
+}
+
+function canAccessPage(page, userRole) {
+  if (!page.roles || page.roles.includes('all')) return true;
+  if (!userRole) return true; // Show all if role is unknown
+  return page.roles.includes(userRole);
+}
+
+function getUserRole() {
+  // Try to determine user role from page context
+  // This is a simplified implementation - adjust based on your needs
+  const body = document.body;
+  const sidebar = document.querySelector('.app-sidebar-nav');
+
+  if (!sidebar) return null;
+
+  // Check for Owner-specific links
+  if (sidebar.querySelector('a[href*="/Admin/Companies"]')) {
+    return 'Owner';
+  }
+
+  // Check for Manager/Director links
+  if (sidebar.querySelector('a[href*="/Admin/Users"]')) {
+    return 'Manager';
+  }
+
+  // Check for Employee links
+  if (sidebar.querySelector('a[href*="/My/Profile"]')) {
+    return 'Employee';
+  }
+
+  return null;
+}
+
+// Make function globally accessible
+window.closeCommandPalette = closeCommandPalette;
+
+// ============= USER MENU NAVIGATION =============
+
+// Navigate to profile when clicking user menu
+document.addEventListener('DOMContentLoaded', function() {
+  const userMenu = document.querySelector('.user-menu');
+  if (userMenu) {
+    userMenu.style.cursor = 'pointer';
+    userMenu.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = '/My/Profile';
+    });
+  }
+});

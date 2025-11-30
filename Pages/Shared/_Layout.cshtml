@@ -13,6 +13,7 @@
     var role = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
     var isAdmin = User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director");
     var isDirector = User.IsInRole("Owner") || User.IsInRole("Director");
+    var isOwner = User.IsInRole("Owner");
     var firstName = name.Split(' ').FirstOrDefault() ?? name;
     var currentCulture = CultureInfo.CurrentUICulture.Name;
     var isHebrew = currentCulture.StartsWith("he");
@@ -21,6 +22,7 @@
     var enableCompanySwitcher = Configuration.GetValue<bool>("Features:EnableCompanySwitcher", false);
     var isViewingAsManager = ViewAsModeService.IsViewingAsManager();
     var viewAsCompanyName = isViewingAsManager ? ViewAsModeService.GetViewAsCompanyNameAsync().Result : null;
+    var currentPath = HttpContextAccessor?.HttpContext?.Request.Path.Value ?? "";
 }
 <!DOCTYPE html>
 <html lang="@lang" dir="@direction" data-theme="light" class="@(isHebrew ? "hebrew" : "english")">
@@ -37,209 +39,254 @@
     @await RenderSectionAsync("Styles", required: false)
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
+    @* Only load session check on authenticated pages (prevents infinite redirect loop on login page) *@
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        <script defer src="~/js/session-check.js" asp-append-version="true"></script>
+    }
     @if (isHebrew)
     {
         <script defer src="~/js/hebrew-audit.js"></script>
     }
 </head>
 <body>
-<header class="@(isAdmin ? "topbar" : "topbar employee-topbar")">
-    <div class="brand">
-        @if (isAdmin)
-        {
-            <span>@Localizer["ShiftManager"]</span>
-        }
-        else
-        {
-            <div class="employee-brand">
-                <span class="brand-icon">📅</span>
-                <div class="brand-text">
-                    <div class="brand-title">@Localizer["MySchedule"]</div>
-                    <div class="brand-subtitle">@Localizer["WelcomeBack", firstName]</div>
-                </div>
+    <div class="app-shell">
+        @* Sidebar Navigation *@
+        <aside class="app-sidebar">
+            @* Brand *@
+            <div class="app-sidebar-brand brand">
+                <span class="app-sidebar-brand-icon">📊</span>
+                <span>@Localizer["ShiftManager"]</span>
             </div>
-        }
-    </div>
 
-    <nav class="nav @(isAdmin ? "" : "employee-nav")">
-        @if (isAdmin)
-        {
-            <div class="dropdown">
-                <button class="linklike">@Localizer["Calendar"] ▾</button>
-                <div class="menu">
-                    <a href="/Calendar/Month">@Localizer["MonthView"]</a>
-                    <a href="/Calendar/Week">@Localizer["WeekView"]</a>
-                    <a href="/Calendar/Day">@Localizer["DayView"]</a>
-                    <a href="/Calendar/Table">📊 @Localizer["TableView"]</a>
-                </div>
-            </div>
-            <a href="/Requests/Index">@Localizer["Requests"]</a>
-            <div class="dropdown">
-                <button class="linklike">@Localizer["Public"] ▾</button>
-                <div class="menu">
-                    <a href="/Public/Chores">@Localizer["Chores"]</a>
-                    <a href="/Public/OnDuty">@Localizer["OnDuty"]</a>
-                    <a href="/Public/Feedback">@Localizer["Feedback"]</a>
-                </div>
-            </div>
-            <a href="/My/Index">@Localizer["MyShifts"]</a>
-            <a href="/MyTeam/Index">👥 My Team</a>
-            <a href="/My/Profile">@Localizer["MyProfile"]</a>
-            <a href="/My/NotificationCenter" class="notification-nav" style="position: relative;">
-                🔔 @Localizer["Notifications"]
-                @await Component.InvokeAsync("UnreadNotificationCount")
-            </a>
-            @if (isDirector)
-            {
-                <div class="dropdown">
-                    <button class="linklike">@Localizer["Director"] ▾</button>
-                    <div class="menu">
-                        <a href="/Director/NotificationHub">@Localizer["NotificationHub"]</a>
-                        <a href="/Director/CompanyFilter">@Localizer["CompanyFilter"]</a>
-                        <a href="/Director/ViewAsMode">@Localizer["ViewAsManager"]</a>
-                    </div>
-                </div>
-            }
-            <div class="dropdown">
-                <button class="linklike">@Localizer["Admin"] ▾</button>
-                <div class="menu">
-                    @if (User.IsInRole("Owner"))
-                    {
-                        <a href="/Admin/Companies">@Localizer["Companies"]</a>
-                        <a href="/Admin/Directors">@Localizer["Directors"]</a>
-                        <a href="/Diagnostic">🔧 @Localizer["Diagnostic"]</a>
-                    }
-                    <a href="/Admin/Users">@Localizer["Users"]</a>
-                    <a href="/Admin/ShiftTypes">@Localizer["ShiftTypes"]</a>
-                    <a href="/Admin/TimeOff">@Localizer["TimeOffManagement"]</a>
-                    <a href="/Admin/Config">@Localizer["Config"]</a>
-                    <a href="/Admin/Analytics">📊 @Localizer["Analytics"]</a>
-                    <a href="/Admin/AuditLog">📋 @Localizer["AuditLog"]</a>
-                    <a href="/My/ApiKeys">🔑 @Localizer["ApiKeys"]</a>
-                </div>
-            </div>
-        }
-        else
-        {
-            <a href="/My/Index" class="nav-item primary">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-text">@Localizer["MyShifts"]</span>
-            </a>
-            <a href="/Calendar/Month" class="nav-item">
-                <span class="nav-icon">📅</span>
-                <span class="nav-text">@Localizer["Schedule"]</span>
-            </a>
-            <a href="/MyTeam/Index" class="nav-item">
-                <span class="nav-icon">👥</span>
-                <span class="nav-text">My Team</span>
-            </a>
-            <div class="dropdown">
-                <button class="linklike nav-item">
-                    <span class="nav-icon">🌐</span>
-                    <span class="nav-text">@Localizer["Public"] ▾</span>
-                </button>
-                <div class="menu">
-                    <a href="/Public/Chores">@Localizer["Chores"]</a>
-                    <a href="/Public/OnDuty">@Localizer["OnDuty"]</a>
-                    <a href="/Public/Feedback">@Localizer["Feedback"]</a>
-                </div>
-            </div>
-            <a href="/My/Requests" class="nav-item">
-                <span class="nav-icon">📝</span>
-                <span class="nav-text">@Localizer["Requests"]</span>
-            </a>
-            <a href="/My/Profile" class="nav-item">
-                <span class="nav-icon">👤</span>
-                <span class="nav-text">@Localizer["MyProfile"]</span>
-            </a>
-            <a href="/My/ApiKeys" class="nav-item">
-                <span class="nav-icon">🔑</span>
-                <span class="nav-text">@Localizer["ApiKeys"]</span>
-            </a>
-            <a href="/My/NotificationCenter" class="nav-item notification-nav" style="position: relative;">
-                <span class="nav-icon">🔔</span>
-                <span class="nav-text">@Localizer["Notifications"]</span>
-                @await Component.InvokeAsync("UnreadNotificationCount")
-            </a>
-        }
-    </nav>
-
-    <div class="spacer"></div>
-
-    <div class="topbar-actions">
-        @* Multitenancy Phase 3: Company switcher (behind feature flag) *@
-        @if (enableCompanySwitcher && isAdmin)
-        {
-            <div class="company-switcher" style="display: none;">
-                @* TODO Phase 3: Implement company switcher dropdown *@
-                <button class="action-btn" aria-label="Switch Company">
-                    <span>🏢</span>
-                </button>
-            </div>
-        }
-
-        @await Component.InvokeAsync("LanguageToggle")
-
-        <button class="action-btn" id="themeToggle" aria-label="@Localizer["ToggleDarkMode"]">
-            <span class="theme-icon">🌓</span>
-        </button>
-
-        @if (User?.Identity?.IsAuthenticated == true)
-        {
-            <div class="user-menu">
-                @if (!isAdmin)
+            @* Navigation *@
+            <nav class="app-sidebar-nav">
+                @if (isAdmin)
                 {
-                    <div class="user-info">
-                        <div class="user-avatar">@firstName.Substring(0, 1).ToUpper()</div>
-                        <div class="user-details">
-                            <div class="user-name">@name</div>
-                            <div class="user-role">@role</div>
-                        </div>
-                    </div>
+                    @* ✅ PHASE 20: My Calendar Section *@
+                    <div class="nav-section-header">@Localizer["Calendar_MyCalendar"]</div>
+
+                    <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🏠</span>
+                        <span>@Localizer["Home"]</span>
+                    </a>
+                    <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📅</span>
+                        <span>@Localizer["Schedule"]</span>
+                    </a>
+                    <a href="/Requests/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Requests") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📝</span>
+                        <span>@Localizer["Requests"]</span>
+                    </a>
+                    <a href="/Admin/Analytics" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Analytics") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📊</span>
+                        <span>@Localizer["Analytics"]</span>
+                    </a>
+
+                    @* Phase 8.2.2: Show different People links based on role *@
+                    @if (User.IsInRole("Manager"))
+                    {
+                        @* Managers see "My Team" (their own team) *@
+                        <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👥</span>
+                            <span>@Localizer["MyTeam"]</span>
+                        </a>
+                    }
+                    else
+                    {
+                        @* Owners and Directors see "People" (all users) *@
+                        <a href="/Admin/Users" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Users") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👥</span>
+                            <span>@Localizer["People"]</span>
+                        </a>
+                    }
+
+                    @if (isOwner)
+                    {
+                        <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">🏢</span>
+                            <span>@Localizer["Companies"]</span>
+                        </a>
+                    }
+
+                    <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/ShiftTypes") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">⚙️</span>
+                        <span>@Localizer["Settings"]</span>
+                    </a>
+
+                    @* Owner Administration Panel *@
+                    @if (isOwner)
+                    {
+                        <div class="nav-section-header">🔧 @Localizer["Owner_AdminPanel"]</div>
+                        <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">🔧</span>
+                            <span>@Localizer["Owner_AdminPanel"]</span>
+                        </a>
+                    }
+
+                    @* ✅ PHASE 20: Management Section *@
+                    <div class="nav-section-header">⚙️ @Localizer["Calendar_Management"]</div>
+
+                    <a href="/Calendar/Table" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Table") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📊</span>
+                        <span>@Localizer["Calendar_ShiftsManagement"]</span>
+                    </a>
+                    <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🗂️</span>
+                        <span>@Localizer["Calendar_ChoresManagement"]</span>
+                    </a>
+                    <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🎯</span>
+                        <span>@Localizer["Calendar_OnDutyManagement"]</span>
+                    </a>
                 }
                 else
                 {
-                    <span class="admin-badge">@name (@role)</span>
+                    @* Employee/Trainee Navigation *@
+                    <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") || currentPath.StartsWith("/My/Index") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🏠</span>
+                        <span>@Localizer["Home"]</span>
+                    </a>
+                    <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📅</span>
+                        <span>@Localizer["Schedule"]</span>
+                    </a>
+                    <a href="/My/Requests" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Requests") || currentPath.StartsWith("/Requests") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📝</span>
+                        <span>@Localizer["Requests"]</span>
+                    </a>
+                    <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">👥</span>
+                        <span>@Localizer["MyTeam"]</span>
+                    </a>
+
+                    @* Divider *@
+                    <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+
+                    <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🗂️</span>
+                        <span>@Localizer["Chores"]</span>
+                    </a>
+                    <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🎯</span>
+                        <span>@Localizer["OnDuty"]</span>
+                    </a>
+                    <a href="/My/Profile" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Profile") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">👤</span>
+                        <span>@Localizer["MyProfile"]</span>
+                    </a>
+                    <a href="/My/Settings" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Settings") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">⚙️</span>
+                        <span>@Localizer["My_Settings"]</span>
+                    </a>
                 }
-                <form method="post" asp-page="/Auth/Logout" style="display:inline">
-                    @Html.AntiForgeryToken()
-                    <button class="logout-btn" type="submit">
-                        <span class="logout-icon">🚪</span>
-                        <span class="logout-text">@Localizer["Logout"]</span>
-                    </button>
-                </form>
-            </div>
-        }
-    </div>
-</header>
+            </nav>
 
-@if (isViewingAsManager && viewAsCompanyName != null)
-{
-    <div style="background: var(--warning); color: #000; padding: 0.75rem 1rem; text-align: center; font-weight: 600; border-bottom: 2px solid #d97706;">
-        ⚠️ Viewing as Manager of <strong>@viewAsCompanyName</strong> —
-        <a href="/Director/ViewAsMode" style="color: #000; text-decoration: underline; margin-left: 1rem;">Exit View Mode</a>
-    </div>
-}
+            @* Sidebar Footer *@
+            <div class="app-sidebar-footer">
+                @if (User?.Identity?.IsAuthenticated == true)
+                {
+                    <div class="user-menu">
+                        <div class="user-avatar">@firstName.Substring(0, 1).ToUpper()</div>
+                        <div class="user-details">
+                            <div class="user-name">@firstName</div>
+                            <div class="user-role">@role</div>
+                        </div>
+                    </div>
 
-@if (!isAdmin)
-{
-    <div class="employee-welcome">
-        <div class="container">
-            <div class="welcome-content">
-                <h1 class="welcome-title">@Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]</h1>
-                <p class="welcome-subtitle">@Localizer["ScheduleSubtitle"]</p>
+                    @* ✅ PHASE 18: Ctrl+K tooltip for command palette discovery *@
+                    <div class="sidebar-footer-shortcut" title="@Localizer["Sidebar_CtrlKTooltip"]">
+                        <span class="shortcut-icon">⌨️</span>
+                        <span class="shortcut-text">@Localizer["Sidebar_CtrlKLabel"]</span>
+                    </div>
+                }
             </div>
-            <div class="quick-stats">
-                <!-- Quick stats will be populated by individual pages -->
+        </aside>
+
+        @* Main Content Area *@
+        <div class="app-main">
+            @* Header *@
+            <header class="app-header">
+                <div class="app-header-main">
+                    <div class="app-header-left">
+                        <h1 class="page-title">@ViewData["Title"]</h1>
+                        @* Breadcrumbs will be rendered by individual pages here *@
+                    </div>
+
+                    <div class="app-header-right">
+                        @* Notifications *@
+                        <a href="/My/NotificationCenter" class="action-btn" style="position: relative;">
+                            <span>🔔</span>
+                            @await Component.InvokeAsync("UnreadNotificationCount")
+                        </a>
+
+                        @* Language Toggle *@
+                        @await Component.InvokeAsync("LanguageToggle")
+
+                        @* Theme Toggle *@
+                        <button class="action-btn" id="themeToggle" aria-label="@Localizer["ToggleDarkMode"]">
+                            <span>🌓</span>
+                        </button>
+
+                        @* Logout *@
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <form method="post" asp-page="/Auth/Logout" style="display:inline; margin: 0;">
+                                @Html.AntiForgeryToken()
+                                <button class="action-btn" type="submit" style="background: var(--danger); color: white;">
+                                    <span>🚪</span>
+                                    <span>@Localizer["Logout"]</span>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </header>
+
+            @* View As Manager Warning *@
+            @if (isViewingAsManager && viewAsCompanyName != null)
+            {
+                <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid #d97706;">
+                    ⚠️ Viewing as Manager of <strong>@viewAsCompanyName</strong> —
+                    <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-left: 1rem;">Exit View Mode</a>
+                </div>
+            }
+
+            @* Employee Welcome (Optional - can be moved to Home page) *@
+            @if (!isAdmin && currentPath.StartsWith("/Home"))
+            {
+                <div class="employee-welcome" style="background: var(--surface-soft); padding: 2rem 1.5rem; border-bottom: 1px solid var(--border);">
+                    <div class="welcome-content">
+                        <h2 class="text-display" style="margin: 0 0 0.5rem 0;">
+                            @Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]
+                        </h2>
+                        <p class="text-subtle" style="margin: 0;">@Localizer["ScheduleSubtitle"]</p>
+                    </div>
+                </div>
+            }
+
+            @* Main Content *@
+            <main class="app-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    @* Command Palette *@
+    <div id="commandPalette" class="command-palette" style="display: none;">
+        <div class="command-palette-backdrop" onclick="closeCommandPalette()"></div>
+        <div class="command-palette-content">
+            <div class="command-palette-search">
+                <span class="command-palette-icon">🔍</span>
+                <input type="text" id="commandPaletteInput" placeholder="@Localizer["CommandPaletteSearch"]" autocomplete="off" />
+                <span class="command-palette-hint">Ctrl+K</span>
+            </div>
+            <div id="commandPaletteResults" class="command-palette-results">
+                @* Results will be populated by JavaScript *@
             </div>
         </div>
     </div>
-}
 
-<main class="@(isAdmin ? "container" : "container employee-container")">
-    @RenderBody()
-</main>
-
-@await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

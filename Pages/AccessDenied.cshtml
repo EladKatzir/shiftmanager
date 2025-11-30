@@ -20,12 +20,10 @@
     <title>Access Denied - Shift Manager</title>
     <link rel="stylesheet" href="~/css/site.css" />
     <script>
+        // Phase 8.5: Removed accessDenied=true parameter to prevent cascade redirects
         // Automatically redirect after 2 seconds
         setTimeout(() => {
-            const returnUrl = '@Model.ReturnUrl';
-            // Properly append query parameter based on whether URL already has parameters
-            const separator = returnUrl.includes('?') ? '&' : '?';
-            window.location.href = returnUrl + separator + 'accessDenied=true';
+            window.location.href = '@Model.ReturnUrl';
         }, 2000);
     </script>
 </head>

@@ -6,6 +6,17 @@
 @{
     Layout = "_Layout";
 }
+
+@* ✅ PHASE 18: Show JavaScript alert if user was redirected due to auth requirement *@
+@if (Model.ShowAuthPrompt)
+{
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            alert(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseSignInToContinue"].Value)));
+        });
+    </script>
+}
+
 <div class="card" style="max-width:420px; margin:auto">
     <h2>@Localizer["Login"]</h2>
     @if (!string.IsNullOrEmpty(Model.Error))
@@ -25,10 +36,11 @@
         </div>
 
         <button class="btn btn-primary" type="submit">@Localizer["Login"]</button>
+
+        @* ✅ SUB-PHASE 18.14 REVISED: Request access button below login *@
+        <a href="/Auth/Signup" class="btn btn-secondary" style="margin-top: 0.5rem; text-align: center; width: 100%; display: block;">
+            @Localizer["RequestAccess"]
+        </a>
     </div>
 </form>
-
-    <div class="small" style="margin-top:1rem; text-align:center">
-        Don't have an account? <a href="/Auth/Signup">Request access here</a>
-    </div>
 </div>

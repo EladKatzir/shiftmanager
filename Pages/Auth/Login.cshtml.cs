@@ -29,8 +29,18 @@ public class LoginModel : PageModel
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string Password { get; set; } = string.Empty;
     public string? Error { get; set; }
+    public bool ShowAuthPrompt { get; set; }
 
-    public void OnGet() { }
+    public void OnGet(string? reason = null)
+    {
+        // ✅ PHASE 18: Show auth required prompt if user was redirected due to unauthorized access
+        ShowAuthPrompt = reason == "authRequired";
+
+        // ✅ SUB-PHASE 18.14: Prevent browser caching to ensure link renders correctly
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+        Response.Headers["Pragma"] = "no-cache";
+        Response.Headers["Expires"] = "0";
+    }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
@@ -96,19 +106,19 @@ public class LoginModel : PageModel
                 {
                     user.FailedLoginAttempts++;
 
-                    // Lock account after 5 failed attempts
-                    if (user.FailedLoginAttempts >= 5)
+                    // Lock account after 10 failed attempts
+                    if (user.FailedLoginAttempts >= 10)
                     {
-                        user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+                        user.LockoutEnd = DateTime.UtcNow.AddMinutes(3);
                         await _db.SaveChangesAsync();
 
                         _logger.LogWarning("Account locked for {Email} after {Attempts} failed attempts", Email, user.FailedLoginAttempts);
-                        Error = "Account has been locked due to multiple failed login attempts. Please try again in 15 minutes.";
+                        Error = "Account has been locked due to multiple failed login attempts. Please try again in 3 minutes.";
                         return Page();
                     }
 
                     await _db.SaveChangesAsync();
-                    _logger.LogWarning("Login failed for {Email} (attempt {Attempt}/5)", Email, user.FailedLoginAttempts);
+                    _logger.LogWarning("Login failed for {Email} (attempt {Attempt}/10)", Email, user.FailedLoginAttempts);
                 }
                 else
                 {
@@ -142,7 +152,8 @@ public class LoginModel : PageModel
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            return RedirectToPage("/Calendar/Month");
+            // ✅ PHASE 18: Redirect to Home/Index dashboard for all users after login
+            return RedirectToPage("/Home/Index");
         }
         catch (Exception ex)
         {

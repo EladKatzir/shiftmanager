@@ -13,6 +13,7 @@ public interface IAuditLogService
     Task LogAsync(string action, string entityType, int? entityId, string description, string? details = null);
     Task LogUserActionAsync(int userId, string action, string entityType, int? entityId, string description, string? details = null);
     Task LogSystemActionAsync(string action, string entityType, int? entityId, string description, string? details = null);
+    Task<List<AuditLog>> GetRecentLogsAsync(int count = 10);
 }
 
 /// <summary>
@@ -148,6 +149,26 @@ public class AuditLogService : IAuditLogService
         {
             _logger.LogError(ex, "Error logging system action {Action}", action);
             // Don't throw - audit logging should never break the main operation
+        }
+    }
+
+    /// <summary>
+    /// Get recent audit logs for dashboard display
+    /// </summary>
+    public async Task<List<AuditLog>> GetRecentLogsAsync(int count = 10)
+    {
+        try
+        {
+            return await _db.AuditLogs
+                .OrderByDescending(log => log.Timestamp)
+                .Take(count)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving recent audit logs");
+            return new List<AuditLog>();
         }
     }
 

@@ -64,12 +64,23 @@ public class ApiRequestLoggingMiddleware
         {
             stopwatch.Stop();
 
+            // Capture values from HttpContext before it's disposed
+            var apiKey = context.Items["ApiKey"] as ApiKey;
+            var method = context.Request.Method;
+            var path = context.Request.Path.ToString();
+            var queryString = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : null;
+            var statusCode = context.Response.StatusCode;
+            var ipAddress = GetClientIpAddress(context);
+            var userAgent = context.Request.Headers["User-Agent"].FirstOrDefault() ?? "Unknown";
+
             // Log request asynchronously (fire-and-forget)
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await LogRequestAsync(scopeFactory, context, stopwatch.ElapsedMilliseconds, correlationId, caughtException);
+                    await LogRequestAsync(scopeFactory, apiKey, method, path, queryString,
+                        statusCode, stopwatch.ElapsedMilliseconds, correlationId, ipAddress,
+                        userAgent, caughtException);
                 }
                 catch (Exception ex)
                 {
@@ -81,27 +92,31 @@ public class ApiRequestLoggingMiddleware
 
     private async Task LogRequestAsync(
         IServiceScopeFactory scopeFactory,
-        HttpContext context,
+        ApiKey? apiKey,
+        string method,
+        string path,
+        string? queryString,
+        int statusCode,
         long durationMs,
         string correlationId,
+        string ipAddress,
+        string userAgent,
         Exception? exception)
     {
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var apiKey = context.Items["ApiKey"] as ApiKey;
-
         var log = new ApiRequestLog
         {
             ApiKeyId = apiKey?.Id,
             CompanyId = apiKey?.CompanyId,
-            Method = context.Request.Method,
-            Path = context.Request.Path,
-            QueryString = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : null,
-            StatusCode = context.Response.StatusCode,
+            Method = method,
+            Path = path,
+            QueryString = queryString,
+            StatusCode = statusCode,
             DurationMs = (int)durationMs,
-            IpAddress = GetClientIpAddress(context),
-            UserAgent = context.Request.Headers["User-Agent"].FirstOrDefault() ?? "Unknown",
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
             CorrelationId = correlationId,
             ErrorMessage = exception?.Message,
             Timestamp = DateTime.UtcNow

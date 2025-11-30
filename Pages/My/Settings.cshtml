@@ -1,0 +1,550 @@
+@page
+@model ShiftManager.Pages.My.SettingsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["My_Settings"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 76, 175, 80), 0.3);
+        }
+
+        .alert-error {
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        .alert-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .card-title-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+
+        .form-help-text {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-top: 0.375rem;
+        }
+
+        /* Checkbox Group */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .checkbox-item:hover {
+            background: var(--hover-bg);
+            border-color: var(--primary);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+            margin-top: 0.125rem;
+            flex-shrink: 0;
+        }
+
+        .checkbox-label {
+            flex: 1;
+        }
+
+        .checkbox-title {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .checkbox-description {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: var(--primary-soft);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .toggle-info {
+            flex: 1;
+        }
+
+        .toggle-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .toggle-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 3.5rem;
+            height: 2rem;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--muted);
+            border-radius: 2rem;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 1.5rem;
+            width: 1.5rem;
+            left: 0.25rem;
+            bottom: 0.25rem;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(1.5rem);
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            border-left: 3px solid var(--primary);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .info-banner-icon {
+            font-size: 1.125rem;
+            line-height: 1;
+            margin-top: 0.125rem;
+        }
+
+        /* Action Buttons */
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-hover);
+        }
+
+        /* Time Input Enhancement */
+        input[type="time"] {
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">⚙️ @Localizer["My_Settings"]</h1>
+    <p class="page-subtitle">@Localizer["My_Settings_Subtitle"]</p>
+</div>
+
+<!-- Success/Error Messages -->
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">
+        <span class="alert-icon">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-error">
+        <span class="alert-icon">✕</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+<!-- Settings Form -->
+<form method="post">
+    <!-- Daily Digest Notifications -->
+    <div class="card">
+        <h2 class="card-title">
+            <span class="card-title-icon">📬</span>
+            <span>@Localizer["Settings_DailyDigest"]</span>
+        </h2>
+
+        <!-- Info Banner -->
+        <div class="info-banner">
+            <span class="info-banner-icon">ℹ️</span>
+            <div>
+                <strong>@Localizer["Settings_DailyDigest_InfoTitle"]</strong>
+                <p style="margin: 0.25rem 0 0 0;">@Localizer["Settings_DailyDigest_InfoDesc"]</p>
+            </div>
+        </div>
+
+        <!-- Enable/Disable Toggle -->
+        <div class="toggle-container">
+            <div class="toggle-info">
+                <div class="toggle-title">@Localizer["Settings_ReceiveDailyDigest"]</div>
+                <div class="toggle-subtitle">@Localizer["Settings_ReceiveDailyDigest_Desc"]</div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" asp-for="ReceiveDailyDigest" />
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <!-- Preferred Time -->
+        <div class="form-group">
+            <label class="form-label" asp-for="PreferredTime">
+                🕐 @Localizer["Settings_PreferredTime"]
+            </label>
+            <input type="time" class="form-input" asp-for="PreferredTime" style="max-width: 200px;" />
+            <div class="form-help-text">@Localizer["Settings_PreferredTime_Help"]</div>
+        </div>
+
+        <!-- Content Preferences -->
+        <div class="form-group">
+            <label class="form-label">@Localizer["Settings_IncludeContent"]</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="IncludeUpcomingShifts" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">📅 @Localizer["Settings_IncludeShifts"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_IncludeShifts_Desc"]</div>
+                    </div>
+                </label>
+
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="IncludePendingRequests" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">⏳ @Localizer["Settings_IncludeRequests"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_IncludeRequests_Desc"]</div>
+                    </div>
+                </label>
+
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="IncludeChores" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">🧹 @Localizer["Settings_IncludeChores"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_IncludeChores_Desc"]</div>
+                    </div>
+                </label>
+
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="IncludeOnDuty" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">🎖️ @Localizer["Settings_IncludeOnDuty"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_IncludeOnDuty_Desc"]</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 6 Extension: Day-Before Reminders -->
+    <div class="card">
+        <h2 class="card-title">
+            <span class="card-title-icon">⏰</span>
+            <span>@Localizer["Settings_DayBeforeReminders"]</span>
+        </h2>
+
+        <!-- Info Banner -->
+        <div class="info-banner">
+            <span class="info-banner-icon">ℹ️</span>
+            <div>
+                <strong>@Localizer["Settings_DayBeforeReminders_InfoTitle"]</strong>
+                <p style="margin: 0.25rem 0 0 0;">@Localizer["Settings_DayBeforeReminders_InfoDesc"]</p>
+            </div>
+        </div>
+
+        <!-- Reminder Options -->
+        <div class="form-group">
+            <div class="checkbox-group">
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="RemindBeforeShifts" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">📅 @Localizer["Settings_RemindBeforeShifts"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_RemindBeforeShifts_Desc"]</div>
+                    </div>
+                </label>
+
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="RemindBeforeChores" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">🧹 @Localizer["Settings_RemindBeforeChores"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_RemindBeforeChores_Desc"]</div>
+                    </div>
+                </label>
+
+                <label class="checkbox-item">
+                    <input type="checkbox" asp-for="RemindBeforeOnDuty" />
+                    <div class="checkbox-label">
+                        <div class="checkbox-title">👮 @Localizer["Settings_RemindBeforeOnDuty"]</div>
+                        <div class="checkbox-description">@Localizer["Settings_RemindBeforeOnDuty_Desc"]</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 6 Extension: OnDuty Role Subscriptions -->
+    <div class="card">
+        <h2 class="card-title">
+            <span class="card-title-icon">📋</span>
+            <span>@Localizer["Settings_OnDutySubscriptions"]</span>
+        </h2>
+
+        <!-- Info Banner -->
+        <div class="info-banner">
+            <span class="info-banner-icon">ℹ️</span>
+            <div>
+                <strong>@Localizer["Settings_OnDutySubscriptions_InfoTitle"]</strong>
+                <p style="margin: 0.25rem 0 0 0;">@Localizer["Settings_OnDutySubscriptions_InfoDesc"]</p>
+            </div>
+        </div>
+
+        <!-- On-Duty Type Subscriptions -->
+        <div class="form-group">
+            <label class="form-label">@Localizer["Settings_SelectOnDutyRoles"]</label>
+            @if (Model.AvailableOnDutyTypes.Any())
+            {
+                <div class="checkbox-group">
+                    @for (int i = 0; i < Model.AvailableOnDutyTypes.Count; i++)
+                    {
+                        var typeOption = Model.AvailableOnDutyTypes[i];
+                        <label class="checkbox-item">
+                            <input type="checkbox"
+                                   name="SelectedOnDutyRoleTypes"
+                                   value="@typeOption.TypeValue"
+                                   @(Model.SelectedOnDutyRoleTypes.Contains(typeOption.TypeValue) ? "checked" : "") />
+                            <div class="checkbox-label">
+                                <div class="checkbox-title">@typeOption.DisplayName</div>
+                            </div>
+                        </label>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="form-help-text">@Localizer["Settings_NoOnDutyTypes"]</p>
+            }
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            <span>💾</span>
+            <span>@Localizer["SaveSettings"]</span>
+        </button>
+        <a href="/My" class="btn btn-secondary">
+            <span>✕</span>
+            <span>@Localizer["Cancel"]</span>
+        </a>
+    </div>
+</form>

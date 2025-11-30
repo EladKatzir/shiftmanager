@@ -22,6 +22,14 @@
     new BreadcrumbItem { Label = Localizer["OnDuty"], IsActive = true }
 })
 
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">@Localizer["OnDuty"]</h1>
+        <p class="page-subtitle">@Localizer["ManageOnDutyRotationsAndAssignments"]</p>
+    </div>
+</div>
+
 <style>
 .onduty-calendar {
     max-width: 1400px;
@@ -410,8 +418,15 @@
                 <label class="form-label">@Localizer["Type"]</label>
                 <select name="OnDutyType" class="form-select" required>
                     <option value="">@Localizer["SelectType"]</option>
+                    @* ✅ PHASE 18: Show default OnDuty types (from enum) *@
                     <option value="@((int)OnDutyType.Hakam)">🛡️ @Localizer["OnDutyHakam"]</option>
                     <option value="@((int)OnDutyType.Lead)">⭐ @Localizer["OnDutyLead"]</option>
+                    @* ✅ PHASE 18: Show custom OnDuty types (from database) *@
+                    @foreach (var customType in Model.CustomOnDutyTypes)
+                    {
+                        var displayName = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("he") ? customType.NameHe : customType.NameEn;
+                        <option value="@customType.TypeValue">@customType.Icon @displayName</option>
+                    }
                 </select>
             </div>
             <div class="form-group">

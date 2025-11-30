@@ -52,8 +52,15 @@ public enum TimeOffType
     After = 1      // Half day: StartDate 16:00 to StartDate+1 13:00
 }
 
+/// <summary>
+/// "Day Shift" types (user-facing term: "סוגי משמרות יומיות" / "Day Shift Types").
+///
+/// TERMINOLOGY NOTE: Enum named "OnDutyType" for historical reasons.
+/// In the UI, these appear as types of "Day Shifts".
+/// See TERMINOLOGY.md for complete terminology mapping.
+/// </summary>
 public enum OnDutyType
 {
-    Hakam = 0,  // חק"מכו - On-Duty Hakam
-    Lead = 1    // מובילתו - On-Duty Lead
+    Hakam = 0,  // חק"מכו - Day Shift: Hakam
+    Lead = 1    // מובילתו - Day Shift: Lead
 }

@@ -14,64 +14,398 @@
     new BreadcrumbItem { Label = Localizer["Admin"], IsActive = true }
 })
 
-<h2>@Localizer["UserManagement"]</h2>
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
 
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .alert-error {
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        /* Section Card */
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+        }
+
+        /* Filters */
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            align-items: end;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.375rem;
+        }
+
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
+        }
+
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        /* Batch Selection Bar */
+        .batch-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.875rem 1.25rem;
+            background: var(--primary-bg);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .batch-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .batch-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .batch-count {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table thead {
+            background: var(--surface-soft);
+        }
+
+        .data-table th {
+            padding: 0.875rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 0.875rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--surface-soft);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+            background: var(--surface-soft);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            background: var(--surface-elevated);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .btn-sm {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Form Elements */
+        .form-input {
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            min-width: 0;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            background: var(--surface-soft);
+            border-left: 4px solid var(--danger);
+            border-radius: 8px;
+        }
+
+        .warning-title {
+            color: var(--danger);
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-text {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            line-height: 1.6;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-approved {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-rejected {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.8125rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.625rem 0.5rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .batch-bar {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: stretch;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">@Localizer["UserManagement"]</h1>
+    <p class="page-subtitle">@Localizer["ManageUsersJoinRequestsAndPermissions"]</p>
+</div>
+
+<!-- Success/Error Messages -->
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
-        ✓ @TempData["SuccessMessage"]
+    <div class="alert alert-success">
+        <span style="font-size: 1.25rem;">✓</span>
+        <span>@TempData["SuccessMessage"]</span>
     </div>
 }
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
-        ✗ @TempData["ErrorMessage"]
+    <div class="alert alert-error">
+        <span style="font-size: 1.25rem;">✗</span>
+        <span>@TempData["ErrorMessage"]</span>
     </div>
 }
 
 <!-- Join Requests Section -->
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["JoinRequests"]</h3>
+<div class="section-card">
+    <h2 class="section-title">@Localizer["JoinRequests"]</h2>
 
     <!-- Filters -->
-    <form method="get" style="margin-bottom: 1.5rem;">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:.75rem; align-items:end">
-            <label>
-                @Localizer["Status"]<br />
-                <select class="input" name="FilterStatus" onchange="this.form.submit()">
+    <form method="get">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label>@Localizer["Status"]</label>
+                <select class="filter-select" name="FilterStatus" onchange="this.form.submit()">
                     <option value="0" selected="@(Model.FilterStatus == JoinRequestStatus.Pending)">@Localizer["Pending"]</option>
                     <option value="1" selected="@(Model.FilterStatus == JoinRequestStatus.Approved)">@Localizer["Approved"]</option>
                     <option value="2" selected="@(Model.FilterStatus == JoinRequestStatus.Rejected)">@Localizer["Rejected"]</option>
                 </select>
-            </label>
+            </div>
 
-            <label>
-                @Localizer["Company"]<br />
-                <select class="input" name="FilterCompanyId" onchange="this.form.submit()">
+            <div class="filter-group">
+                <label>@Localizer["Company"]</label>
+                <select class="filter-select" name="FilterCompanyId" onchange="this.form.submit()">
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
                         <option value="@company.Id" selected="@(Model.FilterCompanyId == company.Id)">@company.Name</option>
                     }
                 </select>
-            </label>
+            </div>
 
-            <label>
-                @Localizer["Role"]<br />
-                <select class="input" name="FilterRole" onchange="this.form.submit()">
+            <div class="filter-group">
+                <label>@Localizer["Role"]</label>
+                <select class="filter-select" name="FilterRole" onchange="this.form.submit()">
                     <option value="">@Localizer["AllRoles"]</option>
                     <option value="2" selected="@(Model.FilterRole == UserRole.Employee)">@Localizer["Employee"]</option>
                     <option value="1" selected="@(Model.FilterRole == UserRole.Manager)">@Localizer["Manager"]</option>
                     <option value="3" selected="@(Model.FilterRole == UserRole.Director)">@Localizer["Director"]</option>
                     <option value="0" selected="@(Model.FilterRole == UserRole.Owner)">@Localizer["Owner"]</option>
                     <option value="4" selected="@(Model.FilterRole == UserRole.Trainee)">@Localizer["Trainee"]</option>
+                    @* ✅ PHASE 18: Add Assigner role filter option *@
+                    <option value="5" selected="@(Model.FilterRole == UserRole.Assigner)">@Localizer["Assigner"]</option>
                 </select>
-            </label>
+            </div>
 
             @if (Model.FilterCompanyId.HasValue || Model.FilterRole.HasValue || Model.FilterStatus != JoinRequestStatus.Pending)
             {
-                <a href="/Admin/Users" class="btn btn-ghost" style="align-self: end;">@Localizer["ClearFilters"]</a>
+                <div class="filter-group" style="display: flex; align-items: end;">
+                    <a href="/Admin/Users" class="btn">@Localizer["ClearFilters"]</a>
+                </div>
             }
         </div>
     </form>
@@ -80,14 +414,14 @@
     {
         @if (Model.FilterStatus == JoinRequestStatus.Pending)
         {
-            <!-- Batch approval form for pending requests -->
-            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--info, #e7f3ff); border-radius: 0.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <!-- Batch Approval Bar -->
+            <div class="batch-bar">
+                <div class="batch-bar-left">
+                    <label class="batch-checkbox-label">
                         <input type="checkbox" id="selectAllRequests" onclick="toggleAllRequests(this)" />
                         <strong>@Localizer["SelectAll"]</strong>
                     </label>
-                    <span id="selectedCount" style="color: var(--muted); font-size: 0.9rem;"></span>
+                    <span id="selectedCount" class="batch-count"></span>
                 </div>
                 <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchApprovalForm" style="margin: 0;">
                     @Html.AntiForgeryToken()
@@ -100,12 +434,10 @@
 
             <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchDataForm">
                 @Html.AntiForgeryToken()
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width:1%">
-                                <span style="visibility: hidden;">☑</span>
-                            </th>
+                            <th style="width:1%"></th>
                             <th>@Localizer["Submitted"]</th>
                             <th>@Localizer["Name"]</th>
                             <th>@Localizer["Email"]</th>
@@ -127,11 +459,9 @@
                             <td>@request.DisplayName</td>
                             <td>@request.Email</td>
                             <td>@request.CompanyName</td>
+                            <td style="color: var(--text-secondary);">@request.RequestedRole</td>
                             <td>
-                                <span style="color: var(--muted);">@request.RequestedRole</span>
-                            </td>
-                            <td>
-                                <select name="RequestRoles[@request.Id]" class="input" style="padding: 0.3rem; font-size: 0.9rem; min-width: 120px;">
+                                <select name="RequestRoles[@request.Id]" class="form-input" style="min-width: 120px;">
                                     @foreach (var role in Model.AssignableRoles)
                                     {
                                         <option value="@((int)role)" selected="@(role.ToString() == request.RequestedRole)">
@@ -141,17 +471,13 @@
                                 </select>
                             </td>
                             <td>
-                                <div style="display: flex; gap: 0.5rem; white-space: nowrap">
-                                    <button class="btn btn-success single-approve-btn" type="button"
-                                            data-request-id="@request.Id"
-                                            onclick="approveSingleRequest(@request.Id)"
-                                            style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                <div class="btn-group">
+                                    <button class="btn btn-success btn-sm" type="button"
+                                            onclick="approveSingleRequest(@request.Id)">
                                         ✓
                                     </button>
-                                    <button class="btn btn-danger single-reject-btn" type="button"
-                                            data-request-id="@request.Id"
-                                            onclick="rejectSingleRequest(@request.Id, '@request.DisplayName')"
-                                            style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                    <button class="btn btn-danger btn-sm" type="button"
+                                            onclick="rejectSingleRequest(@request.Id, '@request.DisplayName')">
                                         ✗
                                     </button>
                                 </div>
@@ -161,92 +487,11 @@
                     </tbody>
                 </table>
             </form>
-
-            <script>
-                const selectedText = '@Localizer["Selected"]';
-
-                function toggleAllRequests(selectAllCheckbox) {
-                    const checkboxes = document.querySelectorAll('.request-checkbox');
-                    checkboxes.forEach(cb => {
-                        cb.checked = selectAllCheckbox.checked;
-                    });
-                    updateSelectedCount();
-                }
-
-                function updateSelectedCount() {
-                    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
-                    const count = checkboxes.length;
-                    const countElement = document.getElementById('selectedCount');
-                    const batchApproveBtn = document.getElementById('batchApproveBtn');
-                    const selectAllCheckbox = document.getElementById('selectAllRequests');
-
-                    countElement.textContent = `(${count} ${selectedText})`;
-                    batchApproveBtn.disabled = count === 0;
-
-                    // Update select all checkbox state
-                    const totalCheckboxes = document.querySelectorAll('.request-checkbox').length;
-                    selectAllCheckbox.checked = count > 0 && count === totalCheckboxes;
-                    selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
-                }
-
-                function approveSingleRequest(requestId) {
-                    const form = document.createElement('form');
-                    form.method = 'post';
-                    form.action = '/Admin/Users?handler=ApproveJoinRequest';
-
-                    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode();
-                    const idInput = document.createElement('input');
-                    idInput.type = 'hidden';
-                    idInput.name = 'id';
-                    idInput.value = requestId;
-
-                    form.appendChild(tokenInput);
-                    form.appendChild(idInput);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-
-                function rejectSingleRequest(requestId, displayName) {
-                    const confirmMsg = '@Localizer["ConfirmRejectJoinRequest"]'.replace('{0}', displayName);
-                    if (!confirm(confirmMsg)) return;
-
-                    const form = document.createElement('form');
-                    form.method = 'post';
-                    form.action = '/Admin/Users?handler=RejectJoinRequest';
-
-                    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode();
-                    const idInput = document.createElement('input');
-                    idInput.type = 'hidden';
-                    idInput.name = 'id';
-                    idInput.value = requestId;
-
-                    form.appendChild(tokenInput);
-                    form.appendChild(idInput);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-
-                // Sync batch form submission with checkboxes
-                document.getElementById('batchApprovalForm').addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
-                    const batchDataForm = document.getElementById('batchDataForm');
-
-                    // Submit the form that contains the checkboxes
-                    batchDataForm.submit();
-                });
-
-                // Initialize on page load
-                document.addEventListener('DOMContentLoaded', function() {
-                    updateSelectedCount();
-                });
-            </script>
         }
         else
         {
-            <!-- Regular table for approved/rejected requests (non-pending) -->
-            <table>
+            <!-- Non-Pending Requests -->
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>@Localizer["Submitted"]</th>
@@ -269,11 +514,11 @@
                         <td>
                             @if (request.Status == JoinRequestStatus.Approved)
                             {
-                                <span style="color: var(--success, #28a745)">✓ @Localizer["Approved"]</span>
+                                <span class="status-badge status-approved">✓ @Localizer["Approved"]</span>
                             }
                             else
                             {
-                                <span style="color: var(--danger, #dc3545)">✗ @Localizer["Rejected"]</span>
+                                <span class="status-badge status-rejected">✗ @Localizer["Rejected"]</span>
                             }
                         </td>
                     </tr>
@@ -284,18 +529,16 @@
     }
     else
     {
-        <p style="color: var(--muted); text-align: center; padding: 2rem;">
-            @Localizer["NoJoinRequestsFound"]
-        </p>
+        <p class="empty-state">@Localizer["NoJoinRequestsFound"]</p>
     }
 </div>
 
+<!-- Existing Users Section -->
+<div class="section-card">
+    <h2 class="section-title">@Localizer["ExistingUsers"]</h2>
 
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["ExistingUsers"]</h3>
-
-    <!-- Filters for users -->
-    <form method="get" style="margin-bottom: 1.5rem;">
+    <!-- Filters -->
+    <form method="get">
         <input type="hidden" name="FilterStatus" value="@((int)Model.FilterStatus)" />
         @if (Model.FilterCompanyId.HasValue)
         {
@@ -306,39 +549,53 @@
             <input type="hidden" name="FilterRole" value="@((int)Model.FilterRole.Value)" />
         }
 
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:.75rem; align-items:end">
-            <label>
-                @Localizer["Company"]<br />
-                <select class="input" name="UserFilterCompanyId" onchange="this.form.submit()">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label>@Localizer["Company"]</label>
+                <select class="filter-select" name="UserFilterCompanyId" onchange="this.form.submit()">
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
                         <option value="@company.Id" selected="@(Model.UserFilterCompanyId == company.Id)">@company.Name</option>
                     }
                 </select>
-            </label>
+            </div>
 
-            <label>
-                @Localizer["Role"]<br />
-                <select class="input" name="UserFilterRole" onchange="this.form.submit()">
+            <div class="filter-group">
+                <label>@Localizer["Role"]</label>
+                <select class="filter-select" name="UserFilterRole" onchange="this.form.submit()">
                     <option value="">@Localizer["AllRoles"]</option>
                     <option value="2" selected="@(Model.UserFilterRole == UserRole.Employee)">@Localizer["Employee"]</option>
                     <option value="1" selected="@(Model.UserFilterRole == UserRole.Manager)">@Localizer["Manager"]</option>
                     <option value="3" selected="@(Model.UserFilterRole == UserRole.Director)">@Localizer["Director"]</option>
                     <option value="0" selected="@(Model.UserFilterRole == UserRole.Owner)">@Localizer["Owner"]</option>
                     <option value="4" selected="@(Model.UserFilterRole == UserRole.Trainee)">@Localizer["Trainee"]</option>
+                    @* ✅ PHASE 18: Add Assigner role filter option *@
+                    <option value="5" selected="@(Model.UserFilterRole == UserRole.Assigner)">@Localizer["Assigner"]</option>
                 </select>
-            </label>
+            </div>
 
             @if (Model.UserFilterCompanyId.HasValue || Model.UserFilterRole.HasValue)
             {
-                <a href="/Admin/Users" class="btn btn-ghost" style="align-self: end;">@Localizer["ClearUserFilters"]</a>
+                <div class="filter-group" style="display: flex; align-items: end;">
+                    <a href="/Admin/Users" class="btn">@Localizer["ClearUserFilters"]</a>
+                </div>
             }
         </div>
     </form>
 
-    <table>
-        <thead><tr><th>@Localizer["Name"]</th><th>@Localizer["Email"]</th><th>@Localizer["Company"]</th><th>@Localizer["Role"]</th><th>@Localizer["Status"]</th><th style="width:1%">@Localizer["Password"]</th><th style="width:1%">@Localizer["Actions"]</th></tr></thead>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>@Localizer["Name"]</th>
+                <th>@Localizer["Email"]</th>
+                <th>@Localizer["Company"]</th>
+                <th>@Localizer["Role"]</th>
+                <th>@Localizer["Status"]</th>
+                <th style="width:1%">@Localizer["Password"]</th>
+                <th style="width:1%">@Localizer["Actions"]</th>
+            </tr>
+        </thead>
         <tbody>
         @foreach (var u in Model.Users)
         {
@@ -347,44 +604,46 @@
                 <td>@u.Email</td>
                 <td>@u.CompanyName</td>
                 <td>
-                    <form method="post" asp-page-handler="Role" style="display:inline">
+                    <form method="post" asp-page-handler="Role" style="display:inline; margin: 0;">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@u.Id" />
-                    <select class="input" name="role" onchange="this.form.submit()">
+                    <select class="form-input" name="role" onchange="this.form.submit()" style="min-width: 110px;">
                     @foreach (var role in Model.AssignableRoles)
                     {
                         <option value="@role" selected="@(u.Role == role.ToString())">@Localizer[role.ToString()]</option>
                     }
                     </select>
                     </form>
-
                 </td>
                 <td>
-                   <form method="post" asp-page-handler="Toggle" style="display:inline">
+                   <form method="post" asp-page-handler="Toggle" style="display:inline; margin: 0;">
                    @Html.AntiForgeryToken()
                    <input type="hidden" name="id" value="@u.Id" />
-                   <button class="btn">@((u.IsActive) ? Localizer["Active"] : Localizer["Inactive"])</button>
+                   <button class="btn btn-sm">@((u.IsActive) ? Localizer["Active"] : Localizer["Inactive"])</button>
                    </form>
                 </td>
                 <td>
-                    <form method="post" asp-page-handler="ResetPassword" style="display:inline">
+                    <form method="post" asp-page-handler="ResetPassword" style="display:inline; margin: 0;">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@u.Id" />
-                    <input class="input" type="password" name="newPassword" placeholder="new password" minlength="6" />
-                    <button class="btn btn-ghost">@Localizer["Set"]</button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input class="form-input" type="password" name="newPassword" placeholder="@Localizer["NewPassword"]"
+                               minlength="6" style="min-width: 100px;" />
+                        <button class="btn btn-sm">@Localizer["Set"]</button>
+                    </div>
                     </form>
                 </td>
                 <td>
-                    <div style="display: flex; gap: 0.5rem; white-space: nowrap;">
-                        <a href="/Admin/EditProfile?UserId=@u.Id" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                            ✏️ @Localizer["EditProfile"]
+                    <div class="btn-group">
+                        <a href="/Admin/EditProfile?UserId=@u.Id" class="btn btn-sm">
+                            ✏️
                         </a>
-                        <form method="post" asp-page-handler="DeleteUser" style="display:inline"
+                        <form method="post" asp-page-handler="DeleteUser" style="display:inline; margin: 0;"
                               onsubmit="return confirm('@Localizer["ConfirmDeleteUser"]'.replace('{0}', '@u.DisplayName'));">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
-                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                                🗑️ @Localizer["Delete"]
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                🗑️
                             </button>
                         </form>
                     </div>
@@ -394,40 +653,144 @@
         </tbody>
     </table>
 
-    <div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-left: 4px solid var(--danger); border-radius: 0.5rem;">
-        <small style="color: var(--danger); font-weight: 600;">
-            ⚠️ <strong>@Localizer["UserDeletionWarning"]</strong>
-        </small>
-        <br>
-        <small style="color: var(--muted);">
-            @Localizer["DeletingUserWillRemove"]
-            • @Localizer["AllTheirShiftAssignments"]
-            • @Localizer["AllTheirTimeOffRequests"]
-            • @Localizer["AllTheirSwapRequests"]
-            • @Localizer["TheUserAccountItself"]
-            <br><br>
+    <div class="warning-box">
+        <div class="warning-title">
+            ⚠️ @Localizer["UserDeletionWarning"]
+        </div>
+        <div class="warning-text">
+            @Localizer["DeletingUserWillRemove"]:<br/>
+            • @Localizer["AllTheirShiftAssignments"]<br/>
+            • @Localizer["AllTheirTimeOffRequests"]<br/>
+            • @Localizer["AllTheirSwapRequests"]<br/>
+            • @Localizer["TheUserAccountItself"]<br/><br/>
             <strong>@Localizer["ActionCannotBeUndone"]</strong>
-        </small>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["AddUser"]</h3>
-    @if (!string.IsNullOrEmpty(Model.Error)) { <div class="small" style="color:var(--danger)">@Model.Error</div> }
+<!-- Add User Section -->
+<div class="section-card">
+    <h2 class="section-title">@Localizer["AddUser"]</h2>
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-error" style="margin-bottom: 1rem;">
+            <span>✗</span>
+            <span>@Model.Error</span>
+        </div>
+    }
     <form method="post" asp-page-handler="Add">
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap:.5rem; align-items:end">
-            <label>@Localizer["Email"]<br /><input class="input" asp-for="NewEmail" /></label>
-            <label>@Localizer["DisplayName"]<br /><input class="input" asp-for="NewDisplayName" /></label>
-            <label>@Localizer["Role"]<br />
-                <select class="input" asp-for="NewRole">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label>@Localizer["Email"]</label>
+                <input class="form-input" asp-for="NewEmail" type="email" required />
+            </div>
+            <div class="filter-group">
+                <label>@Localizer["DisplayName"]</label>
+                <input class="form-input" asp-for="NewDisplayName" required />
+            </div>
+            <div class="filter-group">
+                <label>@Localizer["Role"]</label>
+                <select class="form-input" asp-for="NewRole">
                     @foreach (var role in Model.AssignableRoles)
                     {
                         <option value="@role">@Localizer[role.ToString()]</option>
                     }
                 </select>
-            </label>
-            <label>@Localizer["Password"]<br /><input class="input" asp-for="NewPassword" type="password" minlength="6" /></label>
-            <button class="btn btn-primary" type="submit">@Localizer["Add"]</button>
+            </div>
+            <div class="filter-group">
+                <label>@Localizer["Password"]</label>
+                <input class="form-input" asp-for="NewPassword" type="password" minlength="6" required />
+            </div>
+            <div class="filter-group" style="display: flex; align-items: end;">
+                <button class="btn btn-primary" type="submit" style="width: 100%;">
+                    <span>+</span>
+                    <span>@Localizer["Add"]</span>
+                </button>
+            </div>
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        const selectedText = '@Localizer["Selected"]';
+
+        function toggleAllRequests(selectAllCheckbox) {
+            const checkboxes = document.querySelectorAll('.request-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+            });
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+            const count = checkboxes.length;
+            const countElement = document.getElementById('selectedCount');
+            const batchApproveBtn = document.getElementById('batchApproveBtn');
+            const selectAllCheckbox = document.getElementById('selectAllRequests');
+
+            countElement.textContent = count > 0 ? `(${count} ${selectedText})` : '';
+            batchApproveBtn.disabled = count === 0;
+
+            // Update select all checkbox state
+            const totalCheckboxes = document.querySelectorAll('.request-checkbox').length;
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = count > 0 && count === totalCheckboxes;
+                selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
+            }
+        }
+
+        function approveSingleRequest(requestId) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/Admin/Users?handler=ApproveJoinRequest';
+
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode();
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'id';
+            idInput.value = requestId;
+
+            form.appendChild(tokenInput);
+            form.appendChild(idInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function rejectSingleRequest(requestId, displayName) {
+            const confirmMsg = '@Localizer["ConfirmRejectJoinRequest"]'.replace('{0}', displayName);
+            if (!confirm(confirmMsg)) return;
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/Admin/Users?handler=RejectJoinRequest';
+
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]').cloneNode();
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'id';
+            idInput.value = requestId;
+
+            form.appendChild(tokenInput);
+            form.appendChild(idInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // Sync batch form submission with checkboxes
+        const batchForm = document.getElementById('batchApprovalForm');
+        if (batchForm) {
+            batchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const batchDataForm = document.getElementById('batchDataForm');
+                batchDataForm.submit();
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSelectedCount();
+        });
+    </script>
+}

@@ -3,9 +3,17 @@ using ShiftManager.Models.Support;
 namespace ShiftManager.Models;
 
 /// <summary>
-/// Configuration for custom OnDuty types per company.
-/// Allows companies to define their own OnDuty types beyond the default Hakam/Lead.
-/// Global table (not company-scoped) since OnDuty itself is global.
+/// Configuration for custom "Day Shift" types (user-facing term: "סוגי משמרות יומיות מותאמות אישית" / "Custom Day Shift Types").
+///
+/// TERMINOLOGY NOTE: Class named "OnDutyTypeConfig" for historical reasons.
+/// In the UI, these define custom types of "Day Shifts" beyond the default Hakam/Lead.
+///
+/// Characteristics:
+/// - Global table (not company-scoped) since Day Shifts themselves are global
+/// - Allows organizations to define custom day shift types beyond Hakam/Lead defaults
+/// - Supports localized names (English and Hebrew)
+///
+/// See TERMINOLOGY.md for complete terminology mapping.
 /// </summary>
 public class OnDutyTypeConfig
 {

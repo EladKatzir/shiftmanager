@@ -57,6 +57,8 @@ public class UsersModel : PageModel
             if (_directorService.CanAssignRole(UserRole.Director)) roles.Add(UserRole.Director);
             if (_directorService.CanAssignRole(UserRole.Owner)) roles.Add(UserRole.Owner);
             if (_directorService.CanAssignRole(UserRole.Trainee)) roles.Add(UserRole.Trainee);
+            // ✅ PHASE 18: Add Assigner role to assignable roles
+            if (_directorService.CanAssignRole(UserRole.Assigner)) roles.Add(UserRole.Assigner);
             return roles;
         }
     }
@@ -1026,23 +1028,25 @@ public class UsersModel : PageModel
         if (currentUserRole == nameof(UserRole.Owner))
             return true;
 
-        // Director can modify Employee, Manager, Director, Trainee (but NOT Owner)
+        // ✅ PHASE 18: Director can modify Employee, Manager, Director, Trainee, Assigner (but NOT Owner)
         if (currentUserRole == nameof(UserRole.Director))
         {
             return targetUserRole == UserRole.Employee
                 || targetUserRole == UserRole.Manager
                 || targetUserRole == UserRole.Director
-                || targetUserRole == UserRole.Trainee;
+                || targetUserRole == UserRole.Trainee
+                || targetUserRole == UserRole.Assigner;
         }
 
-        // Manager can modify Employee and Trainee ONLY (NOT Owner, Director, or other Managers)
+        // ✅ PHASE 18: Manager can modify Employee, Trainee, and Assigner (NOT Owner, Director, or other Managers)
         if (currentUserRole == nameof(UserRole.Manager))
         {
             return targetUserRole == UserRole.Employee
-                || targetUserRole == UserRole.Trainee;
+                || targetUserRole == UserRole.Trainee
+                || targetUserRole == UserRole.Assigner;
         }
 
-        // Employees and Trainees cannot modify anyone
+        // Employees, Trainees, and Assigners cannot modify anyone
         return false;
     }
 }

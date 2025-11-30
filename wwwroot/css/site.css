@@ -1,36 +1,152 @@
+/* ========================================
+   Design System - Color Tokens
+   ======================================== */
+
 :root {
-  --bg: #ffffff;
-  --text: #111111;
-  --muted: #666666;
-  --surface: #f8f9fa;
-  --primary: #1f6feb;
-  --primary-rgb: 31, 111, 235;
-  --danger: #dc3545;
-  --success: #28a745;
-  --focus: #ff9800;
-  --warning: #ff9800;
+  /* Background & Surfaces */
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-soft: #f0f2f8;
+  --surface-elevated: #ffffff;
+  --surface-strong: #0f172a;
+
+  /* Text Colors */
+  --text: #111318;
+  --muted: #6b7280;
+
+  /* Brand & Interactive */
+  --primary: #2563eb;
+  --primary-rgb: 37, 99, 235;
+  --primary-soft: #e0ecff;
+
+  /* Status Colors */
+  --danger: #dc2626;
+  --danger-text: #ffffff;
+  --success: #16a34a;
+  --success-text: #ffffff;
+  --warning: #f59e0b;
   --warning-text: #ffffff;
-  --border: #e0e6ed;
+
+  /* UI Elements */
+  --focus: #ff9800;
+  --border: #e2e8f0;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 :root[data-theme="dark"] {
-  --bg: #0d1117;
-  --text: #e6edf3;
-  --muted: #9aa8b4;
-  --surface: #161b22;
-  --primary: #58a6ff;
-  --danger: #ff6b6b;
-  --success: #4caf50;
-  --focus: #ffd54f;
-  --warning: #ffd54f;
+  /* Background & Surfaces */
+  --bg: #020617;
+  --surface: #0b1120;
+  --surface-soft: #0f1629;
+  --surface-elevated: #0f1629;
+  --surface-strong: #1e293b;
+
+  /* Text Colors */
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+
+  /* Brand & Interactive */
+  --primary: #60a5fa;
+  --primary-rgb: 96, 165, 250;
+  --primary-soft: #1d2736;
+
+  /* Status Colors */
+  --danger: #f87171;
+  --danger-text: #1a1a1a;
+  --success: #4ade80;
+  --success-text: #1a1a1a;
+  --warning: #facc15;
   --warning-text: #1a1a1a;
-  --border: #30363d;
+
+  /* UI Elements */
+  --focus: #ffd54f;
+  --border: #1f2937;
+
+  /* Shadows (more subtle in dark mode) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
 }
 
+/* ========================================
+   Typography Scale
+   ======================================== */
+
+.text-display {
+  font-size: 1.75rem;    /* ~28px */
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-title {
+  font-size: 1.25rem;    /* ~20px */
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.text-body {
+  font-size: 0.9375rem;  /* ~15px */
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.text-subtle {
+  font-size: 0.875rem;   /* ~14px */
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.text-caption {
+  font-size: 0.8125rem;  /* ~13px */
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ========================================
+   Smooth Theme Transitions
+   ======================================== */
+
+html[data-theme],
+body,
+.card,
+.topbar,
+.app-sidebar,
+.app-header,
+.breadcrumb,
+.btn,
+input,
+textarea,
+select,
+.dropdown .menu,
+table,
+th,
+td {
+  transition: background-color 0.15s ease,
+              color 0.15s ease,
+              border-color 0.15s ease,
+              box-shadow 0.15s ease;
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+
 * { box-sizing: border-box; }
+
 body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 0.9375rem;  /* 15px base */
+  line-height: 1.5;
 }
 a { color: var(--primary); text-decoration: none; }
 a:hover, button.linklike:hover { text-decoration: underline; }
@@ -75,9 +191,86 @@ a:hover, button.linklike:hover { text-decoration: underline; }
 
 .container { padding: 1rem; max-width: 1100px; margin: 0 auto; }
 
+/* ========================================
+   Card Component System
+   ======================================== */
+
 .card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: .5rem;
-  padding: 1rem; margin-bottom: 1rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  padding: 0.75rem 1.25rem;
+  margin: -1.25rem -1.25rem 1rem -1.25rem;
+  background-color: var(--surface-soft);
+  border-bottom: 1px solid var(--border);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.card-body {
+  padding: 0;
+}
+
+.card-title {
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--text);
+}
+
+/* Card Status Variants */
+.card--status-success {
+  background-color: var(--success);
+  color: var(--success-text);
+  border-color: var(--success);
+}
+
+.card--status-warning {
+  background-color: var(--warning);
+  color: var(--warning-text);
+  border-color: var(--warning);
+}
+
+.card--status-danger {
+  background-color: var(--danger);
+  color: var(--danger-text);
+  border-color: var(--danger);
+}
+
+/* Card Metric Variant (for analytics) */
+.card--metric {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.card--metric .metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+}
+
+.card--metric .metric-label {
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Card Centered Utility */
+.card--centered {
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 table { width: 100%; border-collapse: collapse; color: var(--text) !important; }
@@ -93,7 +286,296 @@ th { text-align: left; color: var(--text) !important; }
 .btn-ghost { background: transparent; border-color: var(--border); }
 .btn:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-/* Modern Calendar Styles */
+/* ========================================
+   App Layout Structure
+   ======================================== */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.app-sidebar {
+  width: 260px;
+  background: var(--surface-elevated);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.app-sidebar-brand {
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-sidebar-brand-icon {
+  font-size: 1.5rem;
+}
+
+.app-sidebar-nav {
+  flex: 1;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app-sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.app-sidebar-nav-item:hover {
+  background: var(--surface-soft);
+  text-decoration: none;
+}
+
+.app-sidebar-nav-item.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.app-sidebar-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.app-sidebar-nav-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ✅ PHASE 18: Ctrl+K shortcut tooltip */
+.sidebar-footer-shortcut {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-soft);
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: help;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.sidebar-footer-shortcut:hover {
+  background: var(--surface-elevated);
+  border-color: var(--border);
+}
+
+.sidebar-footer-shortcut .shortcut-icon {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.sidebar-footer-shortcut .shortcut-text {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+}
+
+/* Main Content Area */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+.app-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.app-content {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Action Buttons (theme toggle, language, etc) */
+.action-btn {
+  background: rgba(var(--primary-rgb), 0.1);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: rgba(var(--primary-rgb), 0.15);
+}
+
+.action-btn:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* User Menu */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--surface-soft);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-menu:hover {
+  background: var(--surface-strong);
+}
+
+.user-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: var(--text);
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1;
+}
+
+/* Responsive Layout */
+@media (max-width: 1024px) {
+  .app-sidebar {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed;
+    left: -260px;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+
+  .app-sidebar.open {
+    left: 0;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
+}
+
+/* ========================================
+   Modern Calendar Styles
+   ======================================== */
 .calendar-header {
   background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
   border: 1px solid var(--border);
@@ -258,6 +740,184 @@ th { text-align: left; color: var(--text) !important; }
   opacity: 0.8;
 }
 
+/* ========================================
+   Enhanced Past Date Styling
+   ======================================== */
+.calendar-cell.past-date {
+  background: var(--surface);
+  opacity: 0.55;
+  position: relative;
+  filter: grayscale(0.3);
+}
+
+.calendar-cell.past-date::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 12px,
+    rgba(0, 0, 0, 0.04) 12px,
+    rgba(0, 0, 0, 0.04) 24px
+  );
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.calendar-cell.past-date .cell-date {
+  color: var(--muted);
+  opacity: 0.65;
+  position: relative;
+  z-index: 2;
+}
+
+.calendar-cell.past-date .cell-content {
+  position: relative;
+  z-index: 2;
+}
+
+.calendar-cell.past-date:hover {
+  transform: none;
+  box-shadow: none;
+  border-left-color: transparent;
+  cursor: default;
+}
+
+/* Hide quick-add buttons for past dates */
+.calendar-cell.past-date .quick-add-section,
+.calendar-cell.past-date .add-item-btn {
+  display: none !important;
+}
+
+/* Dark mode adjustments for past dates */
+.dark-mode .calendar-cell.past-date {
+  filter: grayscale(0.4);
+}
+
+.dark-mode .calendar-cell.past-date::before {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 12px,
+    rgba(255, 255, 255, 0.04) 12px,
+    rgba(255, 255, 255, 0.04) 24px
+  );
+}
+
+/* ========================================
+   Enhanced Today Styling
+   ======================================== */
+.calendar-cell.today {
+  background: linear-gradient(135deg, var(--primary-soft) 0%, var(--surface) 100%);
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+  position: relative;
+}
+
+.calendar-cell.today::before {
+  content: '●';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: var(--primary);
+  font-size: 0.75rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.calendar-cell.today .cell-date {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ========================================
+   Enhanced Toggle Button (Phase 3B)
+   ======================================== */
+.show-my-items-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.show-items-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.show-items-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.15);
+  transform: translateY(-1px);
+}
+
+.show-items-btn.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.show-items-btn .toggle-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.show-items-btn .toggle-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  text-align: left;
+}
+
+.show-items-btn .toggle-label-primary {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.show-items-btn.active .toggle-label-primary {
+  color: var(--primary);
+}
+
+.show-items-btn .toggle-label-secondary {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+/* Mobile: hide secondary label on small screens */
+@media (max-width: 640px) {
+  .show-items-btn .toggle-label-secondary {
+    display: none;
+  }
+
+  .show-items-btn {
+    padding: 0.625rem 1rem;
+  }
+}
+
 .cell-date {
   font-weight: 700;
   font-size: 1rem;
@@ -275,7 +935,7 @@ th { text-align: left; color: var(--text) !important; }
   color: var(--muted);
 }
 
-/* Modern Shift Line Styling */
+/* Modern Scheduled Shift Line Styling */
 .shift-line {
   display: flex;
   align-items: center;
@@ -315,7 +975,7 @@ th { text-align: left; color: var(--text) !important; }
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Shift-specific colors */
+/* Scheduled Shift Type Colors (Morning, Middle, Noon, Night) */
 .shift-badge.morning {
   background: #FFEB3B;
   color: #333;
@@ -727,7 +1387,7 @@ th { text-align: left; color: var(--text) !important; }
   box-shadow: none;
 }
 
-/* Modern Shift Creation UI */
+/* Modern Scheduled Shift Creation UI */
 .add-shift-btn {
   background: linear-gradient(135deg, var(--primary), #4f46e5);
   color: white;
@@ -1707,7 +2367,7 @@ th { text-align: left; color: var(--text) !important; }
   font-style: italic;
 }
 
-/* Shift Name Display */
+/* Scheduled Shift Name Display */
 .shift-display-name {
   margin-top: .25rem;
   padding: .2rem .4rem;
@@ -1734,7 +2394,7 @@ th { text-align: left; color: var(--text) !important; }
   transition: border-color 0.2s ease;
 }
 
-/* Enhanced styling for day view shift name */
+/* Enhanced styling for day view scheduled shift name */
 .day-view .shift-name-input {
   font-size: .85rem;
   padding: .4rem .6rem;
@@ -1965,14 +2625,6 @@ table *, th *, td *, tr * {
   border-radius: 0.375rem;
 }
 
-/* Home icon for first item */
-.breadcrumb-item:first-child a::before {
-  content: "🏠";
-  margin-right: 0.375rem;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
 /* Long label truncation */
 .breadcrumb-item a,
 .breadcrumb-item.active {
@@ -2100,7 +2752,8 @@ thead th {
 }
 
 /* ========================================
-   CUSTOM DROPDOWN STYLES (For Chores & OnDuty Pages)
+   CUSTOM DROPDOWN STYLES (For Chores & Day Shifts Pages)
+   NOTE: "OnDuty" in code refers to "Day Shifts" in UI
    ======================================== */
 
 .custom-select-container {
@@ -2715,4 +3368,413 @@ code {
 .card-title {
   margin-bottom: 0.75rem;
   font-weight: 600;
+}
+
+/* ========================================
+   COMMAND PALETTE
+   ======================================== */
+
+.command-palette {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: commandPaletteFadeIn 0.2s ease;
+}
+
+@keyframes commandPaletteFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.command-palette-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: -1;
+}
+
+.command-palette-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 600px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: commandPaletteSlideUp 0.2s ease;
+}
+
+@keyframes commandPaletteSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.command-palette-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.command-palette-icon {
+  font-size: 1.25rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.command-palette-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--text);
+  outline: none;
+  padding: 0.25rem;
+}
+
+.command-palette-search input::placeholder {
+  color: var(--muted);
+}
+
+.command-palette-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.command-palette-results {
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 0.5rem;
+}
+
+.command-palette-section {
+  padding: 0.5rem 0.75rem;
+}
+
+.command-palette-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0 0.25rem 0;
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.command-palette-item:hover,
+.command-palette-item.selected {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.command-palette-item-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.command-palette-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.command-palette-item-title {
+  font-weight: 500;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-palette-item-subtitle {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-palette-item-shortcut {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.command-palette-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--muted);
+}
+
+.command-palette-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.command-palette-empty-text {
+  font-size: 0.9375rem;
+  font-style: italic;
+}
+
+/* Dark theme adjustments */
+:root[data-theme="dark"] .command-palette-backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .command-palette {
+    padding-top: 10vh;
+  }
+
+  .command-palette-content {
+    width: 95%;
+    max-height: 70vh;
+    border-radius: 0.75rem;
+  }
+
+  .command-palette-search {
+    padding: 0.875rem 1rem;
+  }
+
+  .command-palette-search input {
+    font-size: 0.9375rem;
+  }
+
+  .command-palette-hint {
+    display: none;
+  }
+
+  .command-palette-item {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .command-palette-item-icon {
+    font-size: 1.125rem;
+  }
+
+  .command-palette-item-title {
+    font-size: 0.875rem;
+  }
+
+  .command-palette-item-subtitle {
+    font-size: 0.75rem;
+  }
+}
+
+/* ========================================
+   ✅ PHASE 20: Calendar Quick-Add & Inline Edit Components
+   ======================================== */
+
+/* Quick-add button container */
+.quick-add-container {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* Quick-add buttons */
+.btn-quick-add {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-quick-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+/* Quick-add form */
+.quick-add-form {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.quick-add-form.hidden {
+  display: none;
+}
+
+.quick-add-form .form-select,
+.quick-add-form .form-control {
+  margin-bottom: 0.5rem;
+}
+
+.quick-add-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* Delete button on items */
+.btn-delete-item {
+  margin-left: auto;
+  padding: 0.125rem 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-size: 1.25rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+
+.btn-delete-item:hover {
+  opacity: 1;
+}
+
+/* Day view quick-add section */
+.day-quick-add-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--surface-soft);
+  border-radius: 8px;
+}
+
+.day-quick-add-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  max-width: 400px;
+  color: var(--text);
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-success {
+  border-left: 4px solid var(--success);
+}
+
+.toast-error {
+  border-left: 4px solid var(--danger);
+}
+
+/* Navigation section headers */
+.nav-section-header {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Item header with action buttons */
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.item-header .item-icon {
+  flex-shrink: 0;
+}
+
+.item-header .item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Small form controls for quick-add */
+.form-select-sm,
+.form-control-sm {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+}
+
+/* Hidden utility class */
+.hidden {
+  display: none !important;
 }

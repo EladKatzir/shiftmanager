@@ -13,214 +13,623 @@
     new BreadcrumbItem { Label = Localizer["MyRequests"], IsActive = true }
 })
 
-<div style="max-width: 1000px; margin: 0 auto;">
-    <h2 style="color: var(--text); margin-bottom: 2rem;">@Localizer["MyRequests"]</h2>
+<div class="requests-page">
+    @* Page Header *@
+    <div class="page-header">
+        <h1 class="page-title">📋 @Localizer["MyRequests"]</h1>
+        <p class="page-subtitle">@Localizer["ManageYourTimeOffAndShiftSwaps"]</p>
+    </div>
 
+    @* Success/Error Messages *@
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
-            @Model.Message
+        <div class="alert alert-success">
+            <span class="alert-icon">✓</span>
+            <span>@Model.Message</span>
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
-        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
-            @Model.Error
+        <div class="alert alert-error">
+            <span class="alert-icon">✕</span>
+            <span>@Model.Error</span>
         </div>
     }
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-        <!-- Time Off Request Form -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RequestTimeOff"]</h3>
-            <form method="post" asp-page-handler="TimeOff">
-                @Html.AntiForgeryToken()
-                <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
-                <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.Type" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["VacationType"]</label>
-                    <select asp-for="TimeOffRequest.Type" id="vacationType" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
-                        <option value="0">@Localizer["RegularVacation"]</option>
-                        <option value="1">@Localizer["AfterDutyVacation"]</option>
-                    </select>
-                    <span asp-validation-for="TimeOffRequest.Type" style="color: var(--danger); font-size: 0.8rem;"></span>
-                    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem;">@Localizer["VacationTypeDescription"]</p>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.StartDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["StartDate"]</label>
-                    <input asp-for="TimeOffRequest.StartDate" id="startDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
-                    <span asp-validation-for="TimeOffRequest.StartDate" style="color: var(--danger); font-size: 0.8rem;"></span>
-                </div>
-                <div id="endDateContainer" style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.EndDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["EndDate"]</label>
-                    <input asp-for="TimeOffRequest.EndDate" id="endDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
-                    <span asp-validation-for="TimeOffRequest.EndDate" style="color: var(--danger); font-size: 0.8rem;"></span>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.ApproverId" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["SpecificApprover"] (@Localizer["Optional"])</label>
-                    <select asp-for="TimeOffRequest.ApproverId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
-                        <option value="">@Localizer["AnyManager"]</option>
-                        @foreach (var approver in Model.AvailableApprovers)
-                        {
-                            <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
-                        }
-                    </select>
-                    <span asp-validation-for="TimeOffRequest.ApproverId" style="color: var(--danger); font-size: 0.8rem;"></span>
-                    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem;">@Localizer["ApproverDescription"]</p>
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label asp-for="TimeOffRequest.Reason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["Reason"]</label>
-                    <textarea asp-for="TimeOffRequest.Reason" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>
-                    <span asp-validation-for="TimeOffRequest.Reason" style="color: var(--danger); font-size: 0.8rem;"></span>
-                </div>
-                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">@Localizer["SubmitTimeOffRequest"]</button>
-            </form>
-        </div>
+    @* Request Forms Section *@
+    <div class="forms-section" style="margin-bottom: 3rem;">
+        <h2 class="text-title">@Localizer["NewRequest"]</h2>
 
-        <!-- Shift Swap Request Form -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["RequestShiftSwap"]</h3>
-            @if (Model.AvailableShifts.Any())
-            {
-                <form method="post" asp-page-handler="Swap">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <label asp-for="SwapRequest.ShiftId" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">@Localizer["SelectYourShiftToSwap"]</label>
-                        <select asp-for="SwapRequest.ShiftId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
-                            <option value="0">@Localizer["ChooseAShift"]</option>
-                            @foreach (var shift in Model.AvailableShifts)
-                            {
-                                <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>
-                            }
-                        </select>
-                        <span asp-validation-for="SwapRequest.ShiftId" style="color: var(--danger); font-size: 0.8rem;"></span>
-                    </div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <p style="color: var(--muted); font-size: 0.9rem; margin: 0;">@Localizer["SwapRequestDescription"]</p>
-                    </div>
-                    <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">@Localizer["RequestShiftSwap"]</button>
-                </form>
-            }
-            else
-            {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">@Localizer["NoUpcomingShiftsForSwapping"]</p>
-            }
+        <div class="forms-grid">
+            @* Time Off Request Form *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📅 @Localizer["RequestTimeOff"]</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="TimeOff">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="All" class="validation-summary"></div>
+
+                        <div class="form-group">
+                            <label asp-for="TimeOffRequest.Type" class="form-label">@Localizer["VacationType"]</label>
+                            <select asp-for="TimeOffRequest.Type" id="vacationType" class="form-select">
+                                <option value="0">@Localizer["RegularVacation"]</option>
+                                <option value="1">@Localizer["AfterDutyVacation"]</option>
+                            </select>
+                            <span asp-validation-for="TimeOffRequest.Type" class="validation-error"></span>
+                            <p class="form-hint">@Localizer["VacationTypeDescription"]</p>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label asp-for="TimeOffRequest.StartDate" class="form-label">@Localizer["StartDate"]</label>
+                                <input asp-for="TimeOffRequest.StartDate" id="startDate" type="date" class="form-input" />
+                                <span asp-validation-for="TimeOffRequest.StartDate" class="validation-error"></span>
+                            </div>
+
+                            <div class="form-group" id="endDateContainer">
+                                <label asp-for="TimeOffRequest.EndDate" class="form-label">@Localizer["EndDate"]</label>
+                                <input asp-for="TimeOffRequest.EndDate" id="endDate" type="date" class="form-input" />
+                                <span asp-validation-for="TimeOffRequest.EndDate" class="validation-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TimeOffRequest.ApproverId" class="form-label">@Localizer["SpecificApprover"] (@Localizer["Optional"])</label>
+                            <select asp-for="TimeOffRequest.ApproverId" class="form-select">
+                                <option value="">@Localizer["AnyManager"]</option>
+                                @foreach (var approver in Model.AvailableApprovers)
+                                {
+                                    <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
+                                }
+                            </select>
+                            <span asp-validation-for="TimeOffRequest.ApproverId" class="validation-error"></span>
+                            <p class="form-hint">@Localizer["ApproverDescription"]</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TimeOffRequest.Reason" class="form-label">@Localizer["Reason"]</label>
+                            <textarea asp-for="TimeOffRequest.Reason" rows="3" class="form-textarea" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>
+                            <span asp-validation-for="TimeOffRequest.Reason" class="validation-error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <span>📝</span>
+                            <span>@Localizer["SubmitTimeOffRequest"]</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @* Shift Swap Request Form *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔄 @Localizer["RequestShiftSwap"]</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableShifts.Any())
+                    {
+                        <form method="post" asp-page-handler="Swap">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="All" class="validation-summary"></div>
+
+                            <div class="form-group">
+                                <label asp-for="SwapRequest.ShiftId" class="form-label">@Localizer["SelectYourShiftToSwap"]</label>
+                                <select asp-for="SwapRequest.ShiftId" class="form-select">
+                                    <option value="0">@Localizer["ChooseAShift"]</option>
+                                    @foreach (var shift in Model.AvailableShifts)
+                                    {
+                                        <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="SwapRequest.ShiftId" class="validation-error"></span>
+                            </div>
+
+                            <div class="form-hint-box">
+                                <p>@Localizer["SwapRequestDescription"]</p>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <span>🔄</span>
+                                <span>@Localizer["RequestShiftSwap"]</span>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon-large">📅</div>
+                            <p class="text-subtle">@Localizer["NoUpcomingShiftsForSwapping"]</p>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- My Requests Status -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-        <!-- Time Off Requests -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["MyTimeOffRequests"]</h3>
-            @if (Model.MyTimeOffRequests.Any())
-            {
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Dates"]</th>
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Status"]</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+    @* Request History Section *@
+    <div class="history-section">
+        <h2 class="text-title">@Localizer["RequestHistory"]</h2>
+
+        <div class="history-grid">
+            @* Time Off Requests History *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@Localizer["MyTimeOffRequests"]</h3>
+                    @if (Model.MyTimeOffRequests.Any())
+                    {
+                        <span class="badge badge-primary">@Model.MyTimeOffRequests.Count</span>
+                    }
+                </div>
+                <div class="card-body card-body-no-padding">
+                    @if (Model.MyTimeOffRequests.Any())
+                    {
+                        <div class="request-list">
                             @foreach (var request in Model.MyTimeOffRequests)
                             {
-                                <tr style="border-bottom: 1px solid var(--border);">
-                                    <td style="padding: 0.75rem 0; color: var(--text);">
-                                        @request.StartDate.ToString("MMM dd") - @request.EndDate.ToString("MMM dd, yyyy")
-                                        <br><small style="color: var(--muted);">@request.Reason</small>
-                                    </td>
-                                    <td style="padding: 0.75rem 0;">
-                                        <span style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;
-                                            background: @(request.Status == "Pending" ? "var(--focus)" : request.Status == "Approved" ? "var(--success)" : "var(--danger)");
-                                            color: white;">@request.Status</span>
-                                    </td>
-                                </tr>
+                                <div class="request-item">
+                                    <div class="request-item-content">
+                                        <div class="request-item-header">
+                                            <span class="text-body text-bold">
+                                                @request.StartDate.ToString("MMM dd") - @request.EndDate.ToString("MMM dd, yyyy")
+                                            </span>
+                                            <span class="status-badge status-@request.Status.ToLower()">
+                                                @request.Status
+                                            </span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(request.Reason))
+                                        {
+                                            <div class="request-item-details">
+                                                <span class="text-caption">@request.Reason</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p class="text-subtle">@Localizer["NoTimeOffRequestsYet"]</p>
+                        </div>
+                    }
                 </div>
-            }
-            else
-            {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">@Localizer["NoTimeOffRequestsYet"]</p>
-            }
-        </div>
+            </div>
 
-        <!-- Swap Requests -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">@Localizer["MySwapRequests"]</h3>
-            @if (Model.MySwapRequests.Any())
-            {
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Shift"]</th>
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">@Localizer["Status"]</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            @* Swap Requests History *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@Localizer["MySwapRequests"]</h3>
+                    @if (Model.MySwapRequests.Any())
+                    {
+                        <span class="badge badge-primary">@Model.MySwapRequests.Count</span>
+                    }
+                </div>
+                <div class="card-body card-body-no-padding">
+                    @if (Model.MySwapRequests.Any())
+                    {
+                        <div class="request-list">
                             @foreach (var request in Model.MySwapRequests)
                             {
-                                <tr style="border-bottom: 1px solid var(--border);">
-                                    <td style="padding: 0.75rem 0; color: var(--text);">
-                                        @request.ShiftDate.ToString("MMM dd, yyyy")
-                                        <br><small style="color: var(--muted);">@request.ShiftTypeName</small>
-                                    </td>
-                                    <td style="padding: 0.75rem 0;">
-                                        <span style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;
-                                            background: @(request.Status == "Pending" ? "var(--focus)" : request.Status == "Approved" ? "var(--success)" : "var(--danger)");
-                                            color: white;">@request.Status</span>
-                                    </td>
-                                </tr>
+                                <div class="request-item">
+                                    <div class="request-item-content">
+                                        <div class="request-item-header">
+                                            <span class="text-body text-bold">
+                                                @request.ShiftDate.ToString("MMM dd, yyyy")
+                                            </span>
+                                            <span class="status-badge status-@request.Status.ToLower()">
+                                                @request.Status
+                                            </span>
+                                        </div>
+                                        <div class="request-item-details">
+                                            <span class="text-caption">@request.ShiftTypeName</span>
+                                        </div>
+                                    </div>
+                                </div>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔄</div>
+                            <p class="text-subtle">@Localizer["NoSwapRequestsYet"]</p>
+                        </div>
+                    }
                 </div>
-            }
-            else
-            {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">@Localizer["NoSwapRequestsYet"]</p>
-            }
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    // Handle vacation type change to show/hide end date
-    document.addEventListener('DOMContentLoaded', function() {
-        const vacationType = document.getElementById('vacationType');
-        const endDateContainer = document.getElementById('endDateContainer');
-        const startDate = document.getElementById('startDate');
-        const endDate = document.getElementById('endDate');
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
 
-        function updateEndDateVisibility() {
-            if (vacationType.value === '1') { // After-duty vacation
-                endDateContainer.style.display = 'none';
-                // Set end date to same as start date for After type
-                if (startDate.value) {
-                    endDate.value = startDate.value;
-                }
-            } else { // Regular vacation
-                endDateContainer.style.display = 'block';
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        // Update visibility on page load
-        updateEndDateVisibility();
+        .alert-success {
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 76, 175, 80), 0.3);
+        }
 
-        // Update visibility when type changes
-        vacationType.addEventListener('change', updateEndDateVisibility);
+        .alert-error {
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
 
-        // Keep end date synced with start date for After type
-        startDate.addEventListener('change', function() {
-            if (vacationType.value === '1') { // After-duty vacation
-                endDate.value = startDate.value;
+        .alert-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-soft);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-body-no-padding {
+            padding: 0;
+        }
+
+        /* Section Title */
+        .text-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+        }
+
+        /* Text Utilities */
+        .text-body {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        .text-bold {
+            font-weight: 500;
+        }
+
+        .text-subtle {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .text-caption {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Forms Section */
+        .forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* History Section */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.15s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-hint {
+            margin-top: 0.25rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .form-hint-box {
+            padding: 0.75rem 1rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-hint-box p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .validation-summary {
+            padding: 0.75rem 1rem;
+            background: var(--danger);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .validation-error {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.8125rem;
+            color: var(--danger);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Request List */
+        .request-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .request-item {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+
+        .request-item:last-child {
+            border-bottom: none;
+        }
+
+        .request-item:hover {
+            background: var(--surface-soft);
+        }
+
+        .request-item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .request-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .request-item-details {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-pending {
+            background: var(--warning);
+            color: var(--warning-text);
+        }
+
+        .status-approved {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-declined {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Badge */
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-icon-large {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .forms-grid,
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const vacationType = document.getElementById('vacationType');
+            const endDateContainer = document.getElementById('endDateContainer');
+
+            if (vacationType && endDateContainer) {
+                // Toggle end date visibility based on vacation type
+                function toggleEndDate() {
+                    if (vacationType.value === '1') { // AfterDutyVacation (single day)
+                        endDateContainer.style.display = 'none';
+                    } else {
+                        endDateContainer.style.display = 'block';
+                    }
+                }
+
+                vacationType.addEventListener('change', toggleEndDate);
+                toggleEndDate(); // Initialize on page load
             }
         });
-    });
-</script>
-
+    </script>
+}

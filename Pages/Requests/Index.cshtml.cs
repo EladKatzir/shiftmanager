@@ -37,7 +37,13 @@ public class IndexModel : PageModel
     public record SwapVM(int Id, string FromUser, string When, string ToUser);
     public List<SwapVM> Swaps { get; set; } = new();
 
+    // ✅ Phase 18: Approved Time-Off (consolidated from Admin/TimeOff page)
+    public record ApprovedTimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate,
+                                   string? Reason, DateTime CreatedAt, DateTime ApprovedAt);
+    public List<ApprovedTimeOffVM> ApprovedTimeOffs { get; set; } = new();
+
     public string? Error { get; set; }
+    public string? Message { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -45,15 +51,50 @@ public class IndexModel : PageModel
         {
             _logger.LogInformation("Loading admin requests page");
 
+            // Phase 8.2.1: Get current user for company filtering (fixed to use NameIdentifier instead of Email)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
+            {
+                Error = "User not authenticated";
+                return;
+            }
+
+            var currentUser = await _db.Users.FindAsync(currentUserId);
+            if (currentUser == null)
+            {
+                Error = "User not found";
+                return;
+            }
+
+            // Phase 8.2.1: Determine accessible company IDs based on role
+            List<int> accessibleCompanyIds;
+            if (currentUser.Role == UserRole.Owner)
+            {
+                // Owner sees all companies
+                accessibleCompanyIds = await _db.Users.Select(u => u.CompanyId).Distinct().ToListAsync();
+            }
+            else if (currentUser.Role == UserRole.Director)
+            {
+                // Director sees companies they manage
+                accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUser.Id);
+            }
+            else
+            {
+                // Manager sees only their own company
+                accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+            }
+
+            // Phase 8.2.1: Load pending time-off requests with company filtering
             _logger.LogInformation("Loading pending time off requests");
             var pendingTO = await (from r in _db.TimeOffRequests
                                    join u in _db.Users on r.UserId equals u.Id
-                                   where r.Status == RequestStatus.Pending
+                                   where r.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u.CompanyId)
                                    orderby r.CreatedAt
                                    select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason)).ToListAsync();
             TimeOff = pendingTO;
             _logger.LogInformation("Loaded {Count} pending time off requests", TimeOff.Count);
 
+            // Phase 8.2.1: Load pending swap requests with company filtering
             _logger.LogInformation("Loading pending swap requests");
             var pendingSwaps = await (from s in _db.SwapRequests
                                       join a in _db.ShiftAssignments on s.FromAssignmentId equals a.Id
@@ -61,7 +102,7 @@ public class IndexModel : PageModel
                                       join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
                                       join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
                                       join u2 in _db.Users on s.ToUserId equals u2.Id
-                                      where s.Status == RequestStatus.Pending
+                                      where s.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u1.CompanyId)
                                       orderby s.CreatedAt
                                       select new
                                       {
@@ -73,6 +114,18 @@ public class IndexModel : PageModel
 
             Swaps = pendingSwaps.Select(x => new SwapVM(x.Id, x.FromUser, x.When, x.ToUser)).ToList();
             _logger.LogInformation("Loaded {Count} pending swap requests", Swaps.Count);
+
+            // ✅ Phase 18: Load approved time-off requests
+            // Phase 8.2.1: Simplified to reuse accessibleCompanyIds from above
+            _logger.LogInformation("Loading approved time off requests");
+            ApprovedTimeOffs = await (from r in _db.TimeOffRequests
+                                     join u in _db.Users on r.UserId equals u.Id
+                                     where r.Status == RequestStatus.Approved && accessibleCompanyIds.Contains(u.CompanyId)
+                                     orderby r.StartDate descending
+                                     select new ApprovedTimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt)).ToListAsync();
+
+            _logger.LogInformation("Loaded {Count} approved time off requests", ApprovedTimeOffs.Count);
+
             _logger.LogInformation("Admin requests page loaded successfully");
         }
         catch (Exception ex)
@@ -330,6 +383,106 @@ public class IndexModel : PageModel
         }
 
         return RedirectToPage();
+    }
+
+    // ✅ Phase 18: Delete approved time-off (consolidated from Admin/TimeOff page)
+    public async Task<IActionResult> OnPostDeleteTimeOffAsync(int id)
+    {
+        try
+        {
+            _logger.LogInformation("Admin attempting to delete approved time-off request {RequestId}", id);
+
+            // Get current user for validation
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = "Authentication error. Please log in again.";
+                return RedirectToPage();
+            }
+
+            var currentUser = await _db.Users.FindAsync(currentUserId);
+            if (currentUser == null)
+            {
+                Error = "User not found.";
+                return RedirectToPage();
+            }
+
+            // Load the time-off request and user for validation
+            var request = await _db.TimeOffRequests
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (request == null)
+            {
+                _logger.LogWarning("Time-off request {RequestId} not found", id);
+                Error = "Time-off request not found.";
+                await OnGetAsync();
+                return Page();
+            }
+
+            var user = await _db.Users.FindAsync(request.UserId);
+            if (user == null)
+            {
+                Error = "User not found.";
+                await OnGetAsync();
+                return Page();
+            }
+
+            // Validate access to the request's company
+            var hasAccess = await ValidateAccessToRequestAsync(currentUser, user.CompanyId);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to delete time-off {RequestId} for unauthorized company",
+                    currentUserId, currentUser.Role, id);
+                Error = "You don't have permission to delete this time-off request.";
+                await OnGetAsync();
+                return Page();
+            }
+
+            if (request.Status != RequestStatus.Approved)
+            {
+                _logger.LogWarning("Attempt to delete non-approved time-off request {RequestId} with status {Status}", id, request.Status);
+                Error = "Can only delete approved time-off requests.";
+                await OnGetAsync();
+                return Page();
+            }
+
+            // Check if time-off period has started
+            if (request.StartDate <= DateOnly.FromDateTime(DateTime.Today))
+            {
+                _logger.LogWarning("Attempt to delete time-off request {RequestId} that has already started", id);
+                Error = "Cannot delete time-off that has already started or is in the past.";
+                await OnGetAsync();
+                return Page();
+            }
+
+            var userName = user.DisplayName;
+
+            _logger.LogInformation("Deleting approved time-off request {RequestId} for user {UserName} ({StartDate} to {EndDate})",
+                id, userName, request.StartDate, request.EndDate);
+
+            // Remove the time-off request
+            _db.TimeOffRequests.Remove(request);
+            await _db.SaveChangesAsync();
+
+            // Notify the user that their time-off was deleted
+            await _notificationService.CreateTimeOffDeletedNotificationAsync(
+                userId: request.UserId,
+                startDate: request.StartDate,
+                endDate: request.EndDate);
+
+            _logger.LogInformation("Successfully deleted time-off request {RequestId} for user {UserName}", id, userName);
+            Message = $"Time-off for {userName} ({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}) has been deleted.";
+
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting time-off request {RequestId}", id);
+            Error = "An error occurred while deleting the time-off request. Please try again.";
+            await OnGetAsync();
+            return Page();
+        }
     }
 
     /// <summary>

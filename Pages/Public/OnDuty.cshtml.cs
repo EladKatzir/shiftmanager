@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
@@ -17,19 +19,23 @@ public class OnDutyModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly IBusyUserService _busyUserService;
     private readonly ILogger<OnDutyModel> _logger;
+    // ✅ PHASE 18: Add database context to load custom OnDutyTypeConfigs
+    private readonly AppDbContext _db;
 
     public OnDutyModel(
         IOnDutyService onDutyService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
         IBusyUserService busyUserService,
-        ILogger<OnDutyModel> logger)
+        ILogger<OnDutyModel> logger,
+        AppDbContext db)
     {
         _onDutyService = onDutyService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _busyUserService = busyUserService;
         _logger = logger;
+        _db = db;
     }
 
     // Display properties
@@ -38,6 +44,9 @@ public class OnDutyModel : PageModel
     public List<Models.OnDuty> OnDuties { get; set; } = new();
     public List<AppUser> EligibleAssignees { get; set; } = new();
     public Dictionary<DateOnly, List<Models.OnDuty>> OnDutiesByDate { get; set; } = new();
+
+    // ✅ PHASE 18: Add OnDutyTypeConfigs collection for dropdown population
+    public List<OnDutyTypeConfig> CustomOnDutyTypes { get; set; } = new();
 
     // Busy user status per date: [Date][UserId] => BusyStatus
     public Dictionary<DateOnly, Dictionary<int, BusyStatus>> BusyUsersByDate { get; set; } = new();
@@ -95,6 +104,12 @@ public class OnDutyModel : PageModel
 
         // Get eligible assignees for the create modal
         EligibleAssignees = await _onDutyService.GetEligibleAssigneesAsync();
+
+        // ✅ PHASE 18: Load custom OnDuty types from database (TypeValue >= 2)
+        CustomOnDutyTypes = await _db.OnDutyTypeConfigs
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.TypeValue)
+            .ToListAsync();
 
         // Load busy user status for all dates in the month (for dropdown color coding)
         var daysInMonth = DateTime.DaysInMonth(Year, Month);

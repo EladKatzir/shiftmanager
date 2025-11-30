@@ -48,6 +48,27 @@
   text-align: right;
 }
 
+[dir="rtl"] .card-header {
+  text-align: right;
+}
+
+[dir="rtl"] .card-body {
+  text-align: right;
+}
+
+[dir="rtl"] .card-title {
+  text-align: right;
+}
+
+/* Typography classes - ensure proper RTL alignment */
+[dir="rtl"] .text-display,
+[dir="rtl"] .text-title,
+[dir="rtl"] .text-body,
+[dir="rtl"] .text-subtle,
+[dir="rtl"] .text-caption {
+  text-align: right;
+}
+
 /* Breadcrumb adjustments */
 /* Note: .breadcrumb flex-direction NOT reversed - Hebrew breadcrumb order is correct as-is */
 
@@ -63,4 +84,40 @@
 /* Flip icons and arrows if needed */
 [dir="rtl"] .dropdown button::after {
   transform: scaleX(-1);
+}
+
+/* ========================================
+   App Layout RTL Support
+   ======================================== */
+
+/* Sidebar on the right in RTL */
+[dir="rtl"] .app-sidebar {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+/* Active indicator on the right */
+[dir="rtl"] .app-sidebar-nav-item.active::before {
+  left: auto;
+  right: 0;
+  border-radius: 2px 0 0 2px;
+}
+
+/* Header elements reverse */
+[dir="rtl"] .app-header-left {
+  align-items: flex-end;
+}
+
+[dir="rtl"] .app-header-right {
+  flex-direction: row-reverse;
+}
+
+/* User menu */
+[dir="rtl"] .user-details {
+  align-items: flex-end;
+}
+
+/* Page title alignment */
+[dir="rtl"] .page-title {
+  text-align: right;
 }

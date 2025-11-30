@@ -7,7 +7,7 @@ namespace ShiftManager.Services;
 
 public interface IChoreService
 {
-    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null);
+    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false);
     Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null);
     Task<(bool Success, string Message, Chore? Chore)> ReplaceShiftWithChoreAsync(int shiftAssignmentId, string title, string? notes = null);
     Task<(bool Success, string Message)> ReplaceChoreWithShiftAsync(int choreId, int shiftInstanceId);
@@ -16,6 +16,8 @@ public interface IChoreService
     Task<bool> HasActiveChoreOnDateAsync(int userId, DateOnly date);
     Task<bool> HasShiftOnDateAsync(int userId, DateOnly date);
     Task<ShiftAssignment?> GetShiftOnDateAsync(int userId, DateOnly date);
+    Task<bool> HasVacationConflictAsync(int userId, DateOnly date);
+    Task<(bool HasConflict, DateOnly? StartDate, DateOnly? EndDate, TimeOffType? Type)> GetVacationConflictDetailsAsync(int userId, DateOnly date);
     Task<bool> CanUserManageChoresAsync(int userId);
     Task<bool> CanUserManageChoreForAssigneeAsync(int managerId, int assigneeId);
     Task<List<AppUser>> GetEligibleAssigneesAsync();
@@ -107,6 +109,10 @@ public class ChoreService : IChoreService
     /// <summary>
     /// Get list of users eligible for chore assignment (excludes Directors, includes current user's scope)
     /// </summary>
+    /// <summary>
+    /// Phase 8.1: Fixed to show all active users in dropdown (Director filter removed)
+    /// Business rule "Directors cannot be assigned chores" is enforced at assignment time in CanUserManageChoreForAssigneeAsync
+    /// </summary>
     public async Task<List<AppUser>> GetEligibleAssigneesAsync()
     {
         var currentUser = await GetCurrentUserAsync();
@@ -119,24 +125,24 @@ public class ChoreService : IChoreService
 
         if (currentUser.Role == UserRole.Owner)
         {
-            // Owner sees all active users across all companies (except Directors)
+            // Owner sees all active users across all companies
             // Use IgnoreQueryFilters to bypass multi-tenant scoping
             query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive && u.Role != UserRole.Director);
+                .Where(u => u.IsActive);
         }
         else if (currentUser.Role == UserRole.Director)
         {
             // Directors see users in companies they manage
             var companyIds = await _directorService.GetDirectorCompanyIdsAsync();
             query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive && u.Role != UserRole.Director && companyIds.Contains(u.CompanyId));
+                .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
         }
         else if (currentUser.Role == UserRole.Manager || currentUser.Role == UserRole.Assigner)
         {
             // Managers and Assigners see users in their own company only
             // Note: AppUser doesn't have query filter, so we must explicitly filter by CompanyId
             query = _db.Users
-                .Where(u => u.IsActive && u.Role != UserRole.Director && u.CompanyId == currentUser.CompanyId);
+                .Where(u => u.IsActive && u.CompanyId == currentUser.CompanyId);
         }
         else
         {
@@ -187,13 +193,59 @@ public class ChoreService : IChoreService
     }
 
     /// <summary>
+    /// Check if user has an approved vacation that overlaps with the given date
+    /// COLLISION RULE: Chore assignments cannot overlap with approved vacations
+    /// </summary>
+    public async Task<bool> HasVacationConflictAsync(int userId, DateOnly date)
+    {
+        // Get user to find their company (needed for vacation query)
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        // Check for approved time off requests that include this date
+        var hasConflict = await _db.TimeOffRequests
+            .AnyAsync(t => t.UserId == userId &&
+                          t.CompanyId == user.CompanyId &&
+                          t.Status == RequestStatus.Approved &&
+                          t.StartDate <= date &&
+                          t.EndDate >= date);
+
+        return hasConflict;
+    }
+
+    /// <summary>
+    /// Get vacation details if user has an approved vacation that overlaps with the given date
+    /// Returns (hasConflict, startDate, endDate, type)
+    /// </summary>
+    public async Task<(bool HasConflict, DateOnly? StartDate, DateOnly? EndDate, TimeOffType? Type)>
+        GetVacationConflictDetailsAsync(int userId, DateOnly date)
+    {
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return (false, null, null, null);
+
+        var vacation = await _db.TimeOffRequests
+            .Where(t => t.UserId == userId &&
+                       t.CompanyId == user.CompanyId &&
+                       t.Status == RequestStatus.Approved &&
+                       t.StartDate <= date &&
+                       t.EndDate >= date)
+            .FirstOrDefaultAsync();
+
+        if (vacation == null)
+            return (false, null, null, null);
+
+        return (true, vacation.StartDate, vacation.EndDate, vacation.Type);
+    }
+
+    /// <summary>
     /// Create a new chore assignment
     /// </summary>
     public async Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(
         int assigneeId,
         DateOnly date,
         string title,
-        string? notes = null)
+        string? notes = null,
+        bool forceAssign = false)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -240,6 +292,17 @@ public class ChoreService : IChoreService
                 return (false, "SHIFT_CONFLICT", null); // Special message for UI to handle
             }
 
+            // COLLISION RULE: Check for vacation conflict (unless force-assigning)
+            if (!forceAssign)
+            {
+                var (hasConflict, vacationStart, vacationEnd, vacationType) = await GetVacationConflictDetailsAsync(assigneeId, date);
+                if (hasConflict)
+                {
+                    // Return vacation details for UI to display in confirmation dialog
+                    return (false, $"VACATION_CONFLICT|{vacationStart}|{vacationEnd}|{vacationType}", null);
+                }
+            }
+
             // Validate title
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -263,6 +326,13 @@ public class ChoreService : IChoreService
 
             _logger.LogInformation("Chore {ChoreId} created by user {CreatedBy} for user {UserId} on {Date}",
                 chore.Id, currentUserId, assigneeId, date);
+
+            // Audit log for force-assignments (bypassing vacation conflict)
+            if (forceAssign)
+            {
+                _logger.LogWarning("Chore {ChoreId} was FORCE-ASSIGNED by user {CreatedBy} despite vacation conflict for user {UserId} on {Date}",
+                    chore.Id, currentUserId, assigneeId, date);
+            }
 
             return (true, "Chore created successfully.", chore);
         }

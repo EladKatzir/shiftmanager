@@ -1,0 +1,239 @@
+═══════════════════════════════════════════════════════════════════════
+ERROR 400 - INVALID HOSTNAME - COMPLETE EXPLANATION
+═══════════════════════════════════════════════════════════════════════
+
+ERROR MESSAGE:
+"400 Bad Request - Invalid Hostname"
+"HTTP Error 400. The request hostname is invalid."
+
+═══════════════════════════════════════════════════════════════════════
+WHAT THIS MEANS
+═══════════════════════════════════════════════════════════════════════
+
+✅ GOOD NEWS: Your app is now RUNNING in IIS!
+   (Error 500 is fixed - that's progress!)
+
+❌ BAD NEWS: ASP.NET Core is blocking the request for security reasons
+
+WHY IT HAPPENS:
+- ASP.NET Core has a security feature called "Host Filtering"
+- It checks if the request's hostname matches "AllowedHosts" setting
+- Your request is coming from: 7108dev.d8200.mil
+- But appsettings.json only allows: localhost
+- Result: Request is rejected with Error 400
+
+═══════════════════════════════════════════════════════════════════════
+THE FIX (ALREADY APPLIED)
+═══════════════════════════════════════════════════════════════════════
+
+I've already updated your appsettings.json from:
+  "AllowedHosts": "localhost"
+
+To:
+  "AllowedHosts": "localhost;7108dev.d8200.mil"
+
+This allows both:
+  ✓ http://localhost/ (for local testing on server)
+  ✓ https://7108dev.d8200.mil/ (for production access)
+
+═══════════════════════════════════════════════════════════════════════
+NEXT STEPS - DO THIS NOW
+═══════════════════════════════════════════════════════════════════════
+
+1. Open IIS Manager
+2. Find your Application Pool
+3. Right-click → Recycle
+4. Refresh your browser (F5)
+5. ✅ Should work now!
+
+═══════════════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════════════
+
+After recycling the Application Pool, test both URLs:
+
+✓ http://localhost/ (on the server)
+  Should work ✅
+
+✓ https://7108dev.d8200.mil/ (from any machine)
+  Should work ✅
+
+If you get SSL certificate warnings on HTTPS, that's normal if the
+certificate doesn't exactly match the hostname. You can ignore it for
+testing, or configure the certificate properly in IIS.
+
+═══════════════════════════════════════════════════════════════════════
+UNDERSTANDING ALLOWEDHOSTS
+═══════════════════════════════════════════════════════════════════════
+
+The AllowedHosts setting protects against Host Header attacks.
+
+FORMAT: Semicolon-separated list of hostnames
+
+Examples:
+
+1. Allow only localhost:
+   "AllowedHosts": "localhost"
+   ✓ http://localhost/
+   ✗ https://7108dev.d8200.mil/
+   ✗ http://192.168.1.100/
+
+2. Allow specific hosts (RECOMMENDED):
+   "AllowedHosts": "localhost;7108dev.d8200.mil"
+   ✓ http://localhost/
+   ✓ https://7108dev.d8200.mil/
+   ✗ http://example.com/
+
+3. Allow all hosts (LESS SECURE):
+   "AllowedHosts": "*"
+   ✓ Any hostname works
+   ⚠️ Less secure - not recommended for production
+
+4. Allow multiple specific hosts:
+   "AllowedHosts": "localhost;7108dev.d8200.mil;app.example.com"
+   ✓ All three hostnames work
+
+5. Allow wildcard subdomain:
+   "AllowedHosts": "localhost;*.d8200.mil"
+   ✓ localhost
+   ✓ 7108dev.d8200.mil
+   ✓ anysubdomain.d8200.mil
+
+═══════════════════════════════════════════════════════════════════════
+CURRENT CONFIGURATION
+═══════════════════════════════════════════════════════════════════════
+
+Your appsettings.json now has:
+  "AllowedHosts": "localhost;7108dev.d8200.mil"
+
+This configuration:
+  ✅ Secure (only allows specific hosts)
+  ✅ Flexible (works for local testing and production)
+  ✅ Recommended for production use
+
+═══════════════════════════════════════════════════════════════════════
+IF YOU NEED TO CHANGE IT LATER
+═══════════════════════════════════════════════════════════════════════
+
+Option 1: Use the helper tool
+  Run: FIX_ERROR_400_BAD_HOSTNAME.bat
+  (Interactive menu to change AllowedHosts)
+
+Option 2: Edit manually
+  1. Open appsettings.json in Notepad
+  2. Find line: "AllowedHosts": "..."
+  3. Update the value
+  4. Save file
+  5. Recycle Application Pool in IIS
+  6. Test
+
+═══════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════
+
+If you still get Error 400 after recycling:
+
+1. Verify the change was saved:
+   - Open appsettings.json
+   - Check line 11: "AllowedHosts": "localhost;7108dev.d8200.mil"
+   - Should have BOTH hostnames separated by semicolon
+
+2. Check the hostname you're using:
+   - What's in your browser address bar?
+   - Must match exactly (case-insensitive)
+   - http://7108DEV.D8200.MIL/ works (case doesn't matter)
+   - http://7108dev.d8200.mil:443/ might not work (port specified)
+
+3. Recycle the Application Pool again:
+   - Changes to appsettings.json require app restart
+   - Recycling the pool restarts the app
+
+4. Check for typos:
+   - Hostname: 7108dev.d8200.mil (check spacing, dots)
+   - Format: "host1;host2;host3" (semicolon, no spaces)
+
+5. Try wildcard temporarily for testing:
+   - Change to: "AllowedHosts": "*"
+   - Recycle pool
+   - Test - if works, problem was hostname mismatch
+   - Change back to specific hosts after testing
+
+═══════════════════════════════════════════════════════════════════════
+SECURITY CONSIDERATIONS
+═══════════════════════════════════════════════════════════════════════
+
+Why AllowedHosts exists:
+- Prevents "Host Header Injection" attacks
+- Prevents "Host Header Poisoning" attacks
+- Prevents attackers from spoofing the hostname
+
+Best practices:
+✅ Use specific hostnames (what we did)
+✅ Include all legitimate hostnames your app uses
+❌ Avoid "*" in production (use only for testing)
+❌ Don't include untrusted domains
+
+For air-gapped/internal networks:
+- Security risk is lower (no internet access)
+- Still recommended to use specific hosts
+- Prevents internal abuse
+
+═══════════════════════════════════════════════════════════════════════
+WEB.CONFIG NOTE
+═══════════════════════════════════════════════════════════════════════
+
+You mentioned switching to web.config.minimal - that's fine!
+
+The minimal web.config:
+  ✅ Works perfectly
+  ✅ Has all required settings
+  ✓ No HTTPS redirect (add in IIS if needed)
+  ✓ No security headers (IIS can add these)
+  ✓ No compression settings (IIS handles this)
+
+The enhanced web.config adds:
+  + HTTP → HTTPS redirect
+  + Security headers
+  + Compression settings
+  + Request size limits
+
+For now, minimal is fine. You can switch to enhanced later if you want
+those features.
+
+To switch back to enhanced (optional):
+  copy /Y web.config.enhanced web.config
+  (Then recycle Application Pool)
+
+═══════════════════════════════════════════════════════════════════════
+FINAL CHECKLIST
+═══════════════════════════════════════════════════════════════════════
+
+After this fix, verify:
+
+✓ appsettings.json has: "AllowedHosts": "localhost;7108dev.d8200.mil"
+✓ Application Pool recycled
+✓ Browser refreshed
+✓ Can access https://7108dev.d8200.mil/
+✓ Can login with: admin@local / ShareholderDemo2025!
+✓ Dashboard loads
+✓ All features work
+
+If all checked: ✅ DEPLOYMENT SUCCESSFUL!
+
+═══════════════════════════════════════════════════════════════════════
+SUMMARY
+═══════════════════════════════════════════════════════════════════════
+
+Error 400 "Invalid Hostname" = Security feature blocking your DNS name
+
+Fix = Add DNS name to AllowedHosts in appsettings.json
+
+Status = ✅ FIXED (already applied)
+
+Next = Recycle Application Pool → Refresh browser → Should work!
+
+═══════════════════════════════════════════════════════════════════════
+END OF EXPLANATION
+═══════════════════════════════════════════════════════════════════════
+
+You're almost there! Just recycle the Application Pool and you're done!
