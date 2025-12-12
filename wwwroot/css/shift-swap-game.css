@@ -41,7 +41,7 @@
   background: var(--bg);
   border-radius: 1.5rem;
   padding: 2rem;
-  max-width: 500px;
+  max-width: min(90vw, 600px); /* Allow wider modal for larger grids */
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
@@ -157,6 +157,22 @@
   user-select: none;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dynamic font sizing for different grid sizes */
+.shift-swap-grid[style*="repeat(4"] .shift-swap-tile,
+.shift-swap-grid[style*="repeat(5"] .shift-swap-tile {
+  font-size: 2.5rem; /* Larger for smaller grids */
+}
+
+.shift-swap-grid[style*="repeat(7"] .shift-swap-tile,
+.shift-swap-grid[style*="repeat(8"] .shift-swap-tile {
+  font-size: 1.75rem;
+}
+
+.shift-swap-grid[style*="repeat(9"] .shift-swap-tile,
+.shift-swap-grid[style*="repeat(10"] .shift-swap-tile {
+  font-size: 1.5rem; /* Smaller for larger grids */
 }
 
 .shift-swap-tile:hover {
@@ -297,6 +313,63 @@
   transform: scale(0.95);
 }
 
+/* Hint button */
+.shift-swap-hint {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.shift-swap-hint:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.5);
+}
+
+.shift-swap-hint:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.shift-swap-hint:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(50%);
+}
+
+/* Hint highlight animation */
+.shift-swap-tile.hint-highlight {
+  animation: hintPulse 1.5s ease-in-out infinite;
+  border-color: #fbbf24 !important;
+  border-width: 3px;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.8),
+              0 0 40px rgba(251, 191, 36, 0.5);
+  z-index: 10;
+  position: relative;
+}
+
+@keyframes hintPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.8),
+                0 0 40px rgba(251, 191, 36, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 1),
+                0 0 60px rgba(251, 191, 36, 0.7);
+    transform: scale(1.05);
+  }
+}
+
 /* ✅ PHASE 19: Roasting popup */
 .roasting-popup {
   position: fixed;
@@ -418,6 +491,33 @@
   background: var(--surface-soft);
   border-color: var(--primary);
   transform: translateY(-2px);
+}
+
+/* Game over popup variations */
+.game-over-popup .game-over-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: gameOverShake 0.5s ease;
+}
+
+@keyframes gameOverShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px) rotate(-5deg); }
+  75% { transform: translateX(10px) rotate(5deg); }
+}
+
+.game-over-popup .game-over-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ef4444;
+  margin: 0 0 0.5rem 0;
+}
+
+.game-over-popup .game-over-reason {
+  font-size: 1rem;
+  color: var(--muted);
+  margin: 0 0 1rem 0;
+  font-style: italic;
 }
 
 /* ✅ PHASE 19: Toast notifications */

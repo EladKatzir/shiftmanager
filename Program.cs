@@ -342,7 +342,26 @@ if (enableHttps)
     app.UseHttpsRedirection();
 }
 
-app.UseStaticFiles();
+// Configure static file serving with explicit MIME types for offline reliability
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Ensure correct MIME types for CSS and JS files
+        if (ctx.File.Name.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.ContentType = "text/css; charset=utf-8";
+        }
+        else if (ctx.File.Name.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.ContentType = "application/javascript; charset=utf-8";
+        }
+
+        // Add cache control headers for offline deployments
+        // Allow caching but require revalidation with asp-append-version hashes
+        ctx.Context.Response.Headers["Cache-Control"] = "public, must-revalidate, max-age=0";
+    }
+});
 app.UseRouting();
 
 // Add request logging middleware (must be after routing, before auth)

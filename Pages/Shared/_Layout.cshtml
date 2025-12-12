@@ -30,10 +30,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@(isAdmin ? Localizer["ShiftManager"] : $"{Localizer["MySchedule"]} - {firstName}")</title>
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @if (isHebrew)
     {
-        <link rel="stylesheet" href="~/css/rtl.css" />
+        <link rel="stylesheet" href="~/css/rtl.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/shift-swap-game.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -48,6 +48,30 @@
     {
         <script defer src="~/js/hebrew-audit.js"></script>
     }
+    @* Offline deployment diagnostic: Verify sidebar CSS loads correctly *@
+    <script>
+    (function() {
+        window.addEventListener('DOMContentLoaded', function() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (sidebar) {
+                var computed = window.getComputedStyle(sidebar);
+                if (computed.display !== 'flex') {
+                    console.error('[OFFLINE ERROR] Sidebar CSS not loaded!');
+                    console.error('Expected display: flex, Got:', computed.display);
+                    console.error('Check: 1) UNBLOCK_FILES.bat run? 2) Hard refresh browser (Ctrl+F5)');
+
+                    // Show visual warning banner
+                    var warning = document.createElement('div');
+                    warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:white;padding:12px;text-align:center;z-index:9999;font-family:system-ui;font-size:14px';
+                    warning.textContent = '⚠️ CSS Loading Issue - Press Ctrl+F5 to refresh. If issue persists, run UNBLOCK_FILES.bat';
+                    document.body.insertBefore(warning, document.body.firstChild);
+                } else {
+                    console.log('[OK] Sidebar CSS loaded correctly (display: flex)');
+                }
+            }
+        });
+    })();
+    </script>
 </head>
 <body>
     <div class="app-shell">

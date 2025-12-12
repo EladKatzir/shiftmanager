@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableDelayedExpansion
 REM ================================================================================
 REM                    FILE VERIFICATION SCRIPT
 REM ================================================================================
@@ -17,8 +18,8 @@ echo.
 echo Checking critical DLL files...
 echo.
 
-set ERROR_COUNT=0
-set WARNING_COUNT=0
+set "ERROR_COUNT=0"
+set "WARNING_COUNT=0"
 
 REM ================================================================================
 REM Check Critical DLL Files
@@ -90,8 +91,8 @@ echo ===========================================================================
 echo Counting total DLL files...
 echo.
 
-REM Count DLLs
-for /f %%A in ('dir /s /b *.dll 2^>nul ^| find /c ".dll"') do set DLL_COUNT=%%A
+set "DLL_COUNT=0"
+for /f %%A in ('dir /s /b *.dll 2^>nul ^| find /c ".dll"') do set "DLL_COUNT=%%A"
 
 echo   Total DLL files found: %DLL_COUNT%
 echo   Expected range: 330-340 DLL files
@@ -112,7 +113,9 @@ echo Checking if files are blocked by Windows...
 echo.
 
 REM Try to check if SixLabors.ImageSharp.dll is blocked
-powershell.exe -ExecutionPolicy Bypass -Command "if (Test-Path 'SixLabors.ImageSharp.dll:Zone.Identifier') { exit 1 } else { exit 0 }" 2>nul
+powershell.exe -ExecutionPolicy Bypass -Command ^
+    "if (Test-Path 'SixLabors.ImageSharp.dll:Zone.Identifier') { exit 1 } else { exit 0 }" 2>nul
+
 if %ERRORLEVEL% EQU 1 (
     echo   [CRITICAL] Files are BLOCKED by Windows!
     echo   [CRITICAL] This will cause "Could not load file or assembly" errors!
@@ -124,8 +127,8 @@ if %ERRORLEVEL% EQU 1 (
     echo   [OK] Files appear to be unblocked
     echo.
 ) else (
-    echo   [INFO] Cannot check block status (PowerShell not available)
-    echo   [INFO] If you get DLL errors, run UNBLOCK_FILES.bat
+    echo   [INFO] Cannot check block status (PowerShell not available or failed to run)
+    echo   [INFO] If you get DLL errors, run UNBLOCK_FILES.bat and/or use manual unblock.
     echo.
 )
 
@@ -187,16 +190,17 @@ if %ERROR_COUNT% GTR 0 (
     echo   [SUCCESS] All critical files verified!
     echo.
     echo   Next steps:
-    if not exist UNBLOCK_FILES.bat (
-        echo   1. Run UNBLOCK_FILES.bat if available
-        echo   2. Run START_HERE.bat to start the application
-    ) else (
+    if exist UNBLOCK_FILES.bat (
         echo   1. [IMPORTANT] Run UNBLOCK_FILES.bat FIRST!
-        echo   2. Then run START_HERE.bat to start the application
+        echo   2. Then run your startup script (e.g. ShiftManager_Start.bat)
+    ) else (
+        echo   1. If you experience DLL load errors, ensure files are unblocked
+        echo   2. Then run your startup script (e.g. ShiftManager_Start.bat)
     )
     echo.
 )
 
 echo ================================================================================
 pause
+endlocal
 exit /b %ERROR_COUNT%
