@@ -26,7 +26,8 @@ echo.
 
 REM Method 1: Try PowerShell inline command (works even if script execution is disabled)
 echo [Method 1] Trying PowerShell Unblock-File command...
-powershell.exe -ExecutionPolicy Bypass -Command "Get-ChildItem -Path . -Recurse -File | ForEach-Object { try { Unblock-File -Path $_.FullName -ErrorAction SilentlyContinue } catch {} }" 2>nul
+echo Unblocking all files (DLLs, CSS, JS, etc.)...
+powershell.exe -ExecutionPolicy Bypass -Command "Get-ChildItem -Path . -Recurse -File | ForEach-Object { try { Unblock-File -Path $_.FullName -ErrorAction SilentlyContinue; if ($_.Extension -in '.dll','.css','.js') { Write-Host '  Unblocked: ' $_.Name -ForegroundColor Yellow } } catch {} }" 2>nul
 
 if %ERRORLEVEL% EQU 0 (
     echo [SUCCESS] Files unblocked using PowerShell
@@ -78,7 +79,29 @@ echo ===========================================================================
 echo                    VERIFICATION
 echo ================================================================================
 echo.
-echo Checking if critical DLL files are still blocked...
+echo Checking critical files...
+echo.
+echo [1/2] Verifying CSS files (required for UI)...
+if exist "wwwroot\css\site.css" (
+    echo   [OK] site.css found
+) else (
+    echo   [ERROR] site.css MISSING! Sidebar UI will not work.
+)
+
+if exist "wwwroot\css\rtl.css" (
+    echo   [OK] rtl.css found
+) else (
+    echo   [WARNING] rtl.css not found ^(optional, needed for Hebrew^)
+)
+
+if exist "wwwroot\js\site.js" (
+    echo   [OK] site.js found
+) else (
+    echo   [ERROR] site.js MISSING! Core functionality will fail.
+)
+
+echo.
+echo [2/2] Checking if critical DLL files are still blocked...
 echo.
 
 REM Check SixLabors.ImageSharp.dll specifically

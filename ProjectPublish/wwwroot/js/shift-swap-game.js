@@ -30,6 +30,7 @@
     let selectedTile = null;
     let isAnimating = false;
     let modalElement = null;
+    let gameOver = false;  // Track if game has ended due to no moves
 
     // ✅ PHASE 19: Localization and milestone tracking
     let localization = null;
@@ -66,10 +67,13 @@
             instructions: 'Swap adjacent icons to line up 3+ in a row',
             score: 'Score:',
             trophy: 'Leaderboard',
+            hint: 'Get hint',
             playAgain: 'Play Again',
             viewLeaderboard: 'View Leaderboard',
             scoreSaved: 'Score saved!',
             milestoneReached: 'New milestone reached! 🎉',
+            noMovesLeft: 'No more moves available!',
+            gameOver: 'Game Over',
             roasts: {
                 r1000: ['What? Is there no work?', 'Should we assign you more shifts?', 'Is the real shift schedule not challenging enough?'],
                 r2500: ['I know your next chore: practicing the game!', 'Your dedication is... concerning.', 'Is this why the shifts are piling up?'],
@@ -122,6 +126,12 @@
                 MEGA_COMBO_MIN_5_LINES = gameConfig.megaCombo?.min5MatchLines || 0;
                 MILESTONES = gameConfig.milestones || [1000, 2500, 5000, 7500, 10000, 15000, 20000];
 
+                // Validate grid size
+                if (GRID_SIZE < 4 || GRID_SIZE > 10) {
+                    console.error('Invalid grid size:', GRID_SIZE, '- falling back to 6');
+                    GRID_SIZE = 6;
+                }
+
                 console.log('Game configuration loaded:', gameConfig);
                 return true;
             }
@@ -154,6 +164,7 @@
         score = 0;
         selectedTile = null;
         isAnimating = false;
+        gameOver = false;
         crossedMilestones = new Set();
         highestMilestone = 0;
 
@@ -181,6 +192,7 @@
                     <div class="shift-swap-header">
                         <h2 class="shift-swap-title">${localization.title}</h2>
                         <div class="shift-swap-header-actions">
+                            <button class="shift-swap-hint" aria-label="${localization.hint}" title="${localization.hint}">💡</button>
                             <button class="shift-swap-trophy" aria-label="${localization.trophy}" title="${localization.trophy}">🏆</button>
                             <button class="shift-swap-close" aria-label="Close game">&times;</button>
                         </div>
@@ -209,6 +221,10 @@
         // Close button
         const closeBtn = modalElement.querySelector('.shift-swap-close');
         closeBtn.addEventListener('click', closeGame);
+
+        // Hint button
+        const hintBtn = modalElement.querySelector('.shift-swap-hint');
+        hintBtn.addEventListener('click', showHint);
 
         // ✅ PHASE 19: Trophy button
         const trophyBtn = modalElement.querySelector('.shift-swap-trophy');
@@ -411,6 +427,12 @@
      * Initialize grid with no initial matches
      */
     function initializeGrid() {
+        // Defensive validation
+        if (!GRID_SIZE || GRID_SIZE < 4 || GRID_SIZE > 10) {
+            console.error('Invalid GRID_SIZE:', GRID_SIZE, '- using default 6');
+            GRID_SIZE = 6;
+        }
+
         grid = [];
 
         // Create random grid
@@ -485,6 +507,9 @@
         const gridElement = document.getElementById('shiftSwapGrid');
         if (!gridElement) return;
 
+        // Apply dynamic grid size
+        gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+
         gridElement.innerHTML = '';
 
         for (let row = 0; row < GRID_SIZE; row++) {
@@ -503,12 +528,28 @@
                 gridElement.appendChild(tile);
             }
         }
+
+        // Update hint button state
+        updateHintButton();
+    }
+
+    /**
+     * Update hint button enabled/disabled state
+     */
+    function updateHintButton() {
+        const hintBtn = modalElement?.querySelector('.shift-swap-hint');
+        if (!hintBtn) return;
+
+        const possibleMoves = getPossibleMerges();
+        hintBtn.disabled = possibleMoves.length === 0 || isAnimating;
     }
 
     /**
      * Handle grid click
      */
     function handleGridClick(e) {
+        clearHints();  // Clear any active hints when user clicks
+
         if (isAnimating) return;
 
         const tile = e.target.closest('.shift-swap-tile');
@@ -658,6 +699,263 @@
     }
 
     /**
+     * Calculate the length of a super-merge line
+     * @param {Object} line - Line object with type and coordinates
+     * @returns {number} Length of the line
+     */
+    function getLineLength(line) {
+        if (line.type === 'horizontal') {
+            return line.endCol - line.startCol;
+        } else if (line.type === 'vertical') {
+            return line.endRow - line.startRow;
+        }
+        return 0;
+    }
+
+    /**
+     * Find matches in a specific grid (modified version of findAllMatches)
+     * @param {Array} targetGrid - 2D array to check for matches
+     * @returns {Array} Array of matched tile coordinates
+     */
+    function findMatchesInGrid(targetGrid) {
+        const matches = new Set();
+        const gridSize = targetGrid.length;
+
+        // Check horizontal matches
+        for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize - 2; col++) {
+                const icon = targetGrid[row][col];
+                if (icon === targetGrid[row][col + 1] && icon === targetGrid[row][col + 2]) {
+                    let endCol = col + 2;
+                    while (endCol < gridSize && targetGrid[row][endCol] === icon) {
+                        endCol++;
+                    }
+                    for (let c = col; c < endCol; c++) {
+                        matches.add(`${row},${c}`);
+                    }
+                }
+            }
+        }
+
+        // Check vertical matches
+        for (let col = 0; col < gridSize; col++) {
+            for (let row = 0; row < gridSize - 2; row++) {
+                const icon = targetGrid[row][col];
+                if (icon === targetGrid[row + 1][col] && icon === targetGrid[row + 2][col]) {
+                    let endRow = row + 2;
+                    while (endRow < gridSize && targetGrid[endRow][col] === icon) {
+                        endRow++;
+                    }
+                    for (let r = row; r < endRow; r++) {
+                        matches.add(`${r},${col}`);
+                    }
+                }
+            }
+        }
+
+        return Array.from(matches).map(coord => {
+            const [row, col] = coord.split(',').map(Number);
+            return { row, col };
+        });
+    }
+
+    /**
+     * Find all possible valid moves on the current board
+     * @param {boolean} findAll - If false, returns after finding first match (for performance)
+     * @returns {Array} Array of possible moves with tile positions and matches
+     */
+    function getPossibleMerges(findAll = true) {
+        const possibleMoves = [];
+
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                // Check all 4 adjacent positions
+                const adjacentPositions = [
+                    { row: row, col: col + 1 },     // Right
+                    { row: row + 1, col: col },     // Down
+                ];
+
+                // Only check right and down to avoid duplicate checks
+                for (const adjacent of adjacentPositions) {
+                    if (adjacent.row >= GRID_SIZE || adjacent.col >= GRID_SIZE) {
+                        continue;
+                    }
+
+                    // Simulate swap without modifying actual grid
+                    const tempGrid = JSON.parse(JSON.stringify(grid));
+                    const temp = tempGrid[row][col];
+                    tempGrid[row][col] = tempGrid[adjacent.row][adjacent.col];
+                    tempGrid[adjacent.row][adjacent.col] = temp;
+
+                    // Check if swap creates matches
+                    const matches = findMatchesInGrid(tempGrid);
+
+                    if (matches.length > 0) {
+                        possibleMoves.push({
+                            tile1: { row, col },
+                            tile2: { row: adjacent.row, col: adjacent.col },
+                            matches: matches
+                        });
+
+                        // Early exit if we just need to know if ANY move exists
+                        if (!findAll) {
+                            return possibleMoves;
+                        }
+                    }
+                }
+            }
+        }
+
+        return possibleMoves;
+    }
+
+    /**
+     * Show hint by highlighting a possible merge
+     */
+    function showHint() {
+        if (isAnimating) return;
+
+        // Clear any existing hints
+        clearHints();
+
+        const possibleMoves = getPossibleMerges();
+
+        if (possibleMoves.length === 0) {
+            // No hints available - should trigger lose condition
+            console.warn('No possible moves available');
+            return;
+        }
+
+        // Pick first available move (or random: Math.floor(Math.random() * possibleMoves.length))
+        const hint = possibleMoves[0];
+
+        // Highlight the first 3 matching tiles
+        const tilesToHighlight = [hint.tile1, hint.tile2];
+
+        // Add one more tile from the matches to show which 3 tiles will merge
+        if (hint.matches.length > 0) {
+            tilesToHighlight.push(hint.matches[0]);
+        }
+
+        // Apply hint highlight to tiles
+        tilesToHighlight.forEach(({ row, col }) => {
+            const tile = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (tile) {
+                tile.classList.add('hint-highlight');
+            }
+        });
+
+        // Auto-clear hint after 3 seconds
+        setTimeout(clearHints, 3000);
+    }
+
+    /**
+     * Clear all hint highlights
+     */
+    function clearHints() {
+        document.querySelectorAll('.hint-highlight').forEach(tile => {
+            tile.classList.remove('hint-highlight');
+        });
+    }
+
+    /**
+     * Check if player has lost (no possible moves)
+     */
+    async function checkForLoseCondition() {
+        if (gameOver) return;
+
+        const possibleMoves = getPossibleMerges(false); // Early exit for performance
+
+        if (possibleMoves.length === 0) {
+            console.log('No possible moves - Game Over!');
+            gameOver = true;
+
+            // Wait a moment for player to see the board
+            await sleep(500);
+
+            // Trigger game over with special message
+            await triggerGameOver();
+        }
+    }
+
+    /**
+     * Trigger game over sequence
+     */
+    async function triggerGameOver() {
+        if (!modalElement) return;
+
+        // Show game over popup (modified roasting popup)
+        await showGameOverPopup();
+
+        // Close the game modal
+        modalElement.classList.remove('show');
+
+        setTimeout(() => {
+            if (modalElement && modalElement.parentNode) {
+                document.removeEventListener('keydown', handleKeydown);
+                modalElement.remove();
+                modalElement = null;
+            }
+        }, ANIMATION_DURATION);
+    }
+
+    /**
+     * Show game over popup with score and no-moves message
+     */
+    function showGameOverPopup() {
+        return new Promise((resolve) => {
+            const milestone = highestMilestone;
+            const roastMessage = milestone > 0 ? getRandomRoast(milestone) : null;
+
+            // Custom game over message
+            const gameOverMessage = localization.noMovesLeft || 'No more moves available!';
+
+            const popupHTML = `
+                <div class="roasting-popup game-over-popup" id="gameOverPopup">
+                    <div class="roasting-popup-backdrop"></div>
+                    <div class="roasting-popup-content">
+                        <div class="game-over-icon">😵</div>
+                        <h3 class="game-over-title">${localization.gameOver || 'Game Over'}</h3>
+                        <p class="game-over-reason">${gameOverMessage}</p>
+                        <h3 class="roasting-score-display">${localization.score} ${score}</h3>
+                        ${roastMessage ? `<p class="roasting-message">${roastMessage}</p>` : ''}
+                        <div class="roasting-buttons">
+                            <button class="btn-modal primary" id="playAgainBtn">${localization.playAgain}</button>
+                            <button class="btn-modal secondary" id="viewLeaderboardBtn">${localization.viewLeaderboard}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', popupHTML);
+            const popup = document.getElementById('gameOverPopup');
+
+            setTimeout(() => popup.classList.add('show'), 10);
+
+            // Button handlers
+            document.getElementById('playAgainBtn').addEventListener('click', () => {
+                closePopup(popup);
+                saveScore();
+                resolve();
+                setTimeout(() => openGame(), 400);
+            });
+
+            document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
+                closePopup(popup);
+                saveScore();
+                openLeaderboard();
+                resolve();
+            });
+
+            popup.querySelector('.roasting-popup-backdrop').addEventListener('click', () => {
+                closePopup(popup);
+                saveScore();
+                resolve();
+            });
+        });
+    }
+
+    /**
      * ✅ SUPER-MERGE: Process matches (with super-merge combo detection)
      */
     async function processMatches(matches) {
@@ -713,6 +1011,9 @@
         const newMatches = findAllMatches();
         if (newMatches.length > 0) {
             await processMatches(newMatches);
+        } else {
+            // No more cascades - check if any moves left
+            await checkForLoseCondition();
         }
     }
 
@@ -818,6 +1119,9 @@
         const newMatches = findAllMatches();
         if (newMatches.length > 0) {
             await processMatches(newMatches);
+        } else {
+            // No more cascades - check if any moves left
+            await checkForLoseCondition();
         }
     }
 
@@ -825,10 +1129,16 @@
      * 🎆 MEGA COMBO: Clear entire board and apply multiplier!
      */
     async function handleMegaCombo(lines) {
+        // Defensive check
+        if (!lines || lines.length === 0) {
+            console.warn('handleMegaCombo called with no lines');
+            return;
+        }
+
         // Count lines by size
-        const count3Lines = lines.filter(line => line.length === 3).length;
-        const count4Lines = lines.filter(line => line.length === 4).length;
-        const count5Lines = lines.filter(line => line.length >= 5).length;
+        const count3Lines = lines.filter(line => getLineLength(line) === 3).length;
+        const count4Lines = lines.filter(line => getLineLength(line) === 4).length;
+        const count5Lines = lines.filter(line => getLineLength(line) >= 5).length;
 
         // Check if any threshold is met
         const megaComboTriggered =
@@ -882,6 +1192,9 @@
         const newMatches = findAllMatches();
         if (newMatches.length > 0) {
             await processMatches(newMatches);
+        } else {
+            // No more cascades - check if any moves left
+            await checkForLoseCondition();
         }
     }
 
