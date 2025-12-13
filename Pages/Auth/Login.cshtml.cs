@@ -17,24 +17,61 @@ public class LoginModel : PageModel
     private readonly ILogger<LoginModel> _logger;
     private readonly IRateLimitingService _rateLimiting;
     private readonly IValidationService _validation;
+    private readonly IGriffinConfigService _griffinConfigService;
+    private readonly IGriffinService _griffinService;
 
-    public LoginModel(AppDbContext db, ILogger<LoginModel> logger, IRateLimitingService rateLimiting, IValidationService validation)
+    public LoginModel(
+        AppDbContext db,
+        ILogger<LoginModel> logger,
+        IRateLimitingService rateLimiting,
+        IValidationService validation,
+        IGriffinConfigService griffinConfigService,
+        IGriffinService griffinService)
     {
         _db = db;
         _logger = logger;
         _rateLimiting = rateLimiting;
         _validation = validation;
+        _griffinConfigService = griffinConfigService;
+        _griffinService = griffinService;
     }
 
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string Password { get; set; } = string.Empty;
     public string? Error { get; set; }
     public bool ShowAuthPrompt { get; set; }
+    public bool ShowGriffinButton { get; set; }
+    public bool ShowGriffinUnavailableMessage { get; set; }
+    public string? ReturnUrl { get; set; }
 
-    public void OnGet(string? reason = null)
+    public async Task OnGetAsync(string? reason = null, string? returnUrl = null)
     {
+        ReturnUrl = returnUrl ?? "/Home/Index";
+
         // ✅ PHASE 18: Show auth required prompt if user was redirected due to unauthorized access
         ShowAuthPrompt = reason == "authRequired";
+
+        // Always show Griffin ADFS button
+        ShowGriffinButton = true;
+
+        // Check Griffin availability
+        var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
+
+        if (griffinConfig?.Enabled != true)
+        {
+            ShowGriffinUnavailableMessage = true;
+        }
+        else
+        {
+            var isAvailable = await _griffinConfigService.TestConnectionAsync(
+                griffinConfig.BaseUrl!, griffinConfig.TimeoutSeconds);
+
+            if (!isAvailable)
+            {
+                ShowGriffinUnavailableMessage = true;
+                _logger.LogWarning("Griffin ADFS unavailable");
+            }
+        }
 
         // ✅ SUB-PHASE 18.14: Prevent browser caching to ensure link renders correctly
         Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
@@ -161,5 +198,33 @@ public class LoginModel : PageModel
             Error = "Unexpected error. Please try again.";
             return Page();
         }
+    }
+
+    public async Task<IActionResult> OnPostGriffinAsync(string? returnUrl = null)
+    {
+        var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
+
+        if (griffinConfig?.Enabled != true)
+        {
+            Error = "ADFS authentication is not configured. Please use local login or contact your administrator.";
+            ReturnUrl = returnUrl ?? "/Home/Index";
+            ShowGriffinButton = true;
+            ShowGriffinUnavailableMessage = true;
+            await OnGetAsync(returnUrl: returnUrl);
+            return Page();
+        }
+
+        // Build callback URL
+        var callbackUrl = $"{Request.Scheme}://{Request.Host}/Auth/GriffinCallback";
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            callbackUrl += $"?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+
+        // Build authentication URL
+        var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl!, callbackUrl);
+
+        // Redirect to Griffin
+        return Redirect(authUrl);
     }
 }

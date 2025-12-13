@@ -114,6 +114,10 @@ builder.Services.AddDataProtection(); // Required for EncryptionService
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IMailService, MailService>();
+// Griffin ADFS services
+builder.Services.AddScoped<IGriffinConfigService, GriffinConfigService>();
+builder.Services.AddScoped<IGriffinService, GriffinService>();
+builder.Services.AddMemoryCache(); // For Griffin claims caching (may already be registered)
 builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
@@ -399,6 +403,10 @@ app.Use(async (context, next) =>
 
 // Add request localization middleware
 app.UseRequestLocalization();
+
+// Griffin ADFS authentication (BEFORE CompanyContext)
+// Sets HttpContext.User from griffin.token cookie if present
+app.UseMiddleware<GriffinAuthenticationMiddleware>();
 
 // Multitenancy Phase 2: Add company context middleware
 app.UseMiddleware<CompanyContextMiddleware>();

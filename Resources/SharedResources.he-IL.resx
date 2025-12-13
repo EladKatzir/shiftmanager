@@ -3334,4 +3334,82 @@
   <data name="Settings_NoOnDutyTypes" xml:space="preserve">
     <value>לא הוגדרו סוגי תורנות יומית</value>
   </data>
+  <data name="Owner_GriffinConfig" xml:space="preserve">
+    <value>Griffin ADFS</value>
+  </data>
+  <data name="Owner_GriffinConfig_Desc" xml:space="preserve">
+    <value>הגדר אימות Griffin ADFS</value>
+  </data>
+  <data name="Owner_GriffinConfig_Subtitle" xml:space="preserve">
+    <value>הגדר אימות דומיין עבור סביבות מבודדות</value>
+  </data>
+  <data name="Owner_Griffin_ServiceConfig" xml:space="preserve">
+    <value>הגדרות שירות Griffin</value>
+  </data>
+  <data name="Owner_Griffin_BaseUrl" xml:space="preserve">
+    <value>כתובת בסיס של Griffin</value>
+  </data>
+  <data name="Owner_Griffin_BaseUrl_Desc" xml:space="preserve">
+    <value>נקודת קצה של שירות Griffin (למשל, http://7108dev-auth.d8200.mil)</value>
+  </data>
+  <data name="Owner_Griffin_CallbackUrl" xml:space="preserve">
+    <value>כתובת Callback</value>
+  </data>
+  <data name="Owner_Griffin_CallbackUrl_Desc" xml:space="preserve">
+    <value>כתובת ה-Callback שלך שאליה Griffin מפנה לאחר אימות</value>
+  </data>
+  <data name="Owner_Griffin_Timeout" xml:space="preserve">
+    <value>זמן קצוב (שניות)</value>
+  </data>
+  <data name="Owner_Griffin_Timeout_Desc" xml:space="preserve">
+    <value>זמן קצוב לקריאות API של Griffin (1-60 שניות)</value>
+  </data>
+  <data name="Owner_Griffin_UserProvisioning" xml:space="preserve">
+    <value>יצירת משתמשים אוטומטית</value>
+  </data>
+  <data name="Owner_Griffin_AutoProvision" xml:space="preserve">
+    <value>יצור משתמשים חדשים אוטומטית</value>
+  </data>
+  <data name="Owner_Griffin_AutoProvision_Desc" xml:space="preserve">
+    <value>צור חשבונות משתמש אוטומטית בכניסה ראשונה דרך Griffin</value>
+  </data>
+  <data name="Owner_Griffin_DefaultRole" xml:space="preserve">
+    <value>תפקיד ברירת מחדל</value>
+  </data>
+  <data name="Owner_Griffin_DefaultRole_Desc" xml:space="preserve">
+    <value>תפקיד ברירת מחדל שמוקצה למשתמשים שנוצרו אוטומטית</value>
+  </data>
+  <data name="Owner_Griffin_TestConnection" xml:space="preserve">
+    <value>בדוק חיבור</value>
+  </data>
+  <data name="Owner_Griffin_ConnectionSuccess" xml:space="preserve">
+    <value>החיבור הצליח - שירות Griffin זמין</value>
+  </data>
+  <data name="Owner_Griffin_ConnectionFailed" xml:space="preserve">
+    <value>החיבור נכשל - שירות Griffin לא זמין</value>
+  </data>
+  <data name="Owner_Griffin_About" xml:space="preserve">
+    <value>אודות Griffin ADFS</value>
+  </data>
+  <data name="Owner_Griffin_About_Desc" xml:space="preserve">
+    <value>Griffin ADFS מספק אימות דומיין מרכזי עבור סביבות צבאיות/ממשלתיות מבודדות.</value>
+  </data>
+  <data name="Owner_Griffin_About_Point1" xml:space="preserve">
+    <value>משתמשים מאמתים עם אישורי הדומיין שלהם (CAC/שם משתמש)</value>
+  </data>
+  <data name="Owner_Griffin_About_Point2" xml:space="preserve">
+    <value>אימות מקומי תמיד זמין כגיבוי</value>
+  </data>
+  <data name="Owner_Griffin_About_Point3" xml:space="preserve">
+    <value>אין צורך ב-Client Secret - שירות Griffin מטפל בתקשורת עם ADFS</value>
+  </data>
+  <data name="LoginWithADFS" xml:space="preserve">
+    <value>הזדהות במערכת היחידה</value>
+  </data>
+  <data name="LoginWithADFS_Description" xml:space="preserve">
+    <value>השתמש באישורי הדומיין שלך</value>
+  </data>
+  <data name="LoginWithADFS_Unavailable" xml:space="preserve">
+    <value>Griffin ADFS אינו זמין כרגע. אנא השתמש בהתחברות מקומית למטה.</value>
+  </data>
 </root>

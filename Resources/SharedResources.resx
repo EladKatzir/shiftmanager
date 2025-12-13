@@ -3548,4 +3548,82 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Settings_NoOnDutyTypes" xml:space="preserve">
     <value>No on-duty types are currently configured</value>
   </data>
+  <data name="Owner_GriffinConfig" xml:space="preserve">
+    <value>Griffin ADFS</value>
+  </data>
+  <data name="Owner_GriffinConfig_Desc" xml:space="preserve">
+    <value>Configure Griffin ADFS authentication settings</value>
+  </data>
+  <data name="Owner_GriffinConfig_Subtitle" xml:space="preserve">
+    <value>Configure domain authentication for air-gapped environments</value>
+  </data>
+  <data name="Owner_Griffin_ServiceConfig" xml:space="preserve">
+    <value>Griffin Service Configuration</value>
+  </data>
+  <data name="Owner_Griffin_BaseUrl" xml:space="preserve">
+    <value>Griffin Base URL</value>
+  </data>
+  <data name="Owner_Griffin_BaseUrl_Desc" xml:space="preserve">
+    <value>Griffin service endpoint (e.g., http://7108dev-auth.d8200.mil)</value>
+  </data>
+  <data name="Owner_Griffin_CallbackUrl" xml:space="preserve">
+    <value>Callback URL</value>
+  </data>
+  <data name="Owner_Griffin_CallbackUrl_Desc" xml:space="preserve">
+    <value>Your app's callback URL where Griffin redirects after authentication</value>
+  </data>
+  <data name="Owner_Griffin_Timeout" xml:space="preserve">
+    <value>Timeout (seconds)</value>
+  </data>
+  <data name="Owner_Griffin_Timeout_Desc" xml:space="preserve">
+    <value>Timeout for Griffin API calls (1-60 seconds)</value>
+  </data>
+  <data name="Owner_Griffin_UserProvisioning" xml:space="preserve">
+    <value>User Provisioning</value>
+  </data>
+  <data name="Owner_Griffin_AutoProvision" xml:space="preserve">
+    <value>Auto-Provision New Users</value>
+  </data>
+  <data name="Owner_Griffin_AutoProvision_Desc" xml:space="preserve">
+    <value>Automatically create user accounts on first Griffin login</value>
+  </data>
+  <data name="Owner_Griffin_DefaultRole" xml:space="preserve">
+    <value>Default Role</value>
+  </data>
+  <data name="Owner_Griffin_DefaultRole_Desc" xml:space="preserve">
+    <value>Default role assigned to auto-provisioned users</value>
+  </data>
+  <data name="Owner_Griffin_TestConnection" xml:space="preserve">
+    <value>Test Connection</value>
+  </data>
+  <data name="Owner_Griffin_ConnectionSuccess" xml:space="preserve">
+    <value>Connection successful - Griffin service is reachable</value>
+  </data>
+  <data name="Owner_Griffin_ConnectionFailed" xml:space="preserve">
+    <value>Connection failed - Griffin service unreachable</value>
+  </data>
+  <data name="Owner_Griffin_About" xml:space="preserve">
+    <value>About Griffin ADFS</value>
+  </data>
+  <data name="Owner_Griffin_About_Desc" xml:space="preserve">
+    <value>Griffin ADFS provides centralized domain authentication for air-gapped military/government environments.</value>
+  </data>
+  <data name="Owner_Griffin_About_Point1" xml:space="preserve">
+    <value>Users authenticate with their domain credentials (CAC/username)</value>
+  </data>
+  <data name="Owner_Griffin_About_Point2" xml:space="preserve">
+    <value>Local authentication always available as fallback</value>
+  </data>
+  <data name="Owner_Griffin_About_Point3" xml:space="preserve">
+    <value>No client secret needed - Griffin service handles ADFS communication</value>
+  </data>
+  <data name="LoginWithADFS" xml:space="preserve">
+    <value>Login with ADFS</value>
+  </data>
+  <data name="LoginWithADFS_Description" xml:space="preserve">
+    <value>Use your domain credentials</value>
+  </data>
+  <data name="LoginWithADFS_Unavailable" xml:space="preserve">
+    <value>Griffin ADFS is temporarily unavailable. Please use local login below.</value>
+  </data>
 </root>

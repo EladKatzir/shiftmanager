@@ -17,6 +17,33 @@
     </script>
 }
 
+@* Griffin ADFS login option (always visible) *@
+<div style="max-width:420px; margin:auto">
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <h5 class="card-title">@Localizer["LoginWithADFS"]</h5>
+            <p class="text-muted">@Localizer["LoginWithADFS_Description"]</p>
+            <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shield-alt"></i> @Localizer["LoginWithADFS"]
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center mb-3">
+        <span class="text-muted">— OR —</span>
+    </div>
+
+    @if (Model.ShowGriffinUnavailableMessage)
+    {
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            @Localizer["LoginWithADFS_Unavailable"]
+        </div>
+    }
+</div>
+
 <div class="card" style="max-width:420px; margin:auto">
     <h2>@Localizer["Login"]</h2>
     @if (!string.IsNullOrEmpty(Model.Error))

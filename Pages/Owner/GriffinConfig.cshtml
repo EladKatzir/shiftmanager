@@ -1,0 +1,266 @@
+@page
+@model ShiftManager.Pages.Owner.GriffinConfigModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_GriffinConfig"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_GriffinConfig"], IsActive = true }
+})
+
+<div class="griffin-config-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">🛡️</span>
+            @Localizer["Owner_GriffinConfig"]
+        </h1>
+        <p class="page-subtitle">@Localizer["Owner_GriffinConfig_Subtitle"]</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success">
+            <strong>✅ @Localizer["Success"]:</strong> @Model.SuccessMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">
+            <strong>❌ @Localizer["Error"]:</strong> @Model.ErrorMessage
+        </div>
+    }
+
+    @if (Model.TestConnectionResult != null)
+    {
+        @if (Model.TestConnectionResult.Value)
+        {
+            <div class="alert alert-success">
+                <strong>✅ @Localizer["Success"]:</strong> @Localizer["Owner_Griffin_ConnectionSuccess"]
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-error">
+                <strong>❌ @Localizer["Error"]:</strong> @Localizer["Owner_Griffin_ConnectionFailed"]
+            </div>
+        }
+    }
+
+    <form method="post">
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🛡️ @Localizer["Owner_Griffin_ServiceConfig"]</h2>
+                <div class="form-group-inline">
+                    <label class="toggle-label">
+                        <input type="checkbox" asp-for="Enabled" class="toggle-checkbox" />
+                        <span class="toggle-text">@(Model.Enabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label asp-for="BaseUrl">@Localizer["Owner_Griffin_BaseUrl"]</label>
+                    <input asp-for="BaseUrl" class="form-control" placeholder="http://7108dev-auth.d8200.mil" />
+                    <small class="form-text">@Localizer["Owner_Griffin_BaseUrl_Desc"]</small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="TokenConsumerUrl">@Localizer["Owner_Griffin_CallbackUrl"]</label>
+                    <input asp-for="TokenConsumerUrl" class="form-control"
+                           placeholder="https://your-app.local/Auth/GriffinCallback" />
+                    <small class="form-text">@Localizer["Owner_Griffin_CallbackUrl_Desc"]</small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="TimeoutSeconds">@Localizer["Owner_Griffin_Timeout"]</label>
+                    <input asp-for="TimeoutSeconds" type="number" min="1" max="60" class="form-control" />
+                    <small class="form-text">@Localizer["Owner_Griffin_Timeout_Desc"]</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <div class="card-header">
+                <h2>👥 @Localizer["Owner_Griffin_UserProvisioning"]</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" asp-for="AutoProvisionUsers" class="toggle-checkbox" />
+                        <span class="toggle-text">@Localizer["Owner_Griffin_AutoProvision"]</span>
+                    </label>
+                    <small class="form-text">@Localizer["Owner_Griffin_AutoProvision_Desc"]</small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DefaultProvisionedRole">@Localizer["Owner_Griffin_DefaultRole"]</label>
+                    <select asp-for="DefaultProvisionedRole" class="form-control" asp-items="Model.RoleOptions"></select>
+                    <small class="form-text">@Localizer["Owner_Griffin_DefaultRole_Desc"]</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">💾 @Localizer["Save"]</button>
+                <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
+                    🔌 @Localizer["Owner_Griffin_TestConnection"]
+                </button>
+                <a href="/Owner/Index" class="btn btn-outline">@Localizer["Cancel"]</a>
+            </div>
+        </div>
+    </form>
+
+    @* Info Card *@
+    <div class="config-card">
+        <div class="card-header">
+            <h2>ℹ️ @Localizer["Owner_Griffin_About"]</h2>
+        </div>
+        <div class="card-body">
+            <p>@Localizer["Owner_Griffin_About_Desc"]</p>
+            <ul>
+                <li>@Localizer["Owner_Griffin_About_Point1"]</li>
+                <li>@Localizer["Owner_Griffin_About_Point2"]</li>
+                <li>@Localizer["Owner_Griffin_About_Point3"]</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.griffin-config-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.config-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--background);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.toggle-checkbox {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+.toggle-text {
+    font-weight: 600;
+}
+
+.form-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success, #10b981);
+    color: var(--success, #10b981);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger, #ef4444);
+    color: var(--danger, #ef4444);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-outline:hover {
+    background: var(--background);
+}
+</style>

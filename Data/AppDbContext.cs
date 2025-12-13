@@ -37,6 +37,7 @@ public class AppDbContext : DbContext
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
+    public DbSet<GriffinConfig> GriffinConfigs => Set<GriffinConfig>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
     // Public/Global Tables (no CompanyId, visible across all tenancies)

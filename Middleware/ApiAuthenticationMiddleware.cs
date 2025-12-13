@@ -213,6 +213,12 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // Griffin ADFS callback - receives authentication token from Griffin service
+        if (path.StartsWithSegments("/Auth/GriffinCallback", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 

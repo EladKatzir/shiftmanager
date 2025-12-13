@@ -141,6 +141,7 @@ dotnet run
 - [FinalProductPublish/DEPLOYMENT_GUIDE.txt](FinalProductPublish/DEPLOYMENT_GUIDE.txt) - Production deployment manual
 - [FinalProductPublish/README.txt](FinalProductPublish/README.txt) - Deployment package overview
 - [PRE_DEMO_CHECKLIST.txt](PRE_DEMO_CHECKLIST.txt) - Pre-deployment verification procedures
+- [GRIFFIN_OWNER_GUIDE.md](GRIFFIN_OWNER_GUIDE.md) - Complete guide for Griffin ADFS authentication in air-gapped environments
 
 **For Developers:**
 - [project.md](project.md) - Complete technical documentation (architecture, APIs, database schema)
@@ -413,7 +414,32 @@ Navigate to **http://localhost:5000** and login with:
   set EMAIL__FROMADDRESS=noreply@yourcompany.com
   ```
 
-**See [project.md](project.md) Configuration section for complete reference**
+**Griffin ADFS Authentication** (Optional - Air-Gapped Environments):
+
+ShiftManager supports authentication via Griffin ADFS for air-gapped military/government environments.
+
+**Quick Configuration:**
+- **Configure via Owner Menu**: Navigate to **Owner → Griffin ADFS**
+- **Enable Griffin**: Toggle Griffin ADFS authentication
+- **Base URL**: Griffin service endpoint (e.g., `http://7108dev-auth.d8200.mil`)
+- **Callback URL**: Your app's callback URL (e.g., `https://your-app.local/Auth/GriffinCallback`)
+- **Auto-Provision**: Automatically create user accounts on first Griffin login
+- **Default Role**: Role assigned to auto-provisioned users (Employee, Manager, etc.)
+- **Timeout**: Timeout for Griffin API calls (1-60 seconds)
+
+**Key Features:**
+- Dual authentication: ADFS + email/password fallback
+- Login page shows "Login with ADFS" / "הזדהות במערכת היחידה" button (English/Hebrew)
+- If Griffin is unavailable, users can always use local authentication
+- Login page shows warning when Griffin is temporarily unavailable
+
+**Documentation:**
+- **[GRIFFIN_OWNER_GUIDE.md](GRIFFIN_OWNER_GUIDE.md)** - Complete owner/admin guide with:
+  - Step-by-step setup for local development and air-gapped environments
+  - Authentication flows and user lifecycle management
+  - Configuration options and troubleshooting procedures
+  - FAQ covering every aspect of Griffin ADFS integration
+- [project.md](project.md) Configuration section - Technical reference
 
 ---
 
