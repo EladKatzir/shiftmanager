@@ -281,10 +281,25 @@ th { text-align: left; color: var(--text) !important; }
   padding: .35rem .6rem; border-radius: .4rem; border:1px solid var(--border); background: var(--surface); cursor: pointer;
 }
 .btn:hover { filter: brightness(0.98); }
-.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary { background: var(--primary); color: white !important; border-color: var(--primary); }
 .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
 .btn-ghost { background: transparent; border-color: var(--border); }
 .btn:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+/* Force white text on primary backgrounds in light mode */
+:root:not([data-theme="dark"]) .btn-primary,
+:root:not([data-theme="dark"]) [class*="primary"][class*="bg"],
+:root:not([data-theme="dark"]) [style*="background: var(--primary)"],
+:root:not([data-theme="dark"]) [style*="background-color: var(--primary)"] {
+  color: white !important;
+}
+
+:root:not([data-theme="dark"]) .btn-primary *,
+:root:not([data-theme="dark"]) [class*="primary"][class*="bg"] *,
+:root:not([data-theme="dark"]) [style*="background: var(--primary)"] *,
+:root:not([data-theme="dark"]) [style*="background-color: var(--primary)"] * {
+  color: white !important;
+}
 
 /* ========================================
    App Layout Structure
@@ -514,6 +529,11 @@ th { text-align: left; color: var(--text) !important; }
 
 .user-menu:hover {
   background: var(--surface-strong);
+}
+
+.user-menu:hover .user-name,
+.user-menu:hover .user-role {
+  color: white;
 }
 
 .user-avatar {
@@ -2075,14 +2095,14 @@ th { text-align: left; color: var(--text) !important; }
   font-size: 1.2rem;
 }
 
-/* User Menu */
-.user-menu {
+/* User Menu (Employee Topbar only) */
+.employee-topbar .user-menu {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.user-info {
+.employee-topbar .user-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -2092,7 +2112,7 @@ th { text-align: left; color: var(--text) !important; }
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.user-avatar {
+.employee-topbar .user-avatar {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
@@ -2106,20 +2126,20 @@ th { text-align: left; color: var(--text) !important; }
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-.user-details {
+.employee-topbar .user-details {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
 }
 
-.user-name {
+.employee-topbar .user-name {
   font-size: 0.9rem;
   font-weight: 600;
   color: white;
   margin: 0;
 }
 
-.user-role {
+.employee-topbar .user-role {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
@@ -2234,17 +2254,17 @@ th { text-align: left; color: var(--text) !important; }
     padding: 0.375rem 0.75rem;
   }
 
-  .user-avatar {
+  .employee-topbar .user-avatar {
     width: 2rem;
     height: 2rem;
     font-size: 1rem;
   }
 
-  .user-name {
+  .employee-topbar .user-name {
     font-size: 0.8rem;
   }
 
-  .user-role {
+  .employee-topbar .user-role {
     font-size: 0.7rem;
   }
 

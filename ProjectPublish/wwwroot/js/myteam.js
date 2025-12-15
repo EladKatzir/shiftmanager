@@ -135,7 +135,7 @@ async function apiCall(url, options = {}) {
         return await response.json();
     } catch (error) {
         console.error('API Error:', error);
-        alert(error.message || 'An error occurred');
+        alert(error.message || window.AppLocalizer.AnErrorOccurred);
         throw error;
     }
 }
@@ -340,14 +340,14 @@ function buildTooltip(day) {
 
     // Time range if available
     if (day.timeRange) {
-        parts.push(`Time: ${day.timeRange}`);
+        parts.push(`${window.AppLocalizer.Time}: ${day.timeRange}`);
     }
 
     // Navigation info
     if (day.targetUrl) {
-        parts.push(`Click to view: ${day.targetUrl}`);
+        parts.push(`${window.AppLocalizer.ClickToView}: ${day.targetUrl}`);
     } else if (day.type !== 'Free') {
-        parts.push('(View-only - no navigation available for your role)');
+        parts.push(`(${window.AppLocalizer.ViewOnlyNoNavigation})`);
     }
 
     return parts.join('\n');

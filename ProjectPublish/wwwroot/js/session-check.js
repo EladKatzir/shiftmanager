@@ -15,7 +15,7 @@
 
     // Configuration
     const POLLING_INTERVALS = {
-        OK: 5 * 60 * 1000,      // 5 minutes when session is healthy
+        OK: 10 * 60 * 1000,     // 10 minutes when session is healthy (reduced network load)
         WARNING: 60 * 1000,     // 1 minute when approaching expiration
         EXPIRED: 0              // Stop polling when expired
     };

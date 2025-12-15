@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Easter egg: Shift Swap game (Ctrl+Click on .brand)
   // Using event delegation to catch clicks anywhere within .brand
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', async function(e) {
     // Check if the click (or any parent of the clicked element) is within .brand
     const brandElement = e.target.closest('.brand');
 
@@ -60,6 +60,33 @@ document.addEventListener('DOMContentLoaded', function() {
       e.stopPropagation();
 
       console.log('Ctrl+click detected on .brand! ShiftSwapGame available:', !!window.ShiftSwapGame);
+
+      // Dynamically load game assets if not already loaded
+      if (!window.ShiftSwapGame) {
+        console.log('Loading Shift Swap game assets...');
+
+        // Load CSS
+        if (!document.querySelector('link[href*="shift-swap-game.css"]')) {
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = '/css/shift-swap-game.css?v=' + Date.now();
+          document.head.appendChild(cssLink);
+        }
+
+        // Load JavaScript
+        const script = document.createElement('script');
+        script.src = '/js/shift-swap-game.js?v=' + Date.now();
+        document.head.appendChild(script);
+
+        // Wait for script to load
+        await new Promise((resolve) => {
+          script.onload = resolve;
+          script.onerror = () => {
+            console.error('Failed to load Shift Swap game script');
+            resolve();
+          };
+        });
+      }
 
       // Open the Shift Swap game
       if (window.ShiftSwapGame) {
@@ -337,7 +364,7 @@ function createShiftModal() {
 
   const companySelectorHTML = showCompanySelector ? `
     <div class="form-group">
-      <label class="form-label">Company</label>
+      <label class="form-label">${window.AppLocalizer.Company}</label>
       <select id="companySelect" class="form-input" onchange="filterShiftTypesByCompany()">
         ${companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
       </select>
@@ -348,31 +375,31 @@ function createShiftModal() {
     <div id="shiftModal" class="shift-creation-modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title">Create New Shift</h2>
+          <h2 class="modal-title">${window.AppLocalizer.CreateNewShift}</h2>
           <button class="modal-close" onclick="closeShiftModal()">×</button>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Date</label>
+          <label class="form-label">${window.AppLocalizer.Date}</label>
           <div id="modalDate" style="padding: .75rem 1rem; background: var(--surface); border-radius: .75rem; color: var(--text); font-weight: 500;"></div>
         </div>
 
         ${companySelectorHTML}
 
         <div class="form-group">
-          <label class="form-label">Shift Name (Optional)</label>
-          <input type="text" id="shiftName" class="form-input" placeholder="e.g., Store Opening, Security Round, etc.">
+          <label class="form-label">${window.AppLocalizer.ShiftNameOptional}</label>
+          <input type="text" id="shiftName" class="form-input" placeholder="${window.AppLocalizer.ShiftNamePlaceholder}">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Shift Type</label>
+          <label class="form-label">${window.AppLocalizer.ShiftType}</label>
           <div id="shiftTypeGrid" class="shift-type-grid"></div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Required Staff</label>
+          <label class="form-label">${window.AppLocalizer.RequiredStaff}</label>
           <div class="staffing-controls">
-            <span class="staffing-label">Number of people needed</span>
+            <span class="staffing-label">${window.AppLocalizer.NumberOfPeopleNeeded}</span>
             <div class="staffing-buttons">
               <button type="button" class="staffing-btn" onclick="adjustStaffingCount(-1)">−</button>
               <div id="staffingCount" class="staffing-count">1</div>
@@ -382,8 +409,8 @@ function createShiftModal() {
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn-modal secondary" onclick="closeShiftModal()">Cancel</button>
-          <button type="button" class="btn-modal primary" onclick="createShift()">Create Shift</button>
+          <button type="button" class="btn-modal secondary" onclick="closeShiftModal()">${window.AppLocalizer.Cancel}</button>
+          <button type="button" class="btn-modal primary" onclick="createShift()">${window.AppLocalizer.CreateShift}</button>
         </div>
       </div>
     </div>
@@ -428,7 +455,7 @@ function populateShiftTypes(types) {
     : types;
 
   if (filteredTypes.length === 0) {
-    grid.innerHTML = '<div style="color: var(--muted); text-align: center; padding: 2rem;">No shift types available for this company.</div>';
+    grid.innerHTML = `<div style="color: var(--muted); text-align: center; padding: 2rem;">${window.AppLocalizer.NoShiftTypesAvailable}</div>`;
     return;
   }
 
@@ -486,12 +513,12 @@ async function createShift() {
   const selectedType = document.querySelector('.shift-type-option.selected');
 
   if (!selectedType) {
-    showToast('Please select a shift type', 'error');
+    showToast(window.AppLocalizer.PleaseSelectShiftType, 'error');
     return;
   }
 
   if (!currentModalData) {
-    showToast('Invalid date data', 'error');
+    showToast(window.AppLocalizer.InvalidDateData, 'error');
     return;
   }
 
@@ -532,7 +559,7 @@ async function createShift() {
     }
 
     if (!res.ok) {
-      throw new Error(data.message || 'Failed to create shift');
+      throw new Error(data.message || window.AppLocalizer.FailedToCreateShift);
     }
 
     // If shift name is provided, update it through assignment
@@ -541,7 +568,8 @@ async function createShift() {
       localStorage.setItem(`pendingShiftName_${currentModalData.date}_${selectedType.dataset.typeId}`, shiftName);
     }
 
-    showToast(`Shift created successfully! ${staffingCount} ${staffingCount === 1 ? 'person' : 'people'} required.`, 'success');
+    const personText = staffingCount === 1 ? window.AppLocalizer.Person : window.AppLocalizer.People;
+    showToast(`${window.AppLocalizer.ShiftCreatedSuccessfully} ${staffingCount} ${personText} ${window.AppLocalizer.Required}.`, 'success');
     closeShiftModal();
 
     // Reload the page to show the new shift
@@ -549,7 +577,7 @@ async function createShift() {
 
   } catch (error) {
     console.error('Error creating shift:', error);
-    showToast(error.message || 'Failed to create shift', 'error');
+    showToast(error.message || window.AppLocalizer.FailedToCreateShift, 'error');
   }
 }
 
@@ -641,9 +669,9 @@ function showAccessDeniedPopup() {
 
   popup.innerHTML = `
     <div style="color: var(--danger); font-size: 3rem; margin-bottom: 1rem;">🚫</div>
-    <h3 style="color: var(--text); margin: 0 0 1rem 0; font-size: 1.5rem;">Access Denied</h3>
+    <h3 style="color: var(--text); margin: 0 0 1rem 0; font-size: 1.5rem;">${window.AppLocalizer.AccessDenied}</h3>
     <p style="color: var(--muted); margin: 0 0 2rem 0; line-height: 1.5;">
-      You don't have permission to access this page. This area is restricted to managers and administrators.
+      ${window.AppLocalizer.AccessDeniedMessage}
     </p>
     <button id="closeAccessDenied" style="
       background: var(--primary);
@@ -654,7 +682,7 @@ function showAccessDeniedPopup() {
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-    ">Understood</button>
+    ">${window.AppLocalizer.Understood}</button>
   `;
 
   overlay.appendChild(popup);
@@ -719,7 +747,7 @@ function showAccessDeniedPopup() {
 async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
     event.stopPropagation();
 
-    if (!confirm('Are you sure you want to delete this shift? All assignments will be removed.')) {
+    if (!confirm(window.AppLocalizer.ConfirmDeleteShift)) {
         return;
     }
 
@@ -750,30 +778,33 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
 
 // ============= COMMAND PALETTE =============
 
-const commandPalettePages = [
-  // Manager/Admin Pages
-  { title: 'Home', subtitle: 'Dashboard overview', url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Calendar - Month View', subtitle: 'Monthly schedule', url: '/Calendar/Month', icon: '📅', roles: ['all'] },
-  { title: 'Calendar - Week View', subtitle: 'Weekly schedule', url: '/Calendar/Week', icon: '📆', roles: ['all'] },
-  { title: 'Calendar - Day View', subtitle: 'Daily schedule', url: '/Calendar/Day', icon: '📋', roles: ['all'] },
-  { title: 'Requests', subtitle: 'Manage time-off requests', url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Analytics', subtitle: 'View reports and statistics', url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Users', subtitle: 'Manage employees', url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Companies', subtitle: 'Manage organizations', url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
-  { title: 'Directors', subtitle: 'Assign directors to companies', url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
-  { title: 'Configuration', subtitle: 'System settings', url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Shift Types', subtitle: 'Manage shift definitions', url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Time Off', subtitle: 'Approved time-off requests', url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
-  { title: 'Audit Log', subtitle: 'System activity log', url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
-  { title: 'Chores', subtitle: 'Task management', url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
-  { title: 'On Duty', subtitle: 'Current duty roster', url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
+// Note: Command palette pages will use localized strings from window.AppLocalizer
+function getCommandPalettePages() {
+  return [
+    // Manager/Admin Pages
+    { title: window.AppLocalizer.Home, subtitle: window.AppLocalizer.DashboardOverview, url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
+    { title: `${window.AppLocalizer.Calendar} - Month View`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - Week View`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - Day View`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
+    { title: 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
+    { title: 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
+    { title: 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
+    { title: 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
+    { title: 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
 
-  // Employee Pages
-  { title: 'My Requests', subtitle: 'View my time-off requests', url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
-  { title: 'My Team', subtitle: 'View team members', url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
-  { title: 'My Profile', subtitle: 'Update my information', url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
-  { title: 'Notifications', subtitle: 'View notifications', url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
-];
+    // Employee Pages
+    { title: 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
+    { title: 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+    { title: 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
+    { title: 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
+  ];
+}
 
 let commandPaletteState = {
   isOpen: false,
@@ -880,6 +911,9 @@ function filterCommandPalette(query) {
   // Get user role from page (if available)
   const userRole = getUserRole();
 
+  // Get localized command palette pages
+  const commandPalettePages = getCommandPalettePages();
+
   // Filter pages based on query and role
   const lowerQuery = query.toLowerCase().trim();
 
@@ -918,7 +952,7 @@ function renderCommandPaletteResults(showingRecent) {
     resultsContainer.innerHTML = `
       <div class="command-palette-empty">
         <div class="command-palette-empty-icon">🔍</div>
-        <div class="command-palette-empty-text">No results found</div>
+        <div class="command-palette-empty-text">${window.AppLocalizer.NoResultsFound}</div>
       </div>
     `;
     return;
@@ -928,7 +962,7 @@ function renderCommandPaletteResults(showingRecent) {
   if (showingRecent && commandPaletteState.filteredPages.length > 0) {
     const sectionTitle = document.createElement('div');
     sectionTitle.className = 'command-palette-section-title';
-    sectionTitle.textContent = 'Recent';
+    sectionTitle.textContent = window.AppLocalizer.Recent;
     resultsContainer.appendChild(sectionTitle);
   }
 
