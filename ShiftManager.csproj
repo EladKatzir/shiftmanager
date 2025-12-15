@@ -14,6 +14,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="Backups/**" />
+    <Content Remove="FinalProductPublish/**" />
+    <Content Remove="ProjectPublish/**" />
+    <Content Remove="packages/**" />
+    <Content Remove=".claude/**" />
+    <None Remove="Backups/**" />
+    <None Remove="FinalProductPublish/**" />
+    <None Remove="ProjectPublish/**" />
+    <None Remove="packages/**" />
+    <None Remove=".claude/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
