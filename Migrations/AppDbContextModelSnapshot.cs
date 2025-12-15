@@ -550,6 +550,70 @@ namespace ShiftManager.Migrations
                     b.ToTable("DirectorCompanies");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.EmailApiLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EmailSubject")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestBody")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestHeaders")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestMethod")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResponseBody")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResponseHeaders")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ResponseStatusCode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ValidationErrors")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Success");
+
+                    b.HasIndex("CompanyId", "Timestamp");
+
+                    b.ToTable("EmailApiLogs");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.EmailConfig", b =>
                 {
                     b.Property<int>("Id")
@@ -979,6 +1043,8 @@ namespace ShiftManager.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ShiftTypeId");
+
+                    b.HasIndex("CompanyId", "WorkDate");
 
                     b.ToTable("ShiftInstances");
                 });
@@ -1436,6 +1502,17 @@ namespace ShiftManager.Migrations
                     b.Navigation("GrantedByUser");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.EmailApiLog", b =>
+                {
+                    b.HasOne("ShiftManager.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.EmailConfig", b =>

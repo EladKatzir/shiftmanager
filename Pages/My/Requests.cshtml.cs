@@ -2,21 +2,26 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.My;
 
 [Authorize]
-public class RequestsModel : PageModel
+public class RequestsModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<RequestsModel> _logger;
-    public RequestsModel(AppDbContext db, ILogger<RequestsModel> logger)
+    public RequestsModel(
+        IStringLocalizer<SharedResources> localizer,
+        AppDbContext db,
+        ILogger<RequestsModel> logger) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -36,9 +41,6 @@ public class RequestsModel : PageModel
     [TempData]
     public string? Message { get; set; }
 
-    [TempData]
-    public string? Error { get; set; }
-
     public async Task OnGetAsync()
     {
         try
@@ -49,7 +51,7 @@ public class RequestsModel : PageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = "Authentication error. Please log in again.";
+                Error = _localizer["Error_AuthenticationError"];
                 return;
             }
             _logger.LogInformation("User ID: {UserId}", userId);
@@ -144,7 +146,7 @@ public class RequestsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in OnGetAsync for requests page");
-            Error = "An error occurred while loading your requests. Please try again.";
+            Error = _localizer["Error_LoadingRequestsFailed"];
         }
     }
 
@@ -166,7 +168,7 @@ public class RequestsModel : PageModel
             // Custom validation for date range (only for regular vacation)
             if (TimeOffRequest.Type == TimeOffType.Vacation && TimeOffRequest.EndDate < TimeOffRequest.StartDate)
             {
-                ModelState.AddModelError("TimeOffRequest.EndDate", "End date cannot be before start date.");
+                ModelState.AddModelError("TimeOffRequest.EndDate", _localizer["Error_EndDateBeforeStartDate"]);
                 _logger.LogWarning("Time off request validation failed: End date {EndDate} is before start date {StartDate}", TimeOffRequest.EndDate, TimeOffRequest.StartDate);
             }
 
@@ -182,7 +184,7 @@ public class RequestsModel : PageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = "Authentication error. Please log in again.";
+                Error = _localizer["Error_AuthenticationError"];
                 await OnGetAsync();
                 return Page();
             }
@@ -195,7 +197,7 @@ public class RequestsModel : PageModel
                 if (approver == null || !approver.IsActive ||
                     (approver.Role != UserRole.Manager && approver.Role != UserRole.Director && approver.Role != UserRole.Owner))
                 {
-                    Error = "Invalid approver selected. Please select a valid manager.";
+                    Error = _localizer["Error_InvalidApproverSelected"];
                     await OnGetAsync();
                     return Page();
                 }
@@ -218,13 +220,13 @@ public class RequestsModel : PageModel
 
             _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}, Type: {Type}, Approver: {ApproverId}",
                 request.Id, userId, request.Type, request.ApproverId);
-            Message = "Time off request submitted successfully!";
+            Message = _localizer["Success_TimeOffRequestSubmitted"];
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting time off request");
-            Error = "An error occurred while submitting your request. Please try again.";
+            Error = _localizer["Error_SubmittingRequestFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -242,7 +244,7 @@ public class RequestsModel : PageModel
             // Manual validation for swap request since attributes were removed to prevent cross-validation
             if (SwapRequest.ShiftId <= 0)
             {
-                ModelState.AddModelError("SwapRequest.ShiftId", "Please select a shift to swap.");
+                ModelState.AddModelError("SwapRequest.ShiftId", _localizer["Error_PleaseSelectShiftToSwap"]);
             }
 
             if (!ModelState.IsValid)
@@ -257,7 +259,7 @@ public class RequestsModel : PageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = "Authentication error. Please log in again.";
+                Error = _localizer["Error_AuthenticationError"];
                 await OnGetAsync();
                 return Page();
             }
@@ -270,7 +272,7 @@ public class RequestsModel : PageModel
             if (assignment == null)
             {
                 _logger.LogWarning("Assignment {ShiftId} not found for user {UserId}", SwapRequest.ShiftId, userId);
-                Error = "You are not assigned to this shift.";
+                Error = _localizer["Error_NotAssignedToShift"];
                 await OnGetAsync();
                 return Page();
             }
@@ -289,13 +291,13 @@ public class RequestsModel : PageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Swap request {RequestId} submitted successfully for assignment {AssignmentId}", swapRequest.Id, assignment.Id);
-            Message = "Shift swap request submitted successfully!";
+            Message = _localizer["Success_SwapRequestSubmitted"];
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting swap request");
-            Error = "An error occurred while submitting your swap request. Please try again.";
+            Error = _localizer["Error_SubmittingSwapRequestFailed"];
             await OnGetAsync();
             return Page();
         }

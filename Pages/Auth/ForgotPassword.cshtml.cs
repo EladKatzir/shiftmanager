@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,7 +13,7 @@ using System.Text;
 namespace ShiftManager.Pages.Auth;
 
 [AllowAnonymous]
-public class ForgotPasswordModel : PageModel
+public class ForgotPasswordModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IMailService _mailService;
@@ -20,11 +22,12 @@ public class ForgotPasswordModel : PageModel
     private readonly IValidationService _validation;
 
     public ForgotPasswordModel(
+        IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IMailService mailService,
         ILogger<ForgotPasswordModel> logger,
         IRateLimitingService rateLimiting,
-        IValidationService validation)
+        IValidationService validation) : base(localizer)
     {
         _db = db;
         _mailService = mailService;
@@ -38,9 +41,6 @@ public class ForgotPasswordModel : PageModel
 
     [BindProperty]
     public string Phone { get; set; } = string.Empty;
-
-    public string? SuccessMessage { get; set; }
-    public string? ErrorMessage { get; set; }
 
     // ✅ PHASE 18: Store generated temp password for one-time display (not persisted)
     public string? GeneratedTempPassword { get; set; }
@@ -75,35 +75,35 @@ public class ForgotPasswordModel : PageModel
         if (!_rateLimiting.IsAllowed(rateLimitKey, 3, 15))
         {
             _logger.LogWarning("Rate limit exceeded for password reset from IP: {IP}", ipAddress);
-            ErrorMessage = "Too many password reset attempts. Please try again in 15 minutes.";
+            Error = _localizer["Error_TooManyPasswordResetAttempts"];
             return Page();
         }
 
         // ✅ SECURITY FIX: Input validation
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Phone))
         {
-            ErrorMessage = "Please provide both email and phone number.";
+            Error = _localizer["Error_ProvideEmailAndPhone"];
             return Page();
         }
 
         if (Email.Length > 255 || Phone.Length > 50)
         {
             _logger.LogWarning("Password reset attempt with oversized input from IP: {IP}", ipAddress);
-            ErrorMessage = "Invalid input.";
+            Error = _localizer["Error_InvalidInput"];
             return Page();
         }
 
         // ✅ SECURITY FIX: Proper email format validation with regex
         if (!_validation.IsValidEmail(Email))
         {
-            ErrorMessage = "Invalid email format.";
+            Error = _localizer["Error_InvalidEmailFormat"];
             return Page();
         }
 
         // ✅ SECURITY FIX: Proper phone format validation with regex
         if (!_validation.IsValidPhone(Phone))
         {
-            ErrorMessage = "Invalid phone format.";
+            Error = _localizer["Error_InvalidPhoneFormat"];
             return Page();
         }
 
@@ -120,13 +120,14 @@ public class ForgotPasswordModel : PageModel
             if (user == null)
             {
                 // No match found - show error but don't reveal which field is wrong (security)
-                ErrorMessage = "Email and phone number do not match our records.";
+                var errorMsg = _localizer["Error_EmailPhoneNoMatch"];
+                Error = errorMsg;
                 _logger.LogWarning("Failed password recovery attempt for email: {Email}", Email);
 
                 return new JsonResult(new
                 {
                     status = "error",
-                    message = "Email and phone number do not match our records."
+                    message = errorMsg.ToString()
                 });
             }
 
@@ -139,26 +140,40 @@ public class ForgotPasswordModel : PageModel
             await _db.SaveChangesAsync();
 
             // Send temporary password via email
+            var emailSubject = _localizer["Email_PasswordRecoverySubject"];
+            var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+
             var emailBody = $@"
-<h2>Password Recovery Request</h2>
-<p>Hello {user.DisplayName},</p>
-<p>You requested to recover your password for the Shift Manager system.</p>
-<p><strong>Your temporary password is:</strong> <code style='background: #f4f4f4; padding: 4px 8px; border-radius: 4px;'>{temporaryPassword}</code></p>
-<p><strong>IMPORTANT:</strong> This is a temporary password. Please log in and change it immediately in your profile settings.</p>
-<p>If you did not request this, please contact your system administrator immediately.</p>
-<br/>
-<p>Best regards,<br/>Shift Manager Team</p>
-";
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; padding: 20px; }}
+        .code-box {{ background: #f4f4f4; padding: 4px 8px; border-radius: 4px; display: inline-block; }}
+    </style>
+</head>
+<body>
+    <h2>{_localizer["Email_PasswordRecoveryTitle"]}</h2>
+    <p>{string.Format(_localizer["Email_Hello"], user.DisplayName)},</p>
+    <p>{_localizer["Email_PasswordRecoveryBody"]}</p>
+    <p><strong>{_localizer["Email_YourTemporaryPassword"]}:</strong> <code class='code-box'>{temporaryPassword}</code></p>
+    <p><strong>{_localizer["Important"]}:</strong> {_localizer["Email_PasswordRecoveryImportant"]}</p>
+    <p>{_localizer["Email_PasswordRecoverySecurityNote"]}</p>
+    <br/>
+    <p>{_localizer["Email_BestRegards"]},<br/>{_localizer["Email_ShiftManagerTeam"]}</p>
+</body>
+</html>";
 
             var emailSent = await _mailService.SendMailAsync(
                 recipient: user.Email,
-                subject: "Password Recovery - Shift Manager",
+                subject: emailSubject,
                 htmlBody: emailBody
             );
 
             if (emailSent)
             {
-                SuccessMessage = "A temporary password has been sent to your registered email address.";
+                Success = _localizer["Success_TemporaryPasswordSent"];
                 _logger.LogInformation("Password recovery email sent to user: {Email}", user.Email);
 
                 // ✅ PHASE 18: Store temp password for one-time display (not logged, not persisted)
@@ -177,7 +192,7 @@ public class ForgotPasswordModel : PageModel
             }
             else
             {
-                ErrorMessage = "Failed to send recovery email. Please try again later or contact support.";
+                Error = _localizer["Error_FailedToSendRecoveryEmail"];
                 _logger.LogError("Failed to send password recovery email for user: {Email}", user.Email);
                 return Page();
             }
@@ -185,7 +200,7 @@ public class ForgotPasswordModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during password recovery for email: {Email}", Email);
-            ErrorMessage = "An error occurred. Please try again later.";
+            Error = _localizer["Error_AnErrorOccurred"];
             return Page();
         }
     }
@@ -200,28 +215,28 @@ public class ForgotPasswordModel : PageModel
         if (!_rateLimiting.IsAllowed(rateLimitKey, 5, 15))
         {
             _logger.LogWarning("Rate limit exceeded for password change from IP: {IP}", ipAddress);
-            PasswordChangeError = "Too many password change attempts. Please try again in 15 minutes.";
+            PasswordChangeError = _localizer["Error_TooManyPasswordChangeAttempts"];
             return Page();
         }
 
         // ✅ VALIDATION: Input validation
         if (string.IsNullOrWhiteSpace(ChangeEmail) || string.IsNullOrWhiteSpace(OldPassword) || string.IsNullOrWhiteSpace(NewPassword))
         {
-            PasswordChangeError = "Please provide email, current password, and new password.";
+            PasswordChangeError = _localizer["Error_ProvideEmailCurrentAndNewPassword"];
             return Page();
         }
 
         // ✅ VALIDATION: Email format validation
         if (!_validation.IsValidEmail(ChangeEmail))
         {
-            PasswordChangeError = "Invalid email format.";
+            PasswordChangeError = _localizer["Error_InvalidEmailFormat"];
             return Page();
         }
 
         // ✅ VALIDATION: New password length check
         if (NewPassword.Length < 6)
         {
-            PasswordChangeError = "New password must be at least 6 characters long.";
+            PasswordChangeError = _localizer["Error_NewPasswordTooShort"];
             return Page();
         }
 
@@ -235,7 +250,7 @@ public class ForgotPasswordModel : PageModel
             if (user == null)
             {
                 // Don't reveal if user exists or not (security)
-                PasswordChangeError = "Failed to change password. Please check your current password and try again.";
+                PasswordChangeError = _localizer["Error_FailedToChangePassword"];
                 _logger.LogWarning("Password change attempt for non-existent email: {Email}", ChangeEmail);
                 return Page();
             }
@@ -243,7 +258,7 @@ public class ForgotPasswordModel : PageModel
             // ✅ SECURITY: Verify old password using PasswordHasher
             if (!PasswordHasher.Verify(OldPassword, user.PasswordHash, user.PasswordSalt))
             {
-                PasswordChangeError = "Current password is incorrect.";
+                PasswordChangeError = _localizer["Error_CurrentPasswordIncorrect"];
                 _logger.LogWarning("Password change attempt with incorrect old password for user: {Email}", user.Email);
                 return Page();
             }
@@ -254,7 +269,7 @@ public class ForgotPasswordModel : PageModel
             user.PasswordSalt = newSalt;
             await _db.SaveChangesAsync();
 
-            PasswordChangeSuccess = "Password changed successfully! You can now log in with your new password.";
+            PasswordChangeSuccess = _localizer["Success_PasswordChangedSuccessfully"];
             _logger.LogInformation("Password changed successfully for user: {Email}", user.Email);
 
             // Clear sensitive data from page
@@ -267,7 +282,7 @@ public class ForgotPasswordModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during password change for email: {Email}", ChangeEmail);
-            PasswordChangeError = "An error occurred. Please try again later.";
+            PasswordChangeError = _localizer["Error_AnErrorOccurred"];
             return Page();
         }
     }

@@ -2,17 +2,19 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Requests;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class IndexModel : PageModel
+public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IConflictChecker _checker;
@@ -21,7 +23,15 @@ public class IndexModel : PageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly IDirectorService _directorService;
 
-    public IndexModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ITraineeService traineeService, ILogger<IndexModel> logger, IDirectorService directorService)
+    public IndexModel(
+        IStringLocalizer<SharedResources> localizer,
+        AppDbContext db,
+        IConflictChecker checker,
+        INotificationService notificationService,
+        ITraineeService traineeService,
+        ILogger<IndexModel> logger,
+        IDirectorService directorService)
+        : base(localizer)
     {
         _db = db;
         _checker = checker;
@@ -42,7 +52,6 @@ public class IndexModel : PageModel
                                    string? Reason, DateTime CreatedAt, DateTime ApprovedAt);
     public List<ApprovedTimeOffVM> ApprovedTimeOffs { get; set; } = new();
 
-    public string? Error { get; set; }
     public string? Message { get; set; }
 
     public async Task OnGetAsync()
@@ -55,14 +64,14 @@ public class IndexModel : PageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
             {
-                Error = "User not authenticated";
+                Error = _localizer["Error_UserNotAuthenticated"];
                 return;
             }
 
             var currentUser = await _db.Users.FindAsync(currentUserId);
             if (currentUser == null)
             {
-                Error = "User not found";
+                Error = _localizer["Error_UserNotFound"];
                 return;
             }
 
@@ -131,7 +140,7 @@ public class IndexModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading admin requests page");
-            Error = "An error occurred while loading requests. Please try again.";
+            Error = _localizer["Error_LoadingRequests"];
         }
     }
 
@@ -157,7 +166,7 @@ public class IndexModel : PageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            Error = "Authentication error. Please log in again.";
+            Error = _localizer["Error_AuthenticationError"];
             return RedirectToPage();
         }
 
@@ -167,7 +176,7 @@ public class IndexModel : PageModel
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve time off request {RequestId} for unauthorized company {CompanyId}",
                 currentUserId, currentUser!.Role, id, r.CompanyId);
-            Error = "You don't have permission to approve this request.";
+            Error = _localizer["Error_NoPermissionApproveRequest"];
             await OnGetAsync();
             return Page();
         }
@@ -223,7 +232,7 @@ public class IndexModel : PageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            Error = "Authentication error. Please log in again.";
+            Error = _localizer["Error_AuthenticationError"];
             return RedirectToPage();
         }
 
@@ -233,7 +242,7 @@ public class IndexModel : PageModel
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline time off request {RequestId} for unauthorized company {CompanyId}",
                 currentUserId, currentUser!.Role, id, r.CompanyId);
-            Error = "You don't have permission to decline this request.";
+            Error = _localizer["Error_NoPermissionDeclineRequest"];
             await OnGetAsync();
             return Page();
         }
@@ -271,7 +280,7 @@ public class IndexModel : PageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            Error = "Authentication error. Please log in again.";
+            Error = _localizer["Error_AuthenticationError"];
             await trx.RollbackAsync();
             return RedirectToPage();
         }
@@ -282,7 +291,7 @@ public class IndexModel : PageModel
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve swap request {RequestId} for unauthorized company {CompanyId}",
                 currentUserId, currentUser!.Role, id, s.CompanyId);
-            Error = "You don't have permission to approve this request.";
+            Error = _localizer["Error_NoPermissionApproveRequest"];
             await trx.RollbackAsync();
             await OnGetAsync();
             return Page();
@@ -302,7 +311,7 @@ public class IndexModel : PageModel
         var conflict = await _checker.CanAssignAsync(s.ToUserId.Value, si);
         if (!conflict.Allowed)
         {
-            Error = "Cannot approve swap: " + string.Join(" ", conflict.Reasons);
+            Error = _localizer["Error_CannotApproveSwap"] + ": " + string.Join(" ", conflict.Reasons);
             await trx.RollbackAsync();
             await OnGetAsync();
             return Page();
@@ -349,7 +358,7 @@ public class IndexModel : PageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            Error = "Authentication error. Please log in again.";
+            Error = _localizer["Error_AuthenticationError"];
             return RedirectToPage();
         }
 
@@ -359,7 +368,7 @@ public class IndexModel : PageModel
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline swap request {RequestId} for unauthorized company {CompanyId}",
                 currentUserId, currentUser!.Role, id, s.CompanyId);
-            Error = "You don't have permission to decline this request.";
+            Error = _localizer["Error_NoPermissionDeclineRequest"];
             await OnGetAsync();
             return Page();
         }
@@ -397,14 +406,14 @@ public class IndexModel : PageModel
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = "Authentication error. Please log in again.";
+                Error = _localizer["Error_AuthenticationError"];
                 return RedirectToPage();
             }
 
             var currentUser = await _db.Users.FindAsync(currentUserId);
             if (currentUser == null)
             {
-                Error = "User not found.";
+                Error = _localizer["Error_UserNotFound"];
                 return RedirectToPage();
             }
 
@@ -415,7 +424,7 @@ public class IndexModel : PageModel
             if (request == null)
             {
                 _logger.LogWarning("Time-off request {RequestId} not found", id);
-                Error = "Time-off request not found.";
+                Error = _localizer["Error_TimeOffRequestNotFound"];
                 await OnGetAsync();
                 return Page();
             }
@@ -423,7 +432,7 @@ public class IndexModel : PageModel
             var user = await _db.Users.FindAsync(request.UserId);
             if (user == null)
             {
-                Error = "User not found.";
+                Error = _localizer["Error_UserNotFound"];
                 await OnGetAsync();
                 return Page();
             }
@@ -434,7 +443,7 @@ public class IndexModel : PageModel
             {
                 _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to delete time-off {RequestId} for unauthorized company",
                     currentUserId, currentUser.Role, id);
-                Error = "You don't have permission to delete this time-off request.";
+                Error = _localizer["Error_NoPermissionDeleteTimeOff"];
                 await OnGetAsync();
                 return Page();
             }
@@ -442,7 +451,7 @@ public class IndexModel : PageModel
             if (request.Status != RequestStatus.Approved)
             {
                 _logger.LogWarning("Attempt to delete non-approved time-off request {RequestId} with status {Status}", id, request.Status);
-                Error = "Can only delete approved time-off requests.";
+                Error = _localizer["Error_CanOnlyDeleteApprovedTimeOff"];
                 await OnGetAsync();
                 return Page();
             }
@@ -451,7 +460,7 @@ public class IndexModel : PageModel
             if (request.StartDate <= DateOnly.FromDateTime(DateTime.Today))
             {
                 _logger.LogWarning("Attempt to delete time-off request {RequestId} that has already started", id);
-                Error = "Cannot delete time-off that has already started or is in the past.";
+                Error = _localizer["Error_CannotDeleteStartedTimeOff"];
                 await OnGetAsync();
                 return Page();
             }
@@ -472,14 +481,14 @@ public class IndexModel : PageModel
                 endDate: request.EndDate);
 
             _logger.LogInformation("Successfully deleted time-off request {RequestId} for user {UserName}", id, userName);
-            Message = $"Time-off for {userName} ({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}) has been deleted.";
+            Message = string.Format(_localizer["Success_TimeOffDeleted"], userName, request.StartDate.ToString("yyyy-MM-dd"), request.EndDate.ToString("yyyy-MM-dd"));
 
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting time-off request {RequestId}", id);
-            Error = "An error occurred while deleting the time-off request. Please try again.";
+            Error = _localizer["Error_DeletingTimeOff"];
             await OnGetAsync();
             return Page();
         }

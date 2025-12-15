@@ -156,7 +156,7 @@
     <value>הנה לוח הזמנים ומידע על המשמרות שלך</value>
   </data>
 
-  <!-- Priority 3: Home Dashboard Keys -->
+  
   <data name="NextShift" xml:space="preserve">
     <value>המשמרת הבאה</value>
   </data>
@@ -233,7 +233,7 @@
     <value>נהל חברות</value>
   </data>
 
-  <!-- Priority 2: Schedule Workspace Keys -->
+  
   <data name="Calendars" xml:space="preserve">
     <value>לוחות שנה</value>
   </data>
@@ -1130,9 +1130,6 @@
   <data name="Status" xml:space="preserve">
     <value>סטטוס</value>
   </data>
-  <data name="Unread" xml:space="preserve">
-    <value>לא נקרא</value>
-  </data>
   <data name="NoNotificationsYet" xml:space="preserve">
     <value>אין התראות עדיין.</value>
   </data>
@@ -1369,11 +1366,6 @@
   <data name="Last12Months" xml:space="preserve">
     <value>12 חודשים אחרונים</value>
   </data>
-  <data name="DaysOff" xml:space="preserve">
-    <value>ימי חופש</value>
-  </data>
-
-  
   <data name="Filters" xml:space="preserve">
     <value>מסננים</value>
   </data>
@@ -1503,20 +1495,9 @@
   </data>
 
   
-  <data name="PendingRequests" xml:space="preserve">
-    <value>בקשות ממתינות</value>
-  </data>
   <data name="ManageApprovedTimeOff" xml:space="preserve">
     <value>נהל חופשות מאושרות</value>
   </data>
-  <data name="PendingTimeOff" xml:space="preserve">
-    <value>חופשות ממתינות</value>
-  </data>
-  <data name="PendingSwaps" xml:space="preserve">
-    <value>החלפות ממתינות</value>
-  </data>
-
-  
   <data name="SaveChanges" xml:space="preserve">
     <value>שמור שינויים</value>
   </data>
@@ -1837,7 +1818,7 @@
     <value>נוספים</value>
   </data>
 
-  <!-- Audit Log Page Strings -->
+  
   <data name="AuditLogDescription" xml:space="preserve">
     <value>צפייה וחיפוש ב-{0} רשומות יומן ביקורת המתעדות את כל הפעולות והשינויים במערכת</value>
   </data>
@@ -1862,9 +1843,6 @@
   <data name="Last" xml:space="preserve">
     <value>אחרון</value>
   </data>
-  <data name="Of" xml:space="preserve">
-    <value>מתוך</value>
-  </data>
   <data name="NoAuditLogs" xml:space="preserve">
     <value>לא נמצאו יומני ביקורת</value>
   </data>
@@ -1883,14 +1861,11 @@
   <data name="AfterDescription" xml:space="preserve">
     <value>חצי יום: פעיל מהשעה 16:00 בתאריך שנבחר עד השעה 13:00 למחרת</value>
   </data>
-  <data name="Date" xml:space="preserve">
-    <value>תאריך</value>
-  </data>
   <data name="ReasonOptional" xml:space="preserve">
     <value>סיבה (אופציונלי)</value>
   </data>
 
-  <!-- Public Section & On-Duty -->
+  
   <data name="Public" xml:space="preserve">
     <value>ציבורי</value>
   </data>
@@ -1984,9 +1959,6 @@
   <data name="ConfirmDeleteOnDutyType" xml:space="preserve">
     <value>האם אתה בטוח שברצונך למחוק את סוג המשמרת היומית '{0}'?</value>
   </data>
-  <data name="Add" xml:space="preserve">
-    <value>הוסף</value>
-  </data>
   <data name="VacationType" xml:space="preserve">
     <value>סוג חופשה</value>
   </data>
@@ -2008,9 +1980,6 @@
   <data name="ApproverDescription" xml:space="preserve">
     <value>אופציונלי: בחר מנהל ספציפי לאישור הבקשה לשמירה על פרטיות</value>
   </data>
-  <data name="TimeOffReasonPlaceholder" xml:space="preserve">
-    <value>סיבה אופציונלית לבקשת החופשה</value>
-  </data>
   <data name="Information" xml:space="preserve">
     <value>מידע</value>
   </data>
@@ -2026,44 +1995,17 @@
   <data name="MyOverview" xml:space="preserve">
     <value>הסקירה שלי</value>
   </data>
-  <data name="Week" xml:space="preserve">
-    <value>שבוע</value>
-  </data>
-  <data name="Custom" xml:space="preserve">
-    <value>מותאם אישית</value>
-  </data>
   <data name="TimeRangeSwitcher" xml:space="preserve">
     <value>טווח זמן</value>
   </data>
-  <data name="Filters" xml:space="preserve">
-    <value>מסננים</value>
-  </data>
   <data name="Vacations" xml:space="preserve">
     <value>חופשות</value>
-  </data>
-  <data name="OnDuty" xml:space="preserve">
-    <value>משמרת יומית</value>
-  </data>
-  <data name="Chores" xml:space="preserve">
-    <value>מטלות</value>
-  </data>
-  <data name="Today" xml:space="preserve">
-    <value>היום</value>
-  </data>
-  <data name="Tomorrow" xml:space="preserve">
-    <value>מחר</value>
-  </data>
-  <data name="ThisWeek" xml:space="preserve">
-    <value>השבוע</value>
   </data>
   <data name="Later" xml:space="preserve">
     <value>מאוחר יותר</value>
   </data>
   <data name="Past" xml:space="preserve">
     <value>עבר</value>
-  </data>
-  <data name="Upcoming" xml:space="preserve">
-    <value>קרוב</value>
   </data>
   <data name="All" xml:space="preserve">
     <value>הכל</value>
@@ -2083,12 +2025,6 @@
   <data name="NoItemsMatch" xml:space="preserve">
     <value>אין פריטים התואמים את המסננים שלך.</value>
   </data>
-  <data name="ClearFilters" xml:space="preserve">
-    <value>נקה מסננים</value>
-  </data>
-  <data name="Details" xml:space="preserve">
-    <value>פרטים</value>
-  </data>
   <data name="Conflict" xml:space="preserve">
     <value>התנגשות</value>
   </data>
@@ -2101,9 +2037,6 @@
   <data name="ToggleCountHours" xml:space="preserve">
     <value>החלף כמות/שעות</value>
   </data>
-  <data name="Showing" xml:space="preserve">
-    <value>מציג</value>
-  </data>
   <data name="Items" xml:space="preserve">
     <value>פריטים</value>
   </data>
@@ -2113,26 +2046,9 @@
   <data name="Vacation" xml:space="preserve">
     <value>חופשה</value>
   </data>
-  <data name="After" xml:space="preserve">
-    <value>אחרי</value>
-  </data>
-  <data name="OnDutyHakam" xml:space="preserve">
-    <value>משמרת יומית - חק״מכו</value>
-  </data>
-  <data name="OnDutyLead" xml:space="preserve">
-    <value>משמרת יומית - מובילתו</value>
-  </data>
-  <data name="Shadowing" xml:space="preserve">
-    <value>הדרכה</value>
-  </data>
   <data name="Days" xml:space="preserve">
     <value>ימים</value>
   </data>
-  <data name="Day" xml:space="preserve">
-    <value>יום</value>
-  </data>
-
-  <!-- My Team Calendars -->
   <data name="MyTeam" xml:space="preserve">
     <value>הצוות שלי</value>
   </data>
@@ -2147,12 +2063,6 @@
   </data>
   <data name="PreviousWeek" xml:space="preserve">
     <value>שבוע קודם</value>
-  </data>
-  <data name="NextWeek" xml:space="preserve">
-    <value>שבוע הבא</value>
-  </data>
-  <data name="ThisWeek" xml:space="preserve">
-    <value>השבוע</value>
   </data>
   <data name="TeamMember" xml:space="preserve">
     <value>חבר צוות</value>
@@ -2183,9 +2093,6 @@
   </data>
   <data name="SearchByName" xml:space="preserve">
     <value>חיפוש לפי שם...</value>
-  </data>
-  <data name="SaveChanges" xml:space="preserve">
-    <value>שמור שינויים</value>
   </data>
   <data name="DeleteCalendar" xml:space="preserve">
     <value>מחק לוח</value>
@@ -2241,32 +2148,8 @@
   <data name="ViewOnlyNoNavigation" xml:space="preserve">
     <value>(צפייה בלבד - אין ניווט זמין לתפקיד שלך)</value>
   </data>
-  <data name="Delete" xml:space="preserve">
-    <value>מחק</value>
-  </data>
   <data name="DeleteCalendarNote" xml:space="preserve">
     <value>המחיקה תסיר רק את התצוגה האישית שלך. אין השפעה על הנתונים.</value>
-  </data>
-  <data name="Sunday" xml:space="preserve">
-    <value>יום ראשון</value>
-  </data>
-  <data name="Monday" xml:space="preserve">
-    <value>יום שני</value>
-  </data>
-  <data name="Tuesday" xml:space="preserve">
-    <value>יום שלישי</value>
-  </data>
-  <data name="Wednesday" xml:space="preserve">
-    <value>יום רביעי</value>
-  </data>
-  <data name="Thursday" xml:space="preserve">
-    <value>יום חמישי</value>
-  </data>
-  <data name="Friday" xml:space="preserve">
-    <value>יום שישי</value>
-  </data>
-  <data name="Saturday" xml:space="preserve">
-    <value>שבת</value>
   </data>
   <data name="SunShort" xml:space="preserve">
     <value>א׳</value>
@@ -2313,9 +2196,6 @@
   <data name="Members" xml:space="preserve">
     <value>חברים</value>
   </data>
-  <data name="Rename" xml:space="preserve">
-    <value>שנה שם</value>
-  </data>
   <data name="RenameCalendarTitle" xml:space="preserve">
     <value>שינוי שם לוח</value>
   </data>
@@ -2351,9 +2231,6 @@
   </data>
   <data name="Apr" xml:space="preserve">
     <value>אפר׳</value>
-  </data>
-  <data name="May" xml:space="preserve">
-    <value>מאי</value>
   </data>
   <data name="Jun" xml:space="preserve">
     <value>יוני</value>
@@ -2495,10 +2372,6 @@
     <value>הועתק</value>
     <comment>Phase 18 - Copy success message</comment>
   </data>
-  <data name="Important" xml:space="preserve">
-    <value>חשוב</value>
-    <comment>Phase 18 - Important label</comment>
-  </data>
   <data name="ChangePasswordAfterLogin" xml:space="preserve">
     <value>זוהי סיסמה זמנית. נא להתחבר ולשנות אותה מיד בהגדרות הפרופיל שלך.</value>
     <comment>Phase 18 - Change password reminder</comment>
@@ -2595,14 +2468,6 @@
     <value>חופשה</value>
     <comment>Phase 18 - TimeOff page breadcrumb</comment>
   </data>
-  <data name="Day" xml:space="preserve">
-    <value>יום</value>
-    <comment>Phase 18 - Singular day</comment>
-  </data>
-  <data name="Days" xml:space="preserve">
-    <value>ימים</value>
-    <comment>Phase 18 - Plural days</comment>
-  </data>
   <data name="NoReasonProvided" xml:space="preserve">
     <value>לא צוינה סיבה</value>
     <comment>Phase 18 - TimeOff page empty reason</comment>
@@ -2610,14 +2475,6 @@
   <data name="ActiveToday" xml:space="preserve">
     <value>פעיל היום</value>
     <comment>Phase 18 - TimeOff status badge</comment>
-  </data>
-  <data name="Past" xml:space="preserve">
-    <value>עבר</value>
-    <comment>Phase 18 - TimeOff status badge</comment>
-  </data>
-  <data name="Note" xml:space="preserve">
-    <value>הערה</value>
-    <comment>Phase 18 - General note label</comment>
   </data>
   <data name="TimeOffDeletionNote" xml:space="preserve">
     <value>ניתן למחוק רק בקשות חופשה עתידיות. לא ניתן למחוק בקשות שכבר החלו או שעברו. מחיקת בקשת חופשה לא תשחזר אוטומטית משמרות שהוסרו כשהבקשה אושרה.</value>
@@ -2790,10 +2647,6 @@
   <data name="PasswordManagement" xml:space="preserve">
     <value>ניהול סיסמאות</value>
     <comment>Sub-Phase 18.14 - Page title for combined Reset/Change password page</comment>
-  </data>
-  <data name="RequestAccess" xml:space="preserve">
-    <value>בקש גישה לאתר</value>
-    <comment>Sub-Phase 18.14 - Button on login page to request access/signup</comment>
   </data>
   <data name="Game_Title" xml:space="preserve">
     <value>החלפת משמרות</value>
@@ -3035,18 +2888,6 @@
     <value>אין משמרות, מטלות או תורנויות ליום זה</value>
     <comment>Phase 20 - Empty state subtitle</comment>
   </data>
-  <data name="Add" xml:space="preserve">
-    <value>הוסף</value>
-    <comment>Phase 20 - Add button</comment>
-  </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>ביטול</value>
-    <comment>Phase 20 - Cancel button</comment>
-  </data>
-  <data name="Delete" xml:space="preserve">
-    <value>מחק</value>
-    <comment>Phase 20 - Delete button</comment>
-  </data>
   <data name="Owner_AdminPanel" xml:space="preserve">
     <value>ניהול מערכת - בעלים</value>
   </data>
@@ -3287,10 +3128,6 @@
   <data name="SaveSettings" xml:space="preserve">
     <value>שמור הגדרות</value>
   </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>ביטול</value>
-  </data>
-  <!-- Phase 6 Extension: Day-Before Reminders -->
   <data name="Settings_DayBeforeReminders" xml:space="preserve">
     <value>תזכורות יום מראש</value>
   </data>
@@ -3318,7 +3155,7 @@
   <data name="Settings_RemindBeforeOnDuty_Desc" xml:space="preserve">
     <value>קבל תזכורת יום לפני תורנות יומית</value>
   </data>
-  <!-- Phase 6 Extension: OnDuty Role Subscriptions -->
+  
   <data name="Settings_OnDutySubscriptions" xml:space="preserve">
     <value>התראות תורנות יומית להיום</value>
   </data>
@@ -3411,5 +3248,769 @@
   </data>
   <data name="LoginWithADFS_Unavailable" xml:space="preserve">
     <value>Griffin ADFS אינו זמין כרגע. אנא השתמש בהתחברות מקומית למטה.</value>
+  </data>
+
+  
+  <data name="Error_Login_RateLimitExceeded" xml:space="preserve">
+    <value>יותר מדי ניסיונות התחברות. אנא נסה שוב בעוד 15 דקות.</value>
+  </data>
+  <data name="Error_Login_FieldsRequired" xml:space="preserve">
+    <value>אימייל וסיסמה נדרשים.</value>
+  </data>
+  <data name="Error_InvalidInput" xml:space="preserve">
+    <value>קלט לא חוקי.</value>
+  </data>
+  <data name="Error_InvalidEmailFormat" xml:space="preserve">
+    <value>פורמט אימייל לא חוקי.</value>
+  </data>
+  <data name="Error_Login_AccountLocked" xml:space="preserve">
+    <value>החשבון נעול עקב ניסיונות התחברות כושלים מרובים. אנא נסה שוב בעוד {0} דקה/ות.</value>
+  </data>
+  <data name="Error_Login_AccountLockedAfterAttempts" xml:space="preserve">
+    <value>החשבון ננעל עקב ניסיונות התחברות כושלים מרובים. אנא נסה שוב בעוד 3 דקות.</value>
+  </data>
+  <data name="Error_Login_InvalidCredentials" xml:space="preserve">
+    <value>אישורים לא חוקיים.</value>
+  </data>
+  <data name="Error_UnexpectedError" xml:space="preserve">
+    <value>שגיאה בלתי צפויה. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
+    <value>אימות ADFS לא מוגדר. אנא השתמש בהתחברות מקומית או פנה למנהל המערכת.</value>
+  </data>
+
+  
+  <data name="Culture" xml:space="preserve">
+    <value>he-IL</value>
+  </data>
+  <data name="Email_AutomatedMessage" xml:space="preserve">
+    <value>זהו הודעה אוטומטית. אנא אל תשיב.</value>
+  </data>
+  <data name="Email_Greeting" xml:space="preserve">
+    <value>שלום {0},</value>
+  </data>
+  <data name="Email_ShiftAssigned_Message" xml:space="preserve">
+    <value>הוקצתה לך משמרת חדשה:</value>
+  </data>
+  <data name="Email_ShiftDate" xml:space="preserve">
+    <value>תאריך משמרת</value>
+  </data>
+  <data name="Email_ShiftType" xml:space="preserve">
+    <value>סוג משמרת</value>
+  </data>
+  <data name="Email_Notes" xml:space="preserve">
+    <value>הערות</value>
+  </data>
+  <data name="Email_ThankYou" xml:space="preserve">
+    <value>תודה על שירותך.</value>
+  </data>
+  <data name="Email_RequestApproved_Message" xml:space="preserve">
+    <value>בקשת {0} שלך אושרה!</value>
+  </data>
+  <data name="Email_RequestDate" xml:space="preserve">
+    <value>תאריך בקשה</value>
+  </data>
+  <data name="Email_RequestRejected_Message" xml:space="preserve">
+    <value>בקשת {0} שלך נדחתה.</value>
+  </data>
+  <data name="Email_Reason" xml:space="preserve">
+    <value>סיבה</value>
+  </data>
+  <data name="Email_ContactManager" xml:space="preserve">
+    <value>אם יש לך שאלות, אנא פנה למנהל שלך.</value>
+  </data>
+  <data name="Email_PasswordReset_Message" xml:space="preserve">
+    <value>קיבלנו בקשה לאיפוס הסיסמה שלך. לחץ על הכפתור למטה כדי להגדיר סיסמה חדשה:</value>
+  </data>
+  <data name="Email_ResetPassword" xml:space="preserve">
+    <value>איפוס סיסמה</value>
+  </data>
+  <data name="Email_PasswordReset_Expiry" xml:space="preserve">
+    <value>הקישור יפוג תוך שעה מטעמי אבטחה.</value>
+  </data>
+  <data name="Email_PasswordReset_IgnoreIfNotRequested" xml:space="preserve">
+    <value>אם לא ביקשת איפוס סיסמה, אנא התעלם מהודעה זו.</value>
+  </data>
+  <data name="Email_AccountCreated_Message" xml:space="preserve">
+    <value>החשבון שלך נוצר! הנה אישורי ההתחברות שלך:</value>
+  </data>
+  <data name="Email_Username" xml:space="preserve">
+    <value>שם משתמש</value>
+  </data>
+  <data name="Email_TemporaryPassword" xml:space="preserve">
+    <value>סיסמה זמנית</value>
+  </data>
+  <data name="Email_AccountCreated_ChangePassword" xml:space="preserve">
+    <value>מטעמי אבטחה, אנא שנה את הסיסמה שלך לאחר ההתחברות הראשונה.</value>
+  </data>
+  <data name="Email_SwapRequest_Message" xml:space="preserve">
+    <value>{0} ביקש להחליף משמרות איתך:</value>
+  </data>
+  <data name="Email_SwapRequest_Action" xml:space="preserve">
+    <value>אנא התחבר למערכת כדי לקבל או לדחות את בקשת ההחלפה.</value>
+  </data>
+  <data name="Email_Reminder_Message" xml:space="preserve">
+    <value>זוהי תזכורת לגבי {0} הקרוב שלך:</value>
+  </data>
+  <data name="Email_EventDate" xml:space="preserve">
+    <value>תאריך אירוע</value>
+  </data>
+  <data name="Email_Details" xml:space="preserve">
+    <value>פרטים</value>
+  </data>
+
+  
+  <data name="Error_Signup_PublicDisabled" xml:space="preserve">
+    <value>הרשמה ציבורית מושבתת. אנא פנה למנהל המערכת לקבלת הזמנה.</value>
+  </data>
+  <data name="Error_Signup_RequiredFields" xml:space="preserve">
+    <value>אנא מלא את כל השדות הנדרשים.</value>
+  </data>
+  <data name="Error_Signup_AllFieldsRequired" xml:space="preserve">
+    <value>כל השדות נדרשים.</value>
+  </data>
+  <data name="Error_Signup_EmailTooLong" xml:space="preserve">
+    <value>כתובת אימייל לא יכולה לחרוג מ-255 תווים.</value>
+  </data>
+  <data name="Error_Signup_DisplayNameTooLong" xml:space="preserve">
+    <value>שם תצוגה לא יכול לחרוג מ-200 תווים.</value>
+  </data>
+  <data name="Error_Signup_PasswordTooLong" xml:space="preserve">
+    <value>סיסמה לא יכולה לחרוג מ-128 תווים.</value>
+  </data>
+  <data name="Error_Signup_SelectValidCompany" xml:space="preserve">
+    <value>אנא בחר חברה חוקית.</value>
+  </data>
+  <data name="Error_Signup_EmailExists" xml:space="preserve">
+    <value>חשבון עם כתובת אימייל זו כבר קיים. אנא התחבר במקום.</value>
+  </data>
+  <data name="Error_Signup_CompanyNotFound" xml:space="preserve">
+    <value>החברה שנבחרה לא נמצאה.</value>
+  </data>
+
+  
+  <data name="Error_UserNotAuthenticated" xml:space="preserve">
+    <value>משתמש לא מאומת</value>
+  </data>
+  <data name="Error_UserNotFound" xml:space="preserve">
+    <value>משתמש לא נמצא</value>
+  </data>
+  <data name="Error_LoadingRequests" xml:space="preserve">
+    <value>אירעה שגיאה בטעינת הבקשות. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_AuthenticationError" xml:space="preserve">
+    <value>שגיאת אימות. אנא התחבר שוב.</value>
+  </data>
+  <data name="Error_NoPermissionApproveRequest" xml:space="preserve">
+    <value>אין לך הרשאה לאשר בקשה זו.</value>
+  </data>
+  <data name="Error_NoPermissionDeclineRequest" xml:space="preserve">
+    <value>אין לך הרשאה לדחות בקשה זו.</value>
+  </data>
+  <data name="Error_CannotApproveSwap" xml:space="preserve">
+    <value>לא ניתן לאשר החלפה</value>
+  </data>
+  <data name="Error_TimeOffRequestNotFound" xml:space="preserve">
+    <value>בקשת חופשה לא נמצאה.</value>
+  </data>
+  <data name="Error_NoPermissionDeleteTimeOff" xml:space="preserve">
+    <value>אין לך הרשאה למחוק בקשת חופשה זו.</value>
+  </data>
+  <data name="Error_CanOnlyDeleteApprovedTimeOff" xml:space="preserve">
+    <value>ניתן למחוק רק בקשות חופשה שאושרו.</value>
+  </data>
+  <data name="Error_CannotDeleteStartedTimeOff" xml:space="preserve">
+    <value>לא ניתן למחוק חופשה שכבר החלה או שהיא בעבר.</value>
+  </data>
+  <data name="Error_DeletingTimeOff" xml:space="preserve">
+    <value>אירעה שגיאה במחיקת בקשת החופשה. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_ExportingUsers" xml:space="preserve">
+    <value>שגיאה בייצוא משתמשים. אנא נסה שוב.</value>
+  </data>
+
+
+  <data name="Success_TimeOffDeleted" xml:space="preserve">
+    <value>חופשה עבור {0} ({1} עד {2}) נמחקה.</value>
+  </data>
+
+  
+  <data name="Confirm" xml:space="preserve">
+    <value>אישור</value>
+  </data>
+
+  
+  <data name="CreateNewShift" xml:space="preserve">
+    <value>יצירת משמרת חדשה</value>
+  </data>
+  <data name="ShiftNamePlaceholder" xml:space="preserve">
+    <value>לדוגמה: פתיחת חנות, סיור ביטחון, וכו׳</value>
+  </data>
+  <data name="RequiredStaff" xml:space="preserve">
+    <value>צוות נדרש</value>
+  </data>
+  <data name="CreateShift" xml:space="preserve">
+    <value>יצירת משמרת</value>
+  </data>
+  <data name="PleaseSelectShiftType" xml:space="preserve">
+    <value>אנא בחר סוג משמרת</value>
+  </data>
+  <data name="InvalidDateData" xml:space="preserve">
+    <value>נתוני תאריך לא תקינים</value>
+  </data>
+  <data name="FailedToCreateShift" xml:space="preserve">
+    <value>נכשל ביצירת משמרת</value>
+  </data>
+  <data name="ShiftCreatedSuccessfully" xml:space="preserve">
+    <value>משמרת נוצרה בהצלחה!</value>
+  </data>
+  <data name="Person" xml:space="preserve">
+    <value>איש</value>
+  </data>
+  <data name="ConfirmDeleteShift" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק משמרת זו? כל ההקצאות יוסרו.</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>אין לך הרשאה לגשת לעמוד זה. אזור זה מוגבל למנהלים ומנהלי מערכת.</value>
+  </data>
+  <data name="Understood" xml:space="preserve">
+    <value>הבנתי</value>
+  </data>
+  <data name="NoShiftTypesAvailable" xml:space="preserve">
+    <value>אין סוגי משמרת זמינים עבור חברה זו.</value>
+  </data>
+  <data name="NoResultsFound" xml:space="preserve">
+    <value>לא נמצאו תוצאות</value>
+  </data>
+  <data name="Recent" xml:space="preserve">
+    <value>אחרונים</value>
+  </data>
+
+  
+  <data name="ChoreCreatedSuccessfully" xml:space="preserve">
+    <value>משימה נוצרה בהצלחה</value>
+  </data>
+  <data name="ErrorCreatingChore" xml:space="preserve">
+    <value>שגיאה ביצירת משימה</value>
+  </data>
+  <data name="ConflictDetected" xml:space="preserve">
+    <value>התגלה קונפליקט</value>
+  </data>
+  <data name="OnDutyCreatedSuccessfully" xml:space="preserve">
+    <value>תורנות נוצרה בהצלחה</value>
+  </data>
+  <data name="ErrorCreatingOnDuty" xml:space="preserve">
+    <value>שגיאה ביצירת תורנות</value>
+  </data>
+  <data name="ItemDeletedSuccessfully" xml:space="preserve">
+    <value>פריט נמחק בהצלחה</value>
+  </data>
+  <data name="ErrorDeletingItem" xml:space="preserve">
+    <value>שגיאה במחיקת פריט</value>
+  </data>
+  <data name="PleaseSelectAssignee" xml:space="preserve">
+    <value>אנא בחר מבצע</value>
+  </data>
+  <data name="PleaseEnterTitle" xml:space="preserve">
+    <value>אנא הזן כותרת</value>
+  </data>
+  <data name="TitleMaxLengthExceeded" xml:space="preserve">
+    <value>הכותרת חייבת להיות עד 200 תווים</value>
+  </data>
+
+  
+  <data name="AnErrorOccurred" xml:space="preserve">
+    <value>אירעה שגיאה</value>
+  </data>
+
+  
+  <data name="DashboardOverview" xml:space="preserve">
+    <value>סקירת לוח בקרה</value>
+  </data>
+  <data name="MonthlySchedule" xml:space="preserve">
+    <value>לוח זמנים חודשי</value>
+  </data>
+  <data name="WeeklySchedule" xml:space="preserve">
+    <value>לוח זמנים שבועי</value>
+  </data>
+  <data name="DailySchedule" xml:space="preserve">
+    <value>לוח זמנים יומי</value>
+  </data>
+  <data name="ManageRequests" xml:space="preserve">
+    <value>ניהול בקשות חופשה</value>
+  </data>
+  <data name="ViewReports" xml:space="preserve">
+    <value>הצגת דוחות וסטטיסטיקות</value>
+  </data>
+  <data name="ManageEmployees" xml:space="preserve">
+    <value>ניהול עובדים</value>
+  </data>
+  <data name="ManageOrganizations" xml:space="preserve">
+    <value>ניהול ארגונים</value>
+  </data>
+  <data name="AssignDirectors" xml:space="preserve">
+    <value>הקצאת מנהלים לחברות</value>
+  </data>
+  <data name="SystemSettings" xml:space="preserve">
+    <value>הגדרות מערכת</value>
+  </data>
+  <data name="ManageShiftDefinitions" xml:space="preserve">
+    <value>ניהול הגדרות משמרות</value>
+  </data>
+  <data name="ApprovedTimeOff" xml:space="preserve">
+    <value>בקשות חופשה שאושרו</value>
+  </data>
+  <data name="SystemActivityLog" xml:space="preserve">
+    <value>יומן פעילות מערכת</value>
+  </data>
+  <data name="TaskManagement" xml:space="preserve">
+    <value>ניהול משימות</value>
+  </data>
+  <data name="CurrentDutyRoster" xml:space="preserve">
+    <value>רשימת תורנות נוכחית</value>
+  </data>
+  <data name="ViewMyRequests" xml:space="preserve">
+    <value>הצגת בקשות החופשה שלי</value>
+  </data>
+  <data name="ViewTeamMembers" xml:space="preserve">
+    <value>הצגת חברי צוות</value>
+  </data>
+  <data name="UpdateMyInformation" xml:space="preserve">
+    <value>עדכון המידע שלי</value>
+  </data>
+  <data name="ViewNotifications" xml:space="preserve">
+    <value>הצגת התראות</value>
+  </data>
+
+  
+  <data name="Error_CompanyNameAndSlugRequired" xml:space="preserve">
+    <value>שם החברה ומזהה החברה נדרשים.</value>
+  </data>
+  <data name="Error_CompanyNameOrSlugTooLong" xml:space="preserve">
+    <value>שם החברה או מזהה החברה חורגים מהאורך המקסימלי (200/100 תווים).</value>
+  </data>
+  <data name="Error_CompanyDisplayNameTooLong" xml:space="preserve">
+    <value>שם התצוגה של החברה אינו יכול לחרוג מ-200 תווים.</value>
+  </data>
+  <data name="Error_ManagerDisplayNameTooLong" xml:space="preserve">
+    <value>שם התצוגה של המנהל אינו יכול לחרוג מ-200 תווים.</value>
+  </data>
+  <data name="Error_ManagerEmailTooLong" xml:space="preserve">
+    <value>אימייל המנהל אינו יכול לחרוג מ-255 תווים.</value>
+  </data>
+  <data name="Error_CompanySlugAlreadyExists" xml:space="preserve">
+    <value>מזהה החברה כבר קיים. אנא בחר מזהה אחר.</value>
+  </data>
+  <data name="Error_CompanySlugInvalidFormat" xml:space="preserve">
+    <value>מזהה החברה חייב להיות באותיות קטנות ולהכיל רק אותיות, מספרים ומקפים.</value>
+  </data>
+  <data name="Error_ManagerFieldsRequired" xml:space="preserve">
+    <value>אימייל, שם תצוגה וסיסמה של המנהל נדרשים (או בחר מנהל קיים).</value>
+  </data>
+  <data name="Error_ManagerEmailAlreadyExists" xml:space="preserve">
+    <value>אימייל המנהל כבר קיים.</value>
+  </data>
+  <data name="Error_SelectedDirectorNotFound" xml:space="preserve">
+    <value>המנהל הנבחר אינו קיים או אינו מנהל.</value>
+  </data>
+  <data name="Success_DirectorAssigned" xml:space="preserve">
+    <value>מנהל '{0}' ({1}) הוקצה לניהול חברה זו.</value>
+  </data>
+  <data name="Success_ManagerCreated" xml:space="preserve">
+    <value>המנהל יכול להתחבר עם אימייל: {0}</value>
+  </data>
+  <data name="Success_CompanyCreated" xml:space="preserve">
+    <value>חברה '{0}' נוצרה בהצלחה. {1}</value>
+  </data>
+  <data name="Error_CompanyCreationFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת יצירת החברה. אנא נסה שנית.</value>
+  </data>
+  <data name="Error_InvalidCompanyIdOrName" xml:space="preserve">
+    <value>מזהה או שם חברה לא תקין.</value>
+  </data>
+  <data name="Error_CompanyNotFound" xml:space="preserve">
+    <value>החברה לא נמצאה.</value>
+  </data>
+  <data name="Success_CompanyRenamed" xml:space="preserve">
+    <value>החברה שונתה בהצלחה ל-'{0}'.</value>
+  </data>
+  <data name="Error_CannotDeleteCompanyWithOwners" xml:space="preserve">
+    <value>לא ניתן למחוק חברה: משתמשי בעלים חייבים להיות מוסרים או מועברים תחילה. בעלים חייבים תמיד להישאר במערכת.</value>
+  </data>
+  <data name="Success_CompanyDeleted" xml:space="preserve">
+    <value>חברה '{0}' וכל הנתונים הקשורים נמחקו בהצלחה.</value>
+  </data>
+  <data name="Error_CompanyDeletionFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת מחיקת החברה. אנא נסה שנית.</value>
+  </data>
+
+  
+  <data name="Error_LoadingRequestsFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת טעינת הבקשות שלך. אנא נסה שנית.</value>
+  </data>
+  <data name="Error_EndDateBeforeStartDate" xml:space="preserve">
+    <value>תאריך הסיום לא יכול להיות לפני תאריך ההתחלה.</value>
+  </data>
+  <data name="Error_InvalidApproverSelected" xml:space="preserve">
+    <value>נבחר מאשר לא תקין. אנא בחר מנהל תקף.</value>
+  </data>
+  <data name="Success_TimeOffRequestSubmitted" xml:space="preserve">
+    <value>בקשת החופשה נשלחה בהצלחה!</value>
+  </data>
+  <data name="Error_SubmittingRequestFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת שליחת הבקשה. אנא נסה שנית.</value>
+  </data>
+  <data name="Error_PleaseSelectShiftToSwap" xml:space="preserve">
+    <value>אנא בחר משמרת להחלפה.</value>
+  </data>
+  <data name="Error_NotAssignedToShift" xml:space="preserve">
+    <value>אינך משובץ למשמרת זו.</value>
+  </data>
+  <data name="Success_SwapRequestSubmitted" xml:space="preserve">
+    <value>בקשת החלפת משמרת נשלחה בהצלחה!</value>
+  </data>
+  <data name="Error_SubmittingSwapRequestFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת שליחת בקשת ההחלפה. אנא נסה שנית.</value>
+  </data>
+
+  
+  <data name="Error_TooManyPasswordResetAttempts" xml:space="preserve">
+    <value>יותר מדי ניסיונות לאיפוס סיסמה. אנא נסה שנית בעוד 15 דקות.</value>
+  </data>
+  <data name="Error_ProvideEmailAndPhone" xml:space="preserve">
+    <value>אנא ספק גם אימייל וגם מספר טלפון.</value>
+  </data>
+  <data name="Error_InvalidPhoneFormat" xml:space="preserve">
+    <value>פורמט טלפון לא תקין.</value>
+  </data>
+  <data name="Error_EmailPhoneNoMatch" xml:space="preserve">
+    <value>האימייל ומספר הטלפון אינם תואמים לרשומות שלנו.</value>
+  </data>
+  <data name="Success_TemporaryPasswordSent" xml:space="preserve">
+    <value>סיסמה זמנית נשלחה לכתובת האימייל הרשומה שלך.</value>
+  </data>
+  <data name="Error_FailedToSendRecoveryEmail" xml:space="preserve">
+    <value>נכשל לשלוח אימייל שחזור. אנא נסה שנית מאוחר יותר או צור קשר עם התמיכה.</value>
+  </data>
+  <data name="Error_AnErrorOccurred" xml:space="preserve">
+    <value>אירעה שגיאה. אנא נסה שנית מאוחר יותר.</value>
+  </data>
+  <data name="Error_TooManyPasswordChangeAttempts" xml:space="preserve">
+    <value>יותר מדי ניסיונות לשינוי סיסמה. אנא נסה שנית בעוד 15 דקות.</value>
+  </data>
+  <data name="Error_ProvideEmailCurrentAndNewPassword" xml:space="preserve">
+    <value>אנא ספק אימייל, סיסמה נוכחית וסיסמה חדשה.</value>
+  </data>
+  <data name="Error_NewPasswordTooShort" xml:space="preserve">
+    <value>הסיסמה החדשה חייבת להיות באורך לפחות 6 תווים.</value>
+  </data>
+  <data name="Error_FailedToChangePassword" xml:space="preserve">
+    <value>נכשל לשנות סיסמה. אנא בדוק את הסיסמה הנוכחית שלך ונסה שוב.</value>
+  </data>
+  <data name="Error_CurrentPasswordIncorrect" xml:space="preserve">
+    <value>הסיסמה הנוכחית שגויה.</value>
+  </data>
+  <data name="Success_PasswordChangedSuccessfully" xml:space="preserve">
+    <value>הסיסמה שונתה בהצלחה! כעת תוכל להתחבר עם הסיסמה החדשה שלך.</value>
+  </data>
+
+  
+  <data name="Error_RestHoursRange" xml:space="preserve">
+    <value>שעות מנוחה חייבות להיות בין 0 ל-24.</value>
+  </data>
+  <data name="Error_WeeklyCapRange" xml:space="preserve">
+    <value>מכסת שעות שבועית חייבת להיות בין 0 ל-168 (7 ימים × 24 שעות).</value>
+  </data>
+  <data name="Error_WeeklyCapLessThanRest" xml:space="preserve">
+    <value>מכסת שעות שבועית לא יכולה להיות פחות משעות מנוחה. אנא בדוק את הערכים שלך.</value>
+  </data>
+  <data name="Success_ConfigurationUpdated" xml:space="preserve">
+    <value>התצורה עודכנה בהצלחה.</value>
+  </data>
+  <data name="Error_BothNamesRequired" xml:space="preserve">
+    <value>שם באנגלית ושם בעברית שניהם נדרשים.</value>
+  </data>
+  <data name="Error_NamesTooLong" xml:space="preserve">
+    <value>שמות לא יכולים לעבור 100 תווים.</value>
+  </data>
+  <data name="Success_OnDutyTypeCreated" xml:space="preserve">
+    <value>סוג תורנות '{0}' נוצר בהצלחה.</value>
+  </data>
+  <data name="Error_OnDutyTypeNotFound" xml:space="preserve">
+    <value>סוג תורנות לא נמצא.</value>
+  </data>
+  <data name="Error_CannotDeleteOnDutyTypeInUse" xml:space="preserve">
+    <value>לא ניתן למחוק את '{0}' - הוא משויך כעת למשמרות תורנות פעילות.</value>
+  </data>
+  <data name="Success_OnDutyTypeDeleted" xml:space="preserve">
+    <value>סוג תורנות '{0}' נמחק בהצלחה.</value>
+  </data>
+
+  
+  <data name="Error_CannotRequestTimeOffForPastDates" xml:space="preserve">
+    <value>לא ניתן לבקש חופש עבור תאריכים שעברו.</value>
+  </data>
+  <data name="Error_CannotRequestTimeOffTooFarInFuture" xml:space="preserve">
+    <value>לא ניתן לבקש חופש יותר משנתיים מראש.</value>
+  </data>
+  <data name="Error_TimeOffRequestTooLong" xml:space="preserve">
+    <value>בקשת חופש לא יכולה לעבור 365 ימים. אנא פצל למספר בקשות.</value>
+  </data>
+  <data name="Error_ReasonTooLong" xml:space="preserve">
+    <value>הסיבה לא יכולה לעבור 1000 תווים.</value>
+  </data>
+
+  
+  <data name="Error_FailedToLoadEmailConfig" xml:space="preserve">
+    <value>נכשל בטעינת תצורת אימייל.</value>
+  </data>
+  <data name="Success_EmailConfigSaved" xml:space="preserve">
+    <value>תצורת האימייל נשמרה בהצלחה.</value>
+  </data>
+  <data name="Error_SavingEmailConfigFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת שמירת תצורת האימייל.</value>
+  </data>
+  <data name="Error_ProvideValidEmail" xml:space="preserve">
+    <value>אנא ספק כתובת אימייל תקינה.</value>
+  </data>
+  <data name="Success_TestEmailSent" xml:space="preserve">
+    <value>✅ אימייל בדיקה נשלח בהצלחה אל {0}. בדוק את האבחון למטה.</value>
+  </data>
+  <data name="Error_TestEmailFailed" xml:space="preserve">
+    <value>❌ אימייל בדיקה נכשל: {0}. בדוק את האבחון למטה.</value>
+  </data>
+  <data name="Error_TestEmailFailedNoDiagnostics" xml:space="preserve">
+    <value>אימייל בדיקה נכשל - אין מידע אבחון זמין.</value>
+  </data>
+  <data name="Error_FailedToSendTestEmail" xml:space="preserve">
+    <value>נכשל לשלוח אימייל בדיקה: {0}</value>
+  </data>
+
+  
+  <data name="Dir" xml:space="preserve">
+    <value>rtl</value>
+  </data>
+  <data name="Email_Hello" xml:space="preserve">
+    <value>שלום {0}</value>
+  </data>
+  <data name="Email_BestRegards" xml:space="preserve">
+    <value>בברכה</value>
+  </data>
+  <data name="Email_ShiftManagerTeam" xml:space="preserve">
+    <value>צוות Shift Manager</value>
+  </data>
+
+  
+  <data name="Email_PasswordRecoverySubject" xml:space="preserve">
+    <value>שחזור סיסמה - Shift Manager</value>
+  </data>
+  <data name="Email_PasswordRecoveryTitle" xml:space="preserve">
+    <value>בקשת שחזור סיסמה</value>
+  </data>
+  <data name="Email_PasswordRecoveryBody" xml:space="preserve">
+    <value>ביקשת לשחזר את הסיסמה שלך עבור מערכת Shift Manager.</value>
+  </data>
+  <data name="Email_YourTemporaryPassword" xml:space="preserve">
+    <value>הסיסמה הזמנית שלך היא</value>
+  </data>
+  <data name="Email_PasswordRecoveryImportant" xml:space="preserve">
+    <value>זוהי סיסמה זמנית. אנא התחבר ושנה אותה מיד בהגדרות הפרופיל שלך.</value>
+  </data>
+  <data name="Email_PasswordRecoverySecurityNote" xml:space="preserve">
+    <value>אם לא ביקשת זאת, אנא צור קשר עם מנהל המערכת מיד.</value>
+  </data>
+  <data name="EmailDomainSuggestion" xml:space="preserve">
+    <value>השתמש ב{0}@d360.dom</value>
+  </data>
+
+
+  <data name="Email_ShiftAssignedSubject" xml:space="preserve">
+    <value>שיבוץ משמרת חדשה - {0}</value>
+  </data>
+  <data name="Email_ShiftAssignedTitle" xml:space="preserve">
+    <value>שיבוץ משמרת חדשה</value>
+  </data>
+  <data name="Email_ShiftAssignedBody" xml:space="preserve">
+    <value>שובצת לעבוד במשמרת חדשה:</value>
+  </data>
+  <data name="Email_ShiftAssignedLoginPrompt" xml:space="preserve">
+    <value>אנא התחבר למערכת ShiftManager כדי לצפות בפרטים המלאים.</value>
+  </data>
+  <data name="Email_ShiftAssignedContactManager" xml:space="preserve">
+    <value>אם יש לך שאלות או חששות, אנא צור קשר עם המנהל שלך.</value>
+  </data>
+  <data name="Email_ShiftChangedSubject" xml:space="preserve">
+    <value>הודעת שינוי במשמרת - {0}</value>
+  </data>
+  <data name="Email_ShiftChangedTitle" xml:space="preserve">
+    <value>הודעת שינוי במשמרת</value>
+  </data>
+  <data name="Email_ShiftChangedBody" xml:space="preserve">
+    <value>המשמרת שלך שונתה:</value>
+  </data>
+  <data name="Email_ChangeDetails" xml:space="preserve">
+    <value>פרטי השינוי</value>
+  </data>
+  <data name="Email_ShiftChangedReviewPrompt" xml:space="preserve">
+    <value>אנא התחבר למערכת ShiftManager כדי לעיין בפרטי המשמרת המעודכנים.</value>
+  </data>
+  <data name="Email_ShiftChangedContactManager" xml:space="preserve">
+    <value>אם יש לך שאלות או חששות, אנא צור קשר עם המנהל שלך מיד.</value>
+  </data>
+
+  
+  <data name="Email_ShiftDeletedSubject" xml:space="preserve">
+    <value>משמרת הוסרה - {0}</value>
+  </data>
+  <data name="Email_ShiftDeletedTitle" xml:space="preserve">
+    <value>משמרת הוסרה</value>
+  </data>
+  <data name="Email_ShiftDeletedBody" xml:space="preserve">
+    <value>המשמרת המשובצת שלך הוסרה מהלוח זמנים:</value>
+  </data>
+  <data name="Email_ShiftDeletedSchedulePrompt" xml:space="preserve">
+    <value>משמרת זו אינה עוד בלוח הזמנים שלך. אנא התחבר למערכת ShiftManager כדי לצפות בלוח הזמנים המעודכן שלך.</value>
+  </data>
+  <data name="Email_ShiftDeletedContactManager" xml:space="preserve">
+    <value>אם יש לך שאלות, אנא צור קשר עם המנהל שלך.</value>
+  </data>
+  
+  <data name="Email_ChoreAssignedSubject" xml:space="preserve">
+    <value>משימה חדשה - {0}</value>
+  </data>
+  <data name="Email_ChoreAssignedTitle" xml:space="preserve">
+    <value>שיבוץ משימה חדשה</value>
+  </data>
+  <data name="Email_ChoreAssignedBody" xml:space="preserve">
+    <value>שובצת לך משימה חדשה:</value>
+  </data>
+  <data name="Email_Chore" xml:space="preserve">
+    <value>משימה</value>
+  </data>
+  <data name="Email_ChoreAssignedLoginPrompt" xml:space="preserve">
+    <value>אנא התחבר למערכת ShiftManager כדי לצפות בפרטים המלאים.</value>
+  </data>
+  <data name="Email_ChoreAssignedContactManager" xml:space="preserve">
+    <value>אם יש לך שאלות או דאגות, אנא צור קשר עם המנהל שלך.</value>
+  </data>
+  
+  <data name="Email_ChoreCanceledSubject" xml:space="preserve">
+    <value>משימה בוטלה - {0}</value>
+  </data>
+  <data name="Email_ChoreCanceledTitle" xml:space="preserve">
+    <value>משימה בוטלה</value>
+  </data>
+  <data name="Email_ChoreCanceledBody" xml:space="preserve">
+    <value>המשימה המשובצת שלך בוטלה:</value>
+  </data>
+  <data name="Email_ChoreCanceledSchedulePrompt" xml:space="preserve">
+    <value>משימה זו אינה עוד בלוח הזמנים שלך. אנא התחבר למערכת ShiftManager כדי לצפות בלוח הזמנים המעודכן שלך.</value>
+  </data>
+  <data name="Email_ChoreCanceledContactManager" xml:space="preserve">
+    <value>אם יש לך שאלות, אנא צור קשר עם המנהל שלך.</value>
+  </data>
+  
+  <data name="Email_DailyDigestSubject" xml:space="preserve">
+    <value>📬 תקציר יומי - {0}</value>
+  </data>
+  <data name="Email_DailyDigestTitle" xml:space="preserve">
+    <value>📬 תקציר יומי עבור {0}</value>
+  </data>
+  <data name="Email_DailyDigestIntro" xml:space="preserve">
+    <value>הנה הסיכום שלך לשבוע הקרוב:</value>
+  </data>
+  <data name="Email_DailyDigestFooter" xml:space="preserve">
+    <value>זהו התקציר היומי האוטומטי שלך. כדי לשנות את ההעדפות שלך, בקר בדף ההגדרות.</value>
+  </data>
+  <data name="Email_SentAt" xml:space="preserve">
+    <value>נשלח ב-{0} UTC</value>
+  </data>
+  <data name="Email_UpcomingShifts" xml:space="preserve">
+    <value>📅 משמרות קרובות (7 הימים הבאים)</value>
+  </data>
+  <data name="Email_PendingRequests" xml:space="preserve">
+    <value>⏳ בקשות ממתינות</value>
+  </data>
+  <data name="Email_TimeOffRequests" xml:space="preserve">
+    <value>בקשות חופש:</value>
+  </data>
+  <data name="Email_SwapRequests" xml:space="preserve">
+    <value>בקשות החלפה:</value>
+  </data>
+  <data name="Email_PendingApproval" xml:space="preserve">
+    <value>ממתין לאישור</value>
+  </data>
+  <data name="Email_AssignedChores" xml:space="preserve">
+    <value>🧹 משימות משובצות (7 הימים הבאים)</value>
+  </data>
+  <data name="Email_OnDutyAssignments" xml:space="preserve">
+    <value>🎖️ שיבוצי תורנות (7 הימים הבאים)</value>
+  </data>
+  <data name="Email_TodaysOnDutyAssignments" xml:space="preserve">
+    <value>📋 תורנות היום</value>
+  </data>
+  <data name="Email_UnknownRole" xml:space="preserve">
+    <value>תפקיד לא ידוע</value>
+  </data>
+  <data name="Email_TodaysRole" xml:space="preserve">
+    <value>{0} של היום הוא {1}</value>
+  </data>
+  
+  <data name="Email_ReminderSubject" xml:space="preserve">
+    <value>⏰ תזכורת: שיבוצים למחר ({0})</value>
+  </data>
+  <data name="Email_ReminderTitle" xml:space="preserve">
+    <value>⏰ תזכורת: שיבוצים קרובים למחר</value>
+  </data>
+  <data name="Email_ReminderIntro" xml:space="preserve">
+    <value>שלום {0}, הנה מה שמתוכנן לך למחר ({1}):</value>
+  </data>
+  <data name="Email_ReminderFooter" xml:space="preserve">
+    <value>זוהי התזכורת האוטומטית שלך ליום לפני. כדי לשנות את ההעדפות שלך, בקר בדף ההגדרות.</value>
+  </data>
+  <data name="Email_UpcomingShiftsTomorrow" xml:space="preserve">
+    <value>📅 משמרות קרובות למחר</value>
+  </data>
+  <data name="Email_Shift" xml:space="preserve">
+    <value>משמרת</value>
+  </data>
+  <data name="Email_ChoresAssignedTomorrow" xml:space="preserve">
+    <value>🧹 משימות משובצות למחר</value>
+  </data>
+  <data name="Email_OnDutyAssignmentsTomorrow" xml:space="preserve">
+    <value>👮 שיבוצי תורנות למחר</value>
+  </data>
+  <data name="Email_AccountApprovedSubject" xml:space="preserve">
+    <value>החשבון אושר - ברוכים הבאים ל{0}!</value>
+  </data>
+  <data name="Email_AccountApprovedTitle" xml:space="preserve">
+    <value>החשבון אושר</value>
+  </data>
+  <data name="Email_WelcomeToCompany" xml:space="preserve">
+    <value>ברוכים הבאים ל{0}!</value>
+  </data>
+  <data name="Email_AccountApprovedBody" xml:space="preserve">
+    <value>חדשות טובות! החשבון שלך אושר על ידי מנהל המערכת. כעת תוכל להתחבר ולגשת למערכת ניהול המשמרות.</value>
+  </data>
+  <data name="Email_Company" xml:space="preserve">
+    <value>חברה</value>
+  </data>
+  <data name="Email_AssignedRole" xml:space="preserve">
+    <value>תפקיד שהוקצה</value>
+  </data>
+  <data name="Email_AccountStatus" xml:space="preserve">
+    <value>סטטוס חשבון</value>
+  </data>
+  <data name="Email_Active" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
+  <data name="Email_AccountApprovedLoginPrompt" xml:space="preserve">
+    <value>כעת תוכל להתחבר למערכת באמצעות כתובת האימייל והסיסמה שסיפקת בעת ההרשמה.</value>
+  </data>
+  <data name="Email_AccountApprovedNextSteps" xml:space="preserve">
+    <value>לאחר ההתחברות, תוכל לצפות בלוח הזמנים שלך, לבקש חופשה, להחליף משמרות עם עמיתים ועוד.</value>
+  </data>
+  <data name="Email_AccountApprovedContactSupport" xml:space="preserve">
+    <value>אם יש לך שאלות או שאתה זקוק לסיוע, אנא פנה למנהל שלך או למנהל המערכת.</value>
   </data>
 </root>

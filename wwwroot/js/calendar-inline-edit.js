@@ -135,7 +135,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                         const retryResult = await retryResponse.json();
 
                         if (retryResult.success) {
-                            showToast(retryResult.message || 'Chore created successfully', 'success');
+                            showToast(retryResult.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
 
                             // Step 2: Ask if user wants to manage the conflicting vacation
                             const manageMessage = culture === 'he-IL'
@@ -149,12 +149,12 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                                 setTimeout(() => location.reload(), 500);
                             }
                         } else {
-                            showToast(retryResult.message || 'Error creating chore', 'error');
+                            showToast(retryResult.message || window.AppLocalizer.ErrorCreatingChore, 'error');
                         }
                     }
                 } else {
                     // Shift conflict or other conflict
-                    showToast(result.message || 'Conflict detected', 'error');
+                    showToast(result.message || window.AppLocalizer.ConflictDetected, 'error');
                 }
                 return;
             }
@@ -163,11 +163,11 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
         const result = await response.json();
 
         if (result.success) {
-            showToast(result.message || 'Chore created successfully', 'success');
+            showToast(result.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
             // Reload the page to show the new chore
             setTimeout(() => location.reload(), 500);
         } else {
-            showToast(result.message || 'Error creating chore', 'error');
+            showToast(result.message || window.AppLocalizer.ErrorCreatingChore, 'error');
         }
     } catch (error) {
         handleApiError(null, error);
@@ -239,7 +239,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                         const retryResult = await retryResponse.json();
 
                         if (retryResult.success) {
-                            showToast(retryResult.message || 'On-duty created successfully', 'success');
+                            showToast(retryResult.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
 
                             // Step 2: Ask if user wants to manage the conflicting vacation
                             const manageMessage = culture === 'he-IL'
@@ -253,12 +253,12 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                                 setTimeout(() => location.reload(), 500);
                             }
                         } else {
-                            showToast(retryResult.message || 'Error creating on-duty', 'error');
+                            showToast(retryResult.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
                         }
                     }
                 } else {
                     // Other conflict
-                    showToast(result.message || 'Conflict detected', 'error');
+                    showToast(result.message || window.AppLocalizer.ConflictDetected, 'error');
                 }
                 return;
             }
@@ -267,11 +267,11 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
         const result = await response.json();
 
         if (result.success) {
-            showToast(result.message || 'On-duty created successfully', 'success');
+            showToast(result.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
             // Reload the page to show the new on-duty assignment
             setTimeout(() => location.reload(), 500);
         } else {
-            showToast(result.message || 'Error creating on-duty', 'error');
+            showToast(result.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
         }
     } catch (error) {
         handleApiError(null, error);
@@ -315,11 +315,11 @@ async function deleteItem(itemType, itemId) {
         const result = await response.json();
 
         if (result.success) {
-            showToast(result.message || 'Item deleted successfully', 'success');
+            showToast(result.message || window.AppLocalizer.ItemDeletedSuccessfully, 'success');
             // Reload the page to update the calendar
             setTimeout(() => location.reload(), 500);
         } else {
-            showToast(result.message || 'Error deleting item', 'error');
+            showToast(result.message || window.AppLocalizer.ErrorDeletingItem, 'error');
         }
     } catch (error) {
         handleApiError(null, error);
@@ -413,7 +413,7 @@ async function submitQuickAdd(date) {
 
     // Validate assignee
     if (!assigneeId) {
-        alert('Please select an assignee');
+        alert(window.AppLocalizer.PleaseSelectAssignee);
         return;
     }
 
@@ -423,12 +423,12 @@ async function submitQuickAdd(date) {
 
         // Validate title
         if (!title) {
-            alert('Please enter a title');
+            alert(window.AppLocalizer.PleaseEnterTitle);
             return;
         }
 
         if (title.length > 200) {
-            alert('Title must not exceed 200 characters');
+            alert(window.AppLocalizer.TitleMaxLengthExceeded);
             return;
         }
 

@@ -69,24 +69,38 @@ public class AnalyticsService : IAnalyticsService
 
         try
         {
-            var assignments = await _db.ShiftAssignments
+            // Phase 2C: Use SQL aggregates instead of loading all data into memory
+            // Group by user first in the database, then load minimal data
+            var groupedData = await _db.ShiftAssignments
                 .AsNoTracking()
                 .Include(a => a.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
                 .Include(a => a.User)
                 .Where(a => a.ShiftInstance.WorkDate >= startDate && a.ShiftInstance.WorkDate <= endDate)
                 .Where(a => a.UserId.HasValue) // Filter out unassigned slots
+                .GroupBy(a => new { a.UserId, a.User!.DisplayName })
+                .Select(g => new
+                {
+                    UserId = g.Key.UserId!.Value,
+                    DisplayName = g.Key.DisplayName,
+                    ShiftCount = g.Count(),
+                    Shifts = g.Select(a => new
+                    {
+                        Start = a.ShiftInstance.ShiftType.Start,
+                        End = a.ShiftInstance.ShiftType.End
+                    }).ToList()
+                })
                 .ToListAsync();
 
-            var results = assignments
-                .GroupBy(a => new { a.UserId, a.User!.DisplayName })
+            var weeks = (decimal)(endDate.DayNumber - startDate.DayNumber) / 7;
+
+            var results = groupedData
                 .Select(g =>
                 {
-                    var shiftHours = g.Select(a =>
+                    var totalHours = g.Shifts.Sum(shift =>
                     {
-                        var shiftType = a.ShiftInstance.ShiftType;
-                        var start = shiftType.Start;
-                        var end = shiftType.End;
+                        var start = shift.Start;
+                        var end = shift.End;
 
                         // Handle overnight shifts
                         if (end < start)
@@ -97,19 +111,17 @@ public class AnalyticsService : IAnalyticsService
                         {
                             return (decimal)((end.Hour - start.Hour) + (end.Minute - start.Minute) / 60.0);
                         }
-                    }).ToList();
+                    });
 
-                    var totalHours = shiftHours.Sum();
-                    var weeks = (decimal)(endDate.DayNumber - startDate.DayNumber) / 7;
                     var avgHoursPerWeek = weeks > 0 ? totalHours / weeks : 0;
 
                     return new EmployeeHoursDto
                     {
-                        UserId = g.Key.UserId!.Value,
-                        EmployeeName = g.Key.DisplayName,
+                        UserId = g.UserId,
+                        EmployeeName = g.DisplayName,
                         TotalHours = Math.Round(totalHours, 2),
                         AverageHoursPerWeek = Math.Round(avgHoursPerWeek, 2),
-                        ShiftCount = g.Count()
+                        ShiftCount = g.ShiftCount
                     };
                 })
                 .OrderByDescending(e => e.TotalHours)
@@ -132,15 +144,12 @@ public class AnalyticsService : IAnalyticsService
             var today = DateOnly.FromDateTime(DateTime.Today);
             var endDate = today.AddDays(days);
 
-            var assignments = await _db.ShiftAssignments
+            // Phase 2C: Use SQL aggregates - GroupBy before ToListAsync
+            var results = await _db.ShiftAssignments
                 .AsNoTracking()
-                .Include(a => a.ShiftInstance)
                 .Include(a => a.User)
                 .Where(a => a.ShiftInstance.WorkDate >= today && a.ShiftInstance.WorkDate < endDate)
                 .Where(a => a.UserId.HasValue) // Filter out unassigned slots
-                .ToListAsync();
-
-            var results = assignments
                 .GroupBy(a => new { a.UserId, a.User!.DisplayName })
                 .Select(g => new EmployeeShiftCountDto
                 {
@@ -149,7 +158,7 @@ public class AnalyticsService : IAnalyticsService
                     UpcomingShiftCount = g.Count()
                 })
                 .OrderByDescending(e => e.UpcomingShiftCount)
-                .ToList();
+                .ToListAsync();
 
             return results;
         }
@@ -247,36 +256,44 @@ public class AnalyticsService : IAnalyticsService
     {
         try
         {
-            var assignments = await _db.ShiftAssignments
+            // Phase 2C: Use SQL aggregates - GroupBy before ToListAsync
+            var groupedData = await _db.ShiftAssignments
                 .AsNoTracking()
                 .Include(a => a.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
                 .Include(a => a.User)
                 .Where(a => a.ShiftInstance.WorkDate >= startDate && a.ShiftInstance.WorkDate <= endDate)
-                .ToListAsync();
-
-            var results = assignments
                 .Where(a => a.User != null)  // Filter out unassigned shifts
                 .GroupBy(a => a.User!.Role)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Sum(a =>
+                .Select(g => new
+                {
+                    Role = g.Key,
+                    Shifts = g.Select(a => new
                     {
-                        var shiftType = a.ShiftInstance.ShiftType;
-                        var start = shiftType.Start;
-                        var end = shiftType.End;
+                        Start = a.ShiftInstance.ShiftType.Start,
+                        End = a.ShiftInstance.ShiftType.End
+                    }).ToList()
+                })
+                .ToListAsync();
 
-                        // Handle overnight shifts
-                        if (end < start)
-                        {
-                            return (decimal)(24 - start.Hour + end.Hour + (end.Minute - start.Minute) / 60.0);
-                        }
-                        else
-                        {
-                            return (decimal)((end.Hour - start.Hour) + (end.Minute - start.Minute) / 60.0);
-                        }
-                    })
-                );
+            var results = groupedData.ToDictionary(
+                g => g.Role,
+                g => g.Shifts.Sum(shift =>
+                {
+                    var start = shift.Start;
+                    var end = shift.End;
+
+                    // Handle overnight shifts
+                    if (end < start)
+                    {
+                        return (decimal)(24 - start.Hour + end.Hour + (end.Minute - start.Minute) / 60.0);
+                    }
+                    else
+                    {
+                        return (decimal)((end.Hour - start.Hour) + (end.Minute - start.Minute) / 60.0);
+                    }
+                })
+            );
 
             return results;
         }

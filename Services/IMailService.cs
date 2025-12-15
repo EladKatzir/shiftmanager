@@ -56,4 +56,14 @@ public interface IMailService
     /// </summary>
     Task<bool> SendChoreCanceledEmailAsync(string recipientEmail, string employeeName,
         string choreTitle, DateOnly choreDate);
+
+    /// <summary>
+    /// Send account approval notification email.
+    /// </summary>
+    /// <param name="recipientEmail">New user's email address</param>
+    /// <param name="userName">New user's display name</param>
+    /// <param name="assignedRole">Role assigned to the user (Employee, Manager, etc.)</param>
+    /// <param name="companyName">Name of the company</param>
+    Task<bool> SendAccountApprovedEmailAsync(string recipientEmail, string userName,
+        string assignedRole, string companyName);
 }

@@ -78,8 +78,12 @@ public class BackupModel : PageModel
                 return Page();
             }
 
-            // Copy the database file
-            System.IO.File.Copy(dbPath, backupFilePath, overwrite: false);
+            // Copy the database file asynchronously
+            using (var sourceStream = new FileStream(dbPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+            using (var destinationStream = new FileStream(backupFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+            {
+                await sourceStream.CopyToAsync(destinationStream);
+            }
 
             // Log the backup
             await _auditLogService.LogUserActionAsync(
@@ -134,11 +138,19 @@ public class BackupModel : PageModel
             var preRestoreBackup = Path.Combine(backupsFolder, $"pre_restore_{DateTime.Now:yyyyMMdd_HHmmss}.db");
             if (System.IO.File.Exists(dbPath))
             {
-                System.IO.File.Copy(dbPath, preRestoreBackup, overwrite: false);
+                using (var sourceStream = new FileStream(dbPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+                using (var destinationStream = new FileStream(preRestoreBackup, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+                {
+                    await sourceStream.CopyToAsync(destinationStream);
+                }
             }
 
-            // Restore the backup
-            System.IO.File.Copy(backupFilePath, dbPath, overwrite: true);
+            // Restore the backup asynchronously
+            using (var sourceStream = new FileStream(backupFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+            using (var destinationStream = new FileStream(dbPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+            {
+                await sourceStream.CopyToAsync(destinationStream);
+            }
 
             // Log the restore
             await _auditLogService.LogUserActionAsync(

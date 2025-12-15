@@ -29,6 +29,15 @@
             <label>
                 @Localizer["Email"]<br />
                 <input class="input" asp-for="Email" type="email" required />
+                <div id="emailSuggestion" style="display: none;
+                     margin-top: 0.25rem;
+                     padding: 0.5rem;
+                     background: var(--primary-bg);
+                     border: 1px solid var(--primary);
+                     border-radius: 6px;
+                     cursor: pointer;
+                     font-size: 0.875rem;
+                     color: var(--primary);"></div>
             </label>
 
             <label>
@@ -72,3 +81,35 @@
         @Localizer["AlreadyHaveAccount"] <a href="/Auth/Login">@Localizer["LoginHere"]</a>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Email domain suggestion
+        (function() {
+            const emailInput = document.querySelector('input[name="Email"]');
+            const suggestionDiv = document.getElementById('emailSuggestion');
+            const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
+
+            if (emailInput && suggestionDiv) {
+                emailInput.addEventListener('input', function(e) {
+                    const value = e.target.value.trim();
+
+                    // Show suggestion when typing without @@
+                    if (value.length > 0 && value.indexOf('@@') === -1) {
+                        suggestionDiv.textContent = suggestionText.replace('{0}', value);
+                        suggestionDiv.style.display = 'block';
+                    } else {
+                        suggestionDiv.style.display = 'none';
+                    }
+                });
+
+                suggestionDiv.addEventListener('click', function() {
+                    const currentValue = emailInput.value.trim();
+                    emailInput.value = currentValue + '@@d360.dom';
+                    suggestionDiv.style.display = 'none';
+                    emailInput.focus();
+                });
+            }
+        })();
+    </script>
+}

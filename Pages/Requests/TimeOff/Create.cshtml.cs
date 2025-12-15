@@ -1,17 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Requests.TimeOff;
 
 [Authorize]
-public class CreateModel : PageModel
+public class CreateModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
-    public CreateModel(AppDbContext db) => _db = db;
+
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db) : base(localizer)
+    {
+        _db = db;
+    }
 
     [BindProperty] public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     [BindProperty] public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -31,7 +38,7 @@ public class CreateModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (EndDate < StartDate)
         {
-            ModelState.AddModelError("", "End date cannot be before start date.");
+            ModelState.AddModelError("", _localizer["Error_EndDateBeforeStartDate"]);
             return Page();
         }
 
@@ -39,7 +46,7 @@ public class CreateModel : PageModel
         var today = DateOnly.FromDateTime(DateTime.Today);
         if (StartDate < today)
         {
-            ModelState.AddModelError("", "Cannot request time off for past dates.");
+            ModelState.AddModelError("", _localizer["Error_CannotRequestTimeOffForPastDates"]);
             return Page();
         }
 
@@ -47,7 +54,7 @@ public class CreateModel : PageModel
         var maxFutureDate = today.AddYears(2);
         if (StartDate > maxFutureDate || EndDate > maxFutureDate)
         {
-            ModelState.AddModelError("", "Cannot request time off more than 2 years in advance.");
+            ModelState.AddModelError("", _localizer["Error_CannotRequestTimeOffTooFarInFuture"]);
             return Page();
         }
 
@@ -57,7 +64,7 @@ public class CreateModel : PageModel
             var daysDifference = EndDate.DayNumber - StartDate.DayNumber;
             if (daysDifference > 365)
             {
-                ModelState.AddModelError("", "Time off request cannot exceed 365 days. Please split into multiple requests.");
+                ModelState.AddModelError("", _localizer["Error_TimeOffRequestTooLong"]);
                 return Page();
             }
         }
@@ -65,7 +72,7 @@ public class CreateModel : PageModel
         // Validate reason length
         if (!string.IsNullOrWhiteSpace(Reason) && Reason.Length > 1000)
         {
-            ModelState.AddModelError("", "Reason must not exceed 1000 characters.");
+            ModelState.AddModelError("", _localizer["Error_ReasonTooLong"]);
             return Page();
         }
 

@@ -17,17 +17,21 @@ public class TableModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly ILogger<TableModel> _logger;
     private readonly IBusyUserService _busyUserService;
+    private readonly IShiftTypeCacheService _shiftTypeCache;
 
-    public TableModel(AppDbContext db, ICompanyContext companyContext, ILogger<TableModel> logger, IBusyUserService busyUserService)
+    public TableModel(AppDbContext db, ICompanyContext companyContext, ILogger<TableModel> logger, IBusyUserService busyUserService, IShiftTypeCacheService shiftTypeCache)
     {
         _db = db;
         _companyContext = companyContext;
         _logger = logger;
         _busyUserService = busyUserService;
+        _shiftTypeCache = shiftTypeCache;
     }
 
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
+    public DateOnly PreviousWeekStart { get; set; }
+    public DateOnly NextWeekStart { get; set; }
     public List<DateOnly> Dates { get; set; } = new();
     public List<ShiftType> ShiftTypes { get; set; } = new();
     public List<AppUser> Employees { get; set; } = new();
@@ -63,7 +67,11 @@ public class TableModel : PageModel
             StartDate = DateOnly.Parse(start);
         }
 
-        EndDate = StartDate.AddDays(13); // 2 weeks view
+        EndDate = StartDate.AddDays(6); // 1 week view (7 days)
+
+        // Calculate previous and next week start dates for navigation
+        PreviousWeekStart = StartDate.AddDays(-7);
+        NextWeekStart = StartDate.AddDays(7);
 
         // Generate date range
         for (var date = StartDate; date <= EndDate; date = date.AddDays(1))
@@ -71,9 +79,9 @@ public class TableModel : PageModel
             Dates.Add(date);
         }
 
-        // Load shift types for this company
+        // Load shift types for this company using cache
         // Sort by start time (chronological order), with Offline always last
-        ShiftTypes = (await _db.ShiftTypes.ToListAsync())
+        ShiftTypes = (await _shiftTypeCache.GetShiftTypesAsync(companyId))
             .OrderBy(st => st.IsOffline ? 1 : 0) // Offline last
             .ThenBy(st => st.Start) // Then by start time (chronological)
             .ThenBy(st => st.CustomName ?? st.Name) // Then by name for same start time

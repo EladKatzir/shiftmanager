@@ -76,6 +76,15 @@
     </div>
 }
 
+@* Hidden template for assignee select (rendered once, cloned via JS) *@
+<select id="assignee-options-template" style="display: none;">
+    <option value="">@Localizer["Calendar_SelectAssignee"]</option>
+    @foreach (var user in Model.EligibleAssignees)
+    {
+        <option value="@user.Id">@user.DisplayName</option>
+    }
+</select>
+
 @* ✅ PHASE 20: Day view - Vertical list of all items *@
 <div class="day-items-container">
     @if (Model.Items.Any())
@@ -171,12 +180,8 @@
             </div>
 
             <div id="quickAddForm-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="quick-add-form hidden" data-type="">
-                <select id="assigneeSelect-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
-                    <option value="">@Localizer["Calendar_SelectAssignee"]</option>
-                    @foreach (var user in Model.EligibleAssignees)
-                    {
-                        <option value="@user.Id">@user.DisplayName</option>
-                    }
+                <select id="assigneeSelect-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="form-select form-select-sm assignee-select-clone">
+                    @* Options will be cloned from template via JavaScript *@
                 </select>
 
                 <div id="choreFields-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="hidden">
@@ -396,4 +401,23 @@
             }
         }
     </style>
+}
+
+@section Scripts {
+    <script>
+        // Clone assignee options from template to all dropdowns (performance optimization)
+        document.addEventListener('DOMContentLoaded', function() {
+            const template = document.getElementById('assignee-options-template');
+            if (template) {
+                const selects = document.querySelectorAll('.assignee-select-clone');
+                selects.forEach(select => {
+                    // Clone all options from template
+                    const options = template.querySelectorAll('option');
+                    options.forEach(option => {
+                        select.appendChild(option.cloneNode(true));
+                    });
+                });
+            }
+        });
+    </script>
 }

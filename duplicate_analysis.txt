@@ -1,0 +1,313 @@
+
+================================================================================
+DUPLICATE ANALYSIS: English
+================================================================================
+
+Total unique keys: 1281
+Keys with duplicates: 67
+
+================================================================================
+
+Key: 'AccessDenied' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Access Denied
+
+Key: 'Add' - 3 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Add
+
+Key: 'After' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: After
+
+Key: 'Approve' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Approve
+
+Key: 'Approved' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Approved
+
+Key: 'Cancel' - 4 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Cancel
+
+Key: 'Chores' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Chores
+
+Key: 'ClearFilters' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Clear Filters
+
+Key: 'ClickToView' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Click to view
+
+Key: 'CopiedToClipboard' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Copied to clipboard
+  [2] Copied to clipboard!
+
+Key: 'Custom' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Custom
+
+Key: 'Date' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Date
+
+Key: 'Day' - 3 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Day
+  [2] day
+  [3] day
+
+Key: 'Days' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: days
+
+Key: 'DaysOff' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Days Off
+
+Key: 'Delete' - 4 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Delete
+
+Key: 'Details' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Details
+
+Key: 'Email_AutomatedMessage' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] This is an automated message. Please do not reply.
+  [2] This is an automated message from ShiftManager. Please do not reply to this emai
+
+Key: 'Email_ShiftType' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Shift Type
+
+Key: 'Error_AuthenticationError' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Authentication error. Please log in again.
+
+Key: 'Error_InvalidEmailFormat' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Invalid email format.
+
+Key: 'Error_InvalidInput' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Invalid input.
+
+Key: 'Filters' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Filters
+
+Key: 'Friday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Friday
+
+Key: 'Important' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Important:
+  [2] Important
+
+Key: 'May' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: May
+
+Key: 'Monday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Monday
+
+Key: 'MyRequests' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: My Requests
+
+Key: 'NextWeek' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Next Week
+
+Key: 'Note' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Note
+
+Key: 'NumberOfPeopleNeeded' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Number of people needed
+
+Key: 'Of' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: of
+
+Key: 'OnDuty' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Day Shift
+
+Key: 'OnDutyHakam' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Day Shift - Hakam
+
+Key: 'OnDutyLead' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Day Shift - Lead
+
+Key: 'Past' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Past
+
+Key: 'Pending' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Pending
+
+Key: 'PendingRequests' - 3 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Pending Requests
+
+Key: 'PendingRequestsReview' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Pending Requests - Review Required
+  [2] Pending Requests for Review
+
+Key: 'PendingSwaps' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Pending Swaps
+
+Key: 'PendingTimeOff' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Pending Time Off
+  [2] Pending Time-off
+
+Key: 'People' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] People
+  [2] people
+
+Key: 'Reject' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Reject
+
+Key: 'Rejected' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Rejected
+
+Key: 'Rename' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Rename
+
+Key: 'RequestAccess' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Request Access
+
+Key: 'Required' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Required
+  [2] required
+
+Key: 'Revoke' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Revoke
+
+Key: 'Saturday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Saturday
+
+Key: 'SaveChanges' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Save Changes
+
+Key: 'Shadowing' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Shadowing
+
+Key: 'ShiftNameOptional' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Shift Name (optional)
+  [2] Shift Name (Optional)
+
+Key: 'Showing' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Showing
+
+Key: 'SubmitRequest' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Submit Request
+
+Key: 'Sunday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Sunday
+
+Key: 'ThisWeek' - 3 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: This Week
+
+Key: 'Thursday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Thursday
+
+Key: 'Time' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Time
+
+Key: 'TimeOffReasonPlaceholder' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] Please provide a reason for your time off request...
+  [2] Optional reason for time off request
+
+Key: 'Today' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Today
+
+Key: 'Tomorrow' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Tomorrow
+
+Key: 'Tuesday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Tuesday
+
+Key: 'Unread' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Unread
+
+Key: 'Upcoming' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Upcoming
+
+Key: 'ViewOnlyNoNavigation' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+  [1] (View-only - no navigation available for your role)
+  [2] View-only - no navigation available for your role
+
+Key: 'Wednesday' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Wednesday
+
+Key: 'Week' - 2 occurrences
+  Status: ALL IDENTICAL [OK]
+  Value: Week
+
+
+================================================================================
+DUPLICATE ANALYSIS: Hebrew
+================================================================================
+
+Total unique keys: 1223
+Keys with duplicates: 57
+
+================================================================================
+
+Key: 'AccessDenied' - 2 occurrences
+  Status: DIFFERENT VALUES [WARNING]
+Traceback (most recent call last):
+  File "C:\Users\katzi\Downloads\ShiftManager\analyze_duplicates.py", line 57, in <module>
+    he_duplicates, he_keys = analyze_duplicates('Resources/SharedResources.he-IL.resx', 'Hebrew')
+                             ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\katzi\Downloads\ShiftManager\analyze_duplicates.py", line 49, in analyze_duplicates
+    print(f"  [{i+1}] {val}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\katzi\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 6-9: character maps to <undefined>

@@ -37,6 +37,7 @@
     }
     <link rel="stylesheet" href="~/css/shift-swap-game.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    @await Html.PartialAsync("_LocalizationScript")
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
     @* Only load session check on authenticated pages (prevents infinite redirect loop on login page) *@

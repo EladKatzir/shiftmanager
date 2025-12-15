@@ -99,8 +99,8 @@ namespace ShiftManager.Pages.Home
 
         private async Task LoadCommonDataAsync(int userId, int companyId, DateOnly today, DateOnly startOfWeek, DateOnly endOfWeek)
         {
-            // Next shift
-            NextShift = await _context.ShiftAssignments
+            // Phase 2C: Parallelize independent queries using Task.WhenAll
+            var nextShiftTask = _context.ShiftAssignments
                 .Include(sa => sa.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .Include(sa => sa.User)
@@ -108,23 +108,29 @@ namespace ShiftManager.Pages.Home
                 .OrderBy(sa => sa.ShiftInstance.WorkDate)
                 .FirstOrDefaultAsync();
 
-            // Notifications
-            var notifications = await _context.UserNotifications
+            var notificationsTask = _context.UserNotifications
                 .Where(n => n.UserId == userId && n.CompanyId == companyId)
                 .OrderByDescending(n => n.CreatedAt)
                 .Take(5)
                 .ToListAsync();
 
-            RecentNotifications = notifications;
-            UnreadNotificationsCount = notifications.Count(n => !n.IsRead);
-
-            // Weekly stats
-            var weekShifts = await _context.ShiftAssignments
+            var weekShiftsTask = _context.ShiftAssignments
                 .Include(sa => sa.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .Where(sa => sa.UserId == userId && sa.CompanyId == companyId
                     && sa.ShiftInstance.WorkDate >= startOfWeek && sa.ShiftInstance.WorkDate < endOfWeek)
                 .ToListAsync();
+
+            // Wait for all queries to complete in parallel
+            await Task.WhenAll(nextShiftTask, notificationsTask, weekShiftsTask);
+
+            // Extract results
+            NextShift = nextShiftTask.Result;
+            var notifications = notificationsTask.Result;
+            var weekShifts = weekShiftsTask.Result;
+
+            RecentNotifications = notifications;
+            UnreadNotificationsCount = notifications.Count(n => !n.IsRead);
 
             HoursThisWeek = weekShifts.Sum(sa =>
             {
@@ -157,15 +163,32 @@ namespace ShiftManager.Pages.Home
         {
             var next30Days = today.AddDays(30);
 
-            // Staffing overview - shifts with slots needed but not filled
-            var shiftsInPeriod = await _context.ShiftInstances
+            // Phase 2C: Parallelize independent queries using Task.WhenAll
+            var shiftsInPeriodTask = _context.ShiftInstances
                 .Where(si => si.CompanyId == companyId && si.WorkDate >= today && si.WorkDate < next30Days)
                 .Include(si => si.ShiftType)
                 .ToListAsync();
 
-            var assignments = await _context.ShiftAssignments
+            var assignmentsTask = _context.ShiftAssignments
                 .Where(sa => sa.CompanyId == companyId && sa.ShiftInstance.WorkDate >= today && sa.ShiftInstance.WorkDate < next30Days)
                 .ToListAsync();
+
+            var pendingTimeOffTask = _context.TimeOffRequests
+                .Where(r => r.CompanyId == companyId && r.Status == RequestStatus.Pending)
+                .CountAsync();
+
+            var pendingSwapsTask = _context.SwapRequests
+                .Where(r => r.CompanyId == companyId && r.Status == RequestStatus.Pending)
+                .CountAsync();
+
+            // Wait for all queries to complete in parallel
+            await Task.WhenAll(shiftsInPeriodTask, assignmentsTask, pendingTimeOffTask, pendingSwapsTask);
+
+            // Extract results
+            var shiftsInPeriod = shiftsInPeriodTask.Result;
+            var assignments = assignmentsTask.Result;
+            PendingTimeOffCount = pendingTimeOffTask.Result;
+            PendingSwapsCount = pendingSwapsTask.Result;
 
             var assignmentsByShift = assignments.GroupBy(a => a.ShiftInstanceId).ToDictionary(g => g.Key, g => g.Count());
 
@@ -184,15 +207,6 @@ namespace ShiftManager.Pages.Home
                 .Select(si => si.WorkDate)
                 .Distinct()
                 .Count();
-
-            // Approvals
-            PendingTimeOffCount = await _context.TimeOffRequests
-                .Where(r => r.CompanyId == companyId && r.Status == RequestStatus.Pending)
-                .CountAsync();
-
-            PendingSwapsCount = await _context.SwapRequests
-                .Where(r => r.CompanyId == companyId && r.Status == RequestStatus.Pending)
-                .CountAsync();
         }
 
         private async Task LoadDirectorDataAsync(int companyId, DateOnly today, int userId)
@@ -203,37 +217,40 @@ namespace ShiftManager.Pages.Home
             // Companies overview (for Directors/Owners)
             if (IsOwner)
             {
-                TotalCompaniesCount = await _context.Companies.CountAsync();
-                ActiveCompaniesCount = TotalCompaniesCount; // All companies are considered active
-
-                // ✅ PHASE 18: Load analytics summary for Owner
-                // Total active users across all companies
-                TotalUsersCount = await _context.Users
-                    .IgnoreQueryFilters()
-                    .Where(u => u.IsActive)
-                    .CountAsync();
-
-                // Total shifts this month across all companies
                 var startOfMonth = new DateOnly(today.Year, today.Month, 1);
                 var endOfMonth = startOfMonth.AddMonths(1);
 
-                TotalShiftsThisMonth = await _context.ShiftInstances
+                // Phase 2C: Parallelize Owner analytics queries
+                var totalCompaniesTask = _context.Companies.CountAsync();
+                var totalUsersTask = _context.Users
+                    .IgnoreQueryFilters()
+                    .Where(u => u.IsActive)
+                    .CountAsync();
+                var totalShiftsTask = _context.ShiftInstances
                     .IgnoreQueryFilters()
                     .Where(si => si.WorkDate >= startOfMonth && si.WorkDate < endOfMonth)
                     .CountAsync();
-
-                // Calculate average staffing rate across all companies this month
-                var shiftsThisMonth = await _context.ShiftInstances
+                var shiftsThisMonthTask = _context.ShiftInstances
                     .IgnoreQueryFilters()
                     .Where(si => si.WorkDate >= startOfMonth && si.WorkDate < endOfMonth)
                     .ToListAsync();
-
-                var assignmentsThisMonth = await _context.ShiftAssignments
+                var assignmentsThisMonthTask = _context.ShiftAssignments
                     .IgnoreQueryFilters()
                     .Where(sa => sa.ShiftInstance.WorkDate >= startOfMonth && sa.ShiftInstance.WorkDate < endOfMonth)
                     .GroupBy(sa => sa.ShiftInstanceId)
                     .Select(g => new { ShiftInstanceId = g.Key, Count = g.Count() })
                     .ToListAsync();
+
+                // Wait for all queries to complete in parallel
+                await Task.WhenAll(totalCompaniesTask, totalUsersTask, totalShiftsTask, shiftsThisMonthTask, assignmentsThisMonthTask);
+
+                // Extract results
+                TotalCompaniesCount = totalCompaniesTask.Result;
+                ActiveCompaniesCount = TotalCompaniesCount;
+                TotalUsersCount = totalUsersTask.Result;
+                TotalShiftsThisMonth = totalShiftsTask.Result;
+                var shiftsThisMonth = shiftsThisMonthTask.Result;
+                var assignmentsThisMonth = assignmentsThisMonthTask.Result;
 
                 var assignmentDict = assignmentsThisMonth.ToDictionary(a => a.ShiftInstanceId, a => a.Count);
 

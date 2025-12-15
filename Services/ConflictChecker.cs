@@ -8,8 +8,13 @@ namespace ShiftManager.Services;
 public class ConflictChecker : IConflictChecker
 {
     private readonly AppDbContext _db;
+    private readonly IAppConfigCacheService _configCache;
 
-    public ConflictChecker(AppDbContext db) => _db = db;
+    public ConflictChecker(AppDbContext db, IAppConfigCacheService configCache)
+    {
+        _db = db;
+        _configCache = configCache;
+    }
 
     public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
     {
@@ -112,12 +117,10 @@ public class ConflictChecker : IConflictChecker
         return ConflictResult.Ok();
     }
 
-    // PERFORMANCE FIX: Made async to prevent blocking thread pool
+    // PERFORMANCE FIX: Use config cache to reduce database queries
     private async Task<int> GetConfigIntAsync(int companyId, string key, int defaultValue, CancellationToken ct = default)
     {
-        var config = await _db.Configs
-            .Where(c => c.CompanyId == companyId && c.Key == key)
-            .FirstOrDefaultAsync(ct);
+        var config = await _configCache.GetConfigAsync(companyId, key);
         return int.TryParse(config?.Value, out var i) ? i : defaultValue;
     }
 }

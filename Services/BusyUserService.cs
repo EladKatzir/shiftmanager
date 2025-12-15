@@ -70,17 +70,24 @@ public class BusyUserService : IBusyUserService
 
         // Get all active users for this company
         var users = await _db.Users
-            .Where(u => u.IsActive)
+            .Where(u => u.IsActive && u.CompanyId == companyId)
             .Select(u => u.Id)
             .ToListAsync();
 
         // Batch query for vacations with new time-based logic
-        // Load all approved time-off requests that might overlap with the given date
+        // Optimize: Add date range filter to reduce records loaded from database
         // We need to check a wider date range because:
-        // - Vacation: EndDate+1 at 13:00
-        // - After: StartDate+1 at 13:00
+        // - Vacation: EndDate+1 at 13:00 (so we need EndDate >= checkDate-1)
+        // - After: StartDate+1 at 13:00 (so we need StartDate >= checkDate-1)
+        // For the upper bound, StartDate should be <= checkDate+1 to catch "After" requests
+        var dateRangeStart = date.AddDays(-1);
+        var dateRangeEnd = date.AddDays(1);
+
         var potentialVacations = await _db.TimeOffRequests
-            .Where(r => r.Status == RequestStatus.Approved)
+            .Where(r => r.Status == RequestStatus.Approved
+                     && r.CompanyId == companyId
+                     && r.StartDate <= dateRangeEnd
+                     && r.EndDate >= dateRangeStart)
             .ToListAsync();
 
         // Filter in memory using the new time-based logic
@@ -104,7 +111,8 @@ public class BusyUserService : IBusyUserService
         var usersWithShifts = await (from a in _db.ShiftAssignments
                                      join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
                                      join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
-                                     where si.WorkDate == date &&
+                                     where si.CompanyId == companyId &&
+                                           si.WorkDate == date &&
                                            a.UserId != null &&
                                            st.Key != ShiftType.KEY_OFFLINE && // Offline doesn't count as busy (use Key instead of computed property)
                                            (excludeShiftTypeId == null || st.Id != excludeShiftTypeId) &&
@@ -116,7 +124,7 @@ public class BusyUserService : IBusyUserService
 
         // Batch query for chores
         var usersWithChores = await _db.Chores
-            .Where(c => c.Date == date && c.CanceledAt == null)
+            .Where(c => c.CompanyId == companyId && c.Date == date && c.CanceledAt == null)
             .Select(c => c.UserId)
             .Distinct()
             .ToListAsync();

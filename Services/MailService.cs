@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
@@ -20,20 +23,26 @@ public class MailService : IMailService
     private readonly ILogger<MailService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IEmailConfigService _emailConfigService;
+    private readonly IEmailApiLogService _emailApiLogService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     /// <summary>
-    /// Constructor with dependency injection for HTTP client factory, logging, and configuration.
+    /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
     /// </summary>
     public MailService(
         IHttpClientFactory httpClientFactory,
         ILogger<MailService> logger,
         IConfiguration configuration,
-        IEmailConfigService emailConfigService)
+        IEmailConfigService emailConfigService,
+        IEmailApiLogService emailApiLogService,
+        IStringLocalizer<SharedResources> localizer)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _emailConfigService = emailConfigService ?? throw new ArgumentNullException(nameof(emailConfigService));
+        _emailApiLogService = emailApiLogService ?? throw new ArgumentNullException(nameof(emailApiLogService));
+        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
@@ -68,6 +77,77 @@ public class MailService : IMailService
     }
 
     /// <summary>
+    /// Validates email configuration and returns list of validation errors.
+    /// </summary>
+    private List<string> ValidateEmailConfiguration(string? apiKey, string? apiUrl, string recipient)
+    {
+        var errors = new List<string>();
+
+        // URL validation
+        if (string.IsNullOrWhiteSpace(apiUrl))
+        {
+            errors.Add("API URL is not configured");
+        }
+        else if (!Uri.TryCreate(apiUrl, UriKind.Absolute, out Uri? uri))
+        {
+            errors.Add("API URL is invalid (not a valid URI)");
+        }
+        else if (uri.Scheme != "http" && uri.Scheme != "https")
+        {
+            errors.Add("API URL must use HTTP or HTTPS protocol");
+        }
+
+        // API key validation
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            errors.Add("API key is not configured");
+        }
+        else if (apiKey.Length < 8)
+        {
+            errors.Add("API key appears too short (expected at least 8 characters)");
+        }
+
+        // Recipient validation
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            errors.Add("Recipient email is empty");
+        }
+        else if (!recipient.Contains("@"))
+        {
+            errors.Add("Recipient email is invalid (missing @ symbol)");
+        }
+
+        return errors;
+    }
+
+    /// <summary>
+    /// Returns a user-friendly error message based on HTTP status code.
+    /// </summary>
+    private string GetUserFriendlyHttpError(int statusCode, string? responseBody)
+    {
+        var friendlyMessage = statusCode switch
+        {
+            401 => "API key appears invalid or expired",
+            403 => "Access forbidden - check API permissions",
+            404 => "API endpoint not found - check URL",
+            429 => "Rate limit exceeded - wait before retrying",
+            500 => "Email service server error",
+            502 => "Bad gateway - email service may be temporarily unavailable",
+            503 => "Service unavailable - email service may be under maintenance",
+            504 => "Gateway timeout - email service took too long to respond",
+            _ => $"HTTP {statusCode} error"
+        };
+
+        // Include response body if it's short and might be helpful
+        if (!string.IsNullOrWhiteSpace(responseBody) && responseBody.Length < 200)
+        {
+            return $"{friendlyMessage}. Response: {responseBody}";
+        }
+
+        return friendlyMessage;
+    }
+
+    /// <summary>
     /// Send an email notification asynchronously with retry logic and error handling.
     /// </summary>
     /// <param name="recipient">Email address of the recipient</param>
@@ -76,40 +156,74 @@ public class MailService : IMailService
     /// <returns>True if email sent successfully, false otherwise</returns>
     public async Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
     {
-        // Validate inputs
-        if (string.IsNullOrWhiteSpace(recipient))
-        {
-            _logger.LogWarning("Cannot send email: recipient is null or empty");
-            return false;
-        }
+        // Start timing for diagnostics
+        var stopwatch = Stopwatch.StartNew();
 
-        if (string.IsNullOrWhiteSpace(subject))
-        {
-            _logger.LogWarning("Cannot send email to {Recipient}: subject is null or empty", recipient);
-            return false;
-        }
-
-        // Load configuration (database first, then fallback to appsettings.json)
-        var (emailEnabled, apiKey, apiUrl, fromAddress, source) = await LoadConfigurationAsync();
-
-        // Check if email is enabled in configuration
-        if (!emailEnabled)
-        {
-            _logger.LogInformation("Email service disabled (source: {Source}). Skipping email to {Recipient} with subject: {Subject}",
-                source, recipient, subject);
-            return true; // Return true to avoid blocking workflow
-        }
-
-        // Validate configuration
-        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(apiUrl))
-        {
-            _logger.LogError("Email service misconfigured (source: {Source}). ApiKey or ApiUrl is missing. Cannot send email to {Recipient}",
-                source, recipient);
-            return false;
-        }
+        // Variables for diagnostic logging
+        string? requestUrl = null;
+        string? requestBody = null;
+        Dictionary<string, string>? requestHeaders = null;
+        int? responseStatusCode = null;
+        Dictionary<string, string>? responseHeaders = null;
+        string? responseBody = null;
+        bool success = false;
+        string? errorMessage = null;
+        List<string>? validationErrors = null;
 
         try
         {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(recipient))
+            {
+                _logger.LogWarning("Cannot send email: recipient is null or empty");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(subject))
+            {
+                _logger.LogWarning("Cannot send email to {Recipient}: subject is null or empty", recipient);
+                return false;
+            }
+
+            // Load configuration (database first, then fallback to appsettings.json)
+            var (emailEnabled, apiKey, apiUrl, fromAddress, source) = await LoadConfigurationAsync();
+            requestUrl = apiUrl ?? "not-configured";
+
+            // Check if email is enabled in configuration
+            if (!emailEnabled)
+            {
+                _logger.LogInformation("Email service disabled (source: {Source}). Skipping email to {Recipient} with subject: {Subject}",
+                    source, recipient, subject);
+                return true; // Return true to avoid blocking workflow
+            }
+
+            // Validate configuration BEFORE attempting to send
+            validationErrors = ValidateEmailConfiguration(apiKey, apiUrl, recipient);
+            if (validationErrors.Any())
+            {
+                errorMessage = string.Join("; ", validationErrors);
+                _logger.LogError("Email configuration validation failed: {Errors}", errorMessage);
+
+                // Log validation failure to database (fire-and-forget)
+                stopwatch.Stop();
+                _ = _emailApiLogService.LogEmailApiCallAsync(
+                    requestUrl: requestUrl,
+                    requestMethod: "POST",
+                    requestHeaders: new Dictionary<string, string>(),
+                    requestBody: "",
+                    responseStatusCode: null,
+                    responseHeaders: null,
+                    responseBody: null,
+                    recipientEmail: recipient,
+                    emailSubject: subject,
+                    success: false,
+                    errorMessage: errorMessage,
+                    durationMs: (int)stopwatch.ElapsedMilliseconds,
+                    validationErrors: validationErrors);
+
+                return false;
+            }
+
             // Create HTTP client from factory (best practice for performance and connection pooling)
             using var httpClient = _httpClientFactory.CreateClient();
 
@@ -123,17 +237,24 @@ public class MailService : IMailService
             };
 
             // Serialize to JSON
-            string jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+            requestBody = JsonSerializer.Serialize(payload, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = false
             });
 
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
             // Add API key header
             httpClient.DefaultRequestHeaders.Clear();
-            httpClient.DefaultRequestHeaders.Add("Apikey", apiKey);
+            httpClient.DefaultRequestHeaders.Add("Apikey", apiKey!);
+
+            // Capture request headers for diagnostics
+            requestHeaders = new Dictionary<string, string>
+            {
+                { "Apikey", apiKey! },
+                { "Content-Type", "application/json" }
+            };
 
             // Set reasonable timeout (30 seconds)
             httpClient.Timeout = TimeSpan.FromSeconds(30);
@@ -144,40 +265,73 @@ public class MailService : IMailService
             // Send POST request to mail API
             HttpResponseMessage response = await httpClient.PostAsync(apiUrl, content);
 
-            // Read response content
-            string responseContent = await response.Content.ReadAsStringAsync();
+            // Capture response details
+            responseStatusCode = (int)response.StatusCode;
+            responseBody = await response.Content.ReadAsStringAsync();
+
+            // Capture response headers
+            responseHeaders = new Dictionary<string, string>();
+            foreach (var header in response.Headers)
+            {
+                responseHeaders[header.Key] = string.Join(", ", header.Value);
+            }
 
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogInformation("Email sent successfully to {Recipient}. Response: {Response}",
-                    recipient, responseContent);
-                return true;
+                success = true;
+                _logger.LogInformation("Email sent successfully to {Recipient}. Status: {StatusCode}",
+                    recipient, responseStatusCode);
             }
             else
             {
-                _logger.LogError("Failed to send email to {Recipient}. Status: {StatusCode}, Response: {Response}",
-                    recipient, response.StatusCode, responseContent);
-                return false;
+                success = false;
+                errorMessage = GetUserFriendlyHttpError(responseStatusCode.Value, responseBody);
+                _logger.LogError("Failed to send email to {Recipient}. Status: {StatusCode}, Error: {Error}",
+                    recipient, responseStatusCode, errorMessage);
             }
         }
         catch (HttpRequestException httpEx)
         {
+            success = false;
+            errorMessage = $"Network error: {httpEx.Message}";
             _logger.LogError(httpEx, "HTTP error while sending email to {Recipient}: {Message}",
                 recipient, httpEx.Message);
-            return false;
         }
         catch (TaskCanceledException tcEx)
         {
+            success = false;
+            errorMessage = "Request timeout (30s exceeded)";
             _logger.LogError(tcEx, "Email request to {Recipient} timed out: {Message}",
                 recipient, tcEx.Message);
-            return false;
         }
         catch (Exception ex)
         {
+            success = false;
+            errorMessage = $"Unexpected error: {ex.Message}";
             _logger.LogError(ex, "Unexpected error while sending email to {Recipient}: {Message}",
                 recipient, ex.Message);
-            return false;
         }
+        finally
+        {
+            // Always log to database for diagnostics (fire-and-forget)
+            stopwatch.Stop();
+            _ = _emailApiLogService.LogEmailApiCallAsync(
+                requestUrl: requestUrl ?? "unknown",
+                requestMethod: "POST",
+                requestHeaders: requestHeaders ?? new Dictionary<string, string>(),
+                requestBody: requestBody ?? "",
+                responseStatusCode: responseStatusCode,
+                responseHeaders: responseHeaders,
+                responseBody: responseBody,
+                recipientEmail: recipient,
+                emailSubject: subject,
+                success: success,
+                errorMessage: errorMessage,
+                durationMs: (int)stopwatch.ElapsedMilliseconds,
+                validationErrors: validationErrors);
+        }
+
+        return success;
     }
 
     /// <summary>
@@ -197,12 +351,14 @@ public class MailService : IMailService
             return false;
         }
 
-        string subject = $"New Shift Assignment - {shiftDate:MMM dd, yyyy}";
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_ShiftAssignedSubject"], shiftDate.ToString("MMM dd, yyyy"));
 
         string htmlBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
@@ -216,23 +372,23 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>New Shift Assignment</h2>
+            <h2>{_localizer["Email_ShiftAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
-            <p>You have been assigned to work a new shift:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ShiftAssignedBody"]}</p>
 
             <div class='shift-details'>
-                <p><strong>Shift Type:</strong> <span class='highlight'>{shiftTypeName}</span></p>
-                <p><strong>Date:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
-                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
 
-            <p>Please log in to the ShiftManager system to view full details.</p>
-            <p>If you have any questions or concerns, please contact your manager.</p>
+            <p>{_localizer["Email_ShiftAssignedLoginPrompt"]}</p>
+            <p>{_localizer["Email_ShiftAssignedContactManager"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated message from ShiftManager. Please do not reply to this email.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>
@@ -259,12 +415,14 @@ public class MailService : IMailService
             return false;
         }
 
-        string subject = $"Shift Change Notification - {shiftDate:MMM dd, yyyy}";
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_ShiftChangedSubject"], shiftDate.ToString("MMM dd, yyyy"));
 
         string htmlBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
@@ -279,27 +437,27 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>⚠️ Shift Change Notification</h2>
+            <h2>⚠️ {_localizer["Email_ShiftChangedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
-            <p>Your shift has been modified:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ShiftChangedBody"]}</p>
 
             <div class='shift-details'>
-                <p><strong>Shift Type:</strong> <span class='highlight'>{shiftTypeName}</span></p>
-                <p><strong>Date:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
-                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
 
             <div class='change-notice'>
-                <p><strong>Change Details:</strong> {changeDescription}</p>
+                <p><strong>{_localizer["Email_ChangeDetails"]}:</strong> {changeDescription}</p>
             </div>
 
-            <p>Please log in to the ShiftManager system to review the updated shift details.</p>
-            <p>If you have any questions or concerns, please contact your manager immediately.</p>
+            <p>{_localizer["Email_ShiftChangedReviewPrompt"]}</p>
+            <p>{_localizer["Email_ShiftChangedContactManager"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated message from ShiftManager. Please do not reply to this email.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>
@@ -325,12 +483,14 @@ public class MailService : IMailService
             return false;
         }
 
-        string subject = $"Shift Removed - {shiftDate:MMM dd, yyyy}";
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_ShiftDeletedSubject"], shiftDate.ToString("MMM dd, yyyy"));
 
         string htmlBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
@@ -344,23 +504,23 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>Shift Removed</h2>
+            <h2>{_localizer["Email_ShiftDeletedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
-            <p>Your assigned shift has been removed from the schedule:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ShiftDeletedBody"]}</p>
 
             <div class='shift-details'>
-                <p><strong>Shift Type:</strong> <span class='highlight'>{shiftTypeName}</span></p>
-                <p><strong>Date:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
-                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
 
-            <p>This shift is no longer on your schedule. Please log in to the ShiftManager system to view your updated schedule.</p>
-            <p>If you have any questions, please contact your manager.</p>
+            <p>{_localizer["Email_ShiftDeletedSchedulePrompt"]}</p>
+            <p>{_localizer["Email_ShiftDeletedContactManager"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated message from ShiftManager. Please do not reply to this email.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>
@@ -384,12 +544,14 @@ public class MailService : IMailService
             return false;
         }
 
-        string subject = $"New Chore Assignment - {choreDate:MMM dd, yyyy}";
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_ChoreAssignedSubject"], choreDate.ToString("MMM dd, yyyy"));
 
         string htmlBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
@@ -403,22 +565,22 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>New Chore Assignment</h2>
+            <h2>{_localizer["Email_ChoreAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
-            <p>You have been assigned a new chore:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ChoreAssignedBody"]}</p>
 
             <div class='chore-details'>
-                <p><strong>Chore:</strong> <span class='highlight'>{choreTitle}</span></p>
-                <p><strong>Date:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{choreTitle}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
             </div>
 
-            <p>Please log in to the ShiftManager system to view full details.</p>
-            <p>If you have any questions or concerns, please contact your manager.</p>
+            <p>{_localizer["Email_ChoreAssignedLoginPrompt"]}</p>
+            <p>{_localizer["Email_ChoreAssignedContactManager"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated message from ShiftManager. Please do not reply to this email.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>
@@ -442,12 +604,14 @@ public class MailService : IMailService
             return false;
         }
 
-        string subject = $"Chore Canceled - {choreDate:MMM dd, yyyy}";
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_ChoreCanceledSubject"], choreDate.ToString("MMM dd, yyyy"));
 
         string htmlBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
@@ -461,22 +625,90 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>Chore Canceled</h2>
+            <h2>{_localizer["Email_ChoreCanceledTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
-            <p>Your assigned chore has been canceled:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ChoreCanceledBody"]}</p>
 
             <div class='chore-details'>
-                <p><strong>Chore:</strong> <span class='highlight'>{choreTitle}</span></p>
-                <p><strong>Date:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{choreTitle}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
             </div>
 
-            <p>This chore is no longer on your schedule. Please log in to the ShiftManager system to view your updated schedule.</p>
-            <p>If you have any questions, please contact your manager.</p>
+            <p>{_localizer["Email_ChoreCanceledSchedulePrompt"]}</p>
+            <p>{_localizer["Email_ChoreCanceledContactManager"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated message from ShiftManager. Please do not reply to this email.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send account approval notification email with formatted HTML template.
+    /// Notifies users when their join request has been approved by an administrator.
+    /// </summary>
+    public async Task<bool> SendAccountApprovedEmailAsync(
+        string recipientEmail,
+        string userName,
+        string assignedRole,
+        string companyName)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send account approved email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_AccountApprovedSubject"], companyName);
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4CAF50; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .account-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #4CAF50; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #4CAF50; }}
+        .welcome-box {{ background-color: #e8f5e9; padding: 15px; margin: 15px 0; border-radius: 8px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>✓ {_localizer["Email_AccountApprovedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <div class='welcome-box'>
+                <h3>{string.Format(_localizer["Email_WelcomeToCompany"], companyName)}</h3>
+            </div>
+
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{userName}</strong>")},</p>
+            <p>{_localizer["Email_AccountApprovedBody"]}</p>
+
+            <div class='account-details'>
+                <p><strong>{_localizer["Email_Company"]}:</strong> <span class='highlight'>{companyName}</span></p>
+                <p><strong>{_localizer["Email_AssignedRole"]}:</strong> <span class='highlight'>{assignedRole}</span></p>
+                <p><strong>{_localizer["Email_AccountStatus"]}:</strong> <span class='highlight'>{_localizer["Email_Active"]}</span></p>
+            </div>
+
+            <p>{_localizer["Email_AccountApprovedLoginPrompt"]}</p>
+            <p>{_localizer["Email_AccountApprovedNextSteps"]}</p>
+            <p>{_localizer["Email_AccountApprovedContactSupport"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>

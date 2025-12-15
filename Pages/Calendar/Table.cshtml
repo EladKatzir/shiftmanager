@@ -297,9 +297,52 @@
 
 .nav-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+.nav-buttons .btn-secondary,
+.nav-buttons .btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 0.375rem;
+}
+
+.nav-buttons .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.nav-buttons .btn-secondary:hover {
+    background: var(--surface-soft);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-buttons .btn-primary {
+    background: var(--primary);
+    color: white !important;
+    border: none;
+}
+
+.nav-buttons .btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+}
+
+.nav-buttons span {
+    color: var(--text);
+    padding: 0.5rem 1rem;
 }
 
 /* Shift Row Controls */
@@ -513,14 +556,14 @@
 <h2>@Localizer["ShiftAssignmentTable"]</h2>
 
 <div class="nav-buttons">
-    <a href="/Calendar/Table?start=@Model.StartDate.AddDays(-14).ToString("yyyy-MM-dd")" class="btn-secondary">
-        ← Previous 2 Weeks
+    <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")" class="btn-secondary">
+        ← Previous Week
     </a>
     <span style="font-weight: 600;">
         @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
     </span>
-    <a href="/Calendar/Table?start=@Model.StartDate.AddDays(14).ToString("yyyy-MM-dd")" class="btn-secondary">
-        Next 2 Weeks →
+    <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")" class="btn-secondary">
+        Next Week →
     </a>
     <a href="/Calendar/Table" class="btn btn-primary">
         @Localizer["CurrentWeek"]

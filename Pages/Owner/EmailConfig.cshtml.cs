@@ -1,8 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Models;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace ShiftManager.Pages.Owner;
 
@@ -10,20 +16,27 @@ namespace ShiftManager.Pages.Owner;
 /// Email Configuration - Configure email notifications for the system
 /// </summary>
 [Authorize(Policy = "IsAdmin")]
-public class EmailConfigModel : PageModel
+public class EmailConfigModel : LocalizedPageModel
 {
     private readonly IEmailConfigService _emailConfigService;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<EmailConfigModel> _logger;
+    private readonly IMailService _mailService;
+    private readonly IEmailApiLogService _emailApiLogService;
 
     public EmailConfigModel(
+        IStringLocalizer<SharedResources> localizer,
         IEmailConfigService emailConfigService,
         IAuditLogService auditLogService,
-        ILogger<EmailConfigModel> logger)
+        ILogger<EmailConfigModel> logger,
+        IMailService mailService,
+        IEmailApiLogService emailApiLogService) : base(localizer)
     {
         _emailConfigService = emailConfigService;
         _auditLogService = auditLogService;
         _logger = logger;
+        _mailService = mailService;
+        _emailApiLogService = emailApiLogService;
     }
 
     [BindProperty] public bool EmailEnabled { get; set; }
@@ -32,14 +45,18 @@ public class EmailConfigModel : PageModel
     [BindProperty] public string EmailFromAddress { get; set; } = string.Empty;
 
     public bool HasExistingKey { get; set; }
-    public string? Success { get; set; }
-    public string? Error { get; set; }
 
     // Statistics
     public int TotalEmailsSent { get; set; }
     public int EmailsToday { get; set; }
     public int FailedEmails { get; set; }
     public DateTime? LastEmailSent { get; set; }
+
+    // Diagnostics
+    public EmailApiLog? LastTestResult { get; set; }
+    public string? TestDiagnostics { get; set; }
+    public List<EmailApiLog> RecentLogs { get; set; } = new();
+    public List<EmailApiLog> RecentFailures { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -52,16 +69,21 @@ public class EmailConfigModel : PageModel
             EmailFromAddress = emailConfig.FromAddress ?? string.Empty;
             HasExistingKey = !string.IsNullOrWhiteSpace(emailConfig.EncryptedApiKey);
 
-            // Load statistics (placeholder values)
-            TotalEmailsSent = 0; // Would query from email log
-            EmailsToday = 0; // Would query from email log
-            FailedEmails = 0; // Would query from email log
-            LastEmailSent = null; // Would query from email log
+            // Load recent logs and failures for diagnostics
+            RecentLogs = await _emailApiLogService.GetRecentLogsAsync(10);
+            RecentFailures = await _emailApiLogService.GetFailedLogsAsync(5);
+
+            // Load real statistics from email logs
+            var allLogs = await _emailApiLogService.GetRecentLogsAsync(1000);
+            TotalEmailsSent = allLogs.Count(l => l.Success);
+            EmailsToday = allLogs.Count(l => l.Success && l.Timestamp.Date == DateTime.UtcNow.Date);
+            FailedEmails = allLogs.Count(l => !l.Success);
+            LastEmailSent = allLogs.OrderByDescending(l => l.Timestamp).FirstOrDefault()?.Timestamp;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading email configuration");
-            Error = "Failed to load email configuration.";
+            Error = _localizer["Error_FailedToLoadEmailConfig"];
         }
     }
 
@@ -89,7 +111,7 @@ public class EmailConfigModel : PageModel
                 "Email configuration updated",
                 $"Enabled={EmailEnabled}, Url={EmailApiUrl}, From={EmailFromAddress}");
 
-            Success = "Email configuration saved successfully.";
+            Success = _localizer["Success_EmailConfigSaved"];
             HasExistingKey = !string.IsNullOrWhiteSpace(EmailApiKey) || HasExistingKey;
 
             // Reload the page data
@@ -99,7 +121,7 @@ public class EmailConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving email configuration");
-            Error = "An error occurred while saving email configuration.";
+            Error = _localizer["Error_SavingEmailConfigFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -111,27 +133,48 @@ public class EmailConfigModel : PageModel
         {
             if (string.IsNullOrWhiteSpace(testEmail))
             {
-                Error = "Please provide a valid email address.";
+                Error = _localizer["Error_ProvideValidEmail"];
                 await OnGetAsync();
                 return Page();
             }
 
             var currentUserId = GetCurrentUserId();
 
-            // TODO: Implement test email sending
-            // This would use the IEmailService to send a test email
-            _logger.LogInformation("Test email requested to {Email}", testEmail);
+            // Actually send test email
+            var testSubject = $"Test Email from ShiftManager - {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            var testBody = BuildTestEmailHtml();
 
-            Success = $"Test email sent to {testEmail}. Check your inbox.";
+            _logger.LogInformation("Sending test email to {Email}", testEmail);
+            bool success = await _mailService.SendMailAsync(testEmail, testSubject, testBody);
 
-            // Log the test
+            // Fetch most recent log (our test)
+            await Task.Delay(100); // Brief delay to ensure log is written
+            var recentLogs = await _emailApiLogService.GetRecentLogsAsync(1);
+            LastTestResult = recentLogs.FirstOrDefault();
+
+            if (success && LastTestResult != null)
+            {
+                TestDiagnostics = FormatDiagnostics(LastTestResult);
+                Success = string.Format(_localizer["Success_TestEmailSent"], testEmail);
+            }
+            else if (LastTestResult != null)
+            {
+                TestDiagnostics = FormatDiagnostics(LastTestResult);
+                Error = string.Format(_localizer["Error_TestEmailFailed"], LastTestResult.ErrorMessage);
+            }
+            else
+            {
+                Error = _localizer["Error_TestEmailFailedNoDiagnostics"];
+            }
+
+            // Log audit
             await _auditLogService.LogUserActionAsync(
                 currentUserId,
                 "TestEmailSent",
                 "EmailConfig",
                 null,
                 $"Test email sent to {testEmail}",
-                null);
+                $"Success: {success}");
 
             await OnGetAsync();
             return Page();
@@ -139,10 +182,132 @@ public class EmailConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending test email");
-            Error = "Failed to send test email.";
+            Error = string.Format(_localizer["Error_FailedToSendTestEmail"], ex.Message);
             await OnGetAsync();
             return Page();
         }
+    }
+
+    private string BuildTestEmailHtml()
+    {
+        return @"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-banner { background: #2196F3; color: white; padding: 15px; border-radius: 8px; }
+        .test-info { background: #f5f5f5; padding: 15px; margin-top: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class='test-banner'><h2>✅ Test Email Successful</h2></div>
+    <div class='test-info'>
+        <p><strong>This is a test email from ShiftManager.</strong></p>
+        <p>If you're seeing this message, your email configuration is working correctly!</p>
+        <p><strong>Sent:</strong> " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") + @" UTC</p>
+    </div>
+</body>
+</html>";
+    }
+
+    private string FormatDiagnostics(EmailApiLog log)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"Timestamp: {log.Timestamp:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine($"Duration: {log.DurationMs}ms");
+        sb.AppendLine($"Success: {(log.Success ? "✅ Yes" : "❌ No")}");
+        sb.AppendLine();
+
+        if (!string.IsNullOrEmpty(log.ValidationErrors))
+        {
+            sb.AppendLine("VALIDATION ERRORS:");
+            sb.AppendLine(log.ValidationErrors);
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("REQUEST:");
+        sb.AppendLine($"  URL: {log.RequestUrl}");
+        sb.AppendLine($"  Method: {log.RequestMethod}");
+
+        if (!string.IsNullOrEmpty(log.RequestHeaders))
+        {
+            sb.AppendLine("  Headers:");
+            try
+            {
+                var headers = JsonSerializer.Deserialize<Dictionary<string, string>>(log.RequestHeaders);
+                foreach (var h in headers ?? new())
+                    sb.AppendLine($"    {h.Key}: {h.Value}");
+            }
+            catch
+            {
+                sb.AppendLine($"    {log.RequestHeaders}");
+            }
+        }
+
+        if (!string.IsNullOrEmpty(log.RequestBody))
+        {
+            var bodyPreview = log.RequestBody.Length > 500 ? log.RequestBody.Substring(0, 500) + "..." : log.RequestBody;
+            sb.AppendLine($"  Body: {bodyPreview}");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("RESPONSE:");
+
+        if (log.ResponseStatusCode.HasValue)
+        {
+            sb.AppendLine($"  Status Code: {log.ResponseStatusCode}");
+            if (!string.IsNullOrEmpty(log.ResponseBody))
+            {
+                var responsePreview = log.ResponseBody.Length > 500 ? log.ResponseBody.Substring(0, 500) + "..." : log.ResponseBody;
+                sb.AppendLine($"  Body: {responsePreview}");
+            }
+        }
+        else
+        {
+            sb.AppendLine("  No response (network error or timeout)");
+        }
+
+        if (!string.IsNullOrEmpty(log.ErrorMessage))
+            sb.AppendLine($"\nERROR: {log.ErrorMessage}");
+
+        return sb.ToString();
+    }
+
+    public async Task<IActionResult> OnGetExportLogsJsonAsync(int count = 100)
+    {
+        var logs = await _emailApiLogService.GetRecentLogsAsync(count);
+        var json = JsonSerializer.Serialize(logs, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
+        var fileName = $"EmailApiLogs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
+        return File(Encoding.UTF8.GetBytes(json), "application/json", fileName);
+    }
+
+    public async Task<IActionResult> OnGetExportLogsCsvAsync(int count = 100)
+    {
+        var logs = await _emailApiLogService.GetRecentLogsAsync(count);
+        var csv = new StringBuilder();
+
+        csv.AppendLine("Timestamp,Recipient,Subject,Success,Status Code,Duration (ms),Error Message,Request URL");
+
+        foreach (var log in logs)
+        {
+            csv.AppendLine($"\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\"," +
+                         $"\"{log.RecipientEmail}\"," +
+                         $"\"{log.EmailSubject.Replace("\"", "\"\"")}\"," +
+                         $"{log.Success}," +
+                         $"{log.ResponseStatusCode?.ToString() ?? "N/A"}," +
+                         $"{log.DurationMs}," +
+                         $"\"{log.ErrorMessage?.Replace("\"", "\"\"") ?? ""}\"," +
+                         $"\"{log.RequestUrl}\"");
+        }
+
+        var fileName = $"EmailApiLogs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
+        return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
     }
 
     private int GetCurrentUserId()

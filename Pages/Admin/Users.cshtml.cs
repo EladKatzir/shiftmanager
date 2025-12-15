@@ -2,18 +2,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Text;
 
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class UsersModel : PageModel
+public class UsersModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<UsersModel> _logger;
@@ -21,8 +24,18 @@ public class UsersModel : PageModel
     private readonly IDirectorService _directorService;
     private readonly ITraineeService _traineeService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IMailService _mailService;
 
-    public UsersModel(AppDbContext db, ILogger<UsersModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IAuditLogService auditLogService)
+    public UsersModel(
+        IStringLocalizer<SharedResources> localizer,
+        AppDbContext db,
+        ILogger<UsersModel> logger,
+        ICompanyContext companyContext,
+        IDirectorService directorService,
+        ITraineeService traineeService,
+        IAuditLogService auditLogService,
+        IMailService mailService)
+        : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -30,6 +43,7 @@ public class UsersModel : PageModel
         _directorService = directorService;
         _traineeService = traineeService;
         _auditLogService = auditLogService;
+        _mailService = mailService;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive);
@@ -45,6 +59,21 @@ public class UsersModel : PageModel
     public List<UserVM> Users { get; set; } = new();
     public List<JoinRequestVM> JoinRequests { get; set; } = new();
     public List<Company> AvailableCompanies { get; set; } = new();
+
+    // Pagination properties
+    [BindProperty(SupportsGet = true)]
+    public int CurrentPage { get; set; } = 1;
+
+    public int PageSize { get; set; } = 50;
+    public int TotalUsers { get; set; }
+    public int TotalPages => (int)Math.Ceiling(TotalUsers / (double)PageSize);
+
+    [BindProperty(SupportsGet = true)]
+    public int JoinRequestsPage { get; set; } = 1;
+
+    public int JoinRequestsPageSize { get; set; } = 50;
+    public int TotalJoinRequests { get; set; }
+    public int TotalJoinRequestsPages => (int)Math.Ceiling(TotalJoinRequests / (double)JoinRequestsPageSize);
 
     // Expose assignable roles for UI filtering
     public List<UserRole> AssignableRoles
@@ -84,7 +113,6 @@ public class UsersModel : PageModel
     [BindProperty] public string NewDisplayName { get; set; } = string.Empty;
     [BindProperty] public string NewPassword { get; set; } = string.Empty;
     [BindProperty] public string NewRole { get; set; } = "Employee";
-    public string? Error { get; set; }
 
     // Batch approval properties
     [BindProperty]
@@ -151,7 +179,15 @@ public class UsersModel : PageModel
             joinRequestsQuery = joinRequestsQuery.Where(jr => jr.RequestedRole == FilterRole.Value);
         }
 
-        var joinRequestData = await joinRequestsQuery.ToListAsync();
+        // Get total count for pagination
+        TotalJoinRequests = await joinRequestsQuery.CountAsync();
+
+        // Apply pagination
+        var joinRequestData = await joinRequestsQuery
+            .OrderBy(jr => jr.CreatedAt)
+            .Skip((JoinRequestsPage - 1) * JoinRequestsPageSize)
+            .Take(JoinRequestsPageSize)
+            .ToListAsync();
 
         // Load companies for join requests
         var companyIds = joinRequestData.Select(jr => jr.CompanyId).Distinct().ToList();
@@ -170,7 +206,6 @@ public class UsersModel : PageModel
                 jr.CreatedAt,
                 jr.Status
             ))
-            .OrderBy(jr => jr.CreatedAt)
             .ToList();
 
         // Load available companies for filter dropdown
@@ -255,9 +290,15 @@ public class UsersModel : PageModel
             }
         }
 
+        // Get total count for pagination
+        TotalUsers = userList.Count;
+
+        // Apply pagination
         Users = userList
             .OrderBy(u => u.CompanyName)
             .ThenBy(u => u.DisplayName)
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
             .ToList();
     }
 
@@ -267,37 +308,37 @@ public class UsersModel : PageModel
 
         // ✅ SECURITY FIX: Input validation
         if (string.IsNullOrWhiteSpace(NewEmail) || string.IsNullOrWhiteSpace(NewDisplayName) || string.IsNullOrWhiteSpace(NewPassword))
-        { Error = "All fields are required."; return Page(); }
+        { Error = _localizer["Error_AllFieldsRequired"]; return Page(); }
 
         // Length validation to prevent DoS and database errors
         if (NewEmail.Length > 255)
-        { Error = "Email must not exceed 255 characters."; return Page(); }
+        { Error = _localizer["Error_EmailTooLong"]; return Page(); }
 
         if (NewDisplayName.Length > 200)
-        { Error = "Display name must not exceed 200 characters."; return Page(); }
+        { Error = _localizer["Error_DisplayNameTooLong"]; return Page(); }
 
         if (NewPassword.Length < 6)
-        { Error = "Password must be at least 6 characters."; return Page(); }
+        { Error = _localizer["Error_PasswordTooShort"]; return Page(); }
 
         if (NewPassword.Length > 128)
-        { Error = "Password must not exceed 128 characters."; return Page(); }
+        { Error = _localizer["Error_PasswordTooLong"]; return Page(); }
 
         // Basic email format validation
         if (!NewEmail.Contains('@') || NewEmail.Length < 3)
-        { Error = "Invalid email format."; return Page(); }
+        { Error = _localizer["Error_InvalidEmailFormat"]; return Page(); }
 
-        if (await _db.Users.AnyAsync(u => u.Email == NewEmail)) { Error = "Email already exists."; return Page(); }
+        if (await _db.Users.AnyAsync(u => u.Email == NewEmail)) { Error = _localizer["Error_EmailAlreadyExists"]; return Page(); }
 
         // Validate role string and permission to assign
         if (!Enum.TryParse<UserRole>(NewRole, ignoreCase: true, out var targetRole))
         {
-            TempData["ErrorMessage"] = "Invalid role specified.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"];
             return RedirectToPage();
         }
 
         if (!_directorService.CanAssignRole(targetRole))
         {
-            TempData["ErrorMessage"] = $"You do not have permission to assign the {targetRole} role.";
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
         }
 
@@ -342,7 +383,7 @@ public class UsersModel : PageModel
             newUser.Id,
             $"Created new user '{newUser.DisplayName}' ({newUser.Email}) with role {targetRole}");
 
-        TempData["SuccessMessage"] = $"User {NewDisplayName} created successfully as {targetRole}.";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_UserCreated"], NewDisplayName, targetRole);
         return RedirectToPage();
     }
 
@@ -351,7 +392,7 @@ public class UsersModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = "Invalid user ID.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
             return RedirectToPage();
         }
 
@@ -361,7 +402,7 @@ public class UsersModel : PageModel
             // Check if current user has permission to modify this user
             if (!CanModifyUser(u.Role))
             {
-                TempData["ErrorMessage"] = $"You do not have permission to modify users with the {u.Role} role.";
+                TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionModifyUser"], u.Role);
                 return RedirectToPage();
             }
 
@@ -376,26 +417,26 @@ public class UsersModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = "Invalid user ID.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
             return RedirectToPage();
         }
 
         if (string.IsNullOrWhiteSpace(role) || role.Length > 50)
         {
-            TempData["ErrorMessage"] = "Invalid role.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"];
             return RedirectToPage();
         }
 
         // Validate role string and permission to assign
         if (!Enum.TryParse<UserRole>(role, ignoreCase: true, out var targetRole))
         {
-            TempData["ErrorMessage"] = "Invalid role specified.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"];
             return RedirectToPage();
         }
 
         if (!_directorService.CanAssignRole(targetRole))
         {
-            TempData["ErrorMessage"] = $"You do not have permission to assign the {targetRole} role.";
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
         }
 
@@ -409,7 +450,7 @@ public class UsersModel : PageModel
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
                 return RedirectToPage();
             }
 
@@ -444,7 +485,7 @@ public class UsersModel : PageModel
 
                 if (activeShiftsCount > 0)
                 {
-                    TempData["ErrorMessage"] = $"Cannot change to Trainee role: user has {activeShiftsCount} active shift(s) as primary employee. Please remove these shifts first.";
+                    TempData["ErrorMessage"] = string.Format(_localizer["Error_CannotChangeToTrainee_ActiveShifts"], activeShiftsCount);
                     return RedirectToPage();
                 }
 
@@ -456,7 +497,7 @@ public class UsersModel : PageModel
 
                 if (traineeShadowingCount > 0)
                 {
-                    TempData["ErrorMessage"] = $"Cannot change to Trainee role: user has {traineeShadowingCount} shift(s) with trainees shadowing them. Please remove trainees first.";
+                    TempData["ErrorMessage"] = string.Format(_localizer["Error_CannotChangeToTrainee_ShadowingTrainees"], traineeShadowingCount);
                     return RedirectToPage();
                 }
             }
@@ -476,7 +517,7 @@ public class UsersModel : PageModel
             });
             await _db.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Role updated to {targetRole} for user {u.DisplayName}.";
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleUpdated"], targetRole, u.DisplayName);
         }
         return RedirectToPage();
     }
@@ -486,13 +527,13 @@ public class UsersModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = "Invalid user ID.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
             return RedirectToPage();
         }
 
         if (string.IsNullOrWhiteSpace(newPassword))
         {
-            TempData["ErrorMessage"] = "Password is required.";
+            TempData["ErrorMessage"] = _localizer["Error_PasswordRequired"];
             return RedirectToPage();
         }
 
@@ -514,7 +555,7 @@ public class UsersModel : PageModel
             // Check if current user has permission to modify this user
             if (!CanModifyUser(u.Role))
             {
-                TempData["ErrorMessage"] = $"You do not have permission to reset passwords for users with the {u.Role} role.";
+                TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionResetPassword"], u.Role);
                 return RedirectToPage();
             }
 
@@ -538,7 +579,7 @@ public class UsersModel : PageModel
                 description: $"Password reset for user {u.DisplayName} ({u.Email})"
             );
 
-            TempData["SuccessMessage"] = $"Password updated successfully for {u.DisplayName}.";
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_PasswordUpdated"], u.DisplayName);
         }
         return RedirectToPage();
     }
@@ -554,7 +595,7 @@ public class UsersModel : PageModel
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
                 return RedirectToPage();
             }
 
@@ -562,7 +603,7 @@ public class UsersModel : PageModel
             if (id == currentUserId)
             {
                 _logger.LogWarning("User {CurrentUserId} attempted to delete themselves", currentUserId);
-                Error = "You cannot delete your own account.";
+                Error = _localizer["Error_CannotDeleteOwnAccount"];
                 await OnGetAsync();
                 return Page();
             }
@@ -571,7 +612,7 @@ public class UsersModel : PageModel
             if (user == null)
             {
                 _logger.LogWarning("User {UserId} not found for deletion", id);
-                Error = "User not found.";
+                Error = _localizer["Error_UserNotFound"];
                 await OnGetAsync();
                 return Page();
             }
@@ -580,7 +621,7 @@ public class UsersModel : PageModel
             if (user.CompanyId != companyId)
             {
                 _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} from different company", currentUserId, id);
-                Error = "You can only delete users from your own company.";
+                Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
                 await OnGetAsync();
                 return Page();
             }
@@ -590,38 +631,48 @@ public class UsersModel : PageModel
             {
                 _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} with higher role {TargetRole}",
                     currentUserId, id, user.Role);
-                TempData["ErrorMessage"] = $"You do not have permission to delete users with the {user.Role} role.";
+                TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionDeleteUser"], user.Role);
                 return RedirectToPage();
             }
 
             _logger.LogInformation("Starting deletion of user {UserId} ({UserName}) by admin {CurrentUserId}", id, user.DisplayName, currentUserId);
 
-            // 1. Remove all shift assignments
-            var shiftAssignments = await _db.ShiftAssignments.Where(sa => sa.UserId == id).ToListAsync();
-            if (shiftAssignments.Any())
+            // Get count of shift assignments for logging before deletion
+            var shiftAssignmentCount = await _db.ShiftAssignments.Where(sa => sa.UserId == id).CountAsync();
+
+            // Get shift assignment IDs for swap request deletion
+            var userAssignmentIds = await _db.ShiftAssignments
+                .Where(sa => sa.UserId == id)
+                .Select(sa => sa.Id)
+                .ToListAsync();
+
+            // 1. Delete all swap requests (both from and to this user)
+            // Must do this first before deleting shift assignments due to foreign key
+            var swapRequestsCount = await _db.SwapRequests
+                .Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId) || sr.ToUserId == id)
+                .CountAsync();
+
+            if (swapRequestsCount > 0)
             {
-                _logger.LogInformation("Removing {Count} shift assignments for user {UserId}", shiftAssignments.Count, id);
-                _db.ShiftAssignments.RemoveRange(shiftAssignments);
+                _logger.LogInformation("Deleting {Count} swap requests related to user {UserId}", swapRequestsCount, id);
+                await _db.SwapRequests
+                    .Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId) || sr.ToUserId == id)
+                    .ExecuteDeleteAsync();
             }
 
-            // 2. Delete all time-off requests
-            var timeOffRequests = await _db.TimeOffRequests.Where(tor => tor.UserId == id).ToListAsync();
-            if (timeOffRequests.Any())
+            // 2. Remove all shift assignments using ExecuteDeleteAsync for better performance
+            if (shiftAssignmentCount > 0)
             {
-                _logger.LogInformation("Deleting {Count} time-off requests for user {UserId}", timeOffRequests.Count, id);
-                _db.TimeOffRequests.RemoveRange(timeOffRequests);
+                _logger.LogInformation("Removing {Count} shift assignments for user {UserId}", shiftAssignmentCount, id);
+                await _db.ShiftAssignments.Where(sa => sa.UserId == id).ExecuteDeleteAsync();
             }
 
-            // 3. Delete all swap requests (both from and to this user)
-            var userAssignmentIds = shiftAssignments.Select(sa => sa.Id).ToList();
-            var swapRequestsFrom = await _db.SwapRequests.Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId)).ToListAsync();
-            var swapRequestsTo = await _db.SwapRequests.Where(sr => sr.ToUserId == id).ToListAsync();
-
-            var allSwapRequests = swapRequestsFrom.Union(swapRequestsTo).Distinct().ToList();
-            if (allSwapRequests.Any())
+            // 3. Delete all time-off requests
+            var timeOffRequestCount = await _db.TimeOffRequests.Where(tor => tor.UserId == id).CountAsync();
+            if (timeOffRequestCount > 0)
             {
-                _logger.LogInformation("Deleting {Count} swap requests related to user {UserId}", allSwapRequests.Count, id);
-                _db.SwapRequests.RemoveRange(allSwapRequests);
+                _logger.LogInformation("Deleting {Count} time-off requests for user {UserId}", timeOffRequestCount, id);
+                await _db.TimeOffRequests.Where(tor => tor.UserId == id).ExecuteDeleteAsync();
             }
 
             // 4. Delete the user
@@ -634,7 +685,7 @@ public class UsersModel : PageModel
             _logger.LogInformation("Successfully deleted user {UserId} ({UserName}) and cleaned up all related data", id, user.DisplayName);
 
             // Use TempData to show success message after redirect
-            TempData["SuccessMessage"] = $"User {user.DisplayName} has been successfully deleted along with all their shifts, time-off requests, and swap requests.";
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_UserDeleted"], user.DisplayName);
 
             return RedirectToPage();
         }
@@ -642,7 +693,7 @@ public class UsersModel : PageModel
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error deleting user {UserId}", id);
-            Error = "An error occurred while deleting the user. Please try again.";
+            Error = _localizer["Error_DeletingUser"];
             await OnGetAsync();
             return Page();
         }
@@ -653,7 +704,7 @@ public class UsersModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = "Invalid request ID.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRequestId"];
             return RedirectToPage();
         }
 
@@ -673,7 +724,7 @@ public class UsersModel : PageModel
 
         if (joinRequest == null)
         {
-            TempData["ErrorMessage"] = "Join request not found.";
+            TempData["ErrorMessage"] = _localizer["Error_JoinRequestNotFound"];
             return RedirectToPage();
         }
 
@@ -695,20 +746,20 @@ public class UsersModel : PageModel
 
         if (!hasPermission)
         {
-            TempData["ErrorMessage"] = "You don't have permission to approve this request.";
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveJoinRequest"];
             return RedirectToPage();
         }
 
         if (joinRequest.Status != JoinRequestStatus.Pending)
         {
-            TempData["ErrorMessage"] = "This request has already been reviewed.";
+            TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyReviewed"];
             return RedirectToPage();
         }
 
         // Check if user with this email already exists
         if (await _db.Users.AnyAsync(u => u.Email == joinRequest.Email))
         {
-            TempData["ErrorMessage"] = "A user with this email already exists.";
+            TempData["ErrorMessage"] = _localizer["Error_UserEmailAlreadyExists"];
             return RedirectToPage();
         }
 
@@ -744,10 +795,18 @@ public class UsersModel : PageModel
         joinRequest.CreatedUserId = newUser.Id;
         await _db.SaveChangesAsync();
 
+        // Send account approval email notification
+        _ = _mailService.SendAccountApprovedEmailAsync(
+            newUser.Email,
+            newUser.DisplayName,
+            newUser.Role.ToString(),
+            joinRequest.Company?.Name ?? "the company"
+        );
+
         _logger.LogInformation("Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) for company {CompanyId}",
             id, currentUserId, newUser.Id, newUser.Email, joinRequest.CompanyId);
 
-        TempData["SuccessMessage"] = $"Approved {joinRequest.DisplayName} ({joinRequest.Email}) as {joinRequest.RequestedRole} for {joinRequest.Company?.Name}.";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestApproved"], joinRequest.DisplayName, joinRequest.Email, joinRequest.RequestedRole, joinRequest.Company?.Name);
         return RedirectToPage();
     }
 
@@ -756,13 +815,13 @@ public class UsersModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = "Invalid request ID.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRequestId"];
             return RedirectToPage();
         }
 
         if (!string.IsNullOrWhiteSpace(reason) && reason.Length > 1000)
         {
-            TempData["ErrorMessage"] = "Rejection reason must not exceed 1000 characters.";
+            TempData["ErrorMessage"] = _localizer["Error_RejectionReasonTooLong"];
             return RedirectToPage();
         }
 
@@ -782,7 +841,7 @@ public class UsersModel : PageModel
 
         if (joinRequest == null)
         {
-            TempData["ErrorMessage"] = "Join request not found.";
+            TempData["ErrorMessage"] = _localizer["Error_JoinRequestNotFound"];
             return RedirectToPage();
         }
 
@@ -804,13 +863,13 @@ public class UsersModel : PageModel
 
         if (!hasPermission)
         {
-            TempData["ErrorMessage"] = "You don't have permission to reject this request.";
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionRejectRequest"];
             return RedirectToPage();
         }
 
         if (joinRequest.Status != JoinRequestStatus.Pending)
         {
-            TempData["ErrorMessage"] = "This request has already been reviewed.";
+            TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyReviewed"];
             return RedirectToPage();
         }
 
@@ -825,7 +884,7 @@ public class UsersModel : PageModel
         _logger.LogInformation("Join request {RequestId} rejected by {ReviewerId}. Email: {Email}, Company: {CompanyId}",
             id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
 
-        TempData["SuccessMessage"] = $"Rejected join request from {joinRequest.DisplayName} ({joinRequest.Email}).";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
         return RedirectToPage();
     }
 
@@ -843,7 +902,7 @@ public class UsersModel : PageModel
 
         if (SelectedRequests == null || !SelectedRequests.Any())
         {
-            TempData["ErrorMessage"] = "No requests selected for approval.";
+            TempData["ErrorMessage"] = _localizer["Error_NoRequestsSelected"];
             return RedirectToPage();
         }
 
@@ -900,7 +959,7 @@ public class UsersModel : PageModel
             }
             else
             {
-                TempData["ErrorMessage"] = "You don't have permission to approve requests.";
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveRequests"];
                 return RedirectToPage();
             }
 
@@ -911,7 +970,7 @@ public class UsersModel : PageModel
                 {
                     _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company {CompanyId}",
                         currentUserId, currentUser.Role, joinRequest.Id, joinRequest.CompanyId);
-                    errors.Add($"No permission to approve {joinRequest.DisplayName} (different company)");
+                    errors.Add(string.Format(_localizer["Error_NoPermissionDifferentCompany"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;
                 }
@@ -919,7 +978,7 @@ public class UsersModel : PageModel
                 // Check if already reviewed
                 if (joinRequest.Status != JoinRequestStatus.Pending)
                 {
-                    errors.Add($"{joinRequest.DisplayName} already reviewed");
+                    errors.Add(string.Format(_localizer["Error_AlreadyReviewed"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;
                 }
@@ -927,7 +986,7 @@ public class UsersModel : PageModel
                 // Check if user already exists
                 if (await _db.Users.AnyAsync(u => u.Email == joinRequest.Email))
                 {
-                    errors.Add($"User with email {joinRequest.Email} already exists");
+                    errors.Add(string.Format(_localizer["Error_UserWithEmailExists"], joinRequest.Email));
                     skippedCount++;
                     continue;
                 }
@@ -940,7 +999,7 @@ public class UsersModel : PageModel
                 // Validate permission to assign the role
                 if (!_directorService.CanAssignRole(assignedRole))
                 {
-                    errors.Add($"No permission to assign {assignedRole} role to {joinRequest.DisplayName}");
+                    errors.Add(string.Format(_localizer["Error_NoPermissionAssignRoleTo"], assignedRole, joinRequest.DisplayName));
                     skippedCount++;
                     continue;
                 }
@@ -989,17 +1048,17 @@ public class UsersModel : PageModel
             await transaction.CommitAsync();
 
             // Build success message
-            var successMessage = $"Successfully approved {approvedCount} user(s).";
+            var successMessage = string.Format(_localizer["Success_ApprovedCount"], approvedCount);
             if (skippedCount > 0)
             {
-                successMessage += $" Skipped {skippedCount} request(s).";
+                successMessage += " " + string.Format(_localizer["Success_SkippedCount"], skippedCount);
             }
 
             TempData["SuccessMessage"] = successMessage;
 
             if (errors.Any())
             {
-                TempData["ErrorMessage"] = "Some requests had issues: " + string.Join("; ", errors.Take(3));
+                TempData["ErrorMessage"] = _localizer["Error_SomeRequestsHadIssues"] + ": " + string.Join("; ", errors.Take(3));
             }
 
             return RedirectToPage();
@@ -1008,7 +1067,7 @@ public class UsersModel : PageModel
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error during batch approval of join requests");
-            TempData["ErrorMessage"] = "An error occurred during batch approval. Please try again.";
+            TempData["ErrorMessage"] = _localizer["Error_BatchApprovalFailed"];
             return RedirectToPage();
         }
     }
@@ -1048,5 +1107,106 @@ public class UsersModel : PageModel
 
         // Employees, Trainees, and Assigners cannot modify anyone
         return false;
+    }
+
+    public async Task<IActionResult> OnGetExportCsvAsync()
+    {
+        try
+        {
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+                return RedirectToPage();
+            }
+
+            var currentUser = await _db.Users.FindAsync(currentUserId);
+            if (currentUser == null)
+            {
+                _logger.LogError("User {UserId} not found in database", currentUserId);
+                return RedirectToPage();
+            }
+
+            var role = currentUser.Role;
+
+            // Determine accessible company IDs based on role (same as OnGetAsync)
+            List<int> accessibleCompanyIds;
+
+            if (role == UserRole.Owner)
+            {
+                accessibleCompanyIds = await _db.Companies.Select(c => c.Id).ToListAsync();
+            }
+            else if (role == UserRole.Director)
+            {
+                accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
+            }
+            else if (role == UserRole.Manager)
+            {
+                accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+            }
+            else
+            {
+                accessibleCompanyIds = new List<int>();
+            }
+
+            // Load ALL users (without pagination) respecting filters
+            var usersQuery = _db.Users
+                .AsNoTracking()
+                .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
+
+            // Apply filters (same as OnGetAsync)
+            if (UserFilterRole.HasValue)
+            {
+                usersQuery = usersQuery.Where(u => u.Role == UserFilterRole.Value);
+            }
+
+            if (UserFilterCompanyId.HasValue)
+            {
+                usersQuery = usersQuery.Where(u => u.CompanyId == UserFilterCompanyId.Value);
+            }
+
+            var users = await usersQuery
+                .OrderBy(u => u.CompanyId)
+                .ThenBy(u => u.DisplayName)
+                .ToListAsync();
+
+            // Build CSV
+            var csv = new StringBuilder();
+            csv.AppendLine("display_name,email");
+
+            foreach (var user in users)
+            {
+                // Proper CSV escaping: quote fields if they contain commas, quotes, or newlines
+                var displayName = EscapeCsvField(user.DisplayName);
+                var email = EscapeCsvField(user.Email);
+                csv.AppendLine($"{displayName},{email}");
+            }
+
+            var fileName = $"Users_Export_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
+            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting users to CSV");
+            TempData["ErrorMessage"] = _localizer["Error_ExportingUsers"];
+            return RedirectToPage();
+        }
+    }
+
+    // Helper method for CSV field escaping
+    private static string EscapeCsvField(string field)
+    {
+        if (string.IsNullOrEmpty(field))
+            return "\"\"";
+
+        // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
+        if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
+        {
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        }
+
+        return field;
     }
 }

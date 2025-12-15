@@ -1,602 +1,815 @@
-# MailService Documentation
+# ShiftManager Email Service - Technical Documentation
 
-## Overview
-
-The `MailService` is a comprehensive email notification system integrated into ShiftManager. It sends automated emails to employees when shifts are assigned, changed, or deleted. The service follows ShiftManager's architecture patterns with dependency injection, structured logging, and multi-tenant support.
-
-**Created**: 2025-10-19
-**Status**: ✅ Implemented and tested
-**Files**: `Services/MailService.cs`, `Services/IMailService.cs`
+**Version**: 1.0
+**Date**: December 15, 2025
+**File**: `Services/MailService.cs` (651 lines)
 
 ---
 
-## Features
+## Executive Summary
 
-### Core Capabilities
-- ✅ **Asynchronous email sending** via company mail API
-- ✅ **Three email types**: Shift Assigned, Shift Changed, Shift Deleted
-- ✅ **HTML email templates** with professional styling
-- ✅ **Robust error handling** with structured logging
-- ✅ **Configuration-based** API key and endpoint management
-- ✅ **Enable/disable toggle** for development vs. production
-- ✅ **Automatic integration** with existing NotificationService
+ShiftManager's email notification system is a production-ready service that sends automated emails for shift assignments, changes, chores, and user account events.
 
-### Email Templates
-
-#### 1. Shift Assigned Email
-- **Color Theme**: Green (#4CAF50)
-- **Content**: Employee name, shift type, date, start/end times
-- **Use Case**: Sent when employee is assigned to a new shift
-
-#### 2. Shift Changed Email
-- **Color Theme**: Orange (#FF9800)
-- **Content**: Updated shift details + change description
-- **Use Case**: Sent when shift times or type are modified
-
-#### 3. Shift Deleted Email
-- **Color Theme**: Red (#F44336)
-- **Content**: Removed shift details
-- **Use Case**: Sent when employee is removed from a shift
+**Key Features**:
+- ✅ **6 Email Functions** (1 core + 5 specialized)
+- ✅ **Dual Configuration** (Database per-company + appsettings.json fallback)
+- ✅ **Full Localization** (English + Hebrew RTL)
+- ✅ **Comprehensive Logging** (Every API call logged to database)
+- ✅ **Production-Ready** (30s timeouts, validation, error handling)
 
 ---
 
-## Architecture
-
-### Class Structure
+## System Architecture
 
 ```
-IMailService (interface)
-  ├── SendMailAsync(recipient, subject, htmlBody) → bool
-  ├── SendShiftAssignedEmailAsync(...) → bool
-  ├── SendShiftChangedEmailAsync(...) → bool
-  └── SendShiftDeletedEmailAsync(...) → bool
-
-MailService (implementation)
-  ├── Dependencies: IHttpClientFactory, ILogger, IConfiguration
-  ├── Configuration: Email:Enabled, Email:ApiKey, Email:ApiUrl, Email:FromAddress
-  └── Integration: Called by NotificationService after in-app notification
+┌──────────────────┐
+│   Application    │  (Pages/Admin/Users, Services, etc.)
+└────────┬─────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────┐
+│           IMailService Implementation       │
+├─────────────────────────────────────────────┤
+│  • SendShiftAssignedEmailAsync()            │
+│  • SendShiftChangedEmailAsync()             │
+│  • SendShiftDeletedEmailAsync()             │
+│  • SendChoreAssignedEmailAsync()            │
+│  • SendChoreCanceledEmailAsync()            │
+│  • SendMailAsync() [CORE FUNCTION]          │
+└────────┬─────────────────────────────────── │
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+┌─────────┐ ┌──────────────┐
+│Database │ │appsettings   │
+│ Config  │ │  (fallback)  │
+└────┬────┘ └─────┬────────┘
+     │            │
+     └────┬───────┘
+          │
+          ▼
+  ┌───────────────┐
+  │   Validate    │
+  │Configuration  │
+  └───────┬───────┘
+          │
+          ▼
+  ┌───────────────┐
+  │HTTP POST to   │
+  │  Mail API     │
+  │ (30s timeout) │
+  └───────┬───────┘
+          │
+     ┌────┴────┐
+     │         │
+     ▼         ▼
+┌─────────┐ ┌─────────┐
+│Success  │ │ Error   │
+│  200    │ │4xx/5xx  │
+└────┬────┘ └────┬────┘
+     │           │
+     └─────┬─────┘
+           │
+           ▼
+   ┌───────────────┐
+   │EmailApiLog DB │
+   │+ Struct Logs  │
+   └───────────────┘
 ```
-
-### Integration Flow
-
-```
-Shift Event (assign/change/delete)
-  → NotificationService.CreateShiftAddedNotificationAsync()
-    → Creates in-app notification (UserNotifications table)
-    → Calls MailService.SendShiftAssignedEmailAsync()
-      → Fetches user email from database
-      → Builds HTML template
-      → Sends HTTP POST to mail API
-      → Logs result (success/failure)
-```
-
-**Key Design Decision**: Email failures do **NOT** block shift operations. If email sending fails, the in-app notification still succeeds, and the error is logged.
 
 ---
 
 ## Configuration
 
-### appsettings.json
+### Database Configuration (Priority 1)
+
+**Table**: `EmailConfigs`
+
+```sql
+Id              INTEGER PRIMARY KEY
+CompanyId       INTEGER NOT NULL
+Enabled         INTEGER NOT NULL DEFAULT 0
+ApiUrl          TEXT NOT NULL
+EncryptedApiKey TEXT NOT NULL  -- AES-256 encrypted
+FromAddress     TEXT NOT NULL
+```
+
+**Example**:
+```sql
+INSERT INTO EmailConfigs (CompanyId, Enabled, ApiUrl, EncryptedApiKey, FromAddress)
+VALUES (1, 1, 'https://mail-api.company.com/send', '[encrypted-key]', 'noreply@company.com');
+```
+
+### appsettings.json Fallback (Priority 2)
 
 ```json
 {
   "Email": {
     "Enabled": false,
-    "ApiKey": "f349248u209u249u",
-    "ApiUrl": "https://api.yourcompany.com/v1/mail/send",
+    "ApiKey": "your-api-key-here",
+    "ApiUrl": "https://mail-api.example.com/send",
     "FromAddress": "noreply@shiftmanager.local"
   }
 }
 ```
 
-### Configuration Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| **Email:Enabled** | bool | Yes | Master switch to enable/disable email sending |
-| **Email:ApiKey** | string | Yes (if enabled) | API key for authentication with mail API |
-| **Email:ApiUrl** | string | Yes (if enabled) | Full URL to mail API endpoint |
-| **Email:FromAddress** | string | No | Sender email address (default: noreply@shiftmanager.local) |
-
-### Environment Variables (Production)
-
-For production deployments, override appsettings.json with environment variables:
-
-```bash
-# Linux/macOS
-export Email__Enabled=true
-export Email__ApiKey="your-production-api-key"
-export Email__ApiUrl="https://mail-api.production.com/send"
-export Email__FromAddress="noreply@yourcompany.com"
-
-# Windows PowerShell
-$env:Email__Enabled = "true"
-$env:Email__ApiKey = "your-production-api-key"
-$env:Email__ApiUrl = "https://mail-api.production.com/send"
-$env:Email__FromAddress = "noreply@yourcompany.com"
-```
-
-**Security Best Practice**: Never commit API keys to source control. Use environment variables or Azure Key Vault.
-
 ---
 
-## Usage
+## API Integration
 
-### Enable Email Sending
+### HTTP Request Format
 
-**Step 1**: Update `appsettings.json`:
-```json
+```http
+POST {ApiUrl}
+Content-Type: application/json
+Apikey: {ApiKey}
+
+Request Body (JSON):
 {
-  "Email": {
-    "Enabled": true,
-    "ApiKey": "your-actual-api-key",
-    "ApiUrl": "https://api.yourcompany.com/v1/mail/send",
-    "FromAddress": "noreply@yourcompany.com"
-  }
-}
-```
-
-**Step 2**: Replace `<API_URL_HERE>` with your actual mail API endpoint.
-
-**Step 3**: Restart the application:
-```bash
-dotnet run
-```
-
-**Step 4**: Assign a shift to an employee → Email will be sent automatically.
-
-### Disable Email Sending (Development)
-
-Set `"Enabled": false` in `appsettings.json`:
-```json
-{
-  "Email": {
-    "Enabled": false,
-    ...
-  }
-}
-```
-
-When disabled:
-- MailService logs: `"Email service disabled. Skipping email to {Recipient}"`
-- Shift operations continue normally
-- Only in-app notifications are created
-
----
-
-## API Contract
-
-### Mail API Request Format
-
-**HTTP Method**: POST
-**Content-Type**: application/json
-**Headers**: `Apikey: <your-api-key>`
-
-**Request Payload**:
-```json
-{
-  "from": "noreply@shiftmanager.local",
+  "from": "noreply@company.com",
   "to": "employee@example.com",
-  "subject": "New Shift Assignment - Oct 19, 2025",
+  "subject": "New Shift Assignment - Dec 15, 2025",
   "html": "<html>...</html>"
 }
 ```
 
-### Expected API Response
+### Expected API Responses
 
-**Success (HTTP 200-299)**:
+**Success (200 OK)**:
 ```json
 {
   "status": "sent",
-  "messageId": "abc123",
-  "timestamp": "2025-10-19T14:30:00Z"
+  "messageId": "abc123..."
 }
 ```
 
-**Failure (HTTP 400-599)**:
+**Error (401 Unauthorized)**:
 ```json
 {
-  "error": "Invalid recipient email",
-  "code": "INVALID_EMAIL"
+  "error": "Invalid API key"
 }
+```
+
+---
+
+## Full Function Implementations
+
+### CORE FUNCTION: SendMailAsync
+
+**Purpose**: Foundation for all email sending. All specialized functions call this.
+
+```csharp
+public async Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
+{
+    // Start timing for diagnostics
+    var stopwatch = Stopwatch.StartNew();
+
+    // Variables for diagnostic logging
+    string? requestUrl = null;
+    string? requestBody = null;
+    Dictionary<string, string>? requestHeaders = null;
+    int? responseStatusCode = null;
+    Dictionary<string, string>? responseHeaders = null;
+    string? responseBody = null;
+    bool success = false;
+    string? errorMessage = null;
+    List<string>? validationErrors = null;
+
+    try
+    {
+        // Validate inputs
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            _logger.LogWarning("Cannot send email: recipient is null or empty");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            _logger.LogWarning("Cannot send email to {Recipient}: subject is null or empty", recipient);
+            return false;
+        }
+
+        // Load configuration (database first, then fallback to appsettings.json)
+        var (emailEnabled, apiKey, apiUrl, fromAddress, source) = await LoadConfigurationAsync();
+        requestUrl = apiUrl ?? "not-configured";
+
+        // Check if email is enabled in configuration
+        if (!emailEnabled)
+        {
+            _logger.LogInformation("Email service disabled (source: {Source}). Skipping email to {Recipient} with subject: {Subject}",
+                source, recipient, subject);
+            return true; // Return true to avoid blocking workflow
+        }
+
+        // Validate configuration BEFORE attempting to send
+        validationErrors = ValidateEmailConfiguration(apiKey, apiUrl, recipient);
+        if (validationErrors.Any())
+        {
+            errorMessage = string.Join("; ", validationErrors);
+            _logger.LogError("Email configuration validation failed: {Errors}", errorMessage);
+
+            // Log validation failure to database (fire-and-forget)
+            stopwatch.Stop();
+            _ = _emailApiLogService.LogEmailApiCallAsync(
+                requestUrl: requestUrl,
+                requestMethod: "POST",
+                requestHeaders: new Dictionary<string, string>(),
+                requestBody: "",
+                responseStatusCode: null,
+                responseHeaders: null,
+                responseBody: null,
+                recipientEmail: recipient,
+                emailSubject: subject,
+                success: false,
+                errorMessage: errorMessage,
+                durationMs: (int)stopwatch.ElapsedMilliseconds,
+                validationErrors: validationErrors);
+
+            return false;
+        }
+
+        // Create HTTP client from factory (best practice for performance and connection pooling)
+        using var httpClient = _httpClientFactory.CreateClient();
+
+        // Build email payload matching company API format
+        var payload = new
+        {
+            from = fromAddress,
+            to = recipient,
+            subject = subject,
+            html = htmlBody
+        };
+
+        // Serialize to JSON
+        requestBody = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        });
+
+        var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+        // Add API key header
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Add("Apikey", apiKey!);
+
+        // Capture request headers for diagnostics
+        requestHeaders = new Dictionary<string, string>
+        {
+            { "Apikey", apiKey! },
+            { "Content-Type", "application/json" }
+        };
+
+        // Set reasonable timeout (30 seconds)
+        httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+        _logger.LogInformation("Sending email to {Recipient} with subject: {Subject} (config source: {Source})",
+            recipient, subject, source);
+
+        // Send POST request to mail API
+        HttpResponseMessage response = await httpClient.PostAsync(apiUrl, content);
+
+        // Capture response details
+        responseStatusCode = (int)response.StatusCode;
+        responseBody = await response.Content.ReadAsStringAsync();
+
+        // Capture response headers
+        responseHeaders = new Dictionary<string, string>();
+        foreach (var header in response.Headers)
+        {
+            responseHeaders[header.Key] = string.Join(", ", header.Value);
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            success = true;
+            _logger.LogInformation("Email sent successfully to {Recipient}. Status: {StatusCode}",
+                recipient, responseStatusCode);
+        }
+        else
+        {
+            success = false;
+            errorMessage = GetUserFriendlyHttpError(responseStatusCode.Value, responseBody);
+            _logger.LogError("Failed to send email to {Recipient}. Status: {StatusCode}, Error: {Error}",
+                recipient, responseStatusCode, errorMessage);
+        }
+    }
+    catch (HttpRequestException httpEx)
+    {
+        success = false;
+        errorMessage = $"Network error: {httpEx.Message}";
+        _logger.LogError(httpEx, "HTTP error while sending email to {Recipient}: {Message}",
+            recipient, httpEx.Message);
+    }
+    catch (TaskCanceledException tcEx)
+    {
+        success = false;
+        errorMessage = "Request timeout (30s exceeded)";
+        _logger.LogError(tcEx, "Email request to {Recipient} timed out: {Message}",
+            recipient, tcEx.Message);
+    }
+    catch (Exception ex)
+    {
+        success = false;
+        errorMessage = $"Unexpected error: {ex.Message}";
+        _logger.LogError(ex, "Unexpected error while sending email to {Recipient}: {Message}",
+            recipient, ex.Message);
+    }
+    finally
+    {
+        // Always log to database for diagnostics (fire-and-forget)
+        stopwatch.Stop();
+        _ = _emailApiLogService.LogEmailApiCallAsync(
+            requestUrl: requestUrl ?? "unknown",
+            requestMethod: "POST",
+            requestHeaders: requestHeaders ?? new Dictionary<string, string>(),
+            requestBody: requestBody ?? "",
+            responseStatusCode: responseStatusCode,
+            responseHeaders: responseHeaders,
+            responseBody: responseBody,
+            recipientEmail: recipient,
+            emailSubject: subject,
+            success: success,
+            errorMessage: errorMessage,
+            durationMs: (int)stopwatch.ElapsedMilliseconds,
+            validationErrors: validationErrors);
+    }
+
+    return success;
+}
+```
+
+**Flow**:
+1. ✅ Validate inputs (recipient, subject)
+2. ✅ Load configuration (database first, fallback to appsettings.json)
+3. ✅ Check if email is enabled (graceful skip if disabled)
+4. ✅ Validate configuration (URL, API key, recipient format)
+5. ✅ Build HTTP POST request with JSON payload
+6. ✅ Add Apikey header
+7. ✅ Send request with 30-second timeout
+8. ✅ Parse response and determine success/failure
+9. ✅ **Always** log to database (even on exceptions)
+
+---
+
+### FUNCTION 1: SendShiftAssignedEmailAsync
+
+**Purpose**: Notify employee of new shift assignment
+**Theme**: Green (#4CAF50)
+
+```csharp
+public async Task<bool> SendShiftAssignedEmailAsync(
+    string recipientEmail,
+    string employeeName,
+    string shiftTypeName,
+    DateOnly shiftDate,
+    TimeOnly startTime,
+    TimeOnly endTime)
+{
+    if (string.IsNullOrWhiteSpace(recipientEmail))
+    {
+        _logger.LogWarning("Cannot send shift assigned email: recipient email is null or empty");
+        return false;
+    }
+
+    var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+    string subject = string.Format(_localizer["Email_ShiftAssignedSubject"], shiftDate.ToString("MMM dd, yyyy"));
+
+    string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4CAF50; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .shift-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #4CAF50; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #4CAF50; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_ShiftAssignedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ShiftAssignedBody"]}</p>
+
+            <div class='shift-details'>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+            </div>
+
+            <p>{_localizer["Email_ShiftAssignedLoginPrompt"]}</p>
+            <p>{_localizer["Email_ShiftAssignedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return await SendMailAsync(recipientEmail, subject, htmlBody);
+}
+```
+
+---
+
+### FUNCTION 2: SendShiftChangedEmailAsync
+
+**Purpose**: Notify employee of shift modification
+**Theme**: Orange (#FF9800)
+
+```csharp
+public async Task<bool> SendShiftChangedEmailAsync(
+    string recipientEmail,
+    string employeeName,
+    string shiftTypeName,
+    DateOnly shiftDate,
+    TimeOnly startTime,
+    TimeOnly endTime,
+    string changeDescription)
+{
+    if (string.IsNullOrWhiteSpace(recipientEmail))
+    {
+        _logger.LogWarning("Cannot send shift changed email: recipient email is null or empty");
+        return false;
+    }
+
+    var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+    string subject = string.Format(_localizer["Email_ShiftChangedSubject"], shiftDate.ToString("MMM dd, yyyy"));
+
+    string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #FF9800; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .shift-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #FF9800; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #FF9800; }}
+        .change-notice {{ background-color: #fff3cd; padding: 10px; margin: 10px 0; border-radius: 4px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>⚠️ {_localizer["Email_ShiftChangedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ShiftChangedBody"]}</p>
+
+            <div class='shift-details'>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+
+                <div class='change-notice'>
+                    <p><strong>{_localizer["Email_ChangeDetails"]}:</strong> {changeDescription}</p>
+                </div>
+            </div>
+
+            <p>{_localizer["Email_ShiftChangedSchedulePrompt"]}</p>
+            <p>{_localizer["Email_ShiftChangedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return await SendMailAsync(recipientEmail, subject, htmlBody);
+}
+```
+
+---
+
+### FUNCTION 3: SendShiftDeletedEmailAsync
+
+**Purpose**: Notify employee of shift cancellation
+**Theme**: Red (#F44336)
+
+```csharp
+public async Task<bool> SendShiftDeletedEmailAsync(
+    string recipientEmail,
+    string employeeName,
+    string shiftTypeName,
+    DateOnly shiftDate,
+    TimeOnly startTime,
+    TimeOnly endTime)
+{
+    if (string.IsNullOrWhiteSpace(recipientEmail))
+    {
+        _logger.LogWarning("Cannot send shift deleted email: recipient email is null or empty");
+        return false;
+    }
+
+    var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+    string subject = string.Format(_localizer["Email_ShiftDeletedSubject"], shiftDate.ToString("MMM dd, yyyy"));
+
+    string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #F44336; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .shift-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #F44336; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #F44336; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_ShiftDeletedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ShiftDeletedBody"]}</p>
+
+            <div class='shift-details'>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+            </div>
+
+            <p>{_localizer["Email_ShiftDeletedSchedulePrompt"]}</p>
+            <p>{_localizer["Email_ShiftDeletedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return await SendMailAsync(recipientEmail, subject, htmlBody);
+}
+```
+
+---
+
+### FUNCTION 4: SendChoreAssignedEmailAsync
+
+**Purpose**: Notify employee of chore assignment
+**Theme**: Blue (#2196F3)
+
+```csharp
+public async Task<bool> SendChoreAssignedEmailAsync(
+    string recipientEmail,
+    string employeeName,
+    string choreTitle,
+    DateOnly choreDate)
+{
+    if (string.IsNullOrWhiteSpace(recipientEmail))
+    {
+        _logger.LogWarning("Cannot send chore assigned email: recipient email is null or empty");
+        return false;
+    }
+
+    var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+    string subject = string.Format(_localizer["Email_ChoreAssignedSubject"], choreDate.ToString("MMM dd, yyyy"));
+
+    string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #2196F3; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .chore-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #2196F3; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #2196F3; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_ChoreAssignedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ChoreAssignedBody"]}</p>
+
+            <div class='chore-details'>
+                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{choreTitle}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
+            </div>
+
+            <p>{_localizer["Email_ChoreAssignedLoginPrompt"]}</p>
+            <p>{_localizer["Email_ChoreAssignedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return await SendMailAsync(recipientEmail, subject, htmlBody);
+}
+```
+
+---
+
+### FUNCTION 5: SendChoreCanceledEmailAsync
+
+**Purpose**: Notify employee of chore cancellation
+**Theme**: Orange (#FF9800)
+
+```csharp
+public async Task<bool> SendChoreCanceledEmailAsync(
+    string recipientEmail,
+    string employeeName,
+    string choreTitle,
+    DateOnly choreDate)
+{
+    if (string.IsNullOrWhiteSpace(recipientEmail))
+    {
+        _logger.LogWarning("Cannot send chore canceled email: recipient email is null or empty");
+        return false;
+    }
+
+    var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+    string subject = string.Format(_localizer["Email_ChoreCanceledSubject"], choreDate.ToString("MMM dd, yyyy"));
+
+    string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #FF9800; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .chore-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #FF9800; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #FF9800; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_ChoreCanceledTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{_localizer["Email_ChoreCanceledBody"]}</p>
+
+            <div class='chore-details'>
+                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{choreTitle}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
+            </div>
+
+            <p>{_localizer["Email_ChoreCanceledSchedulePrompt"]}</p>
+            <p>{_localizer["Email_ChoreCanceledContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return await SendMailAsync(recipientEmail, subject, htmlBody);
+}
+```
+
+---
+
+## Logging & Diagnostics
+
+### Database Table: EmailApiLogs
+
+Every email attempt is logged with full diagnostics:
+
+| Column | Description |
+|--------|-------------|
+| `RequestUrl` | API endpoint URL |
+| `RequestMethod` | Always "POST" |
+| `RequestHeaders` | JSON dictionary of headers |
+| `RequestBody` | Full JSON payload sent |
+| `ResponseStatusCode` | HTTP status code (200, 401, etc.) |
+| `ResponseBody` | API response text |
+| `RecipientEmail` | Recipient address |
+| `EmailSubject` | Email subject line |
+| `Success` | 1=success, 0=failure |
+| `ErrorMessage` | User-friendly error (if failed) |
+| `DurationMs` | Milliseconds elapsed |
+| `ValidationErrors` | List of validation failures (if any) |
+| `Timestamp` | UTC timestamp |
+| `CompanyId` | Company identifier |
+
+**Example Log**:
+```json
+{
+  "requestUrl": "https://mail-api.company.com/send",
+  "responseStatusCode": 200,
+  "recipientEmail": "employee@company.com",
+  "emailSubject": "New Shift Assignment - Dec 15, 2025",
+  "success": true,
+  "durationMs": 487,
+  "timestamp": "2025-12-15T10:30:00Z",
+  "companyId": 1
+}
+```
+
+### Structured Application Logs
+
+**Success**:
+```
+[Info] Sending email to employee@company.com (config source: database)
+[Info] Email sent successfully. Status: 200
+```
+
+**Failure**:
+```
+[Error] Email configuration validation failed: API key is not configured
+[Error] Failed to send email. Status: 401, Error: API key appears invalid
 ```
 
 ---
 
 ## Error Handling
 
-### Validation Errors
+### Pre-Flight Validation
 
-| Error | Behavior | Log Level |
-|-------|----------|-----------|
-| **Recipient email null/empty** | Skip email, return false | Warning |
-| **Subject null/empty** | Skip email, return false | Warning |
-| **Email disabled** | Skip email, return true | Information |
-| **ApiKey not configured** | Skip email, return false | Error |
-| **ApiUrl not configured** | Skip email, return false | Error |
+Checked **before** sending:
+- ✅ API URL configured
+- ✅ API URL valid format (http/https)
+- ✅ API key configured
+- ✅ API key length >= 8 characters
+- ✅ Recipient email not empty
+- ✅ Recipient email contains @
 
-### Network Errors
+### HTTP Status Codes
 
-| Error Type | Behavior | Log Level |
-|------------|----------|-----------|
-| **HttpRequestException** | Log error, return false | Error |
-| **TaskCanceledException (timeout)** | Log error, return false | Error |
-| **Generic Exception** | Log error, return false | Error |
+| Code | Meaning | User-Friendly Message |
+|------|---------|----------------------|
+| 200 | Success | Email sent successfully |
+| 401 | Unauthorized | API key appears invalid or expired |
+| 403 | Forbidden | Access forbidden - check API permissions |
+| 404 | Not Found | API endpoint not found - check URL |
+| 429 | Rate Limit | Rate limit exceeded - wait before retrying |
+| 500 | Server Error | Email service server error |
+| 502 | Bad Gateway | Email service may be temporarily unavailable |
+| 503 | Unavailable | Service unavailable - may be under maintenance |
+| 504 | Timeout | Gateway timeout - service took too long |
 
-**Timeout**: 30 seconds (configurable in MailService.cs:119)
+### Exception Handling
 
-### Error Handling in NotificationService
+- `HttpRequestException`: Network errors (DNS, connection refused, SSL)
+- `TaskCanceledException`: 30-second timeout exceeded
+- `Exception`: Unexpected errors
 
-```csharp
-try
-{
-    await _mailService.SendShiftAssignedEmailAsync(...);
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Error sending shift assigned email to user {UserId}", userId);
-    // Don't throw - email failure should not block notification creation
-}
-```
-
-**Critical Design**: Email failures are logged but do NOT throw exceptions. Shift operations always succeed even if email fails.
+All exceptions are caught, logged, and never crash the application.
 
 ---
 
-## Logging
+## Summary
 
-### Log Entries
+**Production-Ready Features**:
+- ✅ HTTP client factory (connection pooling)
+- ✅ AES-256 encrypted API keys
+- ✅ 30-second timeout protection
+- ✅ Pre-flight validation (7 checks)
+- ✅ Comprehensive logging (database + structured logs)
+- ✅ Localization support (English + Hebrew RTL)
+- ✅ Graceful degradation (returns true if disabled)
+- ✅ Fire-and-forget logging (doesn't block on log failures)
 
-**Configuration Validation (Startup)**:
-```
-[Warning] Email service enabled but Email:ApiKey is not configured. Email sending will fail.
-[Warning] Email service enabled but Email:ApiUrl is not configured. Email sending will fail.
-```
-
-**Email Disabled**:
-```
-[Information] Email service disabled. Skipping email to employee@example.com with subject: New Shift Assignment
-```
-
-**Email Sending**:
-```
-[Information] Sending email to employee@example.com with subject: New Shift Assignment - Oct 19, 2025
-[Information] Email sent successfully to employee@example.com. Response: {"status":"sent"}
-```
-
-**Email Failures**:
-```
-[Error] Failed to send email to employee@example.com. Status: 400, Response: {"error":"Invalid email"}
-[Error] HTTP error while sending email to employee@example.com: Connection refused
-[Error] Email request to employee@example.com timed out: The operation was canceled
-```
-
-**NotificationService Integration**:
-```
-[Error] Error sending shift assigned email to user 123: System.Exception: API error
-```
-
-### Log Correlation
-
-All logs include structured properties:
-- `{Recipient}`: Email address
-- `{Subject}`: Email subject
-- `{UserId}`: Employee ID (from NotificationService)
-- `{StatusCode}`: HTTP response status
-- `{Response}`: API response body
+**Statistics**:
+- **Total Functions**: 6 (1 core + 5 specialized)
+- **Configuration Sources**: 2 (database + appsettings.json)
+- **Supported Languages**: 2 (English + Hebrew)
+- **Email Themes**: 5 (Green, Orange, Red, Blue, Orange)
+- **Total Code**: 651 lines
+- **Validation Checks**: 7 pre-flight
+- **Timeout**: 30 seconds
+- **Logging Destinations**: 2 (database + logs)
 
 ---
 
-## Testing
-
-### Manual Testing
-
-**Step 1**: Enable email in `appsettings.json`:
-```json
-{
-  "Email": {
-    "Enabled": true,
-    "ApiKey": "test-key",
-    "ApiUrl": "https://httpbin.org/post",
-    "FromAddress": "test@shiftmanager.local"
-  }
-}
-```
-
-**Step 2**: Assign a shift to an employee:
-1. Navigate to `/Assignments/Manage`
-2. Click `+` button to add employee to shift
-3. Check logs for `"Sending email to employee@example.com"`
-
-**Step 3**: Verify HTTP request:
-- httpbin.org will echo the request
-- Check logs for response body
-
-### Unit Testing (Recommended)
-
-Create `ShiftManager.Tests/Services/MailServiceTests.cs`:
-
-```csharp
-public class MailServiceTests
-{
-    [Fact]
-    public async Task SendMailAsync_WithValidInputs_ReturnsTrue()
-    {
-        // Arrange
-        var httpClientFactory = new MockHttpClientFactory();
-        var logger = new Mock<ILogger<MailService>>();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
-            {
-                {"Email:Enabled", "true"},
-                {"Email:ApiKey", "test-key"},
-                {"Email:ApiUrl", "https://test.com/send"},
-                {"Email:FromAddress", "test@test.com"}
-            })
-            .Build();
-
-        var mailService = new MailService(httpClientFactory, logger.Object, configuration);
-
-        // Act
-        var result = await mailService.SendMailAsync("recipient@test.com", "Test Subject", "<html>Test</html>");
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task SendMailAsync_WhenDisabled_ReturnsTrue()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
-            {
-                {"Email:Enabled", "false"}
-            })
-            .Build();
-
-        var mailService = new MailService(httpClientFactory, logger.Object, configuration);
-
-        // Act
-        var result = await mailService.SendMailAsync("recipient@test.com", "Test", "Test");
-
-        // Assert
-        Assert.True(result); // Returns true to avoid blocking workflow
-    }
-}
-```
-
----
-
-## Security Considerations
-
-### API Key Protection
-
-**❌ DON'T**:
-```json
-{
-  "Email": {
-    "ApiKey": "f349248u209u249u"  // Hardcoded in source control
-  }
-}
-```
-
-**✅ DO**:
-```bash
-# Use environment variables
-export Email__ApiKey="production-key-from-vault"
-
-# Or Azure Key Vault
-az keyvault secret set --vault-name "ShiftManagerVault" --name "EmailApiKey" --value "prod-key"
-```
-
-### Email Content Security
-
-**HTML Injection Prevention**:
-- All user inputs (employee names, shift types) are automatically escaped by C# string interpolation
-- HTML templates use `$"{variable}"` syntax which escapes HTML special characters
-
-**Example**:
-```csharp
-// Safe: HTML entities are escaped
-string employeeName = "John <script>alert('XSS')</script> Doe";
-string htmlBody = $"<p>Hello <strong>{employeeName}</strong></p>";
-// Result: <p>Hello <strong>John &lt;script&gt;alert('XSS')&lt;/script&gt; Doe</strong></p>
-```
-
-### Rate Limiting
-
-**Current Implementation**: No rate limiting (sends unlimited emails)
-
-**Recommended Enhancement**:
-```csharp
-// Add rate limiting to prevent email bombing
-private static readonly SemaphoreSlim _rateLimiter = new SemaphoreSlim(10, 10);
-
-public async Task<bool> SendMailAsync(...)
-{
-    await _rateLimiter.WaitAsync();
-    try
-    {
-        // Send email
-    }
-    finally
-    {
-        _rateLimiter.Release();
-    }
-}
-```
-
----
-
-## Performance Considerations
-
-### HTTP Client Factory
-
-**Why**: IHttpClientFactory manages connection pooling, reduces socket exhaustion, and improves performance.
-
-**Implementation** (Program.cs:84):
-```csharp
-builder.Services.AddHttpClient(); // Required for MailService
-```
-
-**Benefits**:
-- Connection reuse (no socket exhaustion)
-- Automatic DNS refresh (avoids stale DNS issues)
-- Testability (easy to mock)
-
-### Async/Await Pattern
-
-All methods use `async`/`await` for non-blocking I/O:
-```csharp
-public async Task<bool> SendMailAsync(...)
-{
-    HttpResponseMessage response = await httpClient.PostAsync(_apiUrl, content);
-    string responseContent = await response.Content.ReadAsStringAsync();
-    return response.IsSuccessStatusCode;
-}
-```
-
-**Benefits**:
-- Non-blocking: ASP.NET Core thread pool can handle other requests
-- Scalability: Supports 1000+ concurrent email sends
-
-### Timeout Configuration
-
-**Default**: 30 seconds (MailService.cs:119)
-```csharp
-httpClient.Timeout = TimeSpan.FromSeconds(30);
-```
-
-**Recommendation**: Adjust based on mail API SLA:
-- Fast API (<1s): Set to 5 seconds
-- Slow API (>5s): Set to 60 seconds
-
----
-
-## Troubleshooting
-
-### Issue: Emails not being sent
-
-**Check 1**: Is email enabled?
-```json
-{ "Email": { "Enabled": true } }
-```
-
-**Check 2**: Are API credentials configured?
-```bash
-dotnet run | grep "Email service enabled but"
-# Should NOT see warnings about missing ApiKey/ApiUrl
-```
-
-**Check 3**: Check logs for errors:
-```bash
-dotnet run | grep "Failed to send email"
-```
-
-### Issue: API returns 401 Unauthorized
-
-**Cause**: Invalid API key
-
-**Solution**: Verify API key in appsettings.json matches company mail API key
-
-### Issue: API returns 400 Bad Request
-
-**Cause**: Invalid payload format
-
-**Solution**: Check mail API documentation for required fields. Current payload:
-```json
-{
-  "from": "...",
-  "to": "...",
-  "subject": "...",
-  "html": "..."
-}
-```
-
-### Issue: Emails timeout after 30 seconds
-
-**Cause**: Mail API is slow or unreachable
-
-**Solution**: Increase timeout in MailService.cs:119:
-```csharp
-httpClient.Timeout = TimeSpan.FromSeconds(60); // Increase to 60s
-```
-
----
-
-## Future Enhancements
-
-### 1. Email Templates in Database
-**Current**: HTML templates hardcoded in C#
-**Future**: Store templates in database, allow customization per company
-
-### 2. Email Queue with Retry Logic
-**Current**: Synchronous sending (fails immediately)
-**Future**: Background job queue (Hangfire) with 3 retry attempts
-
-### 3. Email Analytics
-**Current**: No tracking of email open/click rates
-**Future**: Track delivery status, open rates, click-through rates
-
-### 4. Localization Support
-**Current**: All emails in English
-**Future**: Send emails in user's preferred language (en-US, he-IL)
-
-### 5. Bulk Email Optimization
-**Current**: One HTTP request per email
-**Future**: Batch API for sending 100+ emails in one request
-
----
-
-## File Reference
-
-### Created Files
-- ✅ `Services/IMailService.cs` (interface, 44 lines)
-- ✅ `Services/MailService.cs` (implementation, 350+ lines)
-
-### Modified Files
-- ✅ `Services/NotificationService.cs` (added email integration, +50 lines)
-- ✅ `Program.cs` (registered MailService, +2 lines)
-- ✅ `appsettings.json` (added Email configuration section, +6 lines)
-
-### Documentation Files
-- ✅ `MAIL_SERVICE_DOCUMENTATION.md` (this file)
-
----
-
-## Quick Reference
-
-### Enable Email Sending
-```json
-{ "Email": { "Enabled": true, "ApiKey": "key", "ApiUrl": "url" } }
-```
-
-### Disable Email Sending
-```json
-{ "Email": { "Enabled": false } }
-```
-
-### Check Logs
-```bash
-dotnet run | grep "Email"
-```
-
-### Test Email Integration
-1. Assign shift to employee
-2. Check application logs
-3. Verify employee received email
-
----
-
-## Support
-
-**Questions**: Review this documentation or check application logs
-**Issues**: File bug in GitHub Issues with logs attached
-**Configuration Help**: See appsettings.json Email section comments
-
----
-
-**Document Version**: 1.0
-**Last Updated**: 2025-10-19
-**Implementation Status**: ✅ Complete and tested
+**End of Documentation**

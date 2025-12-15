@@ -3,15 +3,17 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 
 namespace ShiftManager.Pages.Auth;
 
-public class LoginModel : PageModel
+public class LoginModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<LoginModel> _logger;
@@ -23,10 +25,12 @@ public class LoginModel : PageModel
     public LoginModel(
         AppDbContext db,
         ILogger<LoginModel> logger,
+        IStringLocalizer<SharedResources> localizer,
         IRateLimitingService rateLimiting,
         IValidationService validation,
         IGriffinConfigService griffinConfigService,
         IGriffinService griffinService)
+        : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -38,7 +42,6 @@ public class LoginModel : PageModel
 
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string Password { get; set; } = string.Empty;
-    public string? Error { get; set; }
     public bool ShowAuthPrompt { get; set; }
     public bool ShowGriffinButton { get; set; }
     public bool ShowGriffinUnavailableMessage { get; set; }
@@ -90,28 +93,28 @@ public class LoginModel : PageModel
             if (!_rateLimiting.IsAllowed(rateLimitKey, 10, 15))
             {
                 _logger.LogWarning("Rate limit exceeded for login from IP: {IP}", ipAddress);
-                Error = "Too many login attempts. Please try again in 15 minutes.";
+                Error = _localizer["Error_Login_RateLimitExceeded"];
                 return Page();
             }
 
             // ✅ SECURITY FIX: Input validation
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
-                Error = "Email and password are required.";
+                Error = _localizer["Error_Login_FieldsRequired"];
                 return Page();
             }
 
             if (Email.Length > 255 || Password.Length > 500)
             {
                 _logger.LogWarning("Login attempt with oversized input from IP {IP}", ipAddress);
-                Error = "Invalid input.";
+                Error = _localizer["Error_InvalidInput"];
                 return Page();
             }
 
             // ✅ SECURITY FIX: Proper email format validation with regex
             if (!_validation.IsValidEmail(Email))
             {
-                Error = "Invalid email format.";
+                Error = _localizer["Error_InvalidEmailFormat"];
                 return Page();
             }
 
@@ -127,7 +130,7 @@ public class LoginModel : PageModel
                 {
                     var remainingMinutes = (int)(user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes + 1;
                     _logger.LogWarning("Login attempt for locked account: {Email}. Lockout ends in {Minutes} minutes", Email, remainingMinutes);
-                    Error = $"Account is locked due to multiple failed login attempts. Please try again in {remainingMinutes} minute(s).";
+                    Error = _localizer["Error_Login_AccountLocked", remainingMinutes];
                     return Page();
                 }
 
@@ -150,7 +153,7 @@ public class LoginModel : PageModel
                         await _db.SaveChangesAsync();
 
                         _logger.LogWarning("Account locked for {Email} after {Attempts} failed attempts", Email, user.FailedLoginAttempts);
-                        Error = "Account has been locked due to multiple failed login attempts. Please try again in 3 minutes.";
+                        Error = _localizer["Error_Login_AccountLockedAfterAttempts"];
                         return Page();
                     }
 
@@ -162,7 +165,7 @@ public class LoginModel : PageModel
                     _logger.LogWarning("Login failed for {Email} (user not found)", Email);
                 }
 
-                Error = "Invalid credentials.";
+                Error = _localizer["Error_Login_InvalidCredentials"];
                 return Page();
             }
 
@@ -195,7 +198,7 @@ public class LoginModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception during login for {Email}", Email);
-            Error = "Unexpected error. Please try again.";
+            Error = _localizer["Error_UnexpectedError"];
             return Page();
         }
     }
@@ -206,7 +209,7 @@ public class LoginModel : PageModel
 
         if (griffinConfig?.Enabled != true)
         {
-            Error = "ADFS authentication is not configured. Please use local login or contact your administrator.";
+            Error = _localizer["Error_Login_AdfsNotConfigured"];
             ReturnUrl = returnUrl ?? "/Home/Index";
             ShowGriffinButton = true;
             ShowGriffinUnavailableMessage = true;

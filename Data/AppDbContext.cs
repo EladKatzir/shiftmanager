@@ -37,6 +37,7 @@ public class AppDbContext : DbContext
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
+    public DbSet<EmailApiLog> EmailApiLogs => Set<EmailApiLog>();
     public DbSet<GriffinConfig> GriffinConfigs => Set<GriffinConfig>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
@@ -87,6 +88,11 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<ShiftInstance>()
             .Property(p => p.Concurrency).IsConcurrencyToken();
+
+        // CRITICAL: Add composite index for ShiftInstance date range queries
+        // This index is used by ALL calendar views, dashboards, and reports
+        modelBuilder.Entity<ShiftInstance>()
+            .HasIndex(si => new { si.CompanyId, si.WorkDate });
 
         // Multitenancy Phase 1: Add unique index on Company.Slug for routing
         modelBuilder.Entity<Company>()
@@ -387,6 +393,9 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<GameScore>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            modelBuilder.Entity<EmailApiLog>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
         }
@@ -409,6 +418,19 @@ public class AppDbContext : DbContext
             .HasOne<Company>()
             .WithMany()
             .HasForeignKey(ec => ec.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure EmailApiLog
+        modelBuilder.Entity<EmailApiLog>()
+            .HasIndex(e => new { e.CompanyId, e.Timestamp });
+
+        modelBuilder.Entity<EmailApiLog>()
+            .HasIndex(e => new { e.CompanyId, e.Success });
+
+        modelBuilder.Entity<EmailApiLog>()
+            .HasOne(e => e.Company)
+            .WithMany()
+            .HasForeignKey(e => e.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure Feedback

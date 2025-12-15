@@ -13,19 +13,23 @@ using System.ComponentModel.DataAnnotations;
 namespace ShiftManager.Pages.Auth;
 
 [AllowAnonymous]
-public class SignupModel : PageModel
+public class SignupModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<SignupModel> _logger;
-    private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IConfiguration _configuration;
     private readonly IValidationService _validation;
 
-    public SignupModel(AppDbContext db, ILogger<SignupModel> logger, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, IValidationService validation)
+    public SignupModel(
+        AppDbContext db,
+        ILogger<SignupModel> logger,
+        IStringLocalizer<SharedResources> localizer,
+        IConfiguration configuration,
+        IValidationService validation)
+        : base(localizer)
     {
         _db = db;
         _logger = logger;
-        _localizer = localizer;
         _configuration = configuration;
         _validation = validation;
     }
@@ -46,7 +50,6 @@ public class SignupModel : PageModel
     public UserRole RequestedRole { get; set; } = UserRole.Employee;
 
     public List<Company> AvailableCompanies { get; set; } = new();
-    public string? Error { get; set; }
     public string? PendingRequestMessage { get; set; }
 
     public async Task OnGetAsync()
@@ -79,58 +82,58 @@ public class SignupModel : PageModel
         }
         else
         {
-            Error = "Public signup is disabled. Please contact your administrator for an invitation.";
+            Error = _localizer["Error_Signup_PublicDisabled"];
             return Page();
         }
 
         if (!ModelState.IsValid)
         {
-            Error = "Please fill in all required fields.";
+            Error = _localizer["Error_Signup_RequiredFields"];
             return Page();
         }
 
         // ✅ SECURITY FIX: Additional input validation beyond data annotations
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Password))
         {
-            Error = "All fields are required.";
+            Error = _localizer["Error_Signup_AllFieldsRequired"];
             return Page();
         }
 
         if (Email.Length > 255)
         {
-            Error = "Email must not exceed 255 characters.";
+            Error = _localizer["Error_Signup_EmailTooLong"];
             return Page();
         }
 
         if (DisplayName.Length > 200)
         {
-            Error = "Display name must not exceed 200 characters.";
+            Error = _localizer["Error_Signup_DisplayNameTooLong"];
             return Page();
         }
 
         if (Password.Length > 128)
         {
-            Error = "Password must not exceed 128 characters.";
+            Error = _localizer["Error_Signup_PasswordTooLong"];
             return Page();
         }
 
         if (CompanyId <= 0)
         {
-            Error = "Please select a valid company.";
+            Error = _localizer["Error_Signup_SelectValidCompany"];
             return Page();
         }
 
         // ✅ SECURITY FIX: Proper email format validation with regex
         if (!_validation.IsValidEmail(Email))
         {
-            Error = "Invalid email format.";
+            Error = _localizer["Error_InvalidEmailFormat"];
             return Page();
         }
 
         // Check if user already exists
         if (await _db.Users.AnyAsync(u => u.Email == Email))
         {
-            Error = "An account with this email already exists. Please login instead.";
+            Error = _localizer["Error_Signup_EmailExists"];
             return Page();
         }
 
@@ -154,7 +157,7 @@ public class SignupModel : PageModel
         var selectedCompany = await _db.Companies.FindAsync(CompanyId);
         if (selectedCompany == null)
         {
-            Error = "Selected company not found.";
+            Error = _localizer["Error_Signup_CompanyNotFound"];
             return Page();
         }
 

@@ -2,15 +2,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class ConfigModel : PageModel
+public class ConfigModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
@@ -18,10 +20,11 @@ public class ConfigModel : PageModel
     private readonly IEmailConfigService _emailConfigService;
 
     public ConfigModel(
+        IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ICompanyContext companyContext,
         IAuditLogService auditLogService,
-        IEmailConfigService emailConfigService)
+        IEmailConfigService emailConfigService) : base(localizer)
     {
         _db = db;
         _companyContext = companyContext;
@@ -41,9 +44,6 @@ public class ConfigModel : PageModel
     [BindProperty] public string NameHe { get; set; } = string.Empty;
     [BindProperty] public string Icon { get; set; } = "📌";
     [BindProperty] public string Color { get; set; } = "#6366f1";
-
-    public string? Error { get; set; }
-    public string? Success { get; set; }
 
     private int GetCurrentUserId()
     {
@@ -69,14 +69,14 @@ public class ConfigModel : PageModel
         // ✅ SECURITY FIX: Input validation for configuration values
         if (RestHours < 0 || RestHours > 24)
         {
-            Error = "Rest hours must be between 0 and 24.";
+            Error = _localizer["Error_RestHoursRange"];
             await OnGetAsync();
             return Page();
         }
 
         if (WeeklyCap < 0 || WeeklyCap > 168)
         {
-            Error = "Weekly hours cap must be between 0 and 168 (7 days × 24 hours).";
+            Error = _localizer["Error_WeeklyCapRange"];
             await OnGetAsync();
             return Page();
         }
@@ -84,7 +84,7 @@ public class ConfigModel : PageModel
         // Logical validation: WeeklyCap should be reasonable
         if (WeeklyCap > 0 && WeeklyCap < RestHours)
         {
-            Error = "Weekly hours cap cannot be less than rest hours requirement.";
+            Error = _localizer["Error_WeeklyCapLessThanRest"];
             await OnGetAsync();
             return Page();
         }
@@ -100,7 +100,7 @@ public class ConfigModel : PageModel
             description: $"Updated company configuration: RestHours={RestHours}, WeeklyCap={WeeklyCap}",
             details: System.Text.Json.JsonSerializer.Serialize(new { RestHours, WeeklyCap }));
 
-        Success = "Configuration updated successfully.";
+        Success = _localizer["Success_ConfigurationUpdated"];
         return RedirectToPage();
     }
 
@@ -109,14 +109,14 @@ public class ConfigModel : PageModel
         // Validation
         if (string.IsNullOrWhiteSpace(NameEn) || string.IsNullOrWhiteSpace(NameHe))
         {
-            Error = "Both English and Hebrew names are required.";
+            Error = _localizer["Error_BothNamesRequired"];
             await OnGetAsync();
             return Page();
         }
 
         if (NameEn.Length > 100 || NameHe.Length > 100)
         {
-            Error = "Names must not exceed 100 characters.";
+            Error = _localizer["Error_NamesTooLong"];
             await OnGetAsync();
             return Page();
         }
@@ -150,7 +150,7 @@ public class ConfigModel : PageModel
             description: $"Created custom OnDuty type: {NameEn} ({NameHe}) with value {autoTypeValue}",
             details: System.Text.Json.JsonSerializer.Serialize(new { TypeValue = autoTypeValue, NameEn, NameHe, Icon, Color }));
 
-        Success = $"On-Duty type '{NameEn}' created successfully.";
+        Success = string.Format(_localizer["Success_OnDutyTypeCreated"], NameEn);
         return RedirectToPage();
     }
 
@@ -159,7 +159,7 @@ public class ConfigModel : PageModel
         var type = await _db.OnDutyTypeConfigs.FindAsync(typeId);
         if (type == null)
         {
-            Error = "On-Duty type not found.";
+            Error = _localizer["Error_OnDutyTypeNotFound"];
             await OnGetAsync();
             return Page();
         }
@@ -171,7 +171,7 @@ public class ConfigModel : PageModel
 
         if (inUse)
         {
-            Error = $"Cannot delete '{type.NameEn}' - it is currently assigned to active on-duty shifts.";
+            Error = string.Format(_localizer["Error_CannotDeleteOnDutyTypeInUse"], type.NameEn);
             await OnGetAsync();
             return Page();
         }
@@ -187,7 +187,7 @@ public class ConfigModel : PageModel
             description: $"Deleted custom OnDuty type: {type.NameEn} (value {type.TypeValue})",
             details: System.Text.Json.JsonSerializer.Serialize(new { TypeValue = type.TypeValue, NameEn = type.NameEn }));
 
-        Success = $"On-Duty type '{type.NameEn}' deleted successfully.";
+        Success = string.Format(_localizer["Success_OnDutyTypeDeleted"], type.NameEn);
         return RedirectToPage();
     }
 

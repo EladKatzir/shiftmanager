@@ -114,10 +114,17 @@ builder.Services.AddDataProtection(); // Required for EncryptionService
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IEmailApiLogService, EmailApiLogService>();
 // Griffin ADFS services
 builder.Services.AddScoped<IGriffinConfigService, GriffinConfigService>();
 builder.Services.AddScoped<IGriffinService, GriffinService>();
 builder.Services.AddMemoryCache(); // For Griffin claims caching (may already be registered)
+
+// Phase 2C: Performance Optimization - Caching Services
+builder.Services.AddScoped<IShiftTypeCacheService, ShiftTypeCacheService>();
+builder.Services.AddScoped<IAppConfigCacheService, AppConfigCacheService>();
+builder.Services.AddScoped<ICompanyCacheService, CompanyCacheService>();
+
 builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();

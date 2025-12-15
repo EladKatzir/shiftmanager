@@ -52,6 +52,7 @@ public class SystemHealthModel : PageModel
 
     // Configuration
     public bool EmailConfigured { get; set; }
+    public bool AdfsConfigured { get; set; }
     public int CompanyCount { get; set; }
     public int UserCount { get; set; }
 
@@ -175,6 +176,13 @@ public class SystemHealthModel : PageModel
             var emailEnabled = _configuration.GetValue<bool>("Email:Enabled", false);
             var emailApiKey = _configuration.GetValue<string>("Email:ApiKey", "");
             EmailConfigured = emailEnabled && !string.IsNullOrEmpty(emailApiKey);
+
+            // Check ADFS/Griffin configuration
+            var griffinConfig = await _db.GriffinConfigs.FirstOrDefaultAsync();
+            AdfsConfigured = griffinConfig != null &&
+                            griffinConfig.Enabled &&
+                            !string.IsNullOrEmpty(griffinConfig.BaseUrl) &&
+                            !string.IsNullOrEmpty(griffinConfig.TokenConsumerUrl);
 
             // Get counts
             CompanyCount = await _db.Companies.CountAsync();

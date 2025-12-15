@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Configuration;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
@@ -36,14 +37,16 @@ public class NotificationService : INotificationService
     private readonly ITenantResolver _tenantResolver;
     private readonly IMailService _mailService;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IConfiguration _configuration;
 
-    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer)
+    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
         _tenantResolver = tenantResolver;
         _mailService = mailService;
         _localizer = localizer;
+        _configuration = configuration;
     }
 
     public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
@@ -348,10 +351,17 @@ public class NotificationService : INotificationService
 
             var digestParts = new List<string>();
 
+            // Phase 2C: Parallelize digest data queries using Task.WhenAll
+            Task<List<ShiftAssignment>>? upcomingShiftsTask = null;
+            Task<List<TimeOffRequest>>? pendingTimeOffTask = null;
+            Task<List<SwapRequest>>? pendingSwapsTask = null;
+            Task<List<Chore>>? upcomingChoresTask = null;
+            Task<List<OnDuty>>? upcomingOnDutyTask = null;
+
             // Upcoming Shifts (next 7 days)
             if (preference.IncludeUpcomingShifts)
             {
-                var upcomingShifts = await _db.ShiftAssignments
+                upcomingShiftsTask = _db.ShiftAssignments
                     .Include(sa => sa.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                     .Where(sa => sa.UserId == userId
@@ -362,10 +372,78 @@ public class NotificationService : INotificationService
                     .ThenBy(sa => sa.ShiftInstance.ShiftType.Start)
                     .Take(10)
                     .ToListAsync();
+            }
 
+            // Pending Time-Off and Swap Requests
+            if (preference.IncludePendingRequests)
+            {
+                pendingTimeOffTask = _db.TimeOffRequests
+                    .Where(r => r.UserId == userId
+                             && r.CompanyId == companyId
+                             && r.Status == RequestStatus.Pending)
+                    .OrderBy(r => r.StartDate)
+                    .Take(5)
+                    .ToListAsync();
+
+                pendingSwapsTask = _db.SwapRequests
+                    .Include(sr => sr.FromAssignment)
+                    .ThenInclude(sa => sa.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                    .Where(sr => (sr.FromUserId == userId || sr.ToUserId == userId)
+                              && sr.CompanyId == companyId
+                              && sr.Status == RequestStatus.Pending)
+                    .OrderBy(sr => sr.CreatedAt)
+                    .Take(5)
+                    .ToListAsync();
+            }
+
+            // Assigned Chores (next 7 days)
+            if (preference.IncludeChores)
+            {
+                upcomingChoresTask = _db.Chores
+                    .Where(c => c.UserId == userId
+                             && c.CompanyId == companyId
+                             && c.Date >= today
+                             && c.Date <= nextWeek
+                             && c.CanceledAt == null)
+                    .OrderBy(c => c.Date)
+                    .Take(10)
+                    .ToListAsync();
+            }
+
+            // OnDuty Assignments (next 7 days)
+            if (preference.IncludeOnDuty)
+            {
+                upcomingOnDutyTask = _db.OnDuties
+                    .Where(od => od.UserId == userId
+                              && od.Date >= today
+                              && od.Date <= nextWeek
+                              && od.CanceledAt == null)
+                    .OrderBy(od => od.Date)
+                    .Take(10)
+                    .ToListAsync();
+            }
+
+            // Wait for all queries to complete in parallel
+            var tasks = new List<Task>();
+            if (upcomingShiftsTask != null) tasks.Add(upcomingShiftsTask);
+            if (pendingTimeOffTask != null) tasks.Add(pendingTimeOffTask);
+            if (pendingSwapsTask != null) tasks.Add(pendingSwapsTask);
+            if (upcomingChoresTask != null) tasks.Add(upcomingChoresTask);
+            if (upcomingOnDutyTask != null) tasks.Add(upcomingOnDutyTask);
+
+            if (tasks.Any())
+            {
+                await Task.WhenAll(tasks);
+            }
+
+            // Build digest content from results
+            if (upcomingShiftsTask != null)
+            {
+                var upcomingShifts = await upcomingShiftsTask;
                 if (upcomingShifts.Any())
                 {
-                    var shiftsHtml = "<h3>📅 Upcoming Shifts (Next 7 Days)</h3><ul>";
+                    var shiftsHtml = $"<h3>{_localizer["Email_UpcomingShifts"]}</h3><ul>";
                     foreach (var shift in upcomingShifts)
                     {
                         shiftsHtml += $"<li><strong>{shift.ShiftInstance.WorkDate:MMM dd, yyyy}</strong> - " +
@@ -377,53 +455,36 @@ public class NotificationService : INotificationService
                 }
             }
 
-            // Pending Time-Off and Swap Requests
-            if (preference.IncludePendingRequests)
+            if (pendingTimeOffTask != null || pendingSwapsTask != null)
             {
-                var pendingTimeOff = await _db.TimeOffRequests
-                    .Where(r => r.UserId == userId
-                             && r.CompanyId == companyId
-                             && r.Status == RequestStatus.Pending)
-                    .OrderBy(r => r.StartDate)
-                    .Take(5)
-                    .ToListAsync();
-
-                var pendingSwaps = await _db.SwapRequests
-                    .Include(sr => sr.FromAssignment)
-                    .ThenInclude(sa => sa.ShiftInstance)
-                    .ThenInclude(si => si.ShiftType)
-                    .Where(sr => (sr.FromUserId == userId || sr.ToUserId == userId)
-                              && sr.CompanyId == companyId
-                              && sr.Status == RequestStatus.Pending)
-                    .OrderBy(sr => sr.CreatedAt)
-                    .Take(5)
-                    .ToListAsync();
+                var pendingTimeOff = pendingTimeOffTask != null ? await pendingTimeOffTask : new List<TimeOffRequest>();
+                var pendingSwaps = pendingSwapsTask != null ? await pendingSwapsTask : new List<SwapRequest>();
 
                 if (pendingTimeOff.Any() || pendingSwaps.Any())
                 {
-                    var requestsHtml = "<h3>⏳ Pending Requests</h3>";
+                    var requestsHtml = $"<h3>{_localizer["Email_PendingRequests"]}</h3>";
 
                     if (pendingTimeOff.Any())
                     {
-                        requestsHtml += "<h4>Time Off Requests:</h4><ul>";
+                        requestsHtml += $"<h4>{_localizer["Email_TimeOffRequests"]}</h4><ul>";
                         foreach (var request in pendingTimeOff)
                         {
                             var dateRange = request.StartDate == request.EndDate
                                 ? request.StartDate.ToString("MMM dd, yyyy")
                                 : $"{request.StartDate:MMM dd} - {request.EndDate:MMM dd, yyyy}";
-                            requestsHtml += $"<li>{dateRange} - <em>Pending approval</em></li>";
+                            requestsHtml += $"<li>{dateRange} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
                         requestsHtml += "</ul>";
                     }
 
                     if (pendingSwaps.Any())
                     {
-                        requestsHtml += "<h4>Swap Requests:</h4><ul>";
+                        requestsHtml += $"<h4>{_localizer["Email_SwapRequests"]}</h4><ul>";
                         foreach (var swap in pendingSwaps)
                         {
                             var shiftInfo = $"{swap.FromAssignment.ShiftInstance.WorkDate:MMM dd, yyyy} - " +
                                           $"{swap.FromAssignment.ShiftInstance.ShiftType.Name}";
-                            requestsHtml += $"<li>{shiftInfo} - <em>Pending approval</em></li>";
+                            requestsHtml += $"<li>{shiftInfo} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
                         requestsHtml += "</ul>";
                     }
@@ -432,22 +493,12 @@ public class NotificationService : INotificationService
                 }
             }
 
-            // Assigned Chores (next 7 days)
-            if (preference.IncludeChores)
+            if (upcomingChoresTask != null)
             {
-                var upcomingChores = await _db.Chores
-                    .Where(c => c.UserId == userId
-                             && c.CompanyId == companyId
-                             && c.Date >= today
-                             && c.Date <= nextWeek
-                             && c.CanceledAt == null)
-                    .OrderBy(c => c.Date)
-                    .Take(10)
-                    .ToListAsync();
-
+                var upcomingChores = await upcomingChoresTask;
                 if (upcomingChores.Any())
                 {
-                    var choresHtml = "<h3>🧹 Assigned Chores (Next 7 Days)</h3><ul>";
+                    var choresHtml = $"<h3>{_localizer["Email_AssignedChores"]}</h3><ul>";
                     foreach (var chore in upcomingChores)
                     {
                         choresHtml += $"<li><strong>{chore.Date:MMM dd, yyyy}</strong> - {chore.Title}</li>";
@@ -457,21 +508,12 @@ public class NotificationService : INotificationService
                 }
             }
 
-            // OnDuty Assignments (next 7 days)
-            if (preference.IncludeOnDuty)
+            if (upcomingOnDutyTask != null)
             {
-                var upcomingOnDuty = await _db.OnDuties
-                    .Where(od => od.UserId == userId
-                              && od.Date >= today
-                              && od.Date <= nextWeek
-                              && od.CanceledAt == null)
-                    .OrderBy(od => od.Date)
-                    .Take(10)
-                    .ToListAsync();
-
+                var upcomingOnDuty = await upcomingOnDutyTask;
                 if (upcomingOnDuty.Any())
                 {
-                    var onDutyHtml = "<h3>🎖️ OnDuty Assignments (Next 7 Days)</h3><ul>";
+                    var onDutyHtml = $"<h3>{_localizer["Email_OnDutyAssignments"]}</h3><ul>";
                     foreach (var od in upcomingOnDuty)
                     {
                         var typeName = od.Type == OnDutyType.Hakam
@@ -501,7 +543,7 @@ public class NotificationService : INotificationService
 
                 if (todaysOnDuty.Any())
                 {
-                    var todayHtml = "<h3 style='color: #6366f1; margin-top: 1.5rem;'>📋 Today's On-Duty Assignments</h3><ul>";
+                    var todayHtml = $"<h3 style='color: #6366f1; margin-top: 1.5rem;'>{_localizer["Email_TodaysOnDutyAssignments"]}</h3><ul>";
 
                     // Load custom types for name resolution
                     var customTypes = await _db.OnDutyTypeConfigs
@@ -522,11 +564,14 @@ public class NotificationService : INotificationService
                             roleName = currentCulture.StartsWith("he") ? customType.NameHe : customType.NameEn;
                         }
                         else
-                            roleName = "Unknown Role";
+                            roleName = _localizer["Email_UnknownRole"];
 
                         // Format: "Today's Hakam is John Doe"
-                        todayHtml += $"<li>Today's <strong>{roleName}</strong> is " +
-                                    $"<a href='http://localhost:5000/My/Profile?userId={od.UserId}'>{od.User?.DisplayName ?? "Unknown"}</a></li>";
+                        var baseUrl = _configuration["App:BaseUrl"] ?? "http://localhost:5000";
+                        var todaysRole = string.Format(_localizer["Email_TodaysRole"],
+                                        $"<strong>{roleName}</strong>",
+                                        $"<a href='{baseUrl}/My/Profile?userId={od.UserId}'>{od.User?.DisplayName ?? "Unknown"}</a>");
+                        todayHtml += $"<li>{todaysRole}</li>";
                     }
                     todayHtml += "</ul>";
                     digestParts.Add(todayHtml);
@@ -541,10 +586,12 @@ public class NotificationService : INotificationService
             }
 
             // Build email HTML
+            var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
             var emailBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         h2 {{ color: #4F46E5; }}
@@ -556,17 +603,17 @@ public class NotificationService : INotificationService
     </style>
 </head>
 <body>
-    <h2>📬 Daily Digest for {user.DisplayName}</h2>
-    <p>Here's your summary for the upcoming week:</p>
+    <h2>{string.Format(_localizer["Email_DailyDigestTitle"], user.DisplayName)}</h2>
+    <p>{_localizer["Email_DailyDigestIntro"]}</p>
     {string.Join("\n", digestParts)}
     <div class='footer'>
-        <p>This is your automated daily digest. To change your preferences, visit your Settings page.</p>
-        <p><em>Sent at {DateTime.UtcNow:MMM dd, yyyy HH:mm} UTC</em></p>
+        <p>{_localizer["Email_DailyDigestFooter"]}</p>
+        <p><em>{string.Format(_localizer["Email_SentAt"], DateTime.UtcNow.ToString("MMM dd, yyyy HH:mm"))}</em></p>
     </div>
 </body>
 </html>";
 
-            var subject = $"📬 Daily Digest - {today:MMM dd, yyyy}";
+            var subject = string.Format(_localizer["Email_DailyDigestSubject"], today.ToString("MMM dd, yyyy"));
 
             var success = await _mailService.SendMailAsync(user.Email, subject, emailBody);
 
@@ -630,10 +677,10 @@ public class NotificationService : INotificationService
 
                 if (tomorrowShifts.Any())
                 {
-                    var shiftsHtml = "<h3 style='color: #6366f1;'>📅 Upcoming Shifts Tomorrow</h3><ul>";
+                    var shiftsHtml = $"<h3 style='color: #6366f1;'>{_localizer["Email_UpcomingShiftsTomorrow"]}</h3><ul>";
                     foreach (var sa in tomorrowShifts)
                     {
-                        var shiftTypeName = sa.ShiftInstance.ShiftType?.Name ?? "Shift";
+                        var shiftTypeName = sa.ShiftInstance.ShiftType?.Name ?? _localizer["Email_Shift"];
                         shiftsHtml += $"<li><strong>{shiftTypeName}</strong> - " +
                                      $"{sa.ShiftInstance.ShiftType.Start:HH:mm} to {sa.ShiftInstance.ShiftType.End:HH:mm}</li>";
                     }
@@ -655,7 +702,7 @@ public class NotificationService : INotificationService
 
                 if (tomorrowChores.Any())
                 {
-                    var choresHtml = "<h3 style='color: #10b981;'>🧹 Chores Assigned Tomorrow</h3><ul>";
+                    var choresHtml = $"<h3 style='color: #10b981;'>{_localizer["Email_ChoresAssignedTomorrow"]}</h3><ul>";
                     foreach (var chore in tomorrowChores)
                     {
                         choresHtml += $"<li>{chore.Title}</li>";
@@ -676,7 +723,7 @@ public class NotificationService : INotificationService
 
                 if (tomorrowOnDuties.Any())
                 {
-                    var onDutyHtml = "<h3 style='color: #f59e0b;'>👮 On-Duty Assignments Tomorrow</h3><ul>";
+                    var onDutyHtml = $"<h3 style='color: #f59e0b;'>{_localizer["Email_OnDutyAssignmentsTomorrow"]}</h3><ul>";
 
                     // Load custom types for name resolution
                     var customTypes = await _db.OnDutyTypeConfigs
@@ -697,7 +744,7 @@ public class NotificationService : INotificationService
                             roleName = currentCulture.StartsWith("he") ? customType.NameHe : customType.NameEn;
                         }
                         else
-                            roleName = "Unknown Role";
+                            roleName = _localizer["Email_UnknownRole"];
 
                         onDutyHtml += $"<li><strong>{roleName}</strong></li>";
                     }
@@ -714,10 +761,12 @@ public class NotificationService : INotificationService
             }
 
             // Build email HTML
+            var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
             var emailBody = $@"
 <!DOCTYPE html>
-<html>
+<html dir='{emailDir}'>
 <head>
+    <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
         h2 {{ color: #4F46E5; }}
@@ -728,17 +777,17 @@ public class NotificationService : INotificationService
     </style>
 </head>
 <body>
-    <h2>⏰ Reminder: Upcoming Assignments Tomorrow</h2>
-    <p>Hi {user.DisplayName}, here's what you have scheduled for tomorrow ({tomorrow:MMM dd, yyyy}):</p>
+    <h2>{_localizer["Email_ReminderTitle"]}</h2>
+    <p>{string.Format(_localizer["Email_ReminderIntro"], user.DisplayName, tomorrow.ToString("MMM dd, yyyy"))}</p>
     {string.Join("\n", reminderParts)}
     <div class='footer'>
-        <p>This is your automated day-before reminder. To change your preferences, visit your Settings page.</p>
-        <p><em>Sent at {DateTime.UtcNow:MMM dd, yyyy HH:mm} UTC</em></p>
+        <p>{_localizer["Email_ReminderFooter"]}</p>
+        <p><em>{string.Format(_localizer["Email_SentAt"], DateTime.UtcNow.ToString("MMM dd, yyyy HH:mm"))}</em></p>
     </div>
 </body>
 </html>";
 
-            var subject = $"⏰ Reminder: Assignments Tomorrow ({tomorrow:MMM dd, yyyy})";
+            var subject = string.Format(_localizer["Email_ReminderSubject"], tomorrow.ToString("MMM dd, yyyy"));
 
             var success = await _mailService.SendMailAsync(user.Email, subject, emailBody);
 

@@ -2,21 +2,26 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using System.ComponentModel.DataAnnotations;
 
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "IsAdmin")]
-public class CompaniesModel : PageModel
+public class CompaniesModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<CompaniesModel> _logger;
 
-    public CompaniesModel(AppDbContext db, ILogger<CompaniesModel> logger)
+    public CompaniesModel(
+        IStringLocalizer<SharedResources> localizer,
+        AppDbContext db,
+        ILogger<CompaniesModel> logger) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -40,9 +45,6 @@ public class CompaniesModel : PageModel
 
     [BindProperty] public int RenameCompanyId { get; set; }
     [BindProperty] public string NewCompanyName { get; set; } = string.Empty;
-
-    public string? Error { get; set; }
-    public string? Success { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -78,46 +80,46 @@ public class CompaniesModel : PageModel
         // ✅ SECURITY FIX: Enhanced input validation with length constraints
         if (string.IsNullOrWhiteSpace(CompanyName) || string.IsNullOrWhiteSpace(CompanySlug))
         {
-            Error = "Company name and slug are required.";
+            Error = _localizer["Error_CompanyNameAndSlugRequired"];
             return Page();
         }
 
         // Validate field lengths to prevent DoS via large strings
         if (CompanyName.Length > 200 || CompanySlug.Length > 100)
         {
-            Error = "Company name or slug exceeds maximum length (200/100 characters).";
+            Error = _localizer["Error_CompanyNameOrSlugTooLong"];
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(CompanyDisplayName) && CompanyDisplayName.Length > 200)
         {
-            Error = "Company display name must not exceed 200 characters.";
+            Error = _localizer["Error_CompanyDisplayNameTooLong"];
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(ManagerDisplayName) && ManagerDisplayName.Length > 200)
         {
-            Error = "Manager display name must not exceed 200 characters.";
+            Error = _localizer["Error_ManagerDisplayNameTooLong"];
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(ManagerEmail) && ManagerEmail.Length > 255)
         {
-            Error = "Manager email must not exceed 255 characters.";
+            Error = _localizer["Error_ManagerEmailTooLong"];
             return Page();
         }
 
         // Validate slug is unique
         if (await _db.Companies.AnyAsync(c => c.Slug == CompanySlug))
         {
-            Error = "Company slug already exists. Please choose a different slug.";
+            Error = _localizer["Error_CompanySlugAlreadyExists"];
             return Page();
         }
 
         // Validate slug format (lowercase, alphanumeric, hyphens only)
         if (!System.Text.RegularExpressions.Regex.IsMatch(CompanySlug, @"^[a-z0-9-]+$"))
         {
-            Error = "Company slug must be lowercase and contain only letters, numbers, and hyphens.";
+            Error = _localizer["Error_CompanySlugInvalidFormat"];
             return Page();
         }
 
@@ -131,14 +133,14 @@ public class CompaniesModel : PageModel
                 string.IsNullOrWhiteSpace(ManagerDisplayName) ||
                 string.IsNullOrWhiteSpace(ManagerPassword))
             {
-                Error = "Manager email, display name, and password are required (or select an existing Director).";
+                Error = _localizer["Error_ManagerFieldsRequired"];
                 return Page();
             }
 
             // Validate manager email is unique
             if (await _db.Users.AnyAsync(u => u.Email == ManagerEmail))
             {
-                Error = "Manager email already exists.";
+                Error = _localizer["Error_ManagerEmailAlreadyExists"];
                 return Page();
             }
         }
@@ -148,7 +150,7 @@ public class CompaniesModel : PageModel
             var directorExists = await _db.Users.AnyAsync(u => u.Id == SelectedDirectorId!.Value && u.Role == UserRole.Director);
             if (!directorExists)
             {
-                Error = "Selected Director does not exist or is not a Director.";
+                Error = _localizer["Error_SelectedDirectorNotFound"];
                 return Page();
             }
         }
@@ -198,7 +200,7 @@ public class CompaniesModel : PageModel
                 _logger.LogInformation("Assigned Director {DirectorId} ({DirectorEmail}) to company {CompanyName}",
                     SelectedDirectorId.Value, director?.Email, company.Name);
 
-                successUserInfo = $"Director '{director?.DisplayName}' ({director?.Email}) has been assigned to manage this company.";
+                successUserInfo = string.Format(_localizer["Success_DirectorAssigned"], director?.DisplayName, director?.Email);
             }
             else
             {
@@ -221,7 +223,7 @@ public class CompaniesModel : PageModel
                 _logger.LogInformation("Created manager user {ManagerEmail} for company {CompanyName}",
                     ManagerEmail, company.Name);
 
-                successUserInfo = $"Manager can log in with email: {ManagerEmail}";
+                successUserInfo = string.Format(_localizer["Success_ManagerCreated"], ManagerEmail);
             }
 
             // 3. Create default shift types for the new company
@@ -252,7 +254,7 @@ public class CompaniesModel : PageModel
 
             await transaction.CommitAsync();
 
-            TempData["SuccessMessage"] = $"Company '{company.Name}' created successfully. {successUserInfo}";
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyCreated"], company.Name, successUserInfo);
 
             return RedirectToPage();
         }
@@ -260,7 +262,7 @@ public class CompaniesModel : PageModel
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error creating company {CompanyName}", CompanyName);
-            Error = "An error occurred while creating the company. Please try again.";
+            Error = _localizer["Error_CompanyCreationFailed"];
             return Page();
         }
     }
@@ -269,14 +271,14 @@ public class CompaniesModel : PageModel
     {
         if (RenameCompanyId <= 0 || string.IsNullOrWhiteSpace(NewCompanyName))
         {
-            TempData["ErrorMessage"] = "Invalid company ID or name.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidCompanyIdOrName"];
             return RedirectToPage();
         }
 
         var company = await _db.Companies.FindAsync(RenameCompanyId);
         if (company == null)
         {
-            TempData["ErrorMessage"] = "Company not found.";
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"];
             return RedirectToPage();
         }
 
@@ -284,7 +286,7 @@ public class CompaniesModel : PageModel
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Company {CompanyId} renamed to {NewName}", RenameCompanyId, NewCompanyName);
-        TempData["SuccessMessage"] = $"Company renamed to '{NewCompanyName}' successfully.";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"], NewCompanyName);
 
         return RedirectToPage();
     }
@@ -294,7 +296,7 @@ public class CompaniesModel : PageModel
         var company = await _db.Companies.FindAsync(id);
         if (company == null)
         {
-            TempData["ErrorMessage"] = "Company not found.";
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"];
             return RedirectToPage();
         }
 
@@ -302,7 +304,7 @@ public class CompaniesModel : PageModel
         var hasOwnerUsers = await _db.Users.AnyAsync(u => u.CompanyId == id && u.Role == UserRole.Owner);
         if (hasOwnerUsers)
         {
-            TempData["ErrorMessage"] = "Cannot delete company: Owner users must be removed or transferred first. Owners must always remain in the system.";
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteCompanyWithOwners"];
             _logger.LogWarning("Attempted to delete company {CompanyId} with Owner users still assigned", id);
             return RedirectToPage();
         }
@@ -311,47 +313,38 @@ public class CompaniesModel : PageModel
 
         try
         {
-            // Delete all related data for this company
+            // Delete all related data for this company using ExecuteDeleteAsync for better performance
+            // This avoids loading all entities into memory before deletion
 
             // 1. Delete all swap requests
-            var swapRequests = await _db.SwapRequests.Where(sr => sr.CompanyId == id).ToListAsync();
-            _db.SwapRequests.RemoveRange(swapRequests);
+            await _db.SwapRequests.Where(sr => sr.CompanyId == id).ExecuteDeleteAsync();
 
             // 2. Delete all time-off requests
-            var timeOffRequests = await _db.TimeOffRequests.Where(tor => tor.CompanyId == id).ToListAsync();
-            _db.TimeOffRequests.RemoveRange(timeOffRequests);
+            await _db.TimeOffRequests.Where(tor => tor.CompanyId == id).ExecuteDeleteAsync();
 
             // 3. Delete all shift assignments
-            var shiftAssignments = await _db.ShiftAssignments.Where(sa => sa.CompanyId == id).ToListAsync();
-            _db.ShiftAssignments.RemoveRange(shiftAssignments);
+            await _db.ShiftAssignments.Where(sa => sa.CompanyId == id).ExecuteDeleteAsync();
 
             // 4. Delete all shift instances
-            var shiftInstances = await _db.ShiftInstances.Where(si => si.CompanyId == id).ToListAsync();
-            _db.ShiftInstances.RemoveRange(shiftInstances);
+            await _db.ShiftInstances.Where(si => si.CompanyId == id).ExecuteDeleteAsync();
 
             // 5. Delete all shift types
-            var shiftTypes = await _db.ShiftTypes.Where(st => st.CompanyId == id).ToListAsync();
-            _db.ShiftTypes.RemoveRange(shiftTypes);
+            await _db.ShiftTypes.Where(st => st.CompanyId == id).ExecuteDeleteAsync();
 
             // 6. Delete all configs
-            var configs = await _db.Configs.Where(c => c.CompanyId == id).ToListAsync();
-            _db.Configs.RemoveRange(configs);
+            await _db.Configs.Where(c => c.CompanyId == id).ExecuteDeleteAsync();
 
             // 7. Delete all director assignments
-            var directorAssignments = await _db.DirectorCompanies.Where(dc => dc.CompanyId == id).ToListAsync();
-            _db.DirectorCompanies.RemoveRange(directorAssignments);
+            await _db.DirectorCompanies.Where(dc => dc.CompanyId == id).ExecuteDeleteAsync();
 
             // 8. Delete all user notifications
-            var notifications = await _db.UserNotifications.Where(n => n.CompanyId == id).ToListAsync();
-            _db.UserNotifications.RemoveRange(notifications);
+            await _db.UserNotifications.Where(n => n.CompanyId == id).ExecuteDeleteAsync();
 
             // 9. Delete all join requests
-            var joinRequests = await _db.UserJoinRequests.Where(jr => jr.CompanyId == id).ToListAsync();
-            _db.UserJoinRequests.RemoveRange(joinRequests);
+            await _db.UserJoinRequests.Where(jr => jr.CompanyId == id).ExecuteDeleteAsync();
 
             // 10. Delete all non-Owner users (Owners were already checked above)
-            var users = await _db.Users.Where(u => u.CompanyId == id && u.Role != UserRole.Owner).ToListAsync();
-            _db.Users.RemoveRange(users);
+            await _db.Users.Where(u => u.CompanyId == id && u.Role != UserRole.Owner).ExecuteDeleteAsync();
 
             // 11. Finally, delete the company itself
             _db.Companies.Remove(company);
@@ -360,7 +353,7 @@ public class CompaniesModel : PageModel
             await transaction.CommitAsync();
 
             _logger.LogInformation("Company {CompanyId} ({CompanyName}) deleted successfully", id, company.Name);
-            TempData["SuccessMessage"] = $"Company '{company.Name}' and all associated data deleted successfully.";
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyDeleted"], company.Name);
 
             return RedirectToPage();
         }
@@ -368,7 +361,7 @@ public class CompaniesModel : PageModel
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error deleting company {CompanyId}", id);
-            TempData["ErrorMessage"] = "An error occurred while deleting the company. Please try again.";
+            TempData["ErrorMessage"] = _localizer["Error_CompanyDeletionFailed"];
             return RedirectToPage();
         }
     }

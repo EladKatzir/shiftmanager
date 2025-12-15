@@ -157,7 +157,7 @@
   </data>
 
 
-  <!-- Home Page Dashboard -->
+  
   <data name="NextShift" xml:space="preserve">
     <value>Next Shift</value>
   </data>
@@ -237,7 +237,7 @@
     <value>Manage Companies</value>
   </data>
 
-  <!-- Priority 2: Schedule Workspace Keys -->
+  
   <data name="Calendars" xml:space="preserve">
     <value>Calendars</value>
   </data>
@@ -1134,9 +1134,6 @@
   <data name="Status" xml:space="preserve">
     <value>Status</value>
   </data>
-  <data name="Unread" xml:space="preserve">
-    <value>Unread</value>
-  </data>
   <data name="NoNotificationsYet" xml:space="preserve">
     <value>No notifications yet.</value>
   </data>
@@ -1373,11 +1370,6 @@
   <data name="Last12Months" xml:space="preserve">
     <value>Last 12 Months</value>
   </data>
-  <data name="DaysOff" xml:space="preserve">
-    <value>Days Off</value>
-  </data>
-
-  
   <data name="Filters" xml:space="preserve">
     <value>Filters</value>
   </data>
@@ -1507,20 +1499,9 @@
   </data>
 
   
-  <data name="PendingRequests" xml:space="preserve">
-    <value>Pending Requests</value>
-  </data>
   <data name="ManageApprovedTimeOff" xml:space="preserve">
     <value>Manage Approved Time-Off</value>
   </data>
-  <data name="PendingTimeOff" xml:space="preserve">
-    <value>Pending Time-off</value>
-  </data>
-  <data name="PendingSwaps" xml:space="preserve">
-    <value>Pending Swaps</value>
-  </data>
-
-  
   <data name="SaveChanges" xml:space="preserve">
     <value>Save Changes</value>
   </data>
@@ -1734,9 +1715,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
 
   
-  <data name="MyRequests" xml:space="preserve">
-    <value>My Requests</value>
-  </data>
   <data name="RequestTimeOff" xml:space="preserve">
     <value>Request Time Off</value>
   </data>
@@ -1841,7 +1819,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>more</value>
   </data>
 
-  <!-- Audit Log Page Strings -->
+  
   <data name="AuditLogDescription" xml:space="preserve">
     <value>View and search {0} audit log entries tracking all system actions and changes</value>
   </data>
@@ -1865,9 +1843,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Last" xml:space="preserve">
     <value>Last</value>
-  </data>
-  <data name="Of" xml:space="preserve">
-    <value>of</value>
   </data>
   <data name="NoAuditLogs" xml:space="preserve">
     <value>No Audit Logs Found</value>
@@ -1899,17 +1874,11 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="CopyToClipboard" xml:space="preserve">
     <value>Copy to Clipboard</value>
   </data>
-  <data name="CopiedToClipboard" xml:space="preserve">
-    <value>Copied to clipboard!</value>
-  </data>
   <data name="ActiveApiKeys" xml:space="preserve">
     <value>Active API Keys</value>
   </data>
   <data name="NoActiveApiKeys" xml:space="preserve">
     <value>No active API keys found</value>
-  </data>
-  <data name="PendingRequests" xml:space="preserve">
-    <value>Pending Requests</value>
   </data>
   <data name="NoPendingRequests" xml:space="preserve">
     <value>No pending requests</value>
@@ -1932,12 +1901,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="RequestedScopes" xml:space="preserve">
     <value>Requested Scopes</value>
   </data>
-  <data name="SubmitRequest" xml:space="preserve">
-    <value>Submit Request</value>
-  </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
   <data name="Scopes" xml:space="preserve">
     <value>Scopes</value>
   </data>
@@ -1959,20 +1922,8 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Actions" xml:space="preserve">
     <value>Actions</value>
   </data>
-  <data name="Revoke" xml:space="preserve">
-    <value>Revoke</value>
-  </data>
   <data name="ConfirmRevokeKey" xml:space="preserve">
     <value>Are you sure you want to revoke this API key? This action cannot be undone.</value>
-  </data>
-  <data name="Pending" xml:space="preserve">
-    <value>Pending</value>
-  </data>
-  <data name="Approved" xml:space="preserve">
-    <value>Approved</value>
-  </data>
-  <data name="Rejected" xml:space="preserve">
-    <value>Rejected</value>
   </data>
   <data name="RequestedDate" xml:space="preserve">
     <value>Requested Date</value>
@@ -1991,12 +1942,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="RequestedBy" xml:space="preserve">
     <value>Requested By</value>
-  </data>
-  <data name="Approve" xml:space="preserve">
-    <value>Approve</value>
-  </data>
-  <data name="Reject" xml:space="preserve">
-    <value>Reject</value>
   </data>
   <data name="ApproveApiKeyRequest" xml:space="preserve">
     <value>Approve API Key Request</value>
@@ -2070,9 +2015,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="AllCompanyApiKeys" xml:space="preserve">
     <value>All Company API Keys</value>
   </data>
-  <data name="PendingRequestsReview" xml:space="preserve">
-    <value>Pending Requests for Review</value>
-  </data>
   <data name="Owner" xml:space="preserve">
     <value>Owner</value>
   </data>
@@ -2081,9 +2023,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="ConfirmDeleteShiftType" xml:space="preserve">
     <value>Are you sure you want to delete this shift type? This action cannot be undone.</value>
-  </data>
-  <data name="Delete" xml:space="preserve">
-    <value>Delete</value>
   </data>
   <data name="TimeOffType" xml:space="preserve">
     <value>Time-off Type</value>
@@ -2097,14 +2036,11 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="AfterDescription" xml:space="preserve">
     <value>Half day: Active from 4:00 PM on the selected date until 1:00 PM the next day</value>
   </data>
-  <data name="Date" xml:space="preserve">
-    <value>Date</value>
-  </data>
   <data name="ReasonOptional" xml:space="preserve">
     <value>Reason (optional)</value>
   </data>
 
-  <!-- Public Section & On-Duty -->
+  
   <data name="Public" xml:space="preserve">
     <value>Public</value>
   </data>
@@ -2198,9 +2134,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ConfirmDeleteOnDutyType" xml:space="preserve">
     <value>Are you sure you want to delete the day shift type '{0}'?</value>
   </data>
-  <data name="Add" xml:space="preserve">
-    <value>Add</value>
-  </data>
   <data name="VacationType" xml:space="preserve">
     <value>Vacation Type</value>
   </data>
@@ -2222,9 +2155,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ApproverDescription" xml:space="preserve">
     <value>Optionally select a specific manager to approve your request for privacy</value>
   </data>
-  <data name="TimeOffReasonPlaceholder" xml:space="preserve">
-    <value>Optional reason for time off request</value>
-  </data>
   <data name="Information" xml:space="preserve">
     <value>Information</value>
   </data>
@@ -2240,44 +2170,17 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="MyOverview" xml:space="preserve">
     <value>My Overview</value>
   </data>
-  <data name="Week" xml:space="preserve">
-    <value>Week</value>
-  </data>
-  <data name="Custom" xml:space="preserve">
-    <value>Custom</value>
-  </data>
   <data name="TimeRangeSwitcher" xml:space="preserve">
     <value>Time Range</value>
   </data>
-  <data name="Filters" xml:space="preserve">
-    <value>Filters</value>
-  </data>
   <data name="Vacations" xml:space="preserve">
     <value>Vacations</value>
-  </data>
-  <data name="OnDuty" xml:space="preserve">
-    <value>Day Shift</value>
-  </data>
-  <data name="Chores" xml:space="preserve">
-    <value>Chores</value>
-  </data>
-  <data name="Today" xml:space="preserve">
-    <value>Today</value>
-  </data>
-  <data name="Tomorrow" xml:space="preserve">
-    <value>Tomorrow</value>
-  </data>
-  <data name="ThisWeek" xml:space="preserve">
-    <value>This Week</value>
   </data>
   <data name="Later" xml:space="preserve">
     <value>Later</value>
   </data>
   <data name="Past" xml:space="preserve">
     <value>Past</value>
-  </data>
-  <data name="Upcoming" xml:space="preserve">
-    <value>Upcoming</value>
   </data>
   <data name="All" xml:space="preserve">
     <value>All</value>
@@ -2297,12 +2200,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="NoItemsMatch" xml:space="preserve">
     <value>No items match your filters.</value>
   </data>
-  <data name="ClearFilters" xml:space="preserve">
-    <value>Clear Filters</value>
-  </data>
-  <data name="Details" xml:space="preserve">
-    <value>Details</value>
-  </data>
   <data name="Conflict" xml:space="preserve">
     <value>Conflict</value>
   </data>
@@ -2315,9 +2212,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ToggleCountHours" xml:space="preserve">
     <value>Toggle Count/Hours</value>
   </data>
-  <data name="Showing" xml:space="preserve">
-    <value>Showing</value>
-  </data>
   <data name="Items" xml:space="preserve">
     <value>items</value>
   </data>
@@ -2327,26 +2221,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Vacation" xml:space="preserve">
     <value>Vacation</value>
   </data>
-  <data name="After" xml:space="preserve">
-    <value>After</value>
-  </data>
-  <data name="OnDutyHakam" xml:space="preserve">
-    <value>Day Shift - Hakam</value>
-  </data>
-  <data name="OnDutyLead" xml:space="preserve">
-    <value>Day Shift - Lead</value>
-  </data>
-  <data name="Shadowing" xml:space="preserve">
-    <value>Shadowing</value>
-  </data>
   <data name="Days" xml:space="preserve">
     <value>days</value>
   </data>
-  <data name="Day" xml:space="preserve">
-    <value>day</value>
-  </data>
-
-  <!-- My Team Calendars -->
   <data name="MyTeam" xml:space="preserve">
     <value>My Team</value>
   </data>
@@ -2361,12 +2238,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="PreviousWeek" xml:space="preserve">
     <value>Previous Week</value>
-  </data>
-  <data name="NextWeek" xml:space="preserve">
-    <value>Next Week</value>
-  </data>
-  <data name="ThisWeek" xml:space="preserve">
-    <value>This Week</value>
   </data>
   <data name="TeamMember" xml:space="preserve">
     <value>Team Member</value>
@@ -2397,9 +2268,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="SearchByName" xml:space="preserve">
     <value>Search by name...</value>
-  </data>
-  <data name="SaveChanges" xml:space="preserve">
-    <value>Save Changes</value>
   </data>
   <data name="DeleteCalendar" xml:space="preserve">
     <value>Delete Calendar</value>
@@ -2455,32 +2323,8 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ViewOnlyNoNavigation" xml:space="preserve">
     <value>(View-only - no navigation available for your role)</value>
   </data>
-  <data name="Delete" xml:space="preserve">
-    <value>Delete</value>
-  </data>
   <data name="DeleteCalendarNote" xml:space="preserve">
     <value>This will only remove your personal view. It won't affect any actual data.</value>
-  </data>
-  <data name="Sunday" xml:space="preserve">
-    <value>Sunday</value>
-  </data>
-  <data name="Monday" xml:space="preserve">
-    <value>Monday</value>
-  </data>
-  <data name="Tuesday" xml:space="preserve">
-    <value>Tuesday</value>
-  </data>
-  <data name="Wednesday" xml:space="preserve">
-    <value>Wednesday</value>
-  </data>
-  <data name="Thursday" xml:space="preserve">
-    <value>Thursday</value>
-  </data>
-  <data name="Friday" xml:space="preserve">
-    <value>Friday</value>
-  </data>
-  <data name="Saturday" xml:space="preserve">
-    <value>Saturday</value>
   </data>
   <data name="SunShort" xml:space="preserve">
     <value>Sun</value>
@@ -2527,9 +2371,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Members" xml:space="preserve">
     <value>members</value>
   </data>
-  <data name="Rename" xml:space="preserve">
-    <value>Rename</value>
-  </data>
   <data name="RenameCalendarTitle" xml:space="preserve">
     <value>Rename Calendar</value>
   </data>
@@ -2565,9 +2406,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Apr" xml:space="preserve">
     <value>Apr</value>
-  </data>
-  <data name="May" xml:space="preserve">
-    <value>May</value>
   </data>
   <data name="Jun" xml:space="preserve">
     <value>Jun</value>
@@ -2709,10 +2547,6 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Copied</value>
     <comment>Phase 18 - Copy success message</comment>
   </data>
-  <data name="Important" xml:space="preserve">
-    <value>Important</value>
-    <comment>Phase 18 - Important label</comment>
-  </data>
   <data name="ChangePasswordAfterLogin" xml:space="preserve">
     <value>This is a temporary password. Please log in and change it immediately in your profile settings.</value>
     <comment>Phase 18 - Change password reminder</comment>
@@ -2809,14 +2643,6 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Time-Off</value>
     <comment>Phase 18 - TimeOff page breadcrumb</comment>
   </data>
-  <data name="Day" xml:space="preserve">
-    <value>day</value>
-    <comment>Phase 18 - Singular day</comment>
-  </data>
-  <data name="Days" xml:space="preserve">
-    <value>days</value>
-    <comment>Phase 18 - Plural days</comment>
-  </data>
   <data name="NoReasonProvided" xml:space="preserve">
     <value>No reason provided</value>
     <comment>Phase 18 - TimeOff page empty reason</comment>
@@ -2824,14 +2650,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ActiveToday" xml:space="preserve">
     <value>Active Today</value>
     <comment>Phase 18 - TimeOff status badge</comment>
-  </data>
-  <data name="Past" xml:space="preserve">
-    <value>Past</value>
-    <comment>Phase 18 - TimeOff status badge</comment>
-  </data>
-  <data name="Note" xml:space="preserve">
-    <value>Note</value>
-    <comment>Phase 18 - General note label</comment>
   </data>
   <data name="TimeOffDeletionNote" xml:space="preserve">
     <value>You can only delete future time-off requests. Requests that have already started or are in the past cannot be deleted. Deleting a time-off request will not automatically restore any shift assignments that were removed when it was approved.</value>
@@ -3004,10 +2822,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="PasswordManagement" xml:space="preserve">
     <value>Password Management</value>
     <comment>Sub-Phase 18.14 - Page title for combined Reset/Change password page</comment>
-  </data>
-  <data name="RequestAccess" xml:space="preserve">
-    <value>Request Access</value>
-    <comment>Sub-Phase 18.14 - Button on login page to request access/signup</comment>
   </data>
   <data name="Game_Title" xml:space="preserve">
     <value>Shift Swap</value>
@@ -3249,18 +3063,6 @@ Are you absolutely sure you want to delete this user?</value>
     <value>No shifts, chores, or on-duty assignments for this day</value>
     <comment>Phase 20 - Empty state subtitle</comment>
   </data>
-  <data name="Add" xml:space="preserve">
-    <value>Add</value>
-    <comment>Phase 20 - Add button</comment>
-  </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
-    <comment>Phase 20 - Cancel button</comment>
-  </data>
-  <data name="Delete" xml:space="preserve">
-    <value>Delete</value>
-    <comment>Phase 20 - Delete button</comment>
-  </data>
   <data name="Owner_AdminPanel" xml:space="preserve">
     <value>Owner Administration</value>
   </data>
@@ -3501,10 +3303,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="SaveSettings" xml:space="preserve">
     <value>Save Settings</value>
   </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <!-- Phase 6 Extension: Day-Before Reminders -->
   <data name="Settings_DayBeforeReminders" xml:space="preserve">
     <value>Day-Before Reminders</value>
   </data>
@@ -3532,7 +3330,7 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Settings_RemindBeforeOnDuty_Desc" xml:space="preserve">
     <value>Get a reminder the day before you have an on-duty assignment</value>
   </data>
-  <!-- Phase 6 Extension: OnDuty Role Subscriptions -->
+  
   <data name="Settings_OnDutySubscriptions" xml:space="preserve">
     <value>Today's On-Duty Notifications</value>
   </data>
@@ -3625,5 +3423,769 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="LoginWithADFS_Unavailable" xml:space="preserve">
     <value>Griffin ADFS is temporarily unavailable. Please use local login below.</value>
+  </data>
+
+  
+  <data name="Error_Login_RateLimitExceeded" xml:space="preserve">
+    <value>Too many login attempts. Please try again in 15 minutes.</value>
+  </data>
+  <data name="Error_Login_FieldsRequired" xml:space="preserve">
+    <value>Email and password are required.</value>
+  </data>
+  <data name="Error_InvalidInput" xml:space="preserve">
+    <value>Invalid input.</value>
+  </data>
+  <data name="Error_InvalidEmailFormat" xml:space="preserve">
+    <value>Invalid email format.</value>
+  </data>
+  <data name="Error_Login_AccountLocked" xml:space="preserve">
+    <value>Account is locked due to multiple failed login attempts. Please try again in {0} minute(s).</value>
+  </data>
+  <data name="Error_Login_AccountLockedAfterAttempts" xml:space="preserve">
+    <value>Account has been locked due to multiple failed login attempts. Please try again in 3 minutes.</value>
+  </data>
+  <data name="Error_Login_InvalidCredentials" xml:space="preserve">
+    <value>Invalid credentials.</value>
+  </data>
+  <data name="Error_UnexpectedError" xml:space="preserve">
+    <value>Unexpected error. Please try again.</value>
+  </data>
+  <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
+    <value>ADFS authentication is not configured. Please use local login or contact your administrator.</value>
+  </data>
+
+  
+  <data name="Culture" xml:space="preserve">
+    <value>en-US</value>
+  </data>
+  <data name="Email_AutomatedMessage" xml:space="preserve">
+    <value>This is an automated message. Please do not reply.</value>
+  </data>
+  <data name="Email_Greeting" xml:space="preserve">
+    <value>Hello {0},</value>
+  </data>
+  <data name="Email_ShiftAssigned_Message" xml:space="preserve">
+    <value>You have been assigned to a new shift:</value>
+  </data>
+  <data name="Email_ShiftDate" xml:space="preserve">
+    <value>Shift Date</value>
+  </data>
+  <data name="Email_ShiftType" xml:space="preserve">
+    <value>Shift Type</value>
+  </data>
+  <data name="Email_Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Email_ThankYou" xml:space="preserve">
+    <value>Thank you for your service.</value>
+  </data>
+  <data name="Email_RequestApproved_Message" xml:space="preserve">
+    <value>Your {0} request has been approved!</value>
+  </data>
+  <data name="Email_RequestDate" xml:space="preserve">
+    <value>Request Date</value>
+  </data>
+  <data name="Email_RequestRejected_Message" xml:space="preserve">
+    <value>Your {0} request has been rejected.</value>
+  </data>
+  <data name="Email_Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="Email_ContactManager" xml:space="preserve">
+    <value>If you have questions, please contact your manager.</value>
+  </data>
+  <data name="Email_PasswordReset_Message" xml:space="preserve">
+    <value>We received a request to reset your password. Click the button below to set a new password:</value>
+  </data>
+  <data name="Email_ResetPassword" xml:space="preserve">
+    <value>Reset Password</value>
+  </data>
+  <data name="Email_PasswordReset_Expiry" xml:space="preserve">
+    <value>This link will expire in 1 hour for security reasons.</value>
+  </data>
+  <data name="Email_PasswordReset_IgnoreIfNotRequested" xml:space="preserve">
+    <value>If you did not request a password reset, please ignore this email.</value>
+  </data>
+  <data name="Email_AccountCreated_Message" xml:space="preserve">
+    <value>Your account has been created! Here are your login credentials:</value>
+  </data>
+  <data name="Email_Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Email_TemporaryPassword" xml:space="preserve">
+    <value>Temporary Password</value>
+  </data>
+  <data name="Email_AccountCreated_ChangePassword" xml:space="preserve">
+    <value>For security reasons, please change your password after your first login.</value>
+  </data>
+  <data name="Email_SwapRequest_Message" xml:space="preserve">
+    <value>{0} has requested to swap shifts with you:</value>
+  </data>
+  <data name="Email_SwapRequest_Action" xml:space="preserve">
+    <value>Please log in to the system to accept or reject this swap request.</value>
+  </data>
+  <data name="Email_Reminder_Message" xml:space="preserve">
+    <value>This is a reminder about your upcoming {0}:</value>
+  </data>
+  <data name="Email_EventDate" xml:space="preserve">
+    <value>Event Date</value>
+  </data>
+  <data name="Email_Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+
+  
+  <data name="Error_Signup_PublicDisabled" xml:space="preserve">
+    <value>Public signup is disabled. Please contact your administrator for an invitation.</value>
+  </data>
+  <data name="Error_Signup_RequiredFields" xml:space="preserve">
+    <value>Please fill in all required fields.</value>
+  </data>
+  <data name="Error_Signup_AllFieldsRequired" xml:space="preserve">
+    <value>All fields are required.</value>
+  </data>
+  <data name="Error_Signup_EmailTooLong" xml:space="preserve">
+    <value>Email must not exceed 255 characters.</value>
+  </data>
+  <data name="Error_Signup_DisplayNameTooLong" xml:space="preserve">
+    <value>Display name must not exceed 200 characters.</value>
+  </data>
+  <data name="Error_Signup_PasswordTooLong" xml:space="preserve">
+    <value>Password must not exceed 128 characters.</value>
+  </data>
+  <data name="Error_Signup_SelectValidCompany" xml:space="preserve">
+    <value>Please select a valid company.</value>
+  </data>
+  <data name="Error_Signup_EmailExists" xml:space="preserve">
+    <value>An account with this email already exists. Please login instead.</value>
+  </data>
+  <data name="Error_Signup_CompanyNotFound" xml:space="preserve">
+    <value>Selected company not found.</value>
+  </data>
+
+  
+  <data name="Error_UserNotAuthenticated" xml:space="preserve">
+    <value>User not authenticated</value>
+  </data>
+  <data name="Error_UserNotFound" xml:space="preserve">
+    <value>User not found</value>
+  </data>
+  <data name="Error_LoadingRequests" xml:space="preserve">
+    <value>An error occurred while loading requests. Please try again.</value>
+  </data>
+  <data name="Error_AuthenticationError" xml:space="preserve">
+    <value>Authentication error. Please log in again.</value>
+  </data>
+  <data name="Error_NoPermissionApproveRequest" xml:space="preserve">
+    <value>You don't have permission to approve this request.</value>
+  </data>
+  <data name="Error_NoPermissionDeclineRequest" xml:space="preserve">
+    <value>You don't have permission to decline this request.</value>
+  </data>
+  <data name="Error_CannotApproveSwap" xml:space="preserve">
+    <value>Cannot approve swap</value>
+  </data>
+  <data name="Error_TimeOffRequestNotFound" xml:space="preserve">
+    <value>Time-off request not found.</value>
+  </data>
+  <data name="Error_NoPermissionDeleteTimeOff" xml:space="preserve">
+    <value>You don't have permission to delete this time-off request.</value>
+  </data>
+  <data name="Error_CanOnlyDeleteApprovedTimeOff" xml:space="preserve">
+    <value>Can only delete approved time-off requests.</value>
+  </data>
+  <data name="Error_CannotDeleteStartedTimeOff" xml:space="preserve">
+    <value>Cannot delete time-off that has already started or is in the past.</value>
+  </data>
+  <data name="Error_DeletingTimeOff" xml:space="preserve">
+    <value>An error occurred while deleting the time-off request. Please try again.</value>
+  </data>
+  <data name="Error_ExportingUsers" xml:space="preserve">
+    <value>Error exporting users. Please try again.</value>
+  </data>
+
+
+  <data name="Success_TimeOffDeleted" xml:space="preserve">
+    <value>Time-off for {0} ({1} to {2}) has been deleted.</value>
+  </data>
+
+  
+  <data name="Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+
+  
+  <data name="CreateNewShift" xml:space="preserve">
+    <value>Create New Shift</value>
+  </data>
+  <data name="ShiftNamePlaceholder" xml:space="preserve">
+    <value>e.g., Store Opening, Security Round, etc.</value>
+  </data>
+  <data name="RequiredStaff" xml:space="preserve">
+    <value>Required Staff</value>
+  </data>
+  <data name="CreateShift" xml:space="preserve">
+    <value>Create Shift</value>
+  </data>
+  <data name="PleaseSelectShiftType" xml:space="preserve">
+    <value>Please select a shift type</value>
+  </data>
+  <data name="InvalidDateData" xml:space="preserve">
+    <value>Invalid date data</value>
+  </data>
+  <data name="FailedToCreateShift" xml:space="preserve">
+    <value>Failed to create shift</value>
+  </data>
+  <data name="ShiftCreatedSuccessfully" xml:space="preserve">
+    <value>Shift created successfully!</value>
+  </data>
+  <data name="Person" xml:space="preserve">
+    <value>person</value>
+  </data>
+  <data name="ConfirmDeleteShift" xml:space="preserve">
+    <value>Are you sure you want to delete this shift? All assignments will be removed.</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>You don't have permission to access this page. This area is restricted to managers and administrators.</value>
+  </data>
+  <data name="Understood" xml:space="preserve">
+    <value>Understood</value>
+  </data>
+  <data name="NoShiftTypesAvailable" xml:space="preserve">
+    <value>No shift types available for this company.</value>
+  </data>
+  <data name="NoResultsFound" xml:space="preserve">
+    <value>No results found</value>
+  </data>
+  <data name="Recent" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+
+  
+  <data name="ChoreCreatedSuccessfully" xml:space="preserve">
+    <value>Chore created successfully</value>
+  </data>
+  <data name="ErrorCreatingChore" xml:space="preserve">
+    <value>Error creating chore</value>
+  </data>
+  <data name="ConflictDetected" xml:space="preserve">
+    <value>Conflict detected</value>
+  </data>
+  <data name="OnDutyCreatedSuccessfully" xml:space="preserve">
+    <value>On-duty created successfully</value>
+  </data>
+  <data name="ErrorCreatingOnDuty" xml:space="preserve">
+    <value>Error creating on-duty</value>
+  </data>
+  <data name="ItemDeletedSuccessfully" xml:space="preserve">
+    <value>Item deleted successfully</value>
+  </data>
+  <data name="ErrorDeletingItem" xml:space="preserve">
+    <value>Error deleting item</value>
+  </data>
+  <data name="PleaseSelectAssignee" xml:space="preserve">
+    <value>Please select an assignee</value>
+  </data>
+  <data name="PleaseEnterTitle" xml:space="preserve">
+    <value>Please enter a title</value>
+  </data>
+  <data name="TitleMaxLengthExceeded" xml:space="preserve">
+    <value>Title must not exceed 200 characters</value>
+  </data>
+
+  
+  <data name="AnErrorOccurred" xml:space="preserve">
+    <value>An error occurred</value>
+  </data>
+
+  
+  <data name="DashboardOverview" xml:space="preserve">
+    <value>Dashboard overview</value>
+  </data>
+  <data name="MonthlySchedule" xml:space="preserve">
+    <value>Monthly schedule</value>
+  </data>
+  <data name="WeeklySchedule" xml:space="preserve">
+    <value>Weekly schedule</value>
+  </data>
+  <data name="DailySchedule" xml:space="preserve">
+    <value>Daily schedule</value>
+  </data>
+  <data name="ManageRequests" xml:space="preserve">
+    <value>Manage time-off requests</value>
+  </data>
+  <data name="ViewReports" xml:space="preserve">
+    <value>View reports and statistics</value>
+  </data>
+  <data name="ManageEmployees" xml:space="preserve">
+    <value>Manage employees</value>
+  </data>
+  <data name="ManageOrganizations" xml:space="preserve">
+    <value>Manage organizations</value>
+  </data>
+  <data name="AssignDirectors" xml:space="preserve">
+    <value>Assign directors to companies</value>
+  </data>
+  <data name="SystemSettings" xml:space="preserve">
+    <value>System settings</value>
+  </data>
+  <data name="ManageShiftDefinitions" xml:space="preserve">
+    <value>Manage shift definitions</value>
+  </data>
+  <data name="ApprovedTimeOff" xml:space="preserve">
+    <value>Approved time-off requests</value>
+  </data>
+  <data name="SystemActivityLog" xml:space="preserve">
+    <value>System activity log</value>
+  </data>
+  <data name="TaskManagement" xml:space="preserve">
+    <value>Task management</value>
+  </data>
+  <data name="CurrentDutyRoster" xml:space="preserve">
+    <value>Current duty roster</value>
+  </data>
+  <data name="ViewMyRequests" xml:space="preserve">
+    <value>View my time-off requests</value>
+  </data>
+  <data name="ViewTeamMembers" xml:space="preserve">
+    <value>View team members</value>
+  </data>
+  <data name="UpdateMyInformation" xml:space="preserve">
+    <value>Update my information</value>
+  </data>
+  <data name="ViewNotifications" xml:space="preserve">
+    <value>View notifications</value>
+  </data>
+
+  
+  <data name="Error_CompanyNameAndSlugRequired" xml:space="preserve">
+    <value>Company name and slug are required.</value>
+  </data>
+  <data name="Error_CompanyNameOrSlugTooLong" xml:space="preserve">
+    <value>Company name or slug exceeds maximum length (200/100 characters).</value>
+  </data>
+  <data name="Error_CompanyDisplayNameTooLong" xml:space="preserve">
+    <value>Company display name must not exceed 200 characters.</value>
+  </data>
+  <data name="Error_ManagerDisplayNameTooLong" xml:space="preserve">
+    <value>Manager display name must not exceed 200 characters.</value>
+  </data>
+  <data name="Error_ManagerEmailTooLong" xml:space="preserve">
+    <value>Manager email must not exceed 255 characters.</value>
+  </data>
+  <data name="Error_CompanySlugAlreadyExists" xml:space="preserve">
+    <value>Company slug already exists. Please choose a different slug.</value>
+  </data>
+  <data name="Error_CompanySlugInvalidFormat" xml:space="preserve">
+    <value>Company slug must be lowercase and contain only letters, numbers, and hyphens.</value>
+  </data>
+  <data name="Error_ManagerFieldsRequired" xml:space="preserve">
+    <value>Manager email, display name, and password are required (or select an existing Director).</value>
+  </data>
+  <data name="Error_ManagerEmailAlreadyExists" xml:space="preserve">
+    <value>Manager email already exists.</value>
+  </data>
+  <data name="Error_SelectedDirectorNotFound" xml:space="preserve">
+    <value>Selected Director does not exist or is not a Director.</value>
+  </data>
+  <data name="Success_DirectorAssigned" xml:space="preserve">
+    <value>Director '{0}' ({1}) has been assigned to manage this company.</value>
+  </data>
+  <data name="Success_ManagerCreated" xml:space="preserve">
+    <value>Manager can log in with email: {0}</value>
+  </data>
+  <data name="Success_CompanyCreated" xml:space="preserve">
+    <value>Company '{0}' created successfully. {1}</value>
+  </data>
+  <data name="Error_CompanyCreationFailed" xml:space="preserve">
+    <value>An error occurred while creating the company. Please try again.</value>
+  </data>
+  <data name="Error_InvalidCompanyIdOrName" xml:space="preserve">
+    <value>Invalid company ID or name.</value>
+  </data>
+  <data name="Error_CompanyNotFound" xml:space="preserve">
+    <value>Company not found.</value>
+  </data>
+  <data name="Success_CompanyRenamed" xml:space="preserve">
+    <value>Company renamed to '{0}' successfully.</value>
+  </data>
+  <data name="Error_CannotDeleteCompanyWithOwners" xml:space="preserve">
+    <value>Cannot delete company: Owner users must be removed or transferred first. Owners must always remain in the system.</value>
+  </data>
+  <data name="Success_CompanyDeleted" xml:space="preserve">
+    <value>Company '{0}' and all associated data deleted successfully.</value>
+  </data>
+  <data name="Error_CompanyDeletionFailed" xml:space="preserve">
+    <value>An error occurred while deleting the company. Please try again.</value>
+  </data>
+
+  
+  <data name="Error_LoadingRequestsFailed" xml:space="preserve">
+    <value>An error occurred while loading your requests. Please try again.</value>
+  </data>
+  <data name="Error_EndDateBeforeStartDate" xml:space="preserve">
+    <value>End date cannot be before start date.</value>
+  </data>
+  <data name="Error_InvalidApproverSelected" xml:space="preserve">
+    <value>Invalid approver selected. Please select a valid manager.</value>
+  </data>
+  <data name="Success_TimeOffRequestSubmitted" xml:space="preserve">
+    <value>Time off request submitted successfully!</value>
+  </data>
+  <data name="Error_SubmittingRequestFailed" xml:space="preserve">
+    <value>An error occurred while submitting your request. Please try again.</value>
+  </data>
+  <data name="Error_PleaseSelectShiftToSwap" xml:space="preserve">
+    <value>Please select a shift to swap.</value>
+  </data>
+  <data name="Error_NotAssignedToShift" xml:space="preserve">
+    <value>You are not assigned to this shift.</value>
+  </data>
+  <data name="Success_SwapRequestSubmitted" xml:space="preserve">
+    <value>Shift swap request submitted successfully!</value>
+  </data>
+  <data name="Error_SubmittingSwapRequestFailed" xml:space="preserve">
+    <value>An error occurred while submitting your swap request. Please try again.</value>
+  </data>
+
+  
+  <data name="Error_TooManyPasswordResetAttempts" xml:space="preserve">
+    <value>Too many password reset attempts. Please try again in 15 minutes.</value>
+  </data>
+  <data name="Error_ProvideEmailAndPhone" xml:space="preserve">
+    <value>Please provide both email and phone number.</value>
+  </data>
+  <data name="Error_InvalidPhoneFormat" xml:space="preserve">
+    <value>Invalid phone format.</value>
+  </data>
+  <data name="Error_EmailPhoneNoMatch" xml:space="preserve">
+    <value>Email and phone number do not match our records.</value>
+  </data>
+  <data name="Success_TemporaryPasswordSent" xml:space="preserve">
+    <value>A temporary password has been sent to your registered email address.</value>
+  </data>
+  <data name="Error_FailedToSendRecoveryEmail" xml:space="preserve">
+    <value>Failed to send recovery email. Please try again later or contact support.</value>
+  </data>
+  <data name="Error_AnErrorOccurred" xml:space="preserve">
+    <value>An error occurred. Please try again later.</value>
+  </data>
+  <data name="Error_TooManyPasswordChangeAttempts" xml:space="preserve">
+    <value>Too many password change attempts. Please try again in 15 minutes.</value>
+  </data>
+  <data name="Error_ProvideEmailCurrentAndNewPassword" xml:space="preserve">
+    <value>Please provide email, current password, and new password.</value>
+  </data>
+  <data name="Error_NewPasswordTooShort" xml:space="preserve">
+    <value>New password must be at least 6 characters long.</value>
+  </data>
+  <data name="Error_FailedToChangePassword" xml:space="preserve">
+    <value>Failed to change password. Please check your current password and try again.</value>
+  </data>
+  <data name="Error_CurrentPasswordIncorrect" xml:space="preserve">
+    <value>Current password is incorrect.</value>
+  </data>
+  <data name="Success_PasswordChangedSuccessfully" xml:space="preserve">
+    <value>Password changed successfully! You can now log in with your new password.</value>
+  </data>
+
+  
+  <data name="Error_RestHoursRange" xml:space="preserve">
+    <value>Rest hours must be between 0 and 24.</value>
+  </data>
+  <data name="Error_WeeklyCapRange" xml:space="preserve">
+    <value>Weekly hours cap must be between 0 and 168 (7 days × 24 hours).</value>
+  </data>
+  <data name="Error_WeeklyCapLessThanRest" xml:space="preserve">
+    <value>Weekly hours cap cannot be less than rest hours. Please check your values.</value>
+  </data>
+  <data name="Success_ConfigurationUpdated" xml:space="preserve">
+    <value>Configuration updated successfully.</value>
+  </data>
+  <data name="Error_BothNamesRequired" xml:space="preserve">
+    <value>Both English and Hebrew names are required.</value>
+  </data>
+  <data name="Error_NamesTooLong" xml:space="preserve">
+    <value>Names must not exceed 100 characters.</value>
+  </data>
+  <data name="Success_OnDutyTypeCreated" xml:space="preserve">
+    <value>On-Duty type '{0}' created successfully.</value>
+  </data>
+  <data name="Error_OnDutyTypeNotFound" xml:space="preserve">
+    <value>On-Duty type not found.</value>
+  </data>
+  <data name="Error_CannotDeleteOnDutyTypeInUse" xml:space="preserve">
+    <value>Cannot delete '{0}' - it is currently assigned to active on-duty shifts.</value>
+  </data>
+  <data name="Success_OnDutyTypeDeleted" xml:space="preserve">
+    <value>On-Duty type '{0}' deleted successfully.</value>
+  </data>
+
+  
+  <data name="Error_CannotRequestTimeOffForPastDates" xml:space="preserve">
+    <value>Cannot request time off for past dates.</value>
+  </data>
+  <data name="Error_CannotRequestTimeOffTooFarInFuture" xml:space="preserve">
+    <value>Cannot request time off more than 2 years in advance.</value>
+  </data>
+  <data name="Error_TimeOffRequestTooLong" xml:space="preserve">
+    <value>Time off request cannot exceed 365 days. Please split into multiple requests.</value>
+  </data>
+  <data name="Error_ReasonTooLong" xml:space="preserve">
+    <value>Reason must not exceed 1000 characters.</value>
+  </data>
+
+  
+  <data name="Error_FailedToLoadEmailConfig" xml:space="preserve">
+    <value>Failed to load email configuration.</value>
+  </data>
+  <data name="Success_EmailConfigSaved" xml:space="preserve">
+    <value>Email configuration saved successfully.</value>
+  </data>
+  <data name="Error_SavingEmailConfigFailed" xml:space="preserve">
+    <value>An error occurred while saving email configuration.</value>
+  </data>
+  <data name="Error_ProvideValidEmail" xml:space="preserve">
+    <value>Please provide a valid email address.</value>
+  </data>
+  <data name="Success_TestEmailSent" xml:space="preserve">
+    <value>✅ Test email sent successfully to {0}. Check diagnostics below.</value>
+  </data>
+  <data name="Error_TestEmailFailed" xml:space="preserve">
+    <value>❌ Test email failed: {0}. Check diagnostics below.</value>
+  </data>
+  <data name="Error_TestEmailFailedNoDiagnostics" xml:space="preserve">
+    <value>Test email failed - no diagnostic information available.</value>
+  </data>
+  <data name="Error_FailedToSendTestEmail" xml:space="preserve">
+    <value>Failed to send test email: {0}</value>
+  </data>
+
+  
+  <data name="Dir" xml:space="preserve">
+    <value>ltr</value>
+  </data>
+  <data name="Email_Hello" xml:space="preserve">
+    <value>Hello {0}</value>
+  </data>
+  <data name="Email_BestRegards" xml:space="preserve">
+    <value>Best regards</value>
+  </data>
+  <data name="Email_ShiftManagerTeam" xml:space="preserve">
+    <value>Shift Manager Team</value>
+  </data>
+
+  
+  <data name="Email_PasswordRecoverySubject" xml:space="preserve">
+    <value>Password Recovery - Shift Manager</value>
+  </data>
+  <data name="Email_PasswordRecoveryTitle" xml:space="preserve">
+    <value>Password Recovery Request</value>
+  </data>
+  <data name="Email_PasswordRecoveryBody" xml:space="preserve">
+    <value>You requested to recover your password for the Shift Manager system.</value>
+  </data>
+  <data name="Email_YourTemporaryPassword" xml:space="preserve">
+    <value>Your temporary password is</value>
+  </data>
+  <data name="Email_PasswordRecoveryImportant" xml:space="preserve">
+    <value>This is a temporary password. Please log in and change it immediately in your profile settings.</value>
+  </data>
+  <data name="Email_PasswordRecoverySecurityNote" xml:space="preserve">
+    <value>If you did not request this, please contact your system administrator immediately.</value>
+  </data>
+  <data name="EmailDomainSuggestion" xml:space="preserve">
+    <value>Use {0}@d360.dom</value>
+  </data>
+
+
+  <data name="Email_ShiftAssignedSubject" xml:space="preserve">
+    <value>New Shift Assignment - {0}</value>
+  </data>
+  <data name="Email_ShiftAssignedTitle" xml:space="preserve">
+    <value>New Shift Assignment</value>
+  </data>
+  <data name="Email_ShiftAssignedBody" xml:space="preserve">
+    <value>You have been assigned to work a new shift:</value>
+  </data>
+  <data name="Email_ShiftAssignedLoginPrompt" xml:space="preserve">
+    <value>Please log in to the ShiftManager system to view full details.</value>
+  </data>
+  <data name="Email_ShiftAssignedContactManager" xml:space="preserve">
+    <value>If you have any questions or concerns, please contact your manager.</value>
+  </data>
+  <data name="Email_ShiftChangedSubject" xml:space="preserve">
+    <value>Shift Change Notification - {0}</value>
+  </data>
+  <data name="Email_ShiftChangedTitle" xml:space="preserve">
+    <value>Shift Change Notification</value>
+  </data>
+  <data name="Email_ShiftChangedBody" xml:space="preserve">
+    <value>Your shift has been modified:</value>
+  </data>
+  <data name="Email_ChangeDetails" xml:space="preserve">
+    <value>Change Details</value>
+  </data>
+  <data name="Email_ShiftChangedReviewPrompt" xml:space="preserve">
+    <value>Please log in to the ShiftManager system to review the updated shift details.</value>
+  </data>
+  <data name="Email_ShiftChangedContactManager" xml:space="preserve">
+    <value>If you have any questions or concerns, please contact your manager immediately.</value>
+  </data>
+
+  
+  <data name="Email_ShiftDeletedSubject" xml:space="preserve">
+    <value>Shift Removed - {0}</value>
+  </data>
+  <data name="Email_ShiftDeletedTitle" xml:space="preserve">
+    <value>Shift Removed</value>
+  </data>
+  <data name="Email_ShiftDeletedBody" xml:space="preserve">
+    <value>Your assigned shift has been removed from the schedule:</value>
+  </data>
+  <data name="Email_ShiftDeletedSchedulePrompt" xml:space="preserve">
+    <value>This shift is no longer on your schedule. Please log in to the ShiftManager system to view your updated schedule.</value>
+  </data>
+  <data name="Email_ShiftDeletedContactManager" xml:space="preserve">
+    <value>If you have any questions, please contact your manager.</value>
+  </data>
+  
+  <data name="Email_ChoreAssignedSubject" xml:space="preserve">
+    <value>New Chore Assignment - {0}</value>
+  </data>
+  <data name="Email_ChoreAssignedTitle" xml:space="preserve">
+    <value>New Chore Assignment</value>
+  </data>
+  <data name="Email_ChoreAssignedBody" xml:space="preserve">
+    <value>You have been assigned a new chore:</value>
+  </data>
+  <data name="Email_Chore" xml:space="preserve">
+    <value>Chore</value>
+  </data>
+  <data name="Email_ChoreAssignedLoginPrompt" xml:space="preserve">
+    <value>Please log in to the ShiftManager system to view full details.</value>
+  </data>
+  <data name="Email_ChoreAssignedContactManager" xml:space="preserve">
+    <value>If you have any questions or concerns, please contact your manager.</value>
+  </data>
+  
+  <data name="Email_ChoreCanceledSubject" xml:space="preserve">
+    <value>Chore Canceled - {0}</value>
+  </data>
+  <data name="Email_ChoreCanceledTitle" xml:space="preserve">
+    <value>Chore Canceled</value>
+  </data>
+  <data name="Email_ChoreCanceledBody" xml:space="preserve">
+    <value>Your assigned chore has been canceled:</value>
+  </data>
+  <data name="Email_ChoreCanceledSchedulePrompt" xml:space="preserve">
+    <value>This chore is no longer on your schedule. Please log in to the ShiftManager system to view your updated schedule.</value>
+  </data>
+  <data name="Email_ChoreCanceledContactManager" xml:space="preserve">
+    <value>If you have any questions, please contact your manager.</value>
+  </data>
+  
+  <data name="Email_DailyDigestSubject" xml:space="preserve">
+    <value>📬 Daily Digest - {0}</value>
+  </data>
+  <data name="Email_DailyDigestTitle" xml:space="preserve">
+    <value>📬 Daily Digest for {0}</value>
+  </data>
+  <data name="Email_DailyDigestIntro" xml:space="preserve">
+    <value>Here's your summary for the upcoming week:</value>
+  </data>
+  <data name="Email_DailyDigestFooter" xml:space="preserve">
+    <value>This is your automated daily digest. To change your preferences, visit your Settings page.</value>
+  </data>
+  <data name="Email_SentAt" xml:space="preserve">
+    <value>Sent at {0} UTC</value>
+  </data>
+  <data name="Email_UpcomingShifts" xml:space="preserve">
+    <value>📅 Upcoming Shifts (Next 7 Days)</value>
+  </data>
+  <data name="Email_PendingRequests" xml:space="preserve">
+    <value>⏳ Pending Requests</value>
+  </data>
+  <data name="Email_TimeOffRequests" xml:space="preserve">
+    <value>Time Off Requests:</value>
+  </data>
+  <data name="Email_SwapRequests" xml:space="preserve">
+    <value>Swap Requests:</value>
+  </data>
+  <data name="Email_PendingApproval" xml:space="preserve">
+    <value>Pending approval</value>
+  </data>
+  <data name="Email_AssignedChores" xml:space="preserve">
+    <value>🧹 Assigned Chores (Next 7 Days)</value>
+  </data>
+  <data name="Email_OnDutyAssignments" xml:space="preserve">
+    <value>🎖️ OnDuty Assignments (Next 7 Days)</value>
+  </data>
+  <data name="Email_TodaysOnDutyAssignments" xml:space="preserve">
+    <value>📋 Today's On-Duty Assignments</value>
+  </data>
+  <data name="Email_UnknownRole" xml:space="preserve">
+    <value>Unknown Role</value>
+  </data>
+  <data name="Email_TodaysRole" xml:space="preserve">
+    <value>Today's {0} is {1}</value>
+  </data>
+  
+  <data name="Email_ReminderSubject" xml:space="preserve">
+    <value>⏰ Reminder: Assignments Tomorrow ({0})</value>
+  </data>
+  <data name="Email_ReminderTitle" xml:space="preserve">
+    <value>⏰ Reminder: Upcoming Assignments Tomorrow</value>
+  </data>
+  <data name="Email_ReminderIntro" xml:space="preserve">
+    <value>Hi {0}, here's what you have scheduled for tomorrow ({1}):</value>
+  </data>
+  <data name="Email_ReminderFooter" xml:space="preserve">
+    <value>This is your automated day-before reminder. To change your preferences, visit your Settings page.</value>
+  </data>
+  <data name="Email_UpcomingShiftsTomorrow" xml:space="preserve">
+    <value>📅 Upcoming Shifts Tomorrow</value>
+  </data>
+  <data name="Email_Shift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="Email_ChoresAssignedTomorrow" xml:space="preserve">
+    <value>🧹 Chores Assigned Tomorrow</value>
+  </data>
+  <data name="Email_OnDutyAssignmentsTomorrow" xml:space="preserve">
+    <value>👮 On-Duty Assignments Tomorrow</value>
+  </data>
+  <data name="Email_AccountApprovedSubject" xml:space="preserve">
+    <value>Account Approved - Welcome to {0}!</value>
+  </data>
+  <data name="Email_AccountApprovedTitle" xml:space="preserve">
+    <value>Account Approved</value>
+  </data>
+  <data name="Email_WelcomeToCompany" xml:space="preserve">
+    <value>Welcome to {0}!</value>
+  </data>
+  <data name="Email_AccountApprovedBody" xml:space="preserve">
+    <value>Great news! Your account has been approved by an administrator. You can now log in and access the shift management system.</value>
+  </data>
+  <data name="Email_Company" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="Email_AssignedRole" xml:space="preserve">
+    <value>Assigned Role</value>
+  </data>
+  <data name="Email_AccountStatus" xml:space="preserve">
+    <value>Account Status</value>
+  </data>
+  <data name="Email_Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="Email_AccountApprovedLoginPrompt" xml:space="preserve">
+    <value>You can now log in to the system using your email address and the password you provided during registration.</value>
+  </data>
+  <data name="Email_AccountApprovedNextSteps" xml:space="preserve">
+    <value>Once logged in, you'll be able to view your schedule, request time off, swap shifts with colleagues, and more.</value>
+  </data>
+  <data name="Email_AccountApprovedContactSupport" xml:space="preserve">
+    <value>If you have any questions or need assistance, please contact your manager or system administrator.</value>
   </data>
 </root>
