@@ -119,6 +119,146 @@ STEP 5: START THE APPLICATION
 
 
 ================================================================================
+                  BUILDING FROM SOURCE (OFFLINE)
+================================================================================
+
+This section explains how to build ShiftManager from source code on an
+air-gapped machine without internet access.
+
+PREREQUISITES (On Internet-Connected Machine)
+--------------------------------------------------------------
+
+Before building offline, you must prepare the NuGet package cache:
+
+1. Install .NET 8.0 SDK on the internet-connected machine
+
+2. Clone or download the ShiftManager source code
+
+3. Open PowerShell in the project directory
+
+4. Run the following command to download all dependencies:
+
+   dotnet restore
+
+5. This downloads all NuGet packages to your local cache at:
+
+   Windows: %USERPROFILE%\.nuget\packages
+   Linux/Mac: ~/.nuget/packages
+
+6. Copy the entire packages folder to USB drive
+
+
+TRANSFERRING TO AIR-GAPPED MACHINE
+--------------------------------------------------------------
+
+1. On the air-gapped machine, copy the packages folder to:
+
+   Windows: C:\Users\[YourUsername]\.nuget\packages
+   Linux/Mac: ~/.nuget/packages
+
+2. Copy the ShiftManager source code to the air-gapped machine
+
+3. Verify the packages.lock.json file is present in the project root
+   (this ensures reproducible builds with exact dependency versions)
+
+
+BUILDING ON AIR-GAPPED MACHINE
+--------------------------------------------------------------
+
+1. Open PowerShell or Command Prompt in the project directory
+
+2. Verify packages are accessible:
+
+   dotnet restore --no-http-cache
+
+   Expected output: "All projects are up-to-date for restore."
+
+3. Build the project in Release mode:
+
+   dotnet build -c Release
+
+4. Publish the self-contained application:
+
+   dotnet publish -c Release -r win-x64 --self-contained -o ./publish
+
+   Options explained:
+   -c Release         = Optimized release build
+   -r win-x64         = Windows 64-bit runtime
+   --self-contained   = Includes .NET runtime (no installation needed)
+   -o ./publish       = Output directory
+
+5. The published application will be in: ./publish/
+
+
+VERIFICATION AFTER BUILD
+--------------------------------------------------------------
+
+1. Check that critical files exist in the publish folder:
+
+   [ ] ShiftManager.exe
+   [ ] ShiftManager.dll
+   [ ] SixLabors.ImageSharp.dll
+   [ ] e_sqlite3.dll
+   [ ] Microsoft.EntityFrameworkCore.Sqlite.dll
+   [ ] All wwwroot/ files (CSS, JS, images)
+
+2. Test the build locally before deployment:
+
+   cd publish
+   .\ShiftManager.exe
+
+3. Verify the application starts without errors
+
+
+TROUBLESHOOTING OFFLINE BUILDS
+--------------------------------------------------------------
+
+ERROR: "NU1301: Unable to load the service index for source"
+
+CAUSE: NuGet is trying to access the internet
+
+SOLUTION:
+1. Verify packages.lock.json exists in project root
+2. Ensure NuGet cache was copied correctly to .nuget/packages
+3. Use --no-http-cache flag with restore command
+
+
+ERROR: "Package X is missing"
+
+CAUSE: Package not in local cache or wrong version
+
+SOLUTION:
+1. Check packages.lock.json for exact version required
+2. On internet machine, run: dotnet restore
+3. Recopy the .nuget/packages folder completely
+4. Ensure no files were excluded during copy
+
+
+ERROR: Build succeeds but application fails to start
+
+CAUSE: Incomplete publish or missing runtime files
+
+SOLUTION:
+1. Use --self-contained flag to include runtime
+2. Verify -r win-x64 matches target machine architecture
+3. Check that all DLL files were copied to publish folder
+
+
+NOTES FOR OFFLINE BUILDS
+--------------------------------------------------------------
+
+- The packages.lock.json file locks all transitive dependencies to
+  exact versions, ensuring identical builds across machines
+
+- Total NuGet cache size is approximately 500MB-1GB
+
+- Self-contained builds are 150-200MB (includes .NET runtime)
+
+- Framework-dependent builds are 10-20MB but require .NET 8.0 SDK
+  installed on target machine
+
+
+================================================================================
                   MANUAL UNBLOCK PROCEDURE
 ================================================================================
 
