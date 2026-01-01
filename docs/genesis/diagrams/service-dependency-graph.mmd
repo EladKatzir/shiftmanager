@@ -1,0 +1,270 @@
+graph TB
+    %% ShiftManager Service Dependency Graph
+    %% Shows the layered architecture and key service dependencies
+
+    %% ========================================
+    %% LAYER 1: PRESENTATION LAYER (Razor Pages)
+    %% ========================================
+
+    subgraph Presentation["🖥️ Presentation Layer (66 Razor Pages)"]
+        SchedulePage["📅 Schedule.cshtml.cs"]
+        ChoresPage["📋 Chores.cshtml.cs"]
+        ProfilePage["👤 Profile.cshtml.cs"]
+        NotificationsPage["🔔 Notifications.cshtml.cs"]
+        AdminPage["⚙️ Admin Pages"]
+        ApiController["🌐 API Controllers"]
+    end
+
+    %% ========================================
+    %% LAYER 2: SERVICE LAYER (62 Services)
+    %% ========================================
+
+    subgraph Services["🔧 Service Layer (62 Services)"]
+
+        subgraph Core["Core Services"]
+            TenantResolver["🎯 TenantResolver<br/>(Scoped)"]
+            CompanyContext["💾 CompanyContext<br/>(Scoped)"]
+            DirectorService["👔 DirectorService<br/>(Scoped)"]
+        end
+
+        subgraph BusinessLogic["Business Logic Services"]
+            ConflictChecker["⚠️ ConflictChecker<br/>(Scoped)"]
+            NotificationService["🔔 NotificationService<br/>(Scoped)"]
+            ChoreService["📋 ChoreService<br/>(Scoped)"]
+            OnDutyService["🚨 OnDutyService<br/>(Scoped)"]
+            ProfileService["👤 ProfileService<br/>(Scoped)"]
+            ShiftService["📅 ShiftService<br/>(Scoped)"]
+            TimeOffService["🏖️ TimeOffService<br/>(Scoped)"]
+            SwapService["🔄 SwapService<br/>(Scoped)"]
+        end
+
+        subgraph Caching["Caching Services"]
+            ShiftTypeCacheService["⚡ ShiftTypeCacheService<br/>(Singleton)<br/>TTL: 10min"]
+            AppConfigCacheService["⚡ AppConfigCacheService<br/>(Singleton)<br/>TTL: 5min"]
+            CompanyCacheService["⚡ CompanyCacheService<br/>(Singleton)"]
+        end
+
+        subgraph Communication["Communication Services"]
+            MailService["📧 MailService<br/>(Scoped)"]
+            EmailConfigService["📮 EmailConfigService<br/>(Scoped)"]
+            EmailApiLogService["📊 EmailApiLogService<br/>(Scoped)"]
+        end
+
+        subgraph Api["API Infrastructure"]
+            ApiKeyService["🔑 ApiKeyService<br/>(Scoped)"]
+            UserApiService["👥 UserApiService<br/>(Scoped)"]
+            RateLimitingService["⏱️ RateLimitingService<br/>(Scoped)"]
+        end
+
+        subgraph Audit["Audit & Compliance"]
+            AuditLogService["📜 AuditLogService<br/>(Scoped)"]
+            ProfileChangeAudit["📝 ProfileChangeAudit<br/>(Scoped)"]
+            RoleAuditService["🎭 RoleAuditService<br/>(Scoped)"]
+        end
+
+        subgraph Security["Security Services"]
+            EncryptionService["🔐 EncryptionService<br/>(Singleton)"]
+            PasswordService["🔒 PasswordService<br/>(Scoped)"]
+        end
+
+        subgraph TeamCollab["Team Collaboration"]
+            TeamCalendarService["📆 TeamCalendarService<br/>(Scoped)"]
+            TeamEventAggregator["📊 TeamEventAggregator<br/>(Scoped)"]
+        end
+    end
+
+    %% ========================================
+    %% LAYER 3: DATA ACCESS LAYER
+    %% ========================================
+
+    subgraph DataAccess["🗄️ Data Access Layer"]
+        DbContext["AppDbContext<br/>(Scoped)"]
+        CompanyIdInterceptor["🛡️ CompanyIdInterceptor<br/>(Singleton)"]
+        MemoryCache["IMemoryCache<br/>(Singleton)"]
+    end
+
+    %% ========================================
+    %% LAYER 4: INFRASTRUCTURE
+    %% ========================================
+
+    subgraph Infrastructure["⚙️ Infrastructure"]
+        HttpClientFactory["IHttpClientFactory"]
+        Logger["ILogger&lt;T&gt;"]
+        Configuration["IConfiguration"]
+        DataProtection["IDataProtectionProvider"]
+        HttpContextAccessor["IHttpContextAccessor"]
+        Localizer["IStringLocalizer"]
+    end
+
+    %% ========================================
+    %% LAYER 5: EXTERNAL SYSTEMS
+    %% ========================================
+
+    subgraph External["🌐 External Systems"]
+        EmailApi["Email API<br/>(HTTP)"]
+        GriffinAdfs["Griffin ADFS<br/>(SAML)"]
+        Database["SQLite Database<br/>(File)"]
+    end
+
+    %% ========================================
+    %% PRESENTATION → SERVICES
+    %% ========================================
+
+    SchedulePage --> ShiftService
+    SchedulePage --> ConflictChecker
+    ChoresPage --> ChoreService
+    ProfilePage --> ProfileService
+    NotificationsPage --> NotificationService
+    AdminPage --> ApiKeyService
+    AdminPage --> DirectorService
+    ApiController --> UserApiService
+    ApiController --> RateLimitingService
+
+    %% ========================================
+    %% SERVICES → CORE SERVICES
+    %% ========================================
+
+    ShiftService --> TenantResolver
+    ChoreService --> TenantResolver
+    OnDutyService --> DirectorService
+    ProfileService --> TenantResolver
+    TimeOffService --> TenantResolver
+    NotificationService --> TenantResolver
+    ApiKeyService --> TenantResolver
+
+    TenantResolver --> HttpContextAccessor
+    CompanyContext --> TenantResolver
+    DirectorService --> HttpContextAccessor
+
+    %% ========================================
+    %% BUSINESS LOGIC → CACHING
+    %% ========================================
+
+    ConflictChecker --> AppConfigCacheService
+    ShiftService --> ShiftTypeCacheService
+    ChoreService --> CompanyCacheService
+
+    ShiftTypeCacheService --> MemoryCache
+    AppConfigCacheService --> MemoryCache
+    CompanyCacheService --> MemoryCache
+
+    %% ========================================
+    %% BUSINESS LOGIC → COMMUNICATION
+    %% ========================================
+
+    NotificationService --> MailService
+    ChoreService --> NotificationService
+    OnDutyService --> NotificationService
+    TimeOffService --> NotificationService
+
+    MailService --> EmailConfigService
+    MailService --> EmailApiLogService
+    MailService --> HttpClientFactory
+    MailService --> Localizer
+
+    %% ========================================
+    %% SERVICES → AUDIT
+    %% ========================================
+
+    ProfileService --> AuditLogService
+    ProfileService --> ProfileChangeAudit
+    ApiKeyService --> AuditLogService
+    DirectorService --> RoleAuditService
+
+    AuditLogService --> TenantResolver
+    AuditLogService --> HttpContextAccessor
+
+    %% ========================================
+    %% SERVICES → SECURITY
+    %% ========================================
+
+    EmailConfigService --> EncryptionService
+    ProfileService --> PasswordService
+
+    EncryptionService --> DataProtection
+
+    %% ========================================
+    %% SERVICES → DATA ACCESS
+    %% ========================================
+
+    ShiftService --> DbContext
+    ChoreService --> DbContext
+    OnDutyService --> DbContext
+    ProfileService --> DbContext
+    TimeOffService --> DbContext
+    SwapService --> DbContext
+    NotificationService --> DbContext
+    AuditLogService --> DbContext
+    ApiKeyService --> DbContext
+    UserApiService --> DbContext
+    ShiftTypeCacheService --> DbContext
+    AppConfigCacheService --> DbContext
+
+    DbContext --> CompanyIdInterceptor
+    CompanyIdInterceptor --> TenantResolver
+
+    %% ========================================
+    %% SERVICES → INFRASTRUCTURE
+    %% ========================================
+
+    ShiftService --> Logger
+    ChoreService --> Logger
+    NotificationService --> Logger
+    MailService --> Logger
+    MailService --> Configuration
+    AuditLogService --> Logger
+
+    %% ========================================
+    %% DATA ACCESS → EXTERNAL
+    %% ========================================
+
+    DbContext --> Database
+    MailService --> EmailApi
+
+    %% ========================================
+    %% STYLING
+    %% ========================================
+
+    classDef presentationStyle fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
+    classDef coreStyle fill:#fff4e1,stroke:#f57c00,stroke-width:2px
+    classDef businessStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef cacheStyle fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    classDef commStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef apiStyle fill:#e0f7fa,stroke:#00acc1,stroke-width:2px
+    classDef auditStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef securityStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef dataStyle fill:#f0f0f0,stroke:#616161,stroke-width:2px
+    classDef infraStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef externalStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:3px,stroke-dasharray: 5 5
+
+    class SchedulePage,ChoresPage,ProfilePage,NotificationsPage,AdminPage,ApiController presentationStyle
+    class TenantResolver,CompanyContext,DirectorService coreStyle
+    class ConflictChecker,NotificationService,ChoreService,OnDutyService,ProfileService,ShiftService,TimeOffService,SwapService businessStyle
+    class ShiftTypeCacheService,AppConfigCacheService,CompanyCacheService cacheStyle
+    class MailService,EmailConfigService,EmailApiLogService commStyle
+    class ApiKeyService,UserApiService,RateLimitingService apiStyle
+    class AuditLogService,ProfileChangeAudit,RoleAuditService auditStyle
+    class EncryptionService,PasswordService securityStyle
+    class DbContext,CompanyIdInterceptor,MemoryCache dataStyle
+    class HttpClientFactory,Logger,Configuration,DataProtection,HttpContextAccessor,Localizer infraStyle
+    class EmailApi,GriffinAdfs,Database externalStyle
+
+    %% ========================================
+    %% LEGEND
+    %% ========================================
+
+    subgraph Legend["📊 Legend"]
+        L1["🖥️ Presentation: Razor Pages & Controllers"]
+        L2["🔧 Services: Business Logic Layer"]
+        L3["🗄️ Data Access: EF Core + Interceptors"]
+        L4["⚙️ Infrastructure: ASP.NET Core Services"]
+        L5["🌐 External: 3rd Party Systems"]
+        L6["Scoped: Per-request lifetime"]
+        L7["Singleton: Application lifetime"]
+    end
+
+    %% ========================================
+    %% NOTES
+    %% ========================================
+
+    Note1["🎯 KEY PATTERNS:<br/>✓ Layered Architecture (Presentation → Services → Data → External)<br/>✓ Dependency Injection (Interface-based, constructor injection)<br/>✓ Multi-Tenancy (TenantResolver + CompanyIdInterceptor)<br/>✓ Caching (Singleton services with IMemoryCache)<br/>✓ Fail-Safe (Audit/Notification failures never block operations)<br/>✓ Structured Logging (ILogger&lt;T&gt; with placeholders)"]

@@ -58,6 +58,11 @@ public class EmailConfigModel : LocalizedPageModel
     public List<EmailApiLog> RecentLogs { get; set; } = new();
     public List<EmailApiLog> RecentFailures { get; set; } = new();
 
+    // Status Widget Properties
+    public DateTime? LastTestTimestamp { get; set; }
+    public bool? LastTestSuccess { get; set; }
+    public string? LastTestError { get; set; }
+
     public async Task OnGetAsync()
     {
         try
@@ -72,6 +77,15 @@ public class EmailConfigModel : LocalizedPageModel
             // Load recent logs and failures for diagnostics
             RecentLogs = await _emailApiLogService.GetRecentLogsAsync(10);
             RecentFailures = await _emailApiLogService.GetFailedLogsAsync(5);
+
+            // Populate status widget properties from most recent log
+            var lastLog = RecentLogs.FirstOrDefault();
+            if (lastLog != null)
+            {
+                LastTestTimestamp = lastLog.Timestamp;
+                LastTestSuccess = lastLog.Success;
+                LastTestError = lastLog.ErrorMessage;
+            }
 
             // Load real statistics from email logs
             var allLogs = await _emailApiLogService.GetRecentLogsAsync(1000);

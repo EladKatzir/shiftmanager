@@ -1,0 +1,98 @@
+flowchart TB
+    %% ShiftManager Air-Gapped Deployment Architecture
+    %% Shows deployment topology from development to air-gapped production
+
+    subgraph DevMachine["🌐 Internet-Connected Development Machine"]
+        direction TB
+        DevEnv["💻 Development Environment<br/>• Visual Studio 2022 / VS Code<br/>• .NET 8.0 SDK<br/>• Git repository"]
+        BuildScript["⚙️ Build-Release.ps1<br/>10-Stage Automated Pipeline"]
+        DotnetPublish["📦 dotnet publish<br/>• Self-contained: true<br/>• Runtime: win-x64<br/>• Config: Release"]
+        OutputFolder["📁 ProjectPublish/<br/>• 450 files (~110MB)<br/>• 335 DLLs (with .NET 8.0 runtime)<br/>• ShiftManager.exe<br/>• appsettings.json<br/>• wwwroot/ (CSS, JS, images)"]
+        ZipPackage["🗜️ ShiftManager_v1.0.0.zip<br/>• Compressed package<br/>• SHA256 checksum<br/>• UNBLOCK_FILES.bat included<br/>• AIR_GAPPED_DEPLOYMENT_GUIDE.txt"]
+
+        DevEnv --> BuildScript
+        BuildScript --> DotnetPublish
+        DotnetPublish --> OutputFolder
+        OutputFolder --> ZipPackage
+    end
+
+    subgraph TransferMedium["💾 USB Transfer Medium"]
+        direction TB
+        USBDrive["USB Flash Drive / External HDD<br/>• ShiftManager_v1.0.0.zip<br/>• NuGet offline cache (optional, ~500MB-1GB)<br/>• Deployment guide<br/>• Verification scripts"]
+        ZoneIdentifier["⚠️ Windows Zone.Identifier<br/>• NTFS Alternate Data Stream<br/>• Marks files as 'untrusted'<br/>• Blocks DLL loading on target"]
+
+        USBDrive -.->|"Windows marks files"| ZoneIdentifier
+    end
+
+    subgraph AirGappedMachine["🔒 Air-Gapped Production Machine (No Internet)"]
+        direction TB
+
+        subgraph CriticalStep["🚨 CRITICAL FIRST STEP"]
+            UnblockScript["🔓 UNBLOCK_FILES.bat<br/>PowerShell Unblock-File<br/>• Removes Zone.Identifier streams<br/>• MUST run BEFORE first execution"]
+        end
+
+        TargetFolder["📂 C:\\ShiftManager\\<br/>• Extracted ZIP contents<br/>• All files unblocked"]
+
+        VerifyScript["✅ VERIFY_FILES.bat<br/>• Check file existence<br/>• Verify DLL unblocking<br/>• Count files (expected: 450)"]
+
+        AppStartup["🚀 ShiftManager.exe Startup<br/>• ASP.NET Core Kestrel<br/>• Port 5000 (HTTP) / 5001 (HTTPS)<br/>• Environment: Production"]
+
+        DBInit["💿 Database Initialization<br/>• SQLite: ShiftManager.db<br/>• Auto-run 36 migrations<br/>• Create admin user (if first run)"]
+
+        WebServer["🌐 Internal Web Server<br/>• http://localhost:5000<br/>• Only LAN access (no internet)<br/>• Cookie-based authentication"]
+
+        ClientBrowsers["👥 Client Browsers (LAN)<br/>• http://192.168.1.100:5000<br/>• Hebrew (he-IL) / English (en-US)<br/>• Shift management UI"]
+
+        UnblockScript --> TargetFolder
+        TargetFolder --> VerifyScript
+        VerifyScript --> AppStartup
+        AppStartup --> DBInit
+        DBInit --> WebServer
+        WebServer --> ClientBrowsers
+    end
+
+    subgraph OfflineBuild["🛠️ Optional: Offline Build from Source"]
+        direction TB
+        SourceCode["📚 Source Code Transfer<br/>• Git bundle or ZIP<br/>• Full repository"]
+        NuGetCache["📦 NuGet Offline Cache<br/>• ~/.nuget/packages/<br/>• ~500MB-1GB<br/>• All dependencies pre-downloaded"]
+        OfflineCompile["⚙️ dotnet build (offline)<br/>• --no-restore flag<br/>• Uses local NuGet cache<br/>• No internet required"]
+
+        SourceCode --> NuGetCache
+        NuGetCache --> OfflineCompile
+        OfflineCompile -.->|"Alternative to<br/>pre-built package"| TargetFolder
+    end
+
+    %% Connections between subgraphs
+    ZipPackage -->|"Copy to USB"| USBDrive
+    USBDrive -->|"Physical transfer"| CriticalStep
+
+    %% ========================================
+    %% DEPLOYMENT FLOW ANNOTATIONS
+    %% ========================================
+
+    classDef devStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef transferStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef airGapStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
+    classDef criticalStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    classDef optionalStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000,stroke-dasharray: 5 5
+
+    class DevMachine devStyle
+    class TransferMedium transferStyle
+    class AirGappedMachine airGapStyle
+    class CriticalStep criticalStyle
+    class OfflineBuild optionalStyle
+
+    %% ========================================
+    %% KEY SECURITY & VALIDATION CHECKPOINTS
+    %% ========================================
+
+    note1["🔐 SECURITY CHECKPOINTS:<br/>1. SHA256 checksum verification (ZIP integrity)<br/>2. File unblocking (prevent DLL load failures)<br/>3. File count validation (450 files expected)<br/>4. Database encryption (optional: SQLCipher)<br/>5. HTTPS certificate (production deployment)"]
+
+    note2["⚠️ COMMON FAILURE POINTS:<br/>1. Skipping UNBLOCK_FILES.bat → DLL load error<br/>2. Missing .NET 8.0 runtime → Use self-contained build<br/>3. Port conflicts (5000/5001) → Configure appsettings.json<br/>4. SQLite permissions → Run as admin or grant write access<br/>5. Firewall blocking → Allow port 5000 in Windows Firewall"]
+
+    note3["✅ VERIFICATION STEPS:<br/>1. Run VERIFY_FILES.bat → Check file existence<br/>2. Start ShiftManager.exe → Watch console output<br/>3. Open browser → http://localhost:5000<br/>4. Login as admin → Default: admin@test.com / Admin123!<br/>5. Check database → ShiftManager.db created (~500KB initial)<br/>6. Test OFFLINE shift type → Create test shift assignment"]
+
+    %% Position notes at bottom
+    ClientBrowsers -.-> note1
+    note1 -.-> note2
+    note2 -.-> note3

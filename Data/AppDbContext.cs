@@ -39,6 +39,7 @@ public class AppDbContext : DbContext
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
     public DbSet<EmailApiLog> EmailApiLogs => Set<EmailApiLog>();
     public DbSet<GriffinConfig> GriffinConfigs => Set<GriffinConfig>();
+    public DbSet<GriffinApiLog> GriffinApiLogs => Set<GriffinApiLog>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
     // Public/Global Tables (no CompanyId, visible across all tenancies)

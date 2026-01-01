@@ -3240,6 +3240,138 @@
   <data name="Owner_Griffin_About_Point3" xml:space="preserve">
     <value>אין צורך ב-Client Secret - שירות Griffin מטפל בתקשורת עם ADFS</value>
   </data>
+  <data name="Owner_Griffin_DiagnosticsTitle" xml:space="preserve">
+    <value>אבחון בדיקת חיבור</value>
+  </data>
+  <data name="Owner_Griffin_ExportDiagnostics" xml:space="preserve">
+    <value>ייצא אבחון</value>
+  </data>
+  <data name="Owner_Griffin_RecentTests" xml:space="preserve">
+    <value>בדיקות חיבור אחרונות</value>
+  </data>
+  <data name="Owner_Griffin_RecentFailures" xml:space="preserve">
+    <value>כשלונות חיבור אחרונים</value>
+  </data>
+  <data name="Owner_Griffin_Table_Timestamp" xml:space="preserve">
+    <value>זמן</value>
+  </data>
+  <data name="Owner_Griffin_Table_Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="Owner_Griffin_Table_HttpCode" xml:space="preserve">
+    <value>קוד HTTP</value>
+  </data>
+  <data name="Owner_Griffin_Table_Duration" xml:space="preserve">
+    <value>משך</value>
+  </data>
+  <data name="Owner_Griffin_Table_RedirectUrl" xml:space="preserve">
+    <value>כתובת הפניה</value>
+  </data>
+  <data name="Owner_Griffin_Status_Success" xml:space="preserve">
+    <value>הצליח</value>
+  </data>
+  <data name="Owner_Griffin_Status_Failed" xml:space="preserve">
+    <value>נכשל</value>
+  </data>
+  <data name="Owner_Griffin_ValidationErrors" xml:space="preserve">
+    <value>שגיאות ולידציה:</value>
+  </data>
+  <data name="Status_Healthy" xml:space="preserve">
+    <value>תקין</value>
+  </data>
+  <data name="Status_Unhealthy" xml:space="preserve">
+    <value>לא תקין</value>
+  </data>
+  <data name="Status_NotTested" xml:space="preserve">
+    <value>לא נבדק</value>
+  </data>
+  <data name="Status_ConnectionHealthy" xml:space="preserve">
+    <value>חיבור תקין</value>
+  </data>
+  <data name="Status_ConnectionFailed" xml:space="preserve">
+    <value>החיבור נכשל</value>
+  </data>
+  <data name="Status_EmailHealthy" xml:space="preserve">
+    <value>שירות דואר אלקטרוני תקין</value>
+  </data>
+  <data name="Status_EmailFailed" xml:space="preserve">
+    <value>שירות דואר אלקטרוני נכשל</value>
+  </data>
+  <data name="Status_NotTestedYet" xml:space="preserve">
+    <value>עדיין לא נבדק</value>
+  </data>
+  <data name="Status_NotTested_Desc" xml:space="preserve">
+    <value>לחץ על כפתור הבדיקה כדי לבדוק את החיבור</value>
+  </data>
+  <data name="Status_LastTested" xml:space="preserve">
+    <value>נבדק לאחרונה</value>
+  </data>
+  <data name="Status_RetestConnection" xml:space="preserve">
+    <value>בדוק חיבור מחדש</value>
+  </data>
+  <data name="Status_RetestEmail" xml:space="preserve">
+    <value>בדוק דואר אלקטרוני מחדש</value>
+  </data>
+  <data name="Help_ShowDetails" xml:space="preserve">
+    <value>הצג פרטים</value>
+  </data>
+  <data name="ContextPanel_Purpose" xml:space="preserve">
+    <value>מטרה</value>
+  </data>
+  <data name="ContextPanel_WhereToFind" xml:space="preserve">
+    <value>היכן למצוא את זה</value>
+  </data>
+  <data name="ContextPanel_Example" xml:space="preserve">
+    <value>דוגמאות</value>
+  </data>
+  <data name="ContextPanel_Recommendation" xml:space="preserve">
+    <value>המלצה</value>
+  </data>
+  <data name="ContextPanel_Security" xml:space="preserve">
+    <value>אבטחה</value>
+  </data>
+  <data name="ContextPanel_BestPractices" xml:space="preserve">
+    <value>שיטות עבודה מומלצות</value>
+  </data>
+  <data name="ContextPanel_Griffin_BaseUrl_Purpose" xml:space="preserve">
+    <value>כתובת URL של שירות Griffin שמטפל באימות ADFS עבור הארגון שלך.</value>
+  </data>
+  <data name="ContextPanel_Griffin_BaseUrl_WhereToFind" xml:space="preserve">
+    <value>צור קשר עם מנהל המערכת שלך או בדוק את תיעוד ה-ADFS של הארגון עבור כתובת URL של שירות Griffin.</value>
+  </data>
+  <data name="ContextPanel_Griffin_CallbackUrl_Purpose" xml:space="preserve">
+    <value>כתובת ה-URL שאליה Griffin יפנה משתמשים לאחר אימות מוצלח. זה חייב להתאים לכתובת ה-Callback שהוגדרה ב-Griffin.</value>
+  </data>
+  <data name="ContextPanel_Griffin_CallbackUrl_WhereToFind" xml:space="preserve">
+    <value>השתמש בדומיין של האפליקציה שלך ואחריו /Auth/GriffinCallback. עבור פיתוח מקומי, השתמש ב-localhost עם פורט הפיתוח שלך.</value>
+  </data>
+  <data name="ContextPanel_Griffin_Timeout_Purpose" xml:space="preserve">
+    <value>זמן מקסימלי בשניות להמתין לתגובה משירות Griffin לפני פג זמן.</value>
+  </data>
+  <data name="ContextPanel_Griffin_Timeout_Recommendation" xml:space="preserve">
+    <value>10 שניות מומלץ עבור רוב הסביבות. הגדל אם אתה חווה פגי זמן תכופים בתנאי רשת איטיים יותר.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiUrl_Purpose" xml:space="preserve">
+    <value>כתובת ה-URL של נקודת הקצה של ה-API עבור ספק שירות הדואר האלקטרוני שלך (SendGrid, Mailgun וכו') שישמש לשליחת הודעות דואר אלקטרוני.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiUrl_WhereToFind" xml:space="preserve">
+    <value>בדוק את תיעוד ה-API של ספק שירות הדואר האלקטרוני שלך. ספקים נפוצים כוללים SendGrid, Mailgun, AWS SES וממשקי SMTP מותאמים אישית.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiKey_Purpose" xml:space="preserve">
+    <value>מפתח ה-API של ספק שירות הדואר האלקטרוני שלך לאימות. זה מאוחסן מוצפן במסד הנתונים לצורכי אבטחה.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiKey_WhereToFind" xml:space="preserve">
+    <value>התחבר ללוח הבקרה של ספק שירות הדואר האלקטרוני שלך ונווט אל מפתחות API או הגדרות כדי ליצור או לאחזר את מפתח ה-API שלך.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiKey_Security" xml:space="preserve">
+    <value>מפתחות API מאוחסנים מוצפנים. לעולם אל תשתף את מפתח ה-API שלך בפומבי או תשלח אותו לבקרת גרסאות.</value>
+  </data>
+  <data name="ContextPanel_Email_FromAddress_Purpose" xml:space="preserve">
+    <value>כתובת הדואר האלקטרוני שתופיע כשולח עבור כל הודעות המערכת שנשלחות למשתמשים.</value>
+  </data>
+  <data name="ContextPanel_Email_FromAddress_BestPractices" xml:space="preserve">
+    <value>השתמש בכתובת ללא תשובה (לדוגמה, noreply@yourdomain.com) עבור הודעות אוטומטיות. ודא שהדומיין מאומת אצל ספק הדואר האלקטרוני שלך.</value>
+  </data>
   <data name="LoginWithADFS" xml:space="preserve">
     <value>הזדהות במערכת היחידה</value>
   </data>
@@ -4012,5 +4144,65 @@
   </data>
   <data name="Email_AccountApprovedContactSupport" xml:space="preserve">
     <value>אם יש לך שאלות או שאתה זקוק לסיוע, אנא פנה למנהל שלך או למנהל המערכת.</value>
+  </data>
+  <data name="FindThis_Button" xml:space="preserve">
+    <value>מצא את זה</value>
+  </data>
+  <data name="FindThis_HowToFind" xml:space="preserve">
+    <value>איך למצוא ערך זה</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Title" xml:space="preserve">
+    <value>איך למצוא את כתובת ה-Griffin הבסיסית</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step1_Title" xml:space="preserve">
+    <value>גישה למסוף ניהול ADFS</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step1_Desc" xml:space="preserve">
+    <value>היכנס לפורטל הניהול של Active Directory Federation Services (ADFS) באמצעות אישורי המנהל שלך.</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step2_Title" xml:space="preserve">
+    <value>נווט למאפייני שירות הפדרציה</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step2_Desc" xml:space="preserve">
+    <value>במסוף ADFS, הרחב את שם השרת שלך ולחץ על "שירות" → "מאפייני שירות פדרציה". חפש את השדה "מזהה שירות הפדרציה".</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step3_Title" xml:space="preserve">
+    <value>העתק את כתובת השירות</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step3_Desc" xml:space="preserve">
+    <value>מזהה שירות הפדרציה הוא כתובת ה-Griffin הבסיסית שלך. בדרך כלל הוא עוקב אחרי פורמט זה:</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Note" xml:space="preserve">
+    <value>הכתובת צריכה להשתמש בפרוטוקול HTTP או HTTPS. אם אינך יכול לגשת למסוף ADFS, צור קשר עם מנהל ה-IT שלך עבור כתובת שירות הפדרציה הנכונה.</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Title" xml:space="preserve">
+    <value>איך למצוא את מפתח ה-API של האימייל</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step1_Title" xml:space="preserve">
+    <value>התחבר לספק שירות האימייל</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step1_Desc" xml:space="preserve">
+    <value>גש ללוח המחוונים של המנהל או למסוף המפתחים של ספק שירות האימייל שלך (למשל, SendGrid, Mailgun, AWS SES וכו').</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step2_Title" xml:space="preserve">
+    <value>נווט להגדרות API</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step2_Desc" xml:space="preserve">
+    <value>חפש "מפתחות API", "אישורי API" או "הגדרות מפתחים" בתפריט החשבון שלך. זה בדרך כלל נמצא תחת הגדרות, חשבון או סעיפי API.</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step3_Title" xml:space="preserve">
+    <value>צור או העתק מפתח API</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step3_Desc" xml:space="preserve">
+    <value>אם אין לך עדיין מפתח API, לחץ על "צור מפתח API" או "צור מפתח חדש". ודא שתעניק לו הרשאה לשלוח אימיילים. העתק את המפתח מיד מכיוון שחלק מהספקים מציגים אותו רק פעם אחת.</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_SecurityNote" xml:space="preserve">
+    <value>לעולם אל תשתף את מפתח ה-API שלך בפומבי או תבצע commit אליו לבקרת גרסאות. אחסן אותו בצורה מאובטחת והחלף אותו מעת לעת לשיפור האבטחה.</value>
+  </data>
+  <data name="GotIt" xml:space="preserve">
+    <value>הבנתי</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>אבטחה</value>
   </data>
 </root>

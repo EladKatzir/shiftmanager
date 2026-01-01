@@ -38,9 +38,24 @@ public class GriffinService : IGriffinService
 
     public string BuildAuthenticationUrl(string griffinBaseUrl, string tokenConsumerUrl)
     {
+        _logger.LogDebug("Building Griffin authentication URL:");
+        _logger.LogDebug("  - Griffin BaseUrl: {BaseUrl}", griffinBaseUrl);
+        _logger.LogDebug("  - TokenConsumerUrl (before encoding): {TokenConsumerUrl}", tokenConsumerUrl);
+
         // Double URL-encode the token consumer URL as per Griffin documentation
-        var encoded = Uri.EscapeDataString(Uri.EscapeDataString(tokenConsumerUrl));
-        return $"{griffinBaseUrl.TrimEnd('/')}/authentication?tokenConsumerURL={encoded}";
+        var encodedOnce = Uri.EscapeDataString(tokenConsumerUrl);
+        var encodedTwice = Uri.EscapeDataString(encodedOnce);
+
+        _logger.LogDebug("  - TokenConsumerUrl (after 1st encode): {Encoded1}", encodedOnce);
+        _logger.LogDebug("  - TokenConsumerUrl (after 2nd encode): {Encoded2}", encodedTwice);
+
+        var finalUrl = $"{griffinBaseUrl.TrimEnd('/')}/authentication?tokenConsumerURL={encodedTwice}";
+
+        _logger.LogInformation("Griffin authentication URL constructed: {GriffinBaseUrl}/authentication?tokenConsumerURL=...",
+            griffinBaseUrl.TrimEnd('/'));
+        _logger.LogDebug("  - Full URL with encoded parameter: {FinalUrl}", finalUrl);
+
+        return finalUrl;
     }
 
     public async Task<bool> ValidateTokenAsync(string token, string griffinBaseUrl, int timeoutSeconds)

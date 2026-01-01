@@ -3415,6 +3415,138 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Owner_Griffin_About_Point3" xml:space="preserve">
     <value>No client secret needed - Griffin service handles ADFS communication</value>
   </data>
+  <data name="Owner_Griffin_DiagnosticsTitle" xml:space="preserve">
+    <value>Connection Test Diagnostics</value>
+  </data>
+  <data name="Owner_Griffin_ExportDiagnostics" xml:space="preserve">
+    <value>Export Diagnostics</value>
+  </data>
+  <data name="Owner_Griffin_RecentTests" xml:space="preserve">
+    <value>Recent Connection Tests</value>
+  </data>
+  <data name="Owner_Griffin_RecentFailures" xml:space="preserve">
+    <value>Recent Connection Failures</value>
+  </data>
+  <data name="Owner_Griffin_Table_Timestamp" xml:space="preserve">
+    <value>Timestamp</value>
+  </data>
+  <data name="Owner_Griffin_Table_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Owner_Griffin_Table_HttpCode" xml:space="preserve">
+    <value>HTTP Code</value>
+  </data>
+  <data name="Owner_Griffin_Table_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Owner_Griffin_Table_RedirectUrl" xml:space="preserve">
+    <value>Redirect URL</value>
+  </data>
+  <data name="Owner_Griffin_Status_Success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="Owner_Griffin_Status_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Owner_Griffin_ValidationErrors" xml:space="preserve">
+    <value>Validation Errors:</value>
+  </data>
+  <data name="Status_Healthy" xml:space="preserve">
+    <value>Healthy</value>
+  </data>
+  <data name="Status_Unhealthy" xml:space="preserve">
+    <value>Unhealthy</value>
+  </data>
+  <data name="Status_NotTested" xml:space="preserve">
+    <value>Not tested</value>
+  </data>
+  <data name="Status_ConnectionHealthy" xml:space="preserve">
+    <value>Connection Healthy</value>
+  </data>
+  <data name="Status_ConnectionFailed" xml:space="preserve">
+    <value>Connection Failed</value>
+  </data>
+  <data name="Status_EmailHealthy" xml:space="preserve">
+    <value>Email Service Healthy</value>
+  </data>
+  <data name="Status_EmailFailed" xml:space="preserve">
+    <value>Email Service Failed</value>
+  </data>
+  <data name="Status_NotTestedYet" xml:space="preserve">
+    <value>Not Tested Yet</value>
+  </data>
+  <data name="Status_NotTested_Desc" xml:space="preserve">
+    <value>Click the test button to check connection</value>
+  </data>
+  <data name="Status_LastTested" xml:space="preserve">
+    <value>Last tested</value>
+  </data>
+  <data name="Status_RetestConnection" xml:space="preserve">
+    <value>Retest Connection</value>
+  </data>
+  <data name="Status_RetestEmail" xml:space="preserve">
+    <value>Retest Email</value>
+  </data>
+  <data name="Help_ShowDetails" xml:space="preserve">
+    <value>Show details</value>
+  </data>
+  <data name="ContextPanel_Purpose" xml:space="preserve">
+    <value>Purpose</value>
+  </data>
+  <data name="ContextPanel_WhereToFind" xml:space="preserve">
+    <value>Where to find this</value>
+  </data>
+  <data name="ContextPanel_Example" xml:space="preserve">
+    <value>Examples</value>
+  </data>
+  <data name="ContextPanel_Recommendation" xml:space="preserve">
+    <value>Recommendation</value>
+  </data>
+  <data name="ContextPanel_Security" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="ContextPanel_BestPractices" xml:space="preserve">
+    <value>Best Practices</value>
+  </data>
+  <data name="ContextPanel_Griffin_BaseUrl_Purpose" xml:space="preserve">
+    <value>The Griffin service endpoint URL that handles ADFS authentication for your organization.</value>
+  </data>
+  <data name="ContextPanel_Griffin_BaseUrl_WhereToFind" xml:space="preserve">
+    <value>Contact your system administrator or check your organization's ADFS documentation for the Griffin service URL.</value>
+  </data>
+  <data name="ContextPanel_Griffin_CallbackUrl_Purpose" xml:space="preserve">
+    <value>The URL where Griffin will redirect users after successful authentication. This must match the callback URL configured in Griffin.</value>
+  </data>
+  <data name="ContextPanel_Griffin_CallbackUrl_WhereToFind" xml:space="preserve">
+    <value>Use your application's domain followed by /Auth/GriffinCallback. For local development, use localhost with your development port.</value>
+  </data>
+  <data name="ContextPanel_Griffin_Timeout_Purpose" xml:space="preserve">
+    <value>Maximum time in seconds to wait for a response from the Griffin service before timing out.</value>
+  </data>
+  <data name="ContextPanel_Griffin_Timeout_Recommendation" xml:space="preserve">
+    <value>10 seconds is recommended for most environments. Increase if you experience frequent timeouts in slower network conditions.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiUrl_Purpose" xml:space="preserve">
+    <value>The API endpoint URL for your email service provider (SendGrid, Mailgun, etc.) that will be used to send notification emails.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiUrl_WhereToFind" xml:space="preserve">
+    <value>Check your email service provider's API documentation. Common providers include SendGrid, Mailgun, AWS SES, and custom SMTP APIs.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiKey_Purpose" xml:space="preserve">
+    <value>Your email service provider's API key for authentication. This is stored encrypted in the database for security.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiKey_WhereToFind" xml:space="preserve">
+    <value>Log in to your email service provider's dashboard and navigate to API Keys or Settings to generate or retrieve your API key.</value>
+  </data>
+  <data name="ContextPanel_Email_ApiKey_Security" xml:space="preserve">
+    <value>API keys are stored encrypted. Never share your API key publicly or commit it to version control.</value>
+  </data>
+  <data name="ContextPanel_Email_FromAddress_Purpose" xml:space="preserve">
+    <value>The email address that will appear as the sender for all system notifications sent to users.</value>
+  </data>
+  <data name="ContextPanel_Email_FromAddress_BestPractices" xml:space="preserve">
+    <value>Use a no-reply address (e.g., noreply@yourdomain.com) for automated notifications. Ensure the domain is verified with your email provider.</value>
+  </data>
   <data name="LoginWithADFS" xml:space="preserve">
     <value>Login with ADFS</value>
   </data>
@@ -4187,5 +4319,65 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Email_AccountApprovedContactSupport" xml:space="preserve">
     <value>If you have any questions or need assistance, please contact your manager or system administrator.</value>
+  </data>
+  <data name="FindThis_Button" xml:space="preserve">
+    <value>Find This</value>
+  </data>
+  <data name="FindThis_HowToFind" xml:space="preserve">
+    <value>How to find this value</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Title" xml:space="preserve">
+    <value>How to Find Your Griffin Base URL</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step1_Title" xml:space="preserve">
+    <value>Access ADFS Administration Console</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step1_Desc" xml:space="preserve">
+    <value>Log in to your Active Directory Federation Services (ADFS) admin portal using your administrator credentials.</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step2_Title" xml:space="preserve">
+    <value>Navigate to Federation Service Properties</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step2_Desc" xml:space="preserve">
+    <value>In the ADFS console, expand your server name and click on "Service" → "Federation Service Properties". Look for the "Federation Service identifier" field.</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step3_Title" xml:space="preserve">
+    <value>Copy the Service URL</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Step3_Desc" xml:space="preserve">
+    <value>The Federation Service identifier is your Griffin Base URL. It typically follows this format:</value>
+  </data>
+  <data name="FindThis_Griffin_BaseUrl_Note" xml:space="preserve">
+    <value>The URL should use HTTP or HTTPS protocol. If you cannot access the ADFS console, contact your IT administrator for the correct Federation Service URL.</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Title" xml:space="preserve">
+    <value>How to Find Your Email API Key</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step1_Title" xml:space="preserve">
+    <value>Log In to Your Email Service Provider</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step1_Desc" xml:space="preserve">
+    <value>Access your email service provider's admin dashboard or developer console (e.g., SendGrid, Mailgun, AWS SES, etc.).</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step2_Title" xml:space="preserve">
+    <value>Navigate to API Settings</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step2_Desc" xml:space="preserve">
+    <value>Look for "API Keys", "API Credentials", or "Developer Settings" in your account menu. This is usually found under Settings, Account, or API sections.</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step3_Title" xml:space="preserve">
+    <value>Generate or Copy API Key</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_Step3_Desc" xml:space="preserve">
+    <value>If you don't have an API key yet, click "Create API Key" or "Generate New Key". Make sure to grant it permission to send emails. Copy the key immediately as some providers only show it once.</value>
+  </data>
+  <data name="FindThis_Email_ApiKey_SecurityNote" xml:space="preserve">
+    <value>Never share your API key publicly or commit it to version control. Store it securely and rotate it periodically for enhanced security.</value>
+  </data>
+  <data name="GotIt" xml:space="preserve">
+    <value>Got It</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>Security</value>
   </data>
 </root>

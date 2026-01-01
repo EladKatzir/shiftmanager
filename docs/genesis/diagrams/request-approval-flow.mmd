@@ -1,0 +1,175 @@
+sequenceDiagram
+    %% ShiftManager Request Approval Workflow
+    %% Shows Time-Off and Swap Request flows from creation to approval/decline
+
+    participant Employee as 👤 Employee
+    participant CreatePage as 📄 /Requests/Create
+    participant DB as 💿 SQLite Database
+    participant ManagerPage as 👔 /Requests/Index (Manager)
+    participant ConflictChecker as ⚙️ ConflictChecker
+    participant NotificationService as 🔔 NotificationService
+    participant EmailService as 📧 EmailService
+
+    %% ========================================
+    %% TIME-OFF REQUEST WORKFLOW
+    %% ========================================
+
+    Note over Employee,EmailService: 🏖️ Time-Off Request Workflow
+
+    Employee->>CreatePage: Navigate to /Requests/Create
+    CreatePage-->>Employee: Show request form (type selection)
+
+    Employee->>CreatePage: Submit Time-Off Request<br/>{<br/>  StartDate: "2025-06-15",<br/>  EndDate: "2025-06-20",<br/>  Reason: "Family vacation",<br/>  Type: TimeOff<br/>}
+
+    CreatePage->>CreatePage: Validate input:<br/>• StartDate <= EndDate<br/>• Dates not in past<br/>• Reason max 500 chars
+
+    alt Validation fails
+        CreatePage-->>Employee: Error: "End date must be after start"
+    end
+
+    CreatePage->>DB: INSERT INTO TimeOffRequests:<br/>UserId = current user,<br/>CompanyId = current company,<br/>StartDate, EndDate, Reason,<br/>Status = Pending,<br/>CreatedAt = NOW
+    DB-->>CreatePage: TimeOffRequest created (ID=42)
+
+    CreatePage->>NotificationService: CreateNotification(<br/>  Type: TimeOffRequested,<br/>  TargetUserId: managerId,<br/>  Message: "John Doe requested time off"<br/>)
+    NotificationService->>DB: INSERT INTO Notifications
+    NotificationService->>EmailService: SendEmailAsync(manager.Email)
+
+    CreatePage-->>Employee: Success: "Request submitted"<br/>Redirect to /Requests/Mine
+
+    %% ========================================
+    %% MANAGER APPROVAL (TIME-OFF)
+    %% ========================================
+
+    Note over Employee,EmailService: 👔 Manager Reviews Time-Off Request
+
+    ManagerPage->>DB: Query TimeOffRequests<br/>WHERE CompanyId IN (user's companies)<br/>AND Status = Pending<br/>ORDER BY CreatedAt DESC
+
+    Note over ManagerPage: Multi-company access:<br/>• Owner: All companies<br/>• Director: All companies<br/>• Manager: Own company only
+
+    DB-->>ManagerPage: List of pending requests
+    ManagerPage-->>ManagerPage: Display requests (21 from Company A, 5 from Company B)
+
+    ManagerPage->>ManagerPage: Manager clicks "Approve" (RequestId=42)
+
+    ManagerPage->>DB: BEGIN TRANSACTION
+
+    ManagerPage->>DB: UPDATE TimeOffRequests<br/>SET Status = Approved,<br/>    ApprovedBy = managerId,<br/>    ApprovedAt = NOW<br/>WHERE Id = 42
+
+    ManagerPage->>DB: DELETE FROM ShiftAssignments<br/>WHERE UserId = 42's employee<br/>AND WorkDate BETWEEN '2025-06-15' AND '2025-06-20'
+
+    Note over ManagerPage,DB: Auto-delete overlapping shifts<br/>(6 shifts deleted for 6-day vacation)
+
+    ManagerPage->>DB: COMMIT TRANSACTION
+
+    ManagerPage->>NotificationService: CreateNotification(<br/>  Type: TimeOffApproved,<br/>  TargetUserId: employeeId,<br/>  Message: "Your time-off was approved"<br/>)
+    NotificationService->>DB: INSERT INTO Notifications
+    NotificationService->>EmailService: SendEmailAsync(employee.Email)
+
+    ManagerPage-->>ManagerPage: Success: "Request approved"
+
+    %% ========================================
+    %% SWAP REQUEST WORKFLOW
+    %% ========================================
+
+    Note over Employee,EmailService: 🔄 Shift Swap Request Workflow
+
+    Employee->>CreatePage: Submit Swap Request<br/>{<br/>  ShiftAssignmentId: 123,<br/>  TargetUserId: 456,<br/>  Reason: "Need to switch schedules",<br/>  Type: SwapShift<br/>}
+
+    CreatePage->>DB: Query ShiftAssignment (ID=123)
+    DB-->>CreatePage: ShiftAssignment (CurrentUserId=Employee, WorkDate=2025-07-10)
+
+    alt Shift not found or unauthorized
+        CreatePage-->>Employee: Error: "Invalid shift"
+    end
+
+    CreatePage->>ConflictChecker: CanAssignAsync(<br/>  userId: 456,<br/>  shiftInstance: {WorkDate, StartTime, EndTime}<br/>)
+
+    Note over ConflictChecker: Pre-validation checks:<br/>1. Check approved time-off<br/>2. Check overlapping shifts<br/>3. Check rest period (8h default)<br/>4. Check weekly hours cap (40h)
+
+    ConflictChecker->>DB: Query TimeOffRequests, ShiftAssignments, AppConfig
+    DB-->>ConflictChecker: Data for validation
+    ConflictChecker-->>CreatePage: ConflictResult (HasConflict: false)
+
+    alt Conflict detected
+        CreatePage-->>Employee: Error: "Target user has time-off that day"
+    end
+
+    CreatePage->>DB: INSERT INTO SwapRequests:<br/>UserId = current employee,<br/>CompanyId = current company,<br/>ShiftAssignmentId = 123,<br/>TargetUserId = 456,<br/>Status = Pending,<br/>CreatedAt = NOW
+    DB-->>CreatePage: SwapRequest created (ID=99)
+
+    CreatePage->>NotificationService: CreateNotification(<br/>  Type: SwapRequested,<br/>  TargetUserId: managerId,<br/>  Message: "John Doe requested swap with Jane Smith"<br/>)
+    NotificationService->>DB: INSERT INTO Notifications
+    NotificationService->>EmailService: SendEmailAsync(manager.Email)
+
+    CreatePage-->>Employee: Success: "Swap request submitted"
+
+    %% ========================================
+    %% MANAGER APPROVAL (SWAP)
+    %% ========================================
+
+    Note over Employee,EmailService: 👔 Manager Reviews Swap Request
+
+    ManagerPage->>DB: Query SwapRequests<br/>WHERE CompanyId IN (user's companies)<br/>AND Status = Pending<br/>INCLUDE ShiftAssignment, CurrentUser, TargetUser
+
+    DB-->>ManagerPage: List of pending swap requests
+    ManagerPage-->>ManagerPage: Display: "John → Jane (Shift: July 10 Morning)"
+
+    ManagerPage->>ManagerPage: Manager clicks "Approve" (SwapId=99)
+
+    ManagerPage->>ConflictChecker: CanAssignAsync(<br/>  userId: 456,<br/>  shiftInstance: {WorkDate, StartTime, EndTime}<br/>)
+
+    Note over ConflictChecker: Re-validate before approval<br/>(conditions may have changed)
+
+    ConflictChecker->>DB: Query latest data
+    DB-->>ConflictChecker: Data for validation
+    ConflictChecker-->>ManagerPage: ConflictResult (HasConflict: false)
+
+    alt Conflict detected (changed since request creation)
+        ManagerPage-->>ManagerPage: Error: "Conflict detected.<br/>Target user now has time-off."
+    end
+
+    ManagerPage->>DB: BEGIN TRANSACTION
+
+    ManagerPage->>DB: UPDATE SwapRequests<br/>SET Status = Approved,<br/>    ApprovedBy = managerId,<br/>    ApprovedAt = NOW<br/>WHERE Id = 99
+
+    ManagerPage->>DB: UPDATE ShiftAssignments<br/>SET UserId = 456 (TargetUser),<br/>    UpdatedAt = NOW<br/>WHERE Id = 123
+
+    Note over ManagerPage,DB: Atomic swap: Shift ownership transferred<br/>from John (CurrentUser) to Jane (TargetUser)
+
+    ManagerPage->>DB: COMMIT TRANSACTION
+
+    ManagerPage->>NotificationService: CreateNotification (x2):<br/>1. Type: SwapApproved → John<br/>2. Type: ShiftAdded → Jane
+    NotificationService->>DB: INSERT INTO Notifications (2 rows)
+    NotificationService->>EmailService: SendEmailAsync (2 emails)
+
+    ManagerPage-->>ManagerPage: Success: "Swap approved"
+
+    %% ========================================
+    %% DECLINE FLOW (BOTH TYPES)
+    %% ========================================
+
+    Note over Employee,EmailService: ❌ Decline Workflow (Time-Off or Swap)
+
+    ManagerPage->>ManagerPage: Manager clicks "Decline" (RequestId=42)
+
+    ManagerPage->>DB: UPDATE TimeOffRequests/SwapRequests<br/>SET Status = Declined,<br/>    ApprovedBy = managerId,<br/>    ApprovedAt = NOW<br/>WHERE Id = 42
+
+    Note over ManagerPage,DB: No shift deletions or swaps occur<br/>(Request simply marked as Declined)
+
+    ManagerPage->>NotificationService: CreateNotification(<br/>  Type: TimeOffDeclined / SwapDeclined,<br/>  TargetUserId: employeeId,<br/>  Message: "Your request was declined"<br/>)
+    NotificationService->>DB: INSERT INTO Notifications
+    NotificationService->>EmailService: SendEmailAsync(employee.Email)
+
+    ManagerPage-->>ManagerPage: Success: "Request declined"
+
+    %% ========================================
+    %% AUTHORIZATION SUMMARY
+    %% ========================================
+
+    Note over Employee,EmailService: 🔐 AUTHORIZATION RULES:<br/>✓ Create Request: Employee, Assigner, Manager (own company)<br/>✓ View All Requests: Owner/Director (all companies), Manager (own company)<br/>✓ Approve/Decline: Owner/Director/Manager only<br/>✓ Auto-delete shifts: Time-off approval only (not swaps)<br/>✓ Conflict re-check: Always before swap approval<br/>✓ Multi-company: Owner/Director see 21 + 5 requests across companies
+
+    %% ========================================
+    %% NOTIFICATION TYPES
+    %% ========================================
+
+    Note over NotificationService,EmailService: 📬 NOTIFICATION TYPES:<br/>1. TimeOffRequested → Manager<br/>2. TimeOffApproved → Employee<br/>3. TimeOffDeclined → Employee<br/>4. SwapRequested → Manager<br/>5. SwapApproved → Both employees<br/>6. SwapDeclined → Employee<br/>7. ShiftAdded → Target user (swap approval)

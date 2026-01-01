@@ -1,0 +1,131 @@
+flowchart TB
+    %% ASP.NET Core Middleware Pipeline - ShiftManager
+    %% Shows execution order of middleware from HTTP request to response
+
+    Start([🌐 HTTP Request<br/>Incoming from Browser])
+
+    subgraph AspNetCore["🔧 ASP.NET Core Built-In Middleware"]
+        direction TB
+        DevExceptionPage{{"🐛 IsDevelopment?"}}
+        UseDeveloperPage["UseDeveloperExceptionPage()<br/>Detailed error pages"]
+        UseExceptionHandler["UseExceptionHandler('/Error')<br/>Production error handling"]
+        UseHsts["UseHsts()<br/>HTTP Strict Transport Security"]
+        UseHttpsRedirect{{"🔒 EnableHttpsRedirection?"}}
+        RedirectHttps["UseHttpsRedirection()<br/>Redirect HTTP → HTTPS"]
+    end
+
+    subgraph StaticFiles["📁 Static File Serving"]
+        UseStaticFiles["UseStaticFiles()<br/>• Serve wwwroot/ files<br/>• Explicit MIME types (CSS, JS)<br/>• Cache-Control headers"]
+    end
+
+    subgraph Routing["🗺️ Routing"]
+        UseRouting["UseRouting()<br/>Match incoming URL to endpoint"]
+    end
+
+    subgraph CustomMiddleware1["🔧 Custom Pre-Auth Middleware"]
+        direction TB
+        RequestLogging["UseRequestLogging()<br/>• Log HTTP method, path, IP<br/>• Log to ApiRequestLogs table"]
+        SecurityHeaders["Security Headers Middleware<br/>• X-Frame-Options: DENY<br/>• X-Content-Type-Options: nosniff<br/>• Content-Security-Policy<br/>• Remove Server header"]
+        UseLocalization["UseRequestLocalization()<br/>• Detect culture (en-US/he-IL)<br/>• Query string > Cookie > Accept-Language"]
+    end
+
+    subgraph GriffinAuth["🏢 Griffin ADFS Authentication"]
+        GriffinMiddleware["GriffinAuthenticationMiddleware<br/>• Check griffin.token cookie<br/>• Validate with Griffin API<br/>• Cache claims (8h TTL, SHA256)<br/>• Set HttpContext.User"]
+    end
+
+    subgraph CompanyScope["🏢 Multi-Tenancy Scoping"]
+        CompanyMiddleware["CompanyContextMiddleware<br/>• Resolve user's CompanyId<br/>• Set ICompanyContext<br/>• Enable row-level security"]
+    end
+
+    subgraph AspAuth["🔐 ASP.NET Core Authentication & Authorization"]
+        direction TB
+        UseAuthentication["UseAuthentication()<br/>• Validate cookie auth<br/>• Populate HttpContext.User<br/>• 7-day sliding expiration"]
+        UseAuthorization["UseAuthorization()<br/>• Check [Authorize] attributes<br/>• Enforce policies (IsAdmin, etc.)<br/>• Return 401/403 if unauthorized"]
+    end
+
+    subgraph ApiMiddleware["🌐 API-Specific Middleware (Only /api routes)"]
+        direction TB
+        ApiRequestLogging["ApiRequestLoggingMiddleware<br/>• Log API calls to database<br/>• Track usage per API key"]
+        ApiAuth["ApiAuthenticationMiddleware<br/>• Check X-API-Key header<br/>• Whitelist browser endpoints<br/>• Reject if unauthorized"]
+        ApiRateLimit["ApiRateLimitingMiddleware<br/>• 10 requests / 15 min per IP<br/>• Return 429 if exceeded"]
+    end
+
+    subgraph Endpoints["🎯 Endpoint Execution"]
+        direction TB
+        RazorPages["Razor Pages<br/>• Execute PageModel<br/>• Render .cshtml view"]
+        ApiControllers["API Controllers<br/>• Execute action method<br/>• Return JSON response"]
+        HealthChecks["Health Check Endpoints<br/>• /health (liveness)<br/>• /ready (readiness)"]
+    end
+
+    Response([📤 HTTP Response<br/>Back to Browser])
+
+    %% Flow connections
+    Start --> DevExceptionPage
+    DevExceptionPage -->|Development| UseDeveloperPage
+    DevExceptionPage -->|Production| UseExceptionHandler
+    UseDeveloperPage --> UseHsts
+    UseExceptionHandler --> UseHsts
+    UseHsts --> UseHttpsRedirect
+
+    UseHttpsRedirect -->|Enabled| RedirectHttps
+    UseHttpsRedirect -->|Disabled| UseStaticFiles
+    RedirectHttps --> UseStaticFiles
+
+    UseStaticFiles --> UseRouting
+    UseRouting --> RequestLogging
+    RequestLogging --> SecurityHeaders
+    SecurityHeaders --> UseLocalization
+    UseLocalization --> GriffinMiddleware
+
+    GriffinMiddleware --> CompanyMiddleware
+    CompanyMiddleware --> UseAuthentication
+    UseAuthentication --> UseAuthorization
+
+    UseAuthorization --> CheckRoute{{"Is /api route?"}}
+
+    CheckRoute -->|Yes| ApiRequestLogging
+    CheckRoute -->|No| RazorPages
+
+    ApiRequestLogging --> ApiAuth
+    ApiAuth --> ApiRateLimit
+    ApiRateLimit --> ApiOrHealth{{"Is /health?"}}
+
+    ApiOrHealth -->|Yes| HealthChecks
+    ApiOrHealth -->|No| ApiControllers
+
+    RazorPages --> Response
+    ApiControllers --> Response
+    HealthChecks --> Response
+
+    %% ========================================
+    %% CRITICAL MIDDLEWARE ORDER RULES
+    %% ========================================
+
+    note1["⚠️ CRITICAL ORDER RULES:<br/>1. GriffinAuthenticationMiddleware BEFORE UseAuthentication<br/>   (Must set HttpContext.User before cookie auth checks)<br/>2. CompanyContextMiddleware AFTER Griffin but BEFORE UseAuthentication<br/>   (User must be authenticated to resolve CompanyId)<br/>3. UseAuthentication BEFORE UseAuthorization<br/>   (Must authenticate before checking authorization)<br/>4. API middleware AFTER UseAuthorization<br/>   (Cookie auth must be available for internal endpoints)"]
+
+    note2["🔄 REQUEST FLOW EXAMPLE:<br/>1. Browser → GET /Assignments/Manage<br/>2. StaticFiles → No match (not wwwroot/)<br/>3. Routing → Matched to Razor Page<br/>4. Griffin → No griffin.token cookie<br/>5. CompanyContext → User authenticated → Set CompanyId=2<br/>6. Authentication → Cookie valid → User authenticated<br/>7. Authorization → Check [Authorize] → Allowed (Manager role)<br/>8. Razor Page → Execute ManageModel.OnGetAsync()<br/>9. Response → Render Manage.cshtml → HTML to browser"]
+
+    note3["🛡️ SECURITY CHECKPOINTS:<br/>1. Security Headers → Applied to ALL responses<br/>2. Griffin Validation → 8h cache, SHA256 hash<br/>3. Cookie Auth → HttpOnly, SameSite=Lax, Secure<br/>4. CompanyId Scoping → Global query filters<br/>5. Authorization → Role-based policies<br/>6. API Rate Limiting → 10 requests / 15 min per IP<br/>7. Request Logging → All requests tracked"]
+
+    %% Position notes
+    Response -.-> note1
+    note1 -.-> note2
+    note2 -.-> note3
+
+    %% ========================================
+    %% STYLING
+    %% ========================================
+
+    classDef aspnetStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef customStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef authStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
+    classDef apiStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef endpointStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#000
+    classDef decisionStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+
+    class AspNetCore,StaticFiles,Routing aspnetStyle
+    class CustomMiddleware1 customStyle
+    class GriffinAuth,CompanyScope,AspAuth authStyle
+    class ApiMiddleware apiStyle
+    class Endpoints endpointStyle
+    class DevExceptionPage,UseHttpsRedirect,CheckRoute,ApiOrHealth decisionStyle

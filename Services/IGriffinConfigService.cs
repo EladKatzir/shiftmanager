@@ -31,7 +31,7 @@ public interface IGriffinConfigService
         string updatedBy);
 
     /// <summary>
-    /// Test if Griffin service is reachable
+    /// Test if Griffin service is reachable with detailed diagnostics
     /// </summary>
-    Task<bool> TestConnectionAsync(string baseUrl, int timeoutSeconds);
+    Task<GriffinConnectionTestResult> TestConnectionAsync(string baseUrl, int timeoutSeconds);
 }

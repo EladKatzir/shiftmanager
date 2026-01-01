@@ -118,6 +118,7 @@ builder.Services.AddScoped<IEmailApiLogService, EmailApiLogService>();
 // Griffin ADFS services
 builder.Services.AddScoped<IGriffinConfigService, GriffinConfigService>();
 builder.Services.AddScoped<IGriffinService, GriffinService>();
+builder.Services.AddScoped<IGriffinApiLogService, GriffinApiLogService>();
 builder.Services.AddMemoryCache(); // For Griffin claims caching (may already be registered)
 
 // Phase 2C: Performance Optimization - Caching Services

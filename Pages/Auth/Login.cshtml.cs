@@ -54,25 +54,52 @@ public class LoginModel : LocalizedPageModel
         // ✅ PHASE 18: Show auth required prompt if user was redirected due to unauthorized access
         ShowAuthPrompt = reason == "authRequired";
 
-        // Always show Griffin ADFS button
-        ShowGriffinButton = true;
-
-        // Check Griffin availability
+        // ✅ FIX: Improved Griffin availability check with detailed logging
         var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
 
-        if (griffinConfig?.Enabled != true)
+        if (griffinConfig == null)
         {
+            // Not configured at all (database table missing or appsettings disabled)
+            ShowGriffinButton = false;
+            ShowGriffinUnavailableMessage = false;
+            _logger.LogDebug("Griffin config not found (database table may be missing or appsettings.json has Enabled=false)");
+        }
+        else if (!griffinConfig.Enabled)
+        {
+            // Configured but explicitly disabled
+            ShowGriffinButton = false;
+            ShowGriffinUnavailableMessage = false;
+            _logger.LogDebug("Griffin config exists but Enabled=false for company {CompanyId}", griffinConfig.CompanyId);
+        }
+        else if (string.IsNullOrWhiteSpace(griffinConfig.BaseUrl) ||
+                 string.IsNullOrWhiteSpace(griffinConfig.TokenConsumerUrl))
+        {
+            // Enabled but incomplete configuration
+            ShowGriffinButton = false;
             ShowGriffinUnavailableMessage = true;
+            _logger.LogWarning("Griffin enabled but configuration incomplete: BaseUrl={BaseUrl}, TokenConsumerUrl={TokenConsumerUrl}",
+                griffinConfig.BaseUrl ?? "(null)",
+                griffinConfig.TokenConsumerUrl ?? "(null)");
         }
         else
         {
-            var isAvailable = await _griffinConfigService.TestConnectionAsync(
-                griffinConfig.BaseUrl!, griffinConfig.TimeoutSeconds);
+            // Fully configured - test connection
+            _logger.LogDebug("Testing Griffin connection to {BaseUrl}", griffinConfig.BaseUrl);
 
-            if (!isAvailable)
+            var result = await _griffinConfigService.TestConnectionAsync(
+                griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
+
+            ShowGriffinButton = result.Success;
+            ShowGriffinUnavailableMessage = !result.Success;
+
+            if (result.Success)
             {
-                ShowGriffinUnavailableMessage = true;
-                _logger.LogWarning("Griffin ADFS unavailable");
+                _logger.LogDebug("Griffin ADFS is available and configured correctly");
+            }
+            else
+            {
+                _logger.LogWarning("Griffin ADFS connection test failed for {BaseUrl} (timeout: {Timeout}s)",
+                    griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
             }
         }
 
@@ -205,10 +232,16 @@ public class LoginModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostGriffinAsync(string? returnUrl = null)
     {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        _logger.LogInformation("Griffin authentication initiated from IP {IP}", ipAddress);
+
         var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
 
+        // Validate Griffin is enabled
         if (griffinConfig?.Enabled != true)
         {
+            _logger.LogWarning("Griffin authentication attempt but config not enabled (config null or Enabled=false)");
             Error = _localizer["Error_Login_AdfsNotConfigured"];
             ReturnUrl = returnUrl ?? "/Home/Index";
             ShowGriffinButton = true;
@@ -217,15 +250,47 @@ public class LoginModel : LocalizedPageModel
             return Page();
         }
 
-        // Build callback URL
-        var callbackUrl = $"{Request.Scheme}://{Request.Host}/Auth/GriffinCallback";
-        if (!string.IsNullOrEmpty(returnUrl))
+        // Validate required configuration fields
+        if (string.IsNullOrWhiteSpace(griffinConfig.BaseUrl))
         {
-            callbackUrl += $"?returnUrl={Uri.EscapeDataString(returnUrl)}";
+            _logger.LogError("Griffin enabled but BaseUrl is missing");
+            Error = _localizer["Error_Login_AdfsNotConfigured"];
+            ReturnUrl = returnUrl ?? "/Home/Index";
+            ShowGriffinButton = true;
+            ShowGriffinUnavailableMessage = true;
+            await OnGetAsync(returnUrl: returnUrl);
+            return Page();
         }
 
+        if (string.IsNullOrWhiteSpace(griffinConfig.TokenConsumerUrl))
+        {
+            _logger.LogError("Griffin enabled but TokenConsumerUrl is missing");
+            Error = _localizer["Error_Login_AdfsNotConfigured"];
+            ReturnUrl = returnUrl ?? "/Home/Index";
+            ShowGriffinButton = true;
+            ShowGriffinUnavailableMessage = true;
+            await OnGetAsync(returnUrl: returnUrl);
+            return Page();
+        }
+
+        // ✅ FIX: Use configured TokenConsumerUrl from database (not Request.Scheme/Host)
+        var callbackUrl = griffinConfig.TokenConsumerUrl;
+
+        // Append returnUrl as query parameter if present
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            var separator = callbackUrl.Contains('?') ? '&' : '?';
+            callbackUrl += $"{separator}returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+
+        _logger.LogDebug("Using configured callback URL: {CallbackUrl}", callbackUrl);
+        _logger.LogDebug("Request context: Scheme={Scheme}, Host={Host}", Request.Scheme, Request.Host);
+
         // Build authentication URL
-        var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl!, callbackUrl);
+        var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl, callbackUrl);
+
+        _logger.LogInformation("Redirecting to Griffin ADFS: {BaseUrl}/authentication", griffinConfig.BaseUrl);
+        _logger.LogDebug("Full Griffin auth URL (tokenConsumerURL will be double-encoded): {AuthUrl}", authUrl);
 
         // Redirect to Griffin
         return Redirect(authUrl);

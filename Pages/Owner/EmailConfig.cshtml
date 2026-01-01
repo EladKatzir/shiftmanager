@@ -24,6 +24,55 @@
         <p class="page-subtitle">Configure email notifications for the system</p>
     </div>
 
+    @* Status Widget - At-a-glance health monitoring *@
+    <div class="status-widget">
+        <div class="status-indicator-wrapper">
+            @if (Model.LastTestSuccess == true)
+            {
+                <div class="status-indicator status-success" title="@Localizer["Status_Healthy"]"></div>
+                <div class="status-info">
+                    <div class="status-title">@Localizer["Status_EmailHealthy"]</div>
+                    @if (Model.LastTestTimestamp.HasValue)
+                    {
+                        <div class="status-subtitle">
+                            @Localizer["Status_LastTested"]: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                        </div>
+                    }
+                </div>
+            }
+            else if (Model.LastTestSuccess == false)
+            {
+                <div class="status-indicator status-error" title="@Localizer["Status_Unhealthy"]"></div>
+                <div class="status-info">
+                    <div class="status-title">@Localizer["Status_EmailFailed"]</div>
+                    @if (Model.LastTestTimestamp.HasValue)
+                    {
+                        <div class="status-subtitle">
+                            @Localizer["Status_LastTested"]: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.LastTestError))
+                    {
+                        <div class="status-error-message">@Model.LastTestError</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="status-indicator status-unknown" title="@Localizer["Status_NotTested"]"></div>
+                <div class="status-info">
+                    <div class="status-title">@Localizer["Status_NotTestedYet"]</div>
+                    <div class="status-subtitle">@Localizer["Status_NotTested_Desc"]</div>
+                </div>
+            }
+        </div>
+        <form method="post" asp-page-handler="TestConnection" style="display: inline;">
+            <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
+                📧 @Localizer["Status_RetestEmail"]
+            </button>
+        </form>
+    </div>
+
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
@@ -52,19 +101,50 @@
 
             <div class="card-body">
                 <div class="form-group">
-                    <label asp-for="EmailApiUrl">API URL</label>
-                    <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" />
+                    <div class="label-with-help">
+                        <label asp-for="EmailApiUrl">API URL</label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" title="@Localizer["Help_ShowDetails"]">
+                            ❓
+                        </button>
+                    </div>
+                    <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
                     <small class="form-text">The endpoint URL for your email service API</small>
+
+                    <div class="context-panel" id="email-url-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
+                            <p>@Localizer["ContextPanel_Email_ApiUrl_Purpose"]</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_WhereToFind"]</strong>
+                            <p>@Localizer["ContextPanel_Email_ApiUrl_WhereToFind"]</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_Example"]</strong>
+                            <code class="example-code">https://api.sendgrid.com/v3/mail/send</code>
+                            <code class="example-code">https://api.mailgun.net/v3/yourdomain.com/messages</code>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="EmailApiKey">
-                        API Key
-                        @if (Model.HasExistingKey)
-                        {
-                            <span class="badge badge-success">✅ Configured</span>
-                        }
-                    </label>
+                    <div class="label-with-help">
+                        <label asp-for="EmailApiKey">
+                            API Key
+                            @if (Model.HasExistingKey)
+                            {
+                                <span class="badge badge-success">✅ Configured</span>
+                            }
+                        </label>
+                        <div class="help-buttons-group">
+                            <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" title="@Localizer["Help_ShowDetails"]">
+                                ❓
+                            </button>
+                            <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" title="@Localizer["FindThis_HowToFind"]">
+                                🔍 @Localizer["FindThis_Button"]
+                            </button>
+                        </div>
+                    </div>
                     <input asp-for="EmailApiKey" type="password" class="form-control"
                            placeholder="@(Model.HasExistingKey ? "••••••••••••" : "Enter API key")" />
                     <small class="form-text">
@@ -77,12 +157,48 @@
                             <span>Your email service API key (stored encrypted)</span>
                         }
                     </small>
+
+                    <div class="context-panel" id="email-key-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
+                            <p>@Localizer["ContextPanel_Email_ApiKey_Purpose"]</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_WhereToFind"]</strong>
+                            <p>@Localizer["ContextPanel_Email_ApiKey_WhereToFind"]</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_Security"]</strong>
+                            <p>@Localizer["ContextPanel_Email_ApiKey_Security"]</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="EmailFromAddress">From Address</label>
-                    <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" />
+                    <div class="label-with-help">
+                        <label asp-for="EmailFromAddress">From Address</label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" title="@Localizer["Help_ShowDetails"]">
+                            ❓
+                        </button>
+                    </div>
+                    <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
                     <small class="form-text">The email address that will appear as the sender</small>
+
+                    <div class="context-panel" id="email-from-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
+                            <p>@Localizer["ContextPanel_Email_FromAddress_Purpose"]</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_BestPractices"]</strong>
+                            <p>@Localizer["ContextPanel_Email_FromAddress_BestPractices"]</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>@Localizer["ContextPanel_Example"]</strong>
+                            <code class="example-code">noreply@yourcompany.com</code>
+                            <code class="example-code">notifications@yourdomain.mil</code>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -236,7 +352,209 @@
     </div>
 </div>
 
+@* Find This Modal - Email API Key *@
+<div id="find-apikey-modal" class="modal-overlay" onclick="closeModal('find-apikey-modal')" style="display: none;">
+    <div class="modal-container" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>🔍 @Localizer["FindThis_Email_ApiKey_Title"]</h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('find-apikey-modal')" title="@Localizer["Close"]">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>@Localizer["FindThis_Email_ApiKey_Step1_Title"]</h4>
+                    <p>@Localizer["FindThis_Email_ApiKey_Step1_Desc"]</p>
+                </div>
+            </div>
+            <div class="modal-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>@Localizer["FindThis_Email_ApiKey_Step2_Title"]</h4>
+                    <p>@Localizer["FindThis_Email_ApiKey_Step2_Desc"]</p>
+                </div>
+            </div>
+            <div class="modal-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>@Localizer["FindThis_Email_ApiKey_Step3_Title"]</h4>
+                    <p>@Localizer["FindThis_Email_ApiKey_Step3_Desc"]</p>
+                </div>
+            </div>
+            <div class="modal-note">
+                <strong>🔒 @Localizer["Security"]:</strong> @Localizer["FindThis_Email_ApiKey_SecurityNote"]
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="closeModal('find-apikey-modal')">
+                @Localizer["GotIt"]
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
+/* Status Widget */
+.status-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator.status-success {
+    background: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.status-indicator.status-error {
+    background: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.status-indicator.status-unknown {
+    background: #9ca3af;
+    box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.2);
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.status-subtitle {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.status-error-message {
+    font-size: 0.875rem;
+    color: var(--danger, #ef4444);
+    margin-top: 0.25rem;
+}
+
+.status-retest-btn {
+    white-space: nowrap;
+}
+
+/* Context Panel & Help Button */
+.label-with-help {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.help-button {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.6;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+}
+
+.help-button:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.help-button:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.context-panel {
+    background: var(--surface-soft, #f9fafb);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    animation: slideDown 0.2s ease-out;
+}
+
+@@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.context-panel-section {
+    margin-bottom: 1rem;
+}
+
+.context-panel-section:last-child {
+    margin-bottom: 0;
+}
+
+.context-panel-section strong {
+    display: block;
+    color: var(--text);
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+}
+
+.context-panel-section p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.example-code {
+    display: block;
+    background: var(--background, #fff);
+    border: 1px solid var(--border);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem;
+    color: var(--text);
+    margin-top: 0.5rem;
+}
+
+.example-code + .example-code {
+    margin-top: 0.375rem;
+}
+
 .email-config-container {
     max-width: 900px;
     margin: 0 auto;
@@ -256,11 +574,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: var(--surface-soft, #f9fafb);
 }
 
 .card-header h2 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
 }
 
 .card-body {
@@ -282,6 +604,8 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text);
 }
 
 .form-control {
@@ -291,6 +615,7 @@
     border-radius: 8px;
     font-size: 1rem;
     background: var(--background);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .form-control:focus {
@@ -301,9 +626,10 @@
 
 .form-text {
     display: block;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
     color: var(--muted);
+    line-height: 1.5;
 }
 
 .toggle-label {
@@ -468,4 +794,255 @@
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
 }
+
+/* ========================================
+   Find This Modal (Phase 4)
+   ======================================== */
+
+/* Help buttons group */
+.help-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.find-this-button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.find-this-button:hover {
+    background: var(--primary-dark, #2563eb);
+    transform: translateY(-1px);
+}
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+/* Modal container */
+.modal-container {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Modal header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.modal-close-btn:hover {
+    color: var(--text);
+}
+
+/* Modal body */
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Modal step */
+.modal-step {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.step-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.step-content p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.step-content .example-code {
+    display: block;
+    margin-top: 0.75rem;
+}
+
+/* Modal note */
+.modal-note {
+    background: var(--warning-light, #fef3c7);
+    border-left: 4px solid var(--warning, #f59e0b);
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
 </style>
+
+<script>
+// Toggle context panel visibility
+function toggleFieldHelp(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? 'block' : 'none';
+    }
+}
+
+// Real-time URL validation
+function validateUrl(input) {
+    const value = input.value.trim();
+
+    // Remove previous validation classes
+    input.classList.remove('valid', 'invalid', 'warning');
+
+    if (!value) {
+        // Empty is neutral (no validation)
+        return;
+    }
+
+    try {
+        const url = new URL(value);
+        // Valid URL format
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+            input.classList.add('valid');
+        } else {
+            input.classList.add('warning');
+        }
+    } catch {
+        // Invalid URL format
+        input.classList.add('invalid');
+    }
+}
+
+// Real-time email validation
+function validateEmail(input) {
+    const value = input.value.trim();
+
+    // Remove previous validation classes
+    input.classList.remove('valid', 'invalid');
+
+    if (!value) {
+        // Empty is neutral (no validation)
+        return;
+    }
+
+    // Basic email regex pattern
+    const emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+
+    if (emailPattern.test(value)) {
+        input.classList.add('valid');
+    } else {
+        input.classList.add('invalid');
+    }
+}
+
+// Open modal
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Close modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+        openModals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+        document.body.style.overflow = '';
+    }
+});
+</script>
