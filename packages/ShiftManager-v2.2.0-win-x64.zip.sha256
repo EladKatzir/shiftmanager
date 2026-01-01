@@ -1,0 +1,20 @@
+﻿B8B92A7D437F96B0D45E5DD168FF7204848D6000841FF09F12B1DFCB151F9F7C *ShiftManager-v2.2.0-win-x64.zip
+
+ShiftManager v2.2.0
+Build Date: 2026-01-01 04:38:54 UTC
+Git Commit: a440d51
+
+Package Contents:
+  Files:        385
+  DLLs:         336
+  Total Size:   110.6 MB
+  ZIP Size:     47.3 MB
+  Compression:  57.2%
+
+Verification:
+  To verify the package integrity on Windows:
+    CertUtil -hashfile "ShiftManager-v2.2.0-win-x64.zip" SHA256
+
+  To verify on Linux/Mac:
+    sha256sum -c "ShiftManager-v2.2.0-win-x64.zip.sha256"
+
