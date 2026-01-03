@@ -4205,4 +4205,109 @@
   <data name="Security" xml:space="preserve">
     <value>אבטחה</value>
   </data>
+  <data name="DecisionRibbon_ActionRequired" xml:space="preserve">
+    <value>נדרשת פעולה</value>
+  </data>
+  <data name="DecisionRibbon_AllClear" xml:space="preserve">
+    <value>הכל בסדר</value>
+  </data>
+  <data name="DecisionRibbon_PendingCount" xml:space="preserve">
+    <value>מספר אישורים ממתינים</value>
+  </data>
+  <data name="Dashboard_MissionOverview" xml:space="preserve">
+    <value>סקירת משימות</value>
+  </data>
+  <data name="Dashboard_UpcomingShifts" xml:space="preserve">
+    <value>משמרות קרובות</value>
+  </data>
+  <data name="Dashboard_UpcomingShifts_Desc" xml:space="preserve">
+    <value>7 הימים הקרובים</value>
+  </data>
+  <data name="Dashboard_PendingRequests" xml:space="preserve">
+    <value>בקשות ממתינות</value>
+  </data>
+  <data name="Dashboard_PendingRequests_Desc" xml:space="preserve">
+    <value>ממתינות לאישור</value>
+  </data>
+  <data name="Dashboard_TeamMembers" xml:space="preserve">
+    <value>חברי צוות</value>
+  </data>
+  <data name="Dashboard_TeamMembers_Desc" xml:space="preserve">
+    <value>בחברה שלך</value>
+  </data>
+  <data name="Dashboard_Notifications" xml:space="preserve">
+    <value>התראות</value>
+  </data>
+  <data name="Dashboard_Notifications_Desc" xml:space="preserve">
+    <value>עדכונים שלא נקראו</value>
+  </data>
+  <data name="Dashboard_QuickActions" xml:space="preserve">
+    <value>פעולות מהירות</value>
+  </data>
+  <data name="Dashboard_ViewCalendar" xml:space="preserve">
+    <value>צפה בלוח שנה</value>
+  </data>
+  <data name="Dashboard_ManageRequests" xml:space="preserve">
+    <value>נהל בקשות</value>
+  </data>
+  <data name="Dashboard_ViewTeam" xml:space="preserve">
+    <value>צפה בצוות</value>
+  </data>
+  <data name="Dashboard_ViewAnalytics" xml:space="preserve">
+    <value>צפה בניתוח נתונים</value>
+  </data>
+  <data name="Dashboard_ViewSchedule" xml:space="preserve">
+    <value>צפה בלוח זמנים</value>
+  </data>
+  <data name="Dashboard_SubmitRequest" xml:space="preserve">
+    <value>שלח בקשה</value>
+  </data>
+  <data name="Dashboard_MyProfile" xml:space="preserve">
+    <value>הפרופיל שלי</value>
+  </data>
+  <data name="Dashboard_NextShift" xml:space="preserve">
+    <value>משמרת הבאה</value>
+  </data>
+  <data name="Dashboard_NextShift_On" xml:space="preserve">
+    <value>ב-</value>
+  </data>
+  <data name="Dashboard_NoShiftsScheduled" xml:space="preserve">
+    <value>אין משמרות מתוכננות</value>
+  </data>
+  <data name="Dashboard_MyPendingRequests" xml:space="preserve">
+    <value>הבקשות שלי הממתינות</value>
+  </data>
+  <data name="Dashboard_MyPendingRequests_Desc" xml:space="preserve">
+    <value>ממתינות לתגובה</value>
+  </data>
+  <data name="Calendar_Shifts" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="Calendar_Chores" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="Calendar_OnDuty" xml:space="preserve">
+    <value>תפקידים</value>
+  </data>
+  <data name="Calendar_TotalItems" xml:space="preserve">
+    <value>סה"כ פריטים</value>
+  </data>
+  <data name="Calendar_Pending" xml:space="preserve">
+    <value>ממתינים</value>
+  </data>
+  <data name="Calendar_Coverage" xml:space="preserve">
+    <value>כיסוי</value>
+  </data>
+  <data name="Calendar_MyItems" xml:space="preserve">
+    <value>הפריטים שלי</value>
+  </data>
+  <data name="Calendar_Hakam" xml:space="preserve">
+    <value>חכם</value>
+  </data>
+  <data name="Calendar_Lead" xml:space="preserve">
+    <value>מוביל</value>
+  </data>
+  <data name="Calendar_Unassigned" xml:space="preserve">
+    <value>לא משויך</value>
+  </data>
 </root>

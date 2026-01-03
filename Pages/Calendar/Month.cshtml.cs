@@ -56,6 +56,14 @@ public class MonthModel : PageModel
     public List<AppUser> EligibleAssignees { get; set; } = new();
     public List<OnDutyTypeConfig> CustomOnDutyTypes { get; set; } = new();
 
+    // ✅ PHASE 7: Calendar header contextual metrics
+    public int VisibleShiftCount { get; set; }
+    public int VisibleChoreCount { get; set; }
+    public int VisibleOnDutyCount { get; set; }
+    public int TotalItemCount { get; set; }
+    public int PendingItemsCount { get; set; }
+    public double CoveragePercent { get; set; }
+
     public class DayVM
     {
         public DateOnly Date { get; set; }
@@ -137,6 +145,9 @@ public class MonthModel : PageModel
             }
             Weeks.Add(week);
         }
+
+        // ✅ PHASE 7: Calculate header metrics after Weeks population
+        CalculateHeaderMetrics();
 
         // ✅ PHASE 20: Load dropdown data for quick-add (managers only)
         if (User.IsInRole("Manager") || User.IsInRole("Director") || User.IsInRole("Owner"))
@@ -339,6 +350,59 @@ public class MonthModel : PageModel
         else
         {
             return ("On-Duty", "📋", "onduty-default");
+        }
+    }
+
+    /// <summary>
+    /// ✅ PHASE 7: Calculate contextual metrics for calendar header
+    /// </summary>
+    private void CalculateHeaderMetrics()
+    {
+        var allItems = Weeks.SelectMany(w => w).SelectMany(d => d.Items).ToList();
+
+        VisibleShiftCount = allItems.Count(i => i.Type == CalendarItemType.Shift);
+        VisibleChoreCount = allItems.Count(i => i.Type == CalendarItemType.Chore);
+        VisibleOnDutyCount = allItems.Count(i => i.Type == CalendarItemType.OnDuty);
+        TotalItemCount = allItems.Count;
+
+        // Pending = unfilled shift slots
+        PendingItemsCount = allItems
+            .Where(i => i.Type == CalendarItemType.Shift && !string.IsNullOrEmpty(i.StaffingInfo))
+            .Count(i => {
+                var parts = i.StaffingInfo.Split('/');
+                return parts.Length == 2 &&
+                       int.TryParse(parts[0], out var filled) &&
+                       int.TryParse(parts[1], out var total) &&
+                       filled < total;
+            });
+
+        // Coverage % (admin only)
+        if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+        {
+            var shiftsWithStaffing = allItems
+                .Where(i => i.Type == CalendarItemType.Shift && !string.IsNullOrEmpty(i.StaffingInfo))
+                .ToList();
+
+            if (shiftsWithStaffing.Any())
+            {
+                int totalSlots = 0, filledSlots = 0;
+                foreach (var shift in shiftsWithStaffing)
+                {
+                    var parts = shift.StaffingInfo.Split('/');
+                    if (parts.Length == 2 &&
+                        int.TryParse(parts[0], out var filled) &&
+                        int.TryParse(parts[1], out var total))
+                    {
+                        totalSlots += total;
+                        filledSlots += filled;
+                    }
+                }
+                CoveragePercent = totalSlots > 0 ? Math.Round((double)filledSlots / totalSlots * 100, 1) : 100.0;
+            }
+            else
+            {
+                CoveragePercent = 100.0;
+            }
         }
     }
 }

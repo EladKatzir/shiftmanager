@@ -21,6 +21,7 @@
     new BreadcrumbItem { Label = Localizer["Chores"], IsActive = true }
 })
 
+<div data-ui-version="v2">
 <!-- Page Header -->
 <div class="page-header">
     <div class="page-header-content">
@@ -240,6 +241,39 @@
             <a class="btn btn-ghost" href="/Public/Chores?year=@firstDay.AddMonths(1).Year&month=@firstDay.AddMonths(1).Month">
                 @firstDay.AddMonths(1).ToString("MMM") →
             </a>
+        </div>
+
+        @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
+        <div class="calendar-metrics">
+            <div class="metric-item metric-shifts">
+                <span class="metric-icon">🧹</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.TotalChoresCount</span>
+                    <span class="metric-label">@Localizer["Calendar_Chores"]</span>
+                </div>
+            </div>
+
+            @if (Model.UnassignedChoresCount > 0)
+            {
+                <div class="metric-item metric-pending">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.UnassignedChoresCount</span>
+                        <span class="metric-label">@Localizer["Calendar_Unassigned"]</span>
+                    </div>
+                </div>
+            }
+
+            @if (!User.IsInRole("Owner") && !User.IsInRole("Manager") && !User.IsInRole("Director") && Model.MyChoresCount > 0)
+            {
+                <div class="metric-item metric-coverage">
+                    <span class="metric-icon">👤</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.MyChoresCount</span>
+                        <span class="metric-label">@Localizer["Calendar_MyItems"]</span>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 
@@ -477,6 +511,7 @@
         </div>
     </div>
 }
+</div>
 
 <script>
 // Busy users data per date (serialized from server)

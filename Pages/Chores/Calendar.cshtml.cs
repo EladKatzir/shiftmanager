@@ -35,6 +35,11 @@ public class CalendarModel : PageModel
     public List<AppUser> EligibleAssignees { get; set; } = new();
     public Dictionary<DateOnly, List<Chore>> ChoresByDate { get; set; } = new();
 
+    // ✅ PHASE 7: Calendar header contextual metrics
+    public int TotalChoresCount { get; set; }
+    public int UnassignedChoresCount { get; set; }
+    public int MyChoresCount { get; set; }
+
     // Form properties
     [BindProperty]
     public int AssigneeId { get; set; }
@@ -94,6 +99,16 @@ public class CalendarModel : PageModel
 
         // Get eligible assignees for the create modal
         EligibleAssignees = await _choreService.GetEligibleAssigneesAsync();
+
+        // ✅ PHASE 7: Calculate header metrics
+        TotalChoresCount = Chores.Count;
+        UnassignedChoresCount = Chores.Count(c => c.UserId == null);
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var currentUserId))
+        {
+            MyChoresCount = Chores.Count(c => c.UserId == currentUserId);
+        }
 
         return Page();
     }

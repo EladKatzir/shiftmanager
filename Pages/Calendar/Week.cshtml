@@ -20,6 +20,7 @@
     new BreadcrumbItem { Label = Localizer["Week"], IsActive = true }
 })
 
+<div data-ui-version="v2">
 <div class="calendar-header">
     <div class="header-main">
         <h2>
@@ -47,6 +48,64 @@
             <span class="nav-icon">→</span>
         </a>
     </div>
+
+    @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
+    @if (Model.TotalItemCount > 0)
+    {
+        <div class="calendar-metrics">
+            <div class="metric-item metric-shifts">
+                <span class="metric-icon">📅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.VisibleShiftCount</span>
+                    <span class="metric-label">@Localizer["Calendar_Shifts"]</span>
+                </div>
+            </div>
+
+            @if (Model.VisibleChoreCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🧹</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.VisibleChoreCount</span>
+                        <span class="metric-label">@Localizer["Calendar_Chores"]</span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.VisibleOnDutyCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🎯</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.VisibleOnDutyCount</span>
+                        <span class="metric-label">@Localizer["Calendar_OnDuty"]</span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.PendingItemsCount > 0)
+            {
+                <div class="metric-item metric-pending">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.PendingItemsCount</span>
+                        <span class="metric-label">@Localizer["Calendar_Pending"]</span>
+                    </div>
+                </div>
+            }
+
+            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+            {
+                <div class="metric-item metric-coverage">
+                    <span class="metric-icon">✅</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.CoveragePercent%</span>
+                        <span class="metric-label">@Localizer["Calendar_Coverage"]</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @* ✅ PHASE 20: View switcher (removed Table link) *@
@@ -266,6 +325,7 @@
             </div>
         </div>
     }
+</div>
 </div>
 
 @* ✅ PHASE 20: JavaScript for show more/less functionality *@

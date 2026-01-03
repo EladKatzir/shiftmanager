@@ -51,6 +51,12 @@ public class OnDutyModel : PageModel
     // Busy user status per date: [Date][UserId] => BusyStatus
     public Dictionary<DateOnly, Dictionary<int, BusyStatus>> BusyUsersByDate { get; set; } = new();
 
+    // ✅ PHASE 7: Calendar header contextual metrics
+    public int TotalOnDutyCount { get; set; }
+    public int HakamCount { get; set; }
+    public int LeadCount { get; set; }
+    public int MyOnDutyCount { get; set; }
+
     // Form properties
     [BindProperty]
     public int AssigneeId { get; set; }
@@ -110,6 +116,17 @@ public class OnDutyModel : PageModel
             .Where(t => t.IsActive)
             .OrderBy(t => t.TypeValue)
             .ToListAsync();
+
+        // ✅ PHASE 7: Calculate header metrics
+        TotalOnDutyCount = OnDuties.Count;
+        HakamCount = OnDuties.Count(o => o.Type == OnDutyType.Hakam);
+        LeadCount = OnDuties.Count(o => o.Type == OnDutyType.Lead);
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var currentUserId))
+        {
+            MyOnDutyCount = OnDuties.Count(o => o.UserId == currentUserId);
+        }
 
         // Load busy user status for all dates in the month (for dropdown color coding)
         var daysInMonth = DateTime.DaysInMonth(Year, Month);

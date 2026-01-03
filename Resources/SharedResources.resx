@@ -4380,4 +4380,109 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Security" xml:space="preserve">
     <value>Security</value>
   </data>
+  <data name="DecisionRibbon_ActionRequired" xml:space="preserve">
+    <value>Action Required</value>
+  </data>
+  <data name="DecisionRibbon_AllClear" xml:space="preserve">
+    <value>All Clear</value>
+  </data>
+  <data name="DecisionRibbon_PendingCount" xml:space="preserve">
+    <value>Pending approvals count</value>
+  </data>
+  <data name="Dashboard_MissionOverview" xml:space="preserve">
+    <value>Mission Overview</value>
+  </data>
+  <data name="Dashboard_UpcomingShifts" xml:space="preserve">
+    <value>Upcoming Shifts</value>
+  </data>
+  <data name="Dashboard_UpcomingShifts_Desc" xml:space="preserve">
+    <value>Next 7 days</value>
+  </data>
+  <data name="Dashboard_PendingRequests" xml:space="preserve">
+    <value>Pending Requests</value>
+  </data>
+  <data name="Dashboard_PendingRequests_Desc" xml:space="preserve">
+    <value>Awaiting approval</value>
+  </data>
+  <data name="Dashboard_TeamMembers" xml:space="preserve">
+    <value>Team Members</value>
+  </data>
+  <data name="Dashboard_TeamMembers_Desc" xml:space="preserve">
+    <value>In your company</value>
+  </data>
+  <data name="Dashboard_Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="Dashboard_Notifications_Desc" xml:space="preserve">
+    <value>Unread updates</value>
+  </data>
+  <data name="Dashboard_QuickActions" xml:space="preserve">
+    <value>Quick Actions</value>
+  </data>
+  <data name="Dashboard_ViewCalendar" xml:space="preserve">
+    <value>View Calendar</value>
+  </data>
+  <data name="Dashboard_ManageRequests" xml:space="preserve">
+    <value>Manage Requests</value>
+  </data>
+  <data name="Dashboard_ViewTeam" xml:space="preserve">
+    <value>View Team</value>
+  </data>
+  <data name="Dashboard_ViewAnalytics" xml:space="preserve">
+    <value>View Analytics</value>
+  </data>
+  <data name="Dashboard_ViewSchedule" xml:space="preserve">
+    <value>View Schedule</value>
+  </data>
+  <data name="Dashboard_SubmitRequest" xml:space="preserve">
+    <value>Submit Request</value>
+  </data>
+  <data name="Dashboard_MyProfile" xml:space="preserve">
+    <value>My Profile</value>
+  </data>
+  <data name="Dashboard_NextShift" xml:space="preserve">
+    <value>Next Shift</value>
+  </data>
+  <data name="Dashboard_NextShift_On" xml:space="preserve">
+    <value>on</value>
+  </data>
+  <data name="Dashboard_NoShiftsScheduled" xml:space="preserve">
+    <value>No shifts scheduled</value>
+  </data>
+  <data name="Dashboard_MyPendingRequests" xml:space="preserve">
+    <value>My Pending Requests</value>
+  </data>
+  <data name="Dashboard_MyPendingRequests_Desc" xml:space="preserve">
+    <value>Awaiting response</value>
+  </data>
+  <data name="Calendar_Shifts" xml:space="preserve">
+    <value>Shifts</value>
+  </data>
+  <data name="Calendar_Chores" xml:space="preserve">
+    <value>Chores</value>
+  </data>
+  <data name="Calendar_OnDuty" xml:space="preserve">
+    <value>On-Duty</value>
+  </data>
+  <data name="Calendar_TotalItems" xml:space="preserve">
+    <value>Total Items</value>
+  </data>
+  <data name="Calendar_Pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="Calendar_Coverage" xml:space="preserve">
+    <value>Coverage</value>
+  </data>
+  <data name="Calendar_MyItems" xml:space="preserve">
+    <value>My Items</value>
+  </data>
+  <data name="Calendar_Hakam" xml:space="preserve">
+    <value>Hakam</value>
+  </data>
+  <data name="Calendar_Lead" xml:space="preserve">
+    <value>Lead</value>
+  </data>
+  <data name="Calendar_Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
+  </data>
 </root>

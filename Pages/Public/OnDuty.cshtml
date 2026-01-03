@@ -22,6 +22,7 @@
     new BreadcrumbItem { Label = Localizer["OnDuty"], IsActive = true }
 })
 
+<div data-ui-version="v2">
 <!-- Page Header -->
 <div class="page-header">
     <div class="page-header-content">
@@ -269,6 +270,50 @@
                 @firstDay.AddMonths(1).ToString("MMM") →
             </a>
         </div>
+
+        @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
+        <div class="calendar-metrics">
+            <div class="metric-item metric-shifts">
+                <span class="metric-icon">🎯</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.TotalOnDutyCount</span>
+                    <span class="metric-label">@Localizer["Calendar_OnDuty"]</span>
+                </div>
+            </div>
+
+            @if (Model.HakamCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🎓</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.HakamCount</span>
+                        <span class="metric-label">@Localizer["Calendar_Hakam"]</span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.LeadCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">⭐</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.LeadCount</span>
+                        <span class="metric-label">@Localizer["Calendar_Lead"]</span>
+                    </div>
+                </div>
+            }
+
+            @if (!User.IsInRole("Owner") && !User.IsInRole("Manager") && !User.IsInRole("Director") && Model.MyOnDutyCount > 0)
+            {
+                <div class="metric-item metric-coverage">
+                    <span class="metric-icon">👤</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.MyOnDutyCount</span>
+                        <span class="metric-label">@Localizer["Calendar_MyItems"]</span>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 
     <!-- Calendar Grid -->
@@ -495,6 +540,7 @@
             <button type="button" class="btn btn-primary" onclick="closeInfoModal()">@Localizer["OK"]</button>
         </div>
     </div>
+</div>
 </div>
 
 <script>
