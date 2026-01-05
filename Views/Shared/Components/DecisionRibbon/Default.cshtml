@@ -1,0 +1,19 @@
+@model ShiftManager.Models.ViewModels.DecisionRibbonViewModel
+@using ShiftManager.Resources
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* Decision Ribbon - Signature Phase 1 feature showing pending approvals *@
+<div class="decision-ribbon">
+    <a href="/Requests" class="decision-ribbon-btn @(Model.PendingCount > 0 ? "has-pending" : "")" title="@(Model.PendingCount > 0 ? Localizer["DecisionRibbon_ActionRequired"] : Localizer["DecisionRibbon_AllClear"])">
+        @if (Model.PendingCount > 0)
+        {
+            <span class="ribbon-badge" aria-label="@Localizer["DecisionRibbon_PendingCount"]">@Model.PendingCount</span>
+            <span>@Localizer["DecisionRibbon_ActionRequired"]</span>
+        }
+        else
+        {
+            <span>✓ @Localizer["DecisionRibbon_AllClear"]</span>
+        }
+    </a>
+</div>

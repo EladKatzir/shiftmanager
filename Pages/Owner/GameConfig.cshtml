@@ -15,6 +15,9 @@
     new BreadcrumbItem { Label = Localizer["GameConfig_Title"], IsActive = true }
 })
 
+@* Owner Company Selector *@
+@await Component.InvokeAsync("OwnerCompanySelector")
+
 <div class="feature-flags-container">
     <div class="page-header">
         <h1>

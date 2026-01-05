@@ -14,6 +14,8 @@
     new BreadcrumbItem { Label = Localizer["MyProfile"], IsActive = true }
 })
 
+<div data-ui-version="v2">
+
 @section Styles {
     <style>
         /* Page Header */
@@ -569,3 +571,93 @@
         </a>
     </div>
 </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Drag-and-drop avatar upload enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.querySelector('input[type="file"][name="AvatarFile"]');
+
+            if (!fileInput) return;
+
+            // Prevent default drag behaviors on the entire document
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Highlight file input when dragging over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileInput.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileInput.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                fileInput.classList.add('drag-over');
+            }
+
+            function unhighlight() {
+                fileInput.classList.remove('drag-over');
+            }
+
+            // Handle dropped files
+            fileInput.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0) {
+                    // Check if file is an image
+                    const file = files[0];
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+
+                    if (validTypes.includes(file.type)) {
+                        fileInput.files = dt.files;
+
+                        // Visual feedback
+                        const label = fileInput.closest('.avatar-controls').querySelector('.avatar-label');
+                        if (label) {
+                            const originalText = label.textContent;
+                            label.textContent = '✓ ' + file.name + ' selected';
+                            label.style.color = 'var(--success)';
+
+                            setTimeout(() => {
+                                label.textContent = originalText;
+                                label.style.color = '';
+                            }, 3000);
+                        }
+                    } else {
+                        alert('Please upload a valid image file (JPEG or PNG)');
+                    }
+                }
+            }
+
+            // Also show file name when selected via click
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    const label = this.closest('.avatar-controls').querySelector('.avatar-label');
+                    if (label) {
+                        const originalText = label.textContent;
+                        label.textContent = '✓ ' + file.name + ' selected';
+                        label.style.color = 'var(--success)';
+
+                        setTimeout(() => {
+                            label.textContent = originalText;
+                            label.style.color = '';
+                        }, 3000);
+                    }
+                }
+            });
+        });
+    </script>
+}

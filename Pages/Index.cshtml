@@ -5,9 +5,168 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["Dashboard_MissionOverview"];
 }
-<div class="card">
-    <h2>@Localizer["WelcomeToShiftManager"]</h2>
-    <p>@Localizer["HomePageDescription"]</p>
-    <p><a class="btn btn-primary" href="/Calendar/Month">@Localizer["GoToCalendar"]</a></p>
+
+<div class="app-content" data-ui-version="v2">
+    @* Stat Cards Grid *@
+    <div class="dashboard-stats">
+        @if (Model.IsAdmin)
+        {
+            @* Admin View: Team-wide metrics *@
+            <div class="stat-card stat-card-1">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.UpcomingShiftsCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_UpcomingShifts"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_UpcomingShifts_Desc"]</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-2">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.PendingRequestsCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_PendingRequests"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_PendingRequests_Desc"]</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-3">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.TeamMembersCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_TeamMembers"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_TeamMembers_Desc"]</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-4">
+                <div class="stat-icon">🔔</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.UnreadNotificationsCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_Notifications"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_Notifications_Desc"]</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            @* Employee View: Personal metrics *@
+            <div class="stat-card stat-card-1">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.UpcomingShiftsCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_UpcomingShifts"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_UpcomingShifts_Desc"]</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-2">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.PendingRequestsCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_MyPendingRequests"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_MyPendingRequests_Desc"]</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-3">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.TeamMembersCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_TeamMembers"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_TeamMembers_Desc"]</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-4">
+                <div class="stat-icon">🔔</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.UnreadNotificationsCount</div>
+                    <div class="stat-label">@Localizer["Dashboard_Notifications"]</div>
+                    <div class="stat-desc">@Localizer["Dashboard_Notifications_Desc"]</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* Next Shift Highlight (Employee Only) *@
+    @if (!Model.IsAdmin && Model.NextShiftDate.HasValue)
+    {
+        <div class="next-shift-highlight">
+            <div class="next-shift-icon">⭐</div>
+            <div class="next-shift-content">
+                <div class="next-shift-label">@Localizer["Dashboard_NextShift"]</div>
+                <div class="next-shift-details">
+                    <strong>@Model.NextShiftType</strong>
+                    @Localizer["Dashboard_NextShift_On"]
+                    <strong>@Model.NextShiftDate.Value.ToString("dddd, MMMM dd")</strong>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!Model.IsAdmin && !Model.NextShiftDate.HasValue)
+    {
+        <div class="next-shift-highlight next-shift-empty">
+            <div class="next-shift-icon">📭</div>
+            <div class="next-shift-content">
+                <div class="next-shift-label">@Localizer["Dashboard_NextShift"]</div>
+                <div class="next-shift-details">@Localizer["Dashboard_NoShiftsScheduled"]</div>
+            </div>
+        </div>
+    }
+
+    @* Quick Actions Grid *@
+    <div class="dashboard-section">
+        <h2 class="dashboard-section-title">@Localizer["Dashboard_QuickActions"]</h2>
+        <div class="quick-actions-grid">
+            @if (Model.IsAdmin)
+            {
+                @* Admin Quick Actions *@
+                <a href="/Calendar/Month" class="quick-action-card">
+                    <div class="quick-action-icon">📅</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_ViewCalendar"]</div>
+                </a>
+
+                <a href="/Requests/Index" class="quick-action-card">
+                    <div class="quick-action-icon">📝</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_ManageRequests"]</div>
+                </a>
+
+                <a href="@(Model.UserRole == ShiftManager.Models.Support.UserRole.Manager ? "/MyTeam/Index" : "/Admin/Users")" class="quick-action-card">
+                    <div class="quick-action-icon">👥</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_ViewTeam"]</div>
+                </a>
+
+                <a href="/Admin/Analytics" class="quick-action-card">
+                    <div class="quick-action-icon">📊</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_ViewAnalytics"]</div>
+                </a>
+            }
+            else
+            {
+                @* Employee Quick Actions *@
+                <a href="/Calendar/Month" class="quick-action-card">
+                    <div class="quick-action-icon">📅</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_ViewSchedule"]</div>
+                </a>
+
+                <a href="/My/Requests" class="quick-action-card">
+                    <div class="quick-action-icon">📝</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_SubmitRequest"]</div>
+                </a>
+
+                <a href="/MyTeam/Index" class="quick-action-card">
+                    <div class="quick-action-icon">👥</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_ViewTeam"]</div>
+                </a>
+
+                <a href="/My/Profile" class="quick-action-card">
+                    <div class="quick-action-icon">👤</div>
+                    <div class="quick-action-label">@Localizer["Dashboard_MyProfile"]</div>
+                </a>
+            }
+        </div>
+    </div>
 </div>

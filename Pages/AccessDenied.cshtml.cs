@@ -40,6 +40,8 @@ public class AccessDeniedModel : PageModel
 
         _logger.LogInformation("Access Denied - Final ReturnUrl: {ReturnUrl}", ReturnUrl);
 
+        // Set HTTP 403 Forbidden status code for proper RESTful semantics
+        Response.StatusCode = 403;
         return Page();
     }
 

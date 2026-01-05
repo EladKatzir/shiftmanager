@@ -110,7 +110,8 @@ public class IndexModel : LocalizedPageModel
                                       join u1 in _db.Users on a.UserId equals u1.Id
                                       join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
                                       join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
-                                      join u2 in _db.Users on s.ToUserId equals u2.Id
+                                      join u2 in _db.Users on s.ToUserId equals u2.Id into toUserJoin
+                                      from u2 in toUserJoin.DefaultIfEmpty()
                                       where s.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u1.CompanyId)
                                       orderby s.CreatedAt
                                       select new
@@ -118,7 +119,7 @@ public class IndexModel : LocalizedPageModel
                                           s.Id,
                                           FromUser = u1.DisplayName,
                                           When = $"{si.WorkDate:yyyy-MM-dd} {st.Key}",
-                                          ToUser = u2.DisplayName
+                                          ToUser = u2 != null ? u2.DisplayName : "Open Request"
                                       }).ToListAsync();
 
             Swaps = pendingSwaps.Select(x => new SwapVM(x.Id, x.FromUser, x.When, x.ToUser)).ToList();

@@ -692,6 +692,23 @@ CREATE TABLE GriffinConfigs (
 
 **Admin UI:** `/Owner/GriffinConfig` (Owner-only page)
 
+### Comprehensive ADFS Integration Analysis
+
+**See Also:** [ADFS-INTEGRATION-ANALYSIS.md](ADFS-INTEGRATION-ANALYSIS.md) for comprehensive analysis including:
+- ✅ **Core Questions Answered**: Authorization mechanism, Multi-tenancy handling, ADFS scope configuration
+- ✅ **Expanded Analysis**: Token flow, role/profile synchronization, error handling, scalability
+- ✅ **Proactive Gap Analysis**: 5 critical questions covering:
+  - Token revocation and expiration management
+  - Monitoring and alerting gaps
+  - Disaster recovery scenarios
+  - Compliance and audit trail requirements
+  - Configuration management best practices
+- ✅ **Prioritized Recommendations**: 6 actionable improvements with effort estimates
+- ✅ **Architecture Diagrams**: Complete authentication flows and multi-tenancy integration
+
+**Investigation Date:** 2026-01-03
+**Assessment Grade:** B+ (Very Good with Minor Gaps)
+
 ---
 
 ## Password Hashing (PBKDF2)

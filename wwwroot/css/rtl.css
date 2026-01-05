@@ -210,3 +210,23 @@
   border-left: none;
   border-right: 4px solid var(--warning, #f59e0b);
 }
+
+/* ========================================
+   Decision Ribbon RTL Overrides (Phase 1)
+   ======================================== */
+
+/* Reverse slide-in animation for RTL */
+[dir="rtl"] .decision-ribbon {
+  animation-name: slideInLeft;
+}
+
+/* Reverse flex direction for badge and text */
+[dir="rtl"] .decision-ribbon-btn {
+  flex-direction: row-reverse;
+}
+
+/* RTL slide-in animation from left */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}

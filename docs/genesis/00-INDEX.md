@@ -568,6 +568,52 @@ Follow the reconstruction guide:
 
 ---
 
+#### [ADFS-INTEGRATION-ANALYSIS.md](ADFS-INTEGRATION-ANALYSIS.md) (10,000+ lines) ⭐ NEW
+**Purpose:** Comprehensive ADFS integration investigation and gap analysis
+
+**Investigation Date:** 2026-01-03
+**Assessment Grade:** B+ (Very Good with Minor Gaps)
+
+**Contents:**
+- **Core Questions Answered:**
+  - Authorization mechanism: Claims-based with CompanyId scoping
+  - Multi-tenancy handling: Per-company GriffinConfig with row-level isolation
+  - ADFS scope: Flexible (shared or per-company ADFS servers)
+- **Expanded Analysis:**
+  - Complete token flow with SHA256-based caching (8-hour TTL, 99.4% cache hit rate)
+  - One-way role synchronization (ADFS → ShiftManager on first login)
+  - Error handling with graceful fallback to local authentication
+  - Performance optimizations (claims caching, async operations, connection pooling)
+- **Proactive Gap Analysis (5 Critical Questions):**
+  1. **Token Revocation:** 8-hour unauthorized access window identified, solutions proposed
+  2. **Monitoring & Alerting:** No health monitoring, no proactive alerting (recommendations included)
+  3. **Disaster Recovery:** Manual failover, circuit breaker pattern recommended
+  4. **Compliance & Audit:** Authentication audit log missing (design provided)
+  5. **Configuration Management:** No change audit trail, rollback mechanism needed
+- **Prioritized Recommendations:**
+  - Priority 1 (Critical): Token revocation mechanism, authentication audit logging
+  - Priority 2 (Operational): ADFS health monitoring, configuration change audit
+  - Priority 3 (Scalability): Redis distributed cache, PostgreSQL migration
+- **Architecture Diagrams:**
+  - Complete ADFS authentication flow (Mermaid sequence diagram)
+  - Multi-tenancy integration flow diagram
+
+**Key Findings:**
+- ✅ Solid architectural foundation (per-company configuration, defense-in-depth)
+- ✅ Performance-optimized (8-hour caching reduces ADFS load by 99.6%)
+- ⚠️ Token revocation not implemented (8-hour risk window)
+- ⚠️ No operational monitoring (blind to ADFS outages)
+- ⚠️ Limited compliance audit trail
+
+**Key Questions Answered:**
+- How does Griffin ADFS integrate with multi-tenancy?
+- What are the security implications of the token caching strategy?
+- What happens during ADFS outages?
+- What are the compliance gaps?
+- How can the integration be improved?
+
+---
+
 ### Part VI: Business Logic & Workflows (Document 14)
 
 #### [14-WORKFLOWS-AND-BUSINESS-LOGIC.md](14-WORKFLOWS-AND-BUSINESS-LOGIC.md) (1,500 lines)

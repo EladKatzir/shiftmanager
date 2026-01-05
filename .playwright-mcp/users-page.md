@@ -1,0 +1,578 @@
+### Page state
+- Page URL: http://localhost:5000/Admin/Users
+- Page Title: Shift Manager
+- Page Snapshot:
+```yaml
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 📊
+      - generic [ref=e6]: Shift Manager
+    - navigation [ref=e7]:
+      - generic [ref=e8]: 📅 My Shifty
+      - link "🏠 Home" [ref=e9] [cursor=pointer]:
+        - /url: /Home/Index
+        - generic [ref=e10]: 🏠
+        - generic [ref=e11]: Home
+      - link "📅 Schedule" [ref=e12] [cursor=pointer]:
+        - /url: /Calendar/Month
+        - generic [ref=e13]: 📅
+        - generic [ref=e14]: Schedule
+      - link "📝 Requests" [ref=e15] [cursor=pointer]:
+        - /url: /Requests/Index
+        - generic [ref=e16]: 📝
+        - generic [ref=e17]: Requests
+      - link "📊 Analytics" [ref=e18] [cursor=pointer]:
+        - /url: /Admin/Analytics
+        - generic [ref=e19]: 📊
+        - generic [ref=e20]: Analytics
+      - link "👥 People" [ref=e21] [cursor=pointer]:
+        - /url: /Admin/Users
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: People
+      - link "🏢 Companies" [ref=e24] [cursor=pointer]:
+        - /url: /Admin/Companies
+        - generic [ref=e25]: 🏢
+        - generic [ref=e26]: Companies
+      - link "⚙️ Settings" [ref=e27] [cursor=pointer]:
+        - /url: /Admin/Config
+        - generic [ref=e28]: ⚙️
+        - generic [ref=e29]: Settings
+      - generic [ref=e30]: 🔧 Owner Administration
+      - link "🔧 Owner Administration" [ref=e31] [cursor=pointer]:
+        - /url: /Owner/Index
+        - generic [ref=e32]: 🔧
+        - generic [ref=e33]: Owner Administration
+      - generic [ref=e34]: ⚙️ Management
+      - link "📊 Scheduled Shifts" [ref=e35] [cursor=pointer]:
+        - /url: /Calendar/Table
+        - generic [ref=e36]: 📊
+        - generic [ref=e37]: Scheduled Shifts
+      - link "🗂️ Chores" [ref=e38] [cursor=pointer]:
+        - /url: /Public/Chores
+        - generic [ref=e39]: 🗂️
+        - generic [ref=e40]: Chores
+      - link "🎯 Day Shifts" [ref=e41] [cursor=pointer]:
+        - /url: /Public/OnDuty
+        - generic [ref=e42]: 🎯
+        - generic [ref=e43]: Day Shifts
+    - generic [ref=e44]:
+      - generic [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: O
+        - generic [ref=e47]:
+          - generic [ref=e48]: Owner
+          - generic [ref=e49]: Owner
+      - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e50]:
+        - generic [ref=e51]: ⌨️
+        - generic [ref=e52]: Ctrl+K
+  - generic [ref=e53]:
+    - banner [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - heading [level=1]
+        - generic [ref=e57]:
+          - link "✓ All Clear" [ref=e59] [cursor=pointer]:
+            - /url: /Requests
+            - generic [ref=e60]: ✓ All Clear
+          - link "🔔" [ref=e61] [cursor=pointer]:
+            - /url: /My/NotificationCenter
+            - generic [ref=e62]: 🔔
+          - button "Language" [ref=e64] [cursor=pointer]:
+            - generic [ref=e65]: 🌐
+            - generic [ref=e66]: En
+          - button "Toggle dark mode" [ref=e67] [cursor=pointer]:
+            - generic [ref=e68]: 🌓
+          - button "🚪 Logout" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: 🚪
+            - generic [ref=e72]: Logout
+    - main [ref=e73]:
+      - navigation "Breadcrumb" [ref=e74]:
+        - list [ref=e75]:
+          - listitem "Admin" [ref=e76]
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - heading "UserManagement" [level=1] [ref=e79]
+          - paragraph [ref=e80]: Manage users, join requests, and permissions across your organization
+        - link "📊 Export CSV" [ref=e82] [cursor=pointer]:
+          - /url: /Admin/Users?handler=ExportCsv
+      - generic [ref=e83]:
+        - heading "Join Requests" [level=2] [ref=e84]
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - generic [ref=e88]: Status
+            - combobox [ref=e89] [cursor=pointer]:
+              - option "Pending" [selected]
+              - option "Approved"
+              - option "Rejected"
+          - generic [ref=e90]:
+            - generic [ref=e91]: Company
+            - combobox [ref=e92] [cursor=pointer]:
+              - option "All Companies" [selected]
+              - option "Demo Co"
+              - option "Test Corp"
+          - generic [ref=e93]:
+            - generic [ref=e94]: Role
+            - combobox [ref=e95] [cursor=pointer]:
+              - option "AllRoles" [selected]
+              - option "Employee"
+              - option "Manager"
+              - option "Director"
+              - option "Owner"
+              - option "Trainee"
+              - option "Assigner"
+        - paragraph [ref=e96]: No join requests found with the current filters.
+      - generic [ref=e97]:
+        - heading "Existing Users" [level=2] [ref=e98]
+        - generic [ref=e100]:
+          - generic [ref=e101]:
+            - generic [ref=e102]: Company
+            - combobox [ref=e103] [cursor=pointer]:
+              - option "All Companies" [selected]
+              - option "Demo Co"
+              - option "Test Corp"
+          - generic [ref=e104]:
+            - generic [ref=e105]: Role
+            - combobox [ref=e106] [cursor=pointer]:
+              - option "AllRoles" [selected]
+              - option "Employee"
+              - option "Manager"
+              - option "Director"
+              - option "Owner"
+              - option "Trainee"
+              - option "Assigner"
+        - table [ref=e107]:
+          - rowgroup [ref=e108]:
+            - row "Name Email Company Role Status Password Actions" [ref=e109]:
+              - columnheader "Name" [ref=e110]
+              - columnheader "Email" [ref=e111]
+              - columnheader "Company" [ref=e112]
+              - columnheader "Role" [ref=e113]
+              - columnheader "Status" [ref=e114]
+              - columnheader "Password" [ref=e115]
+              - columnheader "Actions" [ref=e116]
+          - rowgroup [ref=e117]:
+            - row "eladk 12elad@k Demo Co Employee Active Set ✏️ 🗑️" [ref=e118]:
+              - cell "eladk" [ref=e119]
+              - cell "12elad@k" [ref=e120]
+              - cell "Demo Co" [ref=e121]
+              - cell "Employee" [ref=e122]:
+                - combobox [ref=e124] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e125]:
+                - button "Active" [ref=e127] [cursor=pointer]
+              - cell "Set" [ref=e128]:
+                - generic [ref=e130]:
+                  - textbox "New Password" [ref=e131]
+                  - button "Set" [ref=e132] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e133]:
+                - generic [ref=e134]:
+                  - link "✏️" [ref=e135] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=7
+                  - button "🗑️" [ref=e137] [cursor=pointer]
+            - row "employee userfor@employee Demo Co Employee Active Set ✏️ 🗑️" [ref=e138]:
+              - cell "employee" [ref=e139]
+              - cell "userfor@employee" [ref=e140]
+              - cell "Demo Co" [ref=e141]
+              - cell "Employee" [ref=e142]:
+                - combobox [ref=e144] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e145]:
+                - button "Active" [ref=e147] [cursor=pointer]
+              - cell "Set" [ref=e148]:
+                - generic [ref=e150]:
+                  - textbox "New Password" [ref=e151]
+                  - button "Set" [ref=e152] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e153]:
+                - generic [ref=e154]:
+                  - link "✏️" [ref=e155] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=17
+                  - button "🗑️" [ref=e157] [cursor=pointer]
+            - row "empt emp@t Demo Co Employee Active Set ✏️ 🗑️" [ref=e158]:
+              - cell "empt" [ref=e159]
+              - cell "emp@t" [ref=e160]
+              - cell "Demo Co" [ref=e161]
+              - cell "Employee" [ref=e162]:
+                - combobox [ref=e164] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e165]:
+                - button "Active" [ref=e167] [cursor=pointer]
+              - cell "Set" [ref=e168]:
+                - generic [ref=e170]:
+                  - textbox "New Password" [ref=e171]
+                  - button "Set" [ref=e172] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e173]:
+                - generic [ref=e174]:
+                  - link "✏️" [ref=e175] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=8
+                  - button "🗑️" [ref=e177] [cursor=pointer]
+            - row "mail mail@mail Demo Co Employee Active Set ✏️ 🗑️" [ref=e178]:
+              - cell "mail" [ref=e179]
+              - cell "mail@mail" [ref=e180]
+              - cell "Demo Co" [ref=e181]
+              - cell "Employee" [ref=e182]:
+                - combobox [ref=e184] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e185]:
+                - button "Active" [ref=e187] [cursor=pointer]
+              - cell "Set" [ref=e188]:
+                - generic [ref=e190]:
+                  - textbox "New Password" [ref=e191]
+                  - button "Set" [ref=e192] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e193]:
+                - generic [ref=e194]:
+                  - link "✏️" [ref=e195] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=5
+                  - button "🗑️" [ref=e197] [cursor=pointer]
+            - row "manager userfor@manager Demo Co Employee Active Set ✏️ 🗑️" [ref=e198]:
+              - cell "manager" [ref=e199]
+              - cell "userfor@manager" [ref=e200]
+              - cell "Demo Co" [ref=e201]
+              - cell "Employee" [ref=e202]:
+                - combobox [ref=e204] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e205]:
+                - button "Active" [ref=e207] [cursor=pointer]
+              - cell "Set" [ref=e208]:
+                - generic [ref=e210]:
+                  - textbox "New Password" [ref=e211]
+                  - button "Set" [ref=e212] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e213]:
+                - generic [ref=e214]:
+                  - link "✏️" [ref=e215] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=18
+                  - button "🗑️" [ref=e217] [cursor=pointer]
+            - row "mant man@t Demo Co Manager Active Set ✏️ 🗑️" [ref=e218]:
+              - cell "mant" [ref=e219]
+              - cell "man@t" [ref=e220]
+              - cell "Demo Co" [ref=e221]
+              - cell "Manager" [ref=e222]:
+                - combobox [ref=e224] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager" [selected]
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e225]:
+                - button "Active" [ref=e227] [cursor=pointer]
+              - cell "Set" [ref=e228]:
+                - generic [ref=e230]:
+                  - textbox "New Password" [ref=e231]
+                  - button "Set" [ref=e232] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e233]:
+                - generic [ref=e234]:
+                  - link "✏️" [ref=e235] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=9
+                  - button "🗑️" [ref=e237] [cursor=pointer]
+            - row "ori 123o@d Demo Co Manager Active Set ✏️ 🗑️" [ref=e238]:
+              - cell "ori" [ref=e239]
+              - cell "123o@d" [ref=e240]
+              - cell "Demo Co" [ref=e241]
+              - cell "Manager" [ref=e242]:
+                - combobox [ref=e244] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager" [selected]
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e245]:
+                - button "Active" [ref=e247] [cursor=pointer]
+              - cell "Set" [ref=e248]:
+                - generic [ref=e250]:
+                  - textbox "New Password" [ref=e251]
+                  - button "Set" [ref=e252] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e253]:
+                - generic [ref=e254]:
+                  - link "✏️" [ref=e255] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=6
+                  - button "🗑️" [ref=e257] [cursor=pointer]
+            - row "Owner admin@local Demo Co Owner Active Set ✏️ 🗑️" [ref=e258]:
+              - cell "Owner" [ref=e259]
+              - cell "admin@local" [ref=e260]
+              - cell "Demo Co" [ref=e261]
+              - cell "Owner" [ref=e262]:
+                - combobox [ref=e264] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner" [selected]
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e265]:
+                - button "Active" [ref=e267] [cursor=pointer]
+              - cell "Set" [ref=e268]:
+                - generic [ref=e270]:
+                  - textbox "New Password" [ref=e271]
+                  - button "Set" [ref=e272] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e273]:
+                - generic [ref=e274]:
+                  - link "✏️" [ref=e275] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=1
+                  - button "🗑️" [ref=e277] [cursor=pointer]
+            - row "rom a@b Demo Co Employee Active Set ✏️ 🗑️" [ref=e278]:
+              - cell "rom" [ref=e279]
+              - cell "a@b" [ref=e280]
+              - cell "Demo Co" [ref=e281]
+              - cell "Employee" [ref=e282]:
+                - combobox [ref=e284] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e285]:
+                - button "Active" [ref=e287] [cursor=pointer]
+              - cell "Set" [ref=e288]:
+                - generic [ref=e290]:
+                  - textbox "New Password" [ref=e291]
+                  - button "Set" [ref=e292] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e293]:
+                - generic [ref=e294]:
+                  - link "✏️" [ref=e295] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=3
+                  - button "🗑️" [ref=e297] [cursor=pointer]
+            - row "test assigner test@ass Demo Co Assigner Active Set ✏️ 🗑️" [ref=e298]:
+              - cell "test assigner" [ref=e299]
+              - cell "test@ass" [ref=e300]
+              - cell "Demo Co" [ref=e301]
+              - cell "Assigner" [ref=e302]:
+                - combobox [ref=e304] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner" [selected]
+              - cell "Active" [ref=e305]:
+                - button "Active" [ref=e307] [cursor=pointer]
+              - cell "Set" [ref=e308]:
+                - generic [ref=e310]:
+                  - textbox "New Password" [ref=e311]
+                  - button "Set" [ref=e312] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e313]:
+                - generic [ref=e314]:
+                  - link "✏️" [ref=e315] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=14
+                  - button "🗑️" [ref=e317] [cursor=pointer]
+            - row "Test Director director@local Demo Co Director Active Set ✏️ 🗑️" [ref=e318]:
+              - cell "Test Director" [ref=e319]
+              - cell "director@local" [ref=e320]
+              - cell "Demo Co" [ref=e321]
+              - cell "Director" [ref=e322]:
+                - combobox [ref=e324] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager"
+                  - option "Director" [selected]
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e325]:
+                - button "Active" [ref=e327] [cursor=pointer]
+              - cell "Set" [ref=e328]:
+                - generic [ref=e330]:
+                  - textbox "New Password" [ref=e331]
+                  - button "Set" [ref=e332] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e333]:
+                - generic [ref=e334]:
+                  - link "✏️" [ref=e335] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=2
+                  - button "🗑️" [ref=e337] [cursor=pointer]
+            - row "test employee test@emp Demo Co Employee Active Set ✏️ 🗑️" [ref=e338]:
+              - cell "test employee" [ref=e339]
+              - cell "test@emp" [ref=e340]
+              - cell "Demo Co" [ref=e341]
+              - cell "Employee" [ref=e342]:
+                - combobox [ref=e344] [cursor=pointer]:
+                  - option "Employee" [selected]
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e345]:
+                - button "Active" [ref=e347] [cursor=pointer]
+              - cell "Set" [ref=e348]:
+                - generic [ref=e350]:
+                  - textbox "New Password" [ref=e351]
+                  - button "Set" [ref=e352] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e353]:
+                - generic [ref=e354]:
+                  - link "✏️" [ref=e355] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=15
+                  - button "🗑️" [ref=e357] [cursor=pointer]
+            - row "test manager test@man Demo Co Manager Active Set ✏️ 🗑️" [ref=e358]:
+              - cell "test manager" [ref=e359]
+              - cell "test@man" [ref=e360]
+              - cell "Demo Co" [ref=e361]
+              - cell "Manager" [ref=e362]:
+                - combobox [ref=e364] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager" [selected]
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e365]:
+                - button "Active" [ref=e367] [cursor=pointer]
+              - cell "Set" [ref=e368]:
+                - generic [ref=e370]:
+                  - textbox "New Password" [ref=e371]
+                  - button "Set" [ref=e372] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e373]:
+                - generic [ref=e374]:
+                  - link "✏️" [ref=e375] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=13
+                  - button "🗑️" [ref=e377] [cursor=pointer]
+            - row "test trainee test@tra Demo Co Trainee Active Set ✏️ 🗑️" [ref=e378]:
+              - cell "test trainee" [ref=e379]
+              - cell "test@tra" [ref=e380]
+              - cell "Demo Co" [ref=e381]
+              - cell "Trainee" [ref=e382]:
+                - combobox [ref=e384] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee" [selected]
+                  - option "Assigner"
+              - cell "Active" [ref=e385]:
+                - button "Active" [ref=e387] [cursor=pointer]
+              - cell "Set" [ref=e388]:
+                - generic [ref=e390]:
+                  - textbox "New Password" [ref=e391]
+                  - button "Set" [ref=e392] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e393]:
+                - generic [ref=e394]:
+                  - link "✏️" [ref=e395] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=16
+                  - button "🗑️" [ref=e397] [cursor=pointer]
+            - row "testuser 7108@user Demo Co Manager Active Set ✏️ 🗑️" [ref=e398]:
+              - cell "testuser" [ref=e399]
+              - cell "7108@user" [ref=e400]
+              - cell "Demo Co" [ref=e401]
+              - cell "Manager" [ref=e402]:
+                - combobox [ref=e404] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager" [selected]
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e405]:
+                - button "Active" [ref=e407] [cursor=pointer]
+              - cell "Set" [ref=e408]:
+                - generic [ref=e410]:
+                  - textbox "New Password" [ref=e411]
+                  - button "Set" [ref=e412] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e413]:
+                - generic [ref=e414]:
+                  - link "✏️" [ref=e415] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=4
+                  - button "🗑️" [ref=e417] [cursor=pointer]
+            - row "אלוף pak@a Demo Co Assigner Active Set ✏️ 🗑️" [ref=e418]:
+              - cell "אלוף" [ref=e419]
+              - cell "pak@a" [ref=e420]
+              - cell "Demo Co" [ref=e421]
+              - cell "Assigner" [ref=e422]:
+                - combobox [ref=e424] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager"
+                  - option "Director"
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner" [selected]
+              - cell "Active" [ref=e425]:
+                - button "Active" [ref=e427] [cursor=pointer]
+              - cell "Set" [ref=e428]:
+                - generic [ref=e430]:
+                  - textbox "New Password" [ref=e431]
+                  - button "Set" [ref=e432] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e433]:
+                - generic [ref=e434]:
+                  - link "✏️" [ref=e435] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=11
+                  - button "🗑️" [ref=e437] [cursor=pointer]
+            - row "Test Director director@local Test Corp Director Active Set ✏️ 🗑️" [ref=e438]:
+              - cell "Test Director" [ref=e439]
+              - cell "director@local" [ref=e440]
+              - cell "Test Corp" [ref=e441]
+              - cell "Director" [ref=e442]:
+                - combobox [ref=e444] [cursor=pointer]:
+                  - option "Employee"
+                  - option "Manager"
+                  - option "Director" [selected]
+                  - option "Owner"
+                  - option "Trainee"
+                  - option "Assigner"
+              - cell "Active" [ref=e445]:
+                - button "Active" [ref=e447] [cursor=pointer]
+              - cell "Set" [ref=e448]:
+                - generic [ref=e450]:
+                  - textbox "New Password" [ref=e451]
+                  - button "Set" [ref=e452] [cursor=pointer]
+              - cell "✏️ 🗑️" [ref=e453]:
+                - generic [ref=e454]:
+                  - link "✏️" [ref=e455] [cursor=pointer]:
+                    - /url: /Admin/EditProfile?UserId=2
+                  - button "🗑️" [ref=e457] [cursor=pointer]
+        - generic [ref=e458]:
+          - generic [ref=e459]: "⚠️ User Deletion Warning:"
+          - generic [ref=e460]:
+            - text: "Deleting a user will permanently remove::"
+            - text: • All their shift assignments (shifts will become empty)
+            - text: • All their time-off requests (approved, pending, and declined)
+            - text: • All their swap requests (both from and to the user)
+            - text: • The user account itself
+            - strong [ref=e461]: This action cannot be undone. Use with extreme caution.
+      - generic [ref=e462]:
+        - heading "Add User" [level=2] [ref=e463]
+        - generic [ref=e465]:
+          - generic [ref=e466]:
+            - generic [ref=e467]: Email
+            - textbox [ref=e468]
+          - generic [ref=e469]:
+            - generic [ref=e470]: Display name
+            - textbox [ref=e471]
+          - generic [ref=e472]:
+            - generic [ref=e473]: Role
+            - combobox [ref=e474] [cursor=pointer]:
+              - option "Employee" [selected]
+              - option "Manager"
+              - option "Director"
+              - option "Owner"
+              - option "Trainee"
+              - option "Assigner"
+          - generic [ref=e475]:
+            - generic [ref=e476]: Password
+            - textbox [ref=e477]
+          - button "+ Add" [ref=e479] [cursor=pointer]:
+            - generic [ref=e480]: +
+            - generic [ref=e481]: Add
+```

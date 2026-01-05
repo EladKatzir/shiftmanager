@@ -527,13 +527,13 @@ public class UsersModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
             return RedirectToPage();
         }
 
         if (string.IsNullOrWhiteSpace(newPassword))
         {
-            TempData["ErrorMessage"] = _localizer["Error_PasswordRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_PasswordRequired"].Value;
             return RedirectToPage();
         }
 

@@ -1,0 +1,255 @@
+### Page state
+- Page URL: http://localhost:5000/Owner/FeatureFlags
+- Page Title: Shift Manager
+- Page Snapshot:
+```yaml
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 📊
+      - generic [ref=e6]: Shift Manager
+    - navigation [ref=e7]:
+      - generic [ref=e8]: 📅 My Shifty
+      - link "🏠 Home" [ref=e9] [cursor=pointer]:
+        - /url: /Home/Index
+        - generic [ref=e10]: 🏠
+        - generic [ref=e11]: Home
+      - link "📅 Schedule" [ref=e12] [cursor=pointer]:
+        - /url: /Calendar/Month
+        - generic [ref=e13]: 📅
+        - generic [ref=e14]: Schedule
+      - link "📝 Requests" [ref=e15] [cursor=pointer]:
+        - /url: /Requests/Index
+        - generic [ref=e16]: 📝
+        - generic [ref=e17]: Requests
+      - link "📊 Analytics" [ref=e18] [cursor=pointer]:
+        - /url: /Admin/Analytics
+        - generic [ref=e19]: 📊
+        - generic [ref=e20]: Analytics
+      - link "👥 People" [ref=e21] [cursor=pointer]:
+        - /url: /Admin/Users
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: People
+      - link "🏢 Companies" [ref=e24] [cursor=pointer]:
+        - /url: /Admin/Companies
+        - generic [ref=e25]: 🏢
+        - generic [ref=e26]: Companies
+      - link "⚙️ Settings" [ref=e27] [cursor=pointer]:
+        - /url: /Admin/Config
+        - generic [ref=e28]: ⚙️
+        - generic [ref=e29]: Settings
+      - generic [ref=e30]: 🔧 Owner Administration
+      - link "🔧 Owner Administration" [ref=e31] [cursor=pointer]:
+        - /url: /Owner/Index
+        - generic [ref=e32]: 🔧
+        - generic [ref=e33]: Owner Administration
+      - generic [ref=e34]: ⚙️ Management
+      - link "📊 Scheduled Shifts" [ref=e35] [cursor=pointer]:
+        - /url: /Calendar/Table
+        - generic [ref=e36]: 📊
+        - generic [ref=e37]: Scheduled Shifts
+      - link "🗂️ Chores" [ref=e38] [cursor=pointer]:
+        - /url: /Public/Chores
+        - generic [ref=e39]: 🗂️
+        - generic [ref=e40]: Chores
+      - link "🎯 Day Shifts" [ref=e41] [cursor=pointer]:
+        - /url: /Public/OnDuty
+        - generic [ref=e42]: 🎯
+        - generic [ref=e43]: Day Shifts
+    - generic [ref=e44]:
+      - generic [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: O
+        - generic [ref=e47]:
+          - generic [ref=e48]: Owner
+          - generic [ref=e49]: Owner
+      - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e50]:
+        - generic [ref=e51]: ⌨️
+        - generic [ref=e52]: Ctrl+K
+  - generic [ref=e53]:
+    - banner [ref=e54]:
+      - generic [ref=e55]:
+        - heading "Feature Flags" [level=1] [ref=e57]
+        - generic [ref=e58]:
+          - link "🔔" [ref=e59] [cursor=pointer]:
+            - /url: /My/NotificationCenter
+            - generic [ref=e60]: 🔔
+          - button "Language" [ref=e62] [cursor=pointer]:
+            - generic [ref=e63]: 🌐
+            - generic [ref=e64]: En
+          - button "Toggle dark mode" [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]: 🌓
+          - button "🚪 Logout" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: 🚪
+            - generic [ref=e70]: Logout
+    - main [ref=e71]:
+      - navigation "Breadcrumb" [ref=e72]:
+        - list [ref=e73]:
+          - listitem [ref=e74]:
+            - link "Owner Administration" [ref=e75]:
+              - /url: /Owner/Index
+          - listitem "Feature Flags" [ref=e76]: › Feature Flags
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - heading "🚩 Feature Flags" [level=1] [ref=e79]
+          - paragraph [ref=e80]: Toggle system features without redeploying
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - heading "🔧 Core Features" [level=2] [ref=e83]
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic [ref=e86]:
+                  - generic [ref=e87]:
+                    - heading "EnforceCompanyScope" [level=3] [ref=e88]
+                    - paragraph [ref=e89]: Enforce multi-tenant company scoping for data isolation
+                  - generic [ref=e90]:
+                    - checkbox
+                - generic [ref=e92]:
+                  - generic [ref=e93]: ❌ Disabled
+                  - generic [ref=e94]: Critical
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - generic [ref=e97]:
+                    - heading "EnableDirectorRole" [level=3] [ref=e98]
+                    - paragraph [ref=e99]: Enable Director role with cross-company permissions
+                  - generic [ref=e100]:
+                    - checkbox [checked]
+                - generic [ref=e102]:
+                  - generic [ref=e103]: ✅ Enabled
+                  - generic [ref=e104]: High
+              - generic [ref=e105]:
+                - generic [ref=e106]:
+                  - generic [ref=e107]:
+                    - heading "AllowPublicSignup" [level=3] [ref=e108]
+                    - paragraph [ref=e109]: Allow users to self-register without invitation
+                  - generic [ref=e110]:
+                    - checkbox [checked]
+                - generic [ref=e112]:
+                  - generic [ref=e113]: ✅ Enabled
+                  - generic [ref=e114]: Medium
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - generic [ref=e117]:
+                    - heading "EnableApiKeyManagement" [level=3] [ref=e118]
+                    - paragraph [ref=e119]: Allow users to generate and manage API keys
+                  - generic [ref=e120]:
+                    - checkbox [checked]
+                - generic [ref=e122]:
+                  - generic [ref=e123]: ✅ Enabled
+                  - generic [ref=e124]: Medium
+          - generic [ref=e125]:
+            - heading "🔌 API Endpoints" [level=2] [ref=e126]
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - heading "Users" [level=3] [ref=e129]
+                - generic [ref=e130]:
+                  - generic [ref=e131]:
+                    - generic [ref=e132]: List
+                    - generic [ref=e133]:
+                      - checkbox [checked]
+                  - generic [ref=e135]:
+                    - generic [ref=e136]: Get
+                    - generic [ref=e137]:
+                      - checkbox [checked]
+                  - generic [ref=e139]:
+                    - generic [ref=e140]: Create
+                    - generic [ref=e141]:
+                      - checkbox [checked]
+                  - generic [ref=e143]:
+                    - generic [ref=e144]: Update
+                    - generic [ref=e145]:
+                      - checkbox [checked]
+              - generic [ref=e147]:
+                - heading "Shifts" [level=3] [ref=e148]
+                - generic [ref=e149]:
+                  - generic [ref=e150]:
+                    - generic [ref=e151]: List
+                    - generic [ref=e152]:
+                      - checkbox [checked]
+                  - generic [ref=e154]:
+                    - generic [ref=e155]: Get
+                    - generic [ref=e156]:
+                      - checkbox [checked]
+              - generic [ref=e158]:
+                - heading "TimeOff" [level=3] [ref=e159]
+                - generic [ref=e160]:
+                  - generic [ref=e161]:
+                    - generic [ref=e162]: List
+                    - generic [ref=e163]:
+                      - checkbox [checked]
+                  - generic [ref=e165]:
+                    - generic [ref=e166]: Get
+                    - generic [ref=e167]:
+                      - checkbox [checked]
+                  - generic [ref=e169]:
+                    - generic [ref=e170]: Create
+                    - generic [ref=e171]:
+                      - checkbox [checked]
+                  - generic [ref=e173]:
+                    - generic [ref=e174]: Approve
+                    - generic [ref=e175]:
+                      - checkbox [checked]
+              - generic [ref=e177]:
+                - heading "Notifications" [level=3] [ref=e178]
+                - generic [ref=e179]:
+                  - generic [ref=e180]:
+                    - generic [ref=e181]: List
+                    - generic [ref=e182]:
+                      - checkbox [checked]
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: Get
+                    - generic [ref=e186]:
+                      - checkbox [checked]
+                  - generic [ref=e188]:
+                    - generic [ref=e189]: MarkRead
+                    - generic [ref=e190]:
+                      - checkbox [checked]
+              - generic [ref=e192]:
+                - heading "Chores" [level=3] [ref=e193]
+                - generic [ref=e194]:
+                  - generic [ref=e195]:
+                    - generic [ref=e196]: List
+                    - generic [ref=e197]:
+                      - checkbox [checked]
+                  - generic [ref=e199]:
+                    - generic [ref=e200]: Get
+                    - generic [ref=e201]:
+                      - checkbox [checked]
+                  - generic [ref=e203]:
+                    - generic [ref=e204]: Create
+                    - generic [ref=e205]:
+                      - checkbox [checked]
+                  - generic [ref=e207]:
+                    - generic [ref=e208]: Update
+                    - generic [ref=e209]:
+                      - checkbox [checked]
+                  - generic [ref=e211]:
+                    - generic [ref=e212]: Delete
+                    - generic [ref=e213]:
+                      - checkbox [checked]
+              - generic [ref=e215]:
+                - heading "OnDuty" [level=3] [ref=e216]
+                - generic [ref=e217]:
+                  - generic [ref=e218]:
+                    - generic [ref=e219]: List
+                    - generic [ref=e220]:
+                      - checkbox [checked]
+                  - generic [ref=e222]:
+                    - generic [ref=e223]: Get
+                    - generic [ref=e224]:
+                      - checkbox [checked]
+                  - generic [ref=e226]:
+                    - generic [ref=e227]: Create
+                    - generic [ref=e228]:
+                      - checkbox [checked]
+                  - generic [ref=e230]:
+                    - generic [ref=e231]: Update
+                    - generic [ref=e232]:
+                      - checkbox [checked]
+                  - generic [ref=e234]:
+                    - generic [ref=e235]: Delete
+                    - generic [ref=e236]:
+                      - checkbox [checked]
+          - generic [ref=e238]:
+            - button "💾 Save Changes" [ref=e239] [cursor=pointer]
+            - button "🔄 Reset" [ref=e240] [cursor=pointer]
+```

@@ -1,0 +1,225 @@
+### Page state
+- Page URL: http://localhost:5000/Owner/Index
+- Page Title: Shift Manager
+- Page Snapshot:
+```yaml
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 📊
+      - generic [ref=e6]: Shift Manager
+    - navigation [ref=e7]:
+      - generic [ref=e8]: 📅 My Shifty
+      - link "🏠 Home" [ref=e9] [cursor=pointer]:
+        - /url: /Home/Index
+        - generic [ref=e10]: 🏠
+        - generic [ref=e11]: Home
+      - link "📅 Schedule" [ref=e12] [cursor=pointer]:
+        - /url: /Calendar/Month
+        - generic [ref=e13]: 📅
+        - generic [ref=e14]: Schedule
+      - link "📝 Requests" [ref=e15] [cursor=pointer]:
+        - /url: /Requests/Index
+        - generic [ref=e16]: 📝
+        - generic [ref=e17]: Requests
+      - link "📊 Analytics" [ref=e18] [cursor=pointer]:
+        - /url: /Admin/Analytics
+        - generic [ref=e19]: 📊
+        - generic [ref=e20]: Analytics
+      - link "👥 People" [ref=e21] [cursor=pointer]:
+        - /url: /Admin/Users
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: People
+      - link "🏢 Companies" [ref=e24] [cursor=pointer]:
+        - /url: /Admin/Companies
+        - generic [ref=e25]: 🏢
+        - generic [ref=e26]: Companies
+      - link "⚙️ Settings" [ref=e27] [cursor=pointer]:
+        - /url: /Admin/Config
+        - generic [ref=e28]: ⚙️
+        - generic [ref=e29]: Settings
+      - generic [ref=e30]: 🔧 Owner Administration
+      - link "🔧 Owner Administration" [ref=e31] [cursor=pointer]:
+        - /url: /Owner/Index
+        - generic [ref=e32]: 🔧
+        - generic [ref=e33]: Owner Administration
+      - generic [ref=e34]: ⚙️ Management
+      - link "📊 Scheduled Shifts" [ref=e35] [cursor=pointer]:
+        - /url: /Calendar/Table
+        - generic [ref=e36]: 📊
+        - generic [ref=e37]: Scheduled Shifts
+      - link "🗂️ Chores" [ref=e38] [cursor=pointer]:
+        - /url: /Public/Chores
+        - generic [ref=e39]: 🗂️
+        - generic [ref=e40]: Chores
+      - link "🎯 Day Shifts" [ref=e41] [cursor=pointer]:
+        - /url: /Public/OnDuty
+        - generic [ref=e42]: 🎯
+        - generic [ref=e43]: Day Shifts
+    - generic [ref=e44]:
+      - generic [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: O
+        - generic [ref=e47]:
+          - generic [ref=e48]: Owner
+          - generic [ref=e49]: Owner
+      - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e50]:
+        - generic [ref=e51]: ⌨️
+        - generic [ref=e52]: Ctrl+K
+  - generic [ref=e53]:
+    - banner [ref=e54]:
+      - generic [ref=e55]:
+        - heading "Owner Administration" [level=1] [ref=e57]
+        - generic [ref=e58]:
+          - link "🔔" [ref=e59] [cursor=pointer]:
+            - /url: /My/NotificationCenter
+            - generic [ref=e60]: 🔔
+          - button "Language" [ref=e62] [cursor=pointer]:
+            - generic [ref=e63]: 🌐
+            - generic [ref=e64]: En
+          - button "Toggle dark mode" [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]: 🌓
+          - button "🚪 Logout" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: 🚪
+            - generic [ref=e70]: Logout
+    - main [ref=e71]:
+      - navigation "Breadcrumb" [ref=e72]:
+        - list [ref=e73]:
+          - listitem "Owner Administration" [ref=e74]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - heading "🔧 Owner Administration" [level=1] [ref=e77]:
+            - generic [ref=e78]: 🔧
+            - text: Owner Administration
+          - paragraph [ref=e79]: Developer and system owner tools
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]: 📊
+            - generic [ref=e83]:
+              - generic [ref=e84]: "18"
+              - generic [ref=e85]: Total Users
+          - generic [ref=e86]:
+            - generic [ref=e87]: 🏢
+            - generic [ref=e88]:
+              - generic [ref=e89]: "2"
+              - generic [ref=e90]: Total Companies
+          - generic [ref=e91]:
+            - generic [ref=e92]: 💾
+            - generic [ref=e93]:
+              - generic [ref=e94]: 0.79 MB
+              - generic [ref=e95]: Database Size
+          - generic [ref=e96]:
+            - generic [ref=e97]: ⏱️
+            - generic [ref=e98]:
+              - generic [ref=e99]: 1h 24m
+              - generic [ref=e100]: Uptime
+        - generic [ref=e101]:
+          - link "🚩 Feature Flags Manage system feature toggles →" [ref=e102] [cursor=pointer]:
+            - /url: /Owner/FeatureFlags
+            - generic [ref=e103]: 🚩
+            - generic [ref=e104]:
+              - heading "Feature Flags" [level=3] [ref=e105]
+              - paragraph [ref=e106]: Manage system feature toggles
+            - generic [ref=e107]: →
+          - link "💾 Database Console Execute database operations →" [ref=e108] [cursor=pointer]:
+            - /url: /Owner/DatabaseConsole
+            - generic [ref=e109]: 💾
+            - generic [ref=e110]:
+              - heading "Database Console" [level=3] [ref=e111]
+              - paragraph [ref=e112]: Execute database operations
+            - generic [ref=e113]: →
+          - link "📧 Email Configuration Configure email notifications →" [ref=e114] [cursor=pointer]:
+            - /url: /Owner/EmailConfig
+            - generic [ref=e115]: 📧
+            - generic [ref=e116]:
+              - heading "Email Configuration" [level=3] [ref=e117]
+              - paragraph [ref=e118]: Configure email notifications
+            - generic [ref=e119]: →
+          - link "🛡️ Griffin ADFS Configure Griffin ADFS authentication settings →" [ref=e120] [cursor=pointer]:
+            - /url: /Owner/GriffinConfig
+            - generic [ref=e121]: 🛡️
+            - generic [ref=e122]:
+              - heading "Griffin ADFS" [level=3] [ref=e123]
+              - paragraph [ref=e124]: Configure Griffin ADFS authentication settings
+            - generic [ref=e125]: →
+          - link "🏥 System Health Monitor system status →" [ref=e126] [cursor=pointer]:
+            - /url: /Owner/SystemHealth
+            - generic [ref=e127]: 🏥
+            - generic [ref=e128]:
+              - heading "System Health" [level=3] [ref=e129]
+              - paragraph [ref=e130]: Monitor system status
+            - generic [ref=e131]: →
+          - link "💼 Backup & Restore Manage database backups →" [ref=e132] [cursor=pointer]:
+            - /url: /Owner/Backup
+            - generic [ref=e133]: 💼
+            - generic [ref=e134]:
+              - heading "Backup & Restore" [level=3] [ref=e135]
+              - paragraph [ref=e136]: Manage database backups
+            - generic [ref=e137]: →
+          - link "🎮 Game Configuration Configure Shift Swap game settings and scoring →" [ref=e138] [cursor=pointer]:
+            - /url: /Owner/GameConfig
+            - generic [ref=e139]: 🎮
+            - generic [ref=e140]:
+              - heading "Game Configuration" [level=3] [ref=e141]
+              - paragraph [ref=e142]: Configure Shift Swap game settings and scoring
+            - generic [ref=e143]: →
+          - link "🔍 Security Audit View security audit logs →" [ref=e144] [cursor=pointer]:
+            - /url: /Admin/AuditLog
+            - generic [ref=e145]: 🔍
+            - generic [ref=e146]:
+              - heading "Security Audit" [level=3] [ref=e147]
+              - paragraph [ref=e148]: View security audit logs
+            - generic [ref=e149]: →
+        - generic [ref=e150]:
+          - heading "Recent Activity" [level=2] [ref=e151]
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]: ➕
+              - generic [ref=e155]:
+                - generic [ref=e156]: "UserCreated: Created new user 'manager' (userfor@manager) with role Employee"
+                - generic [ref=e157]: 1/1/2026 1:48 AM
+            - generic [ref=e158]:
+              - generic [ref=e159]: ➕
+              - generic [ref=e160]:
+                - generic [ref=e161]: "UserCreated: Created new user 'employee' (userfor@employee) with role Employee"
+                - generic [ref=e162]: 1/1/2026 1:47 AM
+            - generic [ref=e163]:
+              - generic [ref=e164]: ✏️
+              - generic [ref=e165]:
+                - generic [ref=e166]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e167]: 12/12/2025 4:23 PM
+            - generic [ref=e168]:
+              - generic [ref=e169]: ✏️
+              - generic [ref=e170]:
+                - generic [ref=e171]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e172]: 11/30/2025 11:49 PM
+            - generic [ref=e173]:
+              - generic [ref=e174]: ✏️
+              - generic [ref=e175]:
+                - generic [ref=e176]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e177]: 11/30/2025 11:49 PM
+            - generic [ref=e178]:
+              - generic [ref=e179]: ✏️
+              - generic [ref=e180]:
+                - generic [ref=e181]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e182]: 11/30/2025 10:12 PM
+            - generic [ref=e183]:
+              - generic [ref=e184]: ✏️
+              - generic [ref=e185]:
+                - generic [ref=e186]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e187]: 11/30/2025 10:12 PM
+            - generic [ref=e188]:
+              - generic [ref=e189]: ✏️
+              - generic [ref=e190]:
+                - generic [ref=e191]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e192]: 11/30/2025 10:12 PM
+            - generic [ref=e193]:
+              - generic [ref=e194]: ✏️
+              - generic [ref=e195]:
+                - generic [ref=e196]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e197]: 11/30/2025 10:11 PM
+            - generic [ref=e198]:
+              - generic [ref=e199]: ✏️
+              - generic [ref=e200]:
+                - generic [ref=e201]: "GameConfigUpdated: Game configuration updated"
+                - generic [ref=e202]: 11/30/2025 10:11 PM
+```

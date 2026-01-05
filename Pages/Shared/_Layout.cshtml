@@ -239,6 +239,12 @@
                     </div>
 
                     <div class="app-header-right">
+                        @* Decision Ribbon - EXCLUDE from Owner routes (Phase 1 Enhancement) *@
+                        @if (!currentPath.StartsWith("/Owner"))
+                        {
+                            @await Component.InvokeAsync("DecisionRibbon")
+                        }
+
                         @* Notifications *@
                         <a href="/My/NotificationCenter" class="action-btn" style="position: relative;">
                             <span>🔔</span>

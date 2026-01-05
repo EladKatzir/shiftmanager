@@ -279,10 +279,22 @@ public class RequestsModel : LocalizedPageModel
 
             _logger.LogInformation("Found assignment {AssignmentId} for user {UserId}", assignment.Id, userId);
 
+            // Load current user to get CompanyId
+            var currentUser = await _db.Users.FindAsync(userId);
+            if (currentUser == null)
+            {
+                _logger.LogError("User {UserId} not found", userId);
+                Error = _localizer["Error_UserNotFound"];
+                await OnGetAsync();
+                return Page();
+            }
+
             var swapRequest = new SwapRequest
             {
                 FromAssignmentId = assignment.Id,
-                ToUserId = SwapRequest.ToUserId == 0 ? 1 : SwapRequest.ToUserId, // Default to admin if no specific user
+                FromUserId = userId,
+                CompanyId = currentUser.CompanyId,
+                ToUserId = SwapRequest.ToUserId > 0 ? SwapRequest.ToUserId : null,
                 Status = RequestStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
