@@ -121,3 +121,112 @@
 [dir="rtl"] .page-title {
   text-align: right;
 }
+
+/* ========================================
+   Status Widget RTL Overrides (Phase 2)
+   ======================================== */
+
+/* Reverse the flex direction so the indicator appears on the right */
+[dir="rtl"] .status-indicator-wrapper {
+  flex-direction: row-reverse;
+}
+
+/* Ensure status info text aligns right */
+[dir="rtl"] .status-info {
+  text-align: right;
+}
+
+/* Reverse the main status widget layout */
+[dir="rtl"] .status-widget {
+  flex-direction: row-reverse;
+}
+
+/* Form validation icons - flip to left side in RTL */
+[dir="rtl"] .form-control.valid,
+[dir="rtl"] .form-select.valid,
+[dir="rtl"] .form-control.invalid,
+[dir="rtl"] .form-select.invalid,
+[dir="rtl"] .form-control.warning,
+[dir="rtl"] .form-select.warning {
+  background-position: left 0.75rem center;
+  padding-right: 0.75rem;
+  padding-left: 2.5rem;
+}
+
+/* ========================================
+   Context Panel RTL Overrides (Phase 3)
+   ======================================== */
+
+/* Reverse label and help button order */
+[dir="rtl"] .label-with-help {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+/* Ensure context panel text aligns right */
+[dir="rtl"] .context-panel {
+  text-align: right;
+}
+
+/* Example code blocks should align right */
+[dir="rtl"] .example-code {
+  text-align: left;
+  direction: ltr;
+}
+
+/* ========================================
+   Find This Modal RTL Overrides (Phase 4)
+   ======================================== */
+
+/* Reverse help buttons group order */
+[dir="rtl"] .help-buttons-group {
+  flex-direction: row-reverse;
+}
+
+/* Modal header - reverse title and close button */
+[dir="rtl"] .modal-header {
+  flex-direction: row-reverse;
+}
+
+/* Modal footer - buttons align left in RTL */
+[dir="rtl"] .modal-footer {
+  justify-content: flex-start;
+}
+
+/* Modal steps - reverse number and content order */
+[dir="rtl"] .modal-step {
+  flex-direction: row-reverse;
+}
+
+/* Step content text align right */
+[dir="rtl"] .step-content h4,
+[dir="rtl"] .step-content p {
+  text-align: right;
+}
+
+/* Modal note text align right */
+[dir="rtl"] .modal-note {
+  text-align: right;
+  border-left: none;
+  border-right: 4px solid var(--warning, #f59e0b);
+}
+
+/* ========================================
+   Decision Ribbon RTL Overrides (Phase 1)
+   ======================================== */
+
+/* Reverse slide-in animation for RTL */
+[dir="rtl"] .decision-ribbon {
+  animation-name: slideInLeft;
+}
+
+/* Reverse flex direction for badge and text */
+[dir="rtl"] .decision-ribbon-btn {
+  flex-direction: row-reverse;
+}
+
+/* RTL slide-in animation from left */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
