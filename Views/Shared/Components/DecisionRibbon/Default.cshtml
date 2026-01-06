@@ -5,15 +5,15 @@
 
 @* Decision Ribbon - Signature Phase 1 feature showing pending approvals *@
 <div class="decision-ribbon">
-    <a href="/Requests" class="decision-ribbon-btn @(Model.PendingCount > 0 ? "has-pending" : "")" title="@(Model.PendingCount > 0 ? Localizer["DecisionRibbon_ActionRequired"] : Localizer["DecisionRibbon_AllClear"])">
+    <a href="/Requests" class="decision-ribbon-btn @(Model.PendingCount > 0 ? "has-pending" : "")" loc-title="@(Model.PendingCount > 0 ? "DecisionRibbon_ActionRequired" : "DecisionRibbon_AllClear")">
         @if (Model.PendingCount > 0)
         {
-            <span class="ribbon-badge" aria-label="@Localizer["DecisionRibbon_PendingCount"]">@Model.PendingCount</span>
-            <span>@Localizer["DecisionRibbon_ActionRequired"]</span>
+            <span class="ribbon-badge" loc-aria-label="DecisionRibbon_PendingCount">@Model.PendingCount</span>
+            <span><loc key="DecisionRibbon_ActionRequired" /></span>
         }
         else
         {
-            <span>✓ @Localizer["DecisionRibbon_AllClear"]</span>
+            <span>✓ <loc key="DecisionRibbon_AllClear" /></span>
         }
     </a>
 </div>

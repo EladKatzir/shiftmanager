@@ -25,8 +25,8 @@
 <!-- Page Header -->
 <div class="page-header">
     <div class="page-header-content">
-        <h1 class="page-title">@Localizer["Chores"]</h1>
-        <p class="page-subtitle">@Localizer["ManageChoresAndTaskAssignments"]</p>
+        <h1 class="page-title"><loc key="Chores" /></h1>
+        <p class="page-subtitle"><loc key="ManageChoresAndTaskAssignments" /></p>
     </div>
 </div>
 
@@ -230,7 +230,7 @@
 
 <div class="chores-calendar">
     <div class="calendar-header">
-        <h2>@Localizer["ChoresCalendar"] - @firstDay.ToString("MMMM yyyy")</h2>
+        <h2><loc key="ChoresCalendar" /> - @firstDay.ToString("MMMM yyyy")</h2>
         <div class="calendar-nav">
             <a class="btn btn-ghost" href="/Public/Chores?year=@firstDay.AddMonths(-1).Year&month=@firstDay.AddMonths(-1).Month">
                 ← @firstDay.AddMonths(-1).ToString("MMM")
@@ -249,7 +249,7 @@
                 <span class="metric-icon">🧹</span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.TotalChoresCount</span>
-                    <span class="metric-label">@Localizer["Calendar_Chores"]</span>
+                    <span class="metric-label"><loc key="Calendar_Chores" /></span>
                 </div>
             </div>
 
@@ -259,7 +259,7 @@
                     <span class="metric-icon">⏳</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.UnassignedChoresCount</span>
-                        <span class="metric-label">@Localizer["Calendar_Unassigned"]</span>
+                        <span class="metric-label"><loc key="Calendar_Unassigned" /></span>
                     </div>
                 </div>
             }
@@ -270,7 +270,7 @@
                     <span class="metric-icon">👤</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.MyChoresCount</span>
-                        <span class="metric-label">@Localizer["Calendar_MyItems"]</span>
+                        <span class="metric-label"><loc key="Calendar_MyItems" /></span>
                     </div>
                 </div>
             }
@@ -280,13 +280,13 @@
     <!-- Calendar Grid -->
     <div class="calendar-grid">
         <!-- Weekday Headers -->
-        <div class="weekday-header">@Localizer["Mon"]</div>
-        <div class="weekday-header">@Localizer["Tue"]</div>
-        <div class="weekday-header">@Localizer["Wed"]</div>
-        <div class="weekday-header">@Localizer["Thu"]</div>
-        <div class="weekday-header">@Localizer["Fri"]</div>
-        <div class="weekday-header">@Localizer["Sat"]</div>
-        <div class="weekday-header">@Localizer["Sun"]</div>
+        <div class="weekday-header"><loc key="Mon" /></div>
+        <div class="weekday-header"><loc key="Tue" /></div>
+        <div class="weekday-header"><loc key="Wed" /></div>
+        <div class="weekday-header"><loc key="Thu" /></div>
+        <div class="weekday-header"><loc key="Fri" /></div>
+        <div class="weekday-header"><loc key="Sat" /></div>
+        <div class="weekday-header"><loc key="Sun" /></div>
 
         <!-- Calendar Days -->
         @for (int week = 0; week < 6; week++)
@@ -317,7 +317,7 @@
                         }
                         @if (choresForDay.Count > 2)
                         {
-                            <div class="chore-count">+@(choresForDay.Count - 2) @Localizer["More"]</div>
+                            <div class="chore-count">+@(choresForDay.Count - 2) <loc key="More" /></div>
                         }
                     }
                 </div>
@@ -334,16 +334,16 @@
 
     <!-- Chore Table -->
     <div class="chore-table card">
-        <h3>@Localizer["ChoresList"]</h3>
+        <h3><loc key="ChoresList" /></h3>
         <table>
             <thead>
                 <tr>
-                    <th>@Localizer["Date"]</th>
-                    <th>@Localizer["Assignee"]</th>
-                    <th>@Localizer["Title"]</th>
-                    <th>@Localizer["Notes"]</th>
-                    <th>@Localizer["CreatedBy"]</th>
-                    <th>@Localizer["Actions"]</th>
+                    <th><loc key="Date" /></th>
+                    <th><loc key="Assignee" /></th>
+                    <th><loc key="Title" /></th>
+                    <th><loc key="Notes" /></th>
+                    <th><loc key="CreatedBy" /></th>
+                    <th><loc key="Actions" /></th>
                 </tr>
             </thead>
             <tbody>
@@ -389,21 +389,21 @@
 <div id="createModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>@Localizer["CreateChore"]</h3>
+            <h3><loc key="CreateChore" /></h3>
             <button class="modal-close" onclick="closeCreateModal()">&times;</button>
         </div>
         <form method="post" asp-page-handler="CreateChore">
             @Html.AntiForgeryToken()
             <div class="form-group">
-                <label class="form-label">@Localizer["Date"]</label>
+                <label class="form-label"><loc key="Date" /></label>
                 <input type="date" name="ChoreDate" id="choreDate" class="form-input" required />
             </div>
             <div class="form-group">
-                <label class="form-label">@Localizer["Assignee"]</label>
+                <label class="form-label"><loc key="Assignee" /></label>
                 <input type="hidden" name="AssigneeId" id="selectedAssigneeId" required />
                 <div class="custom-select-container">
                     <div class="custom-select-trigger" id="assigneeTrigger" onclick="toggleAssigneeDropdown()">
-                        <span id="selectedAssigneeName">@Localizer["SelectAssignee"]</span>
+                        <span id="selectedAssigneeName"><loc key="SelectAssignee" /></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="custom-dropdown" id="assigneeDropdown" style="display: none;">
@@ -417,16 +417,16 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">@Localizer["Title"]</label>
+                <label class="form-label"><loc key="Title" /></label>
                 <input type="text" name="ChoreTitle" class="form-input" maxlength="200" required />
             </div>
             <div class="form-group">
-                <label class="form-label">@Localizer["Notes"] (@Localizer["Optional"])</label>
+                <label class="form-label"><loc key="Notes" /> (@Localizer["Optional"])</label>
                 <textarea name="ChoreNotes" class="form-textarea"></textarea>
             </div>
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                 <button type="button" class="btn btn-ghost" onclick="closeCreateModal()">@Localizer["Cancel"]</button>
-                <button type="submit" class="btn btn-primary">@Localizer["Create"]</button>
+                <button type="submit" class="btn btn-primary"><loc key="Create" /></button>
             </div>
         </form>
     </div>
@@ -436,16 +436,16 @@
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>@Localizer["ConfirmDelete"]</h3>
+            <h3><loc key="ConfirmDelete" /></h3>
             <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
         </div>
-        <p>@Localizer["AreYouSureDeleteChore"] "<span id="deleteChoreTitle"></span>"?</p>
+        <p><loc key="AreYouSureDeleteChore" /> "<span id="deleteChoreTitle"></span>"?</p>
         <form method="post" asp-page-handler="CancelChore" id="deleteChoreForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ChoreId" id="deleteChoreId" value="0" />
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
                 <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">@Localizer["Cancel"]</button>
-                <button type="submit" class="btn btn-danger">@Localizer["Delete"]</button>
+                <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
             </div>
         </form>
     </div>
@@ -455,7 +455,7 @@
 <div id="detailsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>@Localizer["ChoreDetails"]</h3>
+            <h3><loc key="ChoreDetails" /></h3>
             <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
         </div>
         <div>
@@ -478,10 +478,10 @@
 <div id="infoModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>ℹ️ @Localizer["Information"]</h3>
+            <h3>ℹ️ <loc key="Information" /></h3>
             <button class="modal-close" onclick="closeInfoModal()">&times;</button>
         </div>
-        <p>@Localizer["NoChoreContactManager"]</p>
+        <p><loc key="NoChoreContactManager" /></p>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
             <button type="button" class="btn btn-primary" onclick="closeInfoModal()">@Localizer["OK"]</button>
         </div>
@@ -494,18 +494,18 @@
     <div id="conflictModal" class="modal active">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>@Localizer["ShiftConflictDetected"]</h3>
+                <h3><loc key="ShiftConflictDetected" /></h3>
             </div>
-            <p>@Localizer["UserHasShiftOnThisDate"]</p>
-            <p>@Localizer["DoYouWantToReplaceShift"]</p>
+            <p><loc key="UserHasShiftOnThisDate" /></p>
+            <p><loc key="DoYouWantToReplaceShift" /></p>
             <form method="post" asp-page-handler="ReplaceShiftWithChore">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ShiftAssignmentId" value="@TempData["ConflictShiftId"]" />
                 <input type="hidden" name="ChoreTitle" value="@TempData["ConflictTitle"]" />
                 <input type="hidden" name="ChoreNotes" value="@TempData["ConflictNotes"]" />
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
-                    <a href="/Public/Chores?year=@Model.Year&month=@Model.Month" class="btn btn-ghost">@Localizer["Cancel"]</a>
-                    <button type="submit" class="btn btn-primary">@Localizer["ReplaceShift"]</button>
+                    <a href="/Public/Chores?year=@Model.Year&month=@Model.Month" class="btn btn-ghost"><loc key="Cancel" /></a>
+                    <button type="submit" class="btn btn-primary"><loc key="ReplaceShift" /></button>
                 </div>
             </form>
         </div>

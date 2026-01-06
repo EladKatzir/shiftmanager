@@ -1,19 +1,19 @@
 @model ShiftManager.ViewComponents.LanguageToggleViewModel
-@using Microsoft.Extensions.Localization
-@using ShiftManager.Resources
-@inject IStringLocalizer<SharedResources> Localizer
 
 <div class="language-toggle">
-    <button class="action-btn language-btn" onclick="toggleLanguage('@Model.CurrentLanguage')"
-            aria-label="@Localizer["Language"]" title="@Localizer["Language"]">
+    <button class="action-btn language-btn" onclick="toggleLanguage('@Model.CurrentLanguage', '@Model.DefaultCulture', '@Model.AlternateCulture')"
+            loc-aria-label="Language" loc-title="Language">
         <span class="language-icon">🌐</span>
         <span class="language-text">@(Model.IsHebrew ? "עב" : "En")</span>
     </button>
 </div>
 
 <script>
-function toggleLanguage(currentLang) {
-    const newLang = currentLang === 'he-IL' ? 'en-US' : 'he-IL';
+function toggleLanguage(currentLang, defaultCulture, alternateCulture) {
+    // Determine the target language based on company settings
+    // If current is default, switch to alternate. Otherwise, switch to default.
+    const newLang = currentLang === defaultCulture ? alternateCulture : defaultCulture;
+
     const expires = new Date();
     expires.setFullYear(expires.getFullYear() + 1);
 

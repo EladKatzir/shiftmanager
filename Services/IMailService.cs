@@ -66,4 +66,52 @@ public interface IMailService
     /// <param name="companyName">Name of the company</param>
     Task<bool> SendAccountApprovedEmailAsync(string recipientEmail, string userName,
         string assignedRole, string companyName);
+
+    /// <summary>
+    /// Send time-off request approved notification email.
+    /// </summary>
+    Task<bool> SendTimeOffApprovedEmailAsync(string recipientEmail, string employeeName,
+        DateOnly startDate, DateOnly endDate);
+
+    /// <summary>
+    /// Send time-off request declined notification email.
+    /// </summary>
+    Task<bool> SendTimeOffDeclinedEmailAsync(string recipientEmail, string employeeName,
+        DateOnly startDate, DateOnly endDate);
+
+    /// <summary>
+    /// Send time-off request deleted notification email.
+    /// </summary>
+    Task<bool> SendTimeOffDeletedEmailAsync(string recipientEmail, string employeeName,
+        DateOnly startDate, DateOnly endDate);
+
+    /// <summary>
+    /// Send swap request approved notification email.
+    /// </summary>
+    Task<bool> SendSwapRequestApprovedEmailAsync(string recipientEmail, string employeeName,
+        string shiftInfo);
+
+    /// <summary>
+    /// Send swap request declined notification email.
+    /// </summary>
+    Task<bool> SendSwapRequestDeclinedEmailAsync(string recipientEmail, string employeeName,
+        string shiftInfo);
+
+    /// <summary>
+    /// Send on-duty assignment notification email.
+    /// </summary>
+    Task<bool> SendOnDutyAssignedEmailAsync(string recipientEmail, string employeeName,
+        string onDutyTypeName, DateOnly onDutyDate);
+
+    /// <summary>
+    /// Send on-duty cancellation notification email.
+    /// </summary>
+    Task<bool> SendOnDutyCanceledEmailAsync(string recipientEmail, string employeeName,
+        string onDutyTypeName, DateOnly onDutyDate);
+
+    /// <summary>
+    /// Send access request submitted notification email to owners.
+    /// </summary>
+    Task<bool> SendAccessRequestSubmittedEmailAsync(string recipientEmail, string ownerName,
+        string requesterName, string requesterEmail, string companyName);
 }

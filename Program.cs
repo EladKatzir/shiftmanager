@@ -113,6 +113,7 @@ builder.Services.AddHttpClient(); // Required for MailService
 builder.Services.AddDataProtection(); // Required for EncryptionService
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IEmailApiLogService, EmailApiLogService>();
 // Griffin ADFS services
@@ -145,6 +146,15 @@ builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
 builder.Services.AddSingleton<IValidationService, ValidationService>();
 builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
+
+// Data Lifecycle Services
+builder.Services.AddScoped<IArchiveService, ArchiveService>();
+builder.Services.AddScoped<IPurgeService, PurgeService>();
+builder.Services.AddScoped<IImportService, ImportService>();
+
+// Language Management Services
+builder.Services.AddScoped<ICompanyLocalizationService, CompanyLocalizationService>();
+builder.Services.AddScoped<ILanguageManagementService, LanguageManagementService>();
 
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();

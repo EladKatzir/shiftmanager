@@ -1,9 +1,9 @@
 @page
 @model ShiftManager.Pages.Calendar.DayModel
-@using Microsoft.Extensions.Localization
-@using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @using ShiftManager.Models.ViewModels
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
@@ -41,7 +41,7 @@
         </a>
         <a class="btn btn-primary" href="/Calendar/Day">
             <span class="nav-icon">📅</span>
-            <span class="nav-text">@Localizer["Today"]</span>
+            <span class="nav-text"><loc key="Today" /></span>
         </a>
         <a class="btn btn-ghost" href="/Calendar/Day?year=@Model.Next.Date.Year&month=@Model.Next.Date.Month&day=@Model.Next.Date.Day">
             <span class="nav-text">@Model.Next.Label</span>
@@ -57,7 +57,7 @@
                 <span class="metric-icon">📅</span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.VisibleShiftCount</span>
-                    <span class="metric-label">@Localizer["Calendar_Shifts"]</span>
+                    <span class="metric-label"><loc key="Calendar_Shifts" /></span>
                 </div>
             </div>
 
@@ -67,7 +67,7 @@
                     <span class="metric-icon">🧹</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleChoreCount</span>
-                        <span class="metric-label">@Localizer["Calendar_Chores"]</span>
+                        <span class="metric-label"><loc key="Calendar_Chores" /></span>
                     </div>
                 </div>
             }
@@ -78,7 +78,7 @@
                     <span class="metric-icon">🎯</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleOnDutyCount</span>
-                        <span class="metric-label">@Localizer["Calendar_OnDuty"]</span>
+                        <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
                     </div>
                 </div>
             }
@@ -89,7 +89,7 @@
                     <span class="metric-icon">⏳</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.PendingItemsCount</span>
-                        <span class="metric-label">@Localizer["Calendar_Pending"]</span>
+                        <span class="metric-label"><loc key="Calendar_Pending" /></span>
                     </div>
                 </div>
             }
@@ -100,7 +100,7 @@
                     <span class="metric-icon">✅</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.CoveragePercent%</span>
-                        <span class="metric-label">@Localizer["Calendar_Coverage"]</span>
+                        <span class="metric-label"><loc key="Calendar_Coverage" /></span>
                     </div>
                 </div>
             }
@@ -110,34 +110,34 @@
 
 @* ✅ PHASE 20: View switcher (removed Table link) *@
 <div class="calendar-view-switcher">
-    <a class="btn btn-ghost" href="/Calendar/Month">@Localizer["Month"]</a>
-    <a class="btn btn-ghost" href="/Calendar/Week">@Localizer["Week"]</a>
-    <a class="btn btn-primary" href="/Calendar/Day">@Localizer["Day"]</a>
+    <a class="btn btn-ghost" href="/Calendar/Month"><loc key="Month" /></a>
+    <a class="btn btn-ghost" href="/Calendar/Week"><loc key="Week" /></a>
+    <a class="btn btn-primary" href="/Calendar/Day"><loc key="Day" /></a>
 </div>
 
 @* ✅ PHASE 20: Quick actions for managers *@
 @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
 {
     <div class="calendar-quick-actions">
-        <span class="quick-actions-label">@Localizer["Calendar_QuickActions"]:</span>
+        <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
         <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
             <span>📊</span>
-            @Localizer["Calendar_ManageShifts"]
+            <loc key="Calendar_ManageShifts" />
         </a>
         <a class="btn btn-secondary btn-sm" href="/Public/Chores">
             <span>🧹</span>
-            @Localizer["Calendar_ManageChores"]
+            <loc key="Calendar_ManageChores" />
         </a>
         <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
             <span>🛡️</span>
-            @Localizer["Calendar_ManageOnDuty"]
+            <loc key="Calendar_ManageOnDuty" />
         </a>
     </div>
 }
 
 @* Hidden template for assignee select (rendered once, cloned via JS) *@
 <select id="assignee-options-template" style="display: none;">
-    <option value="">@Localizer["Calendar_SelectAssignee"]</option>
+    <option value=""><loc key="Calendar_SelectAssignee" /></option>
     @foreach (var user in Model.EligibleAssignees)
     {
         <option value="@user.Id">@user.DisplayName</option>
@@ -164,27 +164,27 @@
                     </div>
                     <div class="item-details">
                         <div class="item-assignee">
-                            <span class="detail-label">@Localizer["AssignedTo"]:</span>
+                            <span class="detail-label"><loc key="AssignedTo" />:</span>
                             <span class="detail-value">@item.AssigneeName</span>
                         </div>
                         @if (!string.IsNullOrEmpty(item.TimeRange))
                         {
                             <div class="item-time">
-                                <span class="detail-label">@Localizer["Time"]:</span>
+                                <span class="detail-label"><loc key="Time" />:</span>
                                 <span class="detail-value">@item.TimeRange</span>
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(item.StaffingInfo))
                         {
                             <div class="item-staffing">
-                                <span class="detail-label">@Localizer["Staffing"]:</span>
+                                <span class="detail-label"><loc key="Staffing" />:</span>
                                 <span class="detail-value">@item.StaffingInfo</span>
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(item.Details))
                         {
                             <div class="item-description">
-                                <span class="detail-label">@Localizer["Details"]:</span>
+                                <span class="detail-label"><loc key="Details" />:</span>
                                 <span class="detail-value">@item.Details</span>
                             </div>
                         }
@@ -198,16 +198,16 @@
                         {
                             <button class="btn btn-danger btn-sm"
                                     onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
-                                    title="@Localizer["Delete"]">
+                                    loc-title="Delete">
                                 <span>×</span>
-                                <span>@Localizer["Delete"]</span>
+                                <span><loc key="Delete" /></span>
                             </button>
                         }
                         else
                         {
-                            <a href="@item.ManagementUrl" class="btn btn-secondary btn-sm" title="@Localizer["Calendar_ManageShift"]">
+                            <a href="@item.ManagementUrl" class="btn btn-secondary btn-sm" loc-title="Calendar_ManageShift">
                                 <span class="manage-icon">⚙️</span>
-                                <span>@Localizer["Manage"]</span>
+                                <span><loc key="Manage" /></span>
                             </a>
                         }
                     </div>
@@ -219,8 +219,8 @@
     {
         <div class="empty-day-state">
             <div class="empty-icon">📭</div>
-            <div class="empty-title">@Localizer["Calendar_NoItems"]</div>
-            <div class="empty-subtitle">@Localizer["Calendar_NoItemsForDay"]</div>
+            <div class="empty-title"><loc key="Calendar_NoItems" /></div>
+            <div class="empty-subtitle"><loc key="Calendar_NoItemsForDay" /></div>
         </div>
     }
 
@@ -228,13 +228,13 @@
     @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
     {
         <div class="day-quick-add-section">
-            <h3>@Localizer["Calendar_QuickActions"]</h3>
+            <h3><loc key="Calendar_QuickActions" /></h3>
             <div class="quick-add-container">
                 <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@Model.CurrentDate.ToString("yyyy-MM-dd")')">
-                    + @Localizer["Calendar_AddChore"]
+                    + <loc key="Calendar_AddChore" />
                 </button>
                 <button class="btn-quick-add" onclick="toggleQuickAdd('onduty', '@Model.CurrentDate.ToString("yyyy-MM-dd")')">
-                    + @Localizer["Calendar_AddOnDuty"]
+                    + <loc key="Calendar_AddOnDuty" />
                 </button>
             </div>
 
@@ -246,15 +246,15 @@
                 <div id="choreFields-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="hidden">
                     <input type="text"
                            id="choreTitle-@Model.CurrentDate.ToString("yyyy-MM-dd")"
-                           placeholder="@Localizer["Calendar_ChoreTitle"]"
+                           loc-placeholder="Calendar_ChoreTitle"
                            class="form-control form-control-sm"
                            maxlength="200" />
                 </div>
 
                 <div id="ondutyFields-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="hidden">
                     <select id="ondutyType-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
-                        <option value="0">@Localizer["OnDuty_Hakam"]</option>
-                        <option value="1">@Localizer["OnDuty_Lead"]</option>
+                        <option value="0"><loc key="OnDuty_Hakam" /></option>
+                        <option value="1"><loc key="OnDuty_Lead" /></option>
                         @foreach (var customType in Model.CustomOnDutyTypes)
                         {
                             var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;
@@ -266,10 +266,10 @@
 
                 <div class="quick-add-actions">
                     <button class="btn btn-sm btn-primary" onclick="submitQuickAdd('@Model.CurrentDate.ToString("yyyy-MM-dd")')">
-                        @Localizer["Add"]
+                        <loc key="Add" />
                     </button>
                     <button class="btn btn-sm btn-ghost" onclick="toggleQuickAdd('', '@Model.CurrentDate.ToString("yyyy-MM-dd")')">
-                        @Localizer["Cancel"]
+                        <loc key="Cancel" />
                     </button>
                 </div>
             </div>

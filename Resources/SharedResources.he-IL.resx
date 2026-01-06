@@ -3539,6 +3539,9 @@
   <data name="Error_NoPermissionDeclineRequest" xml:space="preserve">
     <value>אין לך הרשאה לדחות בקשה זו.</value>
   </data>
+  <data name="Error_RequestAlreadyProcessed" xml:space="preserve">
+    <value>בקשה זו כבר עובדה על ידי מנהל אחר. אנא רענן את הדף.</value>
+  </data>
   <data name="Error_CannotApproveSwap" xml:space="preserve">
     <value>לא ניתן לאשר החלפה</value>
   </data>
@@ -4309,5 +4312,152 @@
   </data>
   <data name="Calendar_Unassigned" xml:space="preserve">
     <value>לא משויך</value>
+  </data>
+  <data name="EditMode_Title" xml:space="preserve">
+    <value>מצב עריכה פעיל</value>
+  </data>
+  <data name="EditMode_Company" xml:space="preserve">
+    <value>חברה:</value>
+  </data>
+  <data name="EditMode_Culture" xml:space="preserve">
+    <value>תרבות:</value>
+  </data>
+  <data name="EditMode_Drafts" xml:space="preserve">
+    <value>טיוטות:</value>
+  </data>
+  <data name="EditMode_FreezeInteractions" xml:space="preserve">
+    <value>הקפא אינטראקציות</value>
+  </data>
+  <data name="EditMode_ViewDrafts" xml:space="preserve">
+    <value>הצג טיוטות</value>
+  </data>
+  <data name="EditMode_ViewDraftsTooltip" xml:space="preserve">
+    <value>הצג את כל שינויי הטיוטה</value>
+  </data>
+  <data name="EditMode_SaveAndExit" xml:space="preserve">
+    <value>שמור וצא</value>
+  </data>
+  <data name="EditMode_SaveExitTooltip" xml:space="preserve">
+    <value>שמור את כל הטיוטות וצא ממצב עריכה</value>
+  </data>
+  <data name="EditMode_Discard" xml:space="preserve">
+    <value>בטל</value>
+  </data>
+  <data name="EditMode_DiscardTooltip" xml:space="preserve">
+    <value>בטל את כל הטיוטות וצא ממצב עריכה</value>
+  </data>
+  <data name="OwnerSelector_ManagingCompany" xml:space="preserve">
+    <value>ניהול חברה:</value>
+  </data>
+  <data name="OwnerSelector_Home" xml:space="preserve">
+    <value>(בית)</value>
+  </data>
+  <data name="OwnerSelector_ClearSelectionTooltip" xml:space="preserve">
+    <value>נקה בחירה וחזור לחברת הבית</value>
+  </data>
+  <data name="Owner_EmailTemplates" xml:space="preserve">
+    <value>תבניות אימייל</value>
+  </data>
+  <data name="EmailTemplates_Subtitle" xml:space="preserve">
+    <value>התאם אישית הודעות אימייל הנשלחות לעובדים שלך</value>
+  </data>
+  <data name="EmailTemplates_InfoTitle" xml:space="preserve">
+    <value>איך תבניות אימייל עובדות</value>
+  </data>
+  <data name="EmailTemplates_InfoDescription" xml:space="preserve">
+    <value>התאם אישית את גוף ההודעה עבור כל סוג אימייל. ניתן להשתמש במשתנים כמו {EmployeeName} שיוחלפו בערכים אמיתיים. כותרות ההודעות נשארות סטנדרטיות ומתורגמות.</value>
+  </data>
+  <data name="EmailTemplates_CustomMessage" xml:space="preserve">
+    <value>הודעה מותאמת אישית</value>
+  </data>
+  <data name="EmailTemplates_DefaultMessage" xml:space="preserve">
+    <value>הודעת ברירת מחדל</value>
+  </data>
+  <data name="EmailTemplates_AvailableVariables" xml:space="preserve">
+    <value>משתנים זמינים</value>
+  </data>
+  <data name="EmailTemplates_EditTemplate" xml:space="preserve">
+    <value>עריכת תבנית אימייל</value>
+  </data>
+  <data name="EmailTemplates_MessagePlaceholder" xml:space="preserve">
+    <value>הזן את ההודעה המותאמת אישית שלך כאן. השאר ריק כדי להשתמש בהודעת ברירת המחדל.</value>
+  </data>
+  <data name="EmailTemplates_CharacterCount" xml:space="preserve">
+    <value>תווים</value>
+  </data>
+  <data name="EmailTemplates_EnableCustomTemplate" xml:space="preserve">
+    <value>הפעל הודעה מותאמת אישית</value>
+  </data>
+  <data name="EmailTemplates_VariablesHelp" xml:space="preserve">
+    <value>השתמש במשתנים אלה בהודעה שלך. הם יוחלפו בערכים אמיתיים כאשר האימייל יישלח.</value>
+  </data>
+  <data name="Status_Enabled" xml:space="preserve">
+    <value>מופעל</value>
+  </data>
+  <data name="Status_Disabled" xml:space="preserve">
+    <value>מושבת</value>
+  </data>
+  <data name="Action_ResetToDefault" xml:space="preserve">
+    <value>אפס לברירת מחדל</value>
+  </data>
+  <data name="Confirm_ResetTemplate" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לאפס תבנית זו להודעת ברירת המחדל?</value>
+  </data>
+  <data name="Success_EmailTemplateSaved" xml:space="preserve">
+    <value>תבנית האימייל נשמרה בהצלחה</value>
+  </data>
+  <data name="Success_EmailTemplateReset" xml:space="preserve">
+    <value>תבנית האימייל אופסה לברירת מחדל</value>
+  </data>
+  <data name="Error_EmailTemplate_MessageTooLong" xml:space="preserve">
+    <value>ההודעה ארוכה מדי. מקסימום 2000 תווים מותרים.</value>
+  </data>
+  <data name="Error_SavingEmailTemplate" xml:space="preserve">
+    <value>שגיאה בשמירת תבנית האימייל. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_ResettingEmailTemplate" xml:space="preserve">
+    <value>שגיאה באיפוס תבנית האימייל. אנא נסה שוב.</value>
+  </data>
+  <data name="EmailTemplate_ShiftAssigned" xml:space="preserve">
+    <value>משמרת הוקצתה</value>
+  </data>
+  <data name="EmailTemplate_ShiftChanged" xml:space="preserve">
+    <value>משמרת שונתה</value>
+  </data>
+  <data name="EmailTemplate_ShiftDeleted" xml:space="preserve">
+    <value>משמרת נמחקה</value>
+  </data>
+  <data name="EmailTemplate_ChoreAssigned" xml:space="preserve">
+    <value>משימה הוקצתה</value>
+  </data>
+  <data name="EmailTemplate_ChoreCanceled" xml:space="preserve">
+    <value>משימה בוטלה</value>
+  </data>
+  <data name="EmailTemplate_TimeOffApproved" xml:space="preserve">
+    <value>חופשה אושרה</value>
+  </data>
+  <data name="EmailTemplate_TimeOffDeclined" xml:space="preserve">
+    <value>חופשה נדחתה</value>
+  </data>
+  <data name="EmailTemplate_TimeOffDeleted" xml:space="preserve">
+    <value>חופשה נמחקה</value>
+  </data>
+  <data name="EmailTemplate_SwapRequestApproved" xml:space="preserve">
+    <value>בקשת החלפה אושרה</value>
+  </data>
+  <data name="EmailTemplate_SwapRequestDeclined" xml:space="preserve">
+    <value>בקשת החלפה נדחתה</value>
+  </data>
+  <data name="EmailTemplate_OnDutyAssigned" xml:space="preserve">
+    <value>תורנות הוקצתה</value>
+  </data>
+  <data name="EmailTemplate_OnDutyCanceled" xml:space="preserve">
+    <value>תורנות בוטלה</value>
+  </data>
+  <data name="EmailTemplate_AccessRequestSubmitted" xml:space="preserve">
+    <value>בקשת גישה נשלחה</value>
+  </data>
+  <data name="EmailTemplate_AccountApproved" xml:space="preserve">
+    <value>חשבון אושר</value>
   </data>
 </root>

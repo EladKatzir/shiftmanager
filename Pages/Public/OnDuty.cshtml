@@ -26,8 +26,8 @@
 <!-- Page Header -->
 <div class="page-header">
     <div class="page-header-content">
-        <h1 class="page-title">@Localizer["OnDuty"]</h1>
-        <p class="page-subtitle">@Localizer["ManageOnDutyRotationsAndAssignments"]</p>
+        <h1 class="page-title"><loc key="OnDuty" /></h1>
+        <p class="page-subtitle"><loc key="ManageOnDutyRotationsAndAssignments" /></p>
     </div>
 </div>
 
@@ -258,7 +258,7 @@
 
 <div class="onduty-calendar">
     <div class="calendar-header">
-        <h2>@Localizer["OnDutyCalendar"] - @firstDay.ToString("MMMM yyyy")</h2>
+        <h2><loc key="OnDutyCalendar" /> - @firstDay.ToString("MMMM yyyy")</h2>
         <div class="calendar-nav">
             <a class="btn btn-ghost" href="/Public/OnDuty?year=@firstDay.AddMonths(-1).Year&month=@firstDay.AddMonths(-1).Month">
                 ← @firstDay.AddMonths(-1).ToString("MMM")
@@ -277,7 +277,7 @@
                 <span class="metric-icon">🎯</span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.TotalOnDutyCount</span>
-                    <span class="metric-label">@Localizer["Calendar_OnDuty"]</span>
+                    <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
                 </div>
             </div>
 
@@ -287,7 +287,7 @@
                     <span class="metric-icon">🎓</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.HakamCount</span>
-                        <span class="metric-label">@Localizer["Calendar_Hakam"]</span>
+                        <span class="metric-label"><loc key="Calendar_Hakam" /></span>
                     </div>
                 </div>
             }
@@ -298,7 +298,7 @@
                     <span class="metric-icon">⭐</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.LeadCount</span>
-                        <span class="metric-label">@Localizer["Calendar_Lead"]</span>
+                        <span class="metric-label"><loc key="Calendar_Lead" /></span>
                     </div>
                 </div>
             }
@@ -309,7 +309,7 @@
                     <span class="metric-icon">👤</span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.MyOnDutyCount</span>
-                        <span class="metric-label">@Localizer["Calendar_MyItems"]</span>
+                        <span class="metric-label"><loc key="Calendar_MyItems" /></span>
                     </div>
                 </div>
             }
@@ -319,13 +319,13 @@
     <!-- Calendar Grid -->
     <div class="calendar-grid">
         <!-- Weekday Headers -->
-        <div class="weekday-header">@Localizer["Mon"]</div>
-        <div class="weekday-header">@Localizer["Tue"]</div>
-        <div class="weekday-header">@Localizer["Wed"]</div>
-        <div class="weekday-header">@Localizer["Thu"]</div>
-        <div class="weekday-header">@Localizer["Fri"]</div>
-        <div class="weekday-header">@Localizer["Sat"]</div>
-        <div class="weekday-header">@Localizer["Sun"]</div>
+        <div class="weekday-header"><loc key="Mon" /></div>
+        <div class="weekday-header"><loc key="Tue" /></div>
+        <div class="weekday-header"><loc key="Wed" /></div>
+        <div class="weekday-header"><loc key="Thu" /></div>
+        <div class="weekday-header"><loc key="Fri" /></div>
+        <div class="weekday-header"><loc key="Sat" /></div>
+        <div class="weekday-header"><loc key="Sun" /></div>
 
         <!-- Calendar Days -->
         @for (int week = 0; week < 6; week++)
@@ -358,7 +358,7 @@
                         }
                         @if (onDutiesForDay.Count > 3)
                         {
-                            <div class="onduty-count">+@(onDutiesForDay.Count - 3) @Localizer["More"]</div>
+                            <div class="onduty-count">+@(onDutiesForDay.Count - 3) <loc key="More" /></div>
                         }
                     }
                 </div>
@@ -375,16 +375,16 @@
 
     <!-- On-Duty Table -->
     <div class="onduty-table card">
-        <h3>@Localizer["OnDutyList"]</h3>
+        <h3><loc key="OnDutyList" /></h3>
         <table>
             <thead>
                 <tr>
-                    <th>@Localizer["Date"]</th>
-                    <th>@Localizer["Assignee"]</th>
-                    <th>@Localizer["Type"]</th>
-                    <th>@Localizer["Notes"]</th>
-                    <th>@Localizer["CreatedBy"]</th>
-                    <th>@Localizer["Actions"]</th>
+                    <th><loc key="Date" /></th>
+                    <th><loc key="Assignee" /></th>
+                    <th><loc key="Type" /></th>
+                    <th><loc key="Notes" /></th>
+                    <th><loc key="CreatedBy" /></th>
+                    <th><loc key="Actions" /></th>
                 </tr>
             </thead>
             <tbody>
@@ -432,21 +432,21 @@
 <div id="createModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>@Localizer["CreateOnDuty"]</h3>
+            <h3><loc key="CreateOnDuty" /></h3>
             <button class="modal-close" onclick="closeCreateModal()">&times;</button>
         </div>
         <form method="post" asp-page-handler="CreateOnDuty">
             @Html.AntiForgeryToken()
             <div class="form-group">
-                <label class="form-label">@Localizer["Date"]</label>
+                <label class="form-label"><loc key="Date" /></label>
                 <input type="date" name="OnDutyDate" id="onDutyDate" class="form-input" required />
             </div>
             <div class="form-group">
-                <label class="form-label">@Localizer["Assignee"]</label>
+                <label class="form-label"><loc key="Assignee" /></label>
                 <input type="hidden" name="AssigneeId" id="selectedOnDutyAssigneeId" required />
                 <div class="custom-select-container">
                     <div class="custom-select-trigger" id="onDutyAssigneeTrigger" onclick="toggleOnDutyAssigneeDropdown()">
-                        <span id="selectedOnDutyAssigneeName">@Localizer["SelectAssignee"]</span>
+                        <span id="selectedOnDutyAssigneeName"><loc key="SelectAssignee" /></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="custom-dropdown" id="onDutyAssigneeDropdown" style="display: none;">
@@ -460,9 +460,9 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">@Localizer["Type"]</label>
+                <label class="form-label"><loc key="Type" /></label>
                 <select name="OnDutyType" class="form-select" required>
-                    <option value="">@Localizer["SelectType"]</option>
+                    <option value=""><loc key="SelectType" /></option>
                     @* ✅ PHASE 18: Show default OnDuty types (from enum) *@
                     <option value="@((int)OnDutyType.Hakam)">🛡️ @Localizer["OnDutyHakam"]</option>
                     <option value="@((int)OnDutyType.Lead)">⭐ @Localizer["OnDutyLead"]</option>
@@ -475,12 +475,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">@Localizer["Notes"] (@Localizer["Optional"])</label>
+                <label class="form-label"><loc key="Notes" /> (@Localizer["Optional"])</label>
                 <textarea name="OnDutyNotes" class="form-textarea" maxlength="1000"></textarea>
             </div>
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                 <button type="button" class="btn btn-ghost" onclick="closeCreateModal()">@Localizer["Cancel"]</button>
-                <button type="submit" class="btn btn-primary">@Localizer["Create"]</button>
+                <button type="submit" class="btn btn-primary"><loc key="Create" /></button>
             </div>
         </form>
     </div>
@@ -490,16 +490,16 @@
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>@Localizer["ConfirmDelete"]</h3>
+            <h3><loc key="ConfirmDelete" /></h3>
             <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
         </div>
-        <p>@Localizer["AreYouSureDeleteOnDuty"] "<span id="deleteOnDutyTitle"></span>"?</p>
+        <p><loc key="AreYouSureDeleteOnDuty" /> "<span id="deleteOnDutyTitle"></span>"?</p>
         <form method="post" asp-page-handler="CancelOnDuty" id="deleteOnDutyForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="OnDutyId" id="deleteOnDutyId" value="0" />
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
                 <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">@Localizer["Cancel"]</button>
-                <button type="submit" class="btn btn-danger">@Localizer["Delete"]</button>
+                <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
             </div>
         </form>
     </div>
@@ -509,7 +509,7 @@
 <div id="detailsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>@Localizer["OnDutyDetails"]</h3>
+            <h3><loc key="OnDutyDetails" /></h3>
             <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
         </div>
         <div>
@@ -532,10 +532,10 @@
 <div id="infoModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>ℹ️ @Localizer["Information"]</h3>
+            <h3>ℹ️ <loc key="Information" /></h3>
             <button class="modal-close" onclick="closeInfoModal()">&times;</button>
         </div>
-        <p>@Localizer["NoOnDutyContactManager"]</p>
+        <p><loc key="NoOnDutyContactManager" /></p>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
             <button type="button" class="btn btn-primary" onclick="closeInfoModal()">@Localizer["OK"]</button>
         </div>

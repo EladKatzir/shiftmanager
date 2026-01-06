@@ -459,8 +459,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">@Localizer["Config"]</h1>
-    <p class="page-subtitle">@Localizer["ConfigureSystemSettings"]</p>
+    <h1 class="page-title"><loc key="Config" /></h1>
+    <p class="page-subtitle"><loc key="ConfigureSystemSettings" /></p>
 </div>
 
 <!-- Success Message -->
@@ -486,22 +486,22 @@
     <div class="section-card" style="max-width: 800px;">
         <h3 class="section-header">
             <span>⚙️</span>
-            <span>@Localizer["CompanySettings"]</span>
+            <span><loc key="CompanySettings" /></span>
         </h3>
         <form method="post">
             @Html.AntiForgeryToken()
             <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">@Localizer["RestHours"]</label>
+                    <label class="form-label"><loc key="RestHours" /></label>
                     <input class="form-input" asp-for="RestHours" type="number" min="0" />
                 </div>
                 <div class="form-group">
-                    <label class="form-label">@Localizer["WeeklyCap"]</label>
+                    <label class="form-label"><loc key="WeeklyCap" /></label>
                     <input class="form-input" asp-for="WeeklyCap" type="number" min="0" />
                 </div>
                 <button class="btn btn-primary" type="submit">
                     <span>💾</span>
-                    <span>@Localizer["Save"]</span>
+                    <span><loc key="Save" /></span>
                 </button>
             </div>
         </form>
@@ -515,37 +515,37 @@
     <div class="section-card">
         <h3 class="section-header">
             <span>📋</span>
-            <span>@Localizer["OnDutyTypes"]</span>
+            <span><loc key="OnDutyTypes" /></span>
         </h3>
         <p class="section-description">
             @Localizer["OnDutyTypesDescription"]
         </p>
 
         <!-- Default Types (Read-only) -->
-        <h4 class="subsection-header">@Localizer["DefaultTypes"]</h4>
+        <h4 class="subsection-header"><loc key="DefaultTypes" /></h4>
         <div class="type-list">
             <div class="type-item">
                 <div class="type-info">
                     <span class="type-icon">🛡️</span>
                     <div class="type-details">
-                        <div class="type-name">@Localizer["OnDutyHakam"]</div>
-                        <div class="type-value">@Localizer["ValueLabel"]: 0</div>
+                        <div class="type-name"><loc key="OnDutyHakam" /></div>
+                        <div class="type-value"><loc key="ValueLabel" />: 0</div>
                     </div>
                 </div>
                 <div class="type-actions">
-                    <span class="type-badge type-badge-default">@Localizer["Default"]</span>
+                    <span class="type-badge type-badge-default"><loc key="Default" /></span>
                 </div>
             </div>
             <div class="type-item">
                 <div class="type-info">
                     <span class="type-icon">⭐</span>
                     <div class="type-details">
-                        <div class="type-name">@Localizer["OnDutyLead"]</div>
-                        <div class="type-value">@Localizer["ValueLabel"]: 1</div>
+                        <div class="type-name"><loc key="OnDutyLead" /></div>
+                        <div class="type-value"><loc key="ValueLabel" />: 1</div>
                     </div>
                 </div>
                 <div class="type-actions">
-                    <span class="type-badge type-badge-default">@Localizer["Default"]</span>
+                    <span class="type-badge type-badge-default"><loc key="Default" /></span>
                 </div>
             </div>
         </div>
@@ -553,7 +553,7 @@
         <!-- Custom Types -->
         @if (Model.OnDutyTypes.Any())
         {
-            <h4 class="subsection-header">@Localizer["CustomTypes"]</h4>
+            <h4 class="subsection-header"><loc key="CustomTypes" /></h4>
             <div class="type-list">
                 @foreach (var type in Model.OnDutyTypes)
                 {
@@ -562,7 +562,7 @@
                             <span class="type-icon">@type.Icon</span>
                             <div class="type-details">
                                 <div class="type-name">@type.NameEn / @type.NameHe</div>
-                                <div class="type-value">@Localizer["ValueLabel"]: @type.TypeValue</div>
+                                <div class="type-value"><loc key="ValueLabel" />: @type.TypeValue</div>
                             </div>
                         </div>
                         <div class="type-actions">
@@ -575,7 +575,7 @@
                                 <input type="hidden" name="typeId" value="@type.Id" />
                                 <button type="submit" class="btn btn-danger">
                                     <span>🗑️</span>
-                                    <span>@Localizer["Delete"]</span>
+                                    <span><loc key="Delete" /></span>
                                 </button>
                             </form>
                         </div>
@@ -587,7 +587,7 @@
         <!-- Add New Type Button -->
         <button class="btn btn-success" style="margin-top: 1.5rem;" onclick="openAddTypeModal()">
             <span>➕</span>
-            <span>@Localizer["AddNewOnDutyType"]</span>
+            <span><loc key="AddNewOnDutyType" /></span>
         </button>
     </div>
 </div>
@@ -595,29 +595,29 @@
 <!-- Add OnDuty Type Modal -->
 <div id="addTypeModal" class="modal">
     <div class="modal-content">
-        <h3 class="modal-header">@Localizer["AddNewOnDutyType"]</h3>
+        <h3 class="modal-header"><loc key="AddNewOnDutyType" /></h3>
         <form method="post" asp-page-handler="AddOnDutyType">
             @Html.AntiForgeryToken()
 
             @* ✅ PHASE 18: TypeValue is now auto-generated, no manual input needed *@
 
             <div class="form-group">
-                <label class="form-label">@Localizer["NameEnglish"]</label>
+                <label class="form-label"><loc key="NameEnglish" /></label>
                 <input type="text" name="NameEn" class="form-input" maxlength="100" required />
             </div>
 
             <div class="form-group">
-                <label class="form-label">@Localizer["NameHebrew"]</label>
+                <label class="form-label"><loc key="NameHebrew" /></label>
                 <input type="text" name="NameHe" class="form-input" maxlength="100" required />
             </div>
 
             <div class="form-group">
-                <label class="form-label">@Localizer["Icon"] (@Localizer["Emoji"])</label>
+                <label class="form-label"><loc key="Icon" /> (@Localizer["Emoji"])</label>
                 <input type="text" name="Icon" class="form-input" value="📌" maxlength="10" />
             </div>
 
             <div class="form-group">
-                <label class="form-label">@Localizer["Color"] (@Localizer["HexColor"])</label>
+                <label class="form-label"><loc key="Color" /> (@Localizer["HexColor"])</label>
                 <input type="color" name="Color" class="form-input" value="#6366f1" />
             </div>
 
@@ -625,7 +625,7 @@
                 <button type="button" class="btn btn-ghost" onclick="closeAddTypeModal()">@Localizer["Cancel"]</button>
                 <button type="submit" class="btn btn-primary">
                     <span>➕</span>
-                    <span>@Localizer["Add"]</span>
+                    <span><loc key="Add" /></span>
                 </button>
             </div>
         </form>

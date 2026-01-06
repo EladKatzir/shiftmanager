@@ -410,61 +410,61 @@
 }
 </style>
 
-<h2>@Localizer["MyOverview"]</h2>
+<h2><loc key="MyOverview" /></h2>
 
 <!-- Top Bar -->
 <div class="overview-topbar">
     <div class="topbar-row">
         <!-- Time Range Switcher -->
         <div class="time-range-switcher">
-            <span style="color: var(--muted); font-size: 0.9rem;">@Localizer["TimeRangeSwitcher"]:</span>
+            <span style="color: var(--muted); font-size: 0.9rem;"><loc key="TimeRangeSwitcher" />:</span>
             <div class="btn-group">
-                <a href="?range=week&view=@Model.CurrentView.ToString().ToLower()" class="btn @(Model.CurrentTimeRange == ShiftManager.Pages.My.IndexModel.TimeRange.Week ? "active" : "")">@Localizer["Week"]</a>
-                <a href="?range=month&view=@Model.CurrentView.ToString().ToLower()" class="btn @(Model.CurrentTimeRange == ShiftManager.Pages.My.IndexModel.TimeRange.Month ? "active" : "")">@Localizer["Month"]</a>
+                <a href="?range=week&view=@Model.CurrentView.ToString().ToLower()" class="btn @(Model.CurrentTimeRange == ShiftManager.Pages.My.IndexModel.TimeRange.Week ? "active" : "")"><loc key="Week" /></a>
+                <a href="?range=month&view=@Model.CurrentView.ToString().ToLower()" class="btn @(Model.CurrentTimeRange == ShiftManager.Pages.My.IndexModel.TimeRange.Month ? "active" : "")"><loc key="Month" /></a>
             </div>
         </div>
 
         <!-- Legend -->
         <div class="legend">
-            <span style="font-weight: 600; color: var(--text);">@Localizer["Legend"]:</span>
+            <span style="font-weight: 600; color: var(--text);"><loc key="Legend" />:</span>
             <div class="legend-item">
                 <span class="legend-dot vacation"></span>
-                <span>@Localizer["Vacations"]</span>
+                <span><loc key="Vacations" /></span>
             </div>
             <div class="legend-item">
                 <span class="legend-dot onduty"></span>
-                <span>@Localizer["OnDuty"]</span>
+                <span><loc key="OnDuty" /></span>
             </div>
             <div class="legend-item">
                 <span class="legend-dot shift"></span>
-                <span>@Localizer["Shifts"]</span>
+                <span><loc key="Shifts" /></span>
             </div>
             <div class="legend-item">
                 <span class="legend-dot chore"></span>
-                <span>@Localizer["Chores"]</span>
+                <span><loc key="Chores" /></span>
             </div>
         </div>
     </div>
 
     <!-- Type Filters -->
     <div class="topbar-row">
-        <span style="color: var(--muted); font-size: 0.9rem;">@Localizer["Filters"]:</span>
+        <span style="color: var(--muted); font-size: 0.9rem;"><loc key="Filters" />:</span>
         <div class="type-filters">
             <label>
                 <input type="checkbox" data-filter="vacation" checked>
-                <span>@Localizer["Vacations"]</span>
+                <span><loc key="Vacations" /></span>
             </label>
             <label>
                 <input type="checkbox" data-filter="onduty" checked>
-                <span>@Localizer["OnDuty"]</span>
+                <span><loc key="OnDuty" /></span>
             </label>
             <label>
                 <input type="checkbox" data-filter="shift" checked>
-                <span>@Localizer["Shifts"]</span>
+                <span><loc key="Shifts" /></span>
             </label>
             <label>
                 <input type="checkbox" data-filter="chore" checked>
-                <span>@Localizer["Chores"]</span>
+                <span><loc key="Chores" /></span>
             </label>
         </div>
     </div>
@@ -474,17 +474,17 @@
 <div class="card">
     <!-- View Toggle -->
     <div class="view-toggle">
-        <a href="?range=@Model.CurrentTimeRange.ToString().ToLower()&view=upcoming" class="btn @(Model.CurrentView == ShiftManager.Pages.My.IndexModel.ViewMode.Upcoming ? "active" : "")">@Localizer["Upcoming"]</a>
-        <a href="?range=@Model.CurrentTimeRange.ToString().ToLower()&view=all" class="btn @(Model.CurrentView == ShiftManager.Pages.My.IndexModel.ViewMode.All ? "active" : "")">@Localizer["All"]</a>
-        <a href="?range=@Model.CurrentTimeRange.ToString().ToLower()&view=past30days" class="btn @(Model.CurrentView == ShiftManager.Pages.My.IndexModel.ViewMode.Past30Days ? "active" : "")">@Localizer["Past30Days"]</a>
+        <a href="?range=@Model.CurrentTimeRange.ToString().ToLower()&view=upcoming" class="btn @(Model.CurrentView == ShiftManager.Pages.My.IndexModel.ViewMode.Upcoming ? "active" : "")"><loc key="Upcoming" /></a>
+        <a href="?range=@Model.CurrentTimeRange.ToString().ToLower()&view=all" class="btn @(Model.CurrentView == ShiftManager.Pages.My.IndexModel.ViewMode.All ? "active" : "")"><loc key="All" /></a>
+        <a href="?range=@Model.CurrentTimeRange.ToString().ToLower()&view=past30days" class="btn @(Model.CurrentView == ShiftManager.Pages.My.IndexModel.ViewMode.Past30Days ? "active" : "")"><loc key="Past30Days" /></a>
     </div>
 
     @if (!Model.Items.Any())
     {
         <div class="empty-state">
             <div class="empty-state-icon">📅</div>
-            <div class="empty-state-title">@Localizer["NothingHereYet"]</div>
-            <div class="empty-state-text">@Localizer["InDateRange"]: @Model.RangeStart.ToString("yyyy-MM-dd") - @Model.RangeEnd.ToString("yyyy-MM-dd")</div>
+            <div class="empty-state-title"><loc key="NothingHereYet" /></div>
+            <div class="empty-state-text"><loc key="InDateRange" />: @Model.RangeStart.ToString("yyyy-MM-dd") - @Model.RangeEnd.ToString("yyyy-MM-dd")</div>
         </div>
     }
     else
@@ -497,7 +497,7 @@
         @if (todayItems.Any())
         {
             <div class="timeline-section">
-                <h3>@Localizer["Today"] — @today.ToString("yyyy-MM-dd")</h3>
+                <h3><loc key="Today" /> — @today.ToString("yyyy-MM-dd")</h3>
                 <div class="timeline">
                     @foreach (var item in todayItems)
                     {
@@ -510,7 +510,7 @@
         @if (tomorrowItems.Any())
         {
             <div class="timeline-section">
-                <h3>@Localizer["Tomorrow"] — @tomorrow.ToString("yyyy-MM-dd")</h3>
+                <h3><loc key="Tomorrow" /> — @tomorrow.ToString("yyyy-MM-dd")</h3>
                 <div class="timeline">
                     @foreach (var item in tomorrowItems)
                     {
@@ -523,7 +523,7 @@
         @if (thisWeekItems.Any())
         {
             <div class="timeline-section">
-                <h3>@Localizer["ThisWeek"]</h3>
+                <h3><loc key="ThisWeek" /></h3>
                 <div class="timeline">
                     @foreach (var item in thisWeekItems)
                     {
@@ -549,8 +549,8 @@
         <!-- Empty state for filtered -->
         <div id="filteredEmptyState" class="empty-state" style="display: none;">
             <div class="empty-state-icon">🔍</div>
-            <div class="empty-state-title">@Localizer["NoItemsMatch"]</div>
-            <div class="empty-state-text">@Localizer["ClearFilters"]</div>
+            <div class="empty-state-title"><loc key="NoItemsMatch" /></div>
+            <div class="empty-state-text"><loc key="ClearFilters" /></div>
         </div>
     }
 </div>
@@ -558,8 +558,8 @@
 <!-- Stats Section -->
 <div class="card">
     <div class="stats-header">
-        <h3>@Localizer["MyStatsForThisPeriod"]</h3>
-        <button id="statsToggle" class="btn stats-toggle">@Localizer["ToggleCountHours"]</button>
+        <h3><loc key="MyStatsForThisPeriod" /></h3>
+        <button id="statsToggle" class="btn stats-toggle"><loc key="ToggleCountHours" /></button>
     </div>
     <div class="stats-chart">
         <canvas id="statsChart"></canvas>
@@ -570,7 +570,7 @@
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="detailDrawer">
     <div class="drawer-header">
-        <h3 id="drawerTitle">@Localizer["Details"]</h3>
+        <h3 id="drawerTitle"><loc key="Details" /></h3>
         <button class="drawer-close" onclick="closeDrawer()">×</button>
     </div>
     <div class="drawer-content" id="drawerContent">

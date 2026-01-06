@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
@@ -25,6 +26,7 @@ public class MailService : IMailService
     private readonly IEmailConfigService _emailConfigService;
     private readonly IEmailApiLogService _emailApiLogService;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IEmailTemplateService _emailTemplateService;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
@@ -35,7 +37,8 @@ public class MailService : IMailService
         IConfiguration configuration,
         IEmailConfigService emailConfigService,
         IEmailApiLogService emailApiLogService,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IEmailTemplateService emailTemplateService)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -43,6 +46,7 @@ public class MailService : IMailService
         _emailConfigService = emailConfigService ?? throw new ArgumentNullException(nameof(emailConfigService));
         _emailApiLogService = emailApiLogService ?? throw new ArgumentNullException(nameof(emailApiLogService));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
     }
 
     /// <summary>
@@ -668,6 +672,25 @@ public class MailService : IMailService
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
         string subject = string.Format(_localizer["Email_AccountApprovedSubject"], companyName);
 
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.AccountApproved);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "UserName", userName },
+                { "CompanyName", companyName },
+                { "AssignedRole", assignedRole }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_AccountApprovedBody"];
+        }
+
         string htmlBody = $@"
 <!DOCTYPE html>
 <html dir='{emailDir}'>
@@ -695,7 +718,7 @@ public class MailService : IMailService
             </div>
 
             <p>{string.Format(_localizer["Email_Hello"], $"<strong>{userName}</strong>")},</p>
-            <p>{_localizer["Email_AccountApprovedBody"]}</p>
+            <p>{messageBody}</p>
 
             <div class='account-details'>
                 <p><strong>{_localizer["Email_Company"]}:</strong> <span class='highlight'>{companyName}</span></p>
@@ -706,6 +729,644 @@ public class MailService : IMailService
             <p>{_localizer["Email_AccountApprovedLoginPrompt"]}</p>
             <p>{_localizer["Email_AccountApprovedNextSteps"]}</p>
             <p>{_localizer["Email_AccountApprovedContactSupport"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send time-off request approved notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendTimeOffApprovedEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        DateOnly startDate,
+        DateOnly endDate)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send time-off approved email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        var dateRange = startDate == endDate
+            ? startDate.ToString("MMM dd, yyyy")
+            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+
+        string subject = string.Format(_localizer["Email_TimeOffApprovedSubject"], dateRange);
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.TimeOffApproved);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "StartDate", startDate.ToString("MMM dd, yyyy") },
+                { "EndDate", endDate.ToString("MMM dd, yyyy") }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_TimeOffApprovedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4CAF50; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .timeoff-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #4CAF50; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #4CAF50; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>✓ {_localizer["Email_TimeOffApprovedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='timeoff-details'>
+                <p><strong>{_localizer["Email_DateRange"]}:</strong> <span class='highlight'>{dateRange}</span></p>
+                <p><strong>{_localizer["Email_Status"]}:</strong> <span class='highlight'>{_localizer["Email_Approved"]}</span></p>
+            </div>
+
+            <p>{_localizer["Email_TimeOffApprovedEnjoy"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send time-off request declined notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendTimeOffDeclinedEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        DateOnly startDate,
+        DateOnly endDate)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send time-off declined email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        var dateRange = startDate == endDate
+            ? startDate.ToString("MMM dd, yyyy")
+            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+
+        string subject = string.Format(_localizer["Email_TimeOffDeclinedSubject"], dateRange);
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.TimeOffDeclined);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "StartDate", startDate.ToString("MMM dd, yyyy") },
+                { "EndDate", endDate.ToString("MMM dd, yyyy") }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_TimeOffDeclinedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #F44336; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .timeoff-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #F44336; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #F44336; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_TimeOffDeclinedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='timeoff-details'>
+                <p><strong>{_localizer["Email_DateRange"]}:</strong> <span class='highlight'>{dateRange}</span></p>
+                <p><strong>{_localizer["Email_Status"]}:</strong> <span class='highlight'>{_localizer["Email_Declined"]}</span></p>
+            </div>
+
+            <p>{_localizer["Email_TimeOffDeclinedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send time-off request deleted notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendTimeOffDeletedEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        DateOnly startDate,
+        DateOnly endDate)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send time-off deleted email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        var dateRange = startDate == endDate
+            ? startDate.ToString("MMM dd, yyyy")
+            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+
+        string subject = string.Format(_localizer["Email_TimeOffDeletedSubject"], dateRange);
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.TimeOffDeleted);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "StartDate", startDate.ToString("MMM dd, yyyy") },
+                { "EndDate", endDate.ToString("MMM dd, yyyy") }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_TimeOffDeletedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #FF9800; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .timeoff-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #FF9800; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #FF9800; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>⚠️ {_localizer["Email_TimeOffDeletedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='timeoff-details'>
+                <p><strong>{_localizer["Email_DateRange"]}:</strong> <span class='highlight'>{dateRange}</span></p>
+            </div>
+
+            <p>{_localizer["Email_TimeOffDeletedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send swap request approved notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendSwapRequestApprovedEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        string shiftInfo)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send swap request approved email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = _localizer["Email_SwapRequestApprovedSubject"];
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.SwapRequestApproved);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "ShiftInfo", shiftInfo }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_SwapRequestApprovedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4CAF50; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .swap-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #4CAF50; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #4CAF50; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>✓ {_localizer["Email_SwapRequestApprovedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='swap-details'>
+                <p><strong>{_localizer["Email_Shift"]}:</strong> <span class='highlight'>{shiftInfo}</span></p>
+                <p><strong>{_localizer["Email_Status"]}:</strong> <span class='highlight'>{_localizer["Email_Approved"]}</span></p>
+            </div>
+
+            <p>{_localizer["Email_SwapRequestApprovedScheduleUpdated"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send swap request declined notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendSwapRequestDeclinedEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        string shiftInfo)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send swap request declined email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = _localizer["Email_SwapRequestDeclinedSubject"];
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.SwapRequestDeclined);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "ShiftInfo", shiftInfo }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_SwapRequestDeclinedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #F44336; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .swap-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #F44336; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #F44336; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_SwapRequestDeclinedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='swap-details'>
+                <p><strong>{_localizer["Email_Shift"]}:</strong> <span class='highlight'>{shiftInfo}</span></p>
+                <p><strong>{_localizer["Email_Status"]}:</strong> <span class='highlight'>{_localizer["Email_Declined"]}</span></p>
+            </div>
+
+            <p>{_localizer["Email_SwapRequestDeclinedContactManager"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send on-duty assignment notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendOnDutyAssignedEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        string onDutyTypeName,
+        DateOnly onDutyDate)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send on-duty assigned email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_OnDutyAssignedSubject"], onDutyDate.ToString("MMM dd, yyyy"));
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.OnDutyAssigned);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "OnDutyType", onDutyTypeName },
+                { "Date", onDutyDate.ToString("MMM dd, yyyy") }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_OnDutyAssignedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #9C27B0; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .onduty-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #9C27B0; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #9C27B0; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_OnDutyAssignedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='onduty-details'>
+                <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{onDutyTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {onDutyDate:dddd, MMMM dd, yyyy}</p>
+            </div>
+
+            <p>{_localizer["Email_OnDutyAssignedLoginPrompt"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send on-duty cancellation notification email with formatted HTML template.
+    /// </summary>
+    public async Task<bool> SendOnDutyCanceledEmailAsync(
+        string recipientEmail,
+        string employeeName,
+        string onDutyTypeName,
+        DateOnly onDutyDate)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send on-duty canceled email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_OnDutyCanceledSubject"], onDutyDate.ToString("MMM dd, yyyy"));
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.OnDutyCanceled);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "EmployeeName", employeeName },
+                { "OnDutyType", onDutyTypeName },
+                { "Date", onDutyDate.ToString("MMM dd, yyyy") }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_OnDutyCanceledBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #FF9800; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .onduty-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #FF9800; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #FF9800; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>⚠️ {_localizer["Email_OnDutyCanceledTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='onduty-details'>
+                <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{onDutyTypeName}</span></p>
+                <p><strong>{_localizer["Date"]}:</strong> {onDutyDate:dddd, MMMM dd, yyyy}</p>
+            </div>
+
+            <p>{_localizer["Email_OnDutyCanceledScheduleUpdated"]}</p>
+        </div>
+        <div class='footer'>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    /// <summary>
+    /// Send access request submitted notification email to owners.
+    /// </summary>
+    public async Task<bool> SendAccessRequestSubmittedEmailAsync(
+        string recipientEmail,
+        string ownerName,
+        string requesterName,
+        string requesterEmail,
+        string companyName)
+    {
+        if (string.IsNullOrWhiteSpace(recipientEmail))
+        {
+            _logger.LogWarning("Cannot send access request submitted email: recipient email is null or empty");
+            return false;
+        }
+
+        var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        string subject = string.Format(_localizer["Email_AccessRequestSubmittedSubject"], requesterName);
+
+        // Check for custom template
+        var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.AccessRequestSubmitted);
+        string messageBody;
+
+        if (!string.IsNullOrWhiteSpace(customMessage))
+        {
+            var variables = new Dictionary<string, string>
+            {
+                { "OwnerName", ownerName },
+                { "RequesterName", requesterName },
+                { "RequesterEmail", requesterEmail },
+                { "CompanyName", companyName }
+            };
+            messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
+        }
+        else
+        {
+            messageBody = _localizer["Email_AccessRequestSubmittedBody"];
+        }
+
+        string htmlBody = $@"
+<!DOCTYPE html>
+<html dir='{emailDir}'>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #2196F3; color: white; padding: 15px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .request-details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #2196F3; }}
+        .footer {{ text-align: center; padding: 15px; font-size: 12px; color: #666; }}
+        .highlight {{ font-weight: bold; color: #2196F3; }}
+        .action-box {{ background-color: #e3f2fd; padding: 15px; margin: 15px 0; border-radius: 8px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>{_localizer["Email_AccessRequestSubmittedTitle"]}</h2>
+        </div>
+        <div class='content'>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{ownerName}</strong>")},</p>
+            <p>{messageBody}</p>
+
+            <div class='request-details'>
+                <p><strong>{_localizer["Email_RequesterName"]}:</strong> <span class='highlight'>{requesterName}</span></p>
+                <p><strong>{_localizer["Email_RequesterEmail"]}:</strong> {requesterEmail}</p>
+                <p><strong>{_localizer["Email_Company"]}:</strong> {companyName}</p>
+            </div>
+
+            <div class='action-box'>
+                <p><strong>{_localizer["Email_AccessRequestAction"]}</strong></p>
+                <p>{_localizer["Email_AccessRequestLoginToReview"]}</p>
+            </div>
         </div>
         <div class='footer'>
             <p>{_localizer["Email_AutomatedMessage"]}</p>

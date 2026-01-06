@@ -1,9 +1,9 @@
 # ShiftManager - Complete Genesis Documentation
 ## Master Index & Navigation Hub
 
-**Document Version:** 1.1
-**Last Updated:** 2026-01-01
-**Codebase Version:** v2.1.0 (Branch: NewestAll)
+**Document Version:** 1.2
+**Last Updated:** 2026-01-06
+**Codebase Version:** v2.2.0+ (Branch: newestversionpriorpl)
 **Documentation Purpose:** Enable complete system reconstruction from scratch
 
 ---
@@ -91,9 +91,9 @@ Follow the reconstruction guide:
 |--------|-------|
 | **Technology Stack** | .NET 8.0, ASP.NET Core, EF Core 9.0.9 |
 | **Database** | SQLite (single-file, air-gapped ready) |
-| **Database Tables** | 28 tables |
-| **EF Core Migrations** | 36 migrations (Sept 2025 - Present) |
-| **Razor Pages** | 66 pages |
+| **Database Tables** | 29 tables |
+| **EF Core Migrations** | 37 migrations (Sept 2025 - Present) |
+| **Razor Pages** | 67 pages |
 | **REST API Endpoints** | 27 endpoints |
 | **Injectable Services** | 40+ services |
 | **User Roles** | 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee) |
@@ -115,9 +115,10 @@ Follow the reconstruction guide:
 - Daily chore assignments
 - On-duty scheduling (cross-company visibility)
 - Team calendars
-- In-app notifications + email integration
+- In-app notifications + email integration with customizable templates
 - Analytics and reporting
 - Audit logging (compliance)
+- Data lifecycle management (archive, purge, import)
 - Griffin ADFS authentication (air-gapped SSO)
 - REST API with key-based authentication
 
@@ -386,11 +387,11 @@ Follow the reconstruction guide:
 **Purpose:** Frontend implementation (Razor Pages + CSS + JavaScript)
 
 **Contents:**
-- **66 Razor Pages breakdown by area:**
+- **67 Razor Pages breakdown by area:**
   - **Auth/** (5 pages): Login, Signup, GriffinCallback, ForgotPassword, Logout
   - **Calendar/** (4 pages): Month, Week, Day, Table (shift management workspace)
   - **Admin/** (9 pages): Users, Companies, Directors, ShiftTypes, Config, Analytics, AuditLog, EditProfile
-  - **Owner/** (6 pages): FeatureFlags, EmailConfig, GameConfig, DatabaseConsole, Backup
+  - **Owner/** (7 pages): FeatureFlags, EmailConfig, EmailTemplates, GameConfig, DatabaseConsole, Backup
   - **Director/** (3 pages): CompanyFilter, ViewAsMode, NotificationHub
   - **My/** (6 pages): Profile, Requests, NotificationCenter, Settings, ApiKeys
   - **MyTeam/** (1 page): Index (team calendar view)
@@ -810,7 +811,75 @@ Follow the reconstruction guide:
 
 ---
 
-### Part VIII: The "Soul" - Design Decisions (Document 18)
+### Part VIII: Data Management & Lifecycle (Document 20)
+
+#### [20-DATA-LIFECYCLE-MANAGEMENT.md](20-DATA-LIFECYCLE-MANAGEMENT.md) (2,000+ lines) ⭐ NEW
+**Purpose:** Historical data archival, purge, and re-import
+
+**Implementation Date:** 2026-01-06
+**Feature Status:** ✅ Complete
+
+**Contents:**
+- **Three-Service Architecture:**
+  - **ArchiveService:** Export data in CSV (human-readable) + NDJSON (re-importable) formats
+  - **PurgeService:** Delete historical data with FK-safe deletion order
+  - **ImportService:** Re-import archived data with duplicate detection
+- **Safety Mechanisms:**
+  - Fresh archive requirement (must archive before purge)
+  - Typed confirmation (`DELETE {COMPANY} BEFORE {DATE}`)
+  - Pre-purge automatic database backup
+  - Transaction rollback on error
+  - Complete audit logging
+- **Export Formats:**
+  - **CSV ZIP:** Human-readable, compliance-friendly (Excel/analysis)
+  - **NDJSON ZIP:** Machine-readable, re-importable (disaster recovery)
+  - **SHA-256 hashing:** Archive integrity verification
+- **Database Deletion Order** (FK-safe):
+  1. SwapRequest (by related shift date)
+  2. TimeOffRequest + OFFLINE shifts auto-cleanup
+  3. ShiftInstance → ShiftAssignment (cascade)
+  4. Chore
+  5. OnDuty (soft or hard delete)
+- **UI Implementation:**
+  - Single page with 3 tabs (Archive | Purge | Import)
+  - Owner-only access (`[Authorize(Policy = "IsAdmin")]`)
+  - Bootstrap nav-tabs pattern (same as EmailConfig)
+- **Natural Key Strategy** (import):
+  - User matching by email (not database ID)
+  - ShiftType matching by key (e.g., "MORNING")
+  - Composite keys for shifts (CompanyId, WorkDate, ShiftTypeKey)
+- **Use Cases:**
+  - Annual data archival (compliance + performance)
+  - Disaster recovery (restore from archive)
+  - Company merger data migration
+  - Air-gapped USB transfer workflow
+- **Technical Implementation:**
+  - System.IO.Compression.ZipFile for archive creation
+  - SHA256 hashing for integrity verification
+  - EF Core transactions for atomic deletion
+  - SQLite VACUUM for space reclamation
+  - Streaming NDJSON parsing (low memory footprint)
+- **File Storage:**
+  - `Archives/` - CSV + NDJSON exports (90-day retention recommended)
+  - `Backups/` - Pre-purge database backups (indefinite retention)
+  - `Uploads/` - Temp import files (auto-cleanup)
+- **Edge Cases Handled:**
+  - OnDuty global table (no CompanyId) - scoped by UserId
+  - OFFLINE shifts auto-cleanup with TimeOff
+  - Cascade deletion counting (ShiftInstance → ShiftAssignment)
+  - Missing users on import (modal dialog: Skip or Cancel)
+
+**Key Questions Answered:**
+- How do I archive historical data for compliance?
+- How do I safely purge old data to reclaim disk space?
+- How do I restore data from an archive (disaster recovery)?
+- How does the FK-safe deletion order work?
+- What are the safety mechanisms to prevent accidental data loss?
+- How do I migrate data between ShiftManager instances?
+
+---
+
+### Part IX: The "Soul" - Design Decisions (Document 18)
 
 #### [18-DESIGN-DECISIONS-AND-TRADEOFFS.md](18-DESIGN-DECISIONS-AND-TRADEOFFS.md) (1,200 lines)
 **Purpose:** Architectural rationale and "why"
@@ -878,7 +947,7 @@ Follow the reconstruction guide:
 
 ---
 
-### Part IX: Reconstruction Guide (Document 19)
+### Part X: Reconstruction Guide (Document 19)
 
 #### [19-RECONSTRUCTION-RECIPE.md](19-RECONSTRUCTION-RECIPE.md) (1,500 lines)
 **Purpose:** Step-by-step rebuild from scratch (10 phases)
@@ -1073,7 +1142,7 @@ All diagrams are in Mermaid format (render in GitHub, VS Code, or any Mermaid-co
 
 **API & Infrastructure:**
 - ApiKey, ApiKeyRequest, ApiRequestLog (API management)
-- EmailConfig, EmailApiLog (email integration)
+- EmailConfig, EmailApiLog, EmailTemplateCustomization (email integration)
 - GriffinConfig (ADFS integration)
 - OnDutyTypeConfig (global on-duty types)
 - AppConfig (key-value config store)
@@ -1151,6 +1220,7 @@ All documents include cross-references to related sections. Example:
 - **API:** [09-API-LAYER.md](#09-api-layermd)
 - **UI:** [08-UI-UX-ARCHITECTURE.md](#08-ui-ux-architecturemd)
 - **Deployment:** [15-AIR-GAPPED-DEPLOYMENT.md](#15-air-gapped-deploymentmd), [16-BUILD-AND-RELEASE-PIPELINE.md](#16-build-and-release-pipelinemd)
+- **Data Lifecycle:** [20-DATA-LIFECYCLE-MANAGEMENT.md](#20-data-lifecycle-managementmd)
 - **Why Decisions:** [18-DESIGN-DECISIONS-AND-TRADEOFFS.md](#18-design-decisions-and-tradeoffsmd)
 - **Rebuild:** [19-RECONSTRUCTION-RECIPE.md](#19-reconstruction-recipemd)
 
@@ -1168,7 +1238,7 @@ All documents include cross-references to related sections. Example:
 
 | Document | Status | Last Updated |
 |----------|--------|--------------|
-| 00-INDEX.md | ✅ Complete | 2025-12-30 |
+| 00-INDEX.md | ✅ Complete | 2026-01-06 |
 | 01-EXECUTIVE-OVERVIEW.md | 🚧 Pending | - |
 | 02-ARCHITECTURE-BLUEPRINT.md | 🚧 Pending | - |
 | 03-DATABASE-SCHEMA.md | 🚧 Pending | - |
@@ -1188,14 +1258,15 @@ All documents include cross-references to related sections. Example:
 | 17-TESTING-STRATEGY.md | 🚧 Pending | - |
 | 18-DESIGN-DECISIONS-AND-TRADEOFFS.md | 🚧 Pending | - |
 | 19-RECONSTRUCTION-RECIPE.md | 🚧 Pending | - |
+| 20-DATA-LIFECYCLE-MANAGEMENT.md | ✅ Complete | 2026-01-06 |
 
 ---
 
 ## Contact & Contribution
 
 **Primary Documentation Author:** OmniCortex Architect (Claude Code)
-**Documentation Date:** 2025-12-30
-**Codebase Version:** v2.1.0 (Branch: NewestAll)
+**Documentation Date:** 2026-01-06 (Updated)
+**Codebase Version:** v2.2.0+ (Branch: newestversionpriorpl)
 **Documentation Repository:** `docs/genesis/`
 
 **How to Contribute:**

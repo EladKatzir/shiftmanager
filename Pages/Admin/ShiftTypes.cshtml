@@ -220,8 +220,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">@Localizer["ShiftTypes"]</h1>
-    <p class="page-subtitle">@Localizer["ManageShiftTypesAndSchedules"]</p>
+    <h1 class="page-title"><loc key="ShiftTypes" /></h1>
+    <p class="page-subtitle"><loc key="ManageShiftTypesAndSchedules" /></p>
 </div>
 
 <!-- Error Message -->
@@ -240,11 +240,11 @@
             <table class="shift-types-table">
                 <thead>
                     <tr>
-                        <th>@Localizer["Key"]</th>
-                        <th>@Localizer["Name"]</th>
-                        <th>@Localizer["Start"]</th>
-                        <th>@Localizer["End"]</th>
-                        <th>@Localizer["Actions"]</th>
+                        <th><loc key="Key" /></th>
+                        <th><loc key="Name" /></th>
+                        <th><loc key="Start" /></th>
+                        <th><loc key="End" /></th>
+                        <th><loc key="Actions" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -264,7 +264,7 @@
                         <td>
                             <button type="button" class="btn btn-danger" onclick="deleteShiftType(@Model.Items[i].Id, '@Model.Items[i].Key')">
                                 <span>🗑️</span>
-                                <span>@Localizer["Delete"]</span>
+                                <span><loc key="Delete" /></span>
                             </button>
                         </td>
                         <input type="hidden" name="items[@i].Id" value="@Model.Items[i].Id" />
@@ -277,7 +277,7 @@
         </div>
         <button class="btn btn-primary" type="submit">
             <span>💾</span>
-            <span>@Localizer["Save"]</span>
+            <span><loc key="Save" /></span>
         </button>
     </form>
 </div>

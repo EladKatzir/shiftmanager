@@ -21,8 +21,8 @@
 <div style="max-width:420px; margin:auto">
     <div class="card mb-4">
         <div class="card-body text-center">
-            <h5 class="card-title">@Localizer["LoginWithADFS"]</h5>
-            <p class="text-muted">@Localizer["LoginWithADFS_Description"]</p>
+            <h5 class="card-title"><loc key="LoginWithADFS" /></h5>
+            <p class="text-muted"><loc key="LoginWithADFS_Description" /></p>
             <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="fas fa-shield-alt"></i> @Localizer["LoginWithADFS"]
@@ -45,7 +45,7 @@
 </div>
 
 <div class="card" style="max-width:420px; margin:auto">
-    <h2>@Localizer["Login"]</h2>
+    <h2><loc key="Login" /></h2>
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="small" style="color:var(--danger)">@Model.Error</div>
@@ -53,7 +53,7 @@
    <form method="post" asp-page="./Login">
     @Html.AntiForgeryToken()
     <div style="display:grid; gap:.75rem; margin-top:.75rem">
-        <label>@Localizer["Email"]<br /><input class="input" asp-for="Email" />
+        <label><loc key="Email" /><br /><input class="input" asp-for="Email" />
         <div id="emailSuggestion" style="display: none;
              margin-top: 0.25rem;
              padding: 0.5rem;
@@ -64,7 +64,7 @@
              font-size: 0.875rem;
              color: var(--primary);"></div>
         </label>
-        <label>@Localizer["Password"]<br /><input class="input" asp-for="Password" type="password" /></label>
+        <label><loc key="Password" /><br /><input class="input" asp-for="Password" type="password" /></label>
 
         <div style="text-align: right; margin-top: -0.5rem;">
             <a href="/Auth/ForgotPassword" style="font-size: 0.875rem; color: var(--primary);">
@@ -72,7 +72,7 @@
             </a>
         </div>
 
-        <button class="btn btn-primary" type="submit">@Localizer["Login"]</button>
+        <button class="btn btn-primary" type="submit"><loc key="Login" /></button>
 
         @* ✅ SUB-PHASE 18.14 REVISED: Request access button below login *@
         <a href="/Auth/Signup" class="btn btn-secondary" style="margin-top: 0.5rem; text-align: center; width: 100%; display: block;">

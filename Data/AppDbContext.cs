@@ -38,9 +38,14 @@ public class AppDbContext : DbContext
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
     public DbSet<EmailApiLog> EmailApiLogs => Set<EmailApiLog>();
+    public DbSet<EmailTemplateCustomization> EmailTemplateCustomizations => Set<EmailTemplateCustomization>();
     public DbSet<GriffinConfig> GriffinConfigs => Set<GriffinConfig>();
     public DbSet<GriffinApiLog> GriffinApiLogs => Set<GriffinApiLog>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
+
+    // Language Management (tenant-scoped)
+    public DbSet<CompanyLanguageSettings> CompanyLanguageSettings => Set<CompanyLanguageSettings>();
+    public DbSet<CompanyLocalizationOverride> CompanyLocalizationOverrides => Set<CompanyLocalizationOverride>();
 
     // Public/Global Tables (no CompanyId, visible across all tenancies)
     public DbSet<OnDuty> OnDuties => Set<OnDuty>();
@@ -293,6 +298,57 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Configure Language Management
+        // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)
+        modelBuilder.Entity<CompanyLanguageSettings>()
+            .HasIndex(cls => cls.CompanyId)
+            .IsUnique();
+
+        modelBuilder.Entity<CompanyLanguageSettings>()
+            .HasOne(cls => cls.Company)
+            .WithMany()
+            .HasForeignKey(cls => cls.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyLanguageSettings>()
+            .HasOne(cls => cls.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(cls => cls.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyLanguageSettings>()
+            .HasOne(cls => cls.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(cls => cls.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // CompanyLocalizationOverrides: Unique index on (CompanyId, Culture, ResourceKey)
+        modelBuilder.Entity<CompanyLocalizationOverride>()
+            .HasIndex(clo => new { clo.CompanyId, clo.Culture, clo.ResourceKey })
+            .IsUnique();
+
+        // Performance index for loading all overrides for a company/culture
+        modelBuilder.Entity<CompanyLocalizationOverride>()
+            .HasIndex(clo => new { clo.CompanyId, clo.Culture });
+
+        modelBuilder.Entity<CompanyLocalizationOverride>()
+            .HasOne(clo => clo.Company)
+            .WithMany()
+            .HasForeignKey(clo => clo.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyLocalizationOverride>()
+            .HasOne(clo => clo.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(clo => clo.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyLocalizationOverride>()
+            .HasOne(clo => clo.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(clo => clo.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configure OnDuty (Global/Public Table - No CompanyId)
         modelBuilder.Entity<OnDuty>()
             .Property(o => o.Date).HasConversion(dateConverter);
@@ -392,6 +448,13 @@ public class AppDbContext : DbContext
 
             // ✅ PHASE 19: Game scores query filter for tenant scoping
             modelBuilder.Entity<GameScore>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Language Management: Query filters for tenant scoping
+            modelBuilder.Entity<CompanyLanguageSettings>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<CompanyLocalizationOverride>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<EmailApiLog>()
@@ -587,6 +650,17 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(gs => gs.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Email Template Customization configuration
+        modelBuilder.Entity<EmailTemplateCustomization>()
+            .HasIndex(e => new { e.CompanyId, e.TemplateType })
+            .IsUnique(); // One template per company per type
+
+        modelBuilder.Entity<EmailTemplateCustomization>()
+            .HasOne(e => e.Company)
+            .WithMany()
+            .HasForeignKey(e => e.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         base.OnModelCreating(modelBuilder);
     }

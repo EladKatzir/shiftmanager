@@ -19,19 +19,22 @@ public class SignupModel : LocalizedPageModel
     private readonly ILogger<SignupModel> _logger;
     private readonly IConfiguration _configuration;
     private readonly IValidationService _validation;
+    private readonly INotificationService _notificationService;
 
     public SignupModel(
         AppDbContext db,
         ILogger<SignupModel> logger,
         IStringLocalizer<SharedResources> localizer,
         IConfiguration configuration,
-        IValidationService validation)
+        IValidationService validation,
+        INotificationService notificationService)
         : base(localizer)
     {
         _db = db;
         _logger = logger;
         _configuration = configuration;
         _validation = validation;
+        _notificationService = notificationService;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -182,6 +185,13 @@ public class SignupModel : LocalizedPageModel
 
         _logger.LogInformation("New join request created: {Email} requesting {Role} at {Company}",
             Email, RequestedRole, selectedCompany.Name);
+
+        // Notify all owners about the new access request
+        _ = _notificationService.NotifyOwnersOfAccessRequestAsync(
+            DisplayName,
+            Email,
+            selectedCompany.Name,
+            joinRequest.Id);
 
         PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, RequestedRole.ToString()];
 

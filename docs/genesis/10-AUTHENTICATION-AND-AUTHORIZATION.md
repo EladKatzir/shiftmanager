@@ -10,16 +10,17 @@
 1. [Overview](#overview)
 2. [Authentication Architecture](#authentication-architecture)
 3. [Standard Login Flow](#standard-login-flow)
-4. [Griffin ADFS Integration (SAML SSO)](#griffin-adfs-integration-saml-sso)
-5. [Password Hashing (PBKDF2)](#password-hashing-pbkdf2)
-6. [Session Management](#session-management)
-7. [Role-Based Authorization](#role-based-authorization)
-8. [Authorization Policies](#authorization-policies)
-9. [Security Features](#security-features)
-10. [Account Lockout](#account-lockout)
-11. [Rate Limiting](#rate-limiting)
-12. [Claims Structure](#claims-structure)
-13. [Security Considerations](#security-considerations)
+4. [Post-Login Routing (Role-Based Home Pages)](#post-login-routing-role-based-home-pages)
+5. [Griffin ADFS Integration (SAML SSO)](#griffin-adfs-integration-saml-sso)
+6. [Password Hashing (PBKDF2)](#password-hashing-pbkdf2)
+7. [Session Management](#session-management)
+8. [Role-Based Authorization](#role-based-authorization)
+9. [Authorization Policies](#authorization-policies)
+10. [Security Features](#security-features)
+11. [Account Lockout](#account-lockout)
+12. [Rate Limiting](#rate-limiting)
+13. [Claims Structure](#claims-structure)
+14. [Security Considerations](#security-considerations)
 
 ---
 
@@ -287,7 +288,11 @@ _logger.LogInformation("User {UserId} ({Email}) signed in successfully. Role={Ro
 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
     return Redirect(returnUrl);
 
-return RedirectToPage("/Home/Index");
+// ✅ PHASE 18: Role-based routing - Owner uses old home, others use new redesigned home
+if (user.Role == UserRole.Owner)
+    return RedirectToPage("/Home/Index");
+else
+    return Redirect("/");
 ```
 
 **Claims Created:**
@@ -320,6 +325,152 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 - **SameSite:** Strict (CSRF protection)
 - **HttpOnly:** true (prevents JavaScript access)
 - **Secure:** SameAsRequest (HTTPS in production)
+
+---
+
+## Post-Login Routing (Role-Based Home Pages)
+
+**Implemented:** Phase 18 (2026-01-06)
+
+### Routing Strategy
+
+ShiftManager implements **role-based post-login routing** to provide different user experiences:
+
+| Role | Redirect Path | Page | Experience |
+|------|---------------|------|------------|
+| **Owner** | `/Home/Index` | `Pages/Home/Index.cshtml` | Classic dashboard (company config, analytics) |
+| **All Others** | `/` | `Pages/Index.cshtml` | New redesigned dashboard (mission overview, quick actions) |
+
+**Rationale:**
+- **Owners** need quick access to system configuration, backups, Griffin setup → kept classic dashboard
+- **Employees, Managers, Directors** benefit from simplified, mission-focused UI → new dashboard
+- Maintains UX consistency for power users while modernizing experience for daily users
+
+### Implementation
+
+From `Pages/Auth/Login.cshtml.cs:290-294`:
+```csharp
+// ✅ PHASE 18: Role-based routing - Owner uses old home, others use new redesigned home
+if (user.Role == UserRole.Owner)
+    return RedirectToPage("/Home/Index");  // Classic dashboard
+else
+    return Redirect("/");                  // New redesigned dashboard
+```
+
+**Key Design Decision:** Uses `Redirect("/")` instead of `RedirectToPage("/Index")` for non-Owner users
+
+**Why `Redirect("/")` vs `RedirectToPage("/Index")`?**
+
+The implementation uses **HTTP redirect** (`Redirect("/")`) instead of **Razor Pages routing** (`RedirectToPage("/Index")`) for non-Owner users. This was necessary to avoid namespace resolution issues with the ASP.NET Core Razor Pages routing system.
+
+**Technical Details:**
+- `RedirectToPage("/Index")` relies on the Razor Pages routing convention to resolve page model namespaces
+- With multiple `IndexModel` classes in the project (`ShiftManager.Pages.IndexModel`, `ShiftManager.Pages.Home.IndexModel`, `ShiftManager.Pages.My.IndexModel`, etc.), the routing engine requires fully-qualified model names in the `@model` directive
+- `Redirect("/")` performs a standard HTTP 302 redirect to the root URL, which the routing middleware then maps to `Pages/Index.cshtml` unambiguously
+
+**Files Modified:**
+- `Pages/Index.cshtml.cs` - Added `namespace ShiftManager.Pages;` (line 7)
+- `Pages/Index.cshtml` - Changed `@model IndexModel` → `@model ShiftManager.Pages.IndexModel` (line 2)
+- `Pages/Auth/Login.cshtml.cs` - Added role-based redirect logic (lines 290-294)
+- `Pages/Shared/_Layout.cshtml` - Conditional home button based on role (lines 108-123 for admins, 185-188 for employees)
+
+### Sidebar Navigation
+
+The sidebar home button also adapts based on role:
+
+**For Owners:**
+```cshtml
+<a href="/Home/Index" class="app-sidebar-nav-item">
+    <span class="app-sidebar-nav-icon">🏠</span>
+    <span><loc key="Home" /></span>
+</a>
+```
+
+**For Other Roles:**
+```cshtml
+<a href="/" class="app-sidebar-nav-item">
+    <span class="app-sidebar-nav-icon">🏠</span>
+    <span><loc key="Home" /></span>
+</a>
+```
+
+From `Pages/Shared/_Layout.cshtml:108-123`:
+```cshtml
+@if (isOwner)
+{
+    @* Owner uses old home page *@
+    <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
+        <span class="app-sidebar-nav-icon">🏠</span>
+        <span><loc key="Home" /></span>
+    </a>
+}
+else
+{
+    @* Non-Owner admins (Manager, Director) use new redesigned home *@
+    <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
+        <span class="app-sidebar-nav-icon">🏠</span>
+        <span><loc key="Home" /></span>
+    </a>
+}
+```
+
+### New Dashboard Features
+
+**Location:** `Pages/Index.cshtml` (173 lines) + `Pages/Index.cshtml.cs` (130 lines)
+
+The new redesigned dashboard (`/`) provides:
+
+**Admin View (Manager, Director, Assigner):**
+- **Stat Cards:**
+  - Upcoming Shifts (next 7 days, team-wide)
+  - Pending Requests (time-off + swap requests)
+  - Team Members (count)
+  - Unread Notifications
+- **Quick Actions:**
+  - View Calendar
+  - Manage Requests
+  - View Team
+  - View Analytics
+
+**Employee View:**
+- **Stat Cards:**
+  - My Upcoming Shifts (next 7 days)
+  - My Pending Requests
+  - Team Members (count)
+  - Unread Notifications
+- **Next Shift Highlight:**
+  - Shows next scheduled shift with date and shift type
+  - Empty state if no upcoming shifts
+- **Quick Actions:**
+  - View Schedule
+  - Submit Request
+  - View Team
+  - My Profile
+
+**UI Characteristics:**
+- **Data-driven:** All metrics loaded from database via `IndexModel.OnGetAsync()`
+- **Role-aware:** Conditional rendering based on `Model.IsAdmin` flag
+- **Localized:** All labels use `<loc key="..." />` helper
+- **v2 Design:** Uses `data-ui-version="v2"` for CSS scoping
+
+### Routing Troubleshooting
+
+**Common Issue:** "No page named '/' matches the supplied values"
+
+**Root Causes:**
+1. **Missing namespace** in `Pages/Index.cshtml.cs` - Must include `namespace ShiftManager.Pages;`
+2. **Ambiguous @model directive** in `Pages/Index.cshtml` - Must use fully-qualified name `@model ShiftManager.Pages.IndexModel`
+3. **Using RedirectToPage("/")** instead of `Redirect("/")` - Razor Pages routing can fail with namespace collisions
+
+**Solution:**
+```csharp
+// ✅ CORRECT
+return Redirect("/");
+
+// ❌ INCORRECT (may fail with namespace resolution)
+return RedirectToPage("/");
+return RedirectToPage("/Index");
+```
 
 ---
 
@@ -1338,8 +1489,9 @@ var displayName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 ---
 
 **Document Status:** ✅ Complete
-**Lines:** 1,270
-**Coverage:** All authentication methods, authorization policies, security features documented
+**Last Updated:** 2026-01-06 (Added Post-Login Routing documentation)
+**Lines:** 1,420+
+**Coverage:** All authentication methods, authorization policies, security features, role-based routing documented
 
 **Cross-References:**
 - 05-MULTI-TENANCY-DEEP-DIVE.md - CompanyId enforcement

@@ -182,6 +182,16 @@ public class IndexModel : LocalizedPageModel
             return Page();
         }
 
+        // ✅ CONCURRENCY FIX: Check status is still Pending before approving
+        if (r.Status != RequestStatus.Pending)
+        {
+            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to approve time off request {RequestId} with status {Status} (expected Pending)",
+                currentUserId, id, r.Status);
+            Error = _localizer["Error_RequestAlreadyProcessed"];
+            await OnGetAsync();
+            return Page();
+        }
+
         r.Status = RequestStatus.Approved;
 
         // Remove existing assignments in the approved window
@@ -248,6 +258,16 @@ public class IndexModel : LocalizedPageModel
             return Page();
         }
 
+        // ✅ CONCURRENCY FIX: Check status is still Pending before declining
+        if (r.Status != RequestStatus.Pending)
+        {
+            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to decline time off request {RequestId} with status {Status} (expected Pending)",
+                currentUserId, id, r.Status);
+            Error = _localizer["Error_RequestAlreadyProcessed"];
+            await OnGetAsync();
+            return Page();
+        }
+
         r.Status = RequestStatus.Declined;
         await _db.SaveChangesAsync();
 
@@ -293,6 +313,17 @@ public class IndexModel : LocalizedPageModel
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve swap request {RequestId} for unauthorized company {CompanyId}",
                 currentUserId, currentUser!.Role, id, s.CompanyId);
             Error = _localizer["Error_NoPermissionApproveRequest"];
+            await trx.RollbackAsync();
+            await OnGetAsync();
+            return Page();
+        }
+
+        // ✅ CONCURRENCY FIX: Check status is still Pending before approving
+        if (s.Status != RequestStatus.Pending)
+        {
+            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to approve swap request {RequestId} with status {Status} (expected Pending)",
+                currentUserId, id, s.Status);
+            Error = _localizer["Error_RequestAlreadyProcessed"];
             await trx.RollbackAsync();
             await OnGetAsync();
             return Page();
@@ -370,6 +401,16 @@ public class IndexModel : LocalizedPageModel
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline swap request {RequestId} for unauthorized company {CompanyId}",
                 currentUserId, currentUser!.Role, id, s.CompanyId);
             Error = _localizer["Error_NoPermissionDeclineRequest"];
+            await OnGetAsync();
+            return Page();
+        }
+
+        // ✅ CONCURRENCY FIX: Check status is still Pending before declining
+        if (s.Status != RequestStatus.Pending)
+        {
+            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to decline swap request {RequestId} with status {Status} (expected Pending)",
+                currentUserId, id, s.Status);
+            Error = _localizer["Error_RequestAlreadyProcessed"];
             await OnGetAsync();
             return Page();
         }

@@ -29,17 +29,33 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@(isAdmin ? Localizer["ShiftManager"] : $"{Localizer["MySchedule"]} - {firstName}")</title>
+    <title>@(string.IsNullOrEmpty(firstName) ? (isHebrew ? "השיפטי שלך" : "your shifty") : (isHebrew ? $"השיפטי של {firstName}" : $"{firstName}'s shifty"))</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" />
+    <link rel="manifest" href="~/site.webmanifest" />
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @if (isHebrew)
     {
         <link rel="stylesheet" href="~/css/rtl.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/shift-swap-game.css" asp-append-version="true" />
+    @if (Context.Request.Cookies["language_edit_mode"] == "true")
+    {
+        <link rel="stylesheet" href="~/css/language-edit-mode.css" asp-append-version="true" />
+    }
     @await RenderSectionAsync("Styles", required: false)
     @await Html.PartialAsync("_LocalizationScript")
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
+    @* Localization API - Load on all pages for attribute localization and JavaScript string access *@
+    <script defer src="~/js/localization-api.js" asp-append-version="true"></script>
+    <script defer src="~/js/localization-attributes.js" asp-append-version="true"></script>
     @* Only load session check on authenticated pages (prevents infinite redirect loop on login page) *@
     @if (User?.Identity?.IsAuthenticated ?? false)
     {
@@ -48,6 +64,10 @@
     @if (isHebrew)
     {
         <script defer src="~/js/hebrew-audit.js"></script>
+    }
+    @if (Context.Request.Cookies["language_edit_mode"] == "true")
+    {
+        <script defer src="~/js/language-edit-mode.js" asp-append-version="true"></script>
     }
     @* Offline deployment diagnostic: Verify sidebar CSS loads correctly *@
     <script>
@@ -75,13 +95,16 @@
     </script>
 </head>
 <body>
+    @* Language Edit Mode Banner (only shown when edit mode cookies are set) *@
+    @await Component.InvokeAsync("LanguageEditModeBanner")
+
     <div class="app-shell">
         @* Sidebar Navigation *@
         <aside class="app-sidebar">
             @* Brand *@
             <div class="app-sidebar-brand brand">
                 <span class="app-sidebar-brand-icon">📊</span>
-                <span>@Localizer["ShiftManager"]</span>
+                <span><loc key="ShiftManager" /></span>
             </div>
 
             @* Navigation *@
@@ -89,23 +112,35 @@
                 @if (isAdmin)
                 {
                     @* ✅ PHASE 20: My Calendar Section *@
-                    <div class="nav-section-header">@Localizer["Calendar_MyCalendar"]</div>
+                    <div class="nav-section-header"><loc key="Calendar_MyCalendar" /></div>
 
-                    <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon">🏠</span>
-                        <span>@Localizer["Home"]</span>
-                    </a>
+                    @if (isOwner)
+                    {
+                        @* Owner uses old home page *@
+                        <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">🏠</span>
+                            <span><loc key="Home" /></span>
+                        </a>
+                    }
+                    else
+                    {
+                        @* Non-Owner admins (Manager, Director) use new redesigned home *@
+                        <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">🏠</span>
+                            <span><loc key="Home" /></span>
+                        </a>
+                    }
                     <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📅</span>
-                        <span>@Localizer["Schedule"]</span>
+                        <span><loc key="Schedule" /></span>
                     </a>
                     <a href="/Requests/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Requests") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📝</span>
-                        <span>@Localizer["Requests"]</span>
+                        <span><loc key="Requests" /></span>
                     </a>
                     <a href="/Admin/Analytics" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Analytics") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📊</span>
-                        <span>@Localizer["Analytics"]</span>
+                        <span><loc key="Analytics" /></span>
                     </a>
 
                     @* Phase 8.2.2: Show different People links based on role *@
@@ -114,7 +149,7 @@
                         @* Managers see "My Team" (their own team) *@
                         <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">👥</span>
-                            <span>@Localizer["MyTeam"]</span>
+                            <span><loc key="MyTeam" /></span>
                         </a>
                     }
                     else
@@ -122,7 +157,7 @@
                         @* Owners and Directors see "People" (all users) *@
                         <a href="/Admin/Users" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Users") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">👥</span>
-                            <span>@Localizer["People"]</span>
+                            <span><loc key="People" /></span>
                         </a>
                     }
 
@@ -130,59 +165,59 @@
                     {
                         <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">🏢</span>
-                            <span>@Localizer["Companies"]</span>
+                            <span><loc key="Companies" /></span>
                         </a>
                     }
 
                     <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/ShiftTypes") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">⚙️</span>
-                        <span>@Localizer["Settings"]</span>
+                        <span><loc key="Settings" /></span>
                     </a>
 
                     @* Owner Administration Panel *@
                     @if (isOwner)
                     {
-                        <div class="nav-section-header">🔧 @Localizer["Owner_AdminPanel"]</div>
+                        <div class="nav-section-header">🔧 <loc key="Owner_AdminPanel" /></div>
                         <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">🔧</span>
-                            <span>@Localizer["Owner_AdminPanel"]</span>
+                            <span><loc key="Owner_AdminPanel" /></span>
                         </a>
                     }
 
                     @* ✅ PHASE 20: Management Section *@
-                    <div class="nav-section-header">⚙️ @Localizer["Calendar_Management"]</div>
+                    <div class="nav-section-header">⚙️ <loc key="Calendar_Management" /></div>
 
                     <a href="/Calendar/Table" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Table") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📊</span>
-                        <span>@Localizer["Calendar_ShiftsManagement"]</span>
+                        <span><loc key="Calendar_ShiftsManagement" /></span>
                     </a>
                     <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🗂️</span>
-                        <span>@Localizer["Calendar_ChoresManagement"]</span>
+                        <span><loc key="Calendar_ChoresManagement" /></span>
                     </a>
                     <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🎯</span>
-                        <span>@Localizer["Calendar_OnDutyManagement"]</span>
+                        <span><loc key="Calendar_OnDutyManagement" /></span>
                     </a>
                 }
                 else
                 {
                     @* Employee/Trainee Navigation *@
-                    <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") || currentPath.StartsWith("/My/Index") ? "active" : "")">
+                    <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") || currentPath.StartsWith("/My/Index") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🏠</span>
-                        <span>@Localizer["Home"]</span>
+                        <span><loc key="Home" /></span>
                     </a>
                     <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📅</span>
-                        <span>@Localizer["Schedule"]</span>
+                        <span><loc key="Schedule" /></span>
                     </a>
                     <a href="/My/Requests" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Requests") || currentPath.StartsWith("/Requests") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📝</span>
-                        <span>@Localizer["Requests"]</span>
+                        <span><loc key="Requests" /></span>
                     </a>
                     <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">👥</span>
-                        <span>@Localizer["MyTeam"]</span>
+                        <span><loc key="MyTeam" /></span>
                     </a>
 
                     @* Divider *@
@@ -190,19 +225,19 @@
 
                     <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🗂️</span>
-                        <span>@Localizer["Chores"]</span>
+                        <span><loc key="Chores" /></span>
                     </a>
                     <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🎯</span>
-                        <span>@Localizer["OnDuty"]</span>
+                        <span><loc key="OnDuty" /></span>
                     </a>
                     <a href="/My/Profile" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Profile") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">👤</span>
-                        <span>@Localizer["MyProfile"]</span>
+                        <span><loc key="MyProfile" /></span>
                     </a>
                     <a href="/My/Settings" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Settings") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">⚙️</span>
-                        <span>@Localizer["My_Settings"]</span>
+                        <span><loc key="My_Settings" /></span>
                     </a>
                 }
             </nav>
@@ -220,9 +255,9 @@
                     </div>
 
                     @* ✅ PHASE 18: Ctrl+K tooltip for command palette discovery *@
-                    <div class="sidebar-footer-shortcut" title="@Localizer["Sidebar_CtrlKTooltip"]">
+                    <div class="sidebar-footer-shortcut" loc-title="Sidebar_CtrlKTooltip">
                         <span class="shortcut-icon">⌨️</span>
-                        <span class="shortcut-text">@Localizer["Sidebar_CtrlKLabel"]</span>
+                        <span class="shortcut-text"><loc key="Sidebar_CtrlKLabel" /></span>
                     </div>
                 }
             </div>
@@ -255,7 +290,7 @@
                         @await Component.InvokeAsync("LanguageToggle")
 
                         @* Theme Toggle *@
-                        <button class="action-btn" id="themeToggle" aria-label="@Localizer["ToggleDarkMode"]">
+                        <button class="action-btn" id="themeToggle" loc-aria-label="ToggleDarkMode">
                             <span>🌓</span>
                         </button>
 
@@ -266,7 +301,7 @@
                                 @Html.AntiForgeryToken()
                                 <button class="action-btn" type="submit" style="background: var(--danger); color: white;">
                                     <span>🚪</span>
-                                    <span>@Localizer["Logout"]</span>
+                                    <span><loc key="Logout" /></span>
                                 </button>
                             </form>
                         }
@@ -291,7 +326,7 @@
                         <h2 class="text-display" style="margin: 0 0 0.5rem 0;">
                             @Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]
                         </h2>
-                        <p class="text-subtle" style="margin: 0;">@Localizer["ScheduleSubtitle"]</p>
+                        <p class="text-subtle" style="margin: 0;"><loc key="ScheduleSubtitle" /></p>
                     </div>
                 </div>
             }
@@ -309,7 +344,7 @@
         <div class="command-palette-content">
             <div class="command-palette-search">
                 <span class="command-palette-icon">🔍</span>
-                <input type="text" id="commandPaletteInput" placeholder="@Localizer["CommandPaletteSearch"]" autocomplete="off" />
+                <input type="text" id="commandPaletteInput" loc-placeholder="CommandPaletteSearch" autocomplete="off" />
                 <span class="command-palette-hint">Ctrl+K</span>
             </div>
             <div id="commandPaletteResults" class="command-palette-results">

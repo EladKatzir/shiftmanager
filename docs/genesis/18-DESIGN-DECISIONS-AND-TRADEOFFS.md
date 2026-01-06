@@ -1,7 +1,7 @@
 # 18. Design Decisions and Tradeoffs
 
-**Document Version:** 1.0
-**Last Updated:** December 2025
+**Document Version:** 1.1
+**Last Updated:** 2026-01-06 (Added Role-Based Home Pages decision)
 **Part of:** ShiftManager Genesis Documentation
 
 ---
@@ -631,6 +631,70 @@ Alternatives Considered:
 - ❌ **Lost:** Rapid prototyping (no pre-built components)
 - ❌ **Lost:** Grid system (had to build custom)
 - ⚖️ **Worth it?** YES - flexibility > speed for custom UX
+
+---
+
+### Decision 6.1: Role-Based Home Pages (NOT Single Dashboard)
+
+**Implemented:** Phase 18 (2026-01-06)
+
+**Why Two Dashboards?**
+
+**Chosen:** Role-based routing with separate dashboards:
+- **Owner** → `/Home/Index` (classic admin dashboard)
+- **All others** → `/` (new redesigned mission-focused dashboard)
+
+**Rationale:**
+1. **UX Differentiation** - Owners need quick access to system config (backups, Griffin ADFS, email settings); Employees need mission-focused UI (next shift, quick actions)
+2. **Gradual Migration** - Allows redesign without disrupting power users (Owner)
+3. **Specialization** - Admin dashboard optimized for configuration, employee dashboard optimized for daily tasks
+4. **Simplicity** - Avoids complex conditional rendering in single dashboard
+
+**Implementation:**
+```csharp
+// Pages/Auth/Login.cshtml.cs:290-294
+if (user.Role == UserRole.Owner)
+    return RedirectToPage("/Home/Index");  // Classic dashboard
+else
+    return Redirect("/");                  // New redesigned dashboard
+```
+
+**Technical Challenge: Namespace Resolution**
+
+Initial approach `RedirectToPage("/")` failed with "No page named '/' matches the supplied values" due to namespace ambiguity (multiple `IndexModel` classes in project).
+
+**Solution:** Use `Redirect("/")` (HTTP redirect) instead of `RedirectToPage("/Index")` (Razor Pages routing)
+
+**Files Modified:**
+- `Pages/Index.cshtml.cs` - Added `namespace ShiftManager.Pages;`
+- `Pages/Index.cshtml` - Changed `@model IndexModel` → `@model ShiftManager.Pages.IndexModel`
+- `Pages/Auth/Login.cshtml.cs` - Role-based redirect logic
+- `Pages/Shared/_Layout.cshtml` - Conditional home button (lines 108-123)
+
+**Dashboard Features Comparison:**
+
+| Feature | Owner Dashboard (`/Home/Index`) | Employee Dashboard (`/`) |
+|---------|--------------------------------|-------------------------|
+| **Focus** | System configuration | Mission execution |
+| **Metrics** | Company health | Personal performance |
+| **Actions** | Backups, Griffin, Email | Submit requests, view schedule |
+| **Design** | Classic (v1) | Redesigned (v2 with stat cards) |
+
+**Employee Dashboard Highlights:**
+- **Stat Cards:** Upcoming shifts (next 7 days), pending requests, team size, notifications
+- **Next Shift Highlight:** Visual card showing next scheduled shift
+- **Quick Actions:** View schedule, submit request, view team, my profile
+- **Role-Aware:** Admin view (team metrics) vs Employee view (personal metrics)
+
+**Tradeoffs:**
+- ✅ **Gained:** Specialized UX per role, easier redesign iteration, backward compatibility
+- ✅ **Gained:** Owner efficiency (no navigation changes for power users)
+- ❌ **Lost:** Single source of truth for dashboard (maintain two pages)
+- ❌ **Lost:** Code duplication for shared metrics
+- ⚖️ **Worth it?** YES - UX clarity and user satisfaction > code duplication
+
+**Alternative Considered:** Single dashboard with extensive conditional rendering
+- Rejected due to: Complex template logic, harder to maintain, poor separation of concerns
 
 ---
 
@@ -1626,6 +1690,7 @@ public IActionResult OnGet(string? returnUrl = null)
 | **Database** | SQLite | PostgreSQL | Zero-config, air-gapped | Scale limit (100 users) | ✅ YES |
 | **ORM** | EF Core | Dapper | Migrations, type safety | ORM overhead (~10%) | ✅ YES |
 | **Frontend JS** | Vanilla JS | React | No build step, stable | No reactive UI | ✅ YES |
+| **Home Routing** | Role-Based | Single Dashboard | UX specialization | Code duplication | ✅ YES |
 | **Architecture** | Service Layer | CQRS | Simplicity | No read/write separation | ✅ YES |
 | **Auth** | Cookies | JWT | Browser-first, revocable | No mobile support | ✅ YES |
 | **Roles** | 6 Hard-Coded | Claims RBAC | Type-safe, domain-specific | No runtime role creation | ✅ YES |

@@ -14,20 +14,20 @@
     new BreadcrumbItem { Label = Localizer["RequestTimeOff"], IsActive = true }
 })
 
-<h2>@Localizer["RequestTimeOff"]</h2>
+<h2><loc key="RequestTimeOff" /></h2>
 <div class="card" style="max-width:560px">
     <form method="post" id="timeOffForm">
         <div style="display:grid; gap:.75rem">
             <div>
-                <label style="font-weight: 600; margin-bottom: 0.5rem;">@Localizer["TimeOffType"]</label>
+                <label style="font-weight: 600; margin-bottom: 0.5rem;"><loc key="TimeOffType" /></label>
                 <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="radio" name="Type" value="0" checked onchange="updateDateFields()" style="cursor: pointer;" />
-                        <span>@Localizer["Vacation"]</span>
+                        <span><loc key="Vacation" /></span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="radio" name="Type" value="1" onchange="updateDateFields()" style="cursor: pointer;" />
-                        <span>@Localizer["After"]</span>
+                        <span><loc key="After" /></span>
                     </label>
                 </div>
                 <small style="color: var(--muted); margin-top: 0.25rem; display: block;" id="typeDescription">
@@ -35,10 +35,10 @@
                 </small>
             </div>
 
-            <label id="startDateLabel">@Localizer["StartDate"]<br /><input class="input" asp-for="StartDate" type="date" /></label>
-            <label id="endDateLabel">@Localizer["EndDate"]<br /><input class="input" asp-for="EndDate" type="date" /></label>
-            <label>@Localizer["ReasonOptional"]<br /><input class="input" asp-for="Reason" /></label>
-            <button class="btn btn-primary" type="submit">@Localizer["Submit"]</button>
+            <label id="startDateLabel"><loc key="StartDate" /><br /><input class="input" asp-for="StartDate" type="date" /></label>
+            <label id="endDateLabel"><loc key="EndDate" /><br /><input class="input" asp-for="EndDate" type="date" /></label>
+            <label><loc key="ReasonOptional" /><br /><input class="input" asp-for="Reason" /></label>
+            <button class="btn btn-primary" type="submit"><loc key="Submit" /></button>
         </div>
     </form>
 </div>
@@ -46,7 +46,6 @@
 <script>
 function updateDateFields() {
     const typeRadios = document.getElementsByName('Type');
-    const startDateInput = document.querySelector('input[asp-for="StartDate"]');
     const endDateLabel = document.getElementById('endDateLabel');
     const startDateLabel = document.getElementById('startDateLabel');
     const typeDescription = document.getElementById('typeDescription');
@@ -62,7 +61,16 @@ function updateDateFields() {
     if (selectedType === 1) { // After
         // Hide end date field for "After" type
         endDateLabel.style.display = 'none';
-        startDateLabel.innerHTML = '@Html.Raw(Localizer["Date"])' + '<br /><input class="input" asp-for="StartDate" type="date" />';
+
+        // Update only the label text, not the entire HTML (preserves input binding)
+        const labelText = startDateLabel.querySelector('loc') || startDateLabel.firstChild;
+        if (labelText && labelText.nodeType === Node.TEXT_NODE) {
+            labelText.textContent = '@Html.Raw(Localizer["Date"])';
+        } else if (labelText && labelText.tagName === 'LOC') {
+            labelText.setAttribute('key', 'Date');
+            labelText.textContent = '@Html.Raw(Localizer["Date"])';
+        }
+
         typeDescription.textContent = '@Html.Raw(Localizer["AfterDescription"])';
 
         // Set EndDate to same as StartDate for "After" type
@@ -74,7 +82,16 @@ function updateDateFields() {
     } else { // Vacation
         // Show end date field for "Vacation" type
         endDateLabel.style.display = 'block';
-        startDateLabel.innerHTML = '@Html.Raw(Localizer["StartDate"])' + '<br /><input class="input" asp-for="StartDate" type="date" />';
+
+        // Update only the label text, not the entire HTML (preserves input binding)
+        const labelText = startDateLabel.querySelector('loc') || startDateLabel.firstChild;
+        if (labelText && labelText.nodeType === Node.TEXT_NODE) {
+            labelText.textContent = '@Html.Raw(Localizer["StartDate"])';
+        } else if (labelText && labelText.tagName === 'LOC') {
+            labelText.setAttribute('key', 'StartDate');
+            labelText.textContent = '@Html.Raw(Localizer["StartDate"])';
+        }
+
         typeDescription.textContent = '@Html.Raw(Localizer["VacationDescription"])';
     }
 }

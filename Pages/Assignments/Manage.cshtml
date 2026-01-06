@@ -22,12 +22,12 @@
             @Localizer["Required"]: <b>@Model.Instance.StaffingRequired</b> &nbsp;|&nbsp;
             @Localizer["Assigned"]: <b>@Model.Assigned.Count</b>
         </div>
-        <a class="btn btn-ghost" href="@(!string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : "/Calendar/Month")">@Localizer["BackToCalendar"]</a>
+        <a class="btn btn-ghost" href="@(!string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : "/Calendar/Month")"><loc key="BackToCalendar" /></a>
     </div>
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">@Localizer["Assigned"]</h3>
+    <h3 style="margin-top:0"><loc key="Assigned" /></h3>
     <ul class="list">
         @foreach (var a in Model.Assigned)
         {
@@ -45,7 +45,7 @@
                     <form method="post" asp-page-handler="Remove" style="margin: 0;">
                         <input type="hidden" name="assignmentId" value="@a.AssignmentId" />
                         <input type="hidden" asp-for="ReturnUrl" />
-                        <button class="btn btn-danger">@Localizer["Remove"]</button>
+                        <button class="btn btn-danger"><loc key="Remove" /></button>
                     </form>
                 </div>
 
@@ -58,13 +58,13 @@
                             <input type="hidden" asp-for="ShiftTypeId" />
                             <input type="hidden" asp-for="ReturnUrl" />
                             <select name="traineeUserId" class="input" style="max-width: 300px;" required>
-                                <option value="">@Localizer["AttachTrainee"]</option>
+                                <option value=""><loc key="AttachTrainee" /></option>
                                 @foreach (var trainee in Model.Trainees)
                                 {
                                     <option value="@trainee.Id">@trainee.DisplayName (@trainee.Email)</option>
                                 }
                             </select>
-                            <button type="submit" class="btn btn-secondary">@Localizer["AssignTrainee"]</button>
+                            <button type="submit" class="btn btn-secondary"><loc key="AssignTrainee" /></button>
                         </form>
                     </div>
                 }
@@ -76,7 +76,7 @@
                             <input type="hidden" asp-for="Date" />
                             <input type="hidden" asp-for="ShiftTypeId" />
                             <input type="hidden" asp-for="ReturnUrl" />
-                            <button type="submit" class="btn btn-ghost">@Localizer["RemoveTrainee"]</button>
+                            <button type="submit" class="btn btn-ghost"><loc key="RemoveTrainee" /></button>
                         </form>
                     </div>
                 }
@@ -86,7 +86,7 @@
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">@Localizer["AddPerson"]</h3>
+    <h3 style="margin-top:0"><loc key="AddPerson" /></h3>
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="small" style="color:var(--danger)">@Model.Error</div>
@@ -99,7 +99,7 @@
         @if (Model.Assigned.Count == 0)
         {
             <div style="margin-bottom: 1rem;">
-                <label for="ShiftName" class="form-label">@Localizer["ShiftNameOptional"]</label>
+                <label for="ShiftName" class="form-label"><loc key="ShiftNameOptional" /></label>
                 <input type="text" id="shiftNameInput" class="input" asp-for="ShiftName" placeholder="e.g., Store Opening, Security Round, etc." />
                 <div class="small" style="color:var(--muted); margin-top:0.25rem;">
                     This name will be displayed as "@Model.Type?.Key.ToLower()-'your name'" in the calendar
@@ -114,7 +114,7 @@
         }
 
         <select class="input" asp-for="SelectedUserId" style="font-family: var(--font-sans);">
-            <option value="">@Localizer["ChooseActiveUser"]</option>
+            <option value=""><loc key="ChooseActiveUser" /></option>
             @foreach (var u in Model.ActiveUsers)
             {
                 var busyStatus = Model.BusyUsers.ContainsKey(u.Id) ? Model.BusyUsers[u.Id] : null;
@@ -141,7 +141,7 @@
                 }
             }
         </select>
-        <button class="btn btn-primary" type="submit">@Localizer["Add"]</button>
+        <button class="btn btn-primary" type="submit"><loc key="Add" /></button>
     </form>
 </div>
 

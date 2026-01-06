@@ -11,7 +11,7 @@
     @* Calendar Rail (Left Sidebar) *@
     <aside class="schedule-rail">
         <div class="schedule-rail-header">
-            <h3 class="text-title" style="margin: 0;">@Localizer["Calendars"]</h3>
+            <h3 class="text-title" style="margin: 0;"><loc key="Calendars" /></h3>
         </div>
 
         <div class="schedule-rail-content">
@@ -20,25 +20,25 @@
                 <label class="calendar-toggle-item">
                     <input type="checkbox" id="toggle-company" checked>
                     <span class="calendar-toggle-icon" style="background: var(--primary);"></span>
-                    <span class="calendar-toggle-label">@Localizer["CompanyShifts"]</span>
+                    <span class="calendar-toggle-label"><loc key="CompanyShifts" /></span>
                 </label>
 
                 <label class="calendar-toggle-item">
                     <input type="checkbox" id="toggle-myshifts" checked>
                     <span class="calendar-toggle-icon" style="background: #10b981;"></span>
-                    <span class="calendar-toggle-label">@Localizer["MyShifts"]</span>
+                    <span class="calendar-toggle-label"><loc key="MyShifts" /></span>
                 </label>
 
                 <label class="calendar-toggle-item">
                     <input type="checkbox" id="toggle-chores">
                     <span class="calendar-toggle-icon" style="background: #f59e0b;"></span>
-                    <span class="calendar-toggle-label">@Localizer["ChoresCalendar"]</span>
+                    <span class="calendar-toggle-label"><loc key="ChoresCalendar" /></span>
                 </label>
 
                 <label class="calendar-toggle-item">
                     <input type="checkbox" id="toggle-onduty">
                     <span class="calendar-toggle-icon" style="background: #8b5cf6;"></span>
-                    <span class="calendar-toggle-label">@Localizer["OnDutyCalendar"]</span>
+                    <span class="calendar-toggle-label"><loc key="OnDutyCalendar" /></span>
                 </label>
             </div>
         </div>
@@ -53,11 +53,11 @@
                 <div class="view-mode-toggle">
                     <button class="view-mode-btn active" data-mode="calendar" id="btn-calendar">
                         <span>📅</span>
-                        <span>@Localizer["Calendar"]</span>
+                        <span><loc key="Calendar" /></span>
                     </button>
                     <button class="view-mode-btn" data-mode="table" id="btn-table">
                         <span>📊</span>
-                        <span>@Localizer["Table"]</span>
+                        <span><loc key="Table" /></span>
                     </button>
                 </div>
 
@@ -81,14 +81,14 @@
                 {
                     <a href="/My/Requests" class="btn btn-primary">
                         <span>📝</span>
-                        <span>@Localizer["RequestTimeOff"]</span>
+                        <span><loc key="RequestTimeOff" /></span>
                     </a>
                 }
                 else
                 {
                     <button class="btn btn-primary" id="btn-assign-shifts">
                         <span>➕</span>
-                        <span>@Localizer["AssignShifts"]</span>
+                        <span><loc key="AssignShifts" /></span>
                     </button>
                 }
             </div>

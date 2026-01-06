@@ -423,8 +423,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">@Localizer["Companies"]</h1>
-    <p class="page-subtitle">@Localizer["ManageCompaniesAndOrganizations"]</p>
+    <h1 class="page-title"><loc key="Companies" /></h1>
+    <p class="page-subtitle"><loc key="ManageCompaniesAndOrganizations" /></p>
 </div>
 
 <!-- Success Message -->
@@ -438,7 +438,7 @@
 
 <!-- Add New Company Form -->
 <div class="section-card">
-    <h3 class="section-header">@Localizer["AddNewCompany"]</h3>
+    <h3 class="section-header"><loc key="AddNewCompany" /></h3>
 
     <!-- Error Message -->
     @if (!string.IsNullOrEmpty(Model.Error))
@@ -452,7 +452,7 @@
     <form method="post" asp-page-handler="AddCompany">
         <!-- Company Details Fieldset -->
         <fieldset class="form-fieldset">
-            <legend class="fieldset-legend">@Localizer["CompanyDetails"]</legend>
+            <legend class="fieldset-legend"><loc key="CompanyDetails" /></legend>
             <div class="fieldset-grid">
                 <div class="form-group">
                     <label class="form-label">
@@ -468,7 +468,7 @@
                     <input class="form-input" asp-for="CompanySlug" placeholder="my-company" pattern="[a-z0-9-]+" required />
                 </div>
                 <div class="form-group">
-                    <label class="form-label">@Localizer["DisplayName"]</label>
+                    <label class="form-label"><loc key="DisplayName" /></label>
                     <input class="form-input" asp-for="CompanyDisplayName" placeholder="My Company" />
                 </div>
             </div>
@@ -476,23 +476,23 @@
 
         <!-- Existing Director Fieldset -->
         <fieldset class="form-fieldset">
-            <legend class="fieldset-legend">@Localizer["OrAssignExistingDirector"]</legend>
+            <legend class="fieldset-legend"><loc key="OrAssignExistingDirector" /></legend>
             <div class="form-group">
-                <label class="form-label">@Localizer["ExistingDirector"]</label>
+                <label class="form-label"><loc key="ExistingDirector" /></label>
                 <select class="form-input" asp-for="SelectedDirectorId" id="directorSelect">
-                    <option value="">@Localizer["SelectExistingDirector"]</option>
+                    <option value=""><loc key="SelectExistingDirector" /></option>
                     @foreach (var director in Model.AvailableDirectors)
                     {
                         <option value="@director.Id">@director.DisplayName (@director.Email)</option>
                     }
                 </select>
-                <span class="form-hint">@Localizer["IfDirectorSelected"]</span>
+                <span class="form-hint"><loc key="IfDirectorSelected" /></span>
             </div>
         </fieldset>
 
         <!-- Manager Account Fieldset -->
         <fieldset class="form-fieldset" id="managerFieldset">
-            <legend class="fieldset-legend">@Localizer["ManagerAccount"]</legend>
+            <legend class="fieldset-legend"><loc key="ManagerAccount" /></legend>
             <div class="fieldset-grid">
                 <div class="form-group">
                     <label class="form-label">
@@ -517,7 +517,7 @@
 
         <button class="btn btn-primary" type="submit">
             <span>➕</span>
-            <span>@Localizer["CreateCompanyManager"]</span>
+            <span><loc key="CreateCompanyManager" /></span>
         </button>
     </form>
 
@@ -525,10 +525,10 @@
         <div class="info-box-content">
             <strong>@Localizer["Note"]:</strong> @Localizer["CreatingCompanyWill"]
             <ul class="info-box-list">
-                <li>@Localizer["CreateCompanyWithDetails"]</li>
-                <li>@Localizer["CreateManagerAccount"]</li>
-                <li>@Localizer["GenerateDefaultShiftTypes"]</li>
-                <li>@Localizer["SetupDefaultConfig"]</li>
+                <li><loc key="CreateCompanyWithDetails" /></li>
+                <li><loc key="CreateManagerAccount" /></li>
+                <li><loc key="GenerateDefaultShiftTypes" /></li>
+                <li><loc key="SetupDefaultConfig" /></li>
             </ul>
         </div>
     </div>
@@ -536,7 +536,7 @@
 
 <!-- All Companies List -->
 <div class="section-card">
-    <h3 class="section-header">@Localizer["AllCompanies"]</h3>
+    <h3 class="section-header"><loc key="AllCompanies" /></h3>
 
     @if (Model.Companies.Any())
     {
@@ -544,11 +544,11 @@
             <table class="companies-table">
                 <thead>
                     <tr>
-                        <th>@Localizer["Name"]</th>
-                        <th>@Localizer["Slug"]</th>
-                        <th>@Localizer["DisplayName"]</th>
-                        <th>@Localizer["Users"]</th>
-                        <th style="width:1%">@Localizer["Actions"]</th>
+                        <th><loc key="Name" /></th>
+                        <th><loc key="Slug" /></th>
+                        <th><loc key="DisplayName" /></th>
+                        <th><loc key="Users" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -571,7 +571,7 @@
                                     <input type="hidden" name="id" value="@c.Id" />
                                     <button type="submit" class="btn btn-danger">
                                         <span>🗑️</span>
-                                        <span>@Localizer["Delete"]</span>
+                                        <span><loc key="Delete" /></span>
                                     </button>
                                 </form>
                             </div>
@@ -584,25 +584,25 @@
     }
     else
     {
-        <p class="empty-state">@Localizer["NoCompaniesYet"]</p>
+        <p class="empty-state"><loc key="NoCompaniesYet" /></p>
     }
 </div>
 
 <!-- Rename Company Modal -->
 <div id="renameModal" class="modal">
     <div class="modal-content">
-        <h3 class="modal-header">@Localizer["RenameCompany"]</h3>
+        <h3 class="modal-header"><loc key="RenameCompany" /></h3>
         <form method="post" asp-page-handler="RenameCompany">
             @Html.AntiForgeryToken()
             <input type="hidden" id="renameCompanyId" name="RenameCompanyId" />
             <div class="form-group">
-                <label class="form-label">@Localizer["NewCompanyName"]</label>
+                <label class="form-label"><loc key="NewCompanyName" /></label>
                 <input type="text" class="form-input" id="newCompanyName" name="NewCompanyName" required />
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">
                     <span>💾</span>
-                    <span>@Localizer["Rename"]</span>
+                    <span><loc key="Rename" /></span>
                 </button>
                 <button type="button" class="btn btn-ghost" onclick="closeRenameModal()">@Localizer["Cancel"]</button>
             </div>

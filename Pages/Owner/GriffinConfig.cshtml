@@ -1,8 +1,8 @@
 @page
 @model ShiftManager.Pages.Owner.GriffinConfigModel
+@using ShiftManager.ViewComponents
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
-@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
@@ -22,9 +22,9 @@
     <div class="page-header">
         <h1>
             <span class="page-icon">🛡️</span>
-            @Localizer["Owner_GriffinConfig"]
+            <loc key="Owner_GriffinConfig" />
         </h1>
-        <p class="page-subtitle">@Localizer["Owner_GriffinConfig_Subtitle"]</p>
+        <p class="page-subtitle"><loc key="Owner_GriffinConfig_Subtitle" /></p>
     </div>
 
     @* Status Widget - At-a-glance health monitoring *@
@@ -32,26 +32,26 @@
         <div class="status-indicator-wrapper">
             @if (Model.LastTestSuccess == true)
             {
-                <div class="status-indicator status-success" title="@Localizer["Status_Healthy"]"></div>
+                <div class="status-indicator status-success" loc-title="Status_Healthy"></div>
                 <div class="status-info">
-                    <div class="status-title">@Localizer["Status_ConnectionHealthy"]</div>
+                    <div class="status-title"><loc key="Status_ConnectionHealthy" /></div>
                     @if (Model.LastTestTimestamp.HasValue)
                     {
                         <div class="status-subtitle">
-                            @Localizer["Status_LastTested"]: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                         </div>
                     }
                 </div>
             }
             else if (Model.LastTestSuccess == false)
             {
-                <div class="status-indicator status-error" title="@Localizer["Status_Unhealthy"]"></div>
+                <div class="status-indicator status-error" loc-title="Status_Unhealthy"></div>
                 <div class="status-info">
-                    <div class="status-title">@Localizer["Status_ConnectionFailed"]</div>
+                    <div class="status-title"><loc key="Status_ConnectionFailed" /></div>
                     @if (Model.LastTestTimestamp.HasValue)
                     {
                         <div class="status-subtitle">
-                            @Localizer["Status_LastTested"]: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                         </div>
                     }
                     @if (!string.IsNullOrEmpty(Model.LastTestError))
@@ -62,16 +62,16 @@
             }
             else
             {
-                <div class="status-indicator status-unknown" title="@Localizer["Status_NotTested"]"></div>
+                <div class="status-indicator status-unknown" loc-title="Status_NotTested"></div>
                 <div class="status-info">
-                    <div class="status-title">@Localizer["Status_NotTestedYet"]</div>
-                    <div class="status-subtitle">@Localizer["Status_NotTested_Desc"]</div>
+                    <div class="status-title"><loc key="Status_NotTestedYet" /></div>
+                    <div class="status-subtitle"><loc key="Status_NotTested_Desc" /></div>
                 </div>
             }
         </div>
         <form method="post" asp-page-handler="TestConnection" style="display: inline;">
             <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
-                🔌 @Localizer["Status_RetestConnection"]
+                🔌 <loc key="Status_RetestConnection" />
             </button>
         </form>
     </div>
@@ -79,14 +79,14 @@
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {
         <div class="alert alert-success">
-            <strong>✅ @Localizer["Success"]:</strong> @Model.SuccessMessage
+            <strong>✅ <loc key="Success" />:</strong> @Model.SuccessMessage
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-error">
-            <strong>❌ @Localizer["Error"]:</strong> @Model.ErrorMessage
+            <strong>❌ <loc key="Error" />:</strong> @Model.ErrorMessage
         </div>
     }
 
@@ -95,13 +95,13 @@
         @if (Model.TestConnectionResult.Value)
         {
             <div class="alert alert-success">
-                <strong>✅ @Localizer["Success"]:</strong> @Localizer["Owner_Griffin_ConnectionSuccess"]
+                <strong>✅ <loc key="Success" />:</strong> <loc key="Owner_Griffin_ConnectionSuccess" />
             </div>
         }
         else
         {
             <div class="alert alert-error">
-                <strong>❌ @Localizer["Error"]:</strong> @Localizer["Owner_Griffin_ConnectionFailed"]
+                <strong>❌ <loc key="Error" />:</strong> <loc key="Owner_Griffin_ConnectionFailed" />
             </div>
         }
     }
@@ -109,7 +109,7 @@
     <form method="post">
         <div class="config-card">
             <div class="card-header">
-                <h2>🛡️ @Localizer["Owner_Griffin_ServiceConfig"]</h2>
+                <h2>🛡️ <loc key="Owner_Griffin_ServiceConfig" /></h2>
                 <div class="form-group-inline">
                     <label class="toggle-label">
                         <input type="checkbox" asp-for="Enabled" class="toggle-checkbox" />
@@ -121,30 +121,30 @@
             <div class="card-body">
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="BaseUrl">@Localizer["Owner_Griffin_BaseUrl"]</label>
+                        <label asp-for="BaseUrl"><loc key="Owner_Griffin_BaseUrl" /></label>
                         <div class="help-buttons-group">
-                            <button type="button" class="help-button" onclick="toggleFieldHelp('baseurl-help')" title="@Localizer["Help_ShowDetails"]">
+                            <button type="button" class="help-button" onclick="toggleFieldHelp('baseurl-help')" loc-title="Help_ShowDetails">
                                 ❓
                             </button>
-                            <button type="button" class="find-this-button" onclick="openModal('find-baseurl-modal')" title="@Localizer["FindThis_HowToFind"]">
-                                🔍 @Localizer["FindThis_Button"]
+                            <button type="button" class="find-this-button" onclick="openModal('find-baseurl-modal')" loc-title="FindThis_HowToFind">
+                                🔍 <loc key="FindThis_Button" />
                             </button>
                         </div>
                     </div>
                     <input asp-for="BaseUrl" class="form-control" placeholder="http://7108dev-auth.d8200.mil" id="baseurl-input" onblur="validateUrl(this)" />
-                    <small class="form-text">@Localizer["Owner_Griffin_BaseUrl_Desc"]</small>
+                    <small class="form-text"><loc key="Owner_Griffin_BaseUrl_Desc" /></small>
 
                     <div class="context-panel" id="baseurl-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
-                            <p>@Localizer["ContextPanel_Griffin_BaseUrl_Purpose"]</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Griffin_BaseUrl_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_WhereToFind"]</strong>
-                            <p>@Localizer["ContextPanel_Griffin_BaseUrl_WhereToFind"]</p>
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Griffin_BaseUrl_WhereToFind" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Example"]</strong>
+                            <strong><loc key="ContextPanel_Example" /></strong>
                             <code class="example-code">http://7108dev-auth.d8200.mil</code>
                             <code class="example-code">https://griffin.example.mil</code>
                         </div>
@@ -153,26 +153,26 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="TokenConsumerUrl">@Localizer["Owner_Griffin_CallbackUrl"]</label>
-                        <button type="button" class="help-button" onclick="toggleFieldHelp('callback-help')" title="@Localizer["Help_ShowDetails"]">
+                        <label asp-for="TokenConsumerUrl"><loc key="Owner_Griffin_CallbackUrl" /></label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('callback-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
                     <input asp-for="TokenConsumerUrl" class="form-control"
                            placeholder="https://your-app.local/Auth/GriffinCallback" id="callback-input" onblur="validateUrl(this)" />
-                    <small class="form-text">@Localizer["Owner_Griffin_CallbackUrl_Desc"]</small>
+                    <small class="form-text"><loc key="Owner_Griffin_CallbackUrl_Desc" /></small>
 
                     <div class="context-panel" id="callback-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
-                            <p>@Localizer["ContextPanel_Griffin_CallbackUrl_Purpose"]</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Griffin_CallbackUrl_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_WhereToFind"]</strong>
-                            <p>@Localizer["ContextPanel_Griffin_CallbackUrl_WhereToFind"]</p>
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Griffin_CallbackUrl_WhereToFind" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Example"]</strong>
+                            <strong><loc key="ContextPanel_Example" /></strong>
                             <code class="example-code">https://your-domain.local/Auth/GriffinCallback</code>
                             <code class="example-code">http://localhost:5000/Auth/GriffinCallback</code>
                         </div>
@@ -181,8 +181,8 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="TimeoutSeconds">@Localizer["Owner_Griffin_Timeout"]</label>
-                        <button type="button" class="help-button" onclick="toggleFieldHelp('timeout-help')" title="@Localizer["Help_ShowDetails"]">
+                        <label asp-for="TimeoutSeconds"><loc key="Owner_Griffin_Timeout" /></label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('timeout-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
@@ -190,48 +190,48 @@
 
                     <div class="context-panel" id="timeout-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
-                            <p>@Localizer["ContextPanel_Griffin_Timeout_Purpose"]</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Griffin_Timeout_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Recommendation"]</strong>
-                            <p>@Localizer["ContextPanel_Griffin_Timeout_Recommendation"]</p>
+                            <strong><loc key="ContextPanel_Recommendation" /></strong>
+                            <p><loc key="ContextPanel_Griffin_Timeout_Recommendation" /></p>
                         </div>
                     </div>
-                    <small class="form-text">@Localizer["Owner_Griffin_Timeout_Desc"]</small>
+                    <small class="form-text"><loc key="Owner_Griffin_Timeout_Desc" /></small>
                 </div>
             </div>
         </div>
 
         <div class="config-card">
             <div class="card-header">
-                <h2>👥 @Localizer["Owner_Griffin_UserProvisioning"]</h2>
+                <h2>👥 <loc key="Owner_Griffin_UserProvisioning" /></h2>
             </div>
 
             <div class="card-body">
                 <div class="form-group">
                     <label class="toggle-label">
                         <input type="checkbox" asp-for="AutoProvisionUsers" class="toggle-checkbox" />
-                        <span class="toggle-text">@Localizer["Owner_Griffin_AutoProvision"]</span>
+                        <span class="toggle-text"><loc key="Owner_Griffin_AutoProvision" /></span>
                     </label>
-                    <small class="form-text">@Localizer["Owner_Griffin_AutoProvision_Desc"]</small>
+                    <small class="form-text"><loc key="Owner_Griffin_AutoProvision_Desc" /></small>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="DefaultProvisionedRole">@Localizer["Owner_Griffin_DefaultRole"]</label>
+                    <label asp-for="DefaultProvisionedRole"><loc key="Owner_Griffin_DefaultRole" /></label>
                     <select asp-for="DefaultProvisionedRole" class="form-control" asp-items="Model.RoleOptions"></select>
-                    <small class="form-text">@Localizer["Owner_Griffin_DefaultRole_Desc"]</small>
+                    <small class="form-text"><loc key="Owner_Griffin_DefaultRole_Desc" /></small>
                 </div>
             </div>
         </div>
 
         <div class="config-card">
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary">💾 @Localizer["Save"]</button>
+                <button type="submit" class="btn btn-primary">💾 <loc key="Save" /></button>
                 <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
-                    🔌 @Localizer["Owner_Griffin_TestConnection"]
+                    🔌 <loc key="Owner_Griffin_TestConnection" />
                 </button>
-                <a href="/Owner/Index" class="btn btn-outline">@Localizer["Cancel"]</a>
+                <a href="/Owner/Index" class="btn btn-outline"><loc key="Cancel" /></a>
             </div>
         </div>
     </form>
@@ -239,14 +239,14 @@
     @* Info Card *@
     <div class="config-card">
         <div class="card-header">
-            <h2>ℹ️ @Localizer["Owner_Griffin_About"]</h2>
+            <h2>ℹ️ <loc key="Owner_Griffin_About" /></h2>
         </div>
         <div class="card-body">
-            <p>@Localizer["Owner_Griffin_About_Desc"]</p>
+            <p><loc key="Owner_Griffin_About_Desc" /></p>
             <ul>
-                <li>@Localizer["Owner_Griffin_About_Point1"]</li>
-                <li>@Localizer["Owner_Griffin_About_Point2"]</li>
-                <li>@Localizer["Owner_Griffin_About_Point3"]</li>
+                <li><loc key="Owner_Griffin_About_Point1" /></li>
+                <li><loc key="Owner_Griffin_About_Point2" /></li>
+                <li><loc key="Owner_Griffin_About_Point3" /></li>
             </ul>
         </div>
     </div>
@@ -256,9 +256,9 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>🔍 @Localizer["Owner_Griffin_DiagnosticsTitle"]</h2>
+                <h2>🔍 <loc key="Owner_Griffin_DiagnosticsTitle" /></h2>
                 <button type="button" onclick="exportDiagnostics()" class="btn btn-sm btn-secondary">
-                    📥 @Localizer["Owner_Griffin_ExportDiagnostics"]
+                    📥 <loc key="Owner_Griffin_ExportDiagnostics" />
                 </button>
             </div>
             <div class="card-body">
@@ -274,18 +274,18 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>📊 @Localizer["Owner_Griffin_RecentTests"]</h2>
+                <h2>📊 <loc key="Owner_Griffin_RecentTests" /></h2>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="logs-table">
                         <thead>
                             <tr>
-                                <th>@Localizer["Owner_Griffin_Table_Timestamp"]</th>
-                                <th>@Localizer["Owner_Griffin_Table_Status"]</th>
-                                <th>@Localizer["Owner_Griffin_Table_HttpCode"]</th>
-                                <th>@Localizer["Owner_Griffin_Table_Duration"]</th>
-                                <th>@Localizer["Owner_Griffin_Table_RedirectUrl"]</th>
+                                <th><loc key="Owner_Griffin_Table_Timestamp" /></th>
+                                <th><loc key="Owner_Griffin_Table_Status" /></th>
+                                <th><loc key="Owner_Griffin_Table_HttpCode" /></th>
+                                <th><loc key="Owner_Griffin_Table_Duration" /></th>
+                                <th><loc key="Owner_Griffin_Table_RedirectUrl" /></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -296,11 +296,11 @@
                                     <td>
                                         @if (log.Success)
                                         {
-                                            <span class="badge badge-success">✓ @Localizer["Owner_Griffin_Status_Success"]</span>
+                                            <span class="badge badge-success">✓ <loc key="Owner_Griffin_Status_Success" /></span>
                                         }
                                         else
                                         {
-                                            <span class="badge badge-error">✗ @Localizer["Owner_Griffin_Status_Failed"]</span>
+                                            <span class="badge badge-error">✗ <loc key="Owner_Griffin_Status_Failed" /></span>
                                         }
                                     </td>
                                     <td>@(log.ResponseStatusCode?.ToString() ?? "N/A")</td>
@@ -320,7 +320,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>⚠️ @Localizer["Owner_Griffin_RecentFailures"]</h2>
+                <h2>⚠️ <loc key="Owner_Griffin_RecentFailures" /></h2>
             </div>
             <div class="card-body">
                 @foreach (var failure in Model.RecentFailures)
@@ -339,7 +339,7 @@
                         @if (!string.IsNullOrEmpty(failure.ValidationErrors))
                         {
                             <div class="failure-validation">
-                                <strong>@Localizer["Owner_Griffin_ValidationErrors"]</strong> @failure.ValidationErrors
+                                <strong><loc key="Owner_Griffin_ValidationErrors" /></strong> @failure.ValidationErrors
                             </div>
                         }
                     </div>
@@ -353,8 +353,8 @@
 <div id="find-baseurl-modal" class="modal-overlay" onclick="closeModal('find-baseurl-modal')" style="display: none;">
     <div class="modal-container" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h3>🔍 @Localizer["FindThis_Griffin_BaseUrl_Title"]</h3>
-            <button type="button" class="modal-close-btn" onclick="closeModal('find-baseurl-modal')" title="@Localizer["Close"]">
+            <h3>🔍 <loc key="FindThis_Griffin_BaseUrl_Title" /></h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('find-baseurl-modal')" loc-title="Close">
                 ✕
             </button>
         </div>
@@ -362,32 +362,32 @@
             <div class="modal-step">
                 <div class="step-number">1</div>
                 <div class="step-content">
-                    <h4>@Localizer["FindThis_Griffin_BaseUrl_Step1_Title"]</h4>
-                    <p>@Localizer["FindThis_Griffin_BaseUrl_Step1_Desc"]</p>
+                    <h4><loc key="FindThis_Griffin_BaseUrl_Step1_Title" /></h4>
+                    <p><loc key="FindThis_Griffin_BaseUrl_Step1_Desc" /></p>
                 </div>
             </div>
             <div class="modal-step">
                 <div class="step-number">2</div>
                 <div class="step-content">
-                    <h4>@Localizer["FindThis_Griffin_BaseUrl_Step2_Title"]</h4>
-                    <p>@Localizer["FindThis_Griffin_BaseUrl_Step2_Desc"]</p>
+                    <h4><loc key="FindThis_Griffin_BaseUrl_Step2_Title" /></h4>
+                    <p><loc key="FindThis_Griffin_BaseUrl_Step2_Desc" /></p>
                 </div>
             </div>
             <div class="modal-step">
                 <div class="step-number">3</div>
                 <div class="step-content">
-                    <h4>@Localizer["FindThis_Griffin_BaseUrl_Step3_Title"]</h4>
-                    <p>@Localizer["FindThis_Griffin_BaseUrl_Step3_Desc"]</p>
+                    <h4><loc key="FindThis_Griffin_BaseUrl_Step3_Title" /></h4>
+                    <p><loc key="FindThis_Griffin_BaseUrl_Step3_Desc" /></p>
                     <code class="example-code">http://your-server.domain.mil</code>
                 </div>
             </div>
             <div class="modal-note">
-                <strong>💡 @Localizer["Note"]:</strong> @Localizer["FindThis_Griffin_BaseUrl_Note"]
+                <strong>💡 <loc key="Note" />:</strong> <loc key="FindThis_Griffin_BaseUrl_Note" />
             </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-primary" onclick="closeModal('find-baseurl-modal')">
-                @Localizer["GotIt"]
+                <loc key="GotIt" />
             </button>
         </div>
     </div>

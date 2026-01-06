@@ -371,8 +371,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">@Localizer["Requests"]</h1>
-    <p class="page-subtitle">@Localizer["ReviewAndApproveTeamRequests"]</p>
+    <h1 class="page-title"><loc key="Requests" /></h1>
+    <p class="page-subtitle"><loc key="ReviewAndApproveTeamRequests" /></p>
 </div>
 
 <!-- Error/Success Messages -->
@@ -422,7 +422,7 @@
         <div class="section-header">
             <h2 class="section-title">
                 <span>📅</span>
-                <span>@Localizer["PendingTimeOff"]</span>
+                <span><loc key="PendingTimeOff" /></span>
                 @if (Model.TimeOff.Any())
                 {
                     <span class="count-badge">@Model.TimeOff.Count</span>
@@ -447,13 +447,13 @@
                         <div class="request-info">
                             <div class="request-info-item">
                                 <span class="icon">📅</span>
-                                <span class="label">@Localizer["Dates"]:</span>
+                                <span class="label"><loc key="Dates" />:</span>
                                 <span>@r.StartDate.ToString("MMM dd, yyyy") → @r.EndDate.ToString("MMM dd, yyyy")</span>
                             </div>
                             <div class="request-info-item">
                                 <span class="icon">⏱️</span>
-                                <span class="label">@Localizer["Duration"]:</span>
-                                <span>@((r.EndDate.DayNumber - r.StartDate.DayNumber + 1)) @Localizer["Days"]</span>
+                                <span class="label"><loc key="Duration" />:</span>
+                                <span>@((r.EndDate.DayNumber - r.StartDate.DayNumber + 1)) <loc key="Days" /></span>
                             </div>
                         </div>
 
@@ -470,14 +470,14 @@
                             <input type="hidden" name="id" value="@r.Id" />
                             <button type="submit" class="btn btn-approve">
                                 <span>✓</span>
-                                <span>@Localizer["Approve"]</span>
+                                <span><loc key="Approve" /></span>
                             </button>
                         </form>
                         <form method="post" asp-page-handler="DeclineTimeOff" style="margin: 0;">
                             <input type="hidden" name="id" value="@r.Id" />
                             <button type="submit" class="btn btn-decline">
                                 <span>✗</span>
-                                <span>@Localizer["Decline"]</span>
+                                <span><loc key="Decline" /></span>
                             </button>
                         </form>
                     </div>
@@ -489,8 +489,8 @@
     {
         <div class="empty-state">
             <div class="empty-state-icon">✓</div>
-            <div class="empty-state-title">@Localizer["NoTimeOffRequests"]</div>
-            <div class="empty-state-text">@Localizer["AllCaughtUp"]</div>
+            <div class="empty-state-title"><loc key="NoTimeOffRequests" /></div>
+            <div class="empty-state-text"><loc key="AllCaughtUp" /></div>
         </div>
     }
     </div>
@@ -502,7 +502,7 @@
         <div class="section-header">
             <h2 class="section-title">
                 <span>🔄</span>
-                <span>@Localizer["PendingSwaps"]</span>
+                <span><loc key="PendingSwaps" /></span>
                 @if (Model.Swaps.Any())
                 {
                     <span class="count-badge">@Model.Swaps.Count</span>
@@ -527,12 +527,12 @@
                         <div class="request-info">
                             <div class="request-info-item">
                                 <span class="icon">📅</span>
-                                <span class="label">@Localizer["Shift"]:</span>
+                                <span class="label"><loc key="Shift" />:</span>
                                 <span>@s.When</span>
                             </div>
                             <div class="request-info-item">
                                 <span class="icon">→</span>
-                                <span class="label">@Localizer["ProposedTo"]:</span>
+                                <span class="label"><loc key="ProposedTo" />:</span>
                                 <span>@s.ToUser</span>
                             </div>
                         </div>
@@ -543,14 +543,14 @@
                             <input type="hidden" name="id" value="@s.Id" />
                             <button type="submit" class="btn btn-approve">
                                 <span>✓</span>
-                                <span>@Localizer["Approve"]</span>
+                                <span><loc key="Approve" /></span>
                             </button>
                         </form>
                         <form method="post" asp-page-handler="DeclineSwap" style="margin: 0;">
                             <input type="hidden" name="id" value="@s.Id" />
                             <button type="submit" class="btn btn-decline">
                                 <span>✗</span>
-                                <span>@Localizer["Decline"]</span>
+                                <span><loc key="Decline" /></span>
                             </button>
                         </form>
                     </div>
@@ -562,8 +562,8 @@
     {
         <div class="empty-state">
             <div class="empty-state-icon">✓</div>
-            <div class="empty-state-title">@Localizer["NoSwapRequests"]</div>
-            <div class="empty-state-text">@Localizer["AllCaughtUp"]</div>
+            <div class="empty-state-title"><loc key="NoSwapRequests" /></div>
+            <div class="empty-state-text"><loc key="AllCaughtUp" /></div>
         </div>
     }
     </div>
@@ -575,7 +575,7 @@
         <div class="section-header">
             <h2 class="section-title">
                 <span>📋</span>
-                <span>@Localizer["ApprovedTimeOffRequests"]</span>
+                <span><loc key="ApprovedTimeOffRequests" /></span>
                 @if (Model.ApprovedTimeOffs.Any())
                 {
                     <span class="count-badge">@Model.ApprovedTimeOffs.Count</span>
@@ -605,7 +605,7 @@
                             <div class="request-info">
                                 <div class="request-info-item">
                                     <span class="icon">📅</span>
-                                    <span class="label">@Localizer["Dates"]:</span>
+                                    <span class="label"><loc key="Dates" />:</span>
                                     <span>
                                         @timeOff.StartDate.ToString("MMM dd, yyyy")
                                         @if (timeOff.StartDate != timeOff.EndDate)
@@ -616,12 +616,12 @@
                                 </div>
                                 <div class="request-info-item">
                                     <span class="icon">⏱️</span>
-                                    <span class="label">@Localizer["Duration"]:</span>
+                                    <span class="label"><loc key="Duration" />:</span>
                                     <span>@days @(days == 1 ? Localizer["Day"] : Localizer["Days"])</span>
                                 </div>
                                 <div class="request-info-item">
                                     <span class="icon">📝</span>
-                                    <span class="label">@Localizer["RequestedOn"]:</span>
+                                    <span class="label"><loc key="RequestedOn" />:</span>
                                     <span>@timeOff.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
                                 </div>
                             </div>
@@ -648,7 +648,7 @@
                                     <input type="hidden" name="id" value="@timeOff.Id" />
                                     <button type="submit" class="btn btn-decline">
                                         <span>🗑️</span>
-                                        <span>@Localizer["Delete"]</span>
+                                        <span><loc key="Delete" /></span>
                                     </button>
                                 </form>
                             }
@@ -681,8 +681,8 @@
         {
             <div class="empty-state">
                 <div class="empty-state-icon">📅</div>
-                <div class="empty-state-title">@Localizer["NoApprovedTimeOffRequestsTitle"]</div>
-                <div class="empty-state-text">@Localizer["NoApprovedTimeOffRequestsMessage"]</div>
+                <div class="empty-state-title"><loc key="NoApprovedTimeOffRequestsTitle" /></div>
+                <div class="empty-state-text"><loc key="NoApprovedTimeOffRequestsMessage" /></div>
             </div>
         }
     </div>

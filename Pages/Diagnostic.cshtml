@@ -16,7 +16,7 @@
 
 <div style="max-width: 1200px; margin: 0 auto;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-        <h1 style="margin: 0; color: var(--text);">🔧 @Localizer["SystemDiagnostics"]</h1>
+        <h1 style="margin: 0; color: var(--text);">🔧 <loc key="SystemDiagnostics" /></h1>
     </div>
 
     <div style="background: var(--warning); color: #000; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #d97706;">
@@ -27,7 +27,7 @@
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2 style="margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
             <span>🔍</span>
-            <span>@Localizer["Filter"]</span>
+            <span><loc key="Filter" /></span>
         </h2>
         <form method="get" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
             <div>
@@ -35,7 +35,7 @@
                     @Localizer["SelectUser"]
                 </label>
                 <select name="SelectedUserId" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text);">
-                    <option value="">@Localizer["SelectUserPlaceholder"]</option>
+                    <option value=""><loc key="SelectUserPlaceholder" /></option>
                     @foreach (var user in Model.AllUsers)
                     {
                         <option value="@user.Id" selected="@(Model.SelectedUserId == user.Id)">
@@ -71,15 +71,15 @@
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2 style="margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
             <span>🏢</span>
-            <span>@Localizer["CompaniesInSystem"]</span>
+            <span><loc key="CompaniesInSystem" /></span>
         </h2>
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead style="background: var(--primary); color: var(--primary-text);">
                     <tr>
                         <th style="padding: 0.75rem; text-align: left;">ID</th>
-                        <th style="padding: 0.75rem; text-align: left;">@Localizer["Name"]</th>
-                        <th style="padding: 0.75rem; text-align: left;">@Localizer["Slug"]</th>
+                        <th style="padding: 0.75rem; text-align: left;"><loc key="Name" /></th>
+                        <th style="padding: 0.75rem; text-align: left;"><loc key="Slug" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,21 +100,21 @@
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2 style="margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
             <span>👤</span>
-            <span>@Localizer["UserInformation"]</span>
+            <span><loc key="UserInformation" /></span>
         </h2>
         @if (Model.UserInfo != null)
         {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                 <div>
-                    <div style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem;">@Localizer["Email"]</div>
+                    <div style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem;"><loc key="Email" /></div>
                     <div style="font-weight: 600; color: var(--text);">@Model.UserInfo.Email</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem;">@Localizer["CompanyId"]</div>
+                    <div style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem;"><loc key="CompanyId" /></div>
                     <div style="font-weight: 600; color: var(--text);">@Model.UserInfo.CompanyId</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem;">@Localizer["Role"]</div>
+                    <div style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem;"><loc key="Role" /></div>
                     <div style="font-weight: 600; color: var(--text);">@Model.UserInfo.Role</div>
                 </div>
             </div>
@@ -131,7 +131,7 @@
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2 style="margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
             <span>📅</span>
-            <span>@Localizer["ShiftInstancesForOctober2025"]</span>
+            <span><loc key="ShiftInstancesForOctober2025" /></span>
             <span style="font-size: 0.875rem; font-weight: normal; color: var(--muted);">
                 (@Model.ShiftInstances.Count items)
             </span>
@@ -142,11 +142,11 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead style="background: var(--primary); color: var(--primary-text);">
                         <tr>
-                            <th style="padding: 0.75rem; text-align: left;">@Localizer["InstanceId"]</th>
-                            <th style="padding: 0.75rem; text-align: left;">@Localizer["CompanyId"]</th>
-                            <th style="padding: 0.75rem; text-align: left;">@Localizer["WorkDate"]</th>
-                            <th style="padding: 0.75rem; text-align: left;">@Localizer["ShiftKey"]</th>
-                            <th style="padding: 0.75rem; text-align: left;">@Localizer["Staffing"]</th>
+                            <th style="padding: 0.75rem; text-align: left;"><loc key="InstanceId" /></th>
+                            <th style="padding: 0.75rem; text-align: left;"><loc key="CompanyId" /></th>
+                            <th style="padding: 0.75rem; text-align: left;"><loc key="WorkDate" /></th>
+                            <th style="padding: 0.75rem; text-align: left;"><loc key="ShiftKey" /></th>
+                            <th style="padding: 0.75rem; text-align: left;"><loc key="Staffing" /></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -178,7 +178,7 @@
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2 style="margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
             <span>✅</span>
-            <span>@Localizer["UserAssignments"]</span>
+            <span><loc key="UserAssignments" /></span>
             @if (Model.UserInfo != null)
             {
                 <span style="font-size: 0.875rem; font-weight: normal; color: var(--muted);">
@@ -194,11 +194,11 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead style="background: var(--primary); color: var(--primary-text);">
                             <tr>
-                                <th style="padding: 0.75rem; text-align: left;">@Localizer["AssignmentId"]</th>
-                                <th style="padding: 0.75rem; text-align: left;">@Localizer["UserId"]</th>
-                                <th style="padding: 0.75rem; text-align: left;">@Localizer["CompanyId"]</th>
-                                <th style="padding: 0.75rem; text-align: left;">@Localizer["InstanceId"]</th>
-                                <th style="padding: 0.75rem; text-align: left;">@Localizer["WorkDate"]</th>
+                                <th style="padding: 0.75rem; text-align: left;"><loc key="AssignmentId" /></th>
+                                <th style="padding: 0.75rem; text-align: left;"><loc key="UserId" /></th>
+                                <th style="padding: 0.75rem; text-align: left;"><loc key="CompanyId" /></th>
+                                <th style="padding: 0.75rem; text-align: left;"><loc key="InstanceId" /></th>
+                                <th style="padding: 0.75rem; text-align: left;"><loc key="WorkDate" /></th>
                             </tr>
                         </thead>
                         <tbody>

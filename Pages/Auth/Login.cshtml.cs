@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -219,8 +220,11 @@ public class LoginModel : LocalizedPageModel
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            // ✅ PHASE 18: Redirect to Home/Index dashboard for all users after login
-            return RedirectToPage("/Home/Index");
+            // ✅ PHASE 18: Redirect based on role - Owner uses old home, others use new redesigned home
+            if (user.Role == UserRole.Owner)
+                return RedirectToPage("/Home/Index");
+            else
+                return Redirect("/");
         }
         catch (Exception ex)
         {
@@ -243,7 +247,7 @@ public class LoginModel : LocalizedPageModel
         {
             _logger.LogWarning("Griffin authentication attempt but config not enabled (config null or Enabled=false)");
             Error = _localizer["Error_Login_AdfsNotConfigured"];
-            ReturnUrl = returnUrl ?? "/Home/Index";
+            ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = true;
             ShowGriffinUnavailableMessage = true;
             await OnGetAsync(returnUrl: returnUrl);
@@ -255,7 +259,7 @@ public class LoginModel : LocalizedPageModel
         {
             _logger.LogError("Griffin enabled but BaseUrl is missing");
             Error = _localizer["Error_Login_AdfsNotConfigured"];
-            ReturnUrl = returnUrl ?? "/Home/Index";
+            ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = true;
             ShowGriffinUnavailableMessage = true;
             await OnGetAsync(returnUrl: returnUrl);
@@ -266,7 +270,7 @@ public class LoginModel : LocalizedPageModel
         {
             _logger.LogError("Griffin enabled but TokenConsumerUrl is missing");
             Error = _localizer["Error_Login_AdfsNotConfigured"];
-            ReturnUrl = returnUrl ?? "/Home/Index";
+            ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = true;
             ShowGriffinUnavailableMessage = true;
             await OnGetAsync(returnUrl: returnUrl);

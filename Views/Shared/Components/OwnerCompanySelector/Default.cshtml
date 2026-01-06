@@ -1,4 +1,7 @@
 @model ShiftManager.ViewComponents.OwnerCompanySelectorViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
 
 @if (Model.Companies.Any())
 {
@@ -7,7 +10,7 @@
             @Html.AntiForgeryToken()
             <label style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
                 <span style="font-size: 1.25rem;">🏢</span>
-                <span>Managing Company:</span>
+                <span><loc key="OwnerSelector_ManagingCompany" /></span>
             </label>
 
             <select name="companyId"
@@ -17,7 +20,7 @@
                 {
                     var isHome = company.Id == Model.HomeCompanyId;
                     var isSelected = company.Id == Model.SelectedCompanyId;
-                    var displayName = company.Name + (isHome ? " (Home)" : "");
+                    var displayName = company.Name + (isHome ? $" {Localizer["OwnerSelector_Home"]}" : "");
 
                     <option value="@company.Id" selected="@isSelected">
                         @displayName
@@ -30,7 +33,7 @@
                 <button type="submit"
                         formaction="/Owner/ClearCompanySelection"
                         style="padding: 0.5rem 0.75rem; background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;"
-                        title="Clear selection and return to home company">
+                        loc-title="OwnerSelector_ClearSelectionTooltip">
                     ✕
                 </button>
             }

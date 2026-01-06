@@ -9,7 +9,7 @@
 }
 
 <div class="card">
-    <h2 class="card-title">@Localizer["Game_LeaderboardTitle"] 🏆</h2>
+    <h2 class="card-title"><loc key="Game_LeaderboardTitle" /> 🏆</h2>
 
     @* ✅ PHASE 19: Tabbed navigation for All-Time vs Monthly *@
     <div class="tab-nav" style="margin-top: 1.5rem;">
@@ -28,9 +28,9 @@
             <table class="table" style="margin-top: 1.5rem;">
                 <thead>
                     <tr>
-                        <th style="width: 80px; text-align: center;">@Localizer["Game_Rank"]</th>
-                        <th>@Localizer["Game_Player"]</th>
-                        <th style="width: 120px; text-align: right;">@Localizer["Game_Score"]</th>
+                        <th style="width: 80px; text-align: center;"><loc key="Game_Rank" /></th>
+                        <th><loc key="Game_Player" /></th>
+                        <th style="width: 120px; text-align: right;"><loc key="Game_Score" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,7 +59,7 @@
                                 <strong>@entry.DisplayName</strong>
                                 @if (entry.IsCurrentUser)
                                 {
-                                    <span style="color: var(--primary); margin-left: 0.5rem;">@Localizer["Game_You"]</span>
+                                    <span style="color: var(--primary); margin-left: 0.5rem;"><loc key="Game_You" /></span>
                                 }
                             </td>
                             <td style="text-align: right; font-weight: 600;">
@@ -91,7 +91,7 @@
         {
             <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
-                <p style="font-size: 1.125rem; margin: 0;">@Localizer["Game_NoScoresYet"]</p>
+                <p style="font-size: 1.125rem; margin: 0;"><loc key="Game_NoScoresYet" /></p>
             </div>
         }
     </div>
@@ -103,9 +103,9 @@
             <table class="table" style="margin-top: 1.5rem;">
                 <thead>
                     <tr>
-                        <th style="width: 80px; text-align: center;">@Localizer["Game_Rank"]</th>
-                        <th>@Localizer["Game_Player"]</th>
-                        <th style="width: 120px; text-align: right;">@Localizer["Game_Score"]</th>
+                        <th style="width: 80px; text-align: center;"><loc key="Game_Rank" /></th>
+                        <th><loc key="Game_Player" /></th>
+                        <th style="width: 120px; text-align: right;"><loc key="Game_Score" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,7 +134,7 @@
                                 <strong>@entry.DisplayName</strong>
                                 @if (entry.IsCurrentUser)
                                 {
-                                    <span style="color: var(--primary); margin-left: 0.5rem;">@Localizer["Game_You"]</span>
+                                    <span style="color: var(--primary); margin-left: 0.5rem;"><loc key="Game_You" /></span>
                                 }
                             </td>
                             <td style="text-align: right; font-weight: 600;">
@@ -166,7 +166,7 @@
         {
             <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
-                <p style="font-size: 1.125rem; margin: 0;">@Localizer["Game_NoScoresYet"]</p>
+                <p style="font-size: 1.125rem; margin: 0;"><loc key="Game_NoScoresYet" /></p>
             </div>
         }
     </div>

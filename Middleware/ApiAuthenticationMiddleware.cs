@@ -219,6 +219,12 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // Localization API - used by localization-api.js for client-side string fetching
+        if (path.StartsWithSegments("/Api/Localization", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 

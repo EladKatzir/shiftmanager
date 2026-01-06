@@ -15,7 +15,7 @@
 
 <div style="max-width: 1200px; margin: 0 auto;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-        <h2 style="color: var(--text); margin: 0;">@Localizer["NotificationCenter"]</h2>
+        <h2 style="color: var(--text); margin: 0;"><loc key="NotificationCenter" /></h2>
 
         @if (Model.Notifications.Any(n => !n.IsRead))
         {
@@ -114,8 +114,8 @@
     {
         <div class="empty-state" style="text-align: center; padding: 4rem 2rem; color: var(--muted);">
             <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-            <h3 style="margin: 0 0 0.5rem 0; color: var(--text);">@Localizer["NoNotifications"]</h3>
-            <p style="margin: 0;">@Localizer["AllCaughtUp"]</p>
+            <h3 style="margin: 0 0 0.5rem 0; color: var(--text);"><loc key="NoNotifications" /></h3>
+            <p style="margin: 0;"><loc key="AllCaughtUp" /></p>
         </div>
     }
 </div>

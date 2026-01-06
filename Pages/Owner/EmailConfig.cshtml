@@ -1,8 +1,8 @@
 @page
 @model ShiftManager.Pages.Owner.EmailConfigModel
+@using ShiftManager.ViewComponents
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
-@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
@@ -22,7 +22,7 @@
     <div class="page-header">
         <h1>
             <span class="page-icon">📧</span>
-            @Localizer["Owner_EmailConfig"]
+            <loc key="Owner_EmailConfig" />
         </h1>
         <p class="page-subtitle">Configure email notifications for the system</p>
     </div>
@@ -32,26 +32,26 @@
         <div class="status-indicator-wrapper">
             @if (Model.LastTestSuccess == true)
             {
-                <div class="status-indicator status-success" title="@Localizer["Status_Healthy"]"></div>
+                <div class="status-indicator status-success" loc-title="Status_Healthy"></div>
                 <div class="status-info">
-                    <div class="status-title">@Localizer["Status_EmailHealthy"]</div>
+                    <div class="status-title"><loc key="Status_EmailHealthy" /></div>
                     @if (Model.LastTestTimestamp.HasValue)
                     {
                         <div class="status-subtitle">
-                            @Localizer["Status_LastTested"]: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                         </div>
                     }
                 </div>
             }
             else if (Model.LastTestSuccess == false)
             {
-                <div class="status-indicator status-error" title="@Localizer["Status_Unhealthy"]"></div>
+                <div class="status-indicator status-error" loc-title="Status_Unhealthy"></div>
                 <div class="status-info">
-                    <div class="status-title">@Localizer["Status_EmailFailed"]</div>
+                    <div class="status-title"><loc key="Status_EmailFailed" /></div>
                     @if (Model.LastTestTimestamp.HasValue)
                     {
                         <div class="status-subtitle">
-                            @Localizer["Status_LastTested"]: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                         </div>
                     }
                     @if (!string.IsNullOrEmpty(Model.LastTestError))
@@ -62,16 +62,16 @@
             }
             else
             {
-                <div class="status-indicator status-unknown" title="@Localizer["Status_NotTested"]"></div>
+                <div class="status-indicator status-unknown" loc-title="Status_NotTested"></div>
                 <div class="status-info">
-                    <div class="status-title">@Localizer["Status_NotTestedYet"]</div>
-                    <div class="status-subtitle">@Localizer["Status_NotTested_Desc"]</div>
+                    <div class="status-title"><loc key="Status_NotTestedYet" /></div>
+                    <div class="status-subtitle"><loc key="Status_NotTested_Desc" /></div>
                 </div>
             }
         </div>
         <form method="post" asp-page-handler="TestConnection" style="display: inline;">
             <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
-                📧 @Localizer["Status_RetestEmail"]
+                📧 <loc key="Status_RetestEmail" />
             </button>
         </form>
     </div>
@@ -106,7 +106,7 @@
                 <div class="form-group">
                     <div class="label-with-help">
                         <label asp-for="EmailApiUrl">API URL</label>
-                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" title="@Localizer["Help_ShowDetails"]">
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
@@ -115,15 +115,15 @@
 
                     <div class="context-panel" id="email-url-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
-                            <p>@Localizer["ContextPanel_Email_ApiUrl_Purpose"]</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiUrl_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_WhereToFind"]</strong>
-                            <p>@Localizer["ContextPanel_Email_ApiUrl_WhereToFind"]</p>
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiUrl_WhereToFind" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Example"]</strong>
+                            <strong><loc key="ContextPanel_Example" /></strong>
                             <code class="example-code">https://api.sendgrid.com/v3/mail/send</code>
                             <code class="example-code">https://api.mailgun.net/v3/yourdomain.com/messages</code>
                         </div>
@@ -140,11 +140,11 @@
                             }
                         </label>
                         <div class="help-buttons-group">
-                            <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" title="@Localizer["Help_ShowDetails"]">
+                            <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" loc-title="Help_ShowDetails">
                                 ❓
                             </button>
-                            <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" title="@Localizer["FindThis_HowToFind"]">
-                                🔍 @Localizer["FindThis_Button"]
+                            <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" loc-title="FindThis_HowToFind">
+                                🔍 <loc key="FindThis_Button" />
                             </button>
                         </div>
                     </div>
@@ -163,16 +163,16 @@
 
                     <div class="context-panel" id="email-key-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
-                            <p>@Localizer["ContextPanel_Email_ApiKey_Purpose"]</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiKey_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_WhereToFind"]</strong>
-                            <p>@Localizer["ContextPanel_Email_ApiKey_WhereToFind"]</p>
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiKey_WhereToFind" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Security"]</strong>
-                            <p>@Localizer["ContextPanel_Email_ApiKey_Security"]</p>
+                            <strong><loc key="ContextPanel_Security" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiKey_Security" /></p>
                         </div>
                     </div>
                 </div>
@@ -180,7 +180,7 @@
                 <div class="form-group">
                     <div class="label-with-help">
                         <label asp-for="EmailFromAddress">From Address</label>
-                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" title="@Localizer["Help_ShowDetails"]">
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
@@ -189,15 +189,15 @@
 
                     <div class="context-panel" id="email-from-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Purpose"]</strong>
-                            <p>@Localizer["ContextPanel_Email_FromAddress_Purpose"]</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Email_FromAddress_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_BestPractices"]</strong>
-                            <p>@Localizer["ContextPanel_Email_FromAddress_BestPractices"]</p>
+                            <strong><loc key="ContextPanel_BestPractices" /></strong>
+                            <p><loc key="ContextPanel_Email_FromAddress_BestPractices" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>@Localizer["ContextPanel_Example"]</strong>
+                            <strong><loc key="ContextPanel_Example" /></strong>
                             <code class="example-code">noreply@yourcompany.com</code>
                             <code class="example-code">notifications@yourdomain.mil</code>
                         </div>
@@ -359,8 +359,8 @@
 <div id="find-apikey-modal" class="modal-overlay" onclick="closeModal('find-apikey-modal')" style="display: none;">
     <div class="modal-container" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h3>🔍 @Localizer["FindThis_Email_ApiKey_Title"]</h3>
-            <button type="button" class="modal-close-btn" onclick="closeModal('find-apikey-modal')" title="@Localizer["Close"]">
+            <h3>🔍 <loc key="FindThis_Email_ApiKey_Title" /></h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('find-apikey-modal')" loc-title="Close">
                 ✕
             </button>
         </div>
@@ -368,31 +368,31 @@
             <div class="modal-step">
                 <div class="step-number">1</div>
                 <div class="step-content">
-                    <h4>@Localizer["FindThis_Email_ApiKey_Step1_Title"]</h4>
-                    <p>@Localizer["FindThis_Email_ApiKey_Step1_Desc"]</p>
+                    <h4><loc key="FindThis_Email_ApiKey_Step1_Title" /></h4>
+                    <p><loc key="FindThis_Email_ApiKey_Step1_Desc" /></p>
                 </div>
             </div>
             <div class="modal-step">
                 <div class="step-number">2</div>
                 <div class="step-content">
-                    <h4>@Localizer["FindThis_Email_ApiKey_Step2_Title"]</h4>
-                    <p>@Localizer["FindThis_Email_ApiKey_Step2_Desc"]</p>
+                    <h4><loc key="FindThis_Email_ApiKey_Step2_Title" /></h4>
+                    <p><loc key="FindThis_Email_ApiKey_Step2_Desc" /></p>
                 </div>
             </div>
             <div class="modal-step">
                 <div class="step-number">3</div>
                 <div class="step-content">
-                    <h4>@Localizer["FindThis_Email_ApiKey_Step3_Title"]</h4>
-                    <p>@Localizer["FindThis_Email_ApiKey_Step3_Desc"]</p>
+                    <h4><loc key="FindThis_Email_ApiKey_Step3_Title" /></h4>
+                    <p><loc key="FindThis_Email_ApiKey_Step3_Desc" /></p>
                 </div>
             </div>
             <div class="modal-note">
-                <strong>🔒 @Localizer["Security"]:</strong> @Localizer["FindThis_Email_ApiKey_SecurityNote"]
+                <strong>🔒 <loc key="Security" />:</strong> <loc key="FindThis_Email_ApiKey_SecurityNote" />
             </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-primary" onclick="closeModal('find-apikey-modal')">
-                @Localizer["GotIt"]
+                <loc key="GotIt" />
             </button>
         </div>
     </div>

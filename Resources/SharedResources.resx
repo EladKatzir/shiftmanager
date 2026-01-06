@@ -3714,6 +3714,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_NoPermissionDeclineRequest" xml:space="preserve">
     <value>You don't have permission to decline this request.</value>
   </data>
+  <data name="Error_RequestAlreadyProcessed" xml:space="preserve">
+    <value>This request has already been processed by another manager. Please refresh the page.</value>
+  </data>
   <data name="Error_CannotApproveSwap" xml:space="preserve">
     <value>Cannot approve swap</value>
   </data>
@@ -4484,5 +4487,152 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Calendar_Unassigned" xml:space="preserve">
     <value>Unassigned</value>
+  </data>
+  <data name="EditMode_Title" xml:space="preserve">
+    <value>Edit Mode ON</value>
+  </data>
+  <data name="EditMode_Company" xml:space="preserve">
+    <value>Company:</value>
+  </data>
+  <data name="EditMode_Culture" xml:space="preserve">
+    <value>Culture:</value>
+  </data>
+  <data name="EditMode_Drafts" xml:space="preserve">
+    <value>Drafts:</value>
+  </data>
+  <data name="EditMode_FreezeInteractions" xml:space="preserve">
+    <value>Freeze Interactions</value>
+  </data>
+  <data name="EditMode_ViewDrafts" xml:space="preserve">
+    <value>View Drafts</value>
+  </data>
+  <data name="EditMode_ViewDraftsTooltip" xml:space="preserve">
+    <value>View all draft changes</value>
+  </data>
+  <data name="EditMode_SaveAndExit" xml:space="preserve">
+    <value>Save &amp; Exit</value>
+  </data>
+  <data name="EditMode_SaveExitTooltip" xml:space="preserve">
+    <value>Save all drafts and exit edit mode</value>
+  </data>
+  <data name="EditMode_Discard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
+  <data name="EditMode_DiscardTooltip" xml:space="preserve">
+    <value>Discard all drafts and exit edit mode</value>
+  </data>
+  <data name="OwnerSelector_ManagingCompany" xml:space="preserve">
+    <value>Managing Company:</value>
+  </data>
+  <data name="OwnerSelector_Home" xml:space="preserve">
+    <value>(Home)</value>
+  </data>
+  <data name="OwnerSelector_ClearSelectionTooltip" xml:space="preserve">
+    <value>Clear selection and return to home company</value>
+  </data>
+  <data name="Owner_EmailTemplates" xml:space="preserve">
+    <value>Email Templates</value>
+  </data>
+  <data name="EmailTemplates_Subtitle" xml:space="preserve">
+    <value>Customize email notifications sent to your employees</value>
+  </data>
+  <data name="EmailTemplates_InfoTitle" xml:space="preserve">
+    <value>How Email Templates Work</value>
+  </data>
+  <data name="EmailTemplates_InfoDescription" xml:space="preserve">
+    <value>Customize the message body for each email type. You can use variables like {EmployeeName} that will be replaced with actual values. Subject lines remain standard and localized.</value>
+  </data>
+  <data name="EmailTemplates_CustomMessage" xml:space="preserve">
+    <value>Custom Message</value>
+  </data>
+  <data name="EmailTemplates_DefaultMessage" xml:space="preserve">
+    <value>Default Message</value>
+  </data>
+  <data name="EmailTemplates_AvailableVariables" xml:space="preserve">
+    <value>Available Variables</value>
+  </data>
+  <data name="EmailTemplates_EditTemplate" xml:space="preserve">
+    <value>Edit Email Template</value>
+  </data>
+  <data name="EmailTemplates_MessagePlaceholder" xml:space="preserve">
+    <value>Enter your custom message here. Leave empty to use the default message.</value>
+  </data>
+  <data name="EmailTemplates_CharacterCount" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="EmailTemplates_EnableCustomTemplate" xml:space="preserve">
+    <value>Enable custom message</value>
+  </data>
+  <data name="EmailTemplates_VariablesHelp" xml:space="preserve">
+    <value>Use these variables in your message. They will be replaced with actual values when the email is sent.</value>
+  </data>
+  <data name="Status_Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="Status_Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="Action_ResetToDefault" xml:space="preserve">
+    <value>Reset to Default</value>
+  </data>
+  <data name="Confirm_ResetTemplate" xml:space="preserve">
+    <value>Are you sure you want to reset this template to its default message?</value>
+  </data>
+  <data name="Success_EmailTemplateSaved" xml:space="preserve">
+    <value>Email template saved successfully</value>
+  </data>
+  <data name="Success_EmailTemplateReset" xml:space="preserve">
+    <value>Email template reset to default</value>
+  </data>
+  <data name="Error_EmailTemplate_MessageTooLong" xml:space="preserve">
+    <value>Message is too long. Maximum 2000 characters allowed.</value>
+  </data>
+  <data name="Error_SavingEmailTemplate" xml:space="preserve">
+    <value>Error saving email template. Please try again.</value>
+  </data>
+  <data name="Error_ResettingEmailTemplate" xml:space="preserve">
+    <value>Error resetting email template. Please try again.</value>
+  </data>
+  <data name="EmailTemplate_ShiftAssigned" xml:space="preserve">
+    <value>Shift Assigned</value>
+  </data>
+  <data name="EmailTemplate_ShiftChanged" xml:space="preserve">
+    <value>Shift Changed</value>
+  </data>
+  <data name="EmailTemplate_ShiftDeleted" xml:space="preserve">
+    <value>Shift Deleted</value>
+  </data>
+  <data name="EmailTemplate_ChoreAssigned" xml:space="preserve">
+    <value>Chore Assigned</value>
+  </data>
+  <data name="EmailTemplate_ChoreCanceled" xml:space="preserve">
+    <value>Chore Canceled</value>
+  </data>
+  <data name="EmailTemplate_TimeOffApproved" xml:space="preserve">
+    <value>Time-Off Approved</value>
+  </data>
+  <data name="EmailTemplate_TimeOffDeclined" xml:space="preserve">
+    <value>Time-Off Declined</value>
+  </data>
+  <data name="EmailTemplate_TimeOffDeleted" xml:space="preserve">
+    <value>Time-Off Deleted</value>
+  </data>
+  <data name="EmailTemplate_SwapRequestApproved" xml:space="preserve">
+    <value>Swap Request Approved</value>
+  </data>
+  <data name="EmailTemplate_SwapRequestDeclined" xml:space="preserve">
+    <value>Swap Request Declined</value>
+  </data>
+  <data name="EmailTemplate_OnDutyAssigned" xml:space="preserve">
+    <value>On-Duty Assigned</value>
+  </data>
+  <data name="EmailTemplate_OnDutyCanceled" xml:space="preserve">
+    <value>On-Duty Canceled</value>
+  </data>
+  <data name="EmailTemplate_AccessRequestSubmitted" xml:space="preserve">
+    <value>Access Request Submitted</value>
+  </data>
+  <data name="EmailTemplate_AccountApproved" xml:space="preserve">
+    <value>Account Approved</value>
   </data>
 </root>

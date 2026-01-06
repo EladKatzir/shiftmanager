@@ -553,7 +553,7 @@
 }
 </style>
 
-<h2>@Localizer["ShiftAssignmentTable"]</h2>
+<h2><loc key="ShiftAssignmentTable" /></h2>
 
 <div class="nav-buttons">
     <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")" class="btn-secondary">
@@ -572,7 +572,7 @@
 
 <button class="add-shift-row-btn" onclick="showAddShiftRowModal()">
     <span>➕</span>
-    <span>@Localizer["AddCustomShiftRow"]</span>
+    <span><loc key="AddCustomShiftRow" /></span>
 </button>
 
 <div class="table-view-container">
@@ -589,7 +589,7 @@
                 }
             </tr>
             <tr class="day-row">
-                <td class="shift-name-col">@Localizer["Day"]</td>
+                <td class="shift-name-col"><loc key="Day" /></td>
                 @foreach (var date in Model.Dates)
                 {
                     <td>@date.DayOfWeek</td>
@@ -681,7 +681,7 @@
                                                  data-instance-id="@assignment.ShiftInstanceId"
                                                  onclick="handleUnassignedSlotClick(this, event)">
                                                 <div class="assignment-slot-content">
-                                                    <div>@Localizer["SelectEmployee"]</div>
+                                                    <div><loc key="SelectEmployee" /></div>
                                                     <div class="slot-actions">👤</div>
                                                 </div>
                                             </div>
@@ -700,7 +700,7 @@
                             else
                             {
                                 <div class="add-assignment-btn" onclick="showAmountPicker(this, event)">
-                                    <span>➕ @Localizer["AddAssignment"]</span>
+                                    <span>➕ <loc key="AddAssignment" /></span>
                                 </div>
                             }
 
@@ -715,7 +715,7 @@
 <!-- Amount Picker Modal -->
 <div class="modal-overlay" id="amountPickerModal">
     <div class="modal-content">
-        <div class="modal-header">@Localizer["NumberOfPeopleNeeded"]</div>
+        <div class="modal-header"><loc key="NumberOfPeopleNeeded" /></div>
         <div class="amount-picker">
             <button class="amount-btn" id="decreaseBtn" onclick="adjustAmount(-1)">−</button>
             <div class="amount-display" id="amountDisplay">1</div>
@@ -759,19 +759,19 @@
 <div class="action-menu" id="slotContextMenu" role="menu">
     <div class="action-menu-item" role="menuitem" onclick="showAddTraineeMenu(event)">
         <span>👤</span>
-        <span id="traineeMenuLabel">@Localizer["AddTrainee"]</span>
+        <span id="traineeMenuLabel"><loc key="AddTrainee" /></span>
     </div>
     <div class="action-menu-item" role="menuitem" id="removeTraineeItem" onclick="removeTrainee(event)" style="display: none;">
         <span>🚫</span>
-        <span>@Localizer["RemoveTrainee"]</span>
+        <span><loc key="RemoveTrainee" /></span>
     </div>
     <div class="action-menu-item" role="menuitem" onclick="showChangeUserMenu(event)">
         <span>🔄</span>
-        <span>@Localizer["ChangePrimaryUser"]</span>
+        <span><loc key="ChangePrimaryUser" /></span>
     </div>
     <div class="action-menu-item danger" role="menuitem" onclick="removeUser(event)">
         <span>❌</span>
-        <span>@Localizer["RemoveUser"]</span>
+        <span><loc key="RemoveUser" /></span>
     </div>
 </div>
 

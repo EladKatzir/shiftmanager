@@ -1,5 +1,5 @@
 @page
-@model IndexModel
+@model ShiftManager.Pages.IndexModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
@@ -18,8 +18,8 @@
                 <div class="stat-icon">📅</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UpcomingShiftsCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_UpcomingShifts"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_UpcomingShifts_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_UpcomingShifts" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_UpcomingShifts_Desc" /></div>
                 </div>
             </div>
 
@@ -27,8 +27,8 @@
                 <div class="stat-icon">📝</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.PendingRequestsCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_PendingRequests"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_PendingRequests_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_PendingRequests" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_PendingRequests_Desc" /></div>
                 </div>
             </div>
 
@@ -36,8 +36,8 @@
                 <div class="stat-icon">👥</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.TeamMembersCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_TeamMembers"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_TeamMembers_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_TeamMembers" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_TeamMembers_Desc" /></div>
                 </div>
             </div>
 
@@ -45,8 +45,8 @@
                 <div class="stat-icon">🔔</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UnreadNotificationsCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_Notifications"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_Notifications_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_Notifications" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_Notifications_Desc" /></div>
                 </div>
             </div>
         }
@@ -57,8 +57,8 @@
                 <div class="stat-icon">📅</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UpcomingShiftsCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_UpcomingShifts"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_UpcomingShifts_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_UpcomingShifts" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_UpcomingShifts_Desc" /></div>
                 </div>
             </div>
 
@@ -66,8 +66,8 @@
                 <div class="stat-icon">📝</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.PendingRequestsCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_MyPendingRequests"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_MyPendingRequests_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_MyPendingRequests" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_MyPendingRequests_Desc" /></div>
                 </div>
             </div>
 
@@ -75,8 +75,8 @@
                 <div class="stat-icon">👥</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.TeamMembersCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_TeamMembers"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_TeamMembers_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_TeamMembers" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_TeamMembers_Desc" /></div>
                 </div>
             </div>
 
@@ -84,8 +84,8 @@
                 <div class="stat-icon">🔔</div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UnreadNotificationsCount</div>
-                    <div class="stat-label">@Localizer["Dashboard_Notifications"]</div>
-                    <div class="stat-desc">@Localizer["Dashboard_Notifications_Desc"]</div>
+                    <div class="stat-label"><loc key="Dashboard_Notifications" /></div>
+                    <div class="stat-desc"><loc key="Dashboard_Notifications_Desc" /></div>
                 </div>
             </div>
         }
@@ -97,7 +97,7 @@
         <div class="next-shift-highlight">
             <div class="next-shift-icon">⭐</div>
             <div class="next-shift-content">
-                <div class="next-shift-label">@Localizer["Dashboard_NextShift"]</div>
+                <div class="next-shift-label"><loc key="Dashboard_NextShift" /></div>
                 <div class="next-shift-details">
                     <strong>@Model.NextShiftType</strong>
                     @Localizer["Dashboard_NextShift_On"]
@@ -111,37 +111,37 @@
         <div class="next-shift-highlight next-shift-empty">
             <div class="next-shift-icon">📭</div>
             <div class="next-shift-content">
-                <div class="next-shift-label">@Localizer["Dashboard_NextShift"]</div>
-                <div class="next-shift-details">@Localizer["Dashboard_NoShiftsScheduled"]</div>
+                <div class="next-shift-label"><loc key="Dashboard_NextShift" /></div>
+                <div class="next-shift-details"><loc key="Dashboard_NoShiftsScheduled" /></div>
             </div>
         </div>
     }
 
     @* Quick Actions Grid *@
     <div class="dashboard-section">
-        <h2 class="dashboard-section-title">@Localizer["Dashboard_QuickActions"]</h2>
+        <h2 class="dashboard-section-title"><loc key="Dashboard_QuickActions" /></h2>
         <div class="quick-actions-grid">
             @if (Model.IsAdmin)
             {
                 @* Admin Quick Actions *@
                 <a href="/Calendar/Month" class="quick-action-card">
                     <div class="quick-action-icon">📅</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_ViewCalendar"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_ViewCalendar" /></div>
                 </a>
 
                 <a href="/Requests/Index" class="quick-action-card">
                     <div class="quick-action-icon">📝</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_ManageRequests"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_ManageRequests" /></div>
                 </a>
 
                 <a href="@(Model.UserRole == ShiftManager.Models.Support.UserRole.Manager ? "/MyTeam/Index" : "/Admin/Users")" class="quick-action-card">
                     <div class="quick-action-icon">👥</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_ViewTeam"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_ViewTeam" /></div>
                 </a>
 
                 <a href="/Admin/Analytics" class="quick-action-card">
                     <div class="quick-action-icon">📊</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_ViewAnalytics"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_ViewAnalytics" /></div>
                 </a>
             }
             else
@@ -149,22 +149,22 @@
                 @* Employee Quick Actions *@
                 <a href="/Calendar/Month" class="quick-action-card">
                     <div class="quick-action-icon">📅</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_ViewSchedule"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_ViewSchedule" /></div>
                 </a>
 
                 <a href="/My/Requests" class="quick-action-card">
                     <div class="quick-action-icon">📝</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_SubmitRequest"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_SubmitRequest" /></div>
                 </a>
 
                 <a href="/MyTeam/Index" class="quick-action-card">
                     <div class="quick-action-icon">👥</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_ViewTeam"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_ViewTeam" /></div>
                 </a>
 
                 <a href="/My/Profile" class="quick-action-card">
                     <div class="quick-action-icon">👤</div>
-                    <div class="quick-action-label">@Localizer["Dashboard_MyProfile"]</div>
+                    <div class="quick-action-label"><loc key="Dashboard_MyProfile" /></div>
                 </a>
             }
         </div>

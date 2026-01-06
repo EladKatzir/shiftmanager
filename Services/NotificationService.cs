@@ -22,6 +22,10 @@ public interface INotificationService
     Task CreateOnDutyCanceledNotificationAsync(int userId, OnDutyType onDutyType, DateOnly onDutyDate, int onDutyId);
     Task CreateTimeOffDeletedNotificationAsync(int userId, DateOnly startDate, DateOnly endDate);
 
+    // Access Request Notifications
+    Task NotifyOwnersOfAccessRequestAsync(string requesterName, string requesterEmail, string companyName, int requestId);
+    Task CreateAccessRequestApprovedNotificationAsync(int userId, string companyName, string assignedRole);
+
     // Phase 6: Daily Digest Methods
     Task<List<int>> GetUsersForDailyDigestAsync(TimeOnly currentTime, int companyId);
     Task<bool> SendDailyDigestAsync(int userId, int companyId);
@@ -170,6 +174,36 @@ public class NotificationService : INotificationService
         var notificationType = status == RequestStatus.Approved ? NotificationType.TimeOffApproved : NotificationType.TimeOffDeclined;
 
         await CreateNotificationAsync(userId, notificationType, title, message, requestId, "TimeOffRequest");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                if (status == RequestStatus.Approved)
+                {
+                    await _mailService.SendTimeOffApprovedEmailAsync(
+                        user.Email,
+                        user.DisplayName,
+                        startDate,
+                        endDate);
+                }
+                else
+                {
+                    await _mailService.SendTimeOffDeclinedEmailAsync(
+                        user.Email,
+                        user.DisplayName,
+                        startDate,
+                        endDate);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending time-off {Status} email to user {UserId}", status, userId);
+            // Don't throw - email failure should not block notification creation
+        }
     }
 
     public async Task CreateSwapRequestNotificationAsync(int userId, RequestStatus status, string shiftInfo, int requestId)
@@ -185,6 +219,34 @@ public class NotificationService : INotificationService
         var notificationType = status == RequestStatus.Approved ? NotificationType.SwapRequestApproved : NotificationType.SwapRequestDeclined;
 
         await CreateNotificationAsync(userId, notificationType, title, message, requestId, "SwapRequest");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                if (status == RequestStatus.Approved)
+                {
+                    await _mailService.SendSwapRequestApprovedEmailAsync(
+                        user.Email,
+                        user.DisplayName,
+                        shiftInfo);
+                }
+                else
+                {
+                    await _mailService.SendSwapRequestDeclinedEmailAsync(
+                        user.Email,
+                        user.DisplayName,
+                        shiftInfo);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending swap request {Status} email to user {UserId}", status, userId);
+            // Don't throw - email failure should not block notification creation
+        }
     }
 
     public async Task CreateChoreAssignedNotificationAsync(int userId, string choreTitle, DateOnly choreDate, int choreId)
@@ -257,6 +319,25 @@ public class NotificationService : INotificationService
             onDutyDate.ToString("MMM dd, yyyy"));
 
         await CreateNotificationAsync(userId, NotificationType.OnDutyAssigned, title, message, onDutyId, "OnDuty");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _mailService.SendOnDutyAssignedEmailAsync(
+                    user.Email,
+                    user.DisplayName,
+                    onDutyTypeName,
+                    onDutyDate);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending on-duty assigned email to user {UserId}", userId);
+            // Don't throw - email failure should not block notification creation
+        }
     }
 
     public async Task CreateOnDutyCanceledNotificationAsync(int userId, OnDutyType onDutyType, DateOnly onDutyDate, int onDutyId)
@@ -271,6 +352,25 @@ public class NotificationService : INotificationService
             onDutyDate.ToString("MMM dd, yyyy"));
 
         await CreateNotificationAsync(userId, NotificationType.OnDutyCanceled, title, message, onDutyId, "OnDuty");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _mailService.SendOnDutyCanceledEmailAsync(
+                    user.Email,
+                    user.DisplayName,
+                    onDutyTypeName,
+                    onDutyDate);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending on-duty canceled email to user {UserId}", userId);
+            // Don't throw - email failure should not block notification creation
+        }
     }
 
     public async Task CreateTimeOffDeletedNotificationAsync(int userId, DateOnly startDate, DateOnly endDate)
@@ -282,6 +382,112 @@ public class NotificationService : INotificationService
         var message = string.Format(_localizer["NotificationTimeOffDeletedMessage"], dateRange);
 
         await CreateNotificationAsync(userId, NotificationType.TimeOffDeleted, title, message, null, "TimeOffRequest");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _mailService.SendTimeOffDeletedEmailAsync(
+                    user.Email,
+                    user.DisplayName,
+                    startDate,
+                    endDate);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending time-off deleted email to user {UserId}", userId);
+            // Don't throw - email failure should not block notification creation
+        }
+    }
+
+    // ========================================
+    // Access Request Notification Methods
+    // ========================================
+
+    /// <summary>
+    /// Notify all owner users about a new access request and send them emails.
+    /// </summary>
+    public async Task NotifyOwnersOfAccessRequestAsync(string requesterName, string requesterEmail, string companyName, int requestId)
+    {
+        try
+        {
+            // Get all owner users
+            var owners = await _db.Users
+                .Where(u => u.Role == UserRole.Owner && u.IsActive)
+                .ToListAsync();
+
+            if (!owners.Any())
+            {
+                _logger.LogWarning("No owner users found to notify about access request {RequestId}", requestId);
+                return;
+            }
+
+            var title = _localizer["NotificationAccessRequestSubmittedTitle"];
+            var message = string.Format(_localizer["NotificationAccessRequestSubmittedMessage"],
+                requesterName,
+                requesterEmail,
+                companyName);
+
+            // Create in-app notification for each owner
+            foreach (var owner in owners)
+            {
+                await CreateNotificationAsync(
+                    owner.Id,
+                    NotificationType.AccessRequestSubmitted,
+                    title,
+                    message,
+                    requestId,
+                    "UserJoinRequest");
+            }
+
+            // Send email to each owner
+            foreach (var owner in owners)
+            {
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(owner.Email))
+                    {
+                        await _mailService.SendAccessRequestSubmittedEmailAsync(
+                            owner.Email,
+                            owner.DisplayName,
+                            requesterName,
+                            requesterEmail,
+                            companyName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error sending access request email to owner {UserId}", owner.Id);
+                    // Don't throw - continue notifying other owners
+                }
+            }
+
+            _logger.LogInformation("Notified {OwnerCount} owners about access request {RequestId} from {RequesterEmail}",
+                owners.Count, requestId, requesterEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error notifying owners about access request {RequestId}", requestId);
+            // Don't throw - access request was still created successfully
+        }
+    }
+
+    /// <summary>
+    /// Create notification for user when their access request is approved.
+    /// </summary>
+    public async Task CreateAccessRequestApprovedNotificationAsync(int userId, string companyName, string assignedRole)
+    {
+        var title = _localizer["NotificationAccessRequestApprovedTitle"];
+        var message = string.Format(_localizer["NotificationAccessRequestApprovedMessage"],
+            companyName,
+            assignedRole);
+
+        await CreateNotificationAsync(userId, NotificationType.AccessRequestApproved, title, message, null, "User");
+
+        // Note: Email is already sent by Admin/Users.cshtml.cs using SendAccountApprovedEmailAsync
     }
 
     // ========================================

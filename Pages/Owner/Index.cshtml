@@ -21,7 +21,7 @@
             <span class="page-icon">🔧</span>
             @Localizer["Owner_AdminPanel"]
         </h1>
-        <p class="page-subtitle">@Localizer["Owner_AdminPanel_Subtitle"]</p>
+        <p class="page-subtitle"><loc key="Owner_AdminPanel_Subtitle" /></p>
     </div>
 
     @* Quick Stats *@
@@ -30,28 +30,28 @@
             <div class="stat-icon">📊</div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalUsers</div>
-                <div class="stat-label">@Localizer["Owner_TotalUsers"]</div>
+                <div class="stat-label"><loc key="Owner_TotalUsers" /></div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">🏢</div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalCompanies</div>
-                <div class="stat-label">@Localizer["Owner_TotalCompanies"]</div>
+                <div class="stat-label"><loc key="Owner_TotalCompanies" /></div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">💾</div>
             <div class="stat-content">
                 <div class="stat-value">@Model.DatabaseSize</div>
-                <div class="stat-label">@Localizer["Owner_DatabaseSize"]</div>
+                <div class="stat-label"><loc key="Owner_DatabaseSize" /></div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">⏱️</div>
             <div class="stat-content">
                 <div class="stat-value">@Model.Uptime</div>
-                <div class="stat-label">@Localizer["Owner_Uptime"]</div>
+                <div class="stat-label"><loc key="Owner_Uptime" /></div>
             </div>
         </div>
     </div>
@@ -61,8 +61,8 @@
         <a href="/Owner/FeatureFlags" class="admin-tool-card">
             <div class="tool-icon">🚩</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_FeatureFlags"]</h3>
-                <p>@Localizer["Owner_FeatureFlags_Desc"]</p>
+                <h3><loc key="Owner_FeatureFlags" /></h3>
+                <p><loc key="Owner_FeatureFlags_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -70,8 +70,8 @@
         <a href="/Owner/DatabaseConsole" class="admin-tool-card">
             <div class="tool-icon">💾</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_DatabaseConsole"]</h3>
-                <p>@Localizer["Owner_DatabaseConsole_Desc"]</p>
+                <h3><loc key="Owner_DatabaseConsole" /></h3>
+                <p><loc key="Owner_DatabaseConsole_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -79,8 +79,8 @@
         <a href="/Owner/EmailConfig" class="admin-tool-card">
             <div class="tool-icon">📧</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_EmailConfig"]</h3>
-                <p>@Localizer["Owner_EmailConfig_Desc"]</p>
+                <h3><loc key="Owner_EmailConfig" /></h3>
+                <p><loc key="Owner_EmailConfig_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -88,8 +88,8 @@
         <a href="/Owner/GriffinConfig" class="admin-tool-card">
             <div class="tool-icon">🛡️</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_GriffinConfig"]</h3>
-                <p>@Localizer["Owner_GriffinConfig_Desc"]</p>
+                <h3><loc key="Owner_GriffinConfig" /></h3>
+                <p><loc key="Owner_GriffinConfig_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -97,8 +97,8 @@
         <a href="/Owner/SystemHealth" class="admin-tool-card">
             <div class="tool-icon">🏥</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_SystemHealth"]</h3>
-                <p>@Localizer["Owner_SystemHealth_Desc"]</p>
+                <h3><loc key="Owner_SystemHealth" /></h3>
+                <p><loc key="Owner_SystemHealth_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -106,8 +106,8 @@
         <a href="/Owner/Backup" class="admin-tool-card">
             <div class="tool-icon">💼</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_Backup"]</h3>
-                <p>@Localizer["Owner_Backup_Desc"]</p>
+                <h3><loc key="Owner_Backup" /></h3>
+                <p><loc key="Owner_Backup_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -115,8 +115,17 @@
         <a href="/Owner/GameConfig" class="admin-tool-card">
             <div class="tool-icon">🎮</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_GameConfig"]</h3>
-                <p>@Localizer["Owner_GameConfig_Desc"]</p>
+                <h3><loc key="Owner_GameConfig" /></h3>
+                <p><loc key="Owner_GameConfig_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Owner/LanguageManagement" class="admin-tool-card">
+            <div class="tool-icon">🌐</div>
+            <div class="tool-content">
+                <h3>Language Management</h3>
+                <p>Configure languages and customize translations</p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -124,8 +133,8 @@
         <a href="/Admin/AuditLog" class="admin-tool-card">
             <div class="tool-icon">🔍</div>
             <div class="tool-content">
-                <h3>@Localizer["Owner_SecurityAudit"]</h3>
-                <p>@Localizer["Owner_SecurityAudit_Desc"]</p>
+                <h3><loc key="Owner_SecurityAudit" /></h3>
+                <p><loc key="Owner_SecurityAudit_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -133,7 +142,7 @@
 
     @* Recent Activity *@
     <div class="recent-activity">
-        <h2>@Localizer["Owner_RecentActivity"]</h2>
+        <h2><loc key="Owner_RecentActivity" /></h2>
         <div class="activity-list">
             @foreach (var activity in Model.RecentActivities)
             {

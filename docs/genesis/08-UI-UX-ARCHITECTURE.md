@@ -101,14 +101,16 @@ Pages/
 │   │   └── ShowMyItemsToggle/
 │
 ├── Auth/                              # Authentication (4 pages)
-│   ├── Login.cshtml                   # Login page
+│   ├── Login.cshtml                   # Login page (role-based routing)
 │   ├── Signup.cshtml                  # User registration
 │   ├── Logout.cshtml                  # Logout handler
 │   ├── GriffinCallback.cshtml         # Griffin ADFS callback
 │   └── ForgotPassword.cshtml          # Password reset
 │
-├── Home/                              # Landing page (1 page)
-│   └── Index.cshtml                   # Dashboard/home
+├── Index.cshtml                       # New redesigned dashboard (Employees, Managers, Directors)
+│
+├── Home/                              # Classic dashboard (Owner only)
+│   └── Index.cshtml                   # Owner admin panel
 │
 ├── My/                                # Employee self-service (7 pages)
 │   ├── Index.cshtml                   # Personal timeline/overview
@@ -883,11 +885,31 @@ The layout file defines the **app shell** architecture with sidebar navigation, 
 
 **Role-Based Navigation**:
 
+**Implemented:** Phase 18 (2026-01-06) - Role-based home routing
+
+The sidebar navigation adapts based on user role, with special handling for the home button:
+
 ```csharp
 @if (isAdmin)
 {
     <!-- Admin/Manager/Director Navigation -->
-    <a href="/Home/Index" class="app-sidebar-nav-item">🏠 Home</a>
+    @if (isOwner)
+    {
+        @* Owner uses old home page *@
+        <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
+            <span class="app-sidebar-nav-icon">🏠</span>
+            <span><loc key="Home" /></span>
+        </a>
+    }
+    else
+    {
+        @* Non-Owner admins (Manager, Director) use new redesigned home *@
+        <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
+            <span class="app-sidebar-nav-icon">🏠</span>
+            <span><loc key="Home" /></span>
+        </a>
+    }
+
     <a href="/Calendar/Month" class="app-sidebar-nav-item">📅 Schedule</a>
     <a href="/Requests/Index" class="app-sidebar-nav-item">📝 Requests</a>
     <a href="/Admin/Analytics" class="app-sidebar-nav-item">📊 Analytics</a>

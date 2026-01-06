@@ -36,7 +36,9 @@ public enum NotificationType
     OnDutyAssigned = 14,
     OnDutyCanceled = 15,
     TimeOffDeleted = 16,
-    FeedbackSubmitted = 17
+    FeedbackSubmitted = 17,
+    AccessRequestSubmitted = 18,
+    AccessRequestApproved = 19
 }
 
 public enum JoinRequestStatus
@@ -63,4 +65,22 @@ public enum OnDutyType
 {
     Hakam = 0,  // חק"מכו - Day Shift: Hakam
     Lead = 1    // מובילתו - Day Shift: Lead
+}
+
+public enum EmailTemplateType
+{
+    ShiftAssigned = 0,
+    ShiftChanged = 1,
+    ShiftDeleted = 2,
+    ChoreAssigned = 3,
+    ChoreCanceled = 4,
+    TimeOffApproved = 5,
+    TimeOffDeclined = 6,
+    TimeOffDeleted = 7,
+    SwapRequestApproved = 8,
+    SwapRequestDeclined = 9,
+    OnDutyAssigned = 10,
+    OnDutyCanceled = 11,
+    AccessRequestSubmitted = 12,
+    AccountApproved = 13
 }

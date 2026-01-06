@@ -5,7 +5,7 @@
 
 @if (Model != null && Model.Any())
 {
-    <nav class="breadcrumb-nav" aria-label="@Localizer["Breadcrumb"]" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <nav class="breadcrumb-nav" loc-aria-label="Breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
         <ol class="breadcrumb">
             @for (int i = 0; i < Model.Count; i++)
             {

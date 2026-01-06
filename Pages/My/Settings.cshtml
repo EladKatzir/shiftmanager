@@ -347,8 +347,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">⚙️ @Localizer["My_Settings"]</h1>
-    <p class="page-subtitle">@Localizer["My_Settings_Subtitle"]</p>
+    <h1 class="page-title">⚙️ <loc key="My_Settings" /></h1>
+    <p class="page-subtitle"><loc key="My_Settings_Subtitle" /></p>
 </div>
 
 <!-- Success/Error Messages -->
@@ -374,23 +374,23 @@
     <div class="card">
         <h2 class="card-title">
             <span class="card-title-icon">📬</span>
-            <span>@Localizer["Settings_DailyDigest"]</span>
+            <span><loc key="Settings_DailyDigest" /></span>
         </h2>
 
         <!-- Info Banner -->
         <div class="info-banner">
             <span class="info-banner-icon">ℹ️</span>
             <div>
-                <strong>@Localizer["Settings_DailyDigest_InfoTitle"]</strong>
-                <p style="margin: 0.25rem 0 0 0;">@Localizer["Settings_DailyDigest_InfoDesc"]</p>
+                <strong><loc key="Settings_DailyDigest_InfoTitle" /></strong>
+                <p style="margin: 0.25rem 0 0 0;"><loc key="Settings_DailyDigest_InfoDesc" /></p>
             </div>
         </div>
 
         <!-- Enable/Disable Toggle -->
         <div class="toggle-container">
             <div class="toggle-info">
-                <div class="toggle-title">@Localizer["Settings_ReceiveDailyDigest"]</div>
-                <div class="toggle-subtitle">@Localizer["Settings_ReceiveDailyDigest_Desc"]</div>
+                <div class="toggle-title"><loc key="Settings_ReceiveDailyDigest" /></div>
+                <div class="toggle-subtitle"><loc key="Settings_ReceiveDailyDigest_Desc" /></div>
             </div>
             <label class="toggle-switch">
                 <input type="checkbox" asp-for="ReceiveDailyDigest" />
@@ -404,42 +404,42 @@
                 🕐 @Localizer["Settings_PreferredTime"]
             </label>
             <input type="time" class="form-input" asp-for="PreferredTime" style="max-width: 200px;" />
-            <div class="form-help-text">@Localizer["Settings_PreferredTime_Help"]</div>
+            <div class="form-help-text"><loc key="Settings_PreferredTime_Help" /></div>
         </div>
 
         <!-- Content Preferences -->
         <div class="form-group">
-            <label class="form-label">@Localizer["Settings_IncludeContent"]</label>
+            <label class="form-label"><loc key="Settings_IncludeContent" /></label>
             <div class="checkbox-group">
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludeUpcomingShifts" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">📅 @Localizer["Settings_IncludeShifts"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_IncludeShifts_Desc"]</div>
+                        <div class="checkbox-title">📅 <loc key="Settings_IncludeShifts" /></div>
+                        <div class="checkbox-description"><loc key="Settings_IncludeShifts_Desc" /></div>
                     </div>
                 </label>
 
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludePendingRequests" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">⏳ @Localizer["Settings_IncludeRequests"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_IncludeRequests_Desc"]</div>
+                        <div class="checkbox-title">⏳ <loc key="Settings_IncludeRequests" /></div>
+                        <div class="checkbox-description"><loc key="Settings_IncludeRequests_Desc" /></div>
                     </div>
                 </label>
 
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludeChores" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">🧹 @Localizer["Settings_IncludeChores"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_IncludeChores_Desc"]</div>
+                        <div class="checkbox-title">🧹 <loc key="Settings_IncludeChores" /></div>
+                        <div class="checkbox-description"><loc key="Settings_IncludeChores_Desc" /></div>
                     </div>
                 </label>
 
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludeOnDuty" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">🎖️ @Localizer["Settings_IncludeOnDuty"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_IncludeOnDuty_Desc"]</div>
+                        <div class="checkbox-title">🎖️ <loc key="Settings_IncludeOnDuty" /></div>
+                        <div class="checkbox-description"><loc key="Settings_IncludeOnDuty_Desc" /></div>
                     </div>
                 </label>
             </div>
@@ -450,15 +450,15 @@
     <div class="card">
         <h2 class="card-title">
             <span class="card-title-icon">⏰</span>
-            <span>@Localizer["Settings_DayBeforeReminders"]</span>
+            <span><loc key="Settings_DayBeforeReminders" /></span>
         </h2>
 
         <!-- Info Banner -->
         <div class="info-banner">
             <span class="info-banner-icon">ℹ️</span>
             <div>
-                <strong>@Localizer["Settings_DayBeforeReminders_InfoTitle"]</strong>
-                <p style="margin: 0.25rem 0 0 0;">@Localizer["Settings_DayBeforeReminders_InfoDesc"]</p>
+                <strong><loc key="Settings_DayBeforeReminders_InfoTitle" /></strong>
+                <p style="margin: 0.25rem 0 0 0;"><loc key="Settings_DayBeforeReminders_InfoDesc" /></p>
             </div>
         </div>
 
@@ -468,24 +468,24 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="RemindBeforeShifts" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">📅 @Localizer["Settings_RemindBeforeShifts"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_RemindBeforeShifts_Desc"]</div>
+                        <div class="checkbox-title">📅 <loc key="Settings_RemindBeforeShifts" /></div>
+                        <div class="checkbox-description"><loc key="Settings_RemindBeforeShifts_Desc" /></div>
                     </div>
                 </label>
 
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="RemindBeforeChores" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">🧹 @Localizer["Settings_RemindBeforeChores"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_RemindBeforeChores_Desc"]</div>
+                        <div class="checkbox-title">🧹 <loc key="Settings_RemindBeforeChores" /></div>
+                        <div class="checkbox-description"><loc key="Settings_RemindBeforeChores_Desc" /></div>
                     </div>
                 </label>
 
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="RemindBeforeOnDuty" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">👮 @Localizer["Settings_RemindBeforeOnDuty"]</div>
-                        <div class="checkbox-description">@Localizer["Settings_RemindBeforeOnDuty_Desc"]</div>
+                        <div class="checkbox-title">👮 <loc key="Settings_RemindBeforeOnDuty" /></div>
+                        <div class="checkbox-description"><loc key="Settings_RemindBeforeOnDuty_Desc" /></div>
                     </div>
                 </label>
             </div>
@@ -496,21 +496,21 @@
     <div class="card">
         <h2 class="card-title">
             <span class="card-title-icon">📋</span>
-            <span>@Localizer["Settings_OnDutySubscriptions"]</span>
+            <span><loc key="Settings_OnDutySubscriptions" /></span>
         </h2>
 
         <!-- Info Banner -->
         <div class="info-banner">
             <span class="info-banner-icon">ℹ️</span>
             <div>
-                <strong>@Localizer["Settings_OnDutySubscriptions_InfoTitle"]</strong>
-                <p style="margin: 0.25rem 0 0 0;">@Localizer["Settings_OnDutySubscriptions_InfoDesc"]</p>
+                <strong><loc key="Settings_OnDutySubscriptions_InfoTitle" /></strong>
+                <p style="margin: 0.25rem 0 0 0;"><loc key="Settings_OnDutySubscriptions_InfoDesc" /></p>
             </div>
         </div>
 
         <!-- On-Duty Type Subscriptions -->
         <div class="form-group">
-            <label class="form-label">@Localizer["Settings_SelectOnDutyRoles"]</label>
+            <label class="form-label"><loc key="Settings_SelectOnDutyRoles" /></label>
             @if (Model.AvailableOnDutyTypes.Any())
             {
                 <div class="checkbox-group">
@@ -531,7 +531,7 @@
             }
             else
             {
-                <p class="form-help-text">@Localizer["Settings_NoOnDutyTypes"]</p>
+                <p class="form-help-text"><loc key="Settings_NoOnDutyTypes" /></p>
             }
         </div>
     </div>
@@ -540,11 +540,11 @@
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">
             <span>💾</span>
-            <span>@Localizer["SaveSettings"]</span>
+            <span><loc key="SaveSettings" /></span>
         </button>
         <a href="/My" class="btn btn-secondary">
             <span>✕</span>
-            <span>@Localizer["Cancel"]</span>
+            <span><loc key="Cancel" /></span>
         </a>
     </div>
 </form>

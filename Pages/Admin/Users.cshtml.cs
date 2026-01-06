@@ -25,6 +25,7 @@ public class UsersModel : LocalizedPageModel
     private readonly ITraineeService _traineeService;
     private readonly IAuditLogService _auditLogService;
     private readonly IMailService _mailService;
+    private readonly INotificationService _notificationService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -34,7 +35,8 @@ public class UsersModel : LocalizedPageModel
         IDirectorService directorService,
         ITraineeService traineeService,
         IAuditLogService auditLogService,
-        IMailService mailService)
+        IMailService mailService,
+        INotificationService notificationService)
         : base(localizer)
     {
         _db = db;
@@ -44,6 +46,7 @@ public class UsersModel : LocalizedPageModel
         _traineeService = traineeService;
         _auditLogService = auditLogService;
         _mailService = mailService;
+        _notificationService = notificationService;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive);
@@ -801,6 +804,13 @@ public class UsersModel : LocalizedPageModel
             newUser.DisplayName,
             newUser.Role.ToString(),
             joinRequest.Company?.Name ?? "the company"
+        );
+
+        // Create in-app notification for the new user
+        _ = _notificationService.CreateAccessRequestApprovedNotificationAsync(
+            newUser.Id,
+            joinRequest.Company?.Name ?? "the company",
+            newUser.Role.ToString()
         );
 
         _logger.LogInformation("Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) for company {CompanyId}",

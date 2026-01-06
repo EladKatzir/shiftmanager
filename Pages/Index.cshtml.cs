@@ -4,6 +4,8 @@ using ShiftManager.Data;
 using ShiftManager.Models.Support;
 using System.Security.Claims;
 
+namespace ShiftManager.Pages;
+
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;

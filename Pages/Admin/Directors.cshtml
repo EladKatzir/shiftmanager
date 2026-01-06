@@ -74,8 +74,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">@Localizer["DirectorAssignments"]</h1>
-    <p class="page-subtitle">@Localizer["ManageDirectorAssignments"]</p>
+    <h1 class="page-title"><loc key="DirectorAssignments" /></h1>
+    <p class="page-subtitle"><loc key="ManageDirectorAssignments" /></p>
 </div>
 
 <!-- Success Message -->
@@ -98,14 +98,14 @@
 
 <!-- Assign Director Form -->
 <div class="section-card">
-    <h3 class="section-header">@Localizer["AssignDirectorToCompany"]</h3>
+    <h3 class="section-header"><loc key="AssignDirectorToCompany" /></h3>
     <form method="post" asp-page-handler="Assign">
         @Html.AntiForgeryToken()
         <div class="form-grid">
             <div>
-                <label class="form-label">@Localizer["Director"]</label>
+                <label class="form-label"><loc key="Director" /></label>
                 <select class="form-input" asp-for="DirectorUserId">
-                    <option value="0">@Localizer["SelectDirector"]</option>
+                    <option value="0"><loc key="SelectDirector" /></option>
                     @foreach (var director in Model.AvailableDirectors)
                     {
                         <option value="@director.Id">@director.DisplayName (@director.Email)</option>
@@ -113,9 +113,9 @@
                 </select>
             </div>
             <div>
-                <label class="form-label">@Localizer["Company"]</label>
+                <label class="form-label"><loc key="Company" /></label>
                 <select class="form-input" asp-for="CompanyId">
-                    <option value="0">@Localizer["SelectCompany"]</option>
+                    <option value="0"><loc key="SelectCompany" /></option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
                         <option value="@company.Id">@company.Name (@company.Slug)</option>
@@ -124,7 +124,7 @@
             </div>
             <button class="btn btn-primary" type="submit">
                 <span>✓</span>
-                <span>@Localizer["Assign"]</span>
+                <span><loc key="Assign" /></span>
             </button>
         </div>
     </form>
@@ -132,20 +132,20 @@
 
 <!-- Current Director Assignments -->
 <div class="section-card">
-    <h3 class="section-header">@Localizer["CurrentDirectorAssignments"]</h3>
+    <h3 class="section-header"><loc key="CurrentDirectorAssignments" /></h3>
     @if (Model.Assignments.Any())
     {
         <div class="table-wrapper">
             <table class="directors-table">
                 <thead>
                     <tr>
-                        <th>@Localizer["Director"]</th>
-                        <th>@Localizer["Email"]</th>
-                        <th>@Localizer["Company"]</th>
-                        <th>@Localizer["Slug"]</th>
-                        <th>@Localizer["GrantedBy"]</th>
-                        <th>@Localizer["GrantedAt"]</th>
-                        <th style="width:1%">@Localizer["Actions"]</th>
+                        <th><loc key="Director" /></th>
+                        <th><loc key="Email" /></th>
+                        <th><loc key="Company" /></th>
+                        <th><loc key="Slug" /></th>
+                        <th><loc key="GrantedBy" /></th>
+                        <th><loc key="GrantedAt" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -165,7 +165,7 @@
                                     <input type="hidden" name="id" value="@assignment.Id" />
                                     <button type="submit" class="btn btn-danger">
                                         <span>✗</span>
-                                        <span>@Localizer["Revoke"]</span>
+                                        <span><loc key="Revoke" /></span>
                                     </button>
                                 </form>
                             </td>
@@ -177,20 +177,20 @@
     }
     else
     {
-        <p class="empty-state">@Localizer["NoDirectorAssignments"]</p>
+        <p class="empty-state"><loc key="NoDirectorAssignments" /></p>
     }
 </div>
 
 <!-- About Director Role Info Box -->
 <div class="info-box">
     <div class="info-box-content">
-        <strong>@Localizer["AboutDirectorRole"]</strong><br />
+        <strong><loc key="AboutDirectorRole" /></strong><br />
         @Localizer["DirectorsCanOversee"]
         <ul class="info-box-list">
-            <li>@Localizer["DirectorPerm1"]</li>
-            <li>@Localizer["DirectorPerm2"]</li>
-            <li>@Localizer["DirectorPerm3"]</li>
-            <li>@Localizer["DirectorPerm4"]</li>
+            <li><loc key="DirectorPerm1" /></li>
+            <li><loc key="DirectorPerm2" /></li>
+            <li><loc key="DirectorPerm3" /></li>
+            <li><loc key="DirectorPerm4" /></li>
         </ul>
         @Localizer["DirectorsCannot"]
     </div>

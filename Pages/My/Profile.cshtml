@@ -369,8 +369,8 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">@Localizer["MyProfile"]</h1>
-    <p class="page-subtitle">@Localizer["ManageYourPersonalAndProfessionalInformation"]</p>
+    <h1 class="page-title"><loc key="MyProfile" /></h1>
+    <p class="page-subtitle"><loc key="ManageYourPersonalAndProfessionalInformation" /></p>
 </div>
 
 <!-- Success/Error Messages -->
@@ -393,7 +393,7 @@
 <form method="post" enctype="multipart/form-data">
     <!-- Avatar Section -->
     <div class="card">
-        <h2 class="card-title">@Localizer["Avatar"]</h2>
+        <h2 class="card-title"><loc key="Avatar" /></h2>
 
         <div class="avatar-section">
             <div class="avatar-display">
@@ -412,7 +412,7 @@
             <div class="avatar-controls">
                 <label class="avatar-label">
                     @Localizer["UploadNewAvatar"]
-                    <span class="avatar-hint">@Localizer["MaxFileSizeAnd"] JPEG/PNG</span>
+                    <span class="avatar-hint"><loc key="MaxFileSizeAnd" /> JPEG/PNG</span>
                 </label>
                 <input type="file" name="AvatarFile" accept=".jpg,.jpeg,.png" class="file-input" />
 
@@ -420,7 +420,7 @@
                 {
                     <button type="submit" asp-page-handler="DeleteAvatar" class="btn btn-danger">
                         <span>🗑️</span>
-                        <span>@Localizer["DeleteAvatar"]</span>
+                        <span><loc key="DeleteAvatar" /></span>
                     </button>
                 }
             </div>
@@ -429,7 +429,7 @@
 
     <!-- Personal Information -->
     <div class="card">
-        <h2 class="card-title">@Localizer["PersonalInformation"]</h2>
+        <h2 class="card-title"><loc key="PersonalInformation" /></h2>
 
         <div class="form-group">
             <label class="form-label">
@@ -440,36 +440,36 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["PreferredName"]</label>
+            <label class="form-label"><loc key="PreferredName" /></label>
             <input type="text" asp-for="PreferredName" class="form-input" placeholder="@Localizer["PreferredName"]" />
-            <span class="form-hint">@Localizer["HowYouPreferToBeAddressed"]</span>
+            <span class="form-hint"><loc key="HowYouPreferToBeAddressed" /></span>
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["Phone"]</label>
+            <label class="form-label"><loc key="Phone" /></label>
             <input type="tel" asp-for="Phone" class="form-input" placeholder="050-1234567" />
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["City"]</label>
+            <label class="form-label"><loc key="City" /></label>
             <input type="text" asp-for="City" class="form-input" />
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["DateOfBirth"]</label>
+            <label class="form-label"><loc key="DateOfBirth" /></label>
             <input type="date" asp-for="DateOfBirth" class="form-input" />
         </div>
     </div>
 
     <!-- Professional Information -->
     <div class="card">
-        <h2 class="card-title">@Localizer["ProfessionalInformation"]</h2>
+        <h2 class="card-title"><loc key="ProfessionalInformation" /></h2>
 
         @if (!isOwner)
         {
             <div class="info-banner">
                 <span class="info-banner-icon">ℹ️</span>
-                <span>@Localizer["ManagerOnlyFields"]</span>
+                <span><loc key="ManagerOnlyFields" /></span>
             </div>
         }
 
@@ -528,34 +528,34 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["Skills"]</label>
+            <label class="form-label"><loc key="Skills" /></label>
             <input type="text" asp-for="Skills" class="form-input" placeholder="@Localizer["SkillsPlaceholder"]" />
-            <span class="form-hint">@Localizer["CommaSeparated"]</span>
+            <span class="form-hint"><loc key="CommaSeparated" /></span>
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["Certifications"]</label>
+            <label class="form-label"><loc key="Certifications" /></label>
             <input type="text" asp-for="Certifications" class="form-input" placeholder="@Localizer["CertificationsPlaceholder"]" />
-            <span class="form-hint">@Localizer["CommaSeparated"]</span>
+            <span class="form-hint"><loc key="CommaSeparated" /></span>
         </div>
     </div>
 
     <!-- Emergency Contact -->
     <div class="card">
-        <h2 class="card-title">@Localizer["EmergencyContact"]</h2>
+        <h2 class="card-title"><loc key="EmergencyContact" /></h2>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["EmergencyContactName"]</label>
+            <label class="form-label"><loc key="EmergencyContactName" /></label>
             <input type="text" asp-for="EmergencyContactName" class="form-input" />
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["EmergencyContactPhone"]</label>
+            <label class="form-label"><loc key="EmergencyContactPhone" /></label>
             <input type="tel" asp-for="EmergencyContactPhone" class="form-input" placeholder="050-1234567" />
         </div>
 
         <div class="form-group">
-            <label class="form-label">@Localizer["EmergencyContactRelation"]</label>
+            <label class="form-label"><loc key="EmergencyContactRelation" /></label>
             <input type="text" asp-for="EmergencyContactRelation" class="form-input" />
         </div>
     </div>
@@ -564,10 +564,10 @@
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">
             <span>💾</span>
-            <span>@Localizer["SaveChanges"]</span>
+            <span><loc key="SaveChanges" /></span>
         </button>
         <a href="/My" class="btn btn-secondary">
-            <span>@Localizer["Cancel"]</span>
+            <span><loc key="Cancel" /></span>
         </a>
     </div>
 </form>

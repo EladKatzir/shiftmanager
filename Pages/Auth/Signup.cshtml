@@ -8,7 +8,7 @@
     Layout = "_Layout";
 }
 <div class="card" style="max-width:480px; margin:auto">
-    <h2>@Localizer["RequestAccess"]</h2>
+    <h2><loc key="RequestAccess" /></h2>
 
     @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
     {
@@ -53,7 +53,7 @@
             <label>
                 @Localizer["Company"]<br />
                 <select class="input" asp-for="CompanyId" required>
-                    <option value="">@Localizer["SelectCompany"]</option>
+                    <option value=""><loc key="SelectCompany" /></option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
                         <option value="@company.Id">@company.Name</option>
@@ -64,21 +64,21 @@
             <label>
                 @Localizer["RequestedRole"]<br />
                 <select class="input" asp-for="RequestedRole" required>
-                    <option value="@((int)UserRole.Employee)">@Localizer["Employee"]</option>
-                    <option value="@((int)UserRole.Manager)">@Localizer["Manager"]</option>
-                    <option value="@((int)UserRole.Director)">@Localizer["Director"]</option>
-                    <option value="@((int)UserRole.Trainee)">@Localizer["Trainee"]</option>
-                    <option value="@((int)UserRole.Assigner)">@Localizer["Assigner"]</option>
+                    <option value="@((int)UserRole.Employee)"><loc key="Employee" /></option>
+                    <option value="@((int)UserRole.Manager)"><loc key="Manager" /></option>
+                    <option value="@((int)UserRole.Director)"><loc key="Director" /></option>
+                    <option value="@((int)UserRole.Trainee)"><loc key="Trainee" /></option>
+                    <option value="@((int)UserRole.Assigner)"><loc key="Assigner" /></option>
                 </select>
-                <small style="color:var(--muted, #6c757d)">@Localizer["RequestNeedsApproval"]</small>
+                <small style="color:var(--muted, #6c757d)"><loc key="RequestNeedsApproval" /></small>
             </label>
 
-            <button class="btn btn-primary" type="submit">@Localizer["SubmitRequest"]</button>
+            <button class="btn btn-primary" type="submit"><loc key="SubmitRequest" /></button>
         </div>
     </form>
 
     <div class="small" style="margin-top:1rem; text-align:center">
-        @Localizer["AlreadyHaveAccount"] <a href="/Auth/Login">@Localizer["LoginHere"]</a>
+        @Localizer["AlreadyHaveAccount"] <a href="/Auth/Login"><loc key="LoginHere" /></a>
     </div>
 </div>
 
