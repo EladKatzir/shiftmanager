@@ -3,140 +3,185 @@
     Automated backup of FinalProductPublish with timestamp and retention policy
 
 .DESCRIPTION
-    Creates a timestamped backup of FinalProductPublish in Backups/FinalProductPublish/ directory.
-    Implements retention policy to keep only the last 5 backups.
+    Creates a timestamped backup of FinalProductPublish in:
+      <repo_root>\Backups\FinalProductPublish\FinalProductPublish_BACKUP_<timestamp>
+
+    Verifies backup by file count and size (informational), and keeps only the last 5 backups.
 
 .EXAMPLE
-    .\Backup-FinalProductPublish.ps1
+    .\scripts\Backup-FinalProductPublish.ps1
 
 .NOTES
-    Author: Claude Code
-    Version: 1.0
+    ASCII-only output to avoid encoding/parser issues.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param()
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 # Paths
-$ScriptRoot = Split-Path -Parent $PSScriptRoot
-$SourcePath = Join-Path $ScriptRoot "FinalProductPublish"
-$BackupRoot = Join-Path $ScriptRoot "Backups\FinalProductPublish"
+$RepoRoot   = Split-Path -Parent $PSScriptRoot
+$SourcePath = Join-Path $RepoRoot 'FinalProductPublish'
+$BackupRoot = Join-Path $RepoRoot 'Backups\FinalProductPublish'
 
-# Colors
-$ColorGreen = "Green"
-$ColorYellow = "Yellow"
-$ColorRed = "Red"
-$ColorCyan = "Cyan"
+# Retention
+$KeepCount = 5
 
-function Write-Success { param([string]$Message) Write-Host "  ✓ " -ForegroundColor $ColorGreen -NoNewline; Write-Host $Message }
-function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor $ColorCyan -NoNewline; Write-Host $Message }
-function Write-WarningMsg { param([string]$Message) Write-Host "  ⚠️  " -ForegroundColor $ColorYellow -NoNewline; Write-Host $Message }
-function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor $ColorRed -NoNewline; Write-Host $Message }
+function Write-Info    { param([string]$Message) Write-Host ("[INFO] {0}" -f $Message) -ForegroundColor Cyan }
+function Write-Success { param([string]$Message) Write-Host ("[ OK ] {0}" -f $Message) -ForegroundColor Green }
+function Write-Warn    { param([string]$Message) Write-Host ("[WARN] {0}" -f $Message) -ForegroundColor Yellow }
+function Write-Err     { param([string]$Message) Write-Host ("[FAIL] {0}" -f $Message) -ForegroundColor Red }
+
+function Ensure-Directory {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        $null = New-Item -ItemType Directory -Path $Path -Force
+    }
+}
+
+function Get-FolderStats {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    $files = Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction Stop
+    $count = $files.Count
+    $sum = 0
+    if ($count -gt 0) { $sum = ($files | Measure-Object -Property Length -Sum).Sum }
+    $mb = [math]::Round(($sum / 1MB), 2)
+    return [pscustomobject]@{ Files = $files; Count = $count; SizeMB = $mb }
+}
+
+function Copy-Contents {
+    param(
+        [Parameter(Mandatory=$true)][string]$FromDir,
+        [Parameter(Mandatory=$true)][string]$ToDir
+    )
+
+    Ensure-Directory -Path $ToDir
+
+    if (Get-Command robocopy -ErrorAction SilentlyContinue) {
+        # Robocopy codes: 0-7 success; 8+ failure
+        $args = @(
+            $FromDir, $ToDir,
+            '/E',                # include subdirs
+            '/COPY:DAT',         # data/attrs/timestamps
+            '/DCOPY:DAT',
+            '/R:2','/W:1',
+            '/NFL','/NDL','/NP',
+            '/NJH','/NJS'
+        )
+
+        Write-Info ("Copying with robocopy: {0} -> {1}" -f $FromDir, $ToDir)
+        & robocopy @args | Out-Null
+        $rc = $LASTEXITCODE
+        if ($rc -ge 8) {
+            throw ("robocopy failed with code {0}" -f $rc)
+        }
+    }
+    else {
+        # Copy-Item fallback: copy CONTENTS not the directory node
+        Write-Warn "robocopy not found; using Copy-Item fallback (slower)."
+        Copy-Item -LiteralPath (Join-Path $FromDir '*') -Destination $ToDir -Recurse -Force -ErrorAction Stop
+    }
+}
 
 try {
     Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  FinalProductPublish Backup Tool" -ForegroundColor White
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
+    Write-Info "FinalProductPublish Backup Tool"
     Write-Host ""
 
-    # Check if FinalProductPublish exists
-    if (-not (Test-Path $SourcePath)) {
-        Write-ErrorMsg "FinalProductPublish folder not found at: $SourcePath"
+    if (-not (Test-Path -LiteralPath $SourcePath)) {
+        Write-Err ("FinalProductPublish folder not found at: {0}" -f $SourcePath)
         throw "Source folder missing"
     }
 
-    # Create backup root directory if missing
-    if (-not (Test-Path $BackupRoot)) {
-        Write-Info "Creating backup directory..."
-        New-Item -ItemType Directory -Path $BackupRoot -Force | Out-Null
-        Write-Success "Backup directory created"
-    }
+    Ensure-Directory -Path $BackupRoot
 
-    # Generate timestamp
-    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $backupName = "FinalProductPublish_BACKUP_$timestamp"
+    $timestamp  = Get-Date -Format 'yyyyMMdd_HHmmss'
+    $backupName = "FinalProductPublish_BACKUP_{0}" -f $timestamp
     $backupPath = Join-Path $BackupRoot $backupName
 
     Write-Info "Creating backup..."
-    Write-Host "    Source: $SourcePath" -ForegroundColor Gray
-    Write-Host "    Destination: $backupPath" -ForegroundColor Gray
-    Write-Host "    Timestamp: $timestamp" -ForegroundColor Gray
+    Write-Host ("  Source:      {0}" -f $SourcePath) -ForegroundColor Gray
+    Write-Host ("  Destination: {0}" -f $backupPath) -ForegroundColor Gray
+    Write-Host ("  Timestamp:   {0}" -f $timestamp) -ForegroundColor Gray
     Write-Host ""
 
-    # Copy FinalProductPublish to backup
-    Write-Info "Copying files (this may take 1-2 minutes)..."
-    Copy-Item -Path $SourcePath -Destination $backupPath -Recurse -Force
+    if ($PSCmdlet.ShouldProcess($backupPath, "Create backup from FinalProductPublish")) {
+        # Ensure destination exists
+        Ensure-Directory -Path $backupPath
 
-    # Verify backup
+        # Copy contents so backupPath mirrors FinalProductPublish directly
+        Copy-Contents -FromDir $SourcePath -ToDir $backupPath
+    }
+    else {
+        Write-Warn "Backup skipped due to WhatIf/Confirm."
+        exit 0
+    }
+
     Write-Info "Verifying backup integrity..."
-    $sourceFiles = Get-ChildItem -Path $SourcePath -File -Recurse
-    $backupFiles = Get-ChildItem -Path $backupPath -File -Recurse
+    $src = Get-FolderStats -Path $SourcePath
+    $bak = Get-FolderStats -Path $backupPath
 
-    $sourceCount = $sourceFiles.Count
-    $backupCount = $backupFiles.Count
-
-    if ($sourceCount -ne $backupCount) {
-        Write-ErrorMsg "File count mismatch! Source: $sourceCount, Backup: $backupCount"
+    if ($src.Count -ne $bak.Count) {
+        Write-Err ("File count mismatch! Source: {0}, Backup: {1}" -f $src.Count, $bak.Count)
         throw "Backup verification failed"
     }
 
-    $sourceSize = [math]::Round(($sourceFiles | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
-    $backupSize = [math]::Round(($backupFiles | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
+    Write-Success ("Backup verified: {0} files, {1} MB" -f $bak.Count, $bak.SizeMB)
 
-    Write-Success "Backup verified: $backupCount files, $backupSize MB"
+    # Retention policy
+    Write-Info ("Applying retention policy (keep last {0})..." -f $KeepCount)
+    $allBackups = Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
+                  Sort-Object Name -Descending
 
-    # Implement retention policy (keep last 5 backups)
-    Write-Info "Checking backup retention policy..."
-    $allBackups = Get-ChildItem -Path $BackupRoot -Directory -Filter "FinalProductPublish_BACKUP_*" |
-        Sort-Object Name -Descending
+    $toDelete = @()
+    if ($allBackups.Count -gt $KeepCount) {
+        $toDelete = $allBackups | Select-Object -Skip $KeepCount
+    }
 
-    $keepCount = 5
-    $backupsToDelete = $allBackups | Select-Object -Skip $keepCount
-
-    if ($backupsToDelete) {
-        Write-Info "Cleaning old backups (keeping last $keepCount)..."
-        foreach ($oldBackup in $backupsToDelete) {
-            Write-Host "    Removing: $($oldBackup.Name)" -ForegroundColor Gray
-            Remove-Item -Path $oldBackup.FullName -Recurse -Force
+    if ($toDelete.Count -gt 0) {
+        Write-Info ("Removing {0} old backup(s)..." -f $toDelete.Count)
+        foreach ($old in $toDelete) {
+            Write-Host ("  Deleting: {0}" -f $old.Name) -ForegroundColor DarkGray
+            if ($PSCmdlet.ShouldProcess($old.FullName, "Delete old backup")) {
+                Remove-Item -LiteralPath $old.FullName -Recurse -Force -ErrorAction Stop
+            }
         }
-        Write-Success "Removed $($backupsToDelete.Count) old backup(s)"
-    } else {
-        Write-Info "All backups within retention policy (keeping last $keepCount)"
+        Write-Success ("Removed {0} old backup(s)" -f $toDelete.Count)
+    }
+    else {
+        Write-Info "No old backups to remove."
     }
 
     # Show remaining backups
-    $remainingBackups = Get-ChildItem -Path $BackupRoot -Directory -Filter "FinalProductPublish_BACKUP_*" |
-        Sort-Object Name -Descending
+    $remaining = Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
+                 Sort-Object Name -Descending
 
     Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  BACKUP SUCCESSFUL!" -ForegroundColor $ColorGreen
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
+    Write-Success "BACKUP SUCCESSFUL"
     Write-Host ""
     Write-Host "Backup Details:" -ForegroundColor White
-    Write-Host "  Location: $backupPath" -ForegroundColor Gray
-    Write-Host "  Files:    $backupCount files" -ForegroundColor Gray
-    Write-Host "  Size:     $backupSize MB" -ForegroundColor Gray
+    Write-Host ("  Location: {0}" -f $backupPath) -ForegroundColor Gray
+    Write-Host ("  Files:    {0}" -f $bak.Count) -ForegroundColor Gray
+    Write-Host ("  Size:     {0} MB" -f $bak.SizeMB) -ForegroundColor Gray
     Write-Host ""
-    Write-Host "Available Backups ($($remainingBackups.Count)):" -ForegroundColor White
-    foreach ($backup in $remainingBackups) {
-        $backupTimestamp = $backup.Name -replace "FinalProductPublish_BACKUP_", ""
-        $backupDate = [DateTime]::ParseExact($backupTimestamp, "yyyyMMdd_HHmmss", $null)
-        Write-Host "  - $($backup.Name)" -ForegroundColor Gray
-        Write-Host "    Created: $($backupDate.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor DarkGray
-    }
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host ""
+    Write-Host ("Available Backups ({0}):" -f $remaining.Count) -ForegroundColor White
 
-} catch {
+    foreach ($b in $remaining) {
+        $ts = $b.Name -replace '^FinalProductPublish_BACKUP_', ''
+        $dt = $null
+        try { $dt = [DateTime]::ParseExact($ts, 'yyyyMMdd_HHmmss', $null) } catch { }
+        Write-Host ("  - {0}" -f $b.Name) -ForegroundColor Gray
+        if ($dt) {
+            Write-Host ("    Created: {0}" -f $dt.ToString('yyyy-MM-dd HH:mm:ss')) -ForegroundColor DarkGray
+        }
+    }
+
+    exit 0
+}
+catch {
     Write-Host ""
-    Write-ErrorMsg "Backup failed: $_"
-    Write-Host ""
-    Write-Host "Error Details:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Err ("Backup failed: {0}" -f $_.Exception.Message)
     exit 1
 }

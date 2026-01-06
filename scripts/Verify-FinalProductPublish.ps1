@@ -3,389 +3,461 @@
     Comprehensive verification of FinalProductPublish integrity
 
 .DESCRIPTION
-    Performs detailed checks on FinalProductPublish:
-    - File count
-    - Total size
-    - Critical files present
-    - Deployment scripts
-    - Documentation files
-    - Static files (wwwroot)
-    - Localization (he-IL)
-    - Optional: VERIFY_FILES.bat execution
+    Performs detailed checks on a publish folder:
+      1) File count range
+      2) Total size range
+      3) Critical binaries present + size sanity
+      4) Deployment scripts present (aligned to current pipeline)
+      5) Documentation files present (aligned; supports legacy naming)
+      6) Static assets (wwwroot/css + wwwroot/js) present with minimum counts
+      7) Localization (he-IL) presence + resources dll
+      8) Optional version check (VERSION.txt)
+
+    Bonus: optionally runs VERIFY_FILES.bat and reports whether it clearly passes.
 
 .PARAMETER Path
-    Path to verify (default: "FinalProductPublish")
+    Target folder name or relative path from repo root (default: "FinalProductPublish")
 
 .PARAMETER ExpectedVersion
-    Expected version number (optional, checks VERSION.txt)
+    Expected version string to match inside VERSION.txt (expects line like "VERSION: <x>")
 
-.EXAMPLE
-    .\Verify-FinalProductPublish.ps1
+.PARAMETER Strict
+    Treat warnings as failures (exit 1 if any warnings).
 
-.EXAMPLE
-    .\Verify-FinalProductPublish.ps1 -Path "ProjectPublish"
-
-.EXAMPLE
-    .\Verify-FinalProductPublish.ps1 -ExpectedVersion "2.1.0"
+.PARAMETER NoRunBat
+    Skip running VERIFY_FILES.bat even if present.
 
 .NOTES
-    Author: Claude Code
-    Version: 1.0
+    ASCII-only output to avoid encoding/parser issues.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter()]
-    [string]$Path = "FinalProductPublish",
+    [string]$Path = 'FinalProductPublish',
 
     [Parameter()]
-    [string]$ExpectedVersion
+    [string]$ExpectedVersion,
+
+    [Parameter()]
+    [switch]$Strict,
+
+    [Parameter()]
+    [switch]$NoRunBat
 )
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
-# Paths
-$ScriptRoot = Split-Path -Parent $PSScriptRoot
-$TargetPath = Join-Path $ScriptRoot $Path
+# Repo root assumed one level above scripts\
+$RepoRoot = Split-Path -Parent $PSScriptRoot
 
-# Colors
-$ColorGreen = "Green"
-$ColorYellow = "Yellow"
-$ColorRed = "Red"
-$ColorCyan = "Cyan"
-
-function Write-Success { param([string]$Message) Write-Host "  ✓ " -ForegroundColor $ColorGreen -NoNewline; Write-Host $Message }
-function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor $ColorCyan -NoNewline; Write-Host $Message }
-function Write-WarningMsg { param([string]$Message) Write-Host "  ⚠️  " -ForegroundColor $ColorYellow -NoNewline; Write-Host $Message }
-function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor $ColorRed -NoNewline; Write-Host $Message }
-
-function Write-CheckHeader {
-    param([int]$CheckNum, [int]$Total, [string]$Title)
-    Write-Host ""
-    Write-Host "[CHECK $CheckNum/$Total] $Title..." -ForegroundColor $ColorCyan
+# If user passed an absolute path, use it; otherwise resolve from repo root.
+if ([System.IO.Path]::IsPathRooted($Path)) {
+    $TargetPath = $Path
+} else {
+    $TargetPath = Join-Path $RepoRoot $Path
 }
 
-$script:PassedChecks = 0
-$script:FailedChecks = 0
-$script:WarningChecks = 0
+# =========================
+# Expectations (ALIGNED)
+# =========================
+
+# These ranges were in your original script and match what you already expect (~560-570).
+$ExpectedFileCountMin = 560
+$ExpectedFileCountMax = 570
+
+# Size range from your original script.
+$ExpectedSizeMinMB = 110
+$ExpectedSizeMaxMB = 120
+
+# Critical binaries (as in your original script)
+$CriticalBinaries = @(
+    @{ Name = 'ShiftManager.exe'; Min = 100KB; Max = 200KB },
+    @{ Name = 'ShiftManager.dll'; Min = 3MB;    Max = 5MB }
+)
+
+# Deployment scripts aligned to your current publish-copy list (Update script fallback)
+$RequiredDeploymentScripts = @(
+    'UNBLOCK_FILES.bat',
+    'VERIFY_FILES.bat',
+    'QUICK_FIX.bat',
+    'START_HERE.bat'
+)
+
+# Keep START_HERE as optional (it may exist in some builds, but isn't in the current copy list)
+$OptionalDeploymentScripts = @(
+    'START_HERE.bat'
+)
+
+# Documentation alignment:
+# - appsettings.json is required (your updater also considers it critical)
+# - require ONE of the deployment guides (legacy + new)
+# - require ONE of the operator notes docs (legacy + new)
+$RequiredDocsAlways = @(
+    'appsettings.json'
+)
+
+$RequireOneOfDeploymentGuides = @(
+    'AIR_GAPPED_DEPLOYMENT_GUIDE.txt',
+    'DEPLOYMENT_GUIDE.txt'
+)
+
+$RequireOneOfOperatorNotes = @(
+    'CRITICAL_BEFORE_DEMO.txt',
+    'README.txt',
+    'README.md'
+)
+
+# Optional docs aligned to your current pipeline and some legacy naming
+$OptionalDocs = @(
+    'VERSION.txt',
+    'QUICK_START.txt',
+    'UPGRADE_GUIDE.txt',
+    'API_DOCUMENTATION.md',
+    'appsettings.Production.template.json'
+)
+
+# Additional artifacts that are commonly shipped
+$OptionalDirs = @(
+    'clients'
+)
+
+# Static assets minimums (from your original)
+$MinCssFiles = 2
+$MinJsFiles  = 3
+
+# =========================
+# Counters + helpers
+# =========================
+$script:Passed = 0
+$script:Warned = 0
+$script:Failed = 0
+
+function Write-Info    { param([string]$Message) Write-Host ("[INFO] {0}" -f $Message) -ForegroundColor Cyan }
+function Write-Ok      { param([string]$Message) Write-Host ("[ OK ] {0}" -f $Message) -ForegroundColor Green }
+function Write-Warn    { param([string]$Message) Write-Host ("[WARN] {0}" -f $Message) -ForegroundColor Yellow }
+function Write-Err     { param([string]$Message) Write-Host ("[FAIL] {0}" -f $Message) -ForegroundColor Red }
+
+function Write-CheckHeader {
+    param([int]$Num, [int]$Total, [string]$Title)
+    Write-Host ""
+    Write-Info ("CHECK {0}/{1}: {2}" -f $Num, $Total, $Title)
+}
+
+function Pass { param([string]$Msg = 'PASS'); Write-Ok $Msg; $script:Passed++ }
+function Warn { param([string]$Msg); Write-Warn $Msg; $script:Warned++ }
+function Fail { param([string]$Msg); Write-Err $Msg; $script:Failed++ }
+
+function Get-AllFiles {
+    param([string]$Root)
+    Get-ChildItem -LiteralPath $Root -File -Recurse -Force -ErrorAction Stop
+}
+
+function Get-SizeMb {
+    param([System.IO.FileInfo[]]$Files)
+    $sum = 0
+    if ($Files.Count -gt 0) {
+        $sum = ($Files | Measure-Object -Property Length -Sum).Sum
+    }
+    [math]::Round(($sum / 1MB), 2)
+}
+
+function Test-Exists {
+    param([string]$Root, [string]$Relative)
+    Test-Path -LiteralPath (Join-Path $Root $Relative)
+}
+
+function Require-OneOf {
+    param(
+        [string]$Root,
+        [string]$Label,
+        [string[]]$Candidates
+    )
+
+    $found = @()
+    foreach ($c in $Candidates) {
+        if (Test-Exists -Root $Root -Relative $c) { $found += $c }
+    }
+
+    if ($found.Count -gt 0) {
+        Write-Host ("  OK: {0}: {1}" -f $Label, ($found -join ', ')) -ForegroundColor Gray
+        return $true
+    } else {
+        Write-Host ("  MISSING: {0} (need one of: {1})" -f $Label, ($Candidates -join ', ')) -ForegroundColor Red
+        return $false
+    }
+}
 
 try {
     Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  FinalProductPublish Verification" -ForegroundColor White
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  Target: $Path" -ForegroundColor Gray
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
+    Write-Info "FinalProductPublish Verification"
+    Write-Host ("[INFO] Target: {0}" -f $TargetPath) -ForegroundColor Gray
 
-    # Check if path exists
-    if (-not (Test-Path $TargetPath)) {
-        Write-ErrorMsg "Path not found: $TargetPath"
-        throw "Target path missing"
+    if (-not (Test-Path -LiteralPath $TargetPath)) {
+        throw ("Target path not found: {0}" -f $TargetPath)
     }
 
-    # Check 1: File count
-    Write-CheckHeader 1 8 "File count"
-    $allFiles = Get-ChildItem -Path $TargetPath -File -Recurse
+    # Precompute file list once (checks 1 & 2)
+    $allFiles  = Get-AllFiles -Root $TargetPath
     $fileCount = $allFiles.Count
+    $sizeMB    = Get-SizeMb -Files $allFiles
 
-    $expectedMin = 560
-    $expectedMax = 570
+    # 1) File count
+    Write-CheckHeader 1 8 "File count"
+    Write-Host ("  Found:    {0} files" -f $fileCount) -ForegroundColor Gray
+    Write-Host ("  Expected: {0}-{1} files" -f $ExpectedFileCountMin, $ExpectedFileCountMax) -ForegroundColor Gray
 
-    Write-Host "    Found: $fileCount files" -ForegroundColor Gray
-    Write-Host "    Expected: $expectedMin-$expectedMax files" -ForegroundColor Gray
-
-    if ($fileCount -lt $expectedMin) {
-        Write-ErrorMsg "FAIL - Too few files (expected $expectedMin-$expectedMax)"
-        $script:FailedChecks++
-    } elseif ($fileCount -gt $expectedMax) {
-        Write-WarningMsg "WARNING - More files than expected (may include backups)"
-        $script:WarningChecks++
-    } else {
-        Write-Success "PASS"
-        $script:PassedChecks++
+    if ($fileCount -lt $ExpectedFileCountMin) {
+        Fail ("Too few files (expected {0}-{1})" -f $ExpectedFileCountMin, $ExpectedFileCountMax)
+    }
+    elseif ($fileCount -gt $ExpectedFileCountMax) {
+        Warn "More files than expected (may include extras/backups)."
+    }
+    else {
+        Pass
     }
 
-    # Check 2: Total size
+    # 2) Total size
     Write-CheckHeader 2 8 "Total size"
-    $totalSize = ($allFiles | Measure-Object -Property Length -Sum).Sum
-    $sizeMB = [math]::Round($totalSize / 1MB, 2)
+    Write-Host ("  Found:    {0} MB" -f $sizeMB) -ForegroundColor Gray
+    Write-Host ("  Expected: {0}-{1} MB" -f $ExpectedSizeMinMB, $ExpectedSizeMaxMB) -ForegroundColor Gray
 
-    $expectedSizeMin = 110
-    $expectedSizeMax = 120
-
-    Write-Host "    Found: $sizeMB MB" -ForegroundColor Gray
-    Write-Host "    Expected: $expectedSizeMin-$expectedSizeMax MB" -ForegroundColor Gray
-
-    if ($sizeMB -lt $expectedSizeMin) {
-        Write-ErrorMsg "FAIL - Package too small (may be missing .NET runtime)"
-        $script:FailedChecks++
-    } elseif ($sizeMB -gt $expectedSizeMax) {
-        Write-WarningMsg "WARNING - Package larger than expected"
-        $script:WarningChecks++
-    } else {
-        Write-Success "PASS"
-        $script:PassedChecks++
+    if ($sizeMB -lt $ExpectedSizeMinMB) {
+        Fail "Package too small (may be missing .NET runtime/self-contained bits)."
+    }
+    elseif ($sizeMB -gt $ExpectedSizeMaxMB) {
+        Warn "Package larger than expected."
+    }
+    else {
+        Pass
     }
 
-    # Check 3: Critical executables
+    # 3) Critical executables
     Write-CheckHeader 3 8 "Critical executables"
-    $criticalExes = @{
-        "ShiftManager.exe" = @{ MinSize = 100KB; MaxSize = 200KB }
-        "ShiftManager.dll" = @{ MinSize = 3MB; MaxSize = 5MB }
-    }
+    $exeOk = $true
 
-    $exeCheckPassed = $true
-    foreach ($exe in $criticalExes.Keys) {
-        $exePath = Join-Path $TargetPath $exe
-        if (Test-Path $exePath) {
-            $exeSize = (Get-Item $exePath).Length
-            $exeSizeKB = [math]::Round($exeSize / 1KB, 2)
-            $exeSizeMB = [math]::Round($exeSize / 1MB, 2)
+    foreach ($c in $CriticalBinaries) {
+        $p = Join-Path $TargetPath $c.Name
+        if (-not (Test-Path -LiteralPath $p)) {
+            Write-Host ("  MISSING: {0}" -f $c.Name) -ForegroundColor Red
+            $exeOk = $false
+            continue
+        }
 
-            if ($exeSize -ge $criticalExes[$exe].MinSize -and $exeSize -le $criticalExes[$exe].MaxSize) {
-                if ($exeSizeMB -ge 1) {
-                    Write-Host "    ✓ $exe found ($exeSizeMB MB)" -ForegroundColor Gray
-                } else {
-                    Write-Host "    ✓ $exe found ($exeSizeKB KB)" -ForegroundColor Gray
-                }
-            } else {
-                Write-Host "    ⚠️  $exe found but size unusual" -ForegroundColor Yellow
-                $exeCheckPassed = $false
-            }
+        $len = (Get-Item -LiteralPath $p).Length
+        $human = if ($len -ge 1MB) { "{0} MB" -f ([math]::Round($len/1MB, 2)) } else { "{0} KB" -f ([math]::Round($len/1KB, 2)) }
+
+        $inRange = ($len -ge $c.Min -and $len -le $c.Max)
+        if ($inRange) {
+            Write-Host ("  OK:  {0} ({1})" -f $c.Name, $human) -ForegroundColor Gray
         } else {
-            Write-Host "    ❌ $exe NOT FOUND" -ForegroundColor Red
-            $exeCheckPassed = $false
+            Write-Host ("  ODD: {0} ({1}) expected [{2}..{3} bytes]" -f $c.Name, $human, $c.Min, $c.Max) -ForegroundColor Yellow
+            $exeOk = $false
         }
     }
 
-    if ($exeCheckPassed) {
-        Write-Success "PASS"
-        $script:PassedChecks++
-    } else {
-        Write-ErrorMsg "FAIL - Missing or unusual executables"
-        $script:FailedChecks++
-    }
+    if ($exeOk) { Pass } else { Fail "Missing or unusual executables." }
 
-    # Check 4: Deployment scripts
+    # 4) Deployment scripts (aligned)
     Write-CheckHeader 4 8 "Deployment scripts"
-    $requiredScripts = @(
-        "UNBLOCK_FILES.bat",
-        "VERIFY_FILES.bat",
-        "START_HERE.bat",
-        "QUICK_FIX.bat"
-    )
+    $scriptsOk = $true
 
-    $scriptCheckPassed = $true
-    foreach ($script in $requiredScripts) {
-        $scriptPath = Join-Path $TargetPath $script
-        if (Test-Path $scriptPath) {
-            Write-Host "    ✓ $script found" -ForegroundColor Gray
+    foreach ($s in $RequiredDeploymentScripts) {
+        if (Test-Exists -Root $TargetPath -Relative $s) {
+            Write-Host ("  OK:      {0}" -f $s) -ForegroundColor Gray
         } else {
-            Write-Host "    ❌ $script NOT FOUND" -ForegroundColor Red
-            $scriptCheckPassed = $false
+            Write-Host ("  MISSING: {0}" -f $s) -ForegroundColor Red
+            $scriptsOk = $false
         }
     }
 
-    if ($scriptCheckPassed) {
-        Write-Success "PASS"
-        $script:PassedChecks++
-    } else {
-        Write-ErrorMsg "FAIL - Missing deployment scripts"
-        $script:FailedChecks++
+    foreach ($s in $OptionalDeploymentScripts) {
+        if (Test-Exists -Root $TargetPath -Relative $s) {
+            Write-Host ("  OK:      {0} (optional)" -f $s) -ForegroundColor DarkGray
+        } else {
+            Write-Host ("  NOTE:    {0} (optional not found)" -f $s) -ForegroundColor DarkYellow
+        }
     }
 
-    # Check 5: Documentation files
+    if ($scriptsOk) { Pass } else { Fail "Missing required deployment scripts." }
+
+    # 5) Documentation files (aligned)
     Write-CheckHeader 5 8 "Documentation files"
-    $requiredDocs = @(
-        "README.txt",
-        "DEPLOYMENT_GUIDE.txt",
-        "appsettings.json"
-    )
+    $docsOk = $true
 
-    $optionalDocs = @(
-        "VERSION.txt",
-        "QUICK_START.txt",
-        "UPGRADE_GUIDE.txt",
-        "AIR_GAPPED_DEPLOYMENT_GUIDE.txt",
-        "API_DOCUMENTATION.md"
-    )
-
-    $docCheckPassed = $true
-    foreach ($doc in $requiredDocs) {
-        $docPath = Join-Path $TargetPath $doc
-        if (Test-Path $docPath) {
-            Write-Host "    ✓ $doc found" -ForegroundColor Gray
+    foreach ($d in $RequiredDocsAlways) {
+        if (Test-Exists -Root $TargetPath -Relative $d) {
+            Write-Host ("  OK:      {0}" -f $d) -ForegroundColor Gray
         } else {
-            Write-Host "    ❌ $doc NOT FOUND (required)" -ForegroundColor Red
-            $docCheckPassed = $false
+            Write-Host ("  MISSING: {0} (required)" -f $d) -ForegroundColor Red
+            $docsOk = $false
         }
     }
 
-    foreach ($doc in $optionalDocs) {
-        $docPath = Join-Path $TargetPath $doc
-        if (Test-Path $docPath) {
-            Write-Host "    ✓ $doc found" -ForegroundColor DarkGray
+    if (-not (Require-OneOf -Root $TargetPath -Label 'Deployment guide' -Candidates $RequireOneOfDeploymentGuides)) {
+        $docsOk = $false
+    }
+
+    if (-not (Require-OneOf -Root $TargetPath -Label 'Operator notes' -Candidates $RequireOneOfOperatorNotes)) {
+        $docsOk = $false
+    }
+
+    foreach ($d in $OptionalDocs) {
+        if (Test-Exists -Root $TargetPath -Relative $d) {
+            Write-Host ("  OK:      {0} (optional)" -f $d) -ForegroundColor DarkGray
         } else {
-            Write-Host "    ⚠️  $doc not found (optional)" -ForegroundColor DarkYellow
+            Write-Host ("  NOTE:    {0} (optional not found)" -f $d) -ForegroundColor DarkYellow
         }
     }
 
-    if ($docCheckPassed) {
-        Write-Success "PASS"
-        $script:PassedChecks++
-    } else {
-        Write-ErrorMsg "FAIL - Missing required documentation"
-        $script:FailedChecks++
-    }
+    if ($docsOk) { Pass } else { Fail "Missing required documentation set." }
 
-    # Check 6: Static files (wwwroot)
+    # 6) Static files (wwwroot)
     Write-CheckHeader 6 8 "Static files (wwwroot)"
-    $wwwrootPath = Join-Path $TargetPath "wwwroot"
+    $wwwroot = Join-Path $TargetPath 'wwwroot'
 
-    if (Test-Path $wwwrootPath) {
-        $cssPath = Join-Path $wwwrootPath "css"
-        $jsPath = Join-Path $wwwrootPath "js"
+    if (-not (Test-Path -LiteralPath $wwwroot)) {
+        Fail "wwwroot folder not found."
+    } else {
+        $cssDir = Join-Path $wwwroot 'css'
+        $jsDir  = Join-Path $wwwroot 'js'
 
         $cssCount = 0
-        $jsCount = 0
+        $jsCount  = 0
 
-        if (Test-Path $cssPath) {
-            $cssCount = (Get-ChildItem -Path $cssPath -Filter "*.css").Count
-            Write-Host "    ✓ wwwroot/css/ exists ($cssCount files)" -ForegroundColor Gray
+        if (Test-Path -LiteralPath $cssDir) {
+            $cssCount = (Get-ChildItem -LiteralPath $cssDir -Filter '*.css' -File -ErrorAction SilentlyContinue).Count
+            Write-Host ("  OK: wwwroot\css ({0} .css files)" -f $cssCount) -ForegroundColor Gray
         } else {
-            Write-Host "    ❌ wwwroot/css/ NOT FOUND" -ForegroundColor Red
+            Write-Host "  MISSING: wwwroot\css" -ForegroundColor Red
         }
 
-        if (Test-Path $jsPath) {
-            $jsCount = (Get-ChildItem -Path $jsPath -Filter "*.js").Count
-            Write-Host "    ✓ wwwroot/js/ exists ($jsCount files)" -ForegroundColor Gray
+        if (Test-Path -LiteralPath $jsDir) {
+            $jsCount = (Get-ChildItem -LiteralPath $jsDir -Filter '*.js' -File -ErrorAction SilentlyContinue).Count
+            Write-Host ("  OK: wwwroot\js  ({0} .js files)" -f $jsCount) -ForegroundColor Gray
         } else {
-            Write-Host "    ❌ wwwroot/js/ NOT FOUND" -ForegroundColor Red
+            Write-Host "  MISSING: wwwroot\js" -ForegroundColor Red
         }
 
-        if ($cssCount -ge 2 -and $jsCount -ge 3) {
-            Write-Success "PASS"
-            $script:PassedChecks++
+        if ($cssCount -ge $MinCssFiles -and $jsCount -ge $MinJsFiles) {
+            Pass
         } else {
-            Write-WarningMsg "WARNING - Fewer static files than expected"
-            $script:WarningChecks++
+            Warn ("Fewer static files than expected (min css={0}, min js={1})." -f $MinCssFiles, $MinJsFiles)
         }
-    } else {
-        Write-ErrorMsg "FAIL - wwwroot folder not found"
-        $script:FailedChecks++
     }
 
-    # Check 7: Localization (he-IL)
-    Write-CheckHeader 7 8 "Localization (Hebrew)"
-    $heILPath = Join-Path $TargetPath "he-IL"
+    # 7) Localization (he-IL)
+    Write-CheckHeader 7 8 "Localization (he-IL)"
+    $heIL = Join-Path $TargetPath 'he-IL'
 
-    if (Test-Path $heILPath) {
-        $resourceDll = Join-Path $heILPath "ShiftManager.resources.dll"
-        if (Test-Path $resourceDll) {
-            Write-Host "    ✓ he-IL/ folder exists" -ForegroundColor Gray
-            Write-Host "    ✓ ShiftManager.resources.dll found" -ForegroundColor Gray
-            Write-Success "PASS"
-            $script:PassedChecks++
-        } else {
-            Write-Host "    ✓ he-IL/ folder exists" -ForegroundColor Gray
-            Write-Host "    ❌ ShiftManager.resources.dll NOT FOUND" -ForegroundColor Red
-            Write-ErrorMsg "FAIL - Missing Hebrew resources DLL"
-            $script:FailedChecks++
-        }
+    if (-not (Test-Path -LiteralPath $heIL)) {
+        Warn "he-IL folder not found (Hebrew localization not present)."
     } else {
-        Write-WarningMsg "WARNING - he-IL folder not found (Hebrew not available)"
-        $script:WarningChecks++
+        $resDll = Join-Path $heIL 'ShiftManager.resources.dll'
+        if (Test-Path -LiteralPath $resDll) {
+            Write-Host "  OK: he-IL folder exists" -ForegroundColor Gray
+            Write-Host "  OK: ShiftManager.resources.dll found" -ForegroundColor Gray
+            Pass
+        } else {
+            Write-Host "  OK: he-IL folder exists" -ForegroundColor Gray
+            Write-Host "  MISSING: ShiftManager.resources.dll" -ForegroundColor Red
+            Fail "Missing Hebrew resources DLL."
+        }
     }
 
-    # Check 8: Version check (if specified)
+    # 8) Version check (optional)
     Write-CheckHeader 8 8 "Version verification"
 
-    if ($ExpectedVersion) {
-        $versionPath = Join-Path $TargetPath "VERSION.txt"
-        if (Test-Path $versionPath) {
-            $versionContent = Get-Content $versionPath -Raw
-            if ($versionContent -match "VERSION:\s+$ExpectedVersion") {
-                Write-Host "    ✓ VERSION.txt shows v$ExpectedVersion" -ForegroundColor Gray
-                Write-Success "PASS"
-                $script:PassedChecks++
-            } else {
-                Write-Host "    ⚠️  VERSION.txt doesn't match expected version" -ForegroundColor Yellow
-                Write-WarningMsg "WARNING - Version mismatch"
-                $script:WarningChecks++
-            }
-        } else {
-            Write-Host "    ⚠️  VERSION.txt not found (can't verify version)" -ForegroundColor Yellow
-            Write-WarningMsg "WARNING - No VERSION.txt file"
-            $script:WarningChecks++
-        }
+    if ([string]::IsNullOrWhiteSpace($ExpectedVersion)) {
+        Write-Info "Version check skipped (no -ExpectedVersion provided)."
+        # Not counted as pass/warn/fail.
     } else {
-        Write-Host "    ⏭️  Version check skipped (no expected version provided)" -ForegroundColor DarkGray
-        Write-Info "SKIPPED"
+        $versionFile = Join-Path $TargetPath 'VERSION.txt'
+        if (-not (Test-Path -LiteralPath $versionFile)) {
+            Warn "VERSION.txt not found (cannot verify version)."
+        } else {
+            $content = Get-Content -LiteralPath $versionFile -Raw -ErrorAction Stop
+            if ($content -match ("VERSION:\s+{0}" -f [regex]::Escape($ExpectedVersion))) {
+                Write-Host ("  OK: VERSION.txt matches {0}" -f $ExpectedVersion) -ForegroundColor Gray
+                Pass
+            } else {
+                Warn ("VERSION.txt does not match expected version ({0})." -f $ExpectedVersion)
+            }
+        }
     }
 
-    # Run VERIFY_FILES.bat if available (optional bonus check)
-    $verifyBat = Join-Path $TargetPath "VERIFY_FILES.bat"
-    if (Test-Path $verifyBat) {
+    # Extra: presence of commonly shipped directories (warning only)
+    foreach ($d in $OptionalDirs) {
         Write-Host ""
-        Write-Host "[BONUS CHECK] Running VERIFY_FILES.bat..." -ForegroundColor $ColorCyan
-        Push-Location $TargetPath
-        try {
-            cmd /c VERIFY_FILES.bat > verify_output.tmp 2>&1
-            $verifyOutput = Get-Content verify_output.tmp -Raw
-            Remove-Item verify_output.tmp -ErrorAction SilentlyContinue
-
-            if ($verifyOutput -match "Verification PASSED" -or $verifyOutput -match "All checks passed") {
-                Write-Success "VERIFY_FILES.bat passed"
-            } else {
-                Write-WarningMsg "VERIFY_FILES.bat output unclear"
-                Write-Host "    Run manually for details: cd $Path && VERIFY_FILES.bat" -ForegroundColor DarkGray
-            }
-        } catch {
-            Write-WarningMsg "Could not run VERIFY_FILES.bat"
-        } finally {
-            Pop-Location
+        Write-Info ("Extra: directory check ({0})" -f $d)
+        if (Test-Path -LiteralPath (Join-Path $TargetPath $d)) {
+            Write-Host ("  OK: {0}\ exists" -f $d) -ForegroundColor Gray
+        } else {
+            Warn ("{0}\ not found (may be expected depending on deployment)." -f $d)
         }
     }
 
-    # Final summary
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  VERIFICATION SUMMARY" -ForegroundColor White
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host ""
-    Write-Host "  Passed:   $script:PassedChecks" -ForegroundColor $ColorGreen
-    if ($script:WarningChecks -gt 0) {
-        Write-Host "  Warnings: $script:WarningChecks" -ForegroundColor $ColorYellow
-    }
-    if ($script:FailedChecks -gt 0) {
-        Write-Host "  Failed:   $script:FailedChecks" -ForegroundColor $ColorRed
-    }
-    Write-Host ""
+    # Bonus: run VERIFY_FILES.bat (optional)
+    if (-not $NoRunBat) {
+        $verifyBat = Join-Path $TargetPath 'VERIFY_FILES.bat'
+        if (Test-Path -LiteralPath $verifyBat) {
+            Write-Host ""
+            Write-Info "BONUS: Running VERIFY_FILES.bat..."
+            Push-Location $TargetPath
+            try {
+                $tmp = Join-Path $TargetPath 'verify_output.tmp'
+                cmd /c 'VERIFY_FILES.bat' > $tmp 2>&1
+                $out = ''
+                if (Test-Path -LiteralPath $tmp) {
+                    $out = Get-Content -LiteralPath $tmp -Raw -ErrorAction SilentlyContinue
+                    Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+                }
 
-    if ($script:FailedChecks -eq 0) {
-        if ($script:WarningChecks -eq 0) {
-            Write-Host "  RESULT: ✅ ALL CHECKS PASSED" -ForegroundColor $ColorGreen
-        } else {
-            Write-Host "  RESULT: ✅ PASSED WITH WARNINGS" -ForegroundColor $ColorYellow
+                if ($out -match 'Verification PASSED' -or $out -match 'All checks passed') {
+                    Write-Ok "VERIFY_FILES.bat PASSED"
+                } else {
+                    Warn "VERIFY_FILES.bat ran but output was not clearly PASS. Consider running it manually for details."
+                    Write-Host ("  Manual: cd ""{0}""; VERIFY_FILES.bat" -f $TargetPath) -ForegroundColor DarkGray
+                }
+            } catch {
+                Warn "Could not run VERIFY_FILES.bat."
+            } finally {
+                Pop-Location
+            }
         }
     } else {
-        Write-Host "  RESULT: ❌ VERIFICATION FAILED" -ForegroundColor $ColorRed
+        Write-Info "BONUS: VERIFY_FILES.bat skipped (-NoRunBat)."
     }
 
+    # Summary / exit code
     Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
+    Write-Info "VERIFICATION SUMMARY"
+    Write-Host ("  Passed:   {0}" -f $script:Passed) -ForegroundColor Green
+    if ($script:Warned -gt 0) { Write-Host ("  Warnings: {0}" -f $script:Warned) -ForegroundColor Yellow }
+    if ($script:Failed -gt 0) { Write-Host ("  Failed:   {0}" -f $script:Failed) -ForegroundColor Red }
     Write-Host ""
 
-    if ($script:FailedChecks -gt 0) {
+    $effectiveFailure = ($script:Failed -gt 0) -or ($Strict -and $script:Warned -gt 0)
+
+    if (-not $effectiveFailure) {
+        if ($script:Warned -eq 0) {
+            Write-Ok "RESULT: ALL CHECKS PASSED"
+        } else {
+            Write-Warn "RESULT: PASSED WITH WARNINGS"
+        }
+        exit 0
+    } else {
+        if ($script:Failed -gt 0) {
+            Write-Err "RESULT: VERIFICATION FAILED"
+        } else {
+            Write-Err "RESULT: STRICT MODE FAILED DUE TO WARNINGS"
+        }
         exit 1
     }
-
-} catch {
+}
+catch {
     Write-Host ""
-    Write-ErrorMsg "Verification failed: $_"
-    Write-Host ""
-    Write-Host "Error Details:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    Write-Host ""
+    Write-Err ("Verification failed: {0}" -f $_.Exception.Message)
     exit 1
 }

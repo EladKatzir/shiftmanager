@@ -290,7 +290,8 @@ try {
             'CRITICAL_BEFORE_DEMO.txt',
             'AIR_GAPPED_DEPLOYMENT_GUIDE.txt',
             'API_DOCUMENTATION.md',
-            'appsettings.Production.template.json'
+            'appsettings.Production.template.json',
+            'START_HERE.bat'
         )
 
         foreach ($item in $extras) {

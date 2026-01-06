@@ -3,33 +3,22 @@
     Restore FinalProductPublish from a backup
 
 .DESCRIPTION
-    Restores FinalProductPublish from a timestamped backup in Backups/FinalProductPublish/.
+    Restores FinalProductPublish from:
+      <repo_root>\Backups\FinalProductPublish\FinalProductPublish_BACKUP_<timestamp>
+
     If no timestamp is provided, lists available backups.
 
 .PARAMETER BackupTimestamp
     Timestamp of backup to restore (e.g., "20251213_120024")
 
 .PARAMETER Force
-    Skip confirmation prompt
-
-.EXAMPLE
-    .\Restore-FinalProductPublish.ps1
-    Lists available backups
-
-.EXAMPLE
-    .\Restore-FinalProductPublish.ps1 -BackupTimestamp "20251213_120024"
-    Restores from specific backup
-
-.EXAMPLE
-    .\Restore-FinalProductPublish.ps1 -BackupTimestamp "20251213_120024" -Force
-    Restores without confirmation
+    Skip interactive confirmation prompt.
 
 .NOTES
-    Author: Claude Code
-    Version: 1.0
+    ASCII-only output to avoid encoding/parser issues.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
     [Parameter()]
     [string]$BackupTimestamp,
@@ -38,168 +27,218 @@ param(
     [switch]$Force
 )
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 # Paths
-$ScriptRoot = Split-Path -Parent $PSScriptRoot
-$DestPath = Join-Path $ScriptRoot "FinalProductPublish"
-$BackupRoot = Join-Path $ScriptRoot "Backups\FinalProductPublish"
+$RepoRoot   = Split-Path -Parent $PSScriptRoot
+$DestPath   = Join-Path $RepoRoot 'FinalProductPublish'
+$BackupRoot = Join-Path $RepoRoot 'Backups\FinalProductPublish'
 
-# Colors
-$ColorGreen = "Green"
-$ColorYellow = "Yellow"
-$ColorRed = "Red"
-$ColorCyan = "Cyan"
+function Write-Info    { param([string]$Message) Write-Host ("[INFO] {0}" -f $Message) -ForegroundColor Cyan }
+function Write-Success { param([string]$Message) Write-Host ("[ OK ] {0}" -f $Message) -ForegroundColor Green }
+function Write-Warn    { param([string]$Message) Write-Host ("[WARN] {0}" -f $Message) -ForegroundColor Yellow }
+function Write-Err     { param([string]$Message) Write-Host ("[FAIL] {0}" -f $Message) -ForegroundColor Red }
 
-function Write-Success { param([string]$Message) Write-Host "  ✓ " -ForegroundColor $ColorGreen -NoNewline; Write-Host $Message }
-function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor $ColorCyan -NoNewline; Write-Host $Message }
-function Write-WarningMsg { param([string]$Message) Write-Host "  ⚠️  " -ForegroundColor $ColorYellow -NoNewline; Write-Host $Message }
-function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor $ColorRed -NoNewline; Write-Host $Message }
+function Ensure-Directory {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        $null = New-Item -ItemType Directory -Path $Path -Force
+    }
+}
+
+function Get-FolderStats {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    $files = Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction Stop
+    $count = $files.Count
+    $sum = 0
+    if ($count -gt 0) { $sum = ($files | Measure-Object -Property Length -Sum).Sum }
+    $mb = [math]::Round(($sum / 1MB), 2)
+    return [pscustomobject]@{ Files = $files; Count = $count; SizeMB = $mb }
+}
+
+function Copy-Contents {
+    param(
+        [Parameter(Mandatory=$true)][string]$FromDir,
+        [Parameter(Mandatory=$true)][string]$ToDir
+    )
+
+    Ensure-Directory -Path $ToDir
+
+    if (Get-Command robocopy -ErrorAction SilentlyContinue) {
+        # Robocopy codes: 0-7 success; 8+ failure
+        $args = @(
+            $FromDir, $ToDir,
+            '/E',
+            '/COPY:DAT',
+            '/DCOPY:DAT',
+            '/R:2','/W:1',
+            '/NFL','/NDL','/NP',
+            '/NJH','/NJS'
+        )
+
+        Write-Info ("Copying with robocopy: {0} -> {1}" -f $FromDir, $ToDir)
+        & robocopy @args | Out-Null
+        $rc = $LASTEXITCODE
+        if ($rc -ge 8) {
+            throw ("robocopy failed with code {0}" -f $rc)
+        }
+    }
+    else {
+        Write-Warn "robocopy not found; using Copy-Item fallback (slower)."
+        Copy-Item -LiteralPath (Join-Path $FromDir '*') -Destination $ToDir -Recurse -Force -ErrorAction Stop
+    }
+}
+
+function Remove-DirectoryContents {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    if (Test-Path -LiteralPath $Path) {
+        Remove-Item -LiteralPath (Join-Path $Path '*') -Recurse -Force -ErrorAction Stop
+    } else {
+        Ensure-Directory -Path $Path
+    }
+}
 
 try {
     Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  FinalProductPublish Restore Tool" -ForegroundColor White
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
+    Write-Info "FinalProductPublish Restore Tool"
     Write-Host ""
 
-    # Check if backup root exists
-    if (-not (Test-Path $BackupRoot)) {
-        Write-ErrorMsg "Backup directory not found: $BackupRoot"
+    if (-not (Test-Path -LiteralPath $BackupRoot)) {
+        Write-Err ("Backup directory not found: {0}" -f $BackupRoot)
         throw "No backups available"
     }
 
-    # Get all available backups
-    $allBackups = Get-ChildItem -Path $BackupRoot -Directory -Filter "FinalProductPublish_BACKUP_*" |
-        Sort-Object Name -Descending
+    $allBackups = Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
+                  Sort-Object Name -Descending
 
-    if ($allBackups.Count -eq 0) {
-        Write-ErrorMsg "No backups found in: $BackupRoot"
+    if (-not $allBackups -or $allBackups.Count -eq 0) {
+        Write-Err ("No backups found in: {0}" -f $BackupRoot)
         throw "No backups available"
     }
 
-    # If no timestamp provided, list backups and exit
+    # List mode
     if (-not $BackupTimestamp) {
         Write-Host "Available FinalProductPublish backups:" -ForegroundColor Cyan
         Write-Host ""
 
-        foreach ($backup in $allBackups) {
-            $timestamp = $backup.Name -replace "FinalProductPublish_BACKUP_", ""
-            $backupDate = [DateTime]::ParseExact($timestamp, "yyyyMMdd_HHmmss", $null)
+        foreach ($b in $allBackups) {
+            $ts = $b.Name -replace '^FinalProductPublish_BACKUP_', ''
+            $dt = $null
+            try { $dt = [DateTime]::ParseExact($ts, 'yyyyMMdd_HHmmss', $null) } catch { }
 
-            $files = Get-ChildItem -Path $backup.FullName -File -Recurse
-            $fileCount = $files.Count
-            $size = [math]::Round(($files | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
+            $stats = $null
+            try { $stats = Get-FolderStats -Path $b.FullName } catch { $stats = $null }
 
-            Write-Host "  $timestamp" -ForegroundColor White -NoNewline
-            Write-Host "  ($($backupDate.ToString('MMM d, yyyy HH:mm:ss')))" -ForegroundColor Gray
-            Write-Host "    Files: $fileCount, Size: $size MB" -ForegroundColor DarkGray
+            Write-Host ("  {0}" -f $ts) -ForegroundColor White -NoNewline
+            if ($dt) {
+                Write-Host ("  ({0})" -f $dt.ToString('MMM d, yyyy HH:mm:ss')) -ForegroundColor Gray
+            } else {
+                Write-Host ""
+            }
+
+            if ($stats) {
+                Write-Host ("    Files: {0}, Size: {1} MB" -f $stats.Count, $stats.SizeMB) -ForegroundColor DarkGray
+            } else {
+                Write-Host "    Files: (unable to read), Size: (unable to read)" -ForegroundColor DarkGray
+            }
             Write-Host ""
         }
 
+        $exampleTs = ($allBackups[0].Name -replace '^FinalProductPublish_BACKUP_', '')
         Write-Host "Usage:" -ForegroundColor Cyan
-        Write-Host "  .\Restore-FinalProductPublish.ps1 -BackupTimestamp `"YYYYMMDD_HHMMSS`"" -ForegroundColor Gray
+        Write-Host '  .\scripts\Restore-FinalProductPublish.ps1 -BackupTimestamp "YYYYMMDD_HHMMSS"' -ForegroundColor Gray
         Write-Host ""
         Write-Host "Example:" -ForegroundColor Cyan
-        Write-Host "  .\Restore-FinalProductPublish.ps1 -BackupTimestamp `"$($allBackups[0].Name -replace 'FinalProductPublish_BACKUP_', '')`"" -ForegroundColor Gray
+        Write-Host ("  .\scripts\Restore-FinalProductPublish.ps1 -BackupTimestamp ""{0}""" -f $exampleTs) -ForegroundColor Gray
         Write-Host ""
         exit 0
     }
 
     # Validate timestamp format
     if ($BackupTimestamp -notmatch '^\d{8}_\d{6}$') {
-        Write-ErrorMsg "Invalid timestamp format. Expected: YYYYMMDD_HHMMSS (e.g., 20251213_120024)"
+        Write-Err "Invalid timestamp format. Expected: YYYYMMDD_HHMMSS (e.g., 20251213_120024)"
         throw "Invalid timestamp format"
     }
 
-    # Find backup
-    $backupName = "FinalProductPublish_BACKUP_$BackupTimestamp"
+    $backupName = "FinalProductPublish_BACKUP_{0}" -f $BackupTimestamp
     $backupPath = Join-Path $BackupRoot $backupName
 
-    if (-not (Test-Path $backupPath)) {
-        Write-ErrorMsg "Backup not found: $backupName"
+    if (-not (Test-Path -LiteralPath $backupPath)) {
+        Write-Err ("Backup not found: {0}" -f $backupName)
         Write-Host ""
         Write-Host "Available backups:" -ForegroundColor Yellow
-        foreach ($backup in $allBackups) {
-            $timestamp = $backup.Name -replace "FinalProductPublish_BACKUP_", ""
-            Write-Host "  - $timestamp" -ForegroundColor Gray
+        foreach ($b in $allBackups) {
+            $ts = $b.Name -replace '^FinalProductPublish_BACKUP_', ''
+            Write-Host ("  - {0}" -f $ts) -ForegroundColor Gray
         }
         Write-Host ""
         throw "Backup not found"
     }
 
-    # Get backup info
-    $backupFiles = Get-ChildItem -Path $backupPath -File -Recurse
-    $backupFileCount = $backupFiles.Count
-    $backupSize = [math]::Round(($backupFiles | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
+    $backupDate = $null
+    try { $backupDate = [DateTime]::ParseExact($BackupTimestamp, 'yyyyMMdd_HHmmss', $null) } catch { }
 
-    $backupDate = [DateTime]::ParseExact($BackupTimestamp, "yyyyMMdd_HHmmss", $null)
+    $bakStats = Get-FolderStats -Path $backupPath
 
-    # Show confirmation
     Write-Host "Restore Details:" -ForegroundColor Cyan
-    Write-Host "  Source:   $backupPath" -ForegroundColor Gray
-    Write-Host "  Created:  $($backupDate.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Gray
-    Write-Host "  Files:    $backupFileCount" -ForegroundColor Gray
-    Write-Host "  Size:     $backupSize MB" -ForegroundColor Gray
-    Write-Host "  Target:   $DestPath" -ForegroundColor Gray
+    Write-Host ("  Source:  {0}" -f $backupPath) -ForegroundColor Gray
+    if ($backupDate) {
+        Write-Host ("  Created: {0}" -f $backupDate.ToString('yyyy-MM-dd HH:mm:ss')) -ForegroundColor Gray
+    }
+    Write-Host ("  Files:   {0}" -f $bakStats.Count) -ForegroundColor Gray
+    Write-Host ("  Size:    {0} MB" -f $bakStats.SizeMB) -ForegroundColor Gray
+    Write-Host ("  Target:  {0}" -f $DestPath) -ForegroundColor Gray
     Write-Host ""
 
     if (-not $Force) {
-        Write-WarningMsg "This will DELETE the current FinalProductPublish contents!"
-        Write-Host ""
+        Write-Warn "This will DELETE the current FinalProductPublish contents."
         $confirm = Read-Host "Are you sure you want to continue? (y/N)"
-        if ($confirm -ne 'y' -and $confirm -ne 'Y') {
-            Write-Host "Restore cancelled by user" -ForegroundColor Yellow
+        if ($confirm -notin @('y','Y')) {
+            Write-Warn "Restore cancelled by user."
             exit 0
         }
         Write-Host ""
     }
 
-    # Perform restore
-    Write-Info "Deleting current FinalProductPublish..."
-    if (Test-Path $DestPath) {
-        Remove-Item -Path $DestPath -Recurse -Force
-    }
-    Write-Success "Current contents deleted"
+    if ($PSCmdlet.ShouldProcess($DestPath, ("Restore from {0}" -f $backupName))) {
+        Write-Info "Clearing current FinalProductPublish contents..."
+        Remove-DirectoryContents -Path $DestPath
+        Write-Success "Destination cleared."
 
-    Write-Info "Copying backup to FinalProductPublish (this may take 1-2 minutes)..."
-    Copy-Item -Path $backupPath -Destination $DestPath -Recurse -Force
-    Write-Success "Backup copied"
-
-    # Verify restoration
-    Write-Info "Verifying restoration..."
-    $restoredFiles = Get-ChildItem -Path $DestPath -File -Recurse
-    $restoredCount = $restoredFiles.Count
-    $restoredSize = [math]::Round(($restoredFiles | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
-
-    if ($restoredCount -ne $backupFileCount) {
-        Write-WarningMsg "File count mismatch! Backup: $backupFileCount, Restored: $restoredCount"
-        Write-Host "    This may indicate an incomplete restore" -ForegroundColor Yellow
+        Write-Info "Copying backup contents to FinalProductPublish..."
+        Copy-Contents -FromDir $backupPath -ToDir $DestPath
+        Write-Success "Backup copied."
     } else {
-        Write-Success "Verification passed: $restoredCount files, $restoredSize MB"
+        Write-Warn "Restore skipped due to WhatIf/Confirm."
+        exit 0
     }
 
-    # Success
+    # Verify restoration by file count
+    Write-Info "Verifying restoration..."
+    $dstStats = Get-FolderStats -Path $DestPath
+
+    if ($dstStats.Count -ne $bakStats.Count) {
+        Write-Warn ("File count mismatch! Backup: {0}, Restored: {1}" -f $bakStats.Count, $dstStats.Count)
+        Write-Warn "This may indicate an incomplete restore."
+    } else {
+        Write-Success ("Verification passed: {0} files, {1} MB" -f $dstStats.Count, $dstStats.SizeMB)
+    }
+
     Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorGreen
-    Write-Host "  RESTORATION SUCCESSFUL!" -ForegroundColor $ColorGreen
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorGreen
-    Write-Host ""
-    Write-Host "FinalProductPublish has been restored from backup:" -ForegroundColor White
-    Write-Host "  Backup:    $backupName" -ForegroundColor Gray
-    Write-Host "  Date:      $($backupDate.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Gray
-    Write-Host "  Files:     $restoredCount" -ForegroundColor Gray
-    Write-Host "  Size:      $restoredSize MB" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorGreen
+    Write-Success "RESTORATION SUCCESSFUL"
+    Write-Host ("  Backup: {0}" -f $backupName) -ForegroundColor Gray
+    if ($backupDate) {
+        Write-Host ("  Date:   {0}" -f $backupDate.ToString('yyyy-MM-dd HH:mm:ss')) -ForegroundColor Gray
+    }
+    Write-Host ("  Files:  {0}" -f $dstStats.Count) -ForegroundColor Gray
+    Write-Host ("  Size:   {0} MB" -f $dstStats.SizeMB) -ForegroundColor Gray
     Write-Host ""
 
-} catch {
+    exit 0
+}
+catch {
     Write-Host ""
-    Write-ErrorMsg "Restoration failed: $_"
-    Write-Host ""
-    Write-Host "Error Details:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    Write-Host ""
+    Write-Err ("Restoration failed: {0}" -f $_.Exception.Message)
     exit 1
 }
