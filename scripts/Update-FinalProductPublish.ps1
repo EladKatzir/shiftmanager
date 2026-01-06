@@ -1,41 +1,25 @@
 ﻿<#
 .SYNOPSIS
-    Automated update of FinalProductPublish from ProjectPublish
+    Updates FinalProductPublish from a fresh ProjectPublish build.
 
 .DESCRIPTION
-    Full automation of the FinalProductPublish update process:
-    1. Checks git status
-    2. Creates backup
-    3. Builds fresh ProjectPublish
-    4. Updates FinalProductPublish
-    5. Verifies integrity
-
-.PARAMETER Version
-    Version number for the build (e.g., "2.1.0")
-
-.PARAMETER SkipBackup
-    Skip backup step (not recommended)
-
-.PARAMETER SkipTests
-    Pass to Build-Release.ps1 to skip tests (faster but less safe)
-
-.PARAMETER CommitChanges
-    Auto-commit uncommitted git changes before building
-
-.EXAMPLE
-    .\Update-FinalProductPublish.ps1 -Version "2.1.0"
-
-.EXAMPLE
-    .\Update-FinalProductPublish.ps1 -Version "2.1.1" -SkipTests
+    End-to-end automation:
+      1) Validate git working tree (optional auto-commit)
+      2) Backup FinalProductPublish (optional skip)
+      3) Build ProjectPublish (via Build-Release.ps1 or dotnet publish fallback)
+      4) Validate ProjectPublish output (counts + critical files)
+      5) Replace FinalProductPublish contents with ProjectPublish
+      6) Validate FinalProductPublish and run VERIFY_FILES.bat if present
 
 .NOTES
-    Author: Claude Code
-    Version: 1.0
+    - ASCII-only output (no Unicode symbols) to avoid encoding/parser issues.
+    - Supports -WhatIf / -Confirm for destructive operations (delete/copy/commit).
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
     [string]$Version,
 
     [Parameter()]
@@ -48,275 +32,384 @@ param(
     [switch]$CommitChanges
 )
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
-# Paths
-$ScriptRoot = Split-Path -Parent $PSScriptRoot
-$SourcePath = Join-Path $ScriptRoot "ProjectPublish"
-$DestPath = Join-Path $ScriptRoot "FinalProductPublish"
-$BuildScript = Join-Path $ScriptRoot "Build-Release.ps1"
-$BackupScript = Join-Path $PSScriptRoot "Backup-FinalProductPublish.ps1"
+# -----------------------------
+# Paths (repo layout assumptions)
+# -----------------------------
+$RepoRoot     = Split-Path -Parent $PSScriptRoot   # scripts\ -> repo root
+$SourceDir    = Join-Path $RepoRoot 'ProjectPublish'
+$DestDir      = Join-Path $RepoRoot 'FinalProductPublish'
+$BuildScript  = Join-Path $RepoRoot 'Build-Release.ps1'
+$BackupScript = Join-Path $PSScriptRoot 'Backup-FinalProductPublish.ps1'
+$RestoreScript = Join-Path $PSScriptRoot 'Restore-FinalProductPublish.ps1'
 
-# Colors
-$ColorGreen = "Green"
-$ColorYellow = "Yellow"
-$ColorRed = "Red"
-$ColorCyan = "Cyan"
+# Optional: log file (best-effort)
+$LogDir = Join-Path $RepoRoot 'logs'
+$null = New-Item -ItemType Directory -Path $LogDir -Force -ErrorAction SilentlyContinue
+$LogFile = Join-Path $LogDir ("Update-FinalProductPublish_{0:yyyyMMdd_HHmmss}.log" -f (Get-Date))
 
-function Write-Success { param([string]$Message) Write-Host "  ✓ " -ForegroundColor $ColorGreen -NoNewline; Write-Host $Message }
-function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor $ColorCyan -NoNewline; Write-Host $Message }
-function Write-WarningMsg { param([string]$Message) Write-Host "  ⚠️  " -ForegroundColor $ColorYellow -NoNewline; Write-Host $Message }
-function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor $ColorRed -NoNewline; Write-Host $Message }
+function Write-Log {
+    param(
+        [Parameter(Mandatory = $true)][string]$Message,
+        [ValidateSet('INFO','OK','WARN','ERROR','STEP')][string]$Level = 'INFO'
+    )
+    $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+    $line = "[{0}] [{1}] {2}" -f $ts, $Level, $Message
 
-function Write-StepHeader {
-    param([string]$Step, [string]$Total, [string]$Title)
-    Write-Host ""
-    Write-Host "[STEP $Step/$Total] $Title..." -ForegroundColor $ColorCyan
+    # Console coloring
+    switch ($Level) {
+        'STEP'  { Write-Host $line -ForegroundColor Cyan }
+        'OK'    { Write-Host $line -ForegroundColor Green }
+        'WARN'  { Write-Host $line -ForegroundColor Yellow }
+        'ERROR' { Write-Host $line -ForegroundColor Red }
+        default { Write-Host $line }
+    }
+
+    # Best-effort file logging
+    try { Add-Content -Path $LogFile -Value $line -Encoding UTF8 } catch { }
 }
 
-try {
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  FinalProductPublish Update Tool" -ForegroundColor White
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
-    Write-Host "  Version: $Version" -ForegroundColor Gray
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorCyan
+function Write-Step {
+    param([int]$Step, [int]$Total, [string]$Title)
+    Write-Log -Level STEP -Message ("----- STEP {0}/{1}: {2} -----" -f $Step, $Total, $Title)
+}
 
-    # Step 1: Check git status
-    Write-StepHeader "1" "6" "Checking git status"
-    Push-Location $ScriptRoot
+function Get-Tool {
+    param([string]$Name)
+    return Get-Command $Name -ErrorAction SilentlyContinue
+}
+
+function Invoke-External {
+    param(
+        [Parameter(Mandatory = $true)][string]$File,
+        [Parameter()][string[]]$Args = @(),
+        [Parameter()][string]$WorkingDirectory = $RepoRoot
+    )
+
+    $argString = ($Args -join ' ')
+    Write-Log -Level INFO -Message ("Running: {0} {1} (wd={2})" -f $File, $argString, $WorkingDirectory)
+
+    Push-Location $WorkingDirectory
     try {
-        $gitStatus = git status --porcelain
-
-        if ($gitStatus) {
-            Write-WarningMsg "Git working tree has uncommitted changes"
-            Write-Host "    Uncommitted files:" -ForegroundColor Gray
-            $gitStatus | ForEach-Object { Write-Host "      $_" -ForegroundColor Gray }
-
-            if ($CommitChanges) {
-                Write-Info "Auto-committing changes..."
-                git add -A
-                git commit -m "Auto-commit before FinalProductPublish update to v$Version"
-                Write-Success "Changes committed"
-            } else {
-                Write-WarningMsg "Build may fail if Build-Release.ps1 requires clean working tree"
-                Write-Host "    Use -CommitChanges to auto-commit, or commit manually first" -ForegroundColor Gray
-            }
-        } else {
-            Write-Success "Working tree clean"
-        }
+        & $File @Args
+        $exit = $LASTEXITCODE
     } finally {
         Pop-Location
     }
 
-    # Step 2: Backup
-    if (-not $SkipBackup) {
-        Write-StepHeader "2" "6" "Backing up FinalProductPublish"
-        & $BackupScript
-        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) {
-            throw "Backup failed"
-        }
+    # Some PowerShell scripts won't set LASTEXITCODE; treat $? as a fallback signal.
+    if ($exit -ne $null -and $exit -ne 0) {
+        throw ("Command failed (exit={0}): {1} {2}" -f $exit, $File, $argString)
+    }
+    if (-not $?) {
+        throw ("Command failed (PowerShell error): {0} {1}" -f $File, $argString)
+    }
+}
+
+function Ensure-Directory {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        $null = New-Item -ItemType Directory -Path $Path -Force
+    }
+}
+
+function Remove-DirectoryContents {
+    param([string]$Path)
+    if (Test-Path -LiteralPath $Path) {
+        Remove-Item -LiteralPath (Join-Path $Path '*') -Recurse -Force -ErrorAction Stop
     } else {
-        Write-StepHeader "2" "6" "Backing up FinalProductPublish (SKIPPED)"
-        Write-WarningMsg "Backup skipped - no rollback available if update fails!"
+        Ensure-Directory -Path $Path
+    }
+}
+
+function Get-FolderStats {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return [pscustomobject]@{ Exists = $false; FileCount = 0; SizeMB = 0.0 }
     }
 
-    # Step 3: Build ProjectPublish
-    Write-StepHeader "3" "6" "Building ProjectPublish v$Version"
+    $files = Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction Stop
+    $count = $files.Count
+    $sum = 0
+    if ($count -gt 0) {
+        $sum = ($files | Measure-Object -Property Length -Sum).Sum
+    }
+    $sizeMb = [math]::Round(($sum / 1MB), 2)
 
-    if (Test-Path $BuildScript) {
-        Write-Info "Running Build-Release.ps1..."
-        Push-Location $ScriptRoot
+    return [pscustomobject]@{ Exists = $true; FileCount = $count; SizeMB = $sizeMb }
+}
+
+function Assert-CriticalFiles {
+    param(
+        [string]$BaseDir,
+        [string[]]$CriticalFiles
+    )
+    $missing = @()
+    foreach ($f in $CriticalFiles) {
+        $p = Join-Path $BaseDir $f
+        if (-not (Test-Path -LiteralPath $p)) {
+            $missing += $f
+        }
+    }
+    if ($missing.Count -gt 0) {
+        throw ("Missing critical files in {0}: {1}" -f $BaseDir, ($missing -join ', '))
+    }
+}
+
+function Copy-Folder {
+    param(
+        [string]$From,
+        [string]$To
+    )
+
+    Ensure-Directory -Path $To
+
+    $robocopy = Get-Tool -Name 'robocopy'
+    if ($robocopy) {
+        # Robocopy return codes:
+        # 0-7 = success (including some files copied), 8+ = failure
+        $args = @(
+            $From, $To,
+            '/E',                # include subdirs
+            '/COPY:DAT',         # data/attrs/timestamps
+            '/DCOPY:DAT',
+            '/R:2', '/W:1',      # retries
+            '/NFL', '/NDL',      # no file/dir listing
+            '/NP',               # no progress
+            '/NJH', '/NJS'       # no job header/summary
+        )
+
+        Push-Location $RepoRoot
         try {
-            if ($SkipTests) {
-                & $BuildScript -Version $Version -SkipTests
-            } else {
-                & $BuildScript -Version $Version
-            }
-
-            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) {
-                throw "Build-Release.ps1 failed with exit code $LASTEXITCODE"
-            }
+            & robocopy @args | Out-Null
+            $rc = $LASTEXITCODE
         } finally {
             Pop-Location
         }
+
+        if ($rc -ge 8) {
+            throw ("robocopy failed with code {0}" -f $rc)
+        }
     } else {
-        # Fallback to manual build
-        Write-WarningMsg "Build-Release.ps1 not found, using manual build..."
-        Write-Info "Running: dotnet publish..."
+        # Fallback
+        Copy-Item -LiteralPath (Join-Path $From '*') -Destination $To -Recurse -Force -ErrorAction Stop
+    }
+}
 
-        Push-Location $ScriptRoot
+# -----------------------------
+# Main
+# -----------------------------
+try {
+    Write-Log -Level INFO -Message "============================================================"
+    Write-Log -Level INFO -Message ("FinalProductPublish Update Tool - Version {0}" -f $Version)
+    Write-Log -Level INFO -Message ("RepoRoot: {0}" -f $RepoRoot)
+    Write-Log -Level INFO -Message "============================================================"
+
+    # STEP 1: Git status
+    Write-Step -Step 1 -Total 6 -Title 'Checking git status'
+    $git = Get-Tool -Name 'git'
+    if (-not $git) {
+        Write-Log -Level WARN -Message "git not found on PATH; skipping git status checks."
+    } else {
+        Push-Location $RepoRoot
         try {
-            if (Test-Path $SourcePath) {
-                Remove-Item -Path $SourcePath -Recurse -Force
-            }
+            $status = & git status --porcelain
+            if ($status) {
+                Write-Log -Level WARN -Message "Git working tree has uncommitted changes:"
+                $status | ForEach-Object { Write-Log -Level WARN -Message ("  {0}" -f $_) }
 
-            dotnet publish ShiftManager.csproj -c Release -r win-x64 --self-contained true -o ProjectPublish
-
-            if ($LASTEXITCODE -ne 0) {
-                throw "dotnet publish failed"
-            }
-
-            # Copy deployment scripts
-            $deploymentScripts = @(
-                "UNBLOCK_FILES.bat",
-                "VERIFY_FILES.bat",
-                "QUICK_FIX.bat",
-                "CRITICAL_BEFORE_DEMO.txt",
-                "AIR_GAPPED_DEPLOYMENT_GUIDE.txt",
-                "API_DOCUMENTATION.md",
-                "appsettings.Production.template.json"
-            )
-
-            foreach ($script in $deploymentScripts) {
-                if (Test-Path $script) {
-                    Copy-Item -Path $script -Destination $SourcePath -Force
+                if ($CommitChanges) {
+                    if ($PSCmdlet.ShouldProcess($RepoRoot, "git add -A and commit local changes")) {
+                        Invoke-External -File 'git' -Args @('add','-A') -WorkingDirectory $RepoRoot
+                        Invoke-External -File 'git' -Args @('commit','-m',("Auto-commit before FinalProductPublish update to v{0}" -f $Version)) -WorkingDirectory $RepoRoot
+                        Write-Log -Level OK -Message "Changes committed."
+                    } else {
+                        Write-Log -Level WARN -Message "Commit skipped due to WhatIf/Confirm."
+                    }
+                } else {
+                    Write-Log -Level WARN -Message "Proceeding with dirty working tree. Build may fail if a clean tree is required."
                 }
-            }
-
-            if (Test-Path "clients") {
-                Copy-Item -Path "clients" -Destination $SourcePath -Recurse -Force
-            }
-        } finally {
-            Pop-Location
-        }
-    }
-
-    Write-Success "Build completed"
-
-    # Step 4: Verify ProjectPublish
-    Write-StepHeader "4" "6" "Verifying ProjectPublish"
-
-    if (-not (Test-Path $SourcePath)) {
-        Write-ErrorMsg "ProjectPublish folder not found!"
-        throw "Build output missing"
-    }
-
-    $sourceFiles = Get-ChildItem -Path $SourcePath -File -Recurse
-    $sourceCount = $sourceFiles.Count
-    $sourceSize = [math]::Round(($sourceFiles | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
-
-    Write-Success "File count: $sourceCount files"
-    Write-Success "Size: $sourceSize MB"
-
-    if ($sourceCount -lt 500) {
-        Write-WarningMsg "File count seems low (expected ~560-570)"
-    }
-
-    # Check critical files
-    $criticalFiles = @("ShiftManager.exe", "ShiftManager.dll", "VERIFY_FILES.bat", "appsettings.json")
-    $missingFiles = @()
-
-    foreach ($file in $criticalFiles) {
-        if (-not (Test-Path (Join-Path $SourcePath $file))) {
-            $missingFiles += $file
-        }
-    }
-
-    if ($missingFiles.Count -gt 0) {
-        Write-ErrorMsg "Missing critical files: $($missingFiles -join ', ')"
-        throw "Build verification failed"
-    }
-
-    Write-Success "Critical files present"
-
-    # Step 5: Update FinalProductPublish
-    Write-StepHeader "5" "6" "Updating FinalProductPublish"
-
-    Write-Info "Clearing FinalProductPublish contents..."
-    if (Test-Path $DestPath) {
-        Remove-Item -Path "$DestPath\*" -Recurse -Force
-    } else {
-        New-Item -ItemType Directory -Path $DestPath -Force | Out-Null
-    }
-    Write-Success "Contents cleared"
-
-    Write-Info "Copying ProjectPublish → FinalProductPublish (this may take 1-2 minutes)..."
-    Copy-Item -Path "$SourcePath\*" -Destination $DestPath -Recurse -Force
-    Write-Success "Files copied"
-
-    # Step 6: Verify FinalProductPublish
-    Write-StepHeader "6" "6" "Verifying FinalProductPublish"
-
-    $destFiles = Get-ChildItem -Path $DestPath -File -Recurse
-    $destCount = $destFiles.Count
-    $destSize = [math]::Round(($destFiles | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
-
-    if ($destCount -ne $sourceCount) {
-        Write-ErrorMsg "File count mismatch! Source: $sourceCount, Dest: $destCount"
-        throw "Copy verification failed"
-    }
-
-    Write-Success "File count: $destCount files"
-    Write-Success "Size: $destSize MB"
-
-    # Run VERIFY_FILES.bat if available
-    $verifyScript = Join-Path $DestPath "VERIFY_FILES.bat"
-    if (Test-Path $verifyScript) {
-        Write-Info "Running VERIFY_FILES.bat..."
-        Push-Location $DestPath
-        try {
-            cmd /c VERIFY_FILES.bat > verify_output.tmp 2>&1
-            $verifyOutput = Get-Content verify_output.tmp -Raw
-            Remove-Item verify_output.tmp -ErrorAction SilentlyContinue
-
-            if ($verifyOutput -match "Verification PASSED" -or $verifyOutput -match "All checks passed") {
-                Write-Success "VERIFY_FILES.bat passed"
             } else {
-                Write-WarningMsg "VERIFY_FILES.bat output unclear - manual verification recommended"
+                Write-Log -Level OK -Message "Working tree clean."
+            }
+        } finally {
+            Pop-Location
+        }
+    }
+
+    # STEP 2: Backup
+    if ($SkipBackup) {
+        Write-Step -Step 2 -Total 6 -Title 'Backing up FinalProductPublish (SKIPPED)'
+        Write-Log -Level WARN -Message "Backup skipped. Rollback will not be available if something goes wrong."
+    } else {
+        Write-Step -Step 2 -Total 6 -Title 'Backing up FinalProductPublish'
+        if (-not (Test-Path -LiteralPath $BackupScript)) {
+            throw ("Backup script not found: {0}" -f $BackupScript)
+        }
+        Invoke-External -File $BackupScript -Args @() -WorkingDirectory $PSScriptRoot
+        Write-Log -Level OK -Message "Backup completed."
+    }
+
+    # STEP 3: Build ProjectPublish
+    Write-Step -Step 3 -Total 6 -Title ("Building ProjectPublish v{0}" -f $Version)
+
+    if (Test-Path -LiteralPath $BuildScript) {
+        $args = @('-Version', $Version)
+        if ($SkipTests) { $args += '-SkipTests' }
+
+        Invoke-External -File $BuildScript -Args $args -WorkingDirectory $RepoRoot
+        Write-Log -Level OK -Message "Build-Release.ps1 completed."
+    } else {
+        Write-Log -Level WARN -Message "Build-Release.ps1 not found. Falling back to dotnet publish."
+
+        if (Test-Path -LiteralPath $SourceDir) {
+            if ($PSCmdlet.ShouldProcess($SourceDir, "Delete existing ProjectPublish output")) {
+                Remove-Item -LiteralPath $SourceDir -Recurse -Force -ErrorAction Stop
+            }
+        }
+
+        $dotnet = Get-Tool -Name 'dotnet'
+        if (-not $dotnet) { throw "dotnet not found on PATH; cannot run fallback build." }
+
+        Invoke-External -File 'dotnet' -Args @(
+            'publish',
+            'ShiftManager.csproj',
+            '-c','Release',
+            '-r','win-x64',
+            '--self-contained','true',
+            '-o','ProjectPublish'
+        ) -WorkingDirectory $RepoRoot
+
+        # Copy deployment/support artifacts (best-effort)
+        $extras = @(
+            'UNBLOCK_FILES.bat',
+            'VERIFY_FILES.bat',
+            'QUICK_FIX.bat',
+            'CRITICAL_BEFORE_DEMO.txt',
+            'AIR_GAPPED_DEPLOYMENT_GUIDE.txt',
+            'API_DOCUMENTATION.md',
+            'appsettings.Production.template.json'
+        )
+
+        foreach ($item in $extras) {
+            $src = Join-Path $RepoRoot $item
+            if (Test-Path -LiteralPath $src) {
+                Copy-Item -LiteralPath $src -Destination $SourceDir -Force -ErrorAction Stop
+            }
+        }
+
+        $clients = Join-Path $RepoRoot 'clients'
+        if (Test-Path -LiteralPath $clients) {
+            Copy-Item -LiteralPath $clients -Destination $SourceDir -Recurse -Force -ErrorAction Stop
+        }
+
+        Write-Log -Level OK -Message "dotnet publish fallback build completed."
+    }
+
+    # STEP 4: Verify ProjectPublish
+    Write-Step -Step 4 -Total 6 -Title 'Verifying ProjectPublish'
+    $srcStats = Get-FolderStats -Path $SourceDir
+    if (-not $srcStats.Exists) {
+        throw ("Build output missing: {0}" -f $SourceDir)
+    }
+
+    Write-Log -Level OK -Message ("ProjectPublish files: {0}" -f $srcStats.FileCount)
+    Write-Log -Level OK -Message ("ProjectPublish size:  {0} MB" -f $srcStats.SizeMB)
+
+    if ($srcStats.FileCount -lt 500) {
+        Write-Log -Level WARN -Message "ProjectPublish file count seems low (expected roughly 560-570)."
+    }
+
+    $critical = @('ShiftManager.exe','ShiftManager.dll','VERIFY_FILES.bat','appsettings.json')
+    Assert-CriticalFiles -BaseDir $SourceDir -CriticalFiles $critical
+    Write-Log -Level OK -Message "Critical files present in ProjectPublish."
+
+    # STEP 5: Update FinalProductPublish
+    Write-Step -Step 5 -Total 6 -Title 'Updating FinalProductPublish'
+    if ($PSCmdlet.ShouldProcess($DestDir, "Replace contents with ProjectPublish")) {
+        Write-Log -Level INFO -Message "Clearing FinalProductPublish contents..."
+        Remove-DirectoryContents -Path $DestDir
+        Write-Log -Level OK -Message "Destination cleared."
+
+        Write-Log -Level INFO -Message "Copying ProjectPublish -> FinalProductPublish..."
+        Copy-Folder -From $SourceDir -To $DestDir
+        Write-Log -Level OK -Message "Copy completed."
+    } else {
+        Write-Log -Level WARN -Message "Update skipped due to WhatIf/Confirm."
+        return
+    }
+
+    # STEP 6: Verify FinalProductPublish
+    Write-Step -Step 6 -Total 6 -Title 'Verifying FinalProductPublish'
+    $dstStats = Get-FolderStats -Path $DestDir
+    if (-not $dstStats.Exists) {
+        throw ("Destination missing after copy: {0}" -f $DestDir)
+    }
+
+    if ($dstStats.FileCount -ne $srcStats.FileCount) {
+        throw ("File count mismatch. Source={0} Dest={1}" -f $srcStats.FileCount, $dstStats.FileCount)
+    }
+
+    Write-Log -Level OK -Message ("FinalProductPublish files: {0}" -f $dstStats.FileCount)
+    Write-Log -Level OK -Message ("FinalProductPublish size:  {0} MB" -f $dstStats.SizeMB)
+
+    # Re-check critical files at destination as well
+    Assert-CriticalFiles -BaseDir $DestDir -CriticalFiles $critical
+    Write-Log -Level OK -Message "Critical files present in FinalProductPublish."
+
+    # Optional: run VERIFY_FILES.bat if present
+    $verifyBat = Join-Path $DestDir 'VERIFY_FILES.bat'
+    if (Test-Path -LiteralPath $verifyBat) {
+        Write-Log -Level INFO -Message "Running VERIFY_FILES.bat..."
+        Push-Location $DestDir
+        try {
+            $tmp = Join-Path $DestDir 'verify_output.tmp'
+            cmd /c 'VERIFY_FILES.bat' > $tmp 2>&1
+            $out = ''
+            if (Test-Path -LiteralPath $tmp) {
+                $out = Get-Content -LiteralPath $tmp -Raw -ErrorAction SilentlyContinue
+                Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+            }
+
+            if ($out -match 'Verification PASSED' -or $out -match 'All checks passed') {
+                Write-Log -Level OK -Message "VERIFY_FILES.bat PASSED."
+            } else {
+                Write-Log -Level WARN -Message "VERIFY_FILES.bat completed but output was not clearly PASS. Review manually if needed."
             }
         } finally {
             Pop-Location
         }
     } else {
-        Write-WarningMsg "VERIFY_FILES.bat not found - skip automated verification"
+        Write-Log -Level WARN -Message "VERIFY_FILES.bat not found; skipping bat verification."
     }
 
-    # Success summary
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorGreen
-    Write-Host "  UPDATE SUCCESSFUL!" -ForegroundColor $ColorGreen
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorGreen
-    Write-Host ""
-    Write-Host "Version:          v$Version" -ForegroundColor Gray
-    Write-Host "Files:            $destCount" -ForegroundColor Gray
-    Write-Host "Size:             $destSize MB" -ForegroundColor Gray
+    Write-Log -Level OK -Message "============================================================"
+    Write-Log -Level OK -Message ("UPDATE SUCCESSFUL - v{0}" -f $Version)
+    Write-Log -Level OK -Message ("Files: {0}  Size: {1} MB" -f $dstStats.FileCount, $dstStats.SizeMB)
+    Write-Log -Level OK -Message ("Log: {0}" -f $LogFile)
+    Write-Log -Level OK -Message "Next steps:"
+    Write-Log -Level OK -Message "  git add FinalProductPublish/"
+    if (-not $SkipBackup) { Write-Log -Level OK -Message "  git add Backups/" }
+    Write-Log -Level OK -Message ("  git commit -m ""Update FinalProductPublish to v{0}""" -f $Version)
+    Write-Log -Level OK -Message ("  git tag -a v{0} -m ""Version {0}""" -f $Version)
+    Write-Log -Level OK -Message "============================================================"
+}
+catch {
+    Write-Log -Level ERROR -Message "============================================================"
+    Write-Log -Level ERROR -Message "UPDATE FAILED"
+    Write-Log -Level ERROR -Message ("Error: {0}" -f $_.Exception.Message)
+    Write-Log -Level ERROR -Message ("Log:  {0}" -f $LogFile)
+    Write-Log -Level ERROR -Message "============================================================"
+
     if (-not $SkipBackup) {
-        $latestBackup = Get-ChildItem -Path (Join-Path $ScriptRoot "Backups\FinalProductPublish") -Directory -Filter "FinalProductPublish_BACKUP_*" |
-            Sort-Object Name -Descending |
-            Select-Object -First 1
-        if ($latestBackup) {
-            Write-Host "Backup:           $($latestBackup.Name)" -ForegroundColor Gray
+        if (Test-Path -LiteralPath $RestoreScript) {
+            Write-Log -Level WARN -Message ("To rollback, run: {0}" -f $RestoreScript)
+        } else {
+            Write-Log -Level WARN -Message "Backup was created (unless backup script failed), but Restore-FinalProductPublish.ps1 was not found."
         }
     }
-    Write-Host ""
-    Write-Host "Next steps:" -ForegroundColor Cyan
-    Write-Host "  1. Review FinalProductPublish contents" -ForegroundColor Gray
-    Write-Host "  2. Commit to git:" -ForegroundColor Gray
-    Write-Host "       git add FinalProductPublish/" -ForegroundColor DarkGray
-    Write-Host "       git add Backups/" -ForegroundColor DarkGray
-    Write-Host "       git commit -m `"Update FinalProductPublish to v$Version`"" -ForegroundColor DarkGray
-    Write-Host "  3. Create git tag:" -ForegroundColor Gray
-    Write-Host "       git tag -a v$Version -m `"Version $Version`"" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorGreen
-    Write-Host ""
 
-} catch {
-    Write-Host ""
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorRed
-    Write-Host "  UPDATE FAILED!" -ForegroundColor $ColorRed
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor $ColorRed
-    Write-Host ""
-    Write-ErrorMsg "Update failed: $_"
-    Write-Host ""
-    Write-Host "Error Details:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    Write-Host ""
-    if (-not $SkipBackup) {
-        Write-Host "To rollback, run:" -ForegroundColor Yellow
-        Write-Host "  .\scripts\Restore-FinalProductPublish.ps1" -ForegroundColor Gray
-    }
-    Write-Host ""
     exit 1
 }
