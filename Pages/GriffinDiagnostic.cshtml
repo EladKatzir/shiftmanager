@@ -1,0 +1,532 @@
+@page
+@model ShiftManager.Pages.GriffinDiagnosticModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Griffin ADFS Comprehensive Diagnostic</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+        .header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section h2 {
+            margin: 0;
+            background: #334155;
+            color: white;
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem;
+            border-bottom: 2px solid #475569;
+        }
+        .section-body {
+            padding: 1.5rem;
+        }
+        .status-ok { color: #10b981; font-weight: 600; }
+        .status-error { color: #ef4444; font-weight: 600; }
+        .status-warning { color: #f59e0b; font-weight: 600; }
+        .status-info { color: #3b82f6; font-weight: 600; }
+
+        .check-list {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            background: #0f172a;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+        .check-list div {
+            margin-bottom: 0.25rem;
+        }
+
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            overflow-x: auto;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .field {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #0f172a;
+            border-radius: 6px;
+            border-left: 4px solid #6366f1;
+        }
+        .field-label {
+            font-weight: 600;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .field-value {
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: #e2e8f0;
+            font-size: 1rem;
+            word-break: break-all;
+        }
+        .url-preview {
+            background: #422006;
+            border: 2px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            word-break: break-all;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: #fbbf24;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .badge-success { background: #10b981; color: white; }
+        .badge-error { background: #ef4444; color: white; }
+        .badge-warning { background: #f59e0b; color: #000; }
+
+        .warning-box {
+            background: #422006;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .warning-box ul {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .grid-item {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+        .grid-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+        .grid-item p {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #6366f1;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #64748b;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: #1e293b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            text-align: center;
+        }
+        .summary-card.success { border-color: #10b981; }
+        .summary-card.error { border-color: #ef4444; }
+        .summary-card.warning { border-color: #f59e0b; }
+        .summary-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .summary-card .label {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Griffin ADFS Comprehensive Diagnostic</h1>
+        <p><strong>Generated:</strong> @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") | <strong>Purpose:</strong> Deep diagnostic analysis of Griffin ADFS configuration and connectivity</p>
+    </div>
+
+    @if (Model.HasError)
+    {
+        <div class="section">
+            <h2>❌ CRITICAL ERROR</h2>
+            <div class="section-body">
+                <p class="status-error">@Model.ErrorMessage</p>
+            </div>
+        </div>
+    }
+
+    @* Summary Cards *@
+    @if (Model.ValidationResults.Any())
+    {
+        var passedChecks = Model.ValidationResults.Count(v => v.Value);
+        var failedChecks = Model.ValidationResults.Count(v => !v.Value);
+        var totalChecks = Model.ValidationResults.Count;
+        var passPercentage = totalChecks > 0 ? (int)((passedChecks / (double)totalChecks) * 100) : 0;
+
+        <div class="summary-grid">
+            <div class="summary-card @(failedChecks == 0 ? "success" : failedChecks > 3 ? "error" : "warning")">
+                <h3>Overall Status</h3>
+                <div class="value" style="color: @(failedChecks == 0 ? "#10b981" : failedChecks > 3 ? "#ef4444" : "#f59e0b")">
+                    @(failedChecks == 0 ? "✓" : failedChecks > 3 ? "✗" : "⚠")
+                </div>
+                <div class="label">@(failedChecks == 0 ? "All Checks Passed" : failedChecks > 3 ? "Critical Issues" : "Warnings Found")</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Validation Score</h3>
+                <div class="value">@passPercentage%</div>
+                <div class="label">@passedChecks / @totalChecks checks passed</div>
+            </div>
+
+            <div class="summary-card @(Model.GriffinServerReachable ? "success" : "error")">
+                <h3>Server Status</h3>
+                <div class="value" style="color: @(Model.GriffinServerReachable ? "#10b981" : "#ef4444")">
+                    @(Model.GriffinServerReachable ? "✓" : "✗")
+                </div>
+                <div class="label">@(Model.GriffinServerReachable ? $"Online ({Model.GriffinResponseTime}ms)" : "Unreachable")</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Config Source</h3>
+                <div class="value" style="font-size: 1.25rem;">📊</div>
+                <div class="label">@Model.ConfigSource</div>
+            </div>
+        </div>
+    }
+
+    @* Warnings Section *@
+    @if (Model.Warnings.Any())
+    {
+        <div class="warning-box">
+            <h3 style="margin: 0 0 0.5rem 0; color: #f59e0b;">⚠️ Warnings (@Model.Warnings.Count)</h3>
+            <ul>
+                @foreach (var warning in Model.Warnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @* Diagnostic Checks *@
+    <div class="section">
+        <h2>📋 Diagnostic Checks (@Model.Checks.Count steps)</h2>
+        <div class="section-body">
+            <div class="check-list">
+                @foreach (var check in Model.Checks)
+                {
+                    var line = check;
+                    if (line.Contains("✓"))
+                    {
+                        <div class="status-ok">@line</div>
+                    }
+                    else if (line.Contains("✗"))
+                    {
+                        <div class="status-error">@line</div>
+                    }
+                    else if (line.Contains("⚠"))
+                    {
+                        <div class="status-warning">@line</div>
+                    }
+                    else
+                    {
+                        <div style="color: #94a3b8;">@line</div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.GriffinConfig != null)
+    {
+        @* Configuration Details *@
+        <div class="section">
+            <h2>📊 Current Configuration (@Model.ConfigSource)</h2>
+            <div class="section-body">
+                <div class="grid">
+                    <div class="grid-item">
+                        <h4>Database ID</h4>
+                        <p>@Model.GriffinConfig.Id</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>Company ID</h4>
+                        <p>@Model.GriffinConfig.CompanyId</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>Enabled</h4>
+                        <p style="color: @(Model.GriffinConfig.Enabled ? "#10b981" : "#ef4444")">
+                            @Model.GriffinConfig.Enabled
+                            @if (Model.GriffinConfig.Enabled)
+                            {
+                                <span class="badge badge-success">ACTIVE</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-error">DISABLED</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>Timeout</h4>
+                        <p>@Model.GriffinConfig.TimeoutSeconds seconds</p>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">Base URL (Griffin Server)</span>
+                    <div class="field-value">@(Model.GriffinConfig.BaseUrl ?? "(NULL)")
+                        @if (Model.BaseUrlHasScheme == true)
+                        {
+                            <span class="badge badge-success">✓ Valid Scheme</span>
+                        }
+                        else if (Model.BaseUrlHasScheme == false)
+                        {
+                            <span class="badge badge-error">✗ Missing Scheme</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">Token Consumer URL (Callback)</span>
+                    <div class="field-value">@(Model.GriffinConfig.TokenConsumerUrl ?? "(NULL)")
+                        @if (Model.CallbackUrlHasScheme == true)
+                        {
+                            <span class="badge badge-success">✓ Valid Scheme</span>
+                        }
+                        else if (Model.CallbackUrlHasScheme == false)
+                        {
+                            <span class="badge badge-error">✗ Missing Scheme</span>
+                        }
+                        @if (Model.CallbackUrlUsesLocalhost)
+                        {
+                            <span class="badge badge-warning">Uses localhost</span>
+                        }
+                    </div>
+                    @if (Model.CallbackUrlPath != null)
+                    {
+                        <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #94a3b8;">
+                            Host: <code style="color: #e2e8f0;">@Model.CallbackUrlHost</code> |
+                            Path: <code style="color: #e2e8f0;">@Model.CallbackUrlPath</code>
+                        </div>
+                    }
+                </div>
+
+                <div class="field">
+                    <span class="field-label">Auto Provision Users</span>
+                    <div class="field-value">@Model.GriffinConfig.AutoProvisionUsers</div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">Default Provisioned Role</span>
+                    <div class="field-value">@Model.GriffinConfig.DefaultProvisionedRole</div>
+                </div>
+            </div>
+        </div>
+
+        @* Generated URL *@
+        @if (!string.IsNullOrEmpty(Model.GeneratedAuthUrl))
+        {
+            <div class="section">
+                <h2>🔗 Generated Authentication URL</h2>
+                <div class="section-body">
+                    <p><strong>This is the URL that "Login with ADFS" will redirect to:</strong></p>
+                    <div class="url-preview">
+                        @Model.GeneratedAuthUrl
+                    </div>
+
+                    <h3 style="margin-top: 1.5rem; color: #e2e8f0;">Analysis:</h3>
+                    @if (Model.AuthUrlIsAbsolute == true)
+                    {
+                        <p class="status-ok">✓ URL is ABSOLUTE - Browser will redirect to external Griffin server</p>
+                        <div class="grid" style="margin-top: 1rem;">
+                            <div class="grid-item">
+                                <h4>Scheme</h4>
+                                <p>@Model.UrlScheme://</p>
+                            </div>
+                            <div class="grid-item">
+                                <h4>Host</h4>
+                                <p>@Model.UrlHost</p>
+                            </div>
+                            <div class="grid-item">
+                                <h4>Path</h4>
+                                <p>@Model.UrlPath</p>
+                            </div>
+                            <div class="grid-item">
+                                <h4>Query Length</h4>
+                                <p>@Model.UrlQuery?.Length chars</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="status-error">✗ URL is RELATIVE - This WILL cause a 404 error!</p>
+                        <p style="color: #94a3b8; margin-top: 1rem;">
+                            ASP.NET will treat this as a local path instead of redirecting to the Griffin server.
+                            The browser will try to navigate to a non-existent local route, resulting in "404 Not Found".
+                        </p>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Root Cause *@
+        @if (Model.RootCause != null)
+        {
+            <div class="section">
+                <h2>🐛 Root Cause Analysis</h2>
+                <div class="section-body">
+                    <h3 style="color: #ef4444; margin-top: 0;">@Model.RootCause</h3>
+                    @if (Model.RootCauseExplanation != null)
+                    {
+                        @Html.Raw(Model.RootCauseExplanation)
+                    }
+                </div>
+            </div>
+        }
+
+        @* Fix Instructions *@
+        <div class="section">
+            <h2>✅ @(Model.RootCause != null ? "Fix Instructions" : "Next Steps")</h2>
+            <div class="section-body">
+                @if (!string.IsNullOrEmpty(Model.FixInstructions))
+                {
+                    @Html.Raw(Model.FixInstructions)
+                }
+                else
+                {
+                    <p>No fix needed - configuration appears correct.</p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="section">
+            <h2>⚠️ No Griffin Configuration Found</h2>
+            <div class="section-body">
+                <p>No GriffinConfig record was found in the database or appsettings.json.</p>
+                <p><strong>Next steps:</strong></p>
+                <ol>
+                    <li>Go to <a href="/Owner/GriffinConfig" style="color: #6366f1;">http://localhost:5000/Owner/GriffinConfig</a></li>
+                    <li>Configure the Griffin ADFS settings</li>
+                    <li>Click "Test Connection" to save and verify</li>
+                    <li>Return to this diagnostic page to re-check</li>
+                </ol>
+            </div>
+        </div>
+    }
+
+    @* Actions *@
+    <div class="section">
+        <h2>🔄 Actions</h2>
+        <div class="section-body">
+            <div class="actions">
+                <a href="/Owner/GriffinConfig" class="btn">→ Griffin Configuration</a>
+                <a href="/GriffinDiagnostic" class="btn btn-secondary">🔄 Refresh Diagnostic</a>
+                <a href="/Auth/Login" class="btn btn-secondary">→ Login Page</a>
+                <button onclick="window.print()" class="btn btn-secondary">🖨️ Print Report</button>
+            </div>
+        </div>
+    </div>
+
+    @* Diagnostic Data Export *@
+    <div class="section">
+        <h2>📋 Diagnostic Data (JSON Export)</h2>
+        <div class="section-body">
+            <p style="color: #94a3b8; margin-bottom: 1rem;">
+                Copy this data for support or troubleshooting:
+            </p>
+            <pre>@Model.DiagnosticJson</pre>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; padding: 2rem; color: #64748b; font-size: 0.875rem;">
+        <p>Griffin ADFS Diagnostic Tool v2.0 | Generated by ShiftManager</p>
+        <p>🤖 Enhanced diagnostic engine with comprehensive validation</p>
+    </div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Automated update of FinalProductPublish from ProjectPublish
 

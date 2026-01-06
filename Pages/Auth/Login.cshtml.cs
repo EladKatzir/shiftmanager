@@ -277,6 +277,33 @@ public class LoginModel : LocalizedPageModel
             return Page();
         }
 
+        // ✅ CRITICAL FIX: Validate URLs have proper scheme (http:// or https://)
+        if (!Uri.TryCreate(griffinConfig.BaseUrl, UriKind.Absolute, out var baseUri) ||
+            (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+        {
+            _logger.LogError("CRITICAL: Griffin BaseUrl is missing scheme or invalid: '{BaseUrl}'", griffinConfig.BaseUrl);
+            _logger.LogError("BaseUrl must start with http:// or https://. Current value will cause 404 redirect error.");
+            Error = "Griffin ADFS configuration error: Base URL must start with http:// or https://. Please contact your administrator to fix this in /Owner/GriffinConfig.";
+            ReturnUrl = returnUrl ?? "/";
+            ShowGriffinButton = false;
+            ShowGriffinUnavailableMessage = true;
+            await OnGetAsync(returnUrl: returnUrl);
+            return Page();
+        }
+
+        if (!Uri.TryCreate(griffinConfig.TokenConsumerUrl, UriKind.Absolute, out var callbackUri) ||
+            (callbackUri.Scheme != Uri.UriSchemeHttp && callbackUri.Scheme != Uri.UriSchemeHttps))
+        {
+            _logger.LogError("CRITICAL: Griffin TokenConsumerUrl is missing scheme or invalid: '{TokenConsumerUrl}'", griffinConfig.TokenConsumerUrl);
+            _logger.LogError("TokenConsumerUrl must start with http:// or https://. Current value will cause authentication failure.");
+            Error = "Griffin ADFS configuration error: Callback URL must start with http:// or https://. Please contact your administrator to fix this in /Owner/GriffinConfig.";
+            ReturnUrl = returnUrl ?? "/";
+            ShowGriffinButton = false;
+            ShowGriffinUnavailableMessage = true;
+            await OnGetAsync(returnUrl: returnUrl);
+            return Page();
+        }
+
         // ✅ FIX: Use configured TokenConsumerUrl from database (not Request.Scheme/Host)
         var callbackUrl = griffinConfig.TokenConsumerUrl;
 
@@ -287,14 +314,39 @@ public class LoginModel : LocalizedPageModel
             callbackUrl += $"{separator}returnUrl={Uri.EscapeDataString(returnUrl)}";
         }
 
-        _logger.LogDebug("Using configured callback URL: {CallbackUrl}", callbackUrl);
-        _logger.LogDebug("Request context: Scheme={Scheme}, Host={Host}", Request.Scheme, Request.Host);
+        _logger.LogInformation("=== GRIFFIN ADFS REDIRECT DEBUG ===");
+        _logger.LogInformation("Config from database:");
+        _logger.LogInformation("  - BaseUrl: {BaseUrl}", griffinConfig.BaseUrl);
+        _logger.LogInformation("  - TokenConsumerUrl: {TokenConsumerUrl}", griffinConfig.TokenConsumerUrl);
+        _logger.LogInformation("  - CallbackUrl (with returnUrl): {CallbackUrl}", callbackUrl);
 
         // Build authentication URL
         var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl, callbackUrl);
 
-        _logger.LogInformation("Redirecting to Griffin ADFS: {BaseUrl}/authentication", griffinConfig.BaseUrl);
-        _logger.LogDebug("Full Griffin auth URL (tokenConsumerURL will be double-encoded): {AuthUrl}", authUrl);
+        _logger.LogInformation("Generated authentication URL: {AuthUrl}", authUrl);
+
+        // ✅ CRITICAL FIX: Validate the generated URL is absolute before redirecting
+        if (!Uri.TryCreate(authUrl, UriKind.Absolute, out var authUri))
+        {
+            _logger.LogError("CRITICAL: Generated auth URL is NOT absolute: '{AuthUrl}'", authUrl);
+            _logger.LogError("This will cause ASP.NET to treat it as a relative path, resulting in 404 error.");
+            _logger.LogError("Check that BaseUrl starts with http:// or https://");
+            Error = "Griffin ADFS configuration error: Generated authentication URL is invalid. Please contact your administrator.";
+            ReturnUrl = returnUrl ?? "/";
+            ShowGriffinButton = false;
+            ShowGriffinUnavailableMessage = true;
+            await OnGetAsync(returnUrl: returnUrl);
+            return Page();
+        }
+
+        _logger.LogInformation("URL validation:");
+        _logger.LogInformation("  - Is Absolute: YES ✓");
+        _logger.LogInformation("  - Scheme: {Scheme}", authUri.Scheme);
+        _logger.LogInformation("  - Host: {Host}", authUri.Host);
+        _logger.LogInformation("  - Path: {Path}", authUri.AbsolutePath);
+        _logger.LogInformation("  - Query: {Query}", authUri.Query.Length > 100 ? authUri.Query.Substring(0, 100) + "..." : authUri.Query);
+        _logger.LogInformation("Redirecting browser to Griffin ADFS...");
+        _logger.LogInformation("=== END DEBUG ===");
 
         // Redirect to Griffin
         return Redirect(authUrl);

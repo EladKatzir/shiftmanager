@@ -108,18 +108,45 @@ public class GriffinConfigModel : PageModel
     public async Task<IActionResult> OnPostTestConnectionAsync()
     {
         LoadRoleOptions();
-        await LoadConfigAsync(); // Preserve current values
         await LoadRecentLogsAsync(); // Load logs for display
 
-        if (string.IsNullOrWhiteSpace(BaseUrl))
+        // ✅ CRITICAL FIX: Validate before testing
+        var validationError = ValidateInputs();
+        if (!string.IsNullOrEmpty(validationError))
         {
-            ErrorMessage = "Please enter a Base URL to test.";
+            ErrorMessage = validationError;
             return Page();
         }
 
         try
         {
-            var result = await _griffinConfigService.TestConnectionAsync(BaseUrl, TimeoutSeconds);
+            var userName = User.Identity?.Name ?? "Unknown";
+
+            // ✅ CRITICAL FIX: SAVE configuration FIRST, then test
+            // This ensures the test uses the SAME configuration that Login will use
+            _logger.LogInformation("Saving Griffin config before testing (to ensure test matches login behavior)");
+
+            await _griffinConfigService.SaveGriffinConfigAsync(
+                Enabled,
+                BaseUrl,
+                TokenConsumerUrl,
+                AutoProvisionUsers,
+                DefaultProvisionedRole,
+                TimeoutSeconds,
+                userName);
+
+            // Now test using the SAVED configuration (not the form value)
+            var savedConfig = await _griffinConfigService.GetGriffinConfigAsync();
+
+            if (savedConfig == null || string.IsNullOrWhiteSpace(savedConfig.BaseUrl))
+            {
+                ErrorMessage = "Failed to load saved configuration for testing.";
+                return Page();
+            }
+
+            _logger.LogInformation("Testing connection with SAVED configuration: BaseUrl={BaseUrl}", savedConfig.BaseUrl);
+
+            var result = await _griffinConfigService.TestConnectionAsync(savedConfig.BaseUrl, savedConfig.TimeoutSeconds);
 
             TestConnectionResult = result.Success;
             LastTestTimestamp = DateTime.UtcNow;
@@ -131,11 +158,20 @@ public class GriffinConfigModel : PageModel
 
             if (result.Success)
             {
-                SuccessMessage = $"Connection successful! Griffin responded with HTTP {result.StatusCode} in {result.DurationMs}ms.";
+                SuccessMessage = $"✅ Configuration saved and connection successful! Griffin responded with HTTP {result.StatusCode} in {result.DurationMs}ms. Login with ADFS will now work with these settings.";
+
+                // Audit log
+                await _auditLogService.LogUserActionAsync(
+                    GetCurrentUserId(),
+                    "GriffinConfigTestedSuccessfully",
+                    "GriffinConfig",
+                    null,
+                    "Griffin ADFS connection test successful",
+                    $"BaseUrl={savedConfig.BaseUrl}, StatusCode={result.StatusCode}, Duration={result.DurationMs}ms");
             }
             else
             {
-                ErrorMessage = $"Connection failed: {result.ErrorMessage}";
+                ErrorMessage = $"⚠️ Configuration saved, but connection test failed: {result.ErrorMessage}. Please verify the Base URL and ensure the Griffin server is reachable.";
             }
 
             // Reload logs to show the new test result
