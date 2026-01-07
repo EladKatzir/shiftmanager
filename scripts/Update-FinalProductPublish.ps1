@@ -214,9 +214,22 @@ function Invoke-DeferredBackup {
 
     Write-Log -Level INFO -Message "Running deferred FinalProductPublish backup (pre-replace)..."
 
-    # Attempt to avoid interactive confirmation in automation runs
-    # (Backup script supports ShouldProcess; -Confirm:$false suppresses prompt)
-    Invoke-External -File $BackupScript -Args @('-Confirm:$false') -WorkingDirectory $PSScriptRoot
+    # Call backup script directly with -Confirm:$false to suppress prompts in automation
+    # (Backup script supports ShouldProcess; uses hashtable splatting for proper parameter passing)
+    Push-Location $PSScriptRoot
+    try {
+        & $BackupScript -Confirm:$false
+        $exit = $LASTEXITCODE
+    } finally {
+        Pop-Location
+    }
+
+    if ($exit -ne $null -and $exit -ne 0) {
+        throw ("Backup failed (exit={0})" -f $exit)
+    }
+    if (-not $?) {
+        throw "Backup failed (PowerShell error)"
+    }
 
     $script:BackupCreatedThisRun = $true
     Write-Log -Level OK -Message "Backup completed."
