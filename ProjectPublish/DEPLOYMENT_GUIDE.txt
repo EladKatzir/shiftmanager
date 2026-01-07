@@ -142,7 +142,7 @@ For production use without Windows Service:
 Step 1: Extract Package
   1. Copy ShiftManager-v2.5.0-win-x64.zip to target server
   2. Extract to installation folder (e.g., C:\ShiftManager)
-  3. Verify 412 files extracted
+  3. Verify 413 files extracted
 
 Step 2: Configure Application
   1. Open appsettings.json
@@ -649,7 +649,7 @@ VERSION INFORMATION
 Guide Version:    2.5.0
 Release Date:     2026-01-07
 Package Size:     114 MB
-Git Commit:       92ae45b
+Git Commit:       d8b19eb
 
 This guide covers deployment for ShiftManager v2.5.0.
 

@@ -11,12 +11,12 @@ BUILD INFORMATION
 ================================================================================
 
 Version:        v2.5.0
-Build Date:     2026-01-07 17:55:59 UTC
-Git Commit:     92ae45b
+Build Date:     2026-01-07 23:10:22 UTC
+Git Commit:     d8b19eb
 Git Branch:     finalized
 
 Package Stats:
-  Total Files:  412
+  Total Files:  413
   DLL Count:    336
   Package Size: 114 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
@@ -66,7 +66,7 @@ AUTOMATED TESTING RESULTS
    âœ“ Disk space sufficient
 
 âœ… Build Verification:
-   âœ“ File count in expected range (412 files, expected ~370)
+   âœ“ File count in expected range (413 files, expected ~370)
    âœ“ DLL count in expected range (336 DLLs, expected ~335)
    âœ“ Package size in expected range (114 MB, expected ~110 MB)
    âœ“ All critical files present
@@ -184,7 +184,7 @@ This ProjectPublish package has been:
 Package is READY FOR PRODUCTION DEPLOYMENT.
 
 Verified by: ShiftManager Automated Release Builder v1.0.0
-Date: 2026-01-07 17:55:59 UTC
-Git Commit: 92ae45b
+Date: 2026-01-07 23:10:22 UTC
+Git Commit: d8b19eb
 
 ================================================================================

@@ -337,8 +337,10 @@ try {
         Write-Log -Level WARN -Message "Build-Release.ps1 not found. Falling back to dotnet publish."
 
         if (Test-Path -LiteralPath $SourceDir) {
-            if ($PSCmdlet.ShouldProcess($SourceDir, "Delete existing ProjectPublish output")) {
+            if (-not $WhatIfPreference) {
                 Remove-Item -LiteralPath $SourceDir -Recurse -Force -ErrorAction Stop
+            } else {
+                Write-Log -Level WARN -Message "Would delete: $SourceDir"
             }
         }
 
@@ -404,18 +406,20 @@ try {
     # Backup is intentionally deferred until now to keep the git tree clean for Build-Release pre-build checks.
     Invoke-DeferredBackup
 
-    if ($PSCmdlet.ShouldProcess($DestDir, "Replace contents with ProjectPublish")) {
-        Write-Log -Level INFO -Message "Clearing FinalProductPublish contents..."
-        Remove-DirectoryContents -Path $DestDir
-        Write-Log -Level OK -Message "Destination cleared."
-
-        Write-Log -Level INFO -Message "Copying ProjectPublish -> FinalProductPublish..."
-        Copy-Folder -From $SourceDir -To $DestDir
-        Write-Log -Level OK -Message "Copy completed."
-    } else {
-        Write-Log -Level WARN -Message "Update skipped due to WhatIf/Confirm."
+    # Check if WhatIf mode is enabled
+    if ($WhatIfPreference) {
+        Write-Log -Level WARN -Message "Update skipped due to -WhatIf."
         return
     }
+
+    # Proceed with update (ShouldProcess already handled at script level with ConfirmImpact='High')
+    Write-Log -Level INFO -Message "Clearing FinalProductPublish contents..."
+    Remove-DirectoryContents -Path $DestDir
+    Write-Log -Level OK -Message "Destination cleared."
+
+    Write-Log -Level INFO -Message "Copying ProjectPublish -> FinalProductPublish..."
+    Copy-Folder -From $SourceDir -To $DestDir
+    Write-Log -Level OK -Message "Copy completed."
 
     # STEP 6: Verify FinalProductPublish
     Write-Step -Step 6 -Total 6 -Title 'Verifying FinalProductPublish'
