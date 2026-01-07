@@ -14,6 +14,11 @@
 .NOTES
     - ASCII-only output (no Unicode symbols) to avoid encoding/parser issues.
     - Supports -WhatIf / -Confirm for destructive operations (delete/copy/commit).
+
+FIX NOTE (2026-01-07):
+    Avoid passing script parameters via string[] for Build-Release.ps1 to prevent
+    positional-binding drift (e.g., Version "2.5.0" binding into KeepBackups).
+    Use parameter splatting (hashtable) when invoking Build-Release.ps1.
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
@@ -38,16 +43,16 @@ $ErrorActionPreference = 'Stop'
 # -----------------------------
 # Paths (repo layout assumptions)
 # -----------------------------
-$RepoRoot     = Split-Path -Parent $PSScriptRoot   # scripts\ -> repo root
-$SourceDir    = Join-Path $RepoRoot 'ProjectPublish'
-$DestDir      = Join-Path $RepoRoot 'FinalProductPublish'
-$BuildScript  = Join-Path $RepoRoot 'Build-Release.ps1'
-$BackupScript = Join-Path $PSScriptRoot 'Backup-FinalProductPublish.ps1'
+$RepoRoot      = Split-Path -Parent $PSScriptRoot   # scripts\ -> repo root
+$SourceDir     = Join-Path $RepoRoot 'ProjectPublish'
+$DestDir       = Join-Path $RepoRoot 'FinalProductPublish'
+$BuildScript   = Join-Path $RepoRoot 'Build-Release.ps1'
+$BackupScript  = Join-Path $PSScriptRoot 'Backup-FinalProductPublish.ps1'
 $RestoreScript = Join-Path $PSScriptRoot 'Restore-FinalProductPublish.ps1'
 
 # Optional: log file (best-effort)
-$LogDir = Join-Path $RepoRoot 'logs'
-$null = New-Item -ItemType Directory -Path $LogDir -Force -ErrorAction SilentlyContinue
+$LogDir  = Join-Path $RepoRoot 'logs'
+$null    = New-Item -ItemType Directory -Path $LogDir -Force -ErrorAction SilentlyContinue
 $LogFile = Join-Path $LogDir ("Update-FinalProductPublish_{0:yyyyMMdd_HHmmss}.log" -f (Get-Date))
 
 function Write-Log {
@@ -58,7 +63,6 @@ function Write-Log {
     $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
     $line = "[{0}] [{1}] {2}" -f $ts, $Level, $Message
 
-    # Console coloring
     switch ($Level) {
         'STEP'  { Write-Host $line -ForegroundColor Cyan }
         'OK'    { Write-Host $line -ForegroundColor Green }
@@ -67,7 +71,6 @@ function Write-Log {
         default { Write-Host $line }
     }
 
-    # Best-effort file logging
     try { Add-Content -Path $LogFile -Value $line -Encoding UTF8 } catch { }
 }
 
@@ -99,7 +102,6 @@ function Invoke-External {
         Pop-Location
     }
 
-    # Some PowerShell scripts won't set LASTEXITCODE; treat $? as a fallback signal.
     if ($exit -ne $null -and $exit -ne 0) {
         throw ("Command failed (exit={0}): {1} {2}" -f $exit, $File, $argString)
     }
@@ -168,17 +170,15 @@ function Copy-Folder {
 
     $robocopy = Get-Tool -Name 'robocopy'
     if ($robocopy) {
-        # Robocopy return codes:
-        # 0-7 = success (including some files copied), 8+ = failure
         $args = @(
             $From, $To,
-            '/E',                # include subdirs
-            '/COPY:DAT',         # data/attrs/timestamps
+            '/E',
+            '/COPY:DAT',
             '/DCOPY:DAT',
-            '/R:2', '/W:1',      # retries
-            '/NFL', '/NDL',      # no file/dir listing
-            '/NP',               # no progress
-            '/NJH', '/NJS'       # no job header/summary
+            '/R:2', '/W:1',
+            '/NFL', '/NDL',
+            '/NP',
+            '/NJH', '/NJS'
         )
 
         Push-Location $RepoRoot
@@ -193,7 +193,6 @@ function Copy-Folder {
             throw ("robocopy failed with code {0}" -f $rc)
         }
     } else {
-        # Fallback
         Copy-Item -LiteralPath (Join-Path $From '*') -Destination $To -Recurse -Force -ErrorAction Stop
     }
 }
@@ -256,10 +255,28 @@ try {
     Write-Step -Step 3 -Total 6 -Title ("Building ProjectPublish v{0}" -f $Version)
 
     if (Test-Path -LiteralPath $BuildScript) {
-        $args = @('-Version', $Version)
-        if ($SkipTests) { $args += '-SkipTests' }
+        # FIX: use parameter splatting (named binding) to avoid positional-binding drift
+        $buildParams = @{ Version = $Version }
+        if ($SkipTests) { $buildParams.SkipTests = $true }
 
-        Invoke-External -File $BuildScript -Args $args -WorkingDirectory $RepoRoot
+        $preview = "-Version $Version" + ($(if ($SkipTests) { " -SkipTests" } else { "" }))
+        Write-Log -Level INFO -Message ("Running: {0} {1} (wd={2})" -f $BuildScript, $preview, $RepoRoot)
+
+        Push-Location $RepoRoot
+        try {
+            & $BuildScript @buildParams
+            $exit = $LASTEXITCODE
+        } finally {
+            Pop-Location
+        }
+
+        if ($exit -ne $null -and $exit -ne 0) {
+            throw ("Command failed (exit={0}): {1} {2}" -f $exit, $BuildScript, $preview)
+        }
+        if (-not $?) {
+            throw ("Command failed (PowerShell error): {0} {1}" -f $BuildScript, $preview)
+        }
+
         Write-Log -Level OK -Message "Build-Release.ps1 completed."
     } else {
         Write-Log -Level WARN -Message "Build-Release.ps1 not found. Falling back to dotnet publish."
@@ -282,7 +299,6 @@ try {
             '-o','ProjectPublish'
         ) -WorkingDirectory $RepoRoot
 
-        # Copy deployment/support artifacts (best-effort)
         $extras = @(
             'UNBLOCK_FILES.bat',
             'VERIFY_FILES.bat',
@@ -356,11 +372,9 @@ try {
     Write-Log -Level OK -Message ("FinalProductPublish files: {0}" -f $dstStats.FileCount)
     Write-Log -Level OK -Message ("FinalProductPublish size:  {0} MB" -f $dstStats.SizeMB)
 
-    # Re-check critical files at destination as well
     Assert-CriticalFiles -BaseDir $DestDir -CriticalFiles $critical
     Write-Log -Level OK -Message "Critical files present in FinalProductPublish."
 
-    # Optional: run VERIFY_FILES.bat if present
     $verifyBat = Join-Path $DestDir 'VERIFY_FILES.bat'
     if (Test-Path -LiteralPath $verifyBat) {
         Write-Log -Level INFO -Message "Running VERIFY_FILES.bat..."
