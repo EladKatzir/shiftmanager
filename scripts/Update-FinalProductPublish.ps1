@@ -302,8 +302,9 @@ try {
         # FIX: use parameter splatting (named binding) to avoid positional-binding drift
         $buildParams = @{ Version = $Version }
         if ($SkipTests) { $buildParams.SkipTests = $true }
+        $buildParams.SkipReport = $true  # Skip report generation to avoid PSCustomObject parameter passing issues
 
-        $preview = "-Version $Version" + ($(if ($SkipTests) { " -SkipTests" } else { "" }))
+        $preview = "-Version $Version" + ($(if ($SkipTests) { " -SkipTests" } else { "" })) + " -SkipReport"
         Write-Log -Level INFO -Message ("Running: {0} {1} (wd={2})" -f $BuildScript, $preview, $RepoRoot)
 
         Push-Location $RepoRoot
