@@ -251,6 +251,14 @@ function Invoke-DotnetPublish {
     $dotnet = Get-Tool 'dotnet'
     if (-not $dotnet) { throw "dotnet not found on PATH." }
 
+    # Preserve DLL_CHECKSUMS.txt if it exists (generated during packaging, committed to Git)
+    $dllChecksumsPath = Join-Path $OutputFolder 'DLL_CHECKSUMS.txt'
+    $preservedChecksums = $null
+    if (Test-Path -LiteralPath $dllChecksumsPath) {
+        $preservedChecksums = Get-Content -LiteralPath $dllChecksumsPath -Raw
+        Write-Log -Level INFO -Message "Preserving existing DLL_CHECKSUMS.txt"
+    }
+
     if (Test-Path -LiteralPath $OutputFolder) {
         Remove-Item -LiteralPath $OutputFolder -Recurse -Force
     }
@@ -262,6 +270,12 @@ function Invoke-DotnetPublish {
         throw ("dotnet publish failed with exit code {0}" -f $exit)
     }
     Write-Log -Level OK -Message "dotnet publish completed."
+
+    # Restore DLL_CHECKSUMS.txt if it was preserved
+    if ($preservedChecksums) {
+        Set-Content -LiteralPath $dllChecksumsPath -Value $preservedChecksums -NoNewline
+        Write-Log -Level INFO -Message "Restored DLL_CHECKSUMS.txt"
+    }
 }
 
 function Copy-DeploymentAssets {

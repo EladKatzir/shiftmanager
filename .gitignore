@@ -1,5 +1,5 @@
 # EXCEPTION: ProjectPublish directory - commit everything inside it
-# This ensures ALL files and subdirectories within ProjectPublish are tracked - actually the one down should do it, this one just for saftey
+# This ensures ALL files and subdirectories within ProjectPublish are tracked
 !ProjectPublish/
 !ProjectPublish/**
 !ProjectPublish/**/*.json
@@ -10,10 +10,6 @@
 !FinalProductPublish/**/*.json
 !FinalProductPublish/**/*wwwroot/
 !FinalProductPublish/**/*wwwroot/**
-
-# EXCEPTION: Generated files in ProjectPublish/FinalProductPublish (created during packaging stage)
-ProjectPublish/DLL_CHECKSUMS.txt
-FinalProductPublish/DLL_CHECKSUMS.txt
 
 # Build results
 bin/
