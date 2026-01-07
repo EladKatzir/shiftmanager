@@ -216,8 +216,8 @@ function Backup-ProjectPublish {
     # Retention
     $all = Get-ChildItem -LiteralPath $ScriptRoot -Directory -Filter 'ProjectPublish_BACKUP_*' |
         Sort-Object Name -Descending
-    $old = $all | Select-Object -Skip $KeepBackups
-    if ($old) {
+    $old = @($all | Select-Object -Skip $KeepBackups)
+    if ($old.Count -gt 0) {
         Write-Log -Level INFO -Message ("Removing {0} old backup(s) (keep last {1})..." -f $old.Count, $KeepBackups)
         foreach ($d in $old) {
             try { Remove-Item -LiteralPath $d.FullName -Recurse -Force } catch { }
