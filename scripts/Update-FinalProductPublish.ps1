@@ -5,7 +5,7 @@
 .DESCRIPTION
     End-to-end automation:
       1) Validate git working tree (optional auto-commit)
-      2) Backup FinalProductPublish (optional skip)
+      2) Backup FinalProductPublish (DEFERRED until just before replace; optional skip)
       3) Build ProjectPublish (via Build-Release.ps1 or dotnet publish fallback)
       4) Validate ProjectPublish output (counts + critical files)
       5) Replace FinalProductPublish contents with ProjectPublish
@@ -19,6 +19,11 @@ FIX NOTE (2026-01-07):
     Avoid passing script parameters via string[] for Build-Release.ps1 to prevent
     positional-binding drift (e.g., Version "2.5.0" binding into KeepBackups).
     Use parameter splatting (hashtable) when invoking Build-Release.ps1.
+
+FIX NOTE (2026-01-07):
+    Backup FinalProductPublish was previously executed BEFORE the build, which dirtied the git tree
+    (tracked deletions + untracked new backup) and caused Build-Release pre-build checks to fail.
+    Backup is now DEFERRED until AFTER ProjectPublish build+verify and immediately BEFORE replace.
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
@@ -54,6 +59,9 @@ $RestoreScript = Join-Path $PSScriptRoot 'Restore-FinalProductPublish.ps1'
 $LogDir  = Join-Path $RepoRoot 'logs'
 $null    = New-Item -ItemType Directory -Path $LogDir -Force -ErrorAction SilentlyContinue
 $LogFile = Join-Path $LogDir ("Update-FinalProductPublish_{0:yyyyMMdd_HHmmss}.log" -f (Get-Date))
+
+# Track whether a backup was actually created during this run (important for rollback messaging)
+$script:BackupCreatedThisRun = $false
 
 function Write-Log {
     param(
@@ -197,6 +205,52 @@ function Copy-Folder {
     }
 }
 
+function Invoke-DeferredBackup {
+    if ($SkipBackup) { return }
+
+    if (-not (Test-Path -LiteralPath $BackupScript)) {
+        throw ("Backup script not found: {0}" -f $BackupScript)
+    }
+
+    Write-Log -Level INFO -Message "Running deferred FinalProductPublish backup (pre-replace)..."
+
+    # Attempt to avoid interactive confirmation in automation runs
+    # (Backup script supports ShouldProcess; -Confirm:$false suppresses prompt)
+    Invoke-External -File $BackupScript -Args @('-Confirm:$false') -WorkingDirectory $PSScriptRoot
+
+    $script:BackupCreatedThisRun = $true
+    Write-Log -Level OK -Message "Backup completed."
+}
+
+function Commit-AllChanges {
+    param([string]$Message)
+
+    $git = Get-Tool -Name 'git'
+    if (-not $git) {
+        Write-Log -Level WARN -Message "git not found on PATH; cannot commit changes."
+        return
+    }
+
+    Push-Location $RepoRoot
+    try {
+        $status = & git status --porcelain
+        if (-not $status) {
+            Write-Log -Level OK -Message "No changes to commit."
+            return
+        }
+
+        if ($PSCmdlet.ShouldProcess($RepoRoot, "git add -A and commit")) {
+            Invoke-External -File 'git' -Args @('add','-A') -WorkingDirectory $RepoRoot
+            Invoke-External -File 'git' -Args @('commit','-m',$Message) -WorkingDirectory $RepoRoot
+            Write-Log -Level OK -Message "Changes committed."
+        } else {
+            Write-Log -Level WARN -Message "Commit skipped due to WhatIf/Confirm."
+        }
+    } finally {
+        Pop-Location
+    }
+}
+
 # -----------------------------
 # Main
 # -----------------------------
@@ -206,7 +260,7 @@ try {
     Write-Log -Level INFO -Message ("RepoRoot: {0}" -f $RepoRoot)
     Write-Log -Level INFO -Message "============================================================"
 
-    # STEP 1: Git status
+    # STEP 1: Git status (optionally commit pre-existing changes so build can pass clean-tree checks)
     Write-Step -Step 1 -Total 6 -Title 'Checking git status'
     $git = Get-Tool -Name 'git'
     if (-not $git) {
@@ -220,13 +274,7 @@ try {
                 $status | ForEach-Object { Write-Log -Level WARN -Message ("  {0}" -f $_) }
 
                 if ($CommitChanges) {
-                    if ($PSCmdlet.ShouldProcess($RepoRoot, "git add -A and commit local changes")) {
-                        Invoke-External -File 'git' -Args @('add','-A') -WorkingDirectory $RepoRoot
-                        Invoke-External -File 'git' -Args @('commit','-m',("Auto-commit before FinalProductPublish update to v{0}" -f $Version)) -WorkingDirectory $RepoRoot
-                        Write-Log -Level OK -Message "Changes committed."
-                    } else {
-                        Write-Log -Level WARN -Message "Commit skipped due to WhatIf/Confirm."
-                    }
+                    Commit-AllChanges -Message ("Auto-commit before FinalProductPublish update to v{0}" -f $Version)
                 } else {
                     Write-Log -Level WARN -Message "Proceeding with dirty working tree. Build may fail if a clean tree is required."
                 }
@@ -238,17 +286,13 @@ try {
         }
     }
 
-    # STEP 2: Backup
+    # STEP 2: Backup (DEFERRED)
     if ($SkipBackup) {
         Write-Step -Step 2 -Total 6 -Title 'Backing up FinalProductPublish (SKIPPED)'
         Write-Log -Level WARN -Message "Backup skipped. Rollback will not be available if something goes wrong."
     } else {
-        Write-Step -Step 2 -Total 6 -Title 'Backing up FinalProductPublish'
-        if (-not (Test-Path -LiteralPath $BackupScript)) {
-            throw ("Backup script not found: {0}" -f $BackupScript)
-        }
-        Invoke-External -File $BackupScript -Args @() -WorkingDirectory $PSScriptRoot
-        Write-Log -Level OK -Message "Backup completed."
+        Write-Step -Step 2 -Total 6 -Title 'Backing up FinalProductPublish (DEFERRED)'
+        Write-Log -Level INFO -Message "Backup will run after ProjectPublish build+verify, right before replace."
     }
 
     # STEP 3: Build ProjectPublish
@@ -343,8 +387,12 @@ try {
     Assert-CriticalFiles -BaseDir $SourceDir -CriticalFiles $critical
     Write-Log -Level OK -Message "Critical files present in ProjectPublish."
 
-    # STEP 5: Update FinalProductPublish
+    # STEP 5: Update FinalProductPublish (backup runs HERE, right before destructive replace)
     Write-Step -Step 5 -Total 6 -Title 'Updating FinalProductPublish'
+
+    # Backup is intentionally deferred until now to keep the git tree clean for Build-Release pre-build checks.
+    Invoke-DeferredBackup
+
     if ($PSCmdlet.ShouldProcess($DestDir, "Replace contents with ProjectPublish")) {
         Write-Log -Level INFO -Message "Clearing FinalProductPublish contents..."
         Remove-DirectoryContents -Path $DestDir
@@ -400,6 +448,11 @@ try {
         Write-Log -Level WARN -Message "VERIFY_FILES.bat not found; skipping bat verification."
     }
 
+    # If requested, commit final artifacts NOW (this is when changes actually exist).
+    if ($CommitChanges) {
+        Commit-AllChanges -Message ("Update FinalProductPublish to v{0}" -f $Version)
+    }
+
     Write-Log -Level OK -Message "============================================================"
     Write-Log -Level OK -Message ("UPDATE SUCCESSFUL - v{0}" -f $Version)
     Write-Log -Level OK -Message ("Files: {0}  Size: {1} MB" -f $dstStats.FileCount, $dstStats.SizeMB)
@@ -418,12 +471,15 @@ catch {
     Write-Log -Level ERROR -Message ("Log:  {0}" -f $LogFile)
     Write-Log -Level ERROR -Message "============================================================"
 
-    if (-not $SkipBackup) {
+    # Only suggest rollback if we actually created a backup during THIS run
+    if (-not $SkipBackup -and $script:BackupCreatedThisRun) {
         if (Test-Path -LiteralPath $RestoreScript) {
             Write-Log -Level WARN -Message ("To rollback, run: {0}" -f $RestoreScript)
         } else {
-            Write-Log -Level WARN -Message "Backup was created (unless backup script failed), but Restore-FinalProductPublish.ps1 was not found."
+            Write-Log -Level WARN -Message "Backup was created, but Restore-FinalProductPublish.ps1 was not found."
         }
+    } else {
+        Write-Log -Level WARN -Message "No backup was created during this run; rollback may not be available."
     }
 
     exit 1

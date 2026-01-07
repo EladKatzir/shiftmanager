@@ -36,6 +36,45 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* RGB values for transparency effects */
+  --surface-rgb: 255, 255, 255;
+  --text-rgb: 17, 19, 24;
+
+  /* Spacing Scale (8px base) */
+  --space-xs: 0.5rem;     /* 8px */
+  --space-sm: 0.75rem;    /* 12px */
+  --space-md: 1rem;       /* 16px */
+  --space-lg: 1.5rem;     /* 24px */
+  --space-xl: 2rem;       /* 32px */
+  --space-2xl: 2.5rem;    /* 40px */
+  --space-3xl: 3rem;      /* 48px */
+
+  /* Radius Scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
+
+  /* Enhanced Shadows for v2 */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+
+  /* Animation Tokens */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-elastic: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Z-Index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-modal: 1050;
+  --z-tooltip: 1070;
 }
 
 :root[data-theme="dark"] {
@@ -72,6 +111,15 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+
+  /* RGB values for transparency effects */
+  --surface-rgb: 11, 17, 32;
+  --text-rgb: 229, 231, 235;
+
+  /* Enhanced Shadows for v2 (darker in dark mode) */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.5);
 }
 
 /* ========================================
@@ -3309,6 +3357,779 @@ thead th {
   display: none;
 }
 
+/* ========================================
+   DECISION RIBBON - Phase 1 Enhancement
+   ======================================== */
+
+.decision-ribbon {
+  animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.decision-ribbon-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* Shimmer effect on hover */
+.decision-ribbon-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.decision-ribbon-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.decision-ribbon-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+}
+
+/* Pending state with pulse glow animation */
+.decision-ribbon-btn.has-pending {
+  background: linear-gradient(135deg, var(--warning), #fbbf24);
+  color: white;
+  animation: pulseGlow 2s infinite;
+  border-color: transparent;
+}
+
+.ribbon-badge {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* Keyframe Animations */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ========================================
+   V2 SCOPED ENHANCEMENTS - Base Components
+   Applied only to pages with data-ui-version="v2"
+   ======================================== */
+
+/* Enhanced Card Styles */
+[data-ui-version="v2"] .card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  transition: var(--transition-smooth);
+  background: rgba(var(--surface-rgb), 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+}
+
+[data-ui-version="v2"] .card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Enhanced Button Styles */
+[data-ui-version="v2"] .btn {
+  transition: var(--transition-smooth);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .btn-primary {
+  box-shadow: var(--shadow-soft);
+}
+
+[data-ui-version="v2"] .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+[data-ui-version="v2"] .btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Ripple effect on button click */
+[data-ui-version="v2"] .btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  transform: scale(0);
+  transition: transform 0.6s;
+  pointer-events: none;
+}
+
+[data-ui-version="v2"] .btn:active::before {
+  transform: scale(2);
+}
+
+/* Enhanced Form Controls */
+[data-ui-version="v2"] .form-control {
+  transition: var(--transition-smooth);
+  border-radius: var(--radius-md);
+}
+
+[data-ui-version="v2"] .form-control:focus {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+/* === DASHBOARD V2 STYLES === */
+
+/* Dashboard Stats Grid */
+[data-ui-version="v2"] .dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+}
+
+/* Stat Cards with Staggered Animation */
+[data-ui-version="v2"] .stat-card {
+  background: rgba(var(--surface-rgb), 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: var(--transition-smooth);
+  animation: slideUp 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Staggered animation delays */
+[data-ui-version="v2"] .stat-card-1 { animation-delay: 0.1s; }
+[data-ui-version="v2"] .stat-card-2 { animation-delay: 0.2s; }
+[data-ui-version="v2"] .stat-card-3 { animation-delay: 0.3s; }
+[data-ui-version="v2"] .stat-card-4 { animation-delay: 0.4s; }
+
+/* Stat card shimmer effect on hover */
+[data-ui-version="v2"] .stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.08), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+[data-ui-version="v2"] .stat-card:hover::before {
+  transform: translateX(100%);
+}
+
+[data-ui-version="v2"] .stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+/* Stat icon */
+[data-ui-version="v2"] .stat-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Stat content */
+[data-ui-version="v2"] .stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+[data-ui-version="v2"] .stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: var(--space-xs);
+}
+
+[data-ui-version="v2"] .stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+[data-ui-version="v2"] .stat-desc {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+/* Next Shift Highlight (Employee View) */
+[data-ui-version="v2"] .next-shift-highlight {
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.05) 100%);
+  border: 2px solid rgba(var(--primary-rgb), 0.3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  animation: slideDown 0.4s ease, pulse 2s ease infinite;
+}
+
+[data-ui-version="v2"] .next-shift-highlight.next-shift-empty {
+  background: rgba(var(--surface-rgb), 0.5);
+  border-color: var(--border);
+  animation: slideDown 0.4s ease;
+}
+
+[data-ui-version="v2"] .next-shift-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  animation: rotate3d 3s ease-in-out infinite;
+}
+
+[data-ui-version="v2"] .next-shift-content {
+  flex: 1;
+}
+
+[data-ui-version="v2"] .next-shift-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  margin-bottom: var(--space-xs);
+}
+
+[data-ui-version="v2"] .next-shift-details {
+  font-size: 1.125rem;
+  color: var(--text);
+}
+
+/* Dashboard Section */
+[data-ui-version="v2"] .dashboard-section {
+  margin-bottom: var(--space-2xl);
+}
+
+[data-ui-version="v2"] .dashboard-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-lg);
+  animation: fadeIn 0.6s ease;
+}
+
+/* Quick Actions Grid */
+[data-ui-version="v2"] .quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+[data-ui-version="v2"] .quick-action-card {
+  background: rgba(var(--surface-rgb), 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+  transition: var(--transition-smooth);
+  min-height: 140px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Quick action ripple effect */
+[data-ui-version="v2"] .quick-action-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0);
+  transition: transform 0.5s, opacity 0.3s;
+}
+
+[data-ui-version="v2"] .quick-action-card:active::after {
+  transform: scale(2);
+  opacity: 1;
+  transition: transform 0s, opacity 0s;
+}
+
+[data-ui-version="v2"] .quick-action-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: var(--shadow-elevated);
+  border-color: rgba(var(--primary-rgb), 0.4);
+}
+
+[data-ui-version="v2"] .quick-action-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+[data-ui-version="v2"] .quick-action-card:hover .quick-action-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+[data-ui-version="v2"] .quick-action-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+}
+
+/* === DASHBOARD ANIMATIONS === */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0);
+  }
+}
+
+@keyframes rotate3d {
+  0%, 100% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(15deg);
+  }
+}
+
+/* === CALENDAR V2 STYLES === */
+
+/* Compact Calendar Header */
+[data-ui-version="v2"] .calendar-header {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(var(--primary-rgb), 0.05) 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-md);
+  animation: slideDown 0.4s ease;
+}
+
+[data-ui-version="v2"] .calendar-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+[data-ui-version="v2"] .calendar-icon {
+  display: inline-block;
+  font-size: 1.5rem;
+  margin-right: var(--space-xs);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+[data-ui-version="v2"] .header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+/* Compact Calendar Navigation */
+[data-ui-version="v2"] .calendar-nav {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+[data-ui-version="v2"] .calendar-nav .btn {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.875rem;
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .calendar-nav .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Compact View Switcher */
+[data-ui-version="v2"] .calendar-view-switcher {
+  margin-bottom: var(--space-md);
+  display: flex;
+  gap: var(--space-xs);
+  background: var(--surface-soft);
+  padding: var(--space-xs);
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+[data-ui-version="v2"] .calendar-view-switcher .btn {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.875rem;
+}
+
+/* Calendar Grid Enhancements */
+[data-ui-version="v2"] .calendar-grid {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Calendar Cell Hover Effects */
+[data-ui-version="v2"] .calendar-cell {
+  transition: var(--transition-smooth);
+  position: relative;
+}
+
+[data-ui-version="v2"] .calendar-cell:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  background: rgba(var(--primary-rgb), 0.02);
+}
+
+/* Today Cell Pulsing Highlight */
+[data-ui-version="v2"] .calendar-cell.today {
+  animation: highlightToday 2s ease infinite;
+  border-color: var(--primary);
+}
+
+[data-ui-version="v2"] .calendar-cell.today .cell-date {
+  background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.8));
+  color: white;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+@keyframes highlightToday {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0);
+  }
+}
+
+/* Quick Actions Bar */
+[data-ui-version="v2"] .calendar-quick-actions {
+  background: rgba(var(--surface-rgb), 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  animation: slideDown 0.3s ease;
+}
+
+[data-ui-version="v2"] .quick-actions-label {
+  font-weight: 600;
+  color: var(--text-subtle);
+  margin-right: var(--space-sm);
+}
+
+/* Page Header Enhancements */
+[data-ui-version="v2"] .page-header {
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, transparent 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  animation: slideDown 0.4s ease;
+}
+
+[data-ui-version="v2"] .page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+[data-ui-version="v2"] .page-subtitle {
+  color: var(--text-subtle);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Calendar Items Animation */
+[data-ui-version="v2"] .calendar-item {
+  animation: fadeInItem 0.3s ease backwards;
+}
+
+[data-ui-version="v2"] .calendar-item:nth-child(1) { animation-delay: 0.05s; }
+[data-ui-version="v2"] .calendar-item:nth-child(2) { animation-delay: 0.1s; }
+[data-ui-version="v2"] .calendar-item:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes fadeInItem {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Enhanced Weekday Headers */
+[data-ui-version="v2"] .weekday-header {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  padding: var(--space-sm);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+/* Chores and OnDuty Calendar Specific */
+[data-ui-version="v2"] .chores-calendar,
+[data-ui-version="v2"] .onduty-calendar {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Cell Date Styling */
+[data-ui-version="v2"] .cell-date {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .calendar-cell:hover .cell-date {
+  transform: scale(1.1);
+}
+
+/* Past Dates */
+[data-ui-version="v2"] .calendar-cell.past-date {
+  opacity: 0.6;
+}
+
+[data-ui-version="v2"] .calendar-cell.past-date:hover {
+  opacity: 0.8;
+}
+
+/* Other Month */
+[data-ui-version="v2"] .calendar-cell.other-month {
+  opacity: 0.4;
+}
+
+[data-ui-version="v2"] .calendar-cell.other-month:hover {
+  opacity: 0.6;
+}
+
+/* === PROFILE V2 STYLES === */
+
+/* Page Header Enhancement */
+[data-ui-version="v2"] .page-header {
+  animation: slideDown 0.4s ease;
+}
+
+/* Card Entrance Animation */
+[data-ui-version="v2"] .card {
+  animation: fadeInUp 0.4s ease backwards;
+}
+
+[data-ui-version="v2"] .card:nth-of-type(1) { animation-delay: 0.1s; }
+[data-ui-version="v2"] .card:nth-of-type(2) { animation-delay: 0.2s; }
+[data-ui-version="v2"] .card:nth-of-type(3) { animation-delay: 0.3s; }
+[data-ui-version="v2"] .card:nth-of-type(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Card Hover */
+[data-ui-version="v2"] .card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-elevated);
+  border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+/* Avatar Section Enhancements */
+[data-ui-version="v2"] .avatar-display {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .avatar-display:hover .avatar-img,
+[data-ui-version="v2"] .avatar-display:hover .avatar-initials {
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: var(--shadow-elevated);
+}
+
+[data-ui-version="v2"] .avatar-img,
+[data-ui-version="v2"] .avatar-initials {
+  transition: var(--transition-smooth);
+}
+
+/* Drag-Drop Avatar Upload */
+[data-ui-version="v2"] .file-input-wrapper {
+  position: relative;
+}
+
+[data-ui-version="v2"] .file-input {
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .file-input::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+  pointer-events: none;
+}
+
+[data-ui-version="v2"] .file-input:hover::before {
+  transform: translateX(100%);
+}
+
+/* Drag-over effect */
+[data-ui-version="v2"] .file-input.drag-over {
+  border-color: var(--primary);
+  border-width: 2px;
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+/* Success Pulse Animation */
+[data-ui-version="v2"] .alert-success {
+  animation: successPulse 0.6s ease, slideIn 0.3s ease;
+}
+
+@keyframes successPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* Form Input Enhancements */
+[data-ui-version="v2"] .form-input {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .form-input:focus {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+/* Save Button Enhancement */
+[data-ui-version="v2"] .btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+[data-ui-version="v2"] .btn-primary:hover::after {
+  transform: translateX(100%);
+}
+
+[data-ui-version="v2"] .btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Delete Avatar Button Enhancement */
+[data-ui-version="v2"] .btn-danger {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .btn-danger:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-elevated), 0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+/* Info Banner Enhancement */
+[data-ui-version="v2"] .info-banner {
+  animation: fadeInLeft 0.4s ease;
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Form Actions Enhancement */
+[data-ui-version="v2"] .form-actions {
+  animation: fadeInUp 0.4s ease 0.5s backwards;
+}
+
 .collapse.show {
   display: block;
 }
@@ -3798,3 +4619,1432 @@ code {
 .hidden {
   display: none !important;
 }
+
+/* ========================================
+   Form Field Validation States
+   ======================================== */
+
+/* Valid state - green border and check icon */
+.form-control.valid,
+.form-select.valid {
+  border-color: var(--success);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2316a34a' viewBox='0 0 16 16'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.form-control.valid:focus,
+.form-select.valid:focus {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+/* Invalid state - red border and X icon */
+.form-control.invalid,
+.form-select.invalid {
+  border-color: var(--danger);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23dc2626' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.form-control.invalid:focus,
+.form-select.invalid:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Warning state - yellow/orange border and warning icon */
+.form-control.warning,
+.form-select.warning {
+  border-color: var(--warning);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23f59e0b' viewBox='0 0 16 16'%3E%3Cpath d='M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.form-control.warning:focus,
+.form-select.warning:focus {
+  border-color: var(--warning);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* Validation feedback messages */
+.validation-message {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.validation-message.valid-feedback {
+  color: var(--success);
+}
+
+.validation-message.invalid-feedback {
+  color: var(--danger);
+}
+
+.validation-message.warning-feedback {
+  color: var(--warning);
+}
+
+/* ====================================================================
+   Phase 5: Request Management v2 Enhancements
+   "Queue of Decisions" with approval workflow animations
+   ==================================================================== */
+
+/* Request Cards - Base Styling with Bold Left Border */
+[data-ui-version="v2"] .request-card {
+  border-left: 4px solid var(--primary);
+  transition: var(--transition-smooth);
+  animation: slideInUp 0.4s ease backwards;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Staggered entrance for multiple cards */
+[data-ui-version="v2"] .request-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+[data-ui-version="v2"] .request-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .request-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .request-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .request-card:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+/* Shimmer effect on card background */
+[data-ui-version="v2"] .request-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.05), transparent);
+  transition: left 0.6s;
+  pointer-events: none;
+}
+
+[data-ui-version="v2"] .request-card:hover::before {
+  left: 100%;
+}
+
+/* Card Hover - Bold Transform with Shadow */
+[data-ui-version="v2"] .request-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md), -4px 0 0 0 var(--primary);
+  border-left-width: 4px;
+}
+
+/* Pending Status Cards - Pulse Animation */
+[data-ui-version="v2"] .request-card.status-pending,
+[data-ui-version="v2"] .request-item.status-pending {
+  animation: pulse 2s ease infinite, slideInUp 0.4s ease backwards;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* Request Items in History Lists */
+[data-ui-version="v2"] .request-item {
+  border-left: 3px solid transparent;
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .request-item:hover {
+  border-left-color: var(--primary);
+  transform: translateX(2px);
+  background: rgba(var(--primary-rgb), 0.03);
+}
+
+/* Status Badges with Enhanced Animation */
+[data-ui-version="v2"] .status-badge {
+  transition: var(--transition-smooth);
+  animation: fadeIn 0.5s ease;
+}
+
+[data-ui-version="v2"] .status-badge.status-pending {
+  animation: badgePulse 2s ease infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+  }
+}
+
+[data-ui-version="v2"] .status-badge.status-approved {
+  animation: successBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes successBounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+[data-ui-version="v2"] .status-badge.status-declined {
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+/* Action Buttons - Enhanced Hover Effects */
+[data-ui-version="v2"] .btn-approve {
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .btn-approve::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+[data-ui-version="v2"] .btn-approve:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+[data-ui-version="v2"] .btn-approve:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: var(--shadow-elevated), 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+[data-ui-version="v2"] .btn-decline {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .btn-decline:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Form Cards - Enhanced Entrance */
+[data-ui-version="v2"] .forms-grid .card,
+[data-ui-version="v2"] .history-grid .card {
+  animation: fadeInUp 0.5s ease backwards;
+}
+
+[data-ui-version="v2"] .forms-grid .card:nth-child(1),
+[data-ui-version="v2"] .history-grid .card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .forms-grid .card:nth-child(2),
+[data-ui-version="v2"] .history-grid .card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+/* Page Header Enhancement */
+[data-ui-version="v2"] .requests-page .page-header,
+[data-ui-version="v2"] .page-header {
+  animation: slideDown 0.4s ease;
+}
+
+/* Alert Success - Enhanced with Pulse */
+[data-ui-version="v2"] .requests-page .alert-success {
+  animation: successSlideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes successSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  50% {
+    transform: translateY(5px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Alert Error - Shake Animation */
+[data-ui-version="v2"] .requests-page .alert-error,
+[data-ui-version="v2"] .alert-error {
+  animation: errorShake 0.5s ease;
+}
+
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-8px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(8px);
+  }
+}
+
+/* Empty State - Enhanced Animation */
+[data-ui-version="v2"] .empty-state {
+  animation: fadeInScale 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+[data-ui-version="v2"] .empty-state-icon,
+[data-ui-version="v2"] .empty-state-icon-large {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Tab Navigation Enhancement */
+[data-ui-version="v2"] .tab-button {
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .tab-button::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: var(--primary);
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+[data-ui-version="v2"] .tab-button:hover::after {
+  width: 80%;
+}
+
+[data-ui-version="v2"] .tab-button.active::after {
+  width: 100%;
+}
+
+[data-ui-version="v2"] .tab-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Count Badge - Pulse for Pending Items */
+[data-ui-version="v2"] .count-badge {
+  transition: var(--transition-smooth);
+  animation: fadeIn 0.3s ease;
+}
+
+[data-ui-version="v2"] .tab-button .count-badge {
+  animation: badgePopIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes badgePopIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* User Icon Enhancement */
+[data-ui-version="v2"] .user-icon {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .request-card:hover .user-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Request Info Items - Staggered Fade In */
+[data-ui-version="v2"] .request-info-item {
+  animation: fadeInRight 0.4s ease backwards;
+}
+
+[data-ui-version="v2"] .request-info-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .request-info-item:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .request-info-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Request Reason Box - Enhanced Styling */
+[data-ui-version="v2"] .request-reason {
+  transition: var(--transition-smooth);
+  animation: fadeIn 0.5s ease 0.3s backwards;
+}
+
+[data-ui-version="v2"] .request-card:hover .request-reason {
+  background: rgba(var(--primary-rgb), 0.08);
+  border-left-color: var(--primary);
+  border-left-width: 4px;
+}
+
+/* Form Hint Box Enhancement */
+[data-ui-version="v2"] .form-hint-box {
+  animation: slideInLeft 0.4s ease;
+}
+
+/* Tab Panel Transition */
+[data-ui-version="v2"] .tab-panel {
+  animation: tabFadeIn 0.3s ease;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section Title Enhancement */
+[data-ui-version="v2"] .section-title {
+  animation: slideInLeft 0.4s ease;
+}
+
+/* Badge Count Enhancement */
+[data-ui-version="v2"] .badge {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .badge:hover {
+  transform: scale(1.1);
+}
+
+/* Form Submit Buttons - Enhanced Ripple */
+[data-ui-version="v2"] .requests-page .btn-primary,
+[data-ui-version="v2"] .requests-page .btn-block {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .requests-page .btn-primary::after,
+[data-ui-version="v2"] .requests-page .btn-block::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+[data-ui-version="v2"] .requests-page .btn-primary:hover::after,
+[data-ui-version="v2"] .requests-page .btn-block:hover::after {
+  width: 400px;
+  height: 400px;
+}
+
+/* Card Header Enhancement */
+[data-ui-version="v2"] .requests-page .card-header {
+  background: linear-gradient(135deg, var(--surface-soft) 0%, rgba(var(--primary-rgb), 0.03) 100%);
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .requests-page .card:hover .card-header {
+  background: linear-gradient(135deg, var(--surface-soft) 0%, rgba(var(--primary-rgb), 0.06) 100%);
+}
+
+/* ====================================================================
+   End Phase 5: Request Management v2 Enhancements
+   ==================================================================== */
+
+/* ====================================================================
+   Phase 6: MyTeam v2 Enhancements
+   Skeleton loading, optimistic UI, and enhanced team calendar animations
+   ==================================================================== */
+
+/* Skeleton Loading Animation */
+[data-ui-version="v2"] .skeleton {
+  background: linear-gradient(90deg, var(--surface-soft) 25%, var(--surface) 50%, var(--surface-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton Variants */
+[data-ui-version="v2"] .skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+[data-ui-version="v2"] .skeleton-circle {
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+}
+
+[data-ui-version="v2"] .skeleton-card {
+  height: 100px;
+  border-radius: 12px;
+}
+
+/* Page Header Enhancement */
+[data-ui-version="v2"] .myteam-container .page-header {
+  animation: slideDown 0.4s ease;
+}
+
+/* Top Action Bar Enhancement */
+[data-ui-version="v2"] .myteam-topbar {
+  animation: slideInUp 0.4s ease;
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .myteam-topbar:hover {
+  box-shadow: var(--shadow-md);
+}
+
+[data-ui-version="v2"] .myteam-topbar .btn {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .myteam-topbar .btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(var(--primary-rgb), 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+[data-ui-version="v2"] .myteam-topbar .btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Week Navigation Enhancement */
+[data-ui-version="v2"] .week-nav {
+  animation: slideInUp 0.5s ease 0.1s backwards;
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .week-nav:hover {
+  box-shadow: var(--shadow-md);
+}
+
+[data-ui-version="v2"] .week-range {
+  animation: fadeIn 0.5s ease 0.2s backwards;
+}
+
+/* Member Card Enhancements */
+[data-ui-version="v2"] .member-card {
+  animation: fadeInUp 0.5s ease backwards;
+  transition: var(--transition-smooth);
+}
+
+/* Staggered entrance for member cards */
+[data-ui-version="v2"] .member-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .member-card:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .member-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .member-card:nth-child(4) {
+  animation-delay: 0.25s;
+}
+
+[data-ui-version="v2"] .member-card:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+[data-ui-version="v2"] .member-card:nth-child(n+6) {
+  animation-delay: 0.35s;
+}
+
+[data-ui-version="v2"] .member-card:hover {
+  transform: scale(1.01);
+  box-shadow: var(--shadow-xl);
+  z-index: 10;
+}
+
+/* Member Avatar Enhancement */
+[data-ui-version="v2"] .member-avatar {
+  transition: var(--transition-smooth);
+  animation: fadeIn 0.4s ease;
+}
+
+[data-ui-version="v2"] .member-card:hover .member-avatar {
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: var(--shadow-elevated), 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Member Name Animation */
+[data-ui-version="v2"] .member-name {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .member-card:hover .member-name {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+/* Status Badge Enhancements */
+[data-ui-version="v2"] .status-badge {
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer effect on badges */
+[data-ui-version="v2"] .status-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transition: left 0.6s;
+}
+
+[data-ui-version="v2"] .status-badge.clickable:hover::before {
+  left: 100%;
+}
+
+[data-ui-version="v2"] .status-badge.clickable:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-xl);
+  z-index: 100;
+}
+
+/* Status Badge Entrance Animations */
+[data-ui-version="v2"] .day-cell {
+  animation: fadeIn 0.4s ease backwards;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+[data-ui-version="v2"] .day-cell:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+/* Status Type Specific Animations */
+[data-ui-version="v2"] .status-badge.vacation {
+  animation: fadeInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+}
+
+[data-ui-version="v2"] .status-badge.onduty {
+  animation: fadeInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+}
+
+[data-ui-version="v2"] .status-badge.shift {
+  animation: fadeInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+}
+
+@keyframes fadeInBounce {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Loading Spinner Enhancement */
+[data-ui-version="v2"] .loading {
+  animation: fadeIn 0.3s ease;
+}
+
+[data-ui-version="v2"] .spinner {
+  animation: spin 0.8s linear infinite, pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State Enhancement */
+[data-ui-version="v2"] .empty-state {
+  animation: fadeInScale 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+[data-ui-version="v2"] .empty-state-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Modal Enhancements */
+[data-ui-version="v2"] .modal {
+  backdrop-filter: blur(8px);
+}
+
+[data-ui-version="v2"] .modal-content {
+  animation: modalSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+[data-ui-version="v2"] .modal-header {
+  background: linear-gradient(135deg, var(--surface-soft) 0%, rgba(var(--primary-rgb), 0.05) 100%);
+}
+
+[data-ui-version="v2"] .modal-close:hover {
+  transform: rotate(90deg);
+}
+
+/* Calendar Card Enhancement */
+[data-ui-version="v2"] .calendar-card {
+  transition: var(--transition-smooth);
+  animation: fadeInUp 0.4s ease backwards;
+}
+
+[data-ui-version="v2"] .calendar-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+[data-ui-version="v2"] .calendar-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .calendar-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .calendar-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .calendar-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md), -3px 0 0 0 var(--primary);
+}
+
+[data-ui-version="v2"] .calendar-card.active {
+  animation: activePulse 0.5s ease;
+}
+
+@keyframes activePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+  }
+}
+
+/* Icon Button Enhancement */
+[data-ui-version="v2"] .icon-btn {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .icon-btn:hover {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Member Item Enhancement */
+[data-ui-version="v2"] .member-item {
+  transition: var(--transition-smooth);
+  animation: fadeInRight 0.3s ease backwards;
+}
+
+[data-ui-version="v2"] .member-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+[data-ui-version="v2"] .member-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .member-item:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .member-item:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .member-item:nth-child(n+5) {
+  animation-delay: 0.25s;
+}
+
+[data-ui-version="v2"] .member-item:hover {
+  transform: translateX(4px);
+  border-left: 3px solid var(--primary);
+}
+
+[data-ui-version="v2"] .member-item.selected {
+  animation: selectedBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes selectedBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Member Checkbox Enhancement */
+[data-ui-version="v2"] .member-checkbox {
+  transition: var(--transition-smooth);
+  cursor: pointer;
+}
+
+[data-ui-version="v2"] .member-checkbox:hover {
+  transform: scale(1.15);
+}
+
+/* Form Input Enhancement */
+[data-ui-version="v2"] .form-input {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .form-input:focus {
+  transform: scale(1.01);
+}
+
+/* Pane Search Enhancement */
+[data-ui-version="v2"] .pane-search {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .pane-search:focus {
+  background: var(--surface);
+  transform: scale(1.01);
+}
+
+/* Day Header Enhancement */
+[data-ui-version="v2"] .day-headers {
+  animation: slideDown 0.4s ease;
+}
+
+[data-ui-version="v2"] .day-header {
+  animation: fadeIn 0.4s ease backwards;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+[data-ui-version="v2"] .day-header:nth-child(8) {
+  animation-delay: 0.4s;
+}
+
+/* Optimistic UI States */
+[data-ui-version="v2"] .optimistic-loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+[data-ui-version="v2"] .optimistic-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  opacity: 0.5;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+[data-ui-version="v2"] .optimistic-success {
+  animation: successFlash 0.6s ease;
+}
+
+@keyframes successFlash {
+  0%, 100% {
+    background: inherit;
+  }
+  50% {
+    background: rgba(34, 197, 94, 0.2);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+  }
+}
+
+[data-ui-version="v2"] .optimistic-error {
+  animation: errorShake 0.5s ease;
+}
+
+/* Status Icon Animation */
+[data-ui-version="v2"] .status-icon {
+  display: inline-block;
+  animation: iconPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+}
+
+@keyframes iconPop {
+  0% {
+    transform: scale(0) rotate(-180deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Status Time Animation */
+[data-ui-version="v2"] .status-time {
+  animation: fadeIn 0.5s ease 0.2s backwards;
+}
+
+/* Week View Container */
+[data-ui-version="v2"] .week-view-container {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Calendar Title Transition */
+[data-ui-version="v2"] .calendar-title {
+  transition: var(--transition-smooth);
+}
+
+[data-ui-version="v2"] .calendar-title:hover {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+/* Button Loading State */
+[data-ui-version="v2"] .btn.loading {
+  opacity: 0.7;
+  pointer-events: none;
+  position: relative;
+}
+
+[data-ui-version="v2"] .btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  top: 50%;
+  right: 0.75rem;
+  margin-top: -0.5rem;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ====================================================================
+   End Phase 6: MyTeam v2 Enhancements
+   ==================================================================== */
+
+/* ====================================================================
+   Phase 7: Calendar Header v2 Enhancements
+   "Soft Air, Tactical Truth" - Premium calendar experience
+   ==================================================================== */
+
+/* Enhanced Calendar Header Base - Soft Air Background */
+[data-ui-version="v2"] .calendar-header {
+  position: relative;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.03) 0%, transparent 100%);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  animation: slideDown 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  overflow: hidden;
+}
+
+/* Shimmer Effect - Soft Air Movement */
+[data-ui-version="v2"] .calendar-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* RTL Shimmer */
+[dir="rtl"] [data-ui-version="v2"] .calendar-header::before {
+  animation: shimmerRtl 3s infinite;
+}
+
+@keyframes shimmerRtl {
+  0% {
+    right: -100%;
+    left: auto;
+  }
+  100% {
+    right: 100%;
+    left: auto;
+  }
+}
+
+/* Header Main Container - Staggered Animation */
+[data-ui-version="v2"] .calendar-header .header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  animation: fadeIn 0.5s ease-out 0.2s both;
+}
+
+[data-ui-version="v2"] .calendar-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+[data-ui-version="v2"] .calendar-header .calendar-icon {
+  font-size: 1.5rem;
+  animation: iconBounce 0.6s ease-out 0.4s both;
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Calendar Navigation - Staggered Animation */
+[data-ui-version="v2"] .calendar-header .calendar-nav {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeIn 0.5s ease-out 0.3s both;
+}
+
+/* Enhanced Nav Buttons - Soft Air Hover */
+[data-ui-version="v2"] .calendar-nav .btn {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .calendar-nav .btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+[data-ui-version="v2"] .calendar-nav .btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+[data-ui-version="v2"] .calendar-nav .btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(var(--primary-rgb), 0.3);
+}
+
+[data-ui-version="v2"] .calendar-nav .btn:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* Button Shimmer on Hover */
+[data-ui-version="v2"] .calendar-nav .btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+[data-ui-version="v2"] .calendar-nav .btn:hover::after {
+  left: 100%;
+}
+
+/* Calendar Metrics Container - Tactical Truth */
+[data-ui-version="v2"] .calendar-metrics {
+  display: flex;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  border-top: 1px solid rgba(var(--primary-rgb), 0.15);
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeIn 0.5s ease-out 0.4s both;
+}
+
+/* Individual Metric Item */
+[data-ui-version="v2"] .metric-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(var(--primary-rgb), 0.05);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  border-radius: var(--radius-md);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ui-version="v2"] .metric-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+[data-ui-version="v2"] .metric-item:hover::before {
+  opacity: 1;
+}
+
+[data-ui-version="v2"] .metric-item:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+/* Metric Icon */
+[data-ui-version="v2"] .metric-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  animation: iconBounce 0.6s ease-out both;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Metric Content */
+[data-ui-version="v2"] .metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+[data-ui-version="v2"] .metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+[data-ui-version="v2"] .metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Metric Type Variants */
+[data-ui-version="v2"] .metric-item.metric-shifts .metric-icon {
+  animation-delay: 0.1s;
+}
+
+[data-ui-version="v2"] .metric-item.metric-pending .metric-icon {
+  animation-delay: 0.2s;
+}
+
+[data-ui-version="v2"] .metric-item.metric-coverage .metric-icon {
+  animation-delay: 0.3s;
+}
+
+[data-ui-version="v2"] .metric-item.metric-pending {
+  background: rgba(255, 193, 7, 0.05);
+  border-color: rgba(255, 193, 7, 0.2);
+}
+
+[data-ui-version="v2"] .metric-item.metric-pending .metric-value {
+  color: #f59e0b;
+}
+
+[data-ui-version="v2"] .metric-item.metric-coverage {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-ui-version="v2"] .metric-item.metric-coverage .metric-value {
+  color: #10b981;
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] [data-ui-version="v2"] .calendar-header {
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, transparent 100%);
+  border-color: rgba(var(--primary-rgb), 0.2);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] [data-ui-version="v2"] .calendar-header h2 {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+[data-theme="dark"] [data-ui-version="v2"] .metric-item {
+  background: rgba(var(--primary-rgb), 0.1);
+  border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+[data-theme="dark"] [data-ui-version="v2"] .metric-item.metric-pending {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.25);
+}
+
+[data-theme="dark"] [data-ui-version="v2"] .metric-item.metric-coverage {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  [data-ui-version="v2"] .calendar-header {
+    padding: var(--spacing-md);
+  }
+
+  [data-ui-version="v2"] .calendar-header h2 {
+    font-size: 1.5rem;
+  }
+
+  [data-ui-version="v2"] .calendar-header .header-main {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  [data-ui-version="v2"] .calendar-metrics {
+    gap: var(--spacing-sm);
+  }
+
+  [data-ui-version="v2"] .metric-item {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    flex: 1 1 auto;
+    min-width: calc(50% - var(--spacing-xs));
+  }
+
+  [data-ui-version="v2"] .metric-value {
+    font-size: 1.1rem;
+  }
+
+  [data-ui-version="v2"] .metric-icon {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  [data-ui-version="v2"] .calendar-nav {
+    width: 100%;
+  }
+
+  [data-ui-version="v2"] .calendar-nav .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  [data-ui-version="v2"] .metric-item {
+    min-width: 100%;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] [data-ui-version="v2"] .calendar-header h2 {
+  background: linear-gradient(-135deg, var(--primary-color), var(--primary-color-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[dir="rtl"] [data-ui-version="v2"] .calendar-nav .btn::after {
+  left: auto;
+  right: -100%;
+}
+
+[dir="rtl"] [data-ui-version="v2"] .calendar-nav .btn:hover::after {
+  left: auto;
+  right: 100%;
+}
+
+/* ====================================================================
+   End Phase 7: Calendar Header v2 Enhancements
+   ==================================================================== */
