@@ -444,7 +444,7 @@ try {
         Push-Location $DestDir
         try {
             $tmp = Join-Path $DestDir 'verify_output.tmp'
-            cmd /c 'VERIFY_FILES.bat' > $tmp 2>&1
+            cmd /c VERIFY_FILES.bat > $tmp 2>&1
             $out = ''
             if (Test-Path -LiteralPath $tmp) {
                 $out = Get-Content -LiteralPath $tmp -Raw -ErrorAction SilentlyContinue
