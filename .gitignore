@@ -103,6 +103,10 @@ DIRECTOR_ROLE.md
 check_data.sql
 apply_localization.ps1
 
+# Build script backups (should not be versioned)
+ProjectPublish_BACKUP_*/
+Backups/
+
 # Publish output
 publish/
 out/
