@@ -321,8 +321,8 @@ VERSION-SPECIFIC NOTES
 ================================================================================
 
 Version 2.5.0:
-  - Built: 2026-01-07 23:19:45 UTC
-  - Git Commit: fb79029
+  - Built: 2026-01-07 23:30:21 UTC
+  - Git Commit: 16ee802
   - Changes: See VERSION.txt for full changelog
 
 Breaking Changes: None

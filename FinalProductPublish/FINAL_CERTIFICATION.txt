@@ -3,9 +3,9 @@
                     ShiftManager Version 2.5.0
 ================================================================================
 
-CERTIFICATION DATE: 2026-01-07 23:19:45 UTC
+CERTIFICATION DATE: 2026-01-07 23:30:21 UTC
 PACKAGE VERSION:    v2.5.0
-GIT COMMIT:         fb79029
+GIT COMMIT:         16ee802
 BUILD SYSTEM:       Automated Release Builder v1.0.0
 
 ================================================================================
@@ -43,7 +43,7 @@ The following criteria have been met for production certification:
    âœ… API endpoints tested
 
 3. PACKAGE INTEGRITY
-   âœ… File count verified (443 files)
+   âœ… File count verified (413 files)
    âœ… DLL count verified (336 DLLs)
    âœ… Package size verified (114 MB)
    âœ… All critical files present
@@ -73,7 +73,7 @@ The following criteria have been met for production certification:
 6. VERSION CONTROL
    âœ… Git working tree clean at build time
    âœ… Version tagged: v2.5.0
-   âœ… Commit documented: fb79029
+   âœ… Commit documented: 16ee802
    âœ… Build reproducible from tag
 
 ================================================================================
@@ -82,7 +82,7 @@ DEPLOYMENT PACKAGE SPECIFICATION
 
 Package Type:       Self-Contained Deployment
 Package Size:       114 MB
-File Count:         443 files
+File Count:         413 files
 DLL Count:          336 DLLs
 Target Platform:    Windows x64 (Server 2022 / Windows 10+)
 .NET Version:       8.0 (included, no installation required)
@@ -297,13 +297,13 @@ BUILD INFORMATION
 ================================================================================
 
 Build System:       Automated Release Builder v1.0.0
-Build Date:         2026-01-07 23:19:45 UTC
+Build Date:         2026-01-07 23:30:21 UTC
 Build Host:         Automated
 Build Type:         Release (optimized)
 Build Config:       Self-Contained
 Git Repository:     ShiftManager
 Git Branch:         finalized
-Git Commit:         fb79029
+Git Commit:         16ee802
 Git Tag:            v2.5.0
 
 Pipeline Stages:    10 (all passed)
@@ -321,13 +321,13 @@ by the ShiftManager Automated Release Builder system.
 Certification Authority:
   System:    ShiftManager Automated Release Builder
   Version:   1.0.0
-  Date:      2026-01-07 23:19:45 UTC
-  Signature: Git Tag v2.5.0 (fb79029)
+  Date:      2026-01-07 23:30:21 UTC
+  Signature: Git Tag v2.5.0 (16ee802)
 
 Digital Verification:
   Package Checksum:  See SHA256 checksum file
   Git Tag:          v2.5.0
-  Git Commit:       fb79029
+  Git Commit:       16ee802
 
 This certification is valid and the package is approved for production
 deployment in air-gapped Windows Server 2022 environments.
