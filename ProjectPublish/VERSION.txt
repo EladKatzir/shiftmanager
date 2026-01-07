@@ -1,12 +1,12 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 2.5.0
+                           Version 2.6.0
 ================================================================================
 
-VERSION: 2.5.0
+VERSION: 2.6.0
 RELEASE DATE: 2026-01-07
-BUILD DATE: 2026-01-07 23:47:02 UTC
-GIT COMMIT: baec176
+BUILD DATE: 2026-01-07 23:54:11 UTC
+GIT COMMIT: bff61af
 GIT BRANCH: finalized
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-01-07 23:47:02 UTC
+Build Date:     2026-01-07 23:54:11 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v2.5.0
+  âœ“ Git tagged: v2.6.0
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -260,14 +260,14 @@ This package has been:
   âœ… Tested automatically with comprehensive checks
   âœ… Verified for completeness (413 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v2.5.0)
+  âœ… Tagged in version control (v2.6.0)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-01-07 23:47:02 UTC
-Git Commit: baec176
+Date: 2026-01-07 23:54:11 UTC
+Git Commit: bff61af
 
 ================================================================================
 LICENSE

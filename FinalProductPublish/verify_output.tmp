@@ -1,0 +1,63 @@
+﻿
+================================================================================
+                   FILE VERIFICATION
+================================================================================
+
+Checking critical DLL files...
+
+[1/5] Checking SixLabors.ImageSharp.dll...
+  [OK] SixLabors.ImageSharp.dll found
+  [INFO] Size: 2099712 bytes
+
+[2/5] Checking ShiftManager.dll...
+  [OK] ShiftManager.dll found
+  [INFO] Size: 5915648 bytes
+
+[3/5] Checking e_sqlite3.dll...
+  [OK] e_sqlite3.dll found
+  [INFO] Size: 1759232 bytes
+
+[4/5] Checking ShiftManager.exe...
+  [OK] ShiftManager.exe found
+
+[5/5] Checking Microsoft.EntityFrameworkCore.Sqlite.dll...
+  [OK] Microsoft.EntityFrameworkCore.Sqlite.dll found
+
+================================================================================
+Counting total DLL files...
+
+  Total DLL files found: 336
+  Expected range: 330-340 DLL files
+
+================================================================================
+Checking if files are blocked by Windows...
+
+  [OK] Files appear to be unblocked
+
+  [INFO] If you get DLL errors, run UNBLOCK_FILES.bat
+
+================================================================================
+Checksum Verification Available
+================================================================================
+
+DLL_CHECKSUMS.txt found - you can verify file integrity!
+
+To verify a DLL manually:
+  CertUtil -hashfile SixLabors.ImageSharp.dll SHA256
+  Then compare output with DLL_CHECKSUMS.txt
+
+Critical DLLs with checksums available:
+  - SixLabors.ImageSharp.dll
+  - ShiftManager.dll
+  - e_sqlite3.dll
+  - Microsoft.EntityFrameworkCore.Sqlite.dll
+  - SQLitePCLRaw.provider.e_sqlite3.dll
+
+If checksums don't match, recopy from USB!
+
+[INFO] Cannot verify file integrity automatically
+
+================================================================================
+                   VERIFICATION SUMMARY
+================================================================================
+
