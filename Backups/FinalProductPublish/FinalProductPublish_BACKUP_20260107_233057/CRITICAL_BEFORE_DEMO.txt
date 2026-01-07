@@ -1,0 +1,69 @@
+================================================================================
+           *** CRITICAL ACTION REQUIRED BEFORE DEMO ***
+================================================================================
+
+                   READ THIS FIRST!
+
+You MUST set the admin password before the demo, or login will fail!
+
+================================================================================
+                  STEP-BY-STEP INSTRUCTIONS
+================================================================================
+
+1. Open this file in Notepad:
+   ProjectPublish\appsettings.json
+
+2. Find line 55 (near the bottom):
+   "SEED_ADMIN_PASSWORD": "",
+
+3. Change it to:
+   "SEED_ADMIN_PASSWORD": "ShareholderDemo2025!",
+
+4. Save the file (Ctrl+S)
+
+5. Close Notepad
+
+DONE! You're ready for the demo.
+
+================================================================================
+                  LOGIN CREDENTIALS FOR DEMO
+================================================================================
+
+Email:    admin@local
+Password: ShareholderDemo2025!
+
+(Or whatever password you set above)
+
+================================================================================
+                  VERIFICATION
+================================================================================
+
+To verify you set it correctly:
+
+1. Open appsettings.json again
+2. Line 55 should look like this:
+   "SEED_ADMIN_PASSWORD": "ShareholderDemo2025!",
+3. NOT like this:
+   "SEED_ADMIN_PASSWORD": "",
+
+If there's still "" (empty quotes), you haven't set it!
+
+================================================================================
+                  WHAT HAPPENS IF YOU FORGET?
+================================================================================
+
+If you don't set the password:
+  - Application starts normally
+  - You can open http://localhost:5000
+  - BUT login will fail with "Invalid credentials"
+  - Demo FAILS in front of shareholders!
+
+START_HERE.bat WILL warn you, but better to set it now!
+
+================================================================================
+                  AFTER SETTING PASSWORD
+================================================================================
+
+Continue with PRE_DEMO_CHECKLIST.txt for the full preparation procedure.
+
+================================================================================
