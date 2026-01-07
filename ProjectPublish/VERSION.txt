@@ -5,8 +5,8 @@
 
 VERSION: 2.5.0
 RELEASE DATE: 2026-01-07
-BUILD DATE: 2026-01-07 23:30:21 UTC
-GIT COMMIT: 16ee802
+BUILD DATE: 2026-01-07 23:47:02 UTC
+GIT COMMIT: baec176
 GIT BRANCH: finalized
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-01-07 23:30:21 UTC
+Build Date:     2026-01-07 23:47:02 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -266,8 +266,8 @@ This package has been:
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-01-07 23:30:21 UTC
-Git Commit: 16ee802
+Date: 2026-01-07 23:47:02 UTC
+Git Commit: baec176
 
 ================================================================================
 LICENSE

@@ -182,7 +182,7 @@ VERSION INFORMATION
 Version:        2.5.0
 Release Date:   2026-01-07
 Package Size:   114 MB
-Git Commit:     16ee802
+Git Commit:     baec176
 
 This is a self-contained deployment. No .NET installation required.
 
