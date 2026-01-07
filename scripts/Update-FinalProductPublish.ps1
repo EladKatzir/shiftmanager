@@ -252,13 +252,10 @@ function Commit-AllChanges {
             return
         }
 
-        if ($PSCmdlet.ShouldProcess($RepoRoot, "git add -A and commit")) {
-            Invoke-External -File 'git' -Args @('add','-A') -WorkingDirectory $RepoRoot
-            Invoke-External -File 'git' -Args @('commit','-m',$Message) -WorkingDirectory $RepoRoot
-            Write-Log -Level OK -Message "Changes committed."
-        } else {
-            Write-Log -Level WARN -Message "Commit skipped due to WhatIf/Confirm."
-        }
+        # Commit changes (ShouldProcess already handled at script level)
+        Invoke-External -File 'git' -Args @('add','-A') -WorkingDirectory $RepoRoot
+        Invoke-External -File 'git' -Args @('commit','-m',$Message) -WorkingDirectory $RepoRoot
+        Write-Log -Level OK -Message "Changes committed."
     } finally {
         Pop-Location
     }
