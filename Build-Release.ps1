@@ -3,34 +3,35 @@
     Automated Release Builder for ShiftManager
 
 .DESCRIPTION
-    Enterprise-grade automation system that builds, tests, and packages
-    production-ready ProjectPublish deployments with one command.
+    Builds a production-ready ProjectPublish folder.
 
-    Features:
-    - Automated building and testing
-    - Intelligent documentation generation
-    - Git integration with tagging
-    - Comprehensive verification
-    - Database seeding verification
-    - Automatic rollback on failure
+    Pipeline (best-effort; steps run if scripts exist):
+      1) Pre-build checks (build\Test-PreBuild.ps1)
+      2) Backup existing ProjectPublish (retention policy)
+      3) dotnet publish -> ProjectPublish
+      4) Copy mandatory air-gapped deployment assets
+      5) Optional verify/test/docs/package/report steps (if scripts exist)
 
 .PARAMETER Version
-    Version number (e.g., "1.0.2"). If not provided, will prompt.
+    Version number (e.g., "1.0.2"). If not provided, prompts.
 
 .PARAMETER SkipTests
-    Skip application testing (not recommended for production)
+    Skip test-related stages (also passed into Test-PreBuild.ps1).
 
 .PARAMETER NoPush
-    Create git tag but don't push to remote
+    Passed to build\Git-Integration.ps1 if present.
 
-.EXAMPLE
-    .\Build-Release.ps1
-    # Prompts for version and builds with full testing
+.PARAMETER SkipGit
+    Skip git integration stage (tag/push).
 
-.EXAMPLE
-    .\Build-Release.ps1 -Version "1.0.2"
-    # Builds version 1.0.2 with full testing
+.PARAMETER SkipPackaging
+    Skip packaging stage (zip/package).
 
+.PARAMETER SkipReport
+    Skip release report stage.
+
+.NOTES
+    - ASCII-only output to avoid encoding/parser issues.
 #>
 
 [CmdletBinding()]
@@ -42,416 +43,425 @@ param(
     [switch]$SkipTests,
 
     [Parameter()]
-    [switch]$NoPush
+    [switch]$NoPush,
+
+    [Parameter()]
+    [switch]$SkipGit,
+
+    [Parameter()]
+    [switch]$SkipPackaging,
+
+    [Parameter()]
+    [switch]$SkipReport,
+
+    [Parameter()]
+    [ValidateRange(1, 25)]
+    [int]$KeepBackups = 3
 )
 
-$ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
-# Script metadata
-$ScriptVersion = "1.0.0"
-$ScriptRoot = $PSScriptRoot
-$BuildRoot = Join-Path $ScriptRoot "build"
-$ProjectFile = Join-Path $ScriptRoot "ShiftManager.csproj"
-$OutputFolder = Join-Path $ScriptRoot "ProjectPublish"
+# -----------------------------
+# Paths
+# -----------------------------
+$ScriptRoot   = $PSScriptRoot
+$BuildRoot    = Join-Path $ScriptRoot 'build'
+$ProjectFile  = Join-Path $ScriptRoot 'ShiftManager.csproj'
+$SolutionFile = Join-Path $ScriptRoot 'ShiftManager.sln'
+$OutputFolder = Join-Path $ScriptRoot 'ProjectPublish'
 
-# ANSI Colors for output
-$ColorReset = "`e[0m"
-$ColorGreen = "`e[32m"
-$ColorYellow = "`e[33m"
-$ColorRed = "`e[31m"
-$ColorBlue = "`e[34m"
-$ColorCyan = "`e[36m"
+# Logging (best-effort)
+$LogDir = Join-Path $ScriptRoot 'logs'
+$null = New-Item -ItemType Directory -Path $LogDir -Force -ErrorAction SilentlyContinue
+$LogFile = Join-Path $LogDir ("Build-Release_{0:yyyyMMdd_HHmmss}.log" -f (Get-Date))
 
-# Track timing
 $script:StartTime = Get-Date
-$script:StageTimings = @{}
 
-#region Helper Functions
-
-function Write-Header {
-    param([string]$Text)
-    $width = 60
-    Write-Host ""
-    Write-Host ("═" * $width) -ForegroundColor Cyan
-    Write-Host (" " * (($width - $Text.Length) / 2)) -NoNewline
-    Write-Host $Text -ForegroundColor White
-    Write-Host ("═" * $width) -ForegroundColor Cyan
-    Write-Host ""
-}
-
-function Write-Stage {
+function Write-Log {
     param(
-        [string]$Stage,
-        [string]$Message
+        [Parameter(Mandatory=$true)][string]$Message,
+        [ValidateSet('INFO','OK','WARN','ERROR','STAGE')][string]$Level = 'INFO'
     )
-    Write-Host "[$Stage] " -ForegroundColor Cyan -NoNewline
-    Write-Host $Message
+    $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+    $line = "[{0}] [{1}] {2}" -f $ts, $Level, $Message
+
+    switch ($Level) {
+        'STAGE' { Write-Host $line -ForegroundColor Cyan }
+        'OK'    { Write-Host $line -ForegroundColor Green }
+        'WARN'  { Write-Host $line -ForegroundColor Yellow }
+        'ERROR' { Write-Host $line -ForegroundColor Red }
+        default { Write-Host $line }
+    }
+
+    try { Add-Content -Path $LogFile -Value $line -Encoding UTF8 } catch { }
 }
 
-function Write-Success {
-    param([string]$Message)
-    Write-Host "  ✅ " -ForegroundColor Green -NoNewline
-    Write-Host $Message
+function Require-File {
+    param([string]$Path, [string]$Label)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw ("Missing {0}: {1}" -f $Label, $Path)
+    }
 }
 
-function Write-WarningMsg {
-    param([string]$Message)
-    Write-Host "  ⚠️  " -ForegroundColor Yellow -NoNewline
-    Write-Host $Message
-}
-
-function Write-ErrorMsg {
-    param([string]$Message)
-    Write-Host "  ❌ " -ForegroundColor Red -NoNewline
-    Write-Host $Message
-}
-
-function Write-Info {
-    param([string]$Message)
-    Write-Host "  ⏳ " -ForegroundColor Blue -NoNewline
-    Write-Host $Message
-}
-
-function Start-Stage {
+function Get-Tool {
     param([string]$Name)
-    $script:CurrentStageStart = Get-Date
-    $script:CurrentStageName = $Name
+    Get-Command $Name -ErrorAction SilentlyContinue
 }
 
-function Complete-Stage {
-    $elapsed = (Get-Date) - $script:CurrentStageStart
-    $script:StageTimings[$script:CurrentStageName] = $elapsed
-    Write-Success "$script:CurrentStageName completed ($($elapsed.TotalSeconds.ToString('F1'))s)"
-}
+function Invoke-StepScript {
+    param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter()][hashtable]$Params = @{},
+        [Parameter()][string]$WorkingDirectory = $ScriptRoot,
+        [Parameter()][switch]$Optional,
+        [Parameter()][switch]$CaptureOutput
+    )
 
-function Test-Administrator {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
+    if (-not (Test-Path -LiteralPath $Path)) {
+        if ($Optional) {
+            Write-Log -Level WARN -Message ("Step script not found (skipping): {0}" -f $Path)
+            return $null
+        }
+        throw ("Step script not found: {0}" -f $Path)
+    }
 
-#endregion
+    $argPreview = if ($Params.Count -gt 0) {
+        ($Params.Keys | Sort-Object | ForEach-Object { "-{0} {1}" -f $_, $Params[$_] }) -join ' '
+    } else { '' }
 
-#region Main Build Pipeline
+    Write-Log -Level INFO -Message ("Running: {0} {1} (wd={2})" -f $Path, $argPreview, $WorkingDirectory)
 
-function Invoke-BuildPipeline {
+    Push-Location $WorkingDirectory
     try {
-        Write-Header "ShiftManager Automated Release Builder v$ScriptVersion"
-
-        # Stage 1: Pre-Flight Checks
-        Start-Stage "Pre-Flight Checks"
-        Write-Stage "STAGE 1/10" "Pre-Flight Checks..."
-        & "$BuildRoot\Test-PreBuild.ps1" -Version $Version
-        Complete-Stage
-
-        # Stage 2: Backup
-        Start-Stage "Backup"
-        Write-Stage "STAGE 2/10" "Backing up existing deployment..."
-        Invoke-Backup
-        Complete-Stage
-
-        # Stage 3: Build
-        Start-Stage "Build"
-        Write-Stage "STAGE 3/10" "Building release package..."
-        Invoke-Build
-        Complete-Stage
-
-        # Stage 4: Build Verification
-        Start-Stage "Build Verification"
-        Write-Stage "STAGE 4/10" "Verifying build output..."
-        & "$BuildRoot\Verify-Build.ps1" -OutputPath $OutputFolder
-        Complete-Stage
-
-        # Stage 5: Application Testing
-        if (-not $SkipTests) {
-            Start-Stage "Application Testing"
-            Write-Stage "STAGE 5/10" "Testing application..."
-            & "$BuildRoot\Test-Application.ps1" -OutputPath $OutputFolder
-            Complete-Stage
+        if ($CaptureOutput) {
+            $result = & $Path @Params
         } else {
-            Write-WarningMsg "Skipping application tests (not recommended for production)"
+            & $Path @Params
+            $result = $null
         }
-
-        # Stage 6: Documentation Generation
-        Start-Stage "Documentation Generation"
-        Write-Stage "STAGE 6/10" "Generating documentation..."
-        & "$BuildRoot\Generate-Documentation.ps1" -Version $Version -OutputPath $OutputFolder
-        Complete-Stage
-
-        # Stage 7: Final Integrity Check
-        Start-Stage "Final Integrity Check"
-        Write-Stage "STAGE 7/10" "Final integrity check..."
-        & "$BuildRoot\Test-PackageIntegrity.ps1" -OutputPath $OutputFolder
-        Complete-Stage
-
-        # Stage 8: Git Tagging
-        Start-Stage "Git Tagging"
-        Write-Stage "STAGE 8/10" "Creating git tag..."
-        & "$BuildRoot\Git-Integration.ps1" -Version $Version -NoPush:$NoPush
-        Complete-Stage
-
-        # Stage 9: Packaging
-        Start-Stage "Packaging"
-        Write-Stage "STAGE 9/10" "Creating distribution package..."
-        $packageInfo = & "$BuildRoot\Create-Package.ps1" -Version $Version -OutputPath $OutputFolder
-        Complete-Stage
-
-        # Stage 10: Release Report
-        Start-Stage "Release Report"
-        Write-Stage "STAGE 10/10" "Generating release report..."
-        & "$BuildRoot\Generate-ReleaseReport.ps1" -Version $Version -PackageInfo $packageInfo
-        Complete-Stage
-
-        # Success Summary
-        Show-SuccessSummary -Version $Version -PackageInfo $packageInfo
-
-    } catch {
-        Write-ErrorMsg "Build failed: $_"
-        Write-Host ""
-        Write-Host "Error Details:" -ForegroundColor Red
-        Write-Host $_.Exception.Message -ForegroundColor Red
-        Write-Host $_.ScriptStackTrace -ForegroundColor Red
-
-        # Attempt rollback
-        Invoke-Rollback
-        exit 1
+        $exit = $LASTEXITCODE
+    } finally {
+        Pop-Location
     }
+
+    if ($exit -ne $null -and $exit -ne 0) {
+        throw ("Step failed (exit={0}): {1}" -f $exit, $Path)
+    }
+    if (-not $?) {
+        throw ("Step failed (PowerShell error): {0}" -f $Path)
+    }
+
+    return $result
 }
 
-function Invoke-Backup {
-    if (Test-Path $OutputFolder) {
-        $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        $backupFolder = "$($OutputFolder)_BACKUP_$timestamp"
-        Write-Info "Backing up to: $backupFolder"
-        Copy-Item -Path $OutputFolder -Destination $backupFolder -Recurse -Force
-        Write-Success "Backup created"
+function Copy-Folder {
+    param([Parameter(Mandatory=$true)][string]$From,
+          [Parameter(Mandatory=$true)][string]$To)
 
-        # Clean old backups (keep last 3)
-        $backups = Get-ChildItem -Path $ScriptRoot -Directory -Filter "ProjectPublish_BACKUP_*" |
-            Sort-Object Name -Descending |
-            Select-Object -Skip 3
-        if ($backups) {
-            Write-Info "Cleaning old backups..."
-            $backups | Remove-Item -Recurse -Force
-        }
+    if (-not (Test-Path -LiteralPath $From)) {
+        throw ("Source folder missing: {0}" -f $From)
+    }
+    if (-not (Test-Path -LiteralPath $To)) {
+        $null = New-Item -ItemType Directory -Path $To -Force
+    }
+
+    $robocopy = Get-Tool 'robocopy'
+    if ($robocopy) {
+        # robocopy: 0-7 success, 8+ failure
+        $args = @(
+            $From, $To,
+            '/MIR',
+            '/COPY:DAT', '/DCOPY:DAT',
+            '/R:2', '/W:1',
+            '/NFL', '/NDL', '/NP', '/NJH', '/NJS'
+        )
+        & robocopy @args | Out-Null
+        $rc = $LASTEXITCODE
+        if ($rc -ge 8) { throw ("robocopy failed with code {0}" -f $rc) }
     } else {
-        Write-Info "No existing deployment to backup"
+        Copy-Item -LiteralPath (Join-Path $From '*') -Destination $To -Recurse -Force
     }
 }
 
-function Invoke-Build {
-    # Clean existing output
-    if (Test-Path $OutputFolder) {
-        Write-Info "Removing existing ProjectPublish folder..."
-        Remove-Item -Path $OutputFolder -Recurse -Force
+function Get-FolderStats {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return [pscustomobject]@{ Exists = $false; FileCount = 0; SizeMB = 0.0 }
+    }
+    $files = Get-ChildItem -LiteralPath $Path -File -Recurse -Force
+    $count = $files.Count
+    $sum = if ($count -gt 0) { ($files | Measure-Object Length -Sum).Sum } else { 0 }
+    [pscustomobject]@{
+        Exists    = $true
+        FileCount = $count
+        SizeMB    = [math]::Round(($sum / 1MB), 2)
+    }
+}
+
+function Backup-ProjectPublish {
+    if (-not (Test-Path -LiteralPath $OutputFolder)) {
+        Write-Log -Level INFO -Message "No existing ProjectPublish to backup."
+        return $null
     }
 
-    # Run dotnet publish
-    Write-Info "Running: dotnet publish -c Release -r win-x64 --self-contained"
-    $buildStart = Get-Date
+    $timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+    $backupPath = Join-Path $ScriptRoot ("ProjectPublish_BACKUP_{0}" -f $timestamp)
 
-    $process = Start-Process -FilePath "dotnet" -ArgumentList @(
-        "publish",
-        $ProjectFile,
-        "-c", "Release",
-        "-r", "win-x64",
-        "--self-contained", "true",
-        "-o", $OutputFolder
-    ) -NoNewWindow -Wait -PassThru
+    Write-Log -Level INFO -Message ("Backing up ProjectPublish -> {0}" -f $backupPath)
+    Copy-Folder -From $OutputFolder -To $backupPath
+    Write-Log -Level OK -Message "Backup created."
 
-    if ($process.ExitCode -ne 0) {
-        throw "dotnet publish failed with exit code $($process.ExitCode)"
+    # Retention
+    $all = Get-ChildItem -LiteralPath $ScriptRoot -Directory -Filter 'ProjectPublish_BACKUP_*' |
+        Sort-Object Name -Descending
+    $old = $all | Select-Object -Skip $KeepBackups
+    if ($old) {
+        Write-Log -Level INFO -Message ("Removing {0} old backup(s) (keep last {1})..." -f $old.Count, $KeepBackups)
+        foreach ($d in $old) {
+            try { Remove-Item -LiteralPath $d.FullName -Recurse -Force } catch { }
+        }
+        Write-Log -Level OK -Message "Retention cleanup done."
     }
 
-    $buildTime = ((Get-Date) - $buildStart).TotalSeconds
-    Write-Success "Build successful ($($buildTime.ToString('F1'))s)"
+    return $backupPath
+}
 
-    # Copy air-gapped deployment helper scripts (MANDATORY for production)
-    Write-Info "Adding air-gapped deployment helper scripts..."
+function Restore-FromBackup {
+    param([string]$BackupPath)
+
+    if (-not $BackupPath -or -not (Test-Path -LiteralPath $BackupPath)) {
+        Write-Log -Level WARN -Message "No backup available for rollback."
+        return
+    }
+
+    Write-Log -Level WARN -Message ("Rollback: restoring ProjectPublish from {0}" -f $BackupPath)
+
+    if (Test-Path -LiteralPath $OutputFolder) {
+        Remove-Item -LiteralPath $OutputFolder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $null = New-Item -ItemType Directory -Path $OutputFolder -Force
+    Copy-Folder -From $BackupPath -To $OutputFolder
+
+    Write-Log -Level OK -Message "Rollback complete."
+}
+
+function Invoke-DotnetPublish {
+    $dotnet = Get-Tool 'dotnet'
+    if (-not $dotnet) { throw "dotnet not found on PATH." }
+
+    if (Test-Path -LiteralPath $OutputFolder) {
+        Remove-Item -LiteralPath $OutputFolder -Recurse -Force
+    }
+
+    Write-Log -Level INFO -Message "Running dotnet publish (Release, win-x64, self-contained)..."
+    & dotnet publish $ProjectFile -c Release -r win-x64 --self-contained true -o $OutputFolder
+    $exit = $LASTEXITCODE
+    if ($exit -ne $null -and $exit -ne 0) {
+        throw ("dotnet publish failed with exit code {0}" -f $exit)
+    }
+    Write-Log -Level OK -Message "dotnet publish completed."
+}
+
+function Copy-DeploymentAssets {
+    Write-Log -Level INFO -Message "Copying required deployment assets into ProjectPublish..."
 
     $requiredScripts = @(
-        @{Name = "UNBLOCK_FILES.bat"; Required = $true},
-        @{Name = "VERIFY_FILES.bat"; Required = $true},
-        @{Name = "QUICK_FIX.bat"; Required = $true},
-        @{Name = "CRITICAL_BEFORE_DEMO.txt"; Required = $true},
-        @{Name = "AIR_GAPPED_DEPLOYMENT_GUIDE.txt"; Required = $true},
-        @{Name = "PRE_DEMO_CHECKLIST.txt"; Required = $false},
-        @{Name = "TROUBLESHOOT_DEMO.txt"; Required = $false}
+        'UNBLOCK_FILES.bat',
+        'VERIFY_FILES.bat',
+        'QUICK_FIX.bat',
+        'CRITICAL_BEFORE_DEMO.txt',
+        'AIR_GAPPED_DEPLOYMENT_GUIDE.txt'
     )
 
-    $missingRequired = @()
-    foreach ($script in $requiredScripts) {
-        $scriptPath = Join-Path $ScriptRoot $script.Name
-        if (Test-Path $scriptPath) {
-            Copy-Item -Path $scriptPath -Destination $OutputFolder -Force
-            Write-Success "$($script.Name) added"
-        } else {
-            if ($script.Required) {
-                Write-ErrorMsg "$($script.Name) NOT FOUND - REQUIRED for air-gapped deployment!"
-                $missingRequired += $script.Name
-            } else {
-                Write-WarningMsg "$($script.Name) not found (optional)"
-            }
-        }
-    }
-
-    if ($missingRequired.Count -gt 0) {
-        throw "Missing required deployment scripts: $($missingRequired -join ', '). Air-gapped deployments will fail without these!"
-    }
-
-    # Copy API documentation and client libraries
-    Write-Info "Adding API documentation and client libraries..."
-
-    $apiAssets = @(
-        @{Name = "API_DOCUMENTATION.md"; Required = $true; Type = "File"},
-        @{Name = "appsettings.Production.template.json"; Required = $true; Type = "File"},
-        @{Name = "clients"; Required = $true; Type = "Directory"}
+    $optionalScripts = @(
+        'START_HERE.bat',
+        'PRE_DEMO_CHECKLIST.txt',
+        'TROUBLESHOOT_DEMO.txt'
     )
 
-    foreach ($asset in $apiAssets) {
-        $assetPath = Join-Path $ScriptRoot $asset.Name
-        if (Test-Path $assetPath) {
-            if ($asset.Type -eq "Directory") {
-                Copy-Item -Path $assetPath -Destination $OutputFolder -Recurse -Force
-                Write-Success "$($asset.Name)/ folder added (API client libraries)"
-            } else {
-                Copy-Item -Path $assetPath -Destination $OutputFolder -Force
-                Write-Success "$($asset.Name) added"
-            }
+    $requiredAssets = @(
+        'API_DOCUMENTATION.md',
+        'appsettings.Production.template.json'
+    )
+
+    $missing = @()
+
+    foreach ($f in $requiredScripts) {
+        $src = Join-Path $ScriptRoot $f
+        if (Test-Path -LiteralPath $src) {
+            Copy-Item -LiteralPath $src -Destination $OutputFolder -Force
         } else {
-            if ($asset.Required) {
-                Write-ErrorMsg "$($asset.Name) NOT FOUND - REQUIRED for complete deployment!"
-                $missingRequired += $asset.Name
-            } else {
-                Write-WarningMsg "$($asset.Name) not found (optional)"
-            }
+            $missing += $f
         }
     }
 
-    if ($missingRequired.Count -gt 0) {
-        throw "Missing required API assets: $($missingRequired -join ', ')"
-    }
-}
-
-function Invoke-Rollback {
-    Write-WarningMsg "Attempting rollback..."
-
-    # Find most recent backup
-    $latestBackup = Get-ChildItem -Path $ScriptRoot -Directory -Filter "ProjectPublish_BACKUP_*" |
-        Sort-Object Name -Descending |
-        Select-Object -First 1
-
-    if ($latestBackup) {
-        Write-Info "Restoring from: $($latestBackup.Name)"
-
-        if (Test-Path $OutputFolder) {
-            Remove-Item -Path $OutputFolder -Recurse -Force
+    foreach ($f in $optionalScripts) {
+        $src = Join-Path $ScriptRoot $f
+        if (Test-Path -LiteralPath $src) {
+            Copy-Item -LiteralPath $src -Destination $OutputFolder -Force
         }
+    }
 
-        Copy-Item -Path $latestBackup.FullName -Destination $OutputFolder -Recurse -Force
-        Write-Success "Rollback complete"
+    foreach ($f in $requiredAssets) {
+        $src = Join-Path $ScriptRoot $f
+        if (Test-Path -LiteralPath $src) {
+            Copy-Item -LiteralPath $src -Destination $OutputFolder -Force
+        } else {
+            $missing += $f
+        }
+    }
+
+    $clients = Join-Path $ScriptRoot 'clients'
+    if (Test-Path -LiteralPath $clients) {
+        Copy-Item -LiteralPath $clients -Destination $OutputFolder -Recurse -Force
     } else {
-        Write-WarningMsg "No backup found to restore"
+        $missing += 'clients (directory)'
     }
+
+    if ($missing.Count -gt 0) {
+        throw ("Missing required deployment assets: {0}" -f ($missing -join ', '))
+    }
+
+    Write-Log -Level OK -Message "Deployment assets copied."
 }
 
-function Show-SuccessSummary {
-    param(
-        [string]$Version,
-        [hashtable]$PackageInfo
-    )
+function Show-Summary {
+    param([string]$Version, [object]$PackageInfo)
 
-    $totalTime = (Get-Date) - $script:StartTime
+    $elapsed = (Get-Date) - $script:StartTime
+    $stats = Get-FolderStats -Path $OutputFolder
 
-    Write-Host ""
-    Write-Header "BUILD SUCCESSFUL!"
-
-    Write-Host "Version:        " -NoNewline
-    Write-Host "v$Version" -ForegroundColor Green
-
-    Write-Host "Build Date:     " -NoNewline
-    Write-Host (Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+    Write-Log -Level OK -Message "============================================================"
+    Write-Log -Level OK -Message "BUILD SUCCESSFUL"
+    Write-Log -Level OK -Message ("Version: {0}" -f $Version)
+    Write-Log -Level OK -Message ("ProjectPublish: {0} files, {1} MB" -f $stats.FileCount, $stats.SizeMB)
+    Write-Log -Level OK -Message ("Elapsed: {0}m {1}s" -f $elapsed.Minutes, $elapsed.Seconds)
 
     if ($PackageInfo) {
-        Write-Host "Git Commit:     " -NoNewline
-        Write-Host $PackageInfo.Commit -ForegroundColor Yellow
-
-        Write-Host "Files:          " -NoNewline
-        Write-Host $PackageInfo.FileCount
-
-        Write-Host "DLLs:           " -NoNewline
-        Write-Host $PackageInfo.DllCount
-
-        Write-Host "Package Size:   " -NoNewline
-        Write-Host $PackageInfo.PackageSize
-
-        Write-Host "Tests Passed:   " -NoNewline
-        Write-Host "ALL" -ForegroundColor Green
-
-        Write-Host "OFFLINE Shift:  " -NoNewline
-        Write-Host "✅ VERIFIED IN DATABASE" -ForegroundColor Green
+        try {
+            if ($PackageInfo.Commit)     { Write-Log -Level OK -Message ("Git Commit: {0}" -f $PackageInfo.Commit) }
+            if ($PackageInfo.ZipFile)    { Write-Log -Level OK -Message ("Package: {0}" -f $PackageInfo.ZipFile) }
+            if ($PackageInfo.ReportFile) { Write-Log -Level OK -Message ("Report:  {0}" -f $PackageInfo.ReportFile) }
+        } catch { }
     }
 
-    Write-Host ""
-    Write-Host "Distribution Files:" -ForegroundColor Cyan
-    Write-Host "  [*] ProjectPublish/ (ready for USB transfer)"
-    if ($PackageInfo.ZipFile) {
-        Write-Host "  [*] $($PackageInfo.ZipFile)"
-    }
-    if ($PackageInfo.ReportFile) {
-        Write-Host "  [*] $($PackageInfo.ReportFile)"
-    }
-
-    Write-Host ""
-    Write-Host "Total Time: " -NoNewline
-    Write-Host "$($totalTime.Minutes) minutes $($totalTime.Seconds) seconds" -ForegroundColor Cyan
-
-    Write-Host ""
-    Write-Host "Ready for production deployment!" -ForegroundColor Green
-    Write-Host ""
+    Write-Log -Level OK -Message ("Log: {0}" -f $LogFile)
+    Write-Log -Level OK -Message "============================================================"
 }
 
-#endregion
+# -----------------------------
+# Entry
+# -----------------------------
+$backupMade = $null
 
-# Entry Point
 try {
-    # Check if running from correct directory
-    if (-not (Test-Path $ProjectFile)) {
-        Write-Host "ERROR: ShiftManager.csproj not found. Please run this script from the project root." -ForegroundColor Red
-        exit 1
-    }
+    Require-File -Path $ProjectFile -Label 'project file (ShiftManager.csproj)'
 
-    # Check if build directory exists
-    if (-not (Test-Path $BuildRoot)) {
-        Write-Host "ERROR: Build directory not found. Please ensure build/ folder exists with required scripts." -ForegroundColor Red
-        exit 1
-    }
-
-    # Prompt for version if not provided
     if (-not $Version) {
         Write-Host ""
         Write-Host "Enter version number (e.g., 1.0.2): " -NoNewline -ForegroundColor Cyan
         $Version = Read-Host
+        if (-not $Version) { throw "Version is required." }
+    }
 
-        if (-not $Version) {
-            Write-Host "ERROR: Version is required" -ForegroundColor Red
-            exit 1
+    if ($Version -notmatch '^\d+\.\d+\.\d+(-[\w\.]+)?$') {
+        throw "Invalid version format. Use semantic versioning (e.g., 1.0.2 or 1.0.2-test)."
+    }
+
+    Write-Log -Level INFO -Message "============================================================"
+    Write-Log -Level INFO -Message ("ShiftManager Build-Release - Version {0}" -f $Version)
+    Write-Log -Level INFO -Message ("Root: {0}" -f $ScriptRoot)
+    Write-Log -Level INFO -Message "============================================================"
+
+    # STAGE 1: Pre-build checks (optional but recommended)
+    Write-Log -Level STAGE -Message "STAGE 1/8: Pre-build checks"
+    $pre = Join-Path $BuildRoot 'Test-PreBuild.ps1'
+    Invoke-StepScript -Path $pre -Params @{
+        Version    = $Version
+        SkipTests  = [bool]$SkipTests
+        # AllowDirtyGit not enabled by default
+    } -WorkingDirectory $ScriptRoot -Optional
+
+    # STAGE 2: Backup
+    Write-Log -Level STAGE -Message "STAGE 2/8: Backup existing ProjectPublish"
+    $backupMade = Backup-ProjectPublish
+
+    # STAGE 3: Build (dotnet publish)
+    Write-Log -Level STAGE -Message "STAGE 3/8: Build ProjectPublish (dotnet publish)"
+    Invoke-DotnetPublish
+
+    # STAGE 4: Copy required assets
+    Write-Log -Level STAGE -Message "STAGE 4/8: Add deployment assets"
+    Copy-DeploymentAssets
+
+    # STAGE 5: Verify build output (optional)
+    Write-Log -Level STAGE -Message "STAGE 5/8: Verify build output"
+    $verifyBuild = Join-Path $BuildRoot 'Verify-Build.ps1'
+    Invoke-StepScript -Path $verifyBuild -Params @{ OutputPath = $OutputFolder } -WorkingDirectory $ScriptRoot -Optional
+
+    # STAGE 6: Application testing (optional; gated by -SkipTests)
+    Write-Log -Level STAGE -Message "STAGE 6/8: Application testing"
+    if ($SkipTests) {
+        Write-Log -Level WARN -Message "Skipping application testing (-SkipTests)."
+    } else {
+        $testApp = Join-Path $BuildRoot 'Test-Application.ps1'
+        Invoke-StepScript -Path $testApp -Params @{ OutputPath = $OutputFolder } -WorkingDirectory $ScriptRoot -Optional
+    }
+
+    # STAGE 7: Integrity + git (optional)
+    Write-Log -Level STAGE -Message "STAGE 7/8: Integrity + Git integration"
+    $pkgIntegrity = Join-Path $BuildRoot 'Test-PackageIntegrity.ps1'
+    Invoke-StepScript -Path $pkgIntegrity -Params @{ OutputPath = $OutputFolder } -WorkingDirectory $ScriptRoot -Optional
+
+    if ($SkipGit) {
+        Write-Log -Level WARN -Message "Skipping git integration (-SkipGit)."
+    } else {
+        $gitStep = Join-Path $BuildRoot 'Git-Integration.ps1'
+        Invoke-StepScript -Path $gitStep -Params @{
+            Version = $Version
+            NoPush  = [bool]$NoPush
+        } -WorkingDirectory $ScriptRoot -Optional
+    }
+
+    # STAGE 8: Packaging + report (optional)
+    Write-Log -Level STAGE -Message "STAGE 8/8: Packaging + Report"
+    $packageInfo = $null
+
+    if ($SkipPackaging) {
+        Write-Log -Level WARN -Message "Skipping packaging (-SkipPackaging)."
+    } else {
+        $pkg = Join-Path $BuildRoot 'Create-Package.ps1'
+        $packageInfo = Invoke-StepScript -Path $pkg -Params @{
+            Version    = $Version
+            OutputPath = $OutputFolder
+        } -WorkingDirectory $ScriptRoot -Optional -CaptureOutput
+    }
+
+    if ($SkipReport) {
+        Write-Log -Level WARN -Message "Skipping release report (-SkipReport)."
+    } else {
+        $report = Join-Path $BuildRoot 'Generate-ReleaseReport.ps1'
+        if ($packageInfo) {
+            Invoke-StepScript -Path $report -Params @{ Version = $Version; PackageInfo = $packageInfo } -WorkingDirectory $ScriptRoot -Optional
+        } else {
+            Invoke-StepScript -Path $report -Params @{ Version = $Version } -WorkingDirectory $ScriptRoot -Optional
         }
     }
 
-    # Validate version format (allow pre-release suffixes like -test, -alpha, -beta)
-    if ($Version -notmatch '^\d+\.\d+\.\d+(-[\w\.]+)?$') {
-        Write-Host "ERROR: Invalid version format. Use semantic versioning (e.g., 1.0.2 or 1.0.2-test)" -ForegroundColor Red
-        exit 1
-    }
+    Show-Summary -Version $Version -PackageInfo $packageInfo
+    exit 0
+}
+catch {
+    Write-Log -Level ERROR -Message "============================================================"
+    Write-Log -Level ERROR -Message "BUILD FAILED"
+    Write-Log -Level ERROR -Message ("Error: {0}" -f $_.Exception.Message)
+    Write-Log -Level ERROR -Message ("Log:  {0}" -f $LogFile)
+    Write-Log -Level ERROR -Message "============================================================"
 
-    # Run the build pipeline
-    Invoke-BuildPipeline
+    # rollback only if we created a backup this run
+    try { Restore-FromBackup -BackupPath $backupMade } catch { }
 
-} catch {
-    Write-Host ""
-    Write-Host "FATAL ERROR:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
     exit 1
 }
