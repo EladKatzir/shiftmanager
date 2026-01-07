@@ -28,7 +28,7 @@ try {
     Write-Info "Counting files..."
     $allFiles = Get-ChildItem -Path $OutputPath -File -Recurse
     $fileCount = $allFiles.Count
-    $expectedFiles = 380
+    $expectedFiles = 390
     $tolerance = 30
 
     if ($fileCount -lt ($expectedFiles - $tolerance) -or $fileCount -gt ($expectedFiles + $tolerance)) {
