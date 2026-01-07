@@ -1,0 +1,366 @@
+﻿================================================================================
+                    SHIFTMANAGER UPGRADE GUIDE
+                           Version 2.5.0
+================================================================================
+
+This guide explains how to upgrade ShiftManager from an older version to 2.5.0.
+
+================================================================================
+BEFORE YOU START
+================================================================================
+
+âœ“ Read this entire guide before starting
+âœ“ Plan for 5-10 minutes of downtime
+âœ“ Ensure you have access to the server
+âœ“ Have backup procedures ready
+âœ“ Note your current version number
+
+Current Version: 2.5.0
+Release Date: 2026-01-07
+
+================================================================================
+UPGRADE SCENARIOS
+================================================================================
+
+Choose the scenario that matches your current setup:
+
+1. Upgrading from Running Application (Console/START_HERE.bat)
+2. Upgrading from Windows Service Installation
+3. Upgrading from IIS Installation
+4. Clean Installation (New Version)
+
+================================================================================
+SCENARIO 1: UPGRADING FROM RUNNING APPLICATION
+================================================================================
+
+If you're currently running ShiftManager via START_HERE.bat or console:
+
+Step 1: Stop the Current Version
+  - Close the console window (the black window showing application logs)
+  - Or press Ctrl+C in the console
+  - Wait for the application to fully stop (2-3 seconds)
+
+Step 2: Verify Application Stopped
+  - Open Task Manager (Ctrl+Shift+Esc)
+  - Check that ShiftManager.exe is not running
+  - If still running, kill the process
+
+Step 3: Backup Your Data
+  - Copy app.db to a safe location (e.g., Desktop or USB drive)
+  - Copy app.db-shm and app.db-wal if they exist
+  - Copy appsettings.json (contains your configuration)
+
+Step 4: Backup Current Installation (Optional but Recommended)
+  - Rename the ProjectPublish folder to ProjectPublish_OLD_[date]
+  - Or copy the entire folder to another location
+
+Step 5: Extract New Version
+  - Extract ShiftManager-v2.5.0-win-x64.zip
+  - Extract to the same location as the old version
+  - Overwrite files when prompted
+
+Step 6: Restore Configuration
+  - Open the NEW appsettings.json
+  - Copy your SEED_ADMIN_PASSWORD from the old appsettings.json
+  - Copy any other custom settings you had changed
+  - Save the file
+
+Step 7: Restore Database
+  - If you renamed the folder in Step 4, copy app.db back
+  - Or if you copied the folder, copy app.db from the old folder
+  - Place app.db in the new ProjectPublish folder
+
+Step 8: Start New Version
+  - Double-click START_HERE.bat
+  - The new version will detect the existing database
+  - Migrations will run automatically if needed
+  - Wait for "Now listening on: http://localhost:5000"
+
+Step 9: Verify Upgrade
+  - Open http://localhost:5000 in your browser
+  - Login with admin@local and your password
+  - Check that your data is present (users, shifts, etc.)
+  - Verify the version number in the footer
+
+Step 10: Clean Up
+  - If everything works, delete ProjectPublish_OLD_[date] folder
+  - Keep your database backup for a few days just in case
+
+================================================================================
+SCENARIO 2: UPGRADING FROM WINDOWS SERVICE
+================================================================================
+
+If ShiftManager is running as a Windows Service:
+
+Step 1: Stop the Service
+  - Open Services (services.msc)
+  - Find "ShiftManager" service
+  - Right-click â†’ Stop
+  - Wait for service to stop completely
+
+Step 2: Backup Your Data
+  - Navigate to the service installation folder
+  - Copy app.db to a safe location
+  - Copy appsettings.json
+  - Copy the entire folder as backup (recommended)
+
+Step 3: Extract New Version
+  - Extract ShiftManager-v2.5.0-win-x64.zip
+  - Extract to the same location as the old version
+  - Overwrite all files when prompted
+
+Step 4: Restore Configuration
+  - Open the NEW appsettings.json
+  - Copy your settings from the backup appsettings.json
+  - Ensure SEED_ADMIN_PASSWORD is set
+  - Save the file
+
+Step 5: Start the Service
+  - Open Services (services.msc)
+  - Find "ShiftManager" service
+  - Right-click â†’ Start
+  - Check service status is "Running"
+
+Step 6: Verify Upgrade
+  - Open http://localhost:5000 (or your configured URL)
+  - Login and verify everything works
+  - Check the version number
+
+Note: Service configuration is NOT overwritten during upgrade.
+      Your service settings (startup type, user account, etc.) remain unchanged.
+
+================================================================================
+SCENARIO 3: UPGRADING FROM IIS INSTALLATION
+================================================================================
+
+If ShiftManager is hosted in IIS:
+
+Step 1: Stop IIS Application Pool
+  - Open IIS Manager
+  - Navigate to Application Pools
+  - Find the pool for ShiftManager
+  - Right-click â†’ Stop
+
+Step 2: Backup Your Data
+  - Navigate to the IIS application folder
+  - Copy app.db to a safe location
+  - Copy appsettings.json
+  - Copy web.config if customized
+  - Copy the entire folder as backup (recommended)
+
+Step 3: Extract New Version
+  - Extract ShiftManager-v2.5.0-win-x64.zip
+  - Extract to the same location
+  - Overwrite all files EXCEPT web.config (if you customized it)
+
+Step 4: Restore Configuration
+  - Open the NEW appsettings.json
+  - Copy your settings from backup
+  - Ensure SEED_ADMIN_PASSWORD is set
+  - If you customized web.config, merge any new changes
+
+Step 5: Start IIS Application Pool
+  - Open IIS Manager
+  - Right-click the application pool â†’ Start
+
+Step 6: Verify Upgrade
+  - Open your ShiftManager URL in browser
+  - Login and verify everything works
+  - Check the version number
+
+================================================================================
+SCENARIO 4: CLEAN INSTALLATION (NEW VERSION)
+================================================================================
+
+If this is a new installation or you want a fresh start:
+
+1. Follow QUICK_START.txt
+2. You'll start with a clean database
+3. No upgrade steps needed
+
+To migrate data from old version:
+  - Export data from old version (if feature available)
+  - Or copy app.db from old installation
+  - Place in new installation folder before first run
+
+================================================================================
+HANDLING UPGRADE CONFLICTS
+================================================================================
+
+Issue: START_HERE.bat reports "ShiftManager is already running"
+Solution:
+  - Let START_HERE.bat stop it automatically (choose [S])
+  - Or manually kill the process in Task Manager
+  - Wait 4 seconds for file locks to release
+  - Try again
+
+Issue: Port 5000 is in use
+Solution:
+  - Check that no other application is using port 5000
+  - Use netstat -ano | findstr ":5000" to find the process
+  - Stop the conflicting process or change ShiftManager port
+
+Issue: Access denied / Cannot write files
+Solution:
+  - Run as Administrator
+  - Or ensure your user account has write permissions to the folder
+
+Issue: Database migration errors
+Solution:
+  - Check that app.db is not locked by another process
+  - Verify app.db is not corrupted (restore from backup if needed)
+  - Check application logs for specific error messages
+
+================================================================================
+DATABASE MIGRATIONS
+================================================================================
+
+ShiftManager automatically applies database migrations on startup.
+
+What happens during upgrade:
+  1. Application detects database version
+  2. Compares with code version
+  3. Applies pending migrations automatically
+  4. Logs migration results
+
+Migration Duration:
+  - Usually instant (< 1 second)
+  - May take longer for large databases
+
+If migration fails:
+  - Application will NOT start
+  - Error will be logged
+  - Restore database from backup
+  - Contact support
+
+================================================================================
+CONFIGURATION MIGRATION
+================================================================================
+
+New versions may add new configuration options.
+
+Strategy:
+  1. Keep your old appsettings.json as backup
+  2. Copy the new appsettings.json
+  3. Merge your custom settings into the new file
+  4. Check for new optional settings you may want to configure
+
+New Settings in 2.5.0:
+  [List any new settings here]
+
+================================================================================
+ROLLBACK PROCEDURE
+================================================================================
+
+If the upgrade fails or causes issues:
+
+Step 1: Stop New Version
+  - Close application / stop service / stop IIS pool
+
+Step 2: Restore Old Version
+  - Delete or rename the new ProjectPublish folder
+  - Restore from backup (ProjectPublish_OLD or your backup)
+
+Step 3: Restore Database
+  - Copy app.db from your backup
+  - Overwrite the current app.db
+
+Step 4: Start Old Version
+  - Use the old START_HERE.bat or start service/IIS
+
+Step 5: Verify Rollback
+  - Login and check that everything is back to normal
+
+================================================================================
+POST-UPGRADE CHECKLIST
+================================================================================
+
+After upgrading, verify:
+
+â–¡ Application starts successfully
+â–¡ Can login with existing credentials
+â–¡ All users are present
+â–¡ All shifts are present
+â–¡ All companies are present
+â–¡ Shift types include OFFLINE shift
+â–¡ Configuration settings are correct
+â–¡ Notifications are working
+â–¡ API endpoints are accessible (if used)
+â–¡ Multi-language support works
+â–¡ No error messages in logs
+
+================================================================================
+UPGRADE BEST PRACTICES
+================================================================================
+
+âœ“ Always backup before upgrading
+âœ“ Test upgrade in a non-production environment first
+âœ“ Schedule upgrade during low-usage periods
+âœ“ Keep backups for at least a week after upgrade
+âœ“ Document any custom configuration changes
+âœ“ Read release notes (VERSION.txt) for breaking changes
+âœ“ Verify all functionality after upgrade
+
+================================================================================
+TROUBLESHOOTING UPGRADES
+================================================================================
+
+See DEPLOYMENT_GUIDE.txt Section 8: Troubleshooting for detailed help.
+
+Common upgrade issues:
+  - Database migration failures
+  - Configuration conflicts
+  - Permission issues
+  - Port conflicts
+  - File locks
+
+For each issue, the guide provides step-by-step solutions.
+
+================================================================================
+VERSION-SPECIFIC NOTES
+================================================================================
+
+Version 2.5.0:
+  - Built: 2026-01-07 17:55:59 UTC
+  - Git Commit: 92ae45b
+  - Changes: See VERSION.txt for full changelog
+
+Breaking Changes: None
+Database Changes: Migrations applied automatically
+Configuration Changes: None (backward compatible)
+
+================================================================================
+NEED HELP?
+================================================================================
+
+If you encounter issues during upgrade:
+
+1. Check DEPLOYMENT_GUIDE.txt Section 8: Troubleshooting
+2. Verify your backup is intact
+3. Try rolling back to the old version
+4. Review application logs for error messages
+5. Contact support with:
+   - Old version number
+   - New version number (2.5.0)
+   - Error messages
+   - Steps taken so far
+
+================================================================================
+UPGRADE SUMMARY
+================================================================================
+
+1. âœ“ Stop old version
+2. âœ“ Backup data (app.db, appsettings.json)
+3. âœ“ Extract new version
+4. âœ“ Restore configuration
+5. âœ“ Start new version
+6. âœ“ Verify everything works
+7. âœ“ Clean up old files
+
+Total Time: 5-10 minutes
+Downtime: 2-5 minutes
+
+================================================================================
+END OF UPGRADE GUIDE
+================================================================================
+
