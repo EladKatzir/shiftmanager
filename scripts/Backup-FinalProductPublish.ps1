@@ -43,10 +43,15 @@ function Ensure-Directory {
 
 function Get-FolderStats {
     param([Parameter(Mandatory=$true)][string]$Path)
-    $files = Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction Stop
+
+    $files = @(Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction Stop)
     $count = $files.Count
+
     $sum = 0
-    if ($count -gt 0) { $sum = ($files | Measure-Object -Property Length -Sum).Sum }
+    if ($count -gt 0) {
+        $sum = ($files | Measure-Object -Property Length -Sum).Sum
+    }
+
     $mb = [math]::Round(($sum / 1MB), 2)
     return [pscustomobject]@{ Files = $files; Count = $count; SizeMB = $mb }
 }
@@ -108,10 +113,7 @@ try {
     Write-Host ""
 
     if ($PSCmdlet.ShouldProcess($backupPath, "Create backup from FinalProductPublish")) {
-        # Ensure destination exists
         Ensure-Directory -Path $backupPath
-
-        # Copy contents so backupPath mirrors FinalProductPublish directly
         Copy-Contents -FromDir $SourcePath -ToDir $backupPath
     }
     else {
@@ -130,33 +132,43 @@ try {
 
     Write-Success ("Backup verified: {0} files, {1} MB" -f $bak.Count, $bak.SizeMB)
 
-    # Retention policy
+    # Retention policy (best-effort cleanup)
     Write-Info ("Applying retention policy (keep last {0})..." -f $KeepCount)
-    $allBackups = Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
-                  Sort-Object Name -Descending
 
-    $toDelete = @()
-    if ($allBackups.Count -gt $KeepCount) {
-        $toDelete = $allBackups | Select-Object -Skip $KeepCount
-    }
+    try {
+        $allBackups = @(
+            Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending
+        )
 
-    if ($toDelete.Count -gt 0) {
-        Write-Info ("Removing {0} old backup(s)..." -f $toDelete.Count)
-        foreach ($old in $toDelete) {
-            Write-Host ("  Deleting: {0}" -f $old.Name) -ForegroundColor DarkGray
-            if ($PSCmdlet.ShouldProcess($old.FullName, "Delete old backup")) {
-                Remove-Item -LiteralPath $old.FullName -Recurse -Force -ErrorAction Stop
-            }
+        $toDelete = @()
+        if ($allBackups.Count -gt $KeepCount) {
+            $toDelete = @($allBackups | Select-Object -Skip $KeepCount)
         }
-        Write-Success ("Removed {0} old backup(s)" -f $toDelete.Count)
+
+        if ($toDelete.Count -gt 0) {
+            Write-Info ("Removing {0} old backup(s)..." -f $toDelete.Count)
+            foreach ($old in $toDelete) {
+                Write-Host ("  Deleting: {0}" -f $old.Name) -ForegroundColor DarkGray
+                if ($PSCmdlet.ShouldProcess($old.FullName, "Delete old backup")) {
+                    Remove-Item -LiteralPath $old.FullName -Recurse -Force -ErrorAction Stop
+                }
+            }
+            Write-Success ("Removed {0} old backup(s)" -f $toDelete.Count)
+        }
+        else {
+            Write-Info "No old backups to remove."
+        }
     }
-    else {
-        Write-Info "No old backups to remove."
+    catch {
+        Write-Warn ("Retention cleanup failed (non-fatal): {0}" -f $_.Exception.Message)
     }
 
     # Show remaining backups
-    $remaining = Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
-                 Sort-Object Name -Descending
+    $remaining = @(
+        Get-ChildItem -LiteralPath $BackupRoot -Directory -Filter 'FinalProductPublish_BACKUP_*' -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending
+    )
 
     Write-Host ""
     Write-Success "BACKUP SUCCESSFUL"
