@@ -1,0 +1,192 @@
+﻿================================================================================
+                    SHIFTMANAGER QUICK START GUIDE
+                           Version 2.7.12
+================================================================================
+
+Get ShiftManager running in 3 simple steps!
+Estimated time: 2 minutes
+
+================================================================================
+STEP 1: SET ADMIN PASSWORD
+================================================================================
+
+Before you can run ShiftManager, you MUST set an admin password.
+
+How to do it:
+  1. Open "appsettings.json" in Notepad (right-click â†’ Open With â†’ Notepad)
+  2. Find this line:
+       "SEED_ADMIN_PASSWORD": "",
+  3. Change it to:
+       "SEED_ADMIN_PASSWORD": "YourPassword123!",
+     (Replace YourPassword123! with your desired password)
+  4. Save the file (Ctrl+S)
+  5. Close Notepad
+
+Password Requirements:
+  - At least 8 characters
+  - Include uppercase, lowercase, number, and special character
+  - Example: Admin2025!
+
+âš ï¸ IMPORTANT: Remember this password! You'll need it to login.
+
+================================================================================
+STEP 2: START THE APPLICATION
+================================================================================
+
+Double-click: START_HERE.bat
+
+The script will:
+  âœ“ Check for running processes
+  âœ“ Verify configuration
+  âœ“ Check port availability
+  âœ“ Start ShiftManager
+
+What you'll see:
+  - A console window opens
+  - Green checkmarks appear as checks pass
+  - "ShiftManager is starting up..." message
+  - Application log output
+
+Wait for: "Now listening on: http://localhost:5000"
+
+âš ï¸ KEEP THE WINDOW OPEN! Closing it will stop the application.
+
+Startup time: 5-10 seconds on first run (creating database)
+              2-3 seconds on subsequent runs
+
+================================================================================
+STEP 3: LOGIN AND USE
+================================================================================
+
+Open your web browser and go to:
+  http://localhost:5000
+
+Login with:
+  Email:    admin@local
+  Password: [the password you set in Step 1]
+
+Click "Sign In"
+
+âœ… You're in! You should see the ShiftManager dashboard.
+
+First Time Login:
+  1. Change your admin password (click your name â†’ Profile â†’ Change Password)
+  2. Explore the interface
+  3. Create additional users if needed
+  4. Configure shift types for your organization
+  5. Start scheduling shifts!
+
+================================================================================
+ACCESSING FROM OTHER COMPUTERS
+================================================================================
+
+By default, ShiftManager only accepts connections from localhost (this computer).
+
+To access from other computers on your network:
+  1. Stop ShiftManager (close the console window)
+  2. See DEPLOYMENT_GUIDE.txt Section 6: Network Access
+  3. Configure firewall rules
+  4. Update appsettings.json for network binding
+  5. Restart ShiftManager
+
+================================================================================
+STOPPING THE APPLICATION
+================================================================================
+
+To stop ShiftManager:
+  - Close the console window (the black window with the application log)
+  - Or press Ctrl+C in the console window
+
+Your data is safe - it's stored in app.db and won't be lost.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "SEED_ADMIN_PASSWORD must be set"
+Solution: You skipped Step 1. Go back and set the password in appsettings.json
+
+Problem: "Port 5000 is already in use"
+Solution:
+  - Close other applications using port 5000
+  - Or see DEPLOYMENT_GUIDE.txt to configure a different port
+
+Problem: "Access denied" or "Cannot create database"
+Solution:
+  - Run START_HERE.bat as Administrator (right-click â†’ Run as administrator)
+  - Or give your user account write permissions to this folder
+
+Problem: Browser can't connect to http://localhost:5000
+Solution:
+  - Check that START_HERE.bat window is still open
+  - Verify you see "Now listening on: http://localhost:5000" in the console
+  - Try http://127.0.0.1:5000 instead
+  - Check Windows Firewall isn't blocking the connection
+
+Problem: Application starts but crashes after a few seconds
+Solution:
+  - Look for error messages in the console window
+  - Check the application log file (if created)
+  - See DEPLOYMENT_GUIDE.txt Section 8: Troubleshooting
+
+================================================================================
+WHAT'S NEXT?
+================================================================================
+
+Now that ShiftManager is running:
+
+For Production Use:
+  â–¡ Read DEPLOYMENT_GUIDE.txt for production deployment
+  â–¡ Set up Windows Service (so it runs in the background)
+  â–¡ Configure HTTPS for secure connections
+  â–¡ Set up database backups
+  â–¡ Configure network access (if needed)
+  â–¡ Create additional user accounts
+  â–¡ Customize shift types for your organization
+
+For Testing/Evaluation:
+  â–¡ Explore the interface
+  â–¡ Create test users and shifts
+  â–¡ Test the OFFLINE shift type
+  â–¡ Test On-Duty assignments (Hakam, Lead)
+  â–¡ Verify conflict detection
+  â–¡ Test rest hours enforcement
+  â–¡ Try the multi-language support (Hebrew/English)
+
+================================================================================
+NEED MORE HELP?
+================================================================================
+
+See these files for more information:
+  - DEPLOYMENT_GUIDE.txt    â†’ Complete deployment manual
+  - VERSION.txt             â†’ Version info and features
+  - VERIFICATION_CHECKLIST.txt â†’ Technical details
+  - README.txt              â†’ Overview and welcome
+
+All documentation is in this folder.
+
+================================================================================
+IMPORTANT REMINDERS
+================================================================================
+
+âœ“ The console window must stay open while ShiftManager is running
+âœ“ Close the console to stop the application
+âœ“ Your data is in app.db - back it up regularly
+âœ“ Change the admin password after first login
+âœ“ For production, set up as a Windows Service (see DEPLOYMENT_GUIDE.txt)
+
+================================================================================
+VERSION INFORMATION
+================================================================================
+
+Version:        2.7.12
+Release Date:   2026-01-09
+Package Size:   113 MB
+Git Commit:     fefc819
+
+This is a self-contained deployment. No .NET installation required.
+
+================================================================================
+ENJOY SHIFTMANAGER!
+================================================================================
+

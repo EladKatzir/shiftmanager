@@ -1,0 +1,659 @@
+﻿================================================================================
+                  SHIFTMANAGER DEPLOYMENT GUIDE
+                        Version 2.7.12
+================================================================================
+
+Complete deployment manual for ShiftManager in air-gapped Windows Server 2022
+environments. This guide covers all deployment scenarios from quick testing
+to production Windows Service setup.
+
+Version:        2.7.12
+Release Date:   2026-01-09
+Package Size:   113 MB
+Target OS:      Windows Server 2022 / Windows 10+ (64-bit)
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. Quick Start (3 Steps)
+2. System Requirements
+3. Pre-Deployment Checklist
+4. Deployment Scenarios
+5. Configuration Reference
+6. Network Access Setup
+7. Windows Service Installation
+8. Troubleshooting
+9. Security Hardening
+10. Backup and Maintenance
+
+================================================================================
+SECTION 1: QUICK START (3 STEPS)
+================================================================================
+
+For the fastest deployment (testing or evaluation):
+
+STEP 1: Configure Admin Password
+  1. Open "appsettings.json" in Notepad
+  2. Find: "SEED_ADMIN_PASSWORD": "",
+  3. Change to: "SEED_ADMIN_PASSWORD": "YourStrongPassword123!",
+  4. Save and close
+
+STEP 2: Start Application
+  - Double-click: START_HERE.bat
+  - Wait for "Now listening on: http://localhost:5000"
+  - Keep the console window open
+
+STEP 3: Login
+  - Open browser: http://localhost:5000
+  - Login: admin@local / [your password from Step 1]
+  - Done!
+
+Time Required: 2 minutes
+For more details, see QUICK_START.txt
+
+================================================================================
+SECTION 2: SYSTEM REQUIREMENTS
+================================================================================
+
+Minimum Hardware:
+  â€¢ CPU: x64 processor, 1 GHz or faster
+  â€¢ RAM: 512 MB minimum (1 GB recommended)
+  â€¢ Disk: 150 MB free space (100 MB app + 50 MB database)
+
+Operating System:
+  â€¢ Windows Server 2022 (primary target) âœ…
+  â€¢ Windows Server 2019 (supported)
+  â€¢ Windows 11 64-bit (supported)
+  â€¢ Windows 10 64-bit (supported)
+
+Network Requirements:
+  â€¢ None for localhost-only deployment
+  â€¢ Static IP recommended for network access
+  â€¢ Port 5000 available (default, configurable)
+
+Software Requirements:
+  â€¢ NONE - This is a self-contained deployment!
+  â€¢ No .NET installation required
+  â€¢ No SQL Server required
+  â€¢ No IIS required (optional for advanced scenarios)
+
+Permissions:
+  â€¢ Read/write access to application folder
+  â€¢ Ability to bind to network port (5000)
+  â€¢ Administrator rights for Windows Service installation
+
+================================================================================
+SECTION 3: PRE-DEPLOYMENT CHECKLIST
+================================================================================
+
+Before You Begin:
+  â–¡ Read this guide (at least Sections 1-5)
+  â–¡ Verify system meets minimum requirements
+  â–¡ Plan deployment scenario (console, service, or IIS)
+  â–¡ Choose installation location (e.g., C:\ShiftManager)
+  â–¡ Ensure target folder has write permissions
+  â–¡ Verify port 5000 is available (or choose alternative)
+  â–¡ Prepare strong admin password
+  â–¡ Plan backup strategy
+
+For Air-Gapped Deployment:
+  â–¡ Transfer package via USB drive
+  â–¡ Verify package integrity (SHA256 checksum)
+  â–¡ Extract package on target machine
+  â–¡ No internet connection required âœ…
+
+================================================================================
+SECTION 4: DEPLOYMENT SCENARIOS
+================================================================================
+
+Choose the scenario that best fits your needs:
+
+Scenario A: Quick Testing / Evaluation
+  Use: START_HERE.bat
+  Time: 2 minutes
+  Ideal for: Testing, development, evaluation
+  See: Section 1 (Quick Start) or QUICK_START.txt
+
+Scenario B: Production - Console Application
+  Use: ShiftManager.exe directly
+  Time: 5 minutes
+  Ideal for: Small deployments, manual control
+  See: Section 4.1
+
+Scenario C: Production - Windows Service
+  Use: NSSM or sc.exe
+  Time: 15 minutes
+  Ideal for: Production deployments, automatic startup
+  See: Section 7
+
+Scenario D: Advanced - IIS Hosting
+  Use: IIS with ASP.NET Core Module
+  Time: 30 minutes
+  Ideal for: Enterprise deployments, load balancing
+  See: Section 4.3
+
+================================================================================
+SECTION 4.1: CONSOLE APPLICATION DEPLOYMENT
+================================================================================
+
+For production use without Windows Service:
+
+Step 1: Extract Package
+  1. Copy ShiftManager-v2.7.12-win-x64.zip to target server
+  2. Extract to installation folder (e.g., C:\ShiftManager)
+  3. Verify 392 files extracted
+
+Step 2: Configure Application
+  1. Open appsettings.json
+  2. Set SEED_ADMIN_PASSWORD: "YourStrongPassword!"
+  3. (Optional) Adjust other settings (see Section 5)
+  4. Save and close
+
+Step 3: Start Application
+  - Run: ShiftManager.exe
+  - Or use: START_HERE.bat (recommended - includes checks)
+  - Wait for: "Now listening on: http://localhost:5000"
+
+Step 4: Verify Deployment
+  - Open: http://localhost:5000
+  - Login: admin@local / [your password]
+  - Check: Dashboard loads successfully
+  - Check: Can create test shift
+  - Check: OFFLINE shift type is available
+
+Step 5: Keep Running
+  - Keep console window open
+  - Application runs as long as window is open
+  - To stop: Close window or press Ctrl+C
+
+Limitations:
+  - Must keep console window open
+  - Stops when user logs out
+  - Not ideal for production servers
+
+For production, use Windows Service (Section 7) instead.
+
+================================================================================
+SECTION 4.2: WINDOWS SERVICE DEPLOYMENT
+================================================================================
+
+See Section 7 for detailed Windows Service installation instructions.
+
+================================================================================
+SECTION 4.3: IIS HOSTING DEPLOYMENT
+================================================================================
+
+For enterprise deployments with IIS:
+
+Prerequisites:
+  - IIS installed
+  - ASP.NET Core Hosting Bundle 8.0
+  - URL Rewrite Module (optional)
+
+Installation Steps:
+  1. Extract package to IIS application folder (e.g., C:\inetpub\ShiftManager)
+  2. Configure appsettings.json
+  3. Create IIS Application Pool:
+     - Name: ShiftManager
+     - .NET CLR Version: No Managed Code
+     - Managed Pipeline: Integrated
+  4. Create IIS Site or Application:
+     - Physical Path: C:\inetpub\ShiftManager
+     - Application Pool: ShiftManager
+     - Bindings: http://*:5000
+  5. Set Permissions:
+     - Grant IIS_IUSRS read access to application folder
+     - Grant IIS_IUSRS write access for database
+  6. Start site in IIS Manager
+  7. Verify: Open http://localhost:5000
+
+Benefits of IIS:
+  - Automatic process management
+  - Advanced monitoring and logging
+  - Load balancing support
+  - Integration with Windows Authentication (if needed)
+
+================================================================================
+SECTION 5: CONFIGURATION REFERENCE
+================================================================================
+
+appsettings.json - Main Configuration File
+
+Critical Settings:
+
+SEED_ADMIN_PASSWORD (REQUIRED)
+  â€¢ Default: "" (empty, must be set)
+  â€¢ Purpose: Initial admin password on first run
+  â€¢ Example: "Admin2025!StrongPassword"
+  â€¢ Must be strong: 8+ chars, mixed case, numbers, symbols
+  â€¢ IMPORTANT: Set this before first run!
+
+SEED_DIRECTOR_PASSWORD (Optional)
+  â€¢ Default: "" (empty)
+  â€¢ Purpose: Director user password (if needed)
+  â€¢ Leave empty if you don't want a director user
+
+AllowedHosts
+  â€¢ Default: "*"
+  â€¢ Purpose: Restrict which domains can access
+  â€¢ "*" = allow all (for network access)
+  â€¢ "localhost" = localhost only (most secure)
+
+EnforceCompanyScope
+  â€¢ Default: false
+  â€¢ Purpose: Strict company data isolation
+  â€¢ false = admin can see all companies
+  â€¢ true = strict isolation (for multi-company SaaS)
+
+Kestrel:Endpoints:Http:Url
+  â€¢ Default: "http://localhost:5000"
+  â€¢ Purpose: Which address/port to listen on
+  â€¢ Change for network access: "http://*:5000"
+  â€¢ Change port: "http://localhost:8080"
+
+Logging:LogLevel
+  â€¢ Default: "Information"
+  â€¢ Options: Trace, Debug, Information, Warning, Error, Critical
+  â€¢ Production: "Warning" or "Error"
+
+ConnectionStrings:DefaultConnection
+  â€¢ Default: "Data Source=app.db"
+  â€¢ Purpose: SQLite database path
+  â€¢ Can use full path: "Data Source=C:\\Data\\ShiftManager\\app.db"
+
+================================================================================
+SECTION 6: NETWORK ACCESS SETUP
+================================================================================
+
+By default, ShiftManager only accepts connections from localhost.
+
+To enable network access:
+
+Step 1: Update Configuration
+  1. Open appsettings.json
+  2. Find Kestrel:Endpoints:Http:Url
+  3. Change from: "http://localhost:5000"
+  4. Change to: "http://*:5000"
+  5. Save and close
+
+Step 2: Configure Windows Firewall
+  â€¢ Open: Windows Defender Firewall with Advanced Security
+  â€¢ Create Inbound Rule:
+    - Rule Type: Port
+    - Protocol: TCP
+    - Port: 5000
+    - Action: Allow
+    - Profile: Domain, Private (as needed)
+    - Name: ShiftManager HTTP
+    - Description: Allow HTTP access to ShiftManager
+
+  Command line:
+  netsh advfirewall firewall add rule name="ShiftManager HTTP" dir=in action=allow protocol=TCP localport=5000
+
+Step 3: Restart Application
+  - Stop ShiftManager (close console or stop service)
+  - Start ShiftManager again
+  - Application now accepts network connections
+
+Step 4: Verify Network Access
+  - From another computer on the network:
+  - Open: http://[server-ip]:5000
+  - Example: http://192.168.1.100:5000
+  - Should see ShiftManager login page
+
+Security Note:
+  - Network access uses HTTP (not encrypted)
+  - For production, configure HTTPS (see Section 9.2)
+  - Consider using VPN for remote access
+  - Keep Windows Firewall enabled
+
+================================================================================
+SECTION 7: WINDOWS SERVICE INSTALLATION
+================================================================================
+
+For production deployments, run as Windows Service:
+
+Method 1: Using NSSM (Recommended)
+
+Download NSSM (Non-Sucking Service Manager):
+  - Available at: nssm.cc
+  - Transfer to server via USB if air-gapped
+
+Installation Steps:
+  1. Extract nssm.exe to C:\ShiftManager\
+  2. Open Command Prompt as Administrator
+  3. Run: nssm install ShiftManager
+  4. GUI opens - configure:
+     - Path: C:\ShiftManager\ShiftManager.exe
+     - Startup directory: C:\ShiftManager
+     - Service name: ShiftManager
+  5. Click Install service
+  6. Start service: nssm start ShiftManager
+
+Service Configuration:
+  â€¢ Startup type: Automatic
+  â€¢ Recovery: Restart on failure
+  â€¢ Log on: Local System (or dedicated service account)
+
+Commands:
+  nssm install ShiftManager     # Install service
+  nssm start ShiftManager       # Start service
+  nssm stop ShiftManager        # Stop service
+  nssm restart ShiftManager     # Restart service
+  nssm remove ShiftManager      # Uninstall service
+
+Method 2: Using sc.exe (Built-in)
+
+Create Service:
+  sc create ShiftManager binPath="C:\ShiftManager\ShiftManager.exe" start=auto
+
+Start Service:
+  sc start ShiftManager
+
+Stop Service:
+  sc stop ShiftManager
+
+Delete Service:
+  sc delete ShiftManager
+
+Method 3: Manual Service Wrapper
+
+For advanced scenarios, create a Windows Service wrapper using:
+  - .NET Worker Service template
+  - Topshelf library
+  - Custom Windows Service implementation
+
+Verification:
+  1. Open Services (services.msc)
+  2. Find "ShiftManager" service
+  3. Verify Status: Running
+  4. Open http://localhost:5000
+  5. Verify application accessible
+
+Service Logs:
+  - Check Event Viewer â†’ Windows Logs â†’ Application
+  - Look for entries from "ShiftManager"
+  - Errors will be logged here
+
+================================================================================
+SECTION 8: TROUBLESHOOTING
+================================================================================
+
+8.1: Application Won't Start
+
+Problem: "SEED_ADMIN_PASSWORD must be set"
+Solution:
+  1. Edit appsettings.json
+  2. Set SEED_ADMIN_PASSWORD to a strong password
+  3. Save and restart application
+
+Problem: "Database error" or "Migration failed"
+Solution:
+  1. Stop application
+  2. Delete app.db, app.db-shm, app.db-wal
+  3. Start application (database will be recreated)
+  4. If problem persists, check file permissions
+
+Problem: "Port 5000 is already in use"
+Solution:
+  Option 1: Stop other application using port 5000
+    - Find process: netstat -ano | findstr ":5000"
+    - Kill process: taskkill /F /PID [PID]
+  Option 2: Configure different port
+    - Edit appsettings.json
+    - Change Kestrel:Endpoints:Http:Url to use different port
+    - Example: "http://localhost:8080"
+
+8.2: Can't Access Application
+
+Problem: Browser can't connect
+Solution:
+  1. Verify application is running (check console or services)
+  2. Verify correct URL: http://localhost:5000
+  3. Try http://127.0.0.1:5000 instead
+  4. Check Windows Firewall isn't blocking
+  5. Check antivirus isn't blocking
+
+Problem: "Access denied" or "Cannot create database"
+Solution:
+  1. Stop application
+  2. Right-click folder â†’ Properties â†’ Security
+  3. Grant your user account or IIS_IUSRS full control
+  4. Apply to all files and subfolders
+  5. Restart application
+
+8.3: Authentication Issues
+
+Problem: Can't login with admin@local
+Solution:
+  1. Verify SEED_ADMIN_PASSWORD is set correctly
+  2. Password is case-sensitive
+  3. Delete app.db and restart (creates fresh database)
+  4. Check browser console for errors (F12)
+
+Problem: "Authentication failed" errors
+Solution:
+  1. Clear browser cookies
+  2. Try incognito/private browsing mode
+  3. Check that cookies are enabled
+  4. Verify system clock is correct
+
+8.4: Database Issues
+
+Problem: Database corruption
+Solution:
+  1. Stop application
+  2. Backup current app.db
+  3. Delete app.db, app.db-shm, app.db-wal
+  4. Restore from backup if available
+  5. Or start fresh (database will be recreated)
+
+8.5: Performance Issues
+
+Problem: Slow response times
+Solution:
+  1. Check disk space (database grows over time)
+  2. Check RAM usage (1 GB recommended)
+  3. Consider vacuuming database (SQLite maintenance)
+  4. Check for antivirus interference
+
+8.6: Upgrade Issues
+
+See UPGRADE_GUIDE.txt for detailed upgrade troubleshooting.
+
+8.7: Getting More Help
+
+If you encounter issues not covered here:
+  1. Check Event Viewer (Windows Logs â†’ Application)
+  2. Look for ShiftManager error messages
+  3. Note the exact error message
+  4. Check VERSION.txt for known issues
+  5. Review VERIFICATION_CHECKLIST.txt for package integrity
+
+================================================================================
+SECTION 9: SECURITY HARDENING
+================================================================================
+
+9.1: Essential Security Steps
+
+After initial deployment:
+
+â–¡ Change Admin Password
+  - Login as admin@local
+  - Click your name â†’ Profile
+  - Change Password â†’ Set strong new password
+  - Logout and login with new password
+
+â–¡ Protect Configuration File
+  - Right-click appsettings.json â†’ Properties â†’ Security
+  - Remove access for standard users
+  - Grant read access only to Administrators and service account
+  - Apply changes
+
+â–¡ Set Strong Passwords
+  - Minimum 12 characters
+  - Mix uppercase, lowercase, numbers, symbols
+  - No dictionary words
+  - Unique passwords for each user
+
+â–¡ Regular Backups
+  - Backup app.db daily
+  - Keep multiple backup versions
+  - Test restore procedure
+  - Store backups securely off-server
+
+â–¡ Monitor Access
+  - Review user accounts regularly
+  - Remove inactive users
+  - Check for suspicious login patterns
+  - Monitor Event Viewer logs
+
+9.2: HTTPS Configuration
+
+For production network access, use HTTPS:
+
+Option 1: Reverse Proxy (Recommended)
+  - Use IIS as reverse proxy
+  - Configure SSL certificate in IIS
+  - Forward traffic to ShiftManager on localhost:5000
+
+Option 2: Direct HTTPS
+  - Obtain SSL certificate
+  - Configure Kestrel to use HTTPS
+  - Update appsettings.json with certificate path
+  - Bind to https://*:443
+
+Option 3: Load Balancer
+  - Use external load balancer with SSL termination
+  - Forward unencrypted traffic to ShiftManager
+
+9.3: Defense in Depth
+
+Additional security measures:
+
+â–¡ Firewall Rules
+  - Only open required ports
+  - Restrict access by IP if possible
+  - Block all other incoming traffic
+
+â–¡ Least Privilege
+  - Run service with dedicated service account
+  - Don't use Administrator account
+  - Grant minimum required permissions
+
+â–¡ Regular Updates
+  - Keep Windows Server updated
+  - Apply security patches promptly
+  - Update ShiftManager when new versions available
+
+â–¡ Audit Logging
+  - Enable application logging
+  - Monitor Event Viewer
+  - Review logs for suspicious activity
+  - Retain logs for compliance
+
+â–¡ Network Segmentation
+  - Place ShiftManager in appropriate network zone
+  - Use VLANs if possible
+  - Limit network access to required users
+
+================================================================================
+SECTION 10: BACKUP AND MAINTENANCE
+================================================================================
+
+10.1: Database Backup
+
+The database (app.db) contains all your data:
+
+Manual Backup:
+  1. Stop ShiftManager
+  2. Copy app.db to backup location
+  3. Copy app.db-shm and app.db-wal if present
+  4. Name with date: app.db.backup.2025-01-15
+  5. Start ShiftManager
+
+Automated Backup Script (PowerShell):
+  $date = Get-Date -Format "yyyy-MM-dd"
+  Stop-Service ShiftManager
+  Copy-Item "C:\ShiftManager\app.db" "C:\Backups\app.db.$date"
+  Start-Service ShiftManager
+
+Schedule with Task Scheduler:
+  - Run daily at off-peak hours
+  - Use Task Scheduler to automate
+  - Keep last 30 days of backups
+  - Test restore monthly
+
+10.2: Database Restore
+
+To restore from backup:
+  1. Stop ShiftManager
+  2. Rename current app.db to app.db.old
+  3. Copy backup to app.db
+  4. Delete app.db-shm and app.db-wal
+  5. Start ShiftManager
+  6. Verify data is correct
+
+10.3: Database Maintenance
+
+SQLite database maintenance:
+
+Vacuum Database (reduce file size):
+  1. Stop ShiftManager
+  2. Use SQLite tool: sqlite3 app.db "VACUUM;"
+  3. Start ShiftManager
+
+Analyze Database (optimize queries):
+  sqlite3 app.db "ANALYZE;"
+
+Check Integrity:
+  sqlite3 app.db "PRAGMA integrity_check;"
+
+10.4: Disk Space Monitoring
+
+Monitor disk space regularly:
+  - Database grows over time
+  - Plan for 1 MB per 1000 shifts (approximate)
+  - Keep 20% free space minimum
+  - Set up disk space alerts
+
+10.5: Update Strategy
+
+When new versions are released:
+  1. Read release notes (VERSION.txt)
+  2. Test in non-production environment first
+  3. Backup database before upgrade
+  4. Follow UPGRADE_GUIDE.txt
+  5. Verify functionality after upgrade
+  6. Keep backup for 1 week after upgrade
+
+================================================================================
+ADDITIONAL RESOURCES
+================================================================================
+
+Included Documentation:
+  - README.txt                    â†’ Overview
+  - QUICK_START.txt               â†’ 3-step quick start
+  - DEPLOYMENT_GUIDE.txt          â†’ This file
+  - UPGRADE_GUIDE.txt             â†’ Upgrade instructions
+  - VERSION.txt                   â†’ Version and changelog
+  - VERIFICATION_CHECKLIST.txt    â†’ Technical details
+  - DEPLOYMENT_READINESS_REPORT.txt â†’ Test results
+  - FINAL_CERTIFICATION.txt       â†’ Certification
+
+================================================================================
+VERSION INFORMATION
+================================================================================
+
+Guide Version:    2.7.12
+Release Date:     2026-01-09
+Package Size:     113 MB
+Git Commit:       fefc819
+
+This guide covers deployment for ShiftManager v2.7.12.
+
+================================================================================
+END OF DEPLOYMENT GUIDE
+================================================================================
+

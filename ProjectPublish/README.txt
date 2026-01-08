@@ -232,7 +232,7 @@ All dependencies are included. No internet connection required.
 
 Questions? See DEPLOYMENT_GUIDE.txt for comprehensive documentation.
 
-Version: v2.7.12
+Version: v2.7.13
 Package Date: 2026-01-09
 Package Size: 113 MB
 Deployment Type: Self-Contained

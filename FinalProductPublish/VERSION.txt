@@ -1,12 +1,12 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 2.7.12
+                           Version 2.7.13
 ================================================================================
 
-VERSION: 2.7.12
+VERSION: 2.7.13
 RELEASE DATE: 2026-01-09
-BUILD DATE: 2026-01-09 01:36:08 UTC
-GIT COMMIT: fefc819
+BUILD DATE: 2026-01-09 01:53:22 UTC
+GIT COMMIT: cb12377
 GIT BRANCH: finalized
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-01-09 01:36:08 UTC
+Build Date:     2026-01-09 01:53:22 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v2.7.12
+  âœ“ Git tagged: v2.7.13
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -260,14 +260,14 @@ This package has been:
   âœ… Tested automatically with comprehensive checks
   âœ… Verified for completeness (392 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v2.7.12)
+  âœ… Tagged in version control (v2.7.13)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-01-09 01:36:08 UTC
-Git Commit: fefc819
+Date: 2026-01-09 01:53:22 UTC
+Git Commit: cb12377
 
 ================================================================================
 LICENSE
