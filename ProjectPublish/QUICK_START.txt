@@ -1,6 +1,6 @@
 ﻿================================================================================
                     SHIFTMANAGER QUICK START GUIDE
-                           Version 2.7.7
+                           Version 2.7.12
 ================================================================================
 
 Get ShiftManager running in 3 simple steps!
@@ -179,10 +179,10 @@ IMPORTANT REMINDERS
 VERSION INFORMATION
 ================================================================================
 
-Version:        2.7.7
-Release Date:   2026-01-08
+Version:        2.7.12
+Release Date:   2026-01-09
 Package Size:   113 MB
-Git Commit:     5f349e6
+Git Commit:     fefc819
 
 This is a self-contained deployment. No .NET installation required.
 

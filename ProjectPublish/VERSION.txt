@@ -1,16 +1,16 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 2.7.7
+                           Version 2.7.12
 ================================================================================
 
-VERSION: 2.7.7
-RELEASE DATE: 2026-01-08
-BUILD DATE: 2026-01-08 02:03:41 UTC
-GIT COMMIT: 5f349e6
+VERSION: 2.7.12
+RELEASE DATE: 2026-01-09
+BUILD DATE: 2026-01-09 01:36:08 UTC
+GIT COMMIT: fefc819
 GIT BRANCH: finalized
 
 PACKAGE INFORMATION:
-  Total Files:  403
+  Total Files:  392
   DLL Count:    336
   Package Size: 113 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-01-08 02:03:41 UTC
+Build Date:     2026-01-09 01:36:08 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v2.7.7
+  âœ“ Git tagged: v2.7.12
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (403 files)
+  âœ… Verified for completeness (392 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v2.7.7)
+  âœ… Tagged in version control (v2.7.12)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-01-08 02:03:41 UTC
-Git Commit: 5f349e6
+Date: 2026-01-09 01:36:08 UTC
+Git Commit: fefc819
 
 ================================================================================
 LICENSE
