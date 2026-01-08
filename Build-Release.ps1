@@ -396,6 +396,14 @@
         Write-Log -Level STAGE -Message "STAGE 4/8: Add deployment assets"
         Copy-DeploymentAssets
 
+        # STAGE 4.5: Generate documentation
+        Write-Log -Level STAGE -Message "STAGE 4.5/8: Generate documentation"
+        $genDocs = Join-Path $BuildRoot 'Generate-Documentation.ps1'
+        Invoke-StepScript -Path $genDocs -Params @{
+            Version    = $Version
+            OutputPath = $OutputFolder
+        } -WorkingDirectory $ScriptRoot -Optional
+
         # STAGE 5: Verify build output (optional)
         Write-Log -Level STAGE -Message "STAGE 5/8: Verify build output"
         $verifyBuild = Join-Path $BuildRoot 'Verify-Build.ps1'
