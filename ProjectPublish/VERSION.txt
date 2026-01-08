@@ -1,18 +1,18 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 2.7.5
+                           Version 2.7.7
 ================================================================================
 
-VERSION: 2.7.5
+VERSION: 2.7.7
 RELEASE DATE: 2026-01-08
-BUILD DATE: 2026-01-08 01:55:02 UTC
-GIT COMMIT: b38b93e
+BUILD DATE: 2026-01-08 02:03:41 UTC
+GIT COMMIT: 5f349e6
 GIT BRANCH: finalized
 
 PACKAGE INFORMATION:
-  Total Files:  443
+  Total Files:  403
   DLL Count:    336
-  Package Size: 114 MB
+  Package Size: 113 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
   Platform:     Windows x64 (Server 2022 / Windows 10+)
 
@@ -130,7 +130,7 @@ INSTALLATION SUMMARY
 ================================================================================
 
 Installation Type: Self-Contained
-Installation Size: 114 MB
+Installation Size: 113 MB
 Installation Time: 1 minute (extract + configure)
 First Run Time:    5-10 seconds (database creation)
 
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-01-08 01:55:02 UTC
+Build Date:     2026-01-08 02:03:41 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v2.7.5
+  âœ“ Git tagged: v2.7.7
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (443 files)
+  âœ… Verified for completeness (403 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v2.7.5)
+  âœ… Tagged in version control (v2.7.7)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-01-08 01:55:02 UTC
-Git Commit: b38b93e
+Date: 2026-01-08 02:03:41 UTC
+Git Commit: 5f349e6
 
 ================================================================================
 LICENSE

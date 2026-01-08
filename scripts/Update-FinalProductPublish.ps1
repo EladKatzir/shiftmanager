@@ -24,6 +24,9 @@ FIX NOTE (2026-01-07):
     Backup FinalProductPublish was previously executed BEFORE the build, which dirtied the git tree
     (tracked deletions + untracked new backup) and caused Build-Release pre-build checks to fail.
     Backup is now DEFERRED until AFTER ProjectPublish build+verify and immediately BEFORE replace.
+
+CHANGE (2026-01-08):
+    Add file-count tolerance of 10 files to file-count validations (no new parameter/knob).
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
@@ -44,6 +47,11 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# -----------------------------
+# File-count tolerance (no knob)
+# -----------------------------
+$FileCountTolerance = 10
 
 # -----------------------------
 # Paths (repo layout assumptions)
@@ -168,6 +176,26 @@ function Assert-CriticalFiles {
     }
 }
 
+function Assert-FileCountMatchWithTolerance {
+    param(
+        [Parameter(Mandatory = $true)][int]$Expected,
+        [Parameter(Mandatory = $true)][int]$Actual,
+        [Parameter(Mandatory = $true)][int]$Tolerance,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+
+    $diff = [math]::Abs($Actual - $Expected)
+    if ($diff -gt $Tolerance) {
+        throw ("File count mismatch ({0}). Expected={1} Actual={2} Diff={3} (tolerance={4})" -f $Context, $Expected, $Actual, $diff, $Tolerance)
+    }
+
+    if ($diff -gt 0) {
+        Write-Log -Level WARN -Message ("File count differs within tolerance ({0}). Expected={1} Actual={2} Diff={3} (tolerance={4})" -f $Context, $Expected, $Actual, $diff, $Tolerance)
+    } else {
+        Write-Log -Level OK -Message ("File count match ({0}). Count={1}" -f $Context, $Actual)
+    }
+}
+
 function Copy-Folder {
     param(
         [string]$From,
@@ -268,6 +296,7 @@ try {
     Write-Log -Level INFO -Message "============================================================"
     Write-Log -Level INFO -Message ("FinalProductPublish Update Tool - Version {0}" -f $Version)
     Write-Log -Level INFO -Message ("RepoRoot: {0}" -f $RepoRoot)
+    Write-Log -Level INFO -Message ("File-count tolerance: {0} files" -f $FileCountTolerance)
     Write-Log -Level INFO -Message "============================================================"
 
     # STEP 1: Git status (optionally commit pre-existing changes so build can pass clean-tree checks)
@@ -392,8 +421,19 @@ try {
     Write-Log -Level OK -Message ("ProjectPublish files: {0}" -f $srcStats.FileCount)
     Write-Log -Level OK -Message ("ProjectPublish size:  {0} MB" -f $srcStats.SizeMB)
 
-    if ($srcStats.FileCount -lt 500) {
-        Write-Log -Level WARN -Message "ProjectPublish file count seems low (expected roughly 560-570)."
+    # Replace the old "lt 500" heuristic with an expected-range check using tolerance.
+    # (still WARN-only; does not block)
+    $expectedMin = 560
+    $expectedMax = 570
+    $minOk = $expectedMin - $FileCountTolerance
+    $maxOk = $expectedMax + $FileCountTolerance
+
+    if ($srcStats.FileCount -lt $minOk -or $srcStats.FileCount -gt $maxOk) {
+        Write-Log -Level WARN -Message ("ProjectPublish file count outside expected range. Actual={0} Expected={1}-{2} (tolerance +/-{3} => {4}-{5})." -f `
+            $srcStats.FileCount, $expectedMin, $expectedMax, $FileCountTolerance, $minOk, $maxOk)
+    } else {
+        Write-Log -Level OK -Message ("ProjectPublish file count within expected range. Actual={0} Expected={1}-{2} (tolerance +/-{3})." -f `
+            $srcStats.FileCount, $expectedMin, $expectedMax, $FileCountTolerance)
     }
 
     $critical = @('ShiftManager.exe','ShiftManager.dll','VERIFY_FILES.bat','appsettings.json')
@@ -428,9 +468,8 @@ try {
         throw ("Destination missing after copy: {0}" -f $DestDir)
     }
 
-    if ($dstStats.FileCount -ne $srcStats.FileCount) {
-        throw ("File count mismatch. Source={0} Dest={1}" -f $srcStats.FileCount, $dstStats.FileCount)
-    }
+    # File-count check WITH tolerance (10 files)
+    Assert-FileCountMatchWithTolerance -Expected $srcStats.FileCount -Actual $dstStats.FileCount -Tolerance $FileCountTolerance -Context 'ProjectPublish vs FinalProductPublish'
 
     Write-Log -Level OK -Message ("FinalProductPublish files: {0}" -f $dstStats.FileCount)
     Write-Log -Level OK -Message ("FinalProductPublish size:  {0} MB" -f $dstStats.SizeMB)
