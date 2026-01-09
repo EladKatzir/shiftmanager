@@ -4460,4 +4460,22 @@
   <data name="EmailTemplate_AccountApproved" xml:space="preserve">
     <value>חשבון אושר</value>
   </data>
+  <data name="ShiftType_MORNING_Name" xml:space="preserve">
+    <value>משמרת בוקר</value>
+  </data>
+  <data name="ShiftType_MIDDLE_Name" xml:space="preserve">
+    <value>משמרת אמצע</value>
+  </data>
+  <data name="ShiftType_AFTERNOON_Name" xml:space="preserve">
+    <value>משמרת אחר הצהריים</value>
+  </data>
+  <data name="ShiftType_NIGHT_Name" xml:space="preserve">
+    <value>משמרת לילה</value>
+  </data>
+  <data name="ShiftType_EVENING_Name" xml:space="preserve">
+    <value>משמרת ערב</value>
+  </data>
+  <data name="ShiftType_OFFLINE_Name" xml:space="preserve">
+    <value>לא מקוון</value>
+  </data>
 </root>

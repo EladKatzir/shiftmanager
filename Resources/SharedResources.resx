@@ -4635,4 +4635,22 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="EmailTemplate_AccountApproved" xml:space="preserve">
     <value>Account Approved</value>
   </data>
+  <data name="ShiftType_MORNING_Name" xml:space="preserve">
+    <value>Morning Shift</value>
+  </data>
+  <data name="ShiftType_MIDDLE_Name" xml:space="preserve">
+    <value>Mid Shift</value>
+  </data>
+  <data name="ShiftType_AFTERNOON_Name" xml:space="preserve">
+    <value>Afternoon Shift</value>
+  </data>
+  <data name="ShiftType_NIGHT_Name" xml:space="preserve">
+    <value>Night Shift</value>
+  </data>
+  <data name="ShiftType_EVENING_Name" xml:space="preserve">
+    <value>Evening Shift</value>
+  </data>
+  <data name="ShiftType_OFFLINE_Name" xml:space="preserve">
+    <value>Offline</value>
+  </data>
 </root>

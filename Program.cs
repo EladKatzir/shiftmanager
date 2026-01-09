@@ -156,6 +156,10 @@ builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<ICompanyLocalizationService, CompanyLocalizationService>();
 builder.Services.AddScoped<ILanguageManagementService, LanguageManagementService>();
 
+// Ops Console Scheduler Services
+builder.Services.AddScoped<IShiftProgramService, ShiftProgramService>();
+builder.Services.AddScoped<IMasterProgramService, MasterProgramService>();
+
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();
 

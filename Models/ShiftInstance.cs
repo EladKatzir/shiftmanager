@@ -18,4 +18,26 @@ public class ShiftInstance
     public int Concurrency { get; set; } = 0;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Indicates this instance has been detached from its original Program template.
+    /// When true, shows "OVR" badge in UI and enables "Reset to Program" action.
+    /// </summary>
+    public bool IsDetached { get; set; } = false;
+
+    /// <summary>
+    /// Foreign key to the Program that generated this instance (null if manually created).
+    /// Used for "Reset to Program" functionality to restore original settings.
+    /// </summary>
+    public int? OriginalProgramId { get; set; }
+
+    /// <summary>
+    /// JSON string tracking which fields were overridden (staffing, time, name).
+    /// Parsed via ShiftInstanceOverride helper class.
+    /// Example: {"Staffing": true, "Time": true, "Name": false}
+    /// </summary>
+    public string? OverriddenFields { get; set; }
+
+    // Navigation property
+    public ShiftProgram? OriginalProgram { get; set; }
 }

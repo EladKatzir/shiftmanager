@@ -1377,4 +1377,152 @@ public class MailService : IMailService
 
         return await SendMailAsync(recipientEmail, subject, htmlBody);
     }
+
+    // ============= Ops Console Scheduler: New Email Templates =============
+
+    public async Task<bool> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
+        string traineeName, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime)
+    {
+        var subject = $"Trainee Added: {shiftTypeName} on {shiftDate:MMM dd, yyyy}";
+
+        var htmlBody = $@"<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4; }}
+        .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ background-color: #2196F3; color: white; padding: 20px; text-align: center; border-radius: 6px 6px 0 0; }}
+        .content {{ padding: 20px; }}
+        .highlight {{ background-color: #E3F2FD; color: #1976D2; padding: 12px; border-radius: 4px; border-left: 4px solid #2196F3; margin: 15px 0; font-weight: 600; }}
+        .details {{ background-color: #F5F5F5; padding: 15px; border-radius: 4px; margin: 15px 0; }}
+        .footer {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>👤 Trainee Added to Your Shift</h2>
+        </div>
+        <div class='content'>
+            <p>Hello <strong>{employeeName}</strong>,</p>
+            <p>A trainee has been added to your shift assignment:</p>
+
+            <div class='highlight'>
+                <strong>{traineeName}</strong> will be joining you as a trainee
+            </div>
+
+            <div class='details'>
+                <p><strong>Shift Type:</strong> {shiftTypeName}</p>
+                <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
+                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+            </div>
+
+            <p>Please help guide and mentor your trainee during this shift.</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated notification from ShiftManager.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    public async Task<bool> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
+        string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime, string reason)
+    {
+        var subject = $"Shift Removed: {shiftTypeName} on {shiftDate:MMM dd, yyyy}";
+
+        var htmlBody = $@"<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4; }}
+        .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ background-color: #FF9800; color: white; padding: 20px; text-align: center; border-radius: 6px 6px 0 0; }}
+        .content {{ padding: 20px; }}
+        .alert-box {{ background-color: #FFF3CD; color: #856404; padding: 12px; border-radius: 4px; border-left: 4px solid #FF9800; margin: 15px 0; }}
+        .details {{ background-color: #F5F5F5; padding: 15px; border-radius: 4px; margin: 15px 0; }}
+        .footer {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>⚠️ Shift Assignment Removed</h2>
+        </div>
+        <div class='content'>
+            <p>Hello <strong>{employeeName}</strong>,</p>
+            <p>Your shift assignment has been removed from the schedule:</p>
+
+            <div class='details'>
+                <p><strong>Shift Type:</strong> {shiftTypeName}</p>
+                <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
+                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+            </div>
+
+            <div class='alert-box'>
+                <p><strong>Reason:</strong> {reason}</p>
+            </div>
+
+            <p>If you have any questions about this change, please contact your manager.</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated notification from ShiftManager.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
+
+    public async Task<bool> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
+        string shiftTypeName, DateOnly shiftDate, string changeDescription)
+    {
+        var subject = $"Shift Modified: {shiftTypeName} on {shiftDate:MMM dd, yyyy}";
+
+        var htmlBody = $@"<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4; }}
+        .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ background-color: #9C27B0; color: white; padding: 20px; text-align: center; border-radius: 6px 6px 0 0; }}
+        .content {{ padding: 20px; }}
+        .change-box {{ background-color: #F3E5F5; color: #6A1B9A; padding: 12px; border-radius: 4px; border-left: 4px solid #9C27B0; margin: 15px 0; font-weight: 600; }}
+        .details {{ background-color: #F5F5F5; padding: 15px; border-radius: 4px; margin: 15px 0; }}
+        .footer {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>🔄 Your Shift Has Been Modified</h2>
+        </div>
+        <div class='content'>
+            <p>Hello <strong>{employeeName}</strong>,</p>
+            <p>Your shift assignment has been updated:</p>
+
+            <div class='details'>
+                <p><strong>Shift Type:</strong> {shiftTypeName}</p>
+                <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
+            </div>
+
+            <div class='change-box'>
+                <p><strong>Changes:</strong> {changeDescription}</p>
+            </div>
+
+            <p>Please review the updated shift details and contact your manager if you have any questions.</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated notification from ShiftManager.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        return await SendMailAsync(recipientEmail, subject, htmlBody);
+    }
 }

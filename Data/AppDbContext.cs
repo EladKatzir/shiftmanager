@@ -47,6 +47,12 @@ public class AppDbContext : DbContext
     public DbSet<CompanyLanguageSettings> CompanyLanguageSettings => Set<CompanyLanguageSettings>();
     public DbSet<CompanyLocalizationOverride> CompanyLocalizationOverrides => Set<CompanyLocalizationOverride>();
 
+    // Ops Console Scheduler: Programs and Master Programs (tenant-scoped)
+    public DbSet<ShiftProgram> ShiftPrograms => Set<ShiftProgram>();
+    public DbSet<ProgramDay> ProgramDays => Set<ProgramDay>();
+    public DbSet<MasterProgram> MasterPrograms => Set<MasterProgram>();
+    public DbSet<MasterProgramItem> MasterProgramItems => Set<MasterProgramItem>();
+
     // Public/Global Tables (no CompanyId, visible across all tenancies)
     public DbSet<OnDuty> OnDuties => Set<OnDuty>();
     public DbSet<OnDutyTypeConfig> OnDutyTypeConfigs => Set<OnDutyTypeConfig>();
@@ -99,6 +105,38 @@ public class AppDbContext : DbContext
         // This index is used by ALL calendar views, dashboards, and reports
         modelBuilder.Entity<ShiftInstance>()
             .HasIndex(si => new { si.CompanyId, si.WorkDate });
+
+        // Ops Console Scheduler: ShiftInstance relationship to ShiftProgram
+        modelBuilder.Entity<ShiftInstance>()
+            .HasOne(si => si.OriginalProgram)
+            .WithMany()
+            .HasForeignKey(si => si.OriginalProgramId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        // Ops Console Scheduler: ShiftProgram indexes
+        modelBuilder.Entity<ShiftProgram>()
+            .HasIndex(p => new { p.CompanyId, p.ShiftTypeId });
+
+        modelBuilder.Entity<ShiftProgram>()
+            .HasIndex(p => new { p.CompanyId, p.IsActive });
+
+        // Ops Console Scheduler: ProgramDay unique constraint (one entry per Program per DayOfWeek)
+        modelBuilder.Entity<ProgramDay>()
+            .HasIndex(pd => new { pd.ProgramId, pd.DayOfWeek })
+            .IsUnique();
+
+        // Ops Console Scheduler: MasterProgram index
+        modelBuilder.Entity<MasterProgram>()
+            .HasIndex(mp => new { mp.CompanyId, mp.IsActive });
+
+        // Ops Console Scheduler: MasterProgramItem indexes
+        modelBuilder.Entity<MasterProgramItem>()
+            .HasIndex(mpi => new { mpi.MasterProgramId, mpi.ProgramId })
+            .IsUnique();
+
+        modelBuilder.Entity<MasterProgramItem>()
+            .HasIndex(mpi => new { mpi.MasterProgramId, mpi.SortOrder });
 
         // Multitenancy Phase 1: Add unique index on Company.Slug for routing
         modelBuilder.Entity<Company>()
@@ -460,6 +498,14 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<EmailApiLog>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // Ops Console Scheduler: Query filters for tenant scoping
+            modelBuilder.Entity<ShiftProgram>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<MasterProgram>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
         }

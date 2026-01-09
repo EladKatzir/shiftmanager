@@ -18,14 +18,22 @@ public class TableModel : PageModel
     private readonly ILogger<TableModel> _logger;
     private readonly IBusyUserService _busyUserService;
     private readonly IShiftTypeCacheService _shiftTypeCache;
+    private readonly IShiftProgramService _programService;
 
-    public TableModel(AppDbContext db, ICompanyContext companyContext, ILogger<TableModel> logger, IBusyUserService busyUserService, IShiftTypeCacheService shiftTypeCache)
+    public TableModel(
+        AppDbContext db,
+        ICompanyContext companyContext,
+        ILogger<TableModel> logger,
+        IBusyUserService busyUserService,
+        IShiftTypeCacheService shiftTypeCache,
+        IShiftProgramService programService)
     {
         _db = db;
         _companyContext = companyContext;
         _logger = logger;
         _busyUserService = busyUserService;
         _shiftTypeCache = shiftTypeCache;
+        _programService = programService;
     }
 
     public DateOnly StartDate { get; set; }
@@ -35,6 +43,7 @@ public class TableModel : PageModel
     public List<DateOnly> Dates { get; set; } = new();
     public List<ShiftType> ShiftTypes { get; set; } = new();
     public List<AppUser> Employees { get; set; } = new();
+    public string ViewMode { get; set; } = "week"; // week, 2weeks, month
 
     // Map: [ShiftTypeId][Date] => List of assignments
     public Dictionary<int, Dictionary<DateOnly, List<AssignmentInfo>>> AssignmentGrid { get; set; } = new();
@@ -50,11 +59,21 @@ public class TableModel : PageModel
         public string? EmployeeName { get; set; }
         public int? TraineeUserId { get; set; }
         public string? TraineeName { get; set; }
+        public bool IsDetached { get; set; }
+        public int? OriginalProgramId { get; set; }
+        public string? OverriddenFields { get; set; }
     }
 
-    public async Task<IActionResult> OnGetAsync(string? start)
+    public async Task<IActionResult> OnGetAsync(string? start, string? view)
     {
         var companyId = _companyContext.GetCompanyIdOrThrow();
+
+        // Set view mode (week, 2weeks, month)
+        ViewMode = view?.ToLower() ?? "week";
+        if (ViewMode != "week" && ViewMode != "2weeks" && ViewMode != "month")
+        {
+            ViewMode = "week"; // Default fallback
+        }
 
         // Default to current week if no start date provided
         if (string.IsNullOrEmpty(start))
@@ -67,11 +86,23 @@ public class TableModel : PageModel
             StartDate = DateOnly.Parse(start);
         }
 
-        EndDate = StartDate.AddDays(6); // 1 week view (7 days)
+        // Calculate end date based on view mode
+        EndDate = ViewMode switch
+        {
+            "2weeks" => StartDate.AddDays(13), // 14 days
+            "month" => StartDate.AddDays(DateTime.DaysInMonth(StartDate.Year, StartDate.Month) - 1),
+            _ => StartDate.AddDays(6) // Default: 7 days
+        };
 
-        // Calculate previous and next week start dates for navigation
-        PreviousWeekStart = StartDate.AddDays(-7);
-        NextWeekStart = StartDate.AddDays(7);
+        // Calculate previous and next navigation dates
+        var daysToMove = ViewMode switch
+        {
+            "2weeks" => 14,
+            "month" => DateTime.DaysInMonth(StartDate.Year, StartDate.Month),
+            _ => 7
+        };
+        PreviousWeekStart = StartDate.AddDays(-daysToMove);
+        NextWeekStart = StartDate.AddDays(daysToMove);
 
         // Generate date range
         for (var date = StartDate; date <= EndDate; date = date.AddDays(1))
@@ -134,7 +165,10 @@ public class TableModel : PageModel
                             UserId = a.UserId,
                             EmployeeName = a.User?.DisplayName,
                             TraineeUserId = a.TraineeUserId,
-                            TraineeName = a.Trainee?.DisplayName
+                            TraineeName = a.Trainee?.DisplayName,
+                            IsDetached = instance.IsDetached,
+                            OriginalProgramId = instance.OriginalProgramId,
+                            OverriddenFields = instance.OverriddenFields
                         })
                         .ToList();
 
@@ -524,6 +558,15 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Shift instance not found" });
             }
 
+            // If this instance is from a Program and not yet detached, detach it now
+            if (instance.OriginalProgramId.HasValue && !instance.IsDetached)
+            {
+                await _programService.DetachInstanceAsync(instance.Id, "Manual staffing adjustment");
+                _logger.LogInformation(
+                    "Auto-detached ShiftInstance {InstanceId} from Program {ProgramId} due to manual staffing change",
+                    instance.Id, instance.OriginalProgramId);
+            }
+
             var currentStaffing = await _db.ShiftAssignments
                 .CountAsync(a => a.ShiftInstanceId == instance.Id);
 
@@ -887,5 +930,473 @@ public class TableModel : PageModel
     public class DeleteShiftInstanceRequest
     {
         public int ShiftInstanceId { get; set; }
+    }
+
+    /// <summary>
+    /// Detaches a ShiftInstance from its Program (if any), marking it as manually modified.
+    /// </summary>
+    public async Task<IActionResult> OnPostDetachInstanceAsync([FromBody] DetachInstanceRequest request)
+    {
+        try
+        {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
+
+            var instance = await _db.ShiftInstances
+                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+
+            if (instance == null)
+            {
+                return new JsonResult(new { success = false, error = "Shift instance not found" });
+            }
+
+            // Call service to detach instance
+            await _programService.DetachInstanceAsync(request.ShiftInstanceId, request.Reason);
+
+            _logger.LogInformation(
+                "Detached ShiftInstance {InstanceId} from Program. Reason: {Reason}",
+                request.ShiftInstanceId, request.Reason);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error detaching shift instance {InstanceId}", request.ShiftInstanceId);
+            return new JsonResult(new { success = false, error = "Failed to detach shift instance" });
+        }
+    }
+
+    /// <summary>
+    /// Resets a detached ShiftInstance back to its Program defaults.
+    /// </summary>
+    public async Task<IActionResult> OnPostResetInstanceToProgramAsync([FromBody] ResetInstanceRequest request)
+    {
+        try
+        {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
+
+            var instance = await _db.ShiftInstances
+                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+
+            if (instance == null)
+            {
+                return new JsonResult(new { success = false, error = "Shift instance not found" });
+            }
+
+            if (!instance.IsDetached || !instance.OriginalProgramId.HasValue)
+            {
+                return new JsonResult(new { success = false, error = "Shift instance is not detached from a Program" });
+            }
+
+            // Call service to reset instance to Program defaults
+            await _programService.ResetInstanceToProgramAsync(request.ShiftInstanceId);
+
+            _logger.LogInformation(
+                "Reset ShiftInstance {InstanceId} to Program {ProgramId} defaults",
+                request.ShiftInstanceId, instance.OriginalProgramId);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting shift instance {InstanceId}", request.ShiftInstanceId);
+            return new JsonResult(new { success = false, error = "Failed to reset shift instance" });
+        }
+    }
+
+    /// <summary>
+    /// Get roster of employees with their availability status for the Roster Dock.
+    /// </summary>
+    public async Task<IActionResult> OnGetGetRosterEmployeesAsync()
+    {
+        try
+        {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            // Get all employees for the company
+            var employees = await _db.Users
+                .Where(u => u.CompanyId == companyId && u.IsActive)
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.DisplayName
+                })
+                .ToListAsync();
+
+            // Get busy status for today (for quick status indicators)
+            var busyInfo = await _busyUserService.GetBusyUsersAsync(today, TimeOnly.MinValue, TimeOnly.MaxValue);
+
+            var employeeList = employees.Select(emp => new
+            {
+                id = emp.Id,
+                name = emp.DisplayName,
+                onVacation = busyInfo.ContainsKey(emp.Id) && busyInfo[emp.Id].HasVacation,
+                hasShift = busyInfo.ContainsKey(emp.Id) && busyInfo[emp.Id].HasShift,
+                hasChore = busyInfo.ContainsKey(emp.Id) && busyInfo[emp.Id].HasChore
+            }).ToList();
+
+            return new JsonResult(new { employees = employeeList });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading roster employees");
+            return new JsonResult(new { success = false, error = "Failed to load employees" });
+        }
+    }
+
+    /// <summary>
+    /// Fill a range of dates with shifts copied from a source shift.
+    /// Supports three modes: exact copy, staffing only, or apply Program defaults.
+    /// </summary>
+    public async Task<IActionResult> OnPostFillRangeAsync([FromBody] FillRangeRequest request)
+    {
+        try
+        {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
+
+            // Validate source instance
+            var sourceInstance = await _db.ShiftInstances
+                .Include(si => si.ShiftType)
+                .FirstOrDefaultAsync(si => si.Id == request.SourceInstanceId && si.CompanyId == companyId);
+
+            if (sourceInstance == null)
+            {
+                return new JsonResult(new { success = false, error = "Source shift not found" });
+            }
+
+            // Load source assignments separately
+            var sourceAssignments = await _db.ShiftAssignments
+                .Include(sa => sa.User)
+                .Include(sa => sa.Trainee)
+                .Where(sa => sa.ShiftInstanceId == sourceInstance.Id)
+                .ToListAsync();
+
+            var createdCount = 0;
+            var updatedCount = 0;
+
+            foreach (var targetDate in request.TargetDates)
+            {
+                DateOnly parsedDate;
+                if (!DateOnly.TryParse(targetDate, out parsedDate))
+                {
+                    _logger.LogWarning("Invalid target date: {Date}", targetDate);
+                    continue;
+                }
+
+                // Check if instance already exists for this date and shift type
+                var existingInstance = await _db.ShiftInstances
+                    .FirstOrDefaultAsync(si =>
+                        si.CompanyId == companyId &&
+                        si.ShiftTypeId == sourceInstance.ShiftTypeId &&
+                        si.WorkDate == parsedDate);
+
+                // Load existing assignments if instance exists
+                List<ShiftAssignment> existingAssignments = new();
+                if (existingInstance != null)
+                {
+                    existingAssignments = await _db.ShiftAssignments
+                        .Where(sa => sa.ShiftInstanceId == existingInstance.Id)
+                        .ToListAsync();
+                }
+
+                switch (request.Mode)
+                {
+                    case "exact":
+                        // Copy exact: duplicate all assignments including trainees
+                        if (existingInstance != null)
+                        {
+                            // Update existing instance
+                            existingInstance.StaffingRequired = sourceInstance.StaffingRequired;
+                            existingInstance.IsDetached = true;
+                            existingInstance.OriginalProgramId = sourceInstance.OriginalProgramId;
+
+                            // Remove old assignments
+                            _db.ShiftAssignments.RemoveRange(existingAssignments);
+
+                            // Add new assignments (copy from source)
+                            foreach (var sourceAssignment in sourceAssignments)
+                            {
+                                _db.ShiftAssignments.Add(new ShiftAssignment
+                                {
+                                    ShiftInstanceId = existingInstance.Id,
+                                    UserId = sourceAssignment.UserId,
+                                    TraineeUserId = sourceAssignment.TraineeUserId,
+                                    CompanyId = companyId
+                                });
+                            }
+
+                            updatedCount++;
+                        }
+                        else
+                        {
+                            // Create new instance
+                            var newInstance = new ShiftInstance
+                            {
+                                CompanyId = companyId,
+                                ShiftTypeId = sourceInstance.ShiftTypeId,
+                                WorkDate = parsedDate,
+                                StaffingRequired = sourceInstance.StaffingRequired,
+                                IsDetached = true,
+                                OriginalProgramId = sourceInstance.OriginalProgramId
+                            };
+
+                            _db.ShiftInstances.Add(newInstance);
+                            await _db.SaveChangesAsync(); // Save to get ID
+
+                            // Add assignments
+                            foreach (var sourceAssignment in sourceAssignments)
+                            {
+                                _db.ShiftAssignments.Add(new ShiftAssignment
+                                {
+                                    ShiftInstanceId = newInstance.Id,
+                                    UserId = sourceAssignment.UserId,
+                                    TraineeUserId = sourceAssignment.TraineeUserId,
+                                    CompanyId = companyId
+                                });
+                            }
+
+                            createdCount++;
+                        }
+                        break;
+
+                    case "staffing":
+                        // Copy staffing only: create empty slots with same count
+                        if (existingInstance != null)
+                        {
+                            existingInstance.StaffingRequired = sourceInstance.StaffingRequired;
+                            existingInstance.IsDetached = true;
+
+                            // Remove old assignments
+                            _db.ShiftAssignments.RemoveRange(existingAssignments);
+
+                            // Add empty slots
+                            for (int i = 0; i < sourceInstance.StaffingRequired; i++)
+                            {
+                                _db.ShiftAssignments.Add(new ShiftAssignment
+                                {
+                                    ShiftInstanceId = existingInstance.Id,
+                                    UserId = null,
+                                    CompanyId = companyId
+                                });
+                            }
+
+                            updatedCount++;
+                        }
+                        else
+                        {
+                            var newInstance = new ShiftInstance
+                            {
+                                CompanyId = companyId,
+                                ShiftTypeId = sourceInstance.ShiftTypeId,
+                                WorkDate = parsedDate,
+                                StaffingRequired = sourceInstance.StaffingRequired,
+                                IsDetached = true
+                            };
+
+                            _db.ShiftInstances.Add(newInstance);
+                            await _db.SaveChangesAsync();
+
+                            // Add empty slots
+                            for (int i = 0; i < sourceInstance.StaffingRequired; i++)
+                            {
+                                _db.ShiftAssignments.Add(new ShiftAssignment
+                                {
+                                    ShiftInstanceId = newInstance.Id,
+                                    UserId = null,
+                                    CompanyId = companyId
+                                });
+                            }
+
+                            createdCount++;
+                        }
+                        break;
+
+                    case "program":
+                        // Apply Program defaults: use Program template if available
+                        if (sourceInstance.OriginalProgramId.HasValue)
+                        {
+                            var program = await _db.ShiftPrograms
+                                .Include(p => p.ProgramDays)
+                                .FirstOrDefaultAsync(p => p.Id == sourceInstance.OriginalProgramId.Value);
+
+                            if (program != null)
+                            {
+                                var dayOfWeek = parsedDate.DayOfWeek;
+                                var programDay = program.ProgramDays.FirstOrDefault(pd => pd.DayOfWeek == dayOfWeek);
+
+                                if (programDay != null)
+                                {
+                                    var staffingRequired = programDay.StaffingRequired ?? program.DefaultStaffingRequired;
+
+                                    if (existingInstance != null)
+                                    {
+                                        existingInstance.StaffingRequired = staffingRequired;
+                                        existingInstance.IsDetached = false;
+                                        existingInstance.OriginalProgramId = program.Id;
+
+                                        // Remove old assignments
+                                        _db.ShiftAssignments.RemoveRange(existingAssignments);
+
+                                        // Add empty slots
+                                        for (int i = 0; i < staffingRequired; i++)
+                                        {
+                                            _db.ShiftAssignments.Add(new ShiftAssignment
+                                            {
+                                                ShiftInstanceId = existingInstance.Id,
+                                                UserId = null,
+                                                CompanyId = companyId
+                                            });
+                                        }
+
+                                        updatedCount++;
+                                    }
+                                    else
+                                    {
+                                        var newInstance = new ShiftInstance
+                                        {
+                                            CompanyId = companyId,
+                                            ShiftTypeId = sourceInstance.ShiftTypeId,
+                                            WorkDate = parsedDate,
+                                            StaffingRequired = staffingRequired,
+                                            IsDetached = false,
+                                            OriginalProgramId = program.Id
+                                        };
+
+                                        _db.ShiftInstances.Add(newInstance);
+                                        await _db.SaveChangesAsync();
+
+                                        // Add empty slots
+                                        for (int i = 0; i < staffingRequired; i++)
+                                        {
+                                            _db.ShiftAssignments.Add(new ShiftAssignment
+                                            {
+                                                ShiftInstanceId = newInstance.Id,
+                                                UserId = null,
+                                                CompanyId = companyId
+                                            });
+                                        }
+
+                                        createdCount++;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            return new JsonResult(new { success = false, error = "Source shift is not linked to a Program" });
+                        }
+                        break;
+
+                    default:
+                        return new JsonResult(new { success = false, error = "Invalid fill mode" });
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Fill range completed: {Created} created, {Updated} updated using mode {Mode}",
+                createdCount, updatedCount, request.Mode);
+
+            return new JsonResult(new
+            {
+                success = true,
+                created = createdCount,
+                updated = updatedCount,
+                message = $"Successfully filled {createdCount + updatedCount} shifts"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error filling range");
+            return new JsonResult(new { success = false, error = "Failed to fill range" });
+        }
+    }
+
+    public class DetachInstanceRequest
+    {
+        public int ShiftInstanceId { get; set; }
+        public string Reason { get; set; } = string.Empty;
+    }
+
+    public class ResetInstanceRequest
+    {
+        public int ShiftInstanceId { get; set; }
+    }
+
+    /// <summary>
+    /// Get conflicts and warnings for Radar Mode.
+    /// Returns cells that are underfilled or have overlapping assignments.
+    /// </summary>
+    public async Task<IActionResult> OnGetGetConflictsAsync()
+    {
+        try
+        {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
+
+            // Get all instances in the current view
+            var instances = await _db.ShiftInstances
+                .Where(si => si.WorkDate >= StartDate && si.WorkDate <= EndDate)
+                .Include(si => si.ShiftType)
+                .ToListAsync();
+
+            // Get all assignments for these instances
+            var instanceIds = instances.Select(i => i.Id).ToList();
+            var assignments = await _db.ShiftAssignments
+                .Where(a => instanceIds.Contains(a.ShiftInstanceId))
+                .ToListAsync();
+
+            var conflicts = new List<object>();
+
+            foreach (var instance in instances)
+            {
+                var instanceAssignments = assignments.Where(a => a.ShiftInstanceId == instance.Id).ToList();
+                var filledCount = instanceAssignments.Count(a => a.UserId.HasValue);
+
+                // Check if underfilled
+                if (filledCount < instance.StaffingRequired)
+                {
+                    conflicts.Add(new
+                    {
+                        shiftTypeId = instance.ShiftTypeId,
+                        date = instance.WorkDate.ToString("yyyy-MM-dd"),
+                        type = "underfilled",
+                        severity = "warning",
+                        message = $"Understaffed: {filledCount}/{instance.StaffingRequired} filled",
+                        filled = filledCount,
+                        required = instance.StaffingRequired
+                    });
+                }
+
+                // Check for overfilling
+                if (filledCount > instance.StaffingRequired)
+                {
+                    conflicts.Add(new
+                    {
+                        shiftTypeId = instance.ShiftTypeId,
+                        date = instance.WorkDate.ToString("yyyy-MM-dd"),
+                        type = "overfilled",
+                        severity = "error",
+                        message = $"Overstaffed: {filledCount}/{instance.StaffingRequired} filled"
+                    });
+                }
+            }
+
+            return new JsonResult(new { conflicts });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting conflicts");
+            return new JsonResult(new { success = false, error = "Failed to load conflicts" });
+        }
+    }
+
+    public class FillRangeRequest
+    {
+        public int SourceInstanceId { get; set; }
+        public List<string> TargetDates { get; set; } = new();
+        public List<int> TargetInstanceIds { get; set; } = new();
+        public string Mode { get; set; } = "exact"; // exact, staffing, program
     }
 }

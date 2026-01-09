@@ -23,6 +23,13 @@ public class ShiftType : IBelongsToCompany
     /// </summary>
     public string? CustomName { get; set; }
 
+    /// <summary>
+    /// Resource key for localized shift name (e.g., "ShiftType_MORNING_Name").
+    /// Used with &lt;loc&gt; tag helper for bilingual support via CompanyLocalizationOverride.
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.MaxLength(200)]
+    public string? NameKey { get; set; }
+
     [NotMapped]
     public string Name
     {

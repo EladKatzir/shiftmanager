@@ -1,9 +1,9 @@
 # ShiftManager - Complete Genesis Documentation
 ## Master Index & Navigation Hub
 
-**Document Version:** 1.2
-**Last Updated:** 2026-01-06
-**Codebase Version:** v2.2.0+ (Branch: newestversionpriorpl)
+**Document Version:** 1.3
+**Last Updated:** 2026-01-09
+**Codebase Version:** v2.2.0+ (Branch: newestafterpl)
 **Documentation Purpose:** Enable complete system reconstruction from scratch
 
 ---
@@ -94,7 +94,7 @@ Follow the reconstruction guide:
 | **Database Tables** | 29 tables |
 | **EF Core Migrations** | 37 migrations (Sept 2025 - Present) |
 | **Razor Pages** | 67 pages |
-| **REST API Endpoints** | 27 endpoints |
+| **REST API Endpoints** | 27 external + 12 internal endpoints |
 | **Injectable Services** | 40+ services |
 | **User Roles** | 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee) |
 | **Supported Languages** | English (en-US), Hebrew (he-IL) with RTL support |
@@ -383,13 +383,17 @@ Follow the reconstruction guide:
 
 ### Part IV: User Interface & Experience (Documents 08, 11)
 
-#### [08-UI-UX-ARCHITECTURE.md](08-UI-UX-ARCHITECTURE.md) (1,500 lines)
+#### [08-UI-UX-ARCHITECTURE.md](08-UI-UX-ARCHITECTURE.md) (2,400+ lines)
 **Purpose:** Frontend implementation (Razor Pages + CSS + JavaScript)
 
 **Contents:**
 - **67 Razor Pages breakdown by area:**
   - **Auth/** (5 pages): Login, Signup, GriffinCallback, ForgotPassword, Logout
   - **Calendar/** (4 pages): Month, Week, Day, Table (shift management workspace)
+    - **NEW (Jan 2026):** Ops Console Scheduler features added to Table view:
+      - **Roster Dock**: Drag-and-drop employee assignment with availability status
+      - **Fill Handle**: Excel-style bulk copy (3 modes: exact, staffing, program)
+      - **Radar Mode**: Real-time conflict detection overlay (understaffed/overstaffed)
   - **Admin/** (9 pages): Users, Companies, Directors, ShiftTypes, Config, Analytics, AuditLog, EditProfile
   - **Owner/** (7 pages): FeatureFlags, EmailConfig, EmailTemplates, GameConfig, DatabaseConsole, Backup
   - **Director/** (3 pages): CompanyFilter, ViewAsMode, NotificationHub

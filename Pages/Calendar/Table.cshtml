@@ -25,6 +25,27 @@
     min-width: 100%;
     background: var(--surface);
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.875rem;
+}
+
+/* Dense mode for multi-week/month views */
+.shift-table.dense {
+    font-size: 0.75rem;
+}
+
+.shift-table.dense th,
+.shift-table.dense td {
+    padding: 0.375rem;
+    min-width: 80px;
+}
+
+.shift-table.dense .assignment-slot {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+}
+
+.shift-table.dense .shift-actions-row {
+    gap: 0.25rem;
 }
 
 .shift-table th,
@@ -345,6 +366,39 @@
     padding: 0.5rem 1rem;
 }
 
+/* View Mode Toggle */
+.view-mode-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    padding: 0.25rem;
+}
+
+.view-mode-btn {
+    padding: 0.375rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.view-mode-btn:hover {
+    background: var(--surface-soft);
+}
+
+.view-mode-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
 /* Shift Row Controls */
 .shift-row-header {
     display: flex;
@@ -435,6 +489,59 @@
     color: white;
     opacity: 1;
     transform: scale(1.1);
+}
+
+/* OVR Badge (Override) */
+.ovr-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #f97316;
+    color: white;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+    cursor: help;
+}
+
+.ovr-badge:hover {
+    background: #ea580c;
+}
+
+.assignment-cell.detached {
+    background-color: rgba(249, 115, 22, 0.05);
+    border-left: 3px solid #f97316;
+}
+
+.assignment-cell.detached:hover {
+    background-color: rgba(249, 115, 22, 0.1);
+}
+
+.reset-program-btn {
+    background: #10b981;
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.75rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.reset-program-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
 }
 
 /* Amount Picker Modal */
@@ -551,21 +658,663 @@
 .modal-btn-secondary:hover {
     background: var(--surface);
 }
+
+/* ============= Roster Dock ============= */
+.roster-dock {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    width: 320px;
+    height: calc(100vh - 60px);
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1010;
+    overflow-y: auto;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+}
+
+.roster-dock.open {
+    transform: translateX(0);
+}
+
+.roster-dock-header {
+    padding: 1rem;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    font-size: 1.125rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.roster-dock-close {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+.roster-dock-close:hover {
+    opacity: 0.8;
+}
+
+.roster-search {
+    padding: 1rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 60px;
+    z-index: 9;
+}
+
+.roster-search input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.roster-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+}
+
+.roster-employee-list {
+    padding: 0.5rem;
+}
+
+.roster-employee-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.roster-employee-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.2);
+    transform: translateY(-1px);
+}
+
+.roster-employee-item:active {
+    cursor: grabbing;
+}
+
+.roster-employee-item.dragging {
+    opacity: 0.5;
+}
+
+.roster-employee-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.roster-employee-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.roster-employee-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.roster-employee-status {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.roster-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.roster-status-chip.vacation {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.roster-status-chip.shift {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.roster-status-chip.chore {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.roster-toggle-btn {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.roster-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.roster-toggle-btn.active {
+    background: var(--danger);
+}
+
+/* Drop target highlight */
+.assignment-slot.drop-target {
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 2px dashed var(--primary);
+}
+
+/* ============= Radar Mode ============= */
+.radar-toggle-btn {
+    position: fixed;
+    top: 140px;
+    right: 20px;
+    background: var(--surface);
+    color: var(--text);
+    border: 2px solid var(--border);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.radar-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.radar-toggle-btn.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+/* Radar Mode conflict highlights */
+.assignment-cell.underfilled {
+    background: #FEF3C7 !important;
+}
+
+.assignment-cell.overfilled {
+    background: #FEE2E2 !important;
+    border: 2px solid #ef4444 !important;
+}
+
+.radar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #fbbf24;
+    color: #78350f;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-left: 0.25rem;
+}
+
+.radar-badge.error {
+    background: #ef4444;
+    color: white;
+}
+
+/* ============= Fill Handle ============= */
+.assignment-cell {
+    position: relative;
+}
+
+.fill-handle {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    cursor: crosshair;
+    border-radius: 2px;
+    border: 1px solid white;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.assignment-cell:hover .fill-handle,
+.assignment-cell.selected .fill-handle {
+    opacity: 1;
+}
+
+.assignment-cell.fill-preview {
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 2px dashed var(--primary);
+    animation: fillPulse 1s infinite;
+}
+
+@@keyframes fillPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* Fill Options Modal */
+.fill-options-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.fill-options-modal.show {
+    display: flex;
+}
+
+.fill-options-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 90%;
+}
+
+.fill-options-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.fill-options-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.fill-option-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fill-option-item:hover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.fill-option-item.selected {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.fill-option-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.fill-option-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.fill-preview-info {
+    background: var(--bg);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--primary);
+}
+
+.fill-preview-info p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+/* ============= Drag and Drop Enhancements ============= */
+.roster-employee-item {
+    cursor: grab;
+    user-select: none;
+}
+
+.roster-employee-item:active {
+    cursor: grabbing;
+}
+
+.roster-employee-item.dragging {
+    opacity: 0.5;
+}
+
+.drop-zone-active {
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px dashed #3b82f6;
+    transition: all 0.2s;
+}
+
+.drag-over {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #2563eb;
+}
+
+.fill-source {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.fill-target {
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.fill-available {
+    border: 2px dashed rgba(156, 163, 175, 0.5);
+}
+
+/* ============= Fill Options Modal ============= */
+.fill-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s;
+}
+
+.fill-modal {
+    background: var(--surface);
+    border-radius: 0.5rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.fill-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fill-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.fill-modal-header .close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    line-height: 1;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+}
+
+.fill-modal-header .close-modal:hover {
+    color: var(--text);
+}
+
+.fill-modal-body {
+    padding: 1.5rem;
+}
+
+.fill-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.fill-option {
+    display: flex;
+    align-items: start;
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fill-option:hover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.fill-option input[type="radio"] {
+    margin-top: 0.125rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+}
+
+.fill-option .option-content {
+    flex: 1;
+}
+
+.fill-option .option-content strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.fill-option .option-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.fill-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* ============= Radar Mode Conflict Visualization ============= */
+.radar-conflict {
+    position: relative;
+}
+
+.radar-underfilled {
+    background: rgba(251, 191, 36, 0.15) !important;
+    border-left: 4px solid #f59e0b;
+}
+
+.radar-overfilled {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-left: 4px solid #ef4444;
+}
+
+.conflict-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    z-index: 5;
+}
+
+.conflict-badge.badge-warning {
+    background: #f59e0b;
+}
+
+.conflict-badge.badge-danger {
+    background: #ef4444;
+}
+
+.conflict-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0.5rem);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    pointer-events: none;
+}
+
+.conflict-tooltip.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0.25rem);
+}
+
+.conflict-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--border);
+}
+
+.conflict-tooltip .tooltip-header {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.conflict-tooltip .tooltip-body p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+/* ============= Animations ============= */
+@@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@@keyframes fillPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
 </style>
 
 <h2><loc key="ShiftAssignmentTable" /></h2>
 
+<!-- View Mode Toggle -->
+<div class="view-mode-toggle" style="margin-bottom: 1rem;">
+    <a href="/Calendar/Table?view=week&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+       class="view-mode-btn @(Model.ViewMode == "week" ? "active" : "")">
+        Week
+    </a>
+    <a href="/Calendar/Table?view=2weeks&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+       class="view-mode-btn @(Model.ViewMode == "2weeks" ? "active" : "")">
+        2 Weeks
+    </a>
+    <a href="/Calendar/Table?view=month&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+       class="view-mode-btn @(Model.ViewMode == "month" ? "active" : "")">
+        Month
+    </a>
+</div>
+
 <div class="nav-buttons">
-    <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")" class="btn-secondary">
-        ← Previous Week
+    <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
+        ← Previous
     </a>
     <span style="font-weight: 600;">
         @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
     </span>
-    <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")" class="btn-secondary">
-        Next Week →
+    <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
+        Next →
     </a>
-    <a href="/Calendar/Table" class="btn btn-primary">
+    <a href="/Calendar/Table?view=@Model.ViewMode" class="btn btn-primary">
         @Localizer["CurrentWeek"]
     </a>
 </div>
@@ -576,7 +1325,7 @@
 </button>
 
 <div class="table-view-container">
-    <table class="shift-table">
+    <table class="shift-table @(Model.ViewMode != "week" ? "dense" : "")">
         <thead>
             <tr>
                 <th class="shift-name-col">Shift</th>
@@ -636,11 +1385,15 @@
                         var assignments = Model.AssignmentGrid[shiftType.Id][date];
                         var hasAssignments = assignments.Any();
                         var instanceId = assignments.FirstOrDefault()?.ShiftInstanceId ?? 0;
+                        var isDetached = assignments.FirstOrDefault()?.IsDetached ?? false;
+                        var originalProgramId = assignments.FirstOrDefault()?.OriginalProgramId;
 
-                        <td class="assignment-cell @(!hasAssignments ? "empty" : "")"
+                        <td class="assignment-cell @(!hasAssignments ? "empty" : "") @(isDetached ? "detached" : "")"
                             data-shift-type="@shiftType.Id"
                             data-date="@date.ToString("yyyy-MM-dd")"
-                            data-instance-id="@instanceId">
+                            data-instance-id="@instanceId"
+                            data-is-detached="@isDetached.ToString().ToLower()"
+                            data-original-program-id="@(originalProgramId?.ToString() ?? "")">
 
                             @if (hasAssignments)
                             {
@@ -688,6 +1441,18 @@
                                         }
                                     }
                                     <div class="shift-actions-row">
+                                        @if (isDetached)
+                                        {
+                                            <span class="ovr-badge" title="This shift was manually modified and detached from its Program">
+                                                OVR
+                                            </span>
+                                            @if (originalProgramId.HasValue)
+                                            {
+                                                <button class="reset-program-btn" onclick="resetToProgram(@instanceId, event)" title="Reset to Program defaults">
+                                                    🔄 Reset
+                                                </button>
+                                            }
+                                        }
                                         <div class="adjust-headcount-btn" onclick="showAdjustHeadcount(@instanceId, event)" title="@Localizer["AdjustRequiredHeadcount"]">
                                             ⚙️
                                         </div>
@@ -701,6 +1466,18 @@
                             {
                                 <div class="add-assignment-btn" onclick="showAmountPicker(this, event)">
                                     <span>➕ <loc key="AddAssignment" /></span>
+                                </div>
+                            }
+
+                            @* Fill Handle (Excel-style drag to copy) *@
+                            @if (hasAssignments)
+                            {
+                                <div class="fill-handle"
+                                     data-source-instance="@instanceId"
+                                     data-source-date="@date.ToString("yyyy-MM-dd")"
+                                     data-shift-type="@shiftType.Id"
+                                     onmousedown="startFillDrag(event, this)"
+                                     title="Drag to copy across days">
                                 </div>
                             }
 
@@ -783,6 +1560,43 @@
             @employee.DisplayName
         </div>
     }
+</div>
+
+<!-- Fill Options Modal -->
+<div class="fill-options-modal" id="fillOptionsModal">
+    <div class="fill-options-content">
+        <div class="fill-options-header">
+            <h3>📋 Copy Shift Across Days</h3>
+            <button onclick="closeFillOptions()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">×</button>
+        </div>
+
+        <div class="fill-preview-info">
+            <p><strong>Source:</strong> <span id="fillSourceInfo"></span></p>
+            <p><strong>Target Days:</strong> <span id="fillTargetInfo"></span></p>
+        </div>
+
+        <div id="fillOptionsContainer">
+            <div class="fill-option-item" data-mode="exact" onclick="selectFillOption('exact')">
+                <div class="fill-option-title">📄 Copy Exact</div>
+                <div class="fill-option-desc">Copy all assignments, trainees, and manual overrides to target days</div>
+            </div>
+
+            <div class="fill-option-item" data-mode="staffing" onclick="selectFillOption('staffing')">
+                <div class="fill-option-title">👥 Copy Staffing Only</div>
+                <div class="fill-option-desc">Copy the number of required staff, but leave assignments empty</div>
+            </div>
+
+            <div class="fill-option-item" data-mode="program" onclick="selectFillOption('program')" style="display: none;">
+                <div class="fill-option-title">🔄 Apply Program Defaults</div>
+                <div class="fill-option-desc">Create shifts from Program template (if linked to a Program)</div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeFillOptions()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" id="applyFillBtn" onclick="applyFill()" disabled>Apply</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1606,6 +2420,709 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+// ============= DETACHMENT & RESET =============
+
+/**
+ * Reset a detached ShiftInstance back to its Program defaults.
+ */
+async function resetToProgram(instanceId, event) {
+    event.stopPropagation();
+
+    if (!confirm('Reset this shift to Program defaults? This will restore staffing requirements and clear manual overrides.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=ResetInstanceToProgram', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Reload page to show updated state
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error resetting shift to Program:', error);
+        alert('Failed to reset shift. Please try again.');
+    }
+}
+
+/**
+ * Detach a ShiftInstance from its Program (mark as manually modified).
+ * This is automatically called when staffing is adjusted on a Program-generated shift.
+ */
+async function detachFromProgram(instanceId, reason) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=DetachInstance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId,
+                reason: reason
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            return true;
+        } else {
+            console.error('Failed to detach instance:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error detaching shift from Program:', error);
+        return false;
+    }
+}
+
+// ============= ROSTER DOCK =============
+
+let rosterDockOpen = false;
+let rosterEmployees = [];
+
+/**
+ * Toggle the Roster Dock sidebar
+ */
+function toggleRosterDock() {
+    const dock = document.getElementById('rosterDock');
+    rosterDockOpen = !rosterDockOpen;
+
+    if (rosterDockOpen) {
+        dock.classList.add('open');
+        loadRosterEmployees();
+    } else {
+        dock.classList.remove('open');
+    }
+}
+
+/**
+ * Load available employees into the Roster Dock
+ */
+async function loadRosterEmployees() {
+    try {
+        const response = await fetch('/Calendar/Table?handler=GetRosterEmployees', {
+            method: 'GET',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        });
+
+        if (!response.ok) {
+            // If handler doesn't exist yet, use mock data
+            rosterEmployees = getMockRosterData();
+            renderRosterEmployees(rosterEmployees);
+            return;
+        }
+
+        const data = await response.json();
+        rosterEmployees = data.employees || [];
+        renderRosterEmployees(rosterEmployees);
+    } catch (error) {
+        console.error('Error loading roster employees:', error);
+        // Fallback to mock data
+        rosterEmployees = getMockRosterData();
+        renderRosterEmployees(rosterEmployees);
+    }
+}
+
+/**
+ * Mock data for roster (used until backend handler is implemented)
+ */
+function getMockRosterData() {
+    const allSlots = document.querySelectorAll('.assignment-slot:not(.unassigned)');
+    const employeeMap = new Map();
+
+    allSlots.forEach(slot => {
+        const userId = slot.dataset.userId;
+        const name = slot.textContent.trim().split('\n')[0].trim();
+
+        if (userId && name && !name.startsWith('T:')) {
+            employeeMap.set(userId, {
+                id: parseInt(userId),
+                name: name,
+                onVacation: false,
+                hasShift: true,
+                hasChore: false
+            });
+        }
+    });
+
+    return Array.from(employeeMap.values());
+}
+
+/**
+ * Render employee list in Roster Dock
+ */
+function renderRosterEmployees(employees) {
+    const container = document.getElementById('rosterEmployeeList');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (employees.length === 0) {
+        container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #6b7280;">No employees available</div>';
+        return;
+    }
+
+    employees.forEach(employee => {
+        const item = document.createElement('div');
+        item.className = 'roster-employee-item';
+        item.draggable = true;
+        item.dataset.userId = employee.id;
+        item.dataset.userName = employee.name;
+
+        // Build status chips HTML
+        let statusChips = '';
+        if (employee.onVacation) {
+            statusChips += '<span class="roster-status-chip vacation">Vacation</span>';
+        }
+        if (employee.hasShift) {
+            statusChips += '<span class="roster-status-chip shift">On Shift</span>';
+        }
+        if (employee.hasChore) {
+            statusChips += '<span class="roster-status-chip chore">Chore</span>';
+        }
+
+        item.innerHTML = `
+            <div class="roster-employee-avatar">${employee.name.substring(0, 2).toUpperCase()}</div>
+            <div class="roster-employee-info">
+                <div class="roster-employee-name">${employee.name}</div>
+                <div class="roster-employee-status">
+                    ${statusChips || '<span style="font-size: 0.75rem; color: #10b981;">Available</span>'}
+                </div>
+            </div>
+        `;
+
+        // Drag event handlers
+        item.addEventListener('dragstart', handleRosterDragStart);
+        item.addEventListener('dragend', handleRosterDragEnd);
+
+        container.appendChild(item);
+    });
+}
+
+/**
+ * Handle drag start from roster employee item
+ */
+function handleRosterDragStart(event) {
+    const userId = event.currentTarget.dataset.userId;
+    const userName = event.currentTarget.dataset.userName;
+
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData('text/plain', userId);
+    event.dataTransfer.setData('application/x-roster-user', JSON.stringify({
+        userId: userId,
+        userName: userName
+    }));
+
+    event.currentTarget.classList.add('dragging');
+
+    // Enable drop targets
+    document.querySelectorAll('.assignment-slot').forEach(slot => {
+        slot.addEventListener('dragover', handleSlotDragOver);
+        slot.addEventListener('drop', handleSlotDrop);
+        slot.addEventListener('dragleave', handleSlotDragLeave);
+    });
+}
+
+/**
+ * Handle drag end
+ */
+function handleRosterDragEnd(event) {
+    event.currentTarget.classList.remove('dragging');
+
+    // Disable drop targets
+    document.querySelectorAll('.assignment-slot').forEach(slot => {
+        slot.removeEventListener('dragover', handleSlotDragOver);
+        slot.removeEventListener('drop', handleSlotDrop);
+        slot.removeEventListener('dragleave', handleSlotDragLeave);
+        slot.classList.remove('drop-target');
+    });
+}
+
+/**
+ * Handle drag over slot
+ */
+function handleSlotDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+
+    const slot = event.currentTarget;
+    if (slot.classList.contains('unassigned')) {
+        slot.classList.add('drop-target');
+    }
+}
+
+/**
+ * Handle drag leave slot
+ */
+function handleSlotDragLeave(event) {
+    const slot = event.currentTarget;
+    slot.classList.remove('drop-target');
+}
+
+/**
+ * Handle drop on slot
+ */
+async function handleSlotDrop(event) {
+    event.preventDefault();
+
+    const slot = event.currentTarget;
+    slot.classList.remove('drop-target');
+
+    // Only allow drops on unassigned slots
+    if (!slot.classList.contains('unassigned')) {
+        console.log('Cannot drop on assigned slot');
+        return;
+    }
+
+    try {
+        const userData = JSON.parse(event.dataTransfer.getData('application/x-roster-user'));
+        const assignmentId = parseInt(slot.dataset.assignmentId);
+        const userId = parseInt(userData.userId);
+
+        if (!assignmentId || !userId) {
+            console.error('Missing assignmentId or userId');
+            return;
+        }
+
+        // Call existing assignment handler
+        const response = await fetch('/Calendar/Table?handler=AssignUserToSlot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: assignmentId,
+                userId: userId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update slot UI
+            slot.classList.remove('unassigned');
+            slot.dataset.userId = userId;
+            slot.innerHTML = userData.userName;
+            slot.title = userData.userName;
+
+            // Show success feedback
+            slot.style.backgroundColor = '#d1fae5';
+            setTimeout(() => {
+                slot.style.backgroundColor = '';
+            }, 1000);
+        } else {
+            alert('Failed to assign user: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error handling drop:', error);
+        alert('Failed to assign user. Please try again.');
+    }
+}
+
+/**
+ * Filter roster employees by search query
+ */
+function filterRosterEmployees(query) {
+    const filtered = rosterEmployees.filter(emp =>
+        emp.name.toLowerCase().includes(query.toLowerCase())
+    );
+    renderRosterEmployees(filtered);
+}
+
+// Initialize roster search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('rosterSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterRosterEmployees(e.target.value);
+        });
+    }
+});
+
+// ============= FILL HANDLE =============
+
+let fillDragActive = false;
+let fillSourceCell = null;
+let fillSourceInstance = null;
+let fillTargetCells = [];
+let selectedFillMode = null;
+
+/**
+ * Start fill drag operation
+ */
+function startFillDrag(event, handleElement) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    fillDragActive = true;
+    fillSourceCell = handleElement.closest('.assignment-cell');
+    fillSourceInstance = handleElement.dataset.sourceInstance;
+    fillTargetCells = [];
+
+    // Add selected class to source
+    fillSourceCell.classList.add('selected');
+
+    // Set up document-level drag listeners
+    document.addEventListener('mousemove', handleFillDragMove);
+    document.addEventListener('mouseup', handleFillDragEnd);
+
+    // Change cursor
+    document.body.style.cursor = 'crosshair';
+}
+
+/**
+ * Handle mouse movement during fill drag
+ */
+function handleFillDragMove(event) {
+    if (!fillDragActive) return;
+
+    const targetCell = event.target.closest('.assignment-cell');
+    if (!targetCell || targetCell === fillSourceCell) {
+        return;
+    }
+
+    // Check if target is in the same row (same shift type)
+    const sourceRow = fillSourceCell.closest('tr');
+    const targetRow = targetCell.closest('tr');
+
+    if (sourceRow !== targetRow) {
+        // Different shift type - not allowed
+        return;
+    }
+
+    // Check if target is to the right of source (future dates)
+    const sourceCells = Array.from(sourceRow.querySelectorAll('.assignment-cell'));
+    const sourceIndex = sourceCells.indexOf(fillSourceCell);
+    const targetIndex = sourceCells.indexOf(targetCell);
+
+    if (targetIndex <= sourceIndex) {
+        // Can't fill backwards
+        return;
+    }
+
+    // Build range of cells to fill
+    fillTargetCells = sourceCells.slice(sourceIndex + 1, targetIndex + 1);
+
+    // Visual feedback: add preview class
+    sourceCells.forEach(cell => cell.classList.remove('fill-preview'));
+    fillTargetCells.forEach(cell => cell.classList.add('fill-preview'));
+}
+
+/**
+ * End fill drag operation
+ */
+function handleFillDragEnd(event) {
+    if (!fillDragActive) return;
+
+    document.removeEventListener('mousemove', handleFillDragMove);
+    document.removeEventListener('mouseup', handleFillDragEnd);
+    document.body.style.cursor = '';
+
+    fillSourceCell.classList.remove('selected');
+
+    if (fillTargetCells.length > 0) {
+        // Show fill options modal
+        showFillOptionsModal();
+    } else {
+        // No valid targets - cleanup
+        resetFillState();
+    }
+
+    fillDragActive = false;
+}
+
+/**
+ * Show the fill options modal
+ */
+function showFillOptionsModal() {
+    const modal = document.getElementById('fillOptionsModal');
+
+    // Populate source info
+    const sourceDate = fillSourceCell.dataset.date;
+    const sourceShiftType = fillSourceCell.closest('tr').querySelector('th').textContent.trim();
+    document.getElementById('fillSourceInfo').textContent = `${sourceShiftType} on ${sourceDate}`;
+
+    // Populate target info
+    const targetDates = fillTargetCells.map(cell => cell.dataset.date).join(', ');
+    document.getElementById('fillTargetInfo').textContent = `${fillTargetCells.length} days: ${targetDates}`;
+
+    // Check if source has Program link
+    const hasProgram = fillSourceCell.dataset.originalProgramId;
+    const programOption = document.querySelector('.fill-option-item[data-mode="program"]');
+    if (hasProgram) {
+        programOption.style.display = 'block';
+    } else {
+        programOption.style.display = 'none';
+    }
+
+    // Reset selection
+    selectedFillMode = null;
+    document.querySelectorAll('.fill-option-item').forEach(item => item.classList.remove('selected'));
+    document.getElementById('applyFillBtn').disabled = true;
+
+    modal.classList.add('show');
+}
+
+/**
+ * Close fill options modal
+ */
+function closeFillOptions() {
+    const modal = document.getElementById('fillOptionsModal');
+    modal.classList.remove('show');
+    resetFillState();
+}
+
+/**
+ * Reset fill state
+ */
+function resetFillState() {
+    fillTargetCells.forEach(cell => cell.classList.remove('fill-preview'));
+    fillTargetCells = [];
+    fillSourceCell = null;
+    fillSourceInstance = null;
+    selectedFillMode = null;
+}
+
+/**
+ * Select a fill option
+ */
+function selectFillOption(mode) {
+    selectedFillMode = mode;
+
+    // Visual feedback
+    document.querySelectorAll('.fill-option-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    document.querySelector(`.fill-option-item[data-mode="${mode}"]`).classList.add('selected');
+
+    // Enable apply button
+    document.getElementById('applyFillBtn').disabled = false;
+}
+
+/**
+ * Apply the selected fill operation
+ */
+async function applyFill() {
+    if (!selectedFillMode || fillTargetCells.length === 0) {
+        return;
+    }
+
+    const targetDates = fillTargetCells.map(cell => cell.dataset.date);
+    const targetInstanceIds = fillTargetCells.map(cell => cell.dataset.instanceId).filter(id => id);
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=FillRange', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                sourceInstanceId: parseInt(fillSourceInstance),
+                targetDates: targetDates,
+                targetInstanceIds: targetInstanceIds.map(id => parseInt(id)),
+                mode: selectedFillMode
+            })
+        });
+
+        if (!response.ok) {
+            // Handler might not exist yet - show message
+            alert('Fill functionality will be available once the backend handler is implemented.');
+            closeFillOptions();
+            return;
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            closeFillOptions();
+            // Reload to show changes
+            location.reload();
+        } else {
+            alert('Failed to fill range: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error filling range:', error);
+        alert('Fill functionality will be available once the backend handler is implemented.');
+        closeFillOptions();
+    }
+}
+
+// Initialize fill handles on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.fill-handle').forEach(handle => {
+        handle.addEventListener('mousedown', (e) => startFillDrag(e, handle));
+    });
+});
+
+// ============= RADAR MODE =============
+
+let radarModeActive = false;
+let radarConflicts = [];
+
+/**
+ * Toggle Radar Mode on/off
+ */
+async function toggleRadarMode() {
+    radarModeActive = !radarModeActive;
+
+    const radarBtn = document.getElementById('radarToggle');
+
+    if (radarModeActive) {
+        radarBtn.classList.add('active');
+        await loadConflicts();
+        applyRadarHighlights();
+    } else {
+        radarBtn.classList.remove('active');
+        clearRadarHighlights();
+    }
+}
+
+/**
+ * Load conflicts from the server
+ */
+async function loadConflicts() {
+    try {
+        const response = await fetch('/Calendar/Table?handler=GetConflicts', {
+            method: 'GET',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        });
+
+        const data = await response.json();
+        radarConflicts = data.conflicts || [];
+
+        console.log('Loaded conflicts:', radarConflicts);
+    } catch (error) {
+        console.error('Error loading conflicts:', error);
+        radarConflicts = [];
+    }
+}
+
+/**
+ * Apply radar highlights to cells
+ */
+function applyRadarHighlights() {
+    // Clear any existing highlights first
+    clearRadarHighlights();
+
+    radarConflicts.forEach(conflict => {
+        // Find the cell matching this conflict
+        const cells = document.querySelectorAll('.assignment-cell');
+        cells.forEach(cell => {
+            const cellShiftType = cell.dataset.shiftType;
+            const cellDate = cell.dataset.date;
+
+            if (cellShiftType == conflict.shiftTypeId && cellDate === conflict.date) {
+                // Apply conflict class
+                if (conflict.type === 'underfilled') {
+                    cell.classList.add('underfilled');
+                    cell.title = conflict.message;
+
+                    // Add badge
+                    const badge = document.createElement('span');
+                    badge.className = 'radar-badge';
+                    badge.textContent = `⚠️ ${conflict.filled}/${conflict.required}`;
+                    badge.title = conflict.message;
+
+                    // Insert badge into shift-actions-row
+                    const actionsRow = cell.querySelector('.shift-actions-row');
+                    if (actionsRow && !actionsRow.querySelector('.radar-badge')) {
+                        actionsRow.insertBefore(badge, actionsRow.firstChild);
+                    }
+                } else if (conflict.type === 'overfilled') {
+                    cell.classList.add('overfilled');
+                    cell.title = conflict.message;
+
+                    // Add error badge
+                    const badge = document.createElement('span');
+                    badge.className = 'radar-badge error';
+                    badge.textContent = `❌ Overstaffed`;
+                    badge.title = conflict.message;
+
+                    const actionsRow = cell.querySelector('.shift-actions-row');
+                    if (actionsRow && !actionsRow.querySelector('.radar-badge')) {
+                        actionsRow.insertBefore(badge, actionsRow.firstChild);
+                    }
+                }
+            }
+        });
+    });
+}
+
+/**
+ * Clear all radar highlights
+ */
+function clearRadarHighlights() {
+    document.querySelectorAll('.assignment-cell').forEach(cell => {
+        cell.classList.remove('underfilled', 'overfilled');
+        cell.title = '';
+    });
+
+    document.querySelectorAll('.radar-badge').forEach(badge => {
+        badge.remove();
+    });
+}
+
 </script>
 
+<!-- Roster Dock Sidebar -->
+<div id="rosterDock" class="roster-dock">
+    <div class="roster-dock-header">
+        <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">
+            👥 Roster
+        </h3>
+        <button onclick="toggleRosterDock()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">
+            ×
+        </button>
+    </div>
+
+    <div class="roster-dock-search">
+        <input type="text" id="rosterSearch" placeholder="Search employees..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.375rem; font-size: 0.875rem;">
+    </div>
+
+    <div class="roster-dock-content">
+        <div id="rosterEmployeeList">
+            <!-- Employee items will be dynamically populated -->
+            <div style="padding: 2rem; text-align: center; color: #9ca3af;">
+                <p>Loading employees...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Roster Dock Toggle Button (Fixed Position) -->
+<button id="rosterDockToggle" class="roster-toggle-btn" onclick="toggleRosterDock()" title="Open Roster Dock">
+    ☰ Roster
+</button>
+
+<!-- Radar Mode Toggle Button (Fixed Position) -->
+<button id="radarToggle" class="radar-toggle-btn" onclick="toggleRadarMode()" title="Toggle Radar Mode - Highlight understaffed and overstaffed shifts">
+    📡 Radar
+</button>
+
 @Html.AntiForgeryToken()
+
+@* Ops Console Scheduler JavaScript *@
+<script src="~/js/roster-dock.js" asp-append-version="true"></script>
+<script src="~/js/calendar-radar.js" asp-append-version="true"></script>
+<script src="~/js/calendar-fill-handle.js" asp-append-version="true"></script>

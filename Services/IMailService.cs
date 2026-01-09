@@ -114,4 +114,24 @@ public interface IMailService
     /// </summary>
     Task<bool> SendAccessRequestSubmittedEmailAsync(string recipientEmail, string ownerName,
         string requesterName, string requesterEmail, string companyName);
+
+    // ============= Ops Console Scheduler: New Email Templates =============
+
+    /// <summary>
+    /// Send trainee added notification email.
+    /// </summary>
+    Task<bool> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
+        string traineeName, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime);
+
+    /// <summary>
+    /// Send slot removed notification email (staffing decreased).
+    /// </summary>
+    Task<bool> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
+        string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime, string reason);
+
+    /// <summary>
+    /// Send shift modified notification email (time or name changes).
+    /// </summary>
+    Task<bool> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
+        string shiftTypeName, DateOnly shiftDate, string changeDescription);
 }

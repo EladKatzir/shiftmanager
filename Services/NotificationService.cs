@@ -32,6 +32,17 @@ public interface INotificationService
 
     // Phase 6 Extension: Day-Before Reminders
     Task SendDayBeforeRemindersAsync(int userId, int companyId);
+
+    // Ops Console Scheduler: Trainee Notifications
+    Task CreateTraineeAddedNotificationAsync(int primaryUserId, int traineeUserId, string traineeName, string shiftTypeName, DateOnly date, TimeOnly start, TimeOnly end);
+    Task CreateTraineeChangedNotificationAsync(int primaryUserId, int oldTraineeUserId, int newTraineeUserId, string oldTraineeName, string newTraineeName, string shiftTypeName, DateOnly date);
+    Task CreateTraineeRemovedNotificationAsync(int primaryUserId, int traineeUserId, string traineeName, string shiftTypeName, DateOnly date);
+
+    // Ops Console Scheduler: Staffing Change Notifications
+    Task CreateSlotRemovedNotificationAsync(int affectedUserId, string shiftTypeName, DateOnly date, TimeOnly start, TimeOnly end, string reason);
+
+    // Ops Console Scheduler: Shift Modification Notifications
+    Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription);
 }
 
 public class NotificationService : INotificationService
@@ -1009,6 +1020,126 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending day-before reminders to user {UserId} in company {CompanyId}", userId, companyId);
+        }
+    }
+
+    // ============= Ops Console Scheduler: Trainee Notifications =============
+
+    public async Task CreateTraineeAddedNotificationAsync(int primaryUserId, int traineeUserId, string traineeName, string shiftTypeName, DateOnly date, TimeOnly start, TimeOnly end)
+    {
+        var title = "Trainee Added to Your Shift";
+        var message = $"{traineeName} has been added as a trainee to your {shiftTypeName} shift on {date:MMM dd, yyyy} ({start:HH:mm} - {end:HH:mm})";
+
+        await CreateNotificationAsync(primaryUserId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(primaryUserId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _mailService.SendTraineeAddedEmailAsync(
+                    user.Email,
+                    user.DisplayName,
+                    traineeName,
+                    shiftTypeName,
+                    date,
+                    start,
+                    end);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending trainee added email to user {UserId}", primaryUserId);
+            // Don't throw - email failure should not block notification creation
+        }
+    }
+
+    public async Task CreateTraineeChangedNotificationAsync(int primaryUserId, int oldTraineeUserId, int newTraineeUserId, string oldTraineeName, string newTraineeName, string shiftTypeName, DateOnly date)
+    {
+        var title = "Trainee Changed on Your Shift";
+        var message = $"Your trainee for {shiftTypeName} on {date:MMM dd, yyyy} has been changed from {oldTraineeName} to {newTraineeName}";
+
+        await CreateNotificationAsync(primaryUserId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+
+        // Optionally notify old and new trainees
+        await CreateNotificationAsync(oldTraineeUserId, NotificationType.ShiftRemoved, "Trainee Assignment Removed", $"You are no longer a trainee for {shiftTypeName} on {date:MMM dd, yyyy}", null, "ShiftAssignment");
+        await CreateNotificationAsync(newTraineeUserId, NotificationType.ShiftAdded, "New Trainee Assignment", $"You have been assigned as a trainee for {shiftTypeName} on {date:MMM dd, yyyy}", null, "ShiftAssignment");
+    }
+
+    public async Task CreateTraineeRemovedNotificationAsync(int primaryUserId, int traineeUserId, string traineeName, string shiftTypeName, DateOnly date)
+    {
+        var title = "Trainee Removed from Your Shift";
+        var message = $"{traineeName} has been removed as a trainee from your {shiftTypeName} shift on {date:MMM dd, yyyy}";
+
+        await CreateNotificationAsync(primaryUserId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+
+        // Notify trainee
+        await CreateNotificationAsync(traineeUserId, NotificationType.ShiftRemoved, "Trainee Assignment Removed", $"You are no longer a trainee for {shiftTypeName} on {date:MMM dd, yyyy}", null, "ShiftAssignment");
+    }
+
+    // ============= Ops Console Scheduler: Staffing Change Notifications =============
+
+    public async Task CreateSlotRemovedNotificationAsync(int affectedUserId, string shiftTypeName, DateOnly date, TimeOnly start, TimeOnly end, string reason)
+    {
+        var title = "Shift Assignment Removed";
+        var message = $"Your {shiftTypeName} shift on {date:MMM dd, yyyy} ({start:HH:mm} - {end:HH:mm}) has been removed. Reason: {reason}";
+
+        await CreateNotificationAsync(affectedUserId, NotificationType.ShiftRemoved, title, message, null, "ShiftAssignment");
+
+        // Send email notification
+        try
+        {
+            var user = await _db.Users.FindAsync(affectedUserId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _mailService.SendSlotRemovedEmailAsync(
+                    user.Email,
+                    user.DisplayName,
+                    shiftTypeName,
+                    date,
+                    start,
+                    end,
+                    reason);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending slot removed email to user {UserId}", affectedUserId);
+            // Don't throw - email failure should not block notification creation
+        }
+    }
+
+    // ============= Ops Console Scheduler: Shift Modification Notifications =============
+
+    public async Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription)
+    {
+        var title = "Shift Details Modified";
+        var message = $"Your {shiftTypeName} shift on {date:MMM dd, yyyy} has been modified: {changeDescription}";
+
+        foreach (var userId in assignedUserIds)
+        {
+            await CreateNotificationAsync(userId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+
+            // Send email notification
+            try
+            {
+                var user = await _db.Users.FindAsync(userId);
+                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                {
+                    await _mailService.SendShiftModifiedEmailAsync(
+                        user.Email,
+                        user.DisplayName,
+                        shiftTypeName,
+                        date,
+                        changeDescription);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending shift modified email to user {UserId}", userId);
+                // Don't throw - email failure should not block notification creation
+            }
         }
     }
 }
