@@ -798,6 +798,12 @@ function getCommandPalettePages() {
     { title: 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
     { title: 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
 
+    // Ops Console Scheduler (NEW)
+    { title: 'Schedule Table', subtitle: 'Excel-density operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Blueprints', subtitle: 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
+    { title: 'Programs', subtitle: 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
+    { title: 'Master Programs', subtitle: 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
+
     // Employee Pages
     { title: 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
     { title: 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
