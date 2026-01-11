@@ -35,7 +35,7 @@
 
         cells.forEach(cell => {
             // Only add fill handle to cells that have at least one assignment
-            const hasAssignments = cell.querySelector('.assignment-slot:not(.assignment-slot-empty)');
+            const hasAssignments = cell.querySelector('.assignment-slot:not(.unassigned)');
 
             if (hasAssignments && !cell.querySelector('.fill-handle')) {
                 addFillHandle(cell);
