@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
@@ -6,6 +7,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages;
 
+[Authorize]
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;

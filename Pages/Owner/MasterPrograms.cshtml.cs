@@ -9,8 +9,9 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Master Programs - Manage collections of Programs (complete weekly schedules).
 /// A MasterProgram is a convenience wrapper for applying multiple Programs at once.
+/// ✅ P1-3: Expanded access from Owner-only to Manager+Director+Owner
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "IsManagerOrAdmin")]
 public class MasterProgramsModel : PageModel
 {
     private readonly IMasterProgramService _masterProgramService;

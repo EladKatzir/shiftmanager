@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.My;
 
+[Authorize]
 public class ProfileModel : PageModel
 {
     private readonly AppDbContext _db;

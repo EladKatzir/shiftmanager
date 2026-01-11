@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -6,6 +7,7 @@ namespace ShiftManager.Pages;
 /// <summary>
 /// Phase 8.5: Fixed infinite redirect loop by expanding protected paths and removing query parameters
 /// </summary>
+[AllowAnonymous]
 public class AccessDeniedModel : PageModel
 {
     private readonly ILogger<AccessDeniedModel> _logger;

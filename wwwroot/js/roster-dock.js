@@ -110,7 +110,18 @@
         employeeList.innerHTML = '<p class="loading-text">Loading employees...</p>';
 
         try {
-            const response = await fetch('/Calendar/Table?handler=GetRosterEmployees', {
+            // Get current date range from the table
+            const table = document.querySelector('.shift-table');
+            const startDate = table?.dataset.startDate;
+            const endDate = table?.dataset.endDate;
+
+            // Build URL with date range parameters
+            let url = '/Calendar/Table?handler=GetRosterEmployees';
+            if (startDate && endDate) {
+                url += `&startDate=${startDate}&endDate=${endDate}`;
+            }
+
+            const response = await fetch(url, {
                 method: 'GET',
                 credentials: 'same-origin'
             });
@@ -239,7 +250,7 @@
         });
 
         // Attach drop zones
-        const dropZones = document.querySelectorAll('.add-assignment-btn, .assignment-slot-empty');
+        const dropZones = document.querySelectorAll('.add-assignment-btn, .assignment-slot.unassigned');
 
         dropZones.forEach(zone => {
             zone.addEventListener('dragover', handleDragOver);
@@ -302,6 +313,7 @@
      */
     async function handleDrop(event) {
         event.preventDefault();
+        event.stopPropagation(); // Prevent onclick handler from firing
         event.currentTarget.classList.remove('drag-over');
 
         if (!isDragging) return;
@@ -310,31 +322,23 @@
             const data = JSON.parse(event.dataTransfer.getData('text/plain'));
             const userId = parseInt(data.userId, 10);
 
-            // Find the shift instance ID from the cell
-            const cell = event.currentTarget.closest('.assignment-cell');
-            if (!cell) {
-                console.error('[Roster Dock] Could not find assignment cell');
-                return;
-            }
-
-            const shiftInstanceId = parseInt(cell.dataset.instanceId, 10);
-
-            if (!shiftInstanceId) {
-                console.error('[Roster Dock] Invalid shift instance ID');
-                return;
-            }
-
-            // Find the assignment slot index
+            // Get the assignment ID from the dropped slot
             const slot = event.currentTarget.closest('.assignment-slot');
-            let slotIndex = 0;
 
-            if (slot) {
-                const allSlots = cell.querySelectorAll('.assignment-slot');
-                slotIndex = Array.from(allSlots).indexOf(slot);
+            if (!slot) {
+                console.error('[Roster Dock] Could not find assignment slot');
+                return;
+            }
+
+            const assignmentId = parseInt(slot.dataset.assignmentId, 10);
+
+            if (!assignmentId) {
+                console.error('[Roster Dock] Invalid assignment ID');
+                return;
             }
 
             // Call the API to assign the user
-            await assignUserToSlot(shiftInstanceId, userId, slotIndex);
+            await assignUserToSlot(assignmentId, userId);
 
         } catch (error) {
             console.error('[Roster Dock] Error handling drop:', error);
@@ -347,7 +351,7 @@
     /**
      * Assign user to shift slot via API
      */
-    async function assignUserToSlot(shiftInstanceId, userId, slotIndex) {
+    async function assignUserToSlot(assignmentId, userId) {
         try {
             const response = await fetch('/Calendar/Table?handler=AssignUserToSlot', {
                 method: 'POST',
@@ -357,9 +361,8 @@
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
-                    shiftInstanceId,
-                    userId,
-                    slotIndex
+                    assignmentId,
+                    userId
                 })
             });
 
@@ -389,7 +392,7 @@
      * Highlight or remove highlights from drop zones
      */
     function highlightDropZones(highlight) {
-        const dropZones = document.querySelectorAll('.add-assignment-btn, .assignment-slot-empty');
+        const dropZones = document.querySelectorAll('.add-assignment-btn, .assignment-slot.unassigned');
 
         dropZones.forEach(zone => {
             if (highlight) {

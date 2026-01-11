@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ namespace ShiftManager.Pages.My;
 /// <summary>
 /// Phase 6: User settings page for managing notification preferences
 /// </summary>
+[Authorize]
 public class SettingsModel : PageModel
 {
     private readonly AppDbContext _db;

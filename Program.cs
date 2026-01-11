@@ -450,3 +450,6 @@ app.MapHealthChecks("/health");  // Liveness probe - is the app alive?
 app.MapHealthChecks("/ready");   // Readiness probe - is the app ready to receive traffic?
 
 app.Run();
+
+// Make Program accessible to integration tests
+public partial class Program { }

@@ -11,8 +11,9 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Blueprints - Manage ShiftTypes (shift definitions) with bilingual names.
 /// "Blueprints" are the foundational templates that Programs reference.
+/// ✅ P1-1: Expanded access from Owner-only to Manager+Director+Owner
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "IsManagerOrAdmin")]
 public class BlueprintsModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -53,10 +54,12 @@ public class BlueprintsModel : PageModel
 
         var companyId = _tenantResolver.GetCurrentTenantId();
 
-        ShiftTypes = await _db.ShiftTypes
+        var allShiftTypes = await _db.ShiftTypes
             .Where(st => st.CompanyId == companyId)
-            .OrderBy(st => st.SortOrder)
             .ToListAsync();
+
+        // Sort by SortOrder in memory (it's a [NotMapped] computed property)
+        ShiftTypes = allShiftTypes.OrderBy(st => st.SortOrder).ToList();
     }
 
     /// <summary>
@@ -222,9 +225,46 @@ public class BlueprintsModel : PageModel
     }
 
     /// <summary>
-    /// Deletes a ShiftType if not referenced by Programs.
+    /// ✅ P1-4: Check ShiftType usage count (for deletion warning modal)
     /// </summary>
-    public async Task<IActionResult> OnPostDeleteShiftTypeAsync(int shiftTypeId)
+    public async Task<IActionResult> OnGetCheckShiftTypeUsageAsync(int shiftTypeId)
+    {
+        var companyId = _tenantResolver.GetCurrentTenantId();
+
+        var shiftType = await _db.ShiftTypes
+            .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
+
+        if (shiftType == null)
+        {
+            return new JsonResult(new { error = "Shift type not found" });
+        }
+
+        // Count usage in Programs
+        var programCount = await _db.ShiftPrograms
+            .Where(p => p.ShiftTypeId == shiftTypeId)
+            .CountAsync();
+
+        // Count usage in ShiftInstances
+        var instanceCount = await _db.ShiftInstances
+            .Where(si => si.ShiftTypeId == shiftTypeId)
+            .CountAsync();
+
+        return new JsonResult(new
+        {
+            shiftTypeName = shiftType.Name,
+            programCount,
+            instanceCount,
+            canDelete = true // Always allow deletion after confirmation (P1-4 requirement)
+        });
+    }
+
+    /// <summary>
+    /// ✅ P1-4: Deletes a ShiftType with confirmation (allows deletion even if in use)
+    /// Deletes a ShiftType if not referenced by Programs.
+    /// Allows deletion of ShiftTypes used by ShiftInstances after explicit confirmation.
+    /// Historical shifts remain stable (ShiftInstance records are NOT deleted).
+    /// </summary>
+    public async Task<IActionResult> OnPostDeleteShiftTypeAsync(int shiftTypeId, bool confirmed = false)
     {
         try
         {
@@ -239,7 +279,7 @@ public class BlueprintsModel : PageModel
                 return RedirectToPage(new { error = "Shift type not found" });
             }
 
-            // Check if used by Programs
+            // Check if used by Programs (still prevent deletion)
             var usedByPrograms = await _db.ShiftPrograms
                 .AnyAsync(p => p.ShiftTypeId == shiftTypeId);
 
@@ -247,30 +287,40 @@ public class BlueprintsModel : PageModel
             {
                 return RedirectToPage(new
                 {
-                    error = $"Cannot delete '{shiftType.Name}' - it is used by one or more Programs"
+                    error = $"Cannot delete '{shiftType.Name}' - it is used by one or more Programs. Please remove it from Programs first."
                 });
             }
 
-            // Check if used by ShiftInstances
-            var usedByInstances = await _db.ShiftInstances
-                .AnyAsync(si => si.ShiftTypeId == shiftTypeId);
+            // ✅ P1-4: Check if used by ShiftInstances (allow deletion with confirmation)
+            var instanceCount = await _db.ShiftInstances
+                .Where(si => si.ShiftTypeId == shiftTypeId)
+                .CountAsync();
 
-            if (usedByInstances)
+            if (instanceCount > 0 && !confirmed)
             {
+                // Should not reach here - frontend modal should handle confirmation
                 return RedirectToPage(new
                 {
-                    error = $"Cannot delete '{shiftType.Name}' - it is used by existing shift instances"
+                    error = $"Please confirm deletion of '{shiftType.Name}' which is used by {instanceCount} shift instances"
                 });
             }
 
+            // ✅ P1-4: Delete the ShiftType (ShiftInstances will keep their ShiftTypeId reference)
+            // Note: ShiftInstance records are NOT deleted (historical data preserved)
             _db.ShiftTypes.Remove(shiftType);
             await _db.SaveChangesAsync();
 
             // Audit log
+            await _auditLogService.LogAsync(
+                "ShiftTypeDeleted",
+                "ShiftType",
+                shiftTypeId,
+                $"Deleted ShiftType '{shiftType.Name}' (Key: {shiftType.Key}). " +
+                (instanceCount > 0 ? $"Used by {instanceCount} shift instances (preserved)." : "No shift instances affected."));
 
             _logger.LogInformation(
-                "Deleted ShiftType {Key} from Company {CompanyId}",
-                shiftType.Key, companyId);
+                "Deleted ShiftType {Key} from Company {CompanyId}. Used by {InstanceCount} shift instances.",
+                shiftType.Key, companyId, instanceCount);
 
             return RedirectToPage(new { success = $"Shift type '{shiftType.Name}' deleted" });
         }
@@ -278,6 +328,89 @@ public class BlueprintsModel : PageModel
         {
             _logger.LogError(ex, "Failed to delete ShiftType");
             return RedirectToPage(new { error = "Failed to delete shift type" });
+        }
+    }
+
+    /// <summary>
+    /// MIGRATION HELPER: Populates NameKey for existing ShiftTypes that don't have one.
+    /// This is a one-time operation after the OpsConsoleScheduler migration.
+    /// </summary>
+    public async Task<IActionResult> OnPostPopulateNameKeysAsync()
+    {
+        try
+        {
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+
+            var shiftTypes = await _db.ShiftTypes
+                .Where(st => st.CompanyId == companyId)
+                .ToListAsync();
+
+            int updated = 0;
+
+            foreach (var st in shiftTypes)
+            {
+                string? nameKey = null;
+
+                // Skip if already has NameKey
+                if (!string.IsNullOrWhiteSpace(st.NameKey))
+                    continue;
+
+                // Assign NameKey based on Key
+                switch (st.Key)
+                {
+                    case ShiftType.KEY_MORNING:
+                        nameKey = "ShiftType_MORNING_Name";
+                        break;
+                    case ShiftType.KEY_MIDDLE:
+                        nameKey = "ShiftType_MIDDLE_Name";
+                        break;
+                    case ShiftType.KEY_AFTERNOON:
+                    case ShiftType.KEY_NOON:
+                        nameKey = "ShiftType_AFTERNOON_Name";
+                        break;
+                    case ShiftType.KEY_NIGHT:
+                        nameKey = "ShiftType_NIGHT_Name";
+                        break;
+                    case ShiftType.KEY_EVENING:
+                        nameKey = "ShiftType_EVENING_Name";
+                        break;
+                    case ShiftType.KEY_OFFLINE:
+                        nameKey = "ShiftType_OFFLINE_Name";
+                        break;
+                    default:
+                        // Custom shift type
+                        if (st.Key.StartsWith("CUSTOM_"))
+                        {
+                            nameKey = $"ShiftType_CUSTOM_{st.Id}_Name";
+                        }
+                        break;
+                }
+
+                if (!string.IsNullOrEmpty(nameKey))
+                {
+                    st.NameKey = nameKey;
+                    updated++;
+                    _logger.LogInformation(
+                        "Populated NameKey for ShiftType {Id} (Key={Key}): {NameKey}",
+                        st.Id, st.Key, nameKey);
+                }
+            }
+
+            if (updated > 0)
+            {
+                await _db.SaveChangesAsync();
+                return RedirectToPage(new { success = $"Populated NameKey for {updated} shift types" });
+            }
+            else
+            {
+                return RedirectToPage(new { success = "All shift types already have NameKey values" });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to populate NameKeys");
+            return RedirectToPage(new { error = "Failed to populate NameKeys" });
         }
     }
 }

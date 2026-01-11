@@ -110,9 +110,25 @@ public class TableModel : PageModel
             Dates.Add(date);
         }
 
-        // Load shift types for this company using cache
-        // Sort by start time (chronological order), with Offline always last
-        ShiftTypes = (await _shiftTypeCache.GetShiftTypesAsync(companyId))
+        // Load shift instances for date range FIRST to determine which shift types to show
+        var instances = await _db.ShiftInstances
+            .Where(si => si.WorkDate >= StartDate && si.WorkDate <= EndDate)
+            .ToListAsync();
+
+        // Get shift type IDs that have instances in this date range
+        var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
+
+        // Get shift type IDs from active programs
+        var activePrograms = await _programService.GetCompanyProgramsAsync(companyId, includeInactive: false);
+        var shiftTypeIdsFromPrograms = activePrograms.Select(p => p.ShiftTypeId).Distinct().ToHashSet();
+
+        // Combine: show shift types that have instances OR are in active programs
+        var relevantShiftTypeIds = shiftTypeIdsWithInstances.Union(shiftTypeIdsFromPrograms).ToHashSet();
+
+        // Load only relevant shift types
+        var allShiftTypes = await _shiftTypeCache.GetShiftTypesAsync(companyId);
+        ShiftTypes = allShiftTypes
+            .Where(st => relevantShiftTypeIds.Contains(st.Id))
             .OrderBy(st => st.IsOffline ? 1 : 0) // Offline last
             .ThenBy(st => st.Start) // Then by start time (chronological)
             .ThenBy(st => st.CustomName ?? st.Name) // Then by name for same start time
@@ -132,12 +148,7 @@ public class TableModel : PageModel
             BusyUsersByDate[date] = busyForDate;
         }
 
-        // Load shift instances for date range
-        var instances = await _db.ShiftInstances
-            .Where(si => si.WorkDate >= StartDate && si.WorkDate <= EndDate)
-            .ToListAsync();
-
-        // Load all assignments for these instances (including trainee information)
+        // instances already loaded above - Load all assignments for these instances (including trainee information)
         var instanceIds = instances.Select(i => i.Id).ToList();
         var assignments = await _db.ShiftAssignments
             .Include(a => a.User)
@@ -1005,13 +1016,17 @@ public class TableModel : PageModel
 
     /// <summary>
     /// Get roster of employees with their availability status for the Roster Dock.
+    /// Checks availability across the entire date range being displayed.
     /// </summary>
-    public async Task<IActionResult> OnGetGetRosterEmployeesAsync()
+    public async Task<IActionResult> OnGetGetRosterEmployeesAsync(DateOnly? startDate = null, DateOnly? endDate = null)
     {
         try
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            // Use provided date range or default to current week
+            var start = startDate ?? StartDate;
+            var end = endDate ?? EndDate;
 
             // Get all employees for the company
             var employees = await _db.Users
@@ -1024,16 +1039,38 @@ public class TableModel : PageModel
                 })
                 .ToListAsync();
 
-            // Get busy status for today (for quick status indicators)
-            var busyInfo = await _busyUserService.GetBusyUsersAsync(today, TimeOnly.MinValue, TimeOnly.MaxValue);
+            // Check busy status across the entire date range
+            var employeeStatusMap = new Dictionary<int, (bool hasVacation, bool hasShift, bool hasChore)>();
 
-            var employeeList = employees.Select(emp => new
+            for (var date = start; date <= end; date = date.AddDays(1))
             {
-                id = emp.Id,
-                name = emp.DisplayName,
-                onVacation = busyInfo.ContainsKey(emp.Id) && busyInfo[emp.Id].HasVacation,
-                hasShift = busyInfo.ContainsKey(emp.Id) && busyInfo[emp.Id].HasShift,
-                hasChore = busyInfo.ContainsKey(emp.Id) && busyInfo[emp.Id].HasChore
+                var busyInfo = await _busyUserService.GetBusyUsersAsync(date, TimeOnly.MinValue, TimeOnly.MaxValue);
+
+                foreach (var emp in employees)
+                {
+                    if (busyInfo.ContainsKey(emp.Id))
+                    {
+                        var status = employeeStatusMap.GetValueOrDefault(emp.Id);
+                        employeeStatusMap[emp.Id] = (
+                            status.hasVacation || busyInfo[emp.Id].HasVacation,
+                            status.hasShift || busyInfo[emp.Id].HasShift,
+                            status.hasChore || busyInfo[emp.Id].HasChore
+                        );
+                    }
+                }
+            }
+
+            var employeeList = employees.Select(emp =>
+            {
+                var status = employeeStatusMap.GetValueOrDefault(emp.Id);
+                return new
+                {
+                    id = emp.Id,
+                    name = emp.DisplayName,
+                    onVacation = status.hasVacation,
+                    hasShift = status.hasShift,
+                    hasChore = status.hasChore
+                };
             }).ToList();
 
             return new JsonResult(new { employees = employeeList });
@@ -1329,15 +1366,40 @@ public class TableModel : PageModel
     /// Get conflicts and warnings for Radar Mode.
     /// Returns cells that are underfilled or have overlapping assignments.
     /// </summary>
-    public async Task<IActionResult> OnGetGetConflictsAsync()
+    public async Task<IActionResult> OnGetGetConflictsAsync(string? start, string? view)
     {
         try
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
+            // Calculate date range from query parameters (same logic as OnGetAsync)
+            string viewMode = view?.ToLower() ?? "week";
+            if (viewMode != "week" && viewMode != "2weeks" && viewMode != "month")
+            {
+                viewMode = "week";
+            }
+
+            DateOnly startDate;
+            if (string.IsNullOrEmpty(start))
+            {
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                startDate = today.AddDays(-(int)today.DayOfWeek); // Start of week (Sunday)
+            }
+            else
+            {
+                startDate = DateOnly.Parse(start);
+            }
+
+            DateOnly endDate = viewMode switch
+            {
+                "2weeks" => startDate.AddDays(13),
+                "month" => startDate.AddDays(DateTime.DaysInMonth(startDate.Year, startDate.Month) - 1),
+                _ => startDate.AddDays(6)
+            };
+
             // Get all instances in the current view
             var instances = await _db.ShiftInstances
-                .Where(si => si.WorkDate >= StartDate && si.WorkDate <= EndDate)
+                .Where(si => si.WorkDate >= startDate && si.WorkDate <= endDate)
                 .Include(si => si.ShiftType)
                 .ToListAsync();
 
@@ -1359,7 +1421,9 @@ public class TableModel : PageModel
                 {
                     conflicts.Add(new
                     {
+                        instanceId = instance.Id,
                         shiftTypeId = instance.ShiftTypeId,
+                        shiftTypeName = instance.ShiftType.Name,
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "underfilled",
                         severity = "warning",
@@ -1374,11 +1438,15 @@ public class TableModel : PageModel
                 {
                     conflicts.Add(new
                     {
+                        instanceId = instance.Id,
                         shiftTypeId = instance.ShiftTypeId,
+                        shiftTypeName = instance.ShiftType.Name,
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "overfilled",
                         severity = "error",
-                        message = $"Overstaffed: {filledCount}/{instance.StaffingRequired} filled"
+                        message = $"Overstaffed: {filledCount}/{instance.StaffingRequired} filled",
+                        filled = filledCount,
+                        required = instance.StaffingRequired
                     });
                 }
             }

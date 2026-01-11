@@ -1,0 +1,349 @@
+@page
+@model ShiftManager.Pages.Admin.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Admin Hub";
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = "Admin Hub", IsActive = true }
+})
+
+<div class="owner-panel-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">🎛️</span>
+            Admin Hub
+        </h1>
+        <p class="page-subtitle">Management & Configuration Center</p>
+    </div>
+
+    @* Quick Stats *@
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalUsers</div>
+                <div class="stat-label">Users</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalShifts</div>
+                <div class="stat-label">Shifts</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🧹</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalChores</div>
+                <div class="stat-label">Chores</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👤</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalAssignments</div>
+                <div class="stat-label">Assignments</div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsOwner || Model.IsDirector)
+    {
+        @* Company & Scope Section *@
+        <h2 class="section-title">
+            <span class="section-icon">🏢</span>
+            Company & Scope
+        </h2>
+        <div class="admin-tools-grid">
+            @if (Model.IsOwner)
+            {
+                <a href="/Admin/Companies" class="admin-tool-card">
+                    <div class="tool-icon">🏢</div>
+                    <div class="tool-content">
+                        <h3>Companies</h3>
+                        <p>Manage tenants, create/edit companies</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+
+                <a href="/Admin/Directors" class="admin-tool-card">
+                    <div class="tool-icon">👔</div>
+                    <div class="tool-content">
+                        <h3>Directors</h3>
+                        <p>Assign directors to companies</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.IsDirector)
+            {
+                <a href="/Director/CompanyFilter" class="admin-tool-card">
+                    <div class="tool-icon">🌐</div>
+                    <div class="tool-content">
+                        <h3>Company Context</h3>
+                        <p>Select active company for operations</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+        </div>
+    }
+
+    @* People Management *@
+    <h2 class="section-title">
+        <span class="section-icon">👥</span>
+        People Management
+    </h2>
+    <div class="admin-tools-grid">
+        <a href="/Admin/Users" class="admin-tool-card">
+            <div class="tool-icon">👥</div>
+            <div class="tool-content">
+                <h3>Users</h3>
+                <p>User CRUD, role assignment, approvals</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/MyTeam/Index" class="admin-tool-card">
+            <div class="tool-icon">🏅</div>
+            <div class="tool-content">
+                <h3>My Team</h3>
+                <p>View team members and schedules</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+    </div>
+
+    @* Scheduling Configuration *@
+    <h2 class="section-title">
+        <span class="section-icon">📅</span>
+        Scheduling Configuration
+    </h2>
+    <div class="admin-tools-grid">
+        <a href="/Owner/Blueprints" class="admin-tool-card">
+            <div class="tool-icon">📘</div>
+            <div class="tool-content">
+                <h3>Blueprints</h3>
+                <p>Manage shift type definitions</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Owner/Programs" class="admin-tool-card">
+            <div class="tool-icon">📅</div>
+            <div class="tool-content">
+                <h3>Programs</h3>
+                <p>Create weekly schedule templates</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Owner/MasterPrograms" class="admin-tool-card">
+            <div class="tool-icon">🎯</div>
+            <div class="tool-content">
+                <h3>Master Programs</h3>
+                <p>Advanced program configuration</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Admin/ShiftTypes" class="admin-tool-card">
+            <div class="tool-icon">🕒</div>
+            <div class="tool-content">
+                <h3>Shift Types</h3>
+                <p>Configure shift parameters</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Admin/Config" class="admin-tool-card">
+            <div class="tool-icon">⚙️</div>
+            <div class="tool-content">
+                <h3>Company Settings</h3>
+                <p>RestHours, WeeklyCap, OnDuty types</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+    </div>
+
+    @* Operations Management *@
+    <h2 class="section-title">
+        <span class="section-icon">📊</span>
+        Operations Management
+    </h2>
+    <div class="admin-tools-grid">
+        <a href="/Calendar/Table" class="admin-tool-card">
+            <div class="tool-icon">📋</div>
+            <div class="tool-content">
+                <h3>Shift Assignments</h3>
+                <p>Manage shift staffing with Roster Dock</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Assignments/Manage" class="admin-tool-card">
+            <div class="tool-icon">🗂️</div>
+            <div class="tool-content">
+                <h3>Assignment Manager</h3>
+                <p>Advanced assignment operations</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Public/Chores" class="admin-tool-card">
+            <div class="tool-icon">🧹</div>
+            <div class="tool-content">
+                <h3>Chores Management</h3>
+                <p>Chore calendar and assignments</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Public/OnDuty" class="admin-tool-card">
+            <div class="tool-icon">📌</div>
+            <div class="tool-content">
+                <h3>OnDuty Management</h3>
+                <p>On-call duty assignments</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Requests/Index" class="admin-tool-card">
+            <div class="tool-icon">📝</div>
+            <div class="tool-content">
+                <h3>Requests & Approvals</h3>
+                <p>Time-off and swap request management</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+    </div>
+
+    @* Monitoring & Analytics *@
+    <h2 class="section-title">
+        <span class="section-icon">📈</span>
+        Monitoring & Analytics
+    </h2>
+    <div class="admin-tools-grid">
+        <a href="/Admin/Analytics" class="admin-tool-card">
+            <div class="tool-icon">📊</div>
+            <div class="tool-content">
+                <h3>Analytics Dashboard</h3>
+                <p>Metrics, trends, insights</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Admin/AuditLog" class="admin-tool-card">
+            <div class="tool-icon">🔍</div>
+            <div class="tool-content">
+                <h3>Audit Log</h3>
+                <p>System audit trail and compliance</p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        @if (Model.IsOwner)
+        {
+            <a href="/Owner/SystemHealth" class="admin-tool-card">
+                <div class="tool-icon">🏥</div>
+                <div class="tool-content">
+                    <h3>System Health</h3>
+                    <p>Server status, performance monitoring</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+        }
+    </div>
+
+    @if (Model.IsOwner)
+    {
+        @* Advanced Tools (Owner Only) *@
+        <h2 class="section-title">
+            <span class="section-icon">🔧</span>
+            Advanced Tools
+        </h2>
+        <div class="admin-tools-grid">
+            <a href="/Owner/FeatureFlags" class="admin-tool-card">
+                <div class="tool-icon">🚩</div>
+                <div class="tool-content">
+                    <h3>Feature Flags</h3>
+                    <p>Toggle features on/off</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/EmailConfig" class="admin-tool-card">
+                <div class="tool-icon">📧</div>
+                <div class="tool-content">
+                    <h3>Email Configuration</h3>
+                    <p>SMTP settings and email templates</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/GriffinConfig" class="admin-tool-card">
+                <div class="tool-icon">🔐</div>
+                <div class="tool-content">
+                    <h3>Griffin ADFS</h3>
+                    <p>OAuth authentication configuration</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/LanguageManagement" class="admin-tool-card">
+                <div class="tool-icon">🌍</div>
+                <div class="tool-content">
+                    <h3>Language Management</h3>
+                    <p>Localization strings and translations</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/DatabaseConsole" class="admin-tool-card">
+                <div class="tool-icon">💾</div>
+                <div class="tool-content">
+                    <h3>Database Console</h3>
+                    <p>Direct database operations</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/Backup" class="admin-tool-card">
+                <div class="tool-icon">💼</div>
+                <div class="tool-content">
+                    <h3>Backups</h3>
+                    <p>Database backup management</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/DataLifecycle" class="admin-tool-card">
+                <div class="tool-icon">♻️</div>
+                <div class="tool-content">
+                    <h3>Data Lifecycle</h3>
+                    <p>Retention policies and cleanup</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Owner/GameConfig" class="admin-tool-card">
+                <div class="tool-icon">🎮</div>
+                <div class="tool-content">
+                    <h3>Game Configuration</h3>
+                    <p>Gamification settings and leaderboards</p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+        </div>
+    }
+</div>

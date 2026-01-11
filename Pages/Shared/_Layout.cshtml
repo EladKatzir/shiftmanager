@@ -122,9 +122,17 @@
                             <span><loc key="Home" /></span>
                         </a>
                     }
+                    else if (User.IsInRole("Director"))
+                    {
+                        @* Directors use Director Hub as home *@
+                        <a href="/Director/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director") || currentPath == "/" ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👔</span>
+                            <span>Director Hub</span>
+                        </a>
+                    }
                     else
                     {
-                        @* Non-Owner admins (Manager, Director) use new redesigned home *@
+                        @* Managers use new redesigned home *@
                         <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">🏠</span>
                             <span><loc key="Home" /></span>
@@ -141,6 +149,10 @@
                     <a href="/Admin/Analytics" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Analytics") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📊</span>
                         <span><loc key="Analytics" /></span>
+                    </a>
+                    <a href="/Admin/AuditLog" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/AuditLog") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🔍</span>
+                        <span><loc key="AuditLog" /></span>
                     </a>
 
                     @* Phase 8.2.2: Show different People links based on role *@
@@ -168,6 +180,11 @@
                             <span><loc key="Companies" /></span>
                         </a>
                     }
+
+                    <a href="/Admin/Index" class="app-sidebar-nav-item @(currentPath == "/Admin/Index" || currentPath == "/Admin" ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🎛️</span>
+                        <span>Admin Hub</span>
+                    </a>
 
                     <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/ShiftTypes") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">⚙️</span>

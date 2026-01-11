@@ -74,7 +74,15 @@
      */
     async function loadConflicts() {
         try {
-            const response = await fetch('/Calendar/Table?handler=GetConflicts', {
+            // Get current view parameters from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const start = urlParams.get('start') || '';
+            const view = urlParams.get('view') || 'week';
+
+            // Build API URL with parameters
+            const apiUrl = `/Calendar/Table?handler=GetConflicts&start=${encodeURIComponent(start)}&view=${encodeURIComponent(view)}`;
+
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 credentials: 'same-origin'
             });
@@ -130,7 +138,7 @@
         for (const cell of cells) {
             const instanceId = parseInt(cell.dataset.instanceId, 10);
             const cellDate = cell.dataset.date;
-            const shiftTypeId = parseInt(cell.dataset.shiftTypeId, 10);
+            const shiftTypeId = parseInt(cell.dataset.shiftType, 10);
 
             // Match by instance ID (most reliable)
             if (instanceId === conflict.instanceId) {

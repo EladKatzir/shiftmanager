@@ -110,10 +110,12 @@ public class ShiftProgramService : IShiftProgramService
             query = query.Where(p => p.IsActive);
         }
 
-        return await query
+        // Load data first, then sort by SortOrder (which is [NotMapped])
+        var programs = await query.ToListAsync();
+        return programs
             .OrderBy(p => p.ShiftType.SortOrder)
             .ThenBy(p => p.Name)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task UpdateProgramAsync(
@@ -249,7 +251,42 @@ public class ShiftProgramService : IShiftProgramService
                     existingInstance.OverriddenFields = null;
                     existingInstance.UpdatedAt = DateTime.UtcNow;
 
-                    _logger.LogDebug("Updated existing ShiftInstance {InstanceId} for {Date}", existingInstance.Id, date);
+                    // Update assignment slots to match new staffing requirement
+                    var existingAssignments = await _db.ShiftAssignments
+                        .Where(a => a.ShiftInstanceId == existingInstance.Id)
+                        .ToListAsync();
+
+                    var currentSlotCount = existingAssignments.Count;
+
+                    if (currentSlotCount < staffing)
+                    {
+                        // Add more empty slots
+                        for (int i = currentSlotCount; i < staffing; i++)
+                        {
+                            var assignment = new ShiftAssignment
+                            {
+                                CompanyId = program.CompanyId,
+                                ShiftInstanceId = existingInstance.Id,
+                                UserId = null,
+                                TraineeUserId = null,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            _db.ShiftAssignments.Add(assignment);
+                        }
+                    }
+                    else if (currentSlotCount > staffing)
+                    {
+                        // Remove excess unassigned slots (keep assigned ones)
+                        var unassignedSlots = existingAssignments
+                            .Where(a => !a.UserId.HasValue)
+                            .OrderByDescending(a => a.Id)
+                            .Take(currentSlotCount - staffing)
+                            .ToList();
+
+                        _db.ShiftAssignments.RemoveRange(unassignedSlots);
+                    }
+
+                    _logger.LogDebug("Updated existing ShiftInstance {InstanceId} for {Date} with {Staffing} slots", existingInstance.Id, date, staffing);
                     createdInstances.Add(existingInstance);
                 }
                 else
@@ -276,9 +313,25 @@ public class ShiftProgramService : IShiftProgramService
             };
 
             _db.ShiftInstances.Add(instance);
+            await _db.SaveChangesAsync(); // Save to get instance ID
+
+            // Create empty assignment slots based on staffing requirement
+            for (int i = 0; i < staffing; i++)
+            {
+                var assignment = new ShiftAssignment
+                {
+                    CompanyId = program.CompanyId,
+                    ShiftInstanceId = instance.Id,
+                    UserId = null, // Unassigned slot
+                    TraineeUserId = null,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _db.ShiftAssignments.Add(assignment);
+            }
+
             createdInstances.Add(instance);
 
-            _logger.LogDebug("Created ShiftInstance for {Date} with staffing {Staffing}", date, staffing);
+            _logger.LogDebug("Created ShiftInstance for {Date} with {Staffing} empty assignment slots", date, staffing);
         }
 
         if (createdInstances.Count > 0)

@@ -360,10 +360,36 @@ public class UsersModel : LocalizedPageModel
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
 
+        // ✅ P0-4/P0-5 FIX: If creating a Director, also create DirectorCompany mapping
+        if (targetRole == UserRole.Director)
+        {
+            var directorAssignment = new DirectorCompany
+            {
+                UserId = newUser.Id,
+                CompanyId = companyId,
+                GrantedBy = 0, // Will be set below after getting currentUserId
+                GrantedAt = DateTime.UtcNow,
+                IsDeleted = false
+            };
+
+            // Get current user ID for GrantedBy
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var grantedBy))
+            {
+                directorAssignment.GrantedBy = grantedBy;
+            }
+
+            _db.DirectorCompanies.Add(directorAssignment);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Created DirectorCompany mapping for new Director {DirectorId} to Company {CompanyId}",
+                newUser.Id, companyId);
+        }
+
         // Audit logging (RoleAssignmentAudit)
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(userIdClaim, out var currentUserId))
+        var userIdClaimForAudit = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaimForAudit, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim during user creation audit");
             currentUserId = 0; // Fallback for audit trail
@@ -507,6 +533,32 @@ public class UsersModel : LocalizedPageModel
 
             u.Role = targetRole;
             await _db.SaveChangesAsync();
+
+            // ✅ P0-4/P0-5 FIX: If changing TO Director, create DirectorCompany mapping
+            if (oldRole != UserRole.Director && targetRole == UserRole.Director)
+            {
+                // Check if DirectorCompany mapping already exists
+                var existingMapping = await _db.DirectorCompanies
+                    .FirstOrDefaultAsync(dc => dc.UserId == u.Id && dc.CompanyId == u.CompanyId && !dc.IsDeleted);
+
+                if (existingMapping == null)
+                {
+                    var directorAssignment = new DirectorCompany
+                    {
+                        UserId = u.Id,
+                        CompanyId = u.CompanyId,
+                        GrantedBy = currentUserId,
+                        GrantedAt = DateTime.UtcNow,
+                        IsDeleted = false
+                    };
+
+                    _db.DirectorCompanies.Add(directorAssignment);
+                    await _db.SaveChangesAsync();
+
+                    _logger.LogInformation("Created DirectorCompany mapping for user {UserId} promoted to Director for Company {CompanyId}",
+                        u.Id, u.CompanyId);
+                }
+            }
 
             // Audit logging
             _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit

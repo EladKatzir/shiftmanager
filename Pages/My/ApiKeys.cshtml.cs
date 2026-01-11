@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ShiftManager.Models.Api;
@@ -6,6 +7,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.My;
 
+[Authorize]
 public class ApiKeysModel : PageModel
 {
     private readonly IApiKeyService _apiKeyService;

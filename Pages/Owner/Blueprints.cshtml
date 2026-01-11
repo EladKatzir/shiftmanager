@@ -41,6 +41,20 @@
         </div>
     }
 
+    @* MIGRATION HELPER: Populate NameKeys (one-time after OpsConsoleScheduler migration) *@
+    @if (Model.ShiftTypes.Any(st => string.IsNullOrWhiteSpace(st.NameKey)))
+    {
+        <div class="alert alert-warning">
+            <strong>⚠️ Migration Required:</strong>
+            Some shift types are missing NameKey values (required for localization).
+            <form method="post" asp-page-handler="PopulateNameKeys" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-warning" style="margin-left: 10px;">
+                    🔧 Populate NameKeys Now
+                </button>
+            </form>
+        </div>
+    }
+
     @* Create New ShiftType Section *@
     <div class="feature-category">
         <h2>➕ Create New Shift Type</h2>
@@ -178,17 +192,11 @@
                                     🕐 Edit Time
                                 </button>
 
-                                @if (shiftType.Key.StartsWith("CUSTOM_"))
-                                {
-                                    <form method="post" asp-page-handler="DeleteShiftType"
-                                          style="display: inline;"
-                                          onsubmit="return confirm('Are you sure you want to delete this shift type?');">
-                                        <input type="hidden" name="shiftTypeId" value="@shiftType.Id" />
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            🗑️ Delete
-                                        </button>
-                                    </form>
-                                }
+                                @* ✅ P1-4: Allow deleting ALL shift types with usage warning *@
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmDeleteShiftType(@shiftType.Id, '@shiftType.Name')">
+                                    🗑️ Delete
+                                </button>
                             </td>
                         </tr>
                     }
@@ -251,6 +259,53 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeEditTimeModal()">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveShiftTimes()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ✅ P1-4: Delete Confirmation Modal *@
+<div id="deleteConfirmModal" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Shift Type Deletion</h3>
+                <button type="button" class="close-modal" onclick="closeDeleteConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteShiftTypeId" />
+                <input type="hidden" id="deleteShiftTypeName" />
+
+                <div id="deleteLoadingMessage" style="text-align: center; padding: 20px;">
+                    <p>Checking usage...</p>
+                </div>
+
+                <div id="deleteConfirmMessage" style="display: none;">
+                    <p><strong>Shift Type:</strong> <span id="deleteDisplayName"></span></p>
+
+                    <div id="programUsageWarning" style="display: none; background: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
+                        <p><strong>⚠️ Cannot Delete</strong></p>
+                        <p>This shift type is used by <strong><span id="programUsageCount"></span></strong> program(s).</p>
+                        <p>Please remove it from all programs first before deleting.</p>
+                    </div>
+
+                    <div id="instanceUsageWarning" style="display: none; background: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
+                        <p><strong>⚠️ Warning</strong></p>
+                        <p>This shift type is currently used by <strong><span id="instanceUsageCount"></span></strong> shift instance(s).</p>
+                        <p>Deleting it will <strong>NOT</strong> delete those shifts. Historical shift data will be preserved.</p>
+                    </div>
+
+                    <div id="noUsageMessage" style="display: none; background: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #28a745;">
+                        <p><strong>✓ Safe to Delete</strong></p>
+                        <p>This shift type is not currently in use.</p>
+                    </div>
+
+                    <p style="margin-top: 15px;"><strong>Are you sure you want to delete this shift type?</strong></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirmModal()">Cancel</button>
+                <button type="button" id="deleteConfirmButton" class="btn btn-danger" onclick="proceedDeleteShiftType()" style="display: none;">Confirm Delete</button>
             </div>
         </div>
     </div>
@@ -380,6 +435,114 @@
         document.getElementById('editTimeModal').addEventListener('click', function(e) {
             if (e.target === this) closeEditTimeModal();
         });
+
+        document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteConfirmModal();
+        });
+
+        // ✅ P1-4: Delete Confirmation Modal Functions
+        async function confirmDeleteShiftType(shiftTypeId, shiftTypeName) {
+            // Reset modal state
+            document.getElementById('deleteShiftTypeId').value = shiftTypeId;
+            document.getElementById('deleteShiftTypeName').value = shiftTypeName;
+            document.getElementById('deleteDisplayName').textContent = shiftTypeName;
+            document.getElementById('deleteLoadingMessage').style.display = 'block';
+            document.getElementById('deleteConfirmMessage').style.display = 'none';
+            document.getElementById('deleteConfirmButton').style.display = 'none';
+
+            // Show modal
+            document.getElementById('deleteConfirmModal').style.display = 'block';
+
+            try {
+                // Check usage via API
+                const response = await fetch(`/Owner/Blueprints?handler=CheckShiftTypeUsage&shiftTypeId=${shiftTypeId}`);
+                const result = await response.json();
+
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                    closeDeleteConfirmModal();
+                    return;
+                }
+
+                // Hide loading, show confirmation
+                document.getElementById('deleteLoadingMessage').style.display = 'none';
+                document.getElementById('deleteConfirmMessage').style.display = 'block';
+
+                // Show appropriate warning/message
+                const programCount = result.programCount || 0;
+                const instanceCount = result.instanceCount || 0;
+
+                if (programCount > 0) {
+                    // Cannot delete - used by programs
+                    document.getElementById('programUsageCount').textContent = programCount;
+                    document.getElementById('programUsageWarning').style.display = 'block';
+                    document.getElementById('instanceUsageWarning').style.display = 'none';
+                    document.getElementById('noUsageMessage').style.display = 'none';
+                    document.getElementById('deleteConfirmButton').style.display = 'none';
+                } else if (instanceCount > 0) {
+                    // Can delete with warning - used by shift instances
+                    document.getElementById('instanceUsageCount').textContent = instanceCount;
+                    document.getElementById('programUsageWarning').style.display = 'none';
+                    document.getElementById('instanceUsageWarning').style.display = 'block';
+                    document.getElementById('noUsageMessage').style.display = 'none';
+                    document.getElementById('deleteConfirmButton').style.display = 'block';
+                } else {
+                    // Safe to delete - not used anywhere
+                    document.getElementById('programUsageWarning').style.display = 'none';
+                    document.getElementById('instanceUsageWarning').style.display = 'none';
+                    document.getElementById('noUsageMessage').style.display = 'block';
+                    document.getElementById('deleteConfirmButton').style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Failed to check shift type usage', err);
+                alert('Failed to check shift type usage');
+                closeDeleteConfirmModal();
+            }
+        }
+
+        function closeDeleteConfirmModal() {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+        }
+
+        async function proceedDeleteShiftType() {
+            const shiftTypeId = document.getElementById('deleteShiftTypeId').value;
+            const shiftTypeName = document.getElementById('deleteShiftTypeName').value;
+
+            try {
+                // Create form and submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Owner/Blueprints?handler=DeleteShiftType';
+
+                // Add anti-forgery token
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token;
+                form.appendChild(tokenInput);
+
+                // Add shiftTypeId
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'shiftTypeId';
+                idInput.value = shiftTypeId;
+                form.appendChild(idInput);
+
+                // Add confirmation flag
+                const confirmInput = document.createElement('input');
+                confirmInput.type = 'hidden';
+                confirmInput.name = 'confirmed';
+                confirmInput.value = 'true';
+                form.appendChild(confirmInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            } catch (err) {
+                console.error('Failed to delete shift type', err);
+                alert('Failed to delete shift type');
+            }
+        }
     </script>
 }
 

@@ -12,8 +12,9 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Programs - Manage weekly schedule templates (Programs) and generate shift instances.
 /// Programs define WHEN a specific shift type runs each week.
+/// ✅ P1-2: Expanded access from Owner-only to Manager+Director+Owner
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "IsManagerOrAdmin")]
 public class ProgramsModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -63,10 +64,12 @@ public class ProgramsModel : PageModel
         var companyId = _tenantResolver.GetCurrentTenantId();
 
         Programs = await _programService.GetCompanyProgramsAsync(companyId, includeInactive: false);
-        ShiftTypes = await _db.ShiftTypes
+
+        // Load data first, then sort by SortOrder (which is [NotMapped])
+        var allShiftTypes = await _db.ShiftTypes
             .Where(st => st.CompanyId == companyId)
-            .OrderBy(st => st.SortOrder)
             .ToListAsync();
+        ShiftTypes = allShiftTypes.OrderBy(st => st.SortOrder).ToList();
     }
 
     /// <summary>

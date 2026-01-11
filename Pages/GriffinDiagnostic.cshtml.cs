@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
@@ -7,6 +8,7 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages;
 
+[Authorize(Policy = "IsAdmin")]
 public class GriffinDiagnosticModel : PageModel
 {
     private readonly IGriffinConfigService _griffinConfigService;
