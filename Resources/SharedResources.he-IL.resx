@@ -2942,6 +2942,18 @@
   <data name="Owner_SecurityAudit_Desc" xml:space="preserve">
     <value>צפייה ברישומי ביקורת אבטחה</value>
   </data>
+  <data name="Owner_Companies" xml:space="preserve">
+    <value>חברות</value>
+  </data>
+  <data name="Owner_Companies_Desc" xml:space="preserve">
+    <value>ניהול דיירים, יצירה ועריכת חברות</value>
+  </data>
+  <data name="Owner_Directors" xml:space="preserve">
+    <value>מנהלים</value>
+  </data>
+  <data name="Owner_Directors_Desc" xml:space="preserve">
+    <value>הקצאת מנהלים לניהול חברות</value>
+  </data>
   <data name="Owner_RecentActivity" xml:space="preserve">
     <value>פעילות אחרונה</value>
   </data>
