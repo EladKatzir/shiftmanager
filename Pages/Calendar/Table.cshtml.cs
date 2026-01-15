@@ -1015,6 +1015,73 @@ public class TableModel : PageModel
     }
 
     /// <summary>
+    /// Get 7-day availability for all employees (for availability cubes display).
+    /// Returns availability status (free/busy/partial) for each of the next 7 days.
+    /// </summary>
+    public async Task<IActionResult> OnGetEmployeeAvailabilityAsync()
+    {
+        var startDate = DateOnly.FromDateTime(DateTime.Today);
+        var endDate = startDate.AddDays(6);
+
+        var employees = await _db.Users
+            .Where(u => u.IsActive && (u.Role == UserRole.Employee || u.Role == UserRole.Trainee))
+            .OrderBy(u => u.DisplayName)
+            .Select(u => new { u.Id, u.DisplayName })
+            .ToListAsync();
+
+        var result = new List<object>();
+
+        foreach (var emp in employees)
+        {
+            var availability = new List<object>();
+
+            for (var date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                // Check for shifts
+                var hasShift = await _db.ShiftAssignments
+                    .AnyAsync(sa => sa.UserId == emp.Id &&
+                                   sa.ShiftInstance!.WorkDate == date);
+
+                // Check for time-off (DateOnly comparison)
+                var hasTimeOff = await _db.TimeOffRequests
+                    .AnyAsync(tor => tor.UserId == emp.Id &&
+                                     tor.StartDate <= date &&
+                                     tor.EndDate >= date &&
+                                     tor.Status == RequestStatus.Approved);
+
+                var status = "free";
+                var tooltip = "Available";
+
+                if (hasTimeOff)
+                {
+                    status = "busy";
+                    tooltip = "Time Off";
+                }
+                else if (hasShift)
+                {
+                    status = "partial";
+                    tooltip = "Has Shift";
+                }
+
+                availability.Add(new {
+                    date = date.ToString("d/M"),
+                    dayName = date.DayOfWeek.ToString().Substring(0, 3),
+                    status,
+                    tooltip
+                });
+            }
+
+            result.Add(new {
+                id = emp.Id,
+                name = emp.DisplayName,
+                availability
+            });
+        }
+
+        return new JsonResult(result);
+    }
+
+    /// <summary>
     /// Get roster of employees with their availability status for the Roster Dock.
     /// Checks availability across the entire date range being displayed.
     /// </summary>
