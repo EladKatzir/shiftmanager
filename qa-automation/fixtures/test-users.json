@@ -1,10 +1,18 @@
 {
   "description": "Test user credentials for ShiftManager QA automation",
-  "note": "These are development-only credentials. Production uses environment variables.",
+  "note": "SECURITY: Actual passwords should be stored in environment variables. See .env.example for setup.",
+  "envVarMapping": {
+    "owner": {"email": "OWNER_EMAIL", "password": "OWNER_PASSWORD"},
+    "director": {"email": "DIRECTOR_EMAIL", "password": "DIRECTOR_PASSWORD"},
+    "manager": {"email": "MANAGER_EMAIL", "password": "MANAGER_PASSWORD"},
+    "assigner": {"email": "ASSIGNER_EMAIL", "password": "ASSIGNER_PASSWORD"},
+    "employee": {"email": "EMPLOYEE_EMAIL", "password": "EMPLOYEE_PASSWORD"},
+    "trainee": {"email": "TRAINEE_EMAIL", "password": "TRAINEE_PASSWORD"}
+  },
   "users": {
     "owner": {
       "email": "owner@test.com",
-      "password": "TestPassword123!",
+      "passwordEnvVar": "OWNER_PASSWORD",
       "role": "Owner",
       "displayName": "Owner",
       "permissions": [
@@ -13,7 +21,7 @@
     },
     "director": {
       "email": "director@local",
-      "password": "director123",
+      "passwordEnvVar": "DIRECTOR_PASSWORD",
       "role": "Director",
       "displayName": "Test Director",
       "permissions": [
@@ -28,7 +36,7 @@
     },
     "manager": {
       "email": "manager@test.local",
-      "password": "Manager123!",
+      "passwordEnvVar": "MANAGER_PASSWORD",
       "role": "Manager",
       "displayName": "Test Manager",
       "permissions": [
@@ -41,7 +49,7 @@
     },
     "assigner": {
       "email": "assigner@test.local",
-      "password": "Assigner123!",
+      "passwordEnvVar": "ASSIGNER_PASSWORD",
       "role": "Assigner",
       "displayName": "Test Assigner",
       "permissions": [
@@ -53,7 +61,7 @@
     },
     "employee": {
       "email": "employee@test.local",
-      "password": "Employee123!",
+      "passwordEnvVar": "EMPLOYEE_PASSWORD",
       "role": "Employee",
       "displayName": "Test Employee",
       "permissions": [
@@ -66,7 +74,7 @@
     },
     "trainee": {
       "email": "trainee@test.local",
-      "password": "Trainee123!",
+      "passwordEnvVar": "TRAINEE_PASSWORD",
       "role": "Trainee",
       "displayName": "Test Trainee",
       "permissions": [

@@ -14,22 +14,50 @@
  *
  * Prerequisites:
  *   - Application running at http://localhost:5000
- *   - Test users seeded (owner@test.com/TestPassword123!, director@local/director123)
+ *   - Environment variables configured (see .env.example)
+ *   - Test users seeded in database
  */
 
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
+// Load environment variables from .env file if present
+try {
+    require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+} catch (e) {
+    // dotenv not installed, rely on system environment variables
+}
+
+// Configuration - credentials loaded from environment variables
 const CONFIG = {
     baseUrl: process.env.APP_URL || 'http://localhost:5000',
     timeout: 30000,
     credentials: {
-        Owner: { email: 'owner@test.com', password: 'TestPassword123!' },
-        Director: { email: 'director@local', password: 'director123' },
-        // Note: Manager, Employee, Trainee, Assigner credentials would need to be seeded
-        // For now, we'll document expected routes based on codebase analysis
+        Owner: {
+            email: process.env.OWNER_EMAIL || 'owner@test.com',
+            password: process.env.OWNER_PASSWORD || ''
+        },
+        Director: {
+            email: process.env.DIRECTOR_EMAIL || 'director@local',
+            password: process.env.DIRECTOR_PASSWORD || ''
+        },
+        Manager: {
+            email: process.env.MANAGER_EMAIL || 'manager@test.local',
+            password: process.env.MANAGER_PASSWORD || ''
+        },
+        Assigner: {
+            email: process.env.ASSIGNER_EMAIL || 'assigner@test.local',
+            password: process.env.ASSIGNER_PASSWORD || ''
+        },
+        Employee: {
+            email: process.env.EMPLOYEE_EMAIL || 'employee@test.local',
+            password: process.env.EMPLOYEE_PASSWORD || ''
+        },
+        Trainee: {
+            email: process.env.TRAINEE_EMAIL || 'trainee@test.local',
+            password: process.env.TRAINEE_PASSWORD || ''
+        },
     },
     outputDir: path.join(__dirname, '.'),
     reportsDir: path.join(__dirname, '..', 'reports'),

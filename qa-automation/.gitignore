@@ -1,0 +1,24 @@
+# Environment files - NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Test artifacts
+reports/test-artifacts/
+reports/playwright-report/
+
+# Playwright state
+.playwright/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo

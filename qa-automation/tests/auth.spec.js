@@ -1,5 +1,17 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const path = require('path');
+
+// Load environment variables
+try {
+    require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+} catch (e) {
+    // dotenv not installed, rely on system environment variables
+}
+
+// Credentials from environment variables
+const OWNER_EMAIL = process.env.OWNER_EMAIL || 'owner@test.com';
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
 
 /**
  * Authentication Tests - Phase 1
@@ -8,7 +20,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Authentication', () => {
   test.describe('Login Page', () => {
-    test('P1-01: should display login page', async ({ page }) => {
+    test('P1-01a: should display login page', async ({ page }) => {
       await page.goto('/Auth/Login');
 
       // Verify login form elements are present
@@ -17,7 +29,7 @@ test.describe('Authentication', () => {
       await expect(page.locator('button[type="submit"]')).toBeVisible();
     });
 
-    test('P1-01: should show error for invalid credentials', async ({ page }) => {
+    test('P1-01b: should show error for invalid credentials', async ({ page }) => {
       await page.goto('/Auth/Login');
 
       // Fill in invalid credentials
@@ -29,12 +41,12 @@ test.describe('Authentication', () => {
       await expect(page).toHaveURL(/\/Auth\/Login/);
     });
 
-    test('P1-01: should login successfully as Owner', async ({ page }) => {
+    test('P1-01c: should login successfully as Owner', async ({ page }) => {
       await page.goto('/Auth/Login');
 
-      // Fill in valid credentials
-      await page.fill('input[name="Email"], input#Email', 'admin@local');
-      await page.fill('input[name="Password"], input#Password', 'admin123');
+      // Fill in valid credentials from environment variables
+      await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
+      await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
 
       // Submit and wait for navigation
       await Promise.all([
@@ -46,7 +58,7 @@ test.describe('Authentication', () => {
       await expect(page).not.toHaveURL(/\/Auth\/Login/);
     });
 
-    test('P1-01: should enforce rate limiting', async ({ page }) => {
+    test('P1-01d: should enforce rate limiting', async ({ page }) => {
       // This test would need to be run multiple times rapidly
       // For now, just verify the login form handles multiple submissions
       await page.goto('/Auth/Login');
@@ -65,10 +77,10 @@ test.describe('Authentication', () => {
 
   test.describe('Logout', () => {
     test.beforeEach(async ({ page }) => {
-      // Login first
+      // Login first using credentials from environment variables
       await page.goto('/Auth/Login');
-      await page.fill('input[name="Email"], input#Email', 'admin@local');
-      await page.fill('input[name="Password"], input#Password', 'admin123');
+      await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
+      await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
       await Promise.all([
         page.waitForURL(url => !url.toString().includes('/Auth/Login')),
         page.click('button[type="submit"]'),
@@ -117,10 +129,10 @@ test.describe('Authorization', () => {
       // This would require an Employee account to test properly
       // For now, document the expected behavior
 
-      // Login as Owner first (who has access)
+      // Login as Owner first (who has access) using credentials from environment variables
       await page.goto('/Auth/Login');
-      await page.fill('input[name="Email"], input#Email', 'admin@local');
-      await page.fill('input[name="Password"], input#Password', 'admin123');
+      await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
+      await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
       await Promise.all([
         page.waitForURL(url => !url.toString().includes('/Auth/Login')),
         page.click('button[type="submit"]'),
@@ -135,10 +147,10 @@ test.describe('Authorization', () => {
 
 test.describe('Session Management', () => {
   test('should handle session timeout gracefully', async ({ page }) => {
-    // Login
+    // Login using credentials from environment variables
     await page.goto('/Auth/Login');
-    await page.fill('input[name="Email"], input#Email', 'admin@local');
-    await page.fill('input[name="Password"], input#Password', 'admin123');
+    await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
+    await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
     await Promise.all([
       page.waitForURL(url => !url.toString().includes('/Auth/Login')),
       page.click('button[type="submit"]'),
