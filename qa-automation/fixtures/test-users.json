@@ -3,8 +3,8 @@
   "note": "These are development-only credentials. Production uses environment variables.",
   "users": {
     "owner": {
-      "email": "admin@local",
-      "password": "admin123",
+      "email": "owner@test.com",
+      "password": "TestPassword123!",
       "role": "Owner",
       "displayName": "Owner",
       "permissions": [

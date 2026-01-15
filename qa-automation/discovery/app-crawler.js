@@ -14,7 +14,7 @@
  *
  * Prerequisites:
  *   - Application running at http://localhost:5000
- *   - Test users seeded (admin@local/admin123, director@local/director123)
+ *   - Test users seeded (owner@test.com/TestPassword123!, director@local/director123)
  */
 
 const { chromium } = require('playwright');
@@ -26,7 +26,7 @@ const CONFIG = {
     baseUrl: process.env.APP_URL || 'http://localhost:5000',
     timeout: 30000,
     credentials: {
-        Owner: { email: 'admin@local', password: 'admin123' },
+        Owner: { email: 'owner@test.com', password: 'TestPassword123!' },
         Director: { email: 'director@local', password: 'director123' },
         // Note: Manager, Employee, Trainee, Assigner credentials would need to be seeded
         // For now, we'll document expected routes based on codebase analysis
