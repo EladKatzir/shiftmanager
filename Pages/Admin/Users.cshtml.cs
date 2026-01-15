@@ -404,6 +404,17 @@ public class UsersModel : LocalizedPageModel
         var currentUserRole = Enum.Parse<UserRole>(User.FindFirst("Role")?.Value ?? "Employee");
         if (currentUserRole == UserRole.Owner && NewUserCompanyId.HasValue)
         {
+            // Verify company exists
+            var company = await _db.Companies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == NewUserCompanyId.Value);
+
+            if (company == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_InvalidCompanySelected"];
+                return RedirectToPage();
+            }
+
             targetCompanyId = NewUserCompanyId.Value;
         }
         else
@@ -737,13 +748,20 @@ public class UsersModel : LocalizedPageModel
                 return Page();
             }
 
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-            if (user.CompanyId != companyId)
+            var currentUser = await _db.Users.FindAsync(currentUserId);
+
+            // Owner can delete any user; others must match company
+            if (currentUser!.Role != UserRole.Owner)
             {
-                _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} from different company", currentUserId, id);
-                Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
-                await OnGetAsync();
-                return Page();
+                var companyId = _companyContext.GetCompanyIdOrThrow();
+                if (user.CompanyId != companyId)
+                {
+                    _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} from different company",
+                        currentUserId, id);
+                    Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
+                    await OnGetAsync();
+                    return Page();
+                }
             }
 
             // Check if current user has permission to delete this user based on role hierarchy
@@ -1263,7 +1281,7 @@ public class UsersModel : LocalizedPageModel
 
             if (role == UserRole.Owner)
             {
-                accessibleCompanyIds = await _db.Companies.Select(c => c.Id).ToListAsync();
+                accessibleCompanyIds = await _db.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
             }
             else if (role == UserRole.Director)
             {
