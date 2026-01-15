@@ -767,6 +767,19 @@
                     }
                 </select>
             </div>
+            @if (Model.IsOwner)
+            {
+                <div class="filter-group">
+                    <label>@Localizer["Company"]</label>
+                    <select asp-for="NewUserCompanyId" class="form-input" required>
+                        <option value="">-- @Localizer["SelectCompany"] --</option>
+                        @foreach (var company in Model.Companies)
+                        {
+                            <option value="@company.Id">@company.Name</option>
+                        }
+                    </select>
+                </div>
+            }
             <div class="filter-group">
                 <label>@Localizer["Password"]</label>
                 <input class="form-input" asp-for="NewPassword" type="password" minlength="6" required />

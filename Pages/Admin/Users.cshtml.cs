@@ -117,6 +117,14 @@ public class UsersModel : LocalizedPageModel
     [BindProperty] public string NewPassword { get; set; } = string.Empty;
     [BindProperty] public string NewRole { get; set; } = "Employee";
 
+    // Owner cross-company user management
+    [BindProperty]
+    public int? NewUserCompanyId { get; set; }
+
+    public List<Company> Companies { get; set; } = new();
+
+    public bool IsOwner { get; set; }
+
     // Batch approval properties
     [BindProperty]
     public List<int> SelectedRequests { get; set; } = new();
@@ -142,13 +150,25 @@ public class UsersModel : LocalizedPageModel
 
         var role = currentUser.Role;
 
+        // Determine if user is Owner for cross-company visibility
+        IsOwner = role == UserRole.Owner;
+
+        // Load all companies for Owner user management
+        if (IsOwner)
+        {
+            Companies = await _db.Companies
+                .IgnoreQueryFilters()
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+
         // Determine accessible company IDs based on role
         List<int> accessibleCompanyIds;
 
         if (role == UserRole.Owner)
         {
-            // Owner: all companies
-            accessibleCompanyIds = await _db.Companies.Select(c => c.Id).ToListAsync();
+            // Owner: all companies (using IgnoreQueryFilters for cross-tenant visibility)
+            accessibleCompanyIds = await _db.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
         }
         else if (role == UserRole.Director)
         {
@@ -212,15 +232,37 @@ public class UsersModel : LocalizedPageModel
             .ToList();
 
         // Load available companies for filter dropdown
-        AvailableCompanies = await _db.Companies
-            .Where(c => accessibleCompanyIds.Contains(c.Id))
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        if (IsOwner)
+        {
+            AvailableCompanies = await _db.Companies
+                .IgnoreQueryFilters()
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+        else
+        {
+            AvailableCompanies = await _db.Companies
+                .Where(c => accessibleCompanyIds.Contains(c.Id))
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
 
         // Load existing users with filters
-        var usersQuery = _db.Users
-            .AsNoTracking()
-            .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
+        IQueryable<AppUser> usersQuery;
+        if (IsOwner)
+        {
+            // Owner sees ALL users across all companies
+            usersQuery = _db.Users
+                .IgnoreQueryFilters()
+                .AsNoTracking();
+        }
+        else
+        {
+            // Other roles see filtered by accessible companies
+            usersQuery = _db.Users
+                .AsNoTracking()
+                .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
+        }
 
         // Apply role filter first (before handling Directors specially)
         if (UserFilterRole.HasValue)
@@ -232,10 +274,22 @@ public class UsersModel : LocalizedPageModel
 
         // Load companies for users
         var userCompanyIds = userData.Select(u => u.CompanyId).Distinct().ToList();
-        var userCompanies = await _db.Companies
-            .AsNoTracking()
-            .Where(c => userCompanyIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id);
+        Dictionary<int, Company> userCompanies;
+        if (IsOwner)
+        {
+            userCompanies = await _db.Companies
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => userCompanyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id);
+        }
+        else
+        {
+            userCompanies = await _db.Companies
+                .AsNoTracking()
+                .Where(c => userCompanyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id);
+        }
 
         // Build user list, handling Directors specially
         var userList = new List<UserVM>();
@@ -345,11 +399,22 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var companyId = _companyContext.GetCompanyIdOrThrow();
+        // Determine target company - Owner can select any company
+        int targetCompanyId;
+        var currentUserRole = Enum.Parse<UserRole>(User.FindFirst("Role")?.Value ?? "Employee");
+        if (currentUserRole == UserRole.Owner && NewUserCompanyId.HasValue)
+        {
+            targetCompanyId = NewUserCompanyId.Value;
+        }
+        else
+        {
+            targetCompanyId = _companyContext.GetCompanyIdOrThrow();
+        }
+
         var (h, s) = PasswordHasher.CreateHash(NewPassword);
         var newUser = new AppUser
         {
-            CompanyId = companyId,
+            CompanyId = targetCompanyId,
             Email = NewEmail,
             DisplayName = NewDisplayName,
             Role = targetRole,
@@ -366,7 +431,7 @@ public class UsersModel : LocalizedPageModel
             var directorAssignment = new DirectorCompany
             {
                 UserId = newUser.Id,
-                CompanyId = companyId,
+                CompanyId = targetCompanyId,
                 GrantedBy = 0, // Will be set below after getting currentUserId
                 GrantedAt = DateTime.UtcNow,
                 IsDeleted = false
@@ -383,7 +448,7 @@ public class UsersModel : LocalizedPageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Created DirectorCompany mapping for new Director {DirectorId} to Company {CompanyId}",
-                newUser.Id, companyId);
+                newUser.Id, targetCompanyId);
         }
 
         // Audit logging (RoleAssignmentAudit)
@@ -400,7 +465,7 @@ public class UsersModel : LocalizedPageModel
             TargetUserId = newUser.Id,
             FromRole = null,
             ToRole = targetRole,
-            CompanyId = companyId,
+            CompanyId = targetCompanyId,
             Timestamp = DateTime.UtcNow
         });
         await _db.SaveChangesAsync();
