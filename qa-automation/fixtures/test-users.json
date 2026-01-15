@@ -1,0 +1,93 @@
+{
+  "description": "Test user credentials for ShiftManager QA automation",
+  "note": "These are development-only credentials. Production uses environment variables.",
+  "users": {
+    "owner": {
+      "email": "admin@local",
+      "password": "admin123",
+      "role": "Owner",
+      "displayName": "Owner",
+      "permissions": [
+        "all"
+      ]
+    },
+    "director": {
+      "email": "director@local",
+      "password": "director123",
+      "role": "Director",
+      "displayName": "Test Director",
+      "permissions": [
+        "cross-company-view",
+        "view-as-manager",
+        "admin-hub"
+      ],
+      "prerequisites": {
+        "featureFlag": "EnableDirectorRole",
+        "value": true
+      }
+    },
+    "manager": {
+      "email": "manager@test.local",
+      "password": "Manager123!",
+      "role": "Manager",
+      "displayName": "Test Manager",
+      "permissions": [
+        "admin-hub",
+        "user-management",
+        "shift-management"
+      ],
+      "creationMethod": "manual",
+      "notes": "Create via /Admin/Users as Owner"
+    },
+    "assigner": {
+      "email": "assigner@test.local",
+      "password": "Assigner123!",
+      "role": "Assigner",
+      "displayName": "Test Assigner",
+      "permissions": [
+        "edit-chores",
+        "edit-shifts"
+      ],
+      "creationMethod": "manual",
+      "notes": "Create via /Admin/Users as Manager or Owner"
+    },
+    "employee": {
+      "email": "employee@test.local",
+      "password": "Employee123!",
+      "role": "Employee",
+      "displayName": "Test Employee",
+      "permissions": [
+        "view-own-schedule",
+        "create-requests",
+        "view-public"
+      ],
+      "creationMethod": "signup",
+      "notes": "Create via /Auth/Signup (requires AllowPublicSignup=true)"
+    },
+    "trainee": {
+      "email": "trainee@test.local",
+      "password": "Trainee123!",
+      "role": "Trainee",
+      "displayName": "Test Trainee",
+      "permissions": [
+        "view-own-schedule",
+        "view-public"
+      ],
+      "creationMethod": "manual",
+      "notes": "Create via /Admin/Users as Manager or Owner"
+    }
+  },
+  "testCompanies": {
+    "primary": {
+      "id": 1,
+      "name": "Default Company",
+      "slug": "default"
+    },
+    "secondary": {
+      "name": "Test Corp",
+      "slug": "test-corp",
+      "displayName": "Test Corporation",
+      "notes": "Created automatically when EnableDirectorRole=true"
+    }
+  }
+}
