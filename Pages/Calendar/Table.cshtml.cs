@@ -134,6 +134,13 @@ public class TableModel : PageModel
             .ThenBy(st => st.CustomName ?? st.Name) // Then by name for same start time
             .ToList();
 
+        _logger.LogInformation("Loaded {Count} shift types for company", ShiftTypes.Count);
+
+        if (!ShiftTypes.Any())
+        {
+            _logger.LogWarning("No shift types found - calendar will be empty");
+        }
+
         // Load active employees for this company
         Employees = await _db.Users
             .Where(u => u.IsActive)

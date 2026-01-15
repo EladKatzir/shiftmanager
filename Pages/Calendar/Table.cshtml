@@ -1324,6 +1324,16 @@
     <span><loc key="AddCustomShiftRow" /></span>
 </button>
 
+@if (!Model.ShiftTypes.Any())
+{
+    <div class="alert alert-warning" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem; background: #fff3cd; border: 1px solid #ffc107;">
+        <strong>⚠️ No shift types configured.</strong>
+        <p style="margin: 0.5rem 0 0 0;">
+            <a href="/Admin/ShiftTypes" style="color: #856404;">Configure shift types</a> to start scheduling.
+        </p>
+    </div>
+}
+
 <div class="table-view-container">
     <table class="shift-table @(Model.ViewMode != "week" ? "dense" : "")"
            data-start-date="@Model.StartDate.ToString("yyyy-MM-dd")"
