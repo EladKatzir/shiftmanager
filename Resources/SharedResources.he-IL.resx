@@ -4490,4 +4490,52 @@
   <data name="ShiftType_OFFLINE_Name" xml:space="preserve">
     <value>לא מקוון</value>
   </data>
+
+  <!-- Admin Hub -->
+  <data name="AdminHub_Title" xml:space="preserve">
+    <value>מרכז ניהול</value>
+  </data>
+  <data name="AdminHub_Subtitle" xml:space="preserve">
+    <value>מרכז ניהול והגדרות</value>
+  </data>
+  <data name="CompanyScope" xml:space="preserve">
+    <value>חברה והיקף</value>
+  </data>
+  <data name="PeopleManagement" xml:space="preserve">
+    <value>ניהול אנשים</value>
+  </data>
+  <data name="SchedulingConfiguration" xml:space="preserve">
+    <value>הגדרות שיבוץ</value>
+  </data>
+  <data name="OperationsManagement" xml:space="preserve">
+    <value>ניהול תפעולי</value>
+  </data>
+  <data name="MonitoringAnalytics" xml:space="preserve">
+    <value>ניטור וניתוח</value>
+  </data>
+  <data name="AdvancedTools" xml:space="preserve">
+    <value>כלים מתקדמים</value>
+  </data>
+
+  <!-- Calendar/Table -->
+  <data name="TwoWeeks" xml:space="preserve">
+    <value>שבועיים</value>
+  </data>
+
+  <!-- Users Page -->
+  <data name="Users_Title" xml:space="preserve">
+    <value>משתמשים</value>
+  </data>
+  <data name="Users_AddNew" xml:space="preserve">
+    <value>הוסף משתמש חדש</value>
+  </data>
+  <data name="Users_Edit" xml:space="preserve">
+    <value>ערוך משתמש</value>
+  </data>
+  <data name="Users_Delete" xml:space="preserve">
+    <value>מחק משתמש</value>
+  </data>
+  <data name="Users_Company" xml:space="preserve">
+    <value>חברה</value>
+  </data>
 </root>

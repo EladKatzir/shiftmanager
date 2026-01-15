@@ -4665,4 +4665,52 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ShiftType_OFFLINE_Name" xml:space="preserve">
     <value>Offline</value>
   </data>
+
+  <!-- Admin Hub -->
+  <data name="AdminHub_Title" xml:space="preserve">
+    <value>Admin Hub</value>
+  </data>
+  <data name="AdminHub_Subtitle" xml:space="preserve">
+    <value>Management and Settings Center</value>
+  </data>
+  <data name="CompanyScope" xml:space="preserve">
+    <value>Company &amp; Scope</value>
+  </data>
+  <data name="PeopleManagement" xml:space="preserve">
+    <value>People Management</value>
+  </data>
+  <data name="SchedulingConfiguration" xml:space="preserve">
+    <value>Scheduling Configuration</value>
+  </data>
+  <data name="OperationsManagement" xml:space="preserve">
+    <value>Operations Management</value>
+  </data>
+  <data name="MonitoringAnalytics" xml:space="preserve">
+    <value>Monitoring &amp; Analytics</value>
+  </data>
+  <data name="AdvancedTools" xml:space="preserve">
+    <value>Advanced Tools</value>
+  </data>
+
+  <!-- Calendar/Table -->
+  <data name="TwoWeeks" xml:space="preserve">
+    <value>Two Weeks</value>
+  </data>
+
+  <!-- Users Page -->
+  <data name="Users_Title" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Users_AddNew" xml:space="preserve">
+    <value>Add New User</value>
+  </data>
+  <data name="Users_Edit" xml:space="preserve">
+    <value>Edit User</value>
+  </data>
+  <data name="Users_Delete" xml:space="preserve">
+    <value>Delete User</value>
+  </data>
+  <data name="Users_Company" xml:space="preserve">
+    <value>Company</value>
+  </data>
 </root>
