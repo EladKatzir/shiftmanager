@@ -54,19 +54,28 @@ public class CompaniesModel : LocalizedPageModel
             Success = successMsg;
         }
 
+        // First, get user counts per company using IgnoreQueryFilters
+        var userCountsByCompany = await _db.Users
+            .IgnoreQueryFilters()
+            .GroupBy(u => u.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count);
+
         Companies = await _db.Companies
+            .IgnoreQueryFilters()
             .OrderBy(c => c.Name)
             .Select(c => new CompanyVM(
                 c.Id,
                 c.Name,
                 c.Slug,
                 c.DisplayName,
-                _db.Users.Count(u => u.CompanyId == c.Id)
+                userCountsByCompany.GetValueOrDefault(c.Id, 0)
             ))
             .ToListAsync();
 
         // Load all Director users
         AvailableDirectors = await _db.Users
+            .IgnoreQueryFilters()
             .Where(u => u.Role == UserRole.Director)
             .OrderBy(u => u.DisplayName)
             .Select(u => new DirectorVM(u.Id, u.DisplayName, u.Email))
