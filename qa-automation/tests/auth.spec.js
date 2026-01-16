@@ -1,17 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const path = require('path');
-
-// Load environment variables
-try {
-    require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-} catch (e) {
-    // dotenv not installed, rely on system environment variables
-}
-
-// Credentials from environment variables
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'owner@test.com';
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
+const { loginAsOwner, getOwnerCredentials, OWNER_EMAIL, OWNER_PASSWORD } = require('../helpers/auth-helpers');
 
 /**
  * Authentication Tests - Phase 1
@@ -35,7 +24,7 @@ test.describe('Authentication', () => {
       // Fill in invalid credentials
       await page.fill('input[name="Email"], input#Email', 'invalid@test.com');
       await page.fill('input[name="Password"], input#Password', 'wrongpassword');
-      await page.click('button[type="submit"]');
+      await page.locator('form:has(input[name="Email"]) button[type="submit"]').click();
 
       // Should stay on login page with error
       await expect(page).toHaveURL(/\/Auth\/Login/);
@@ -51,7 +40,7 @@ test.describe('Authentication', () => {
       // Submit and wait for navigation
       await Promise.all([
         page.waitForURL(url => !url.toString().includes('/Auth/Login')),
-        page.click('button[type="submit"]'),
+        page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
       ]);
 
       // Should be redirected away from login
@@ -66,7 +55,7 @@ test.describe('Authentication', () => {
       for (let i = 0; i < 3; i++) {
         await page.fill('input[name="Email"], input#Email', 'test@test.com');
         await page.fill('input[name="Password"], input#Password', 'wrong');
-        await page.click('button[type="submit"]');
+        await page.locator('form:has(input[name="Email"]) button[type="submit"]').click();
         await page.waitForLoadState('networkidle');
       }
 
@@ -83,7 +72,7 @@ test.describe('Authentication', () => {
       await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
       await Promise.all([
         page.waitForURL(url => !url.toString().includes('/Auth/Login')),
-        page.click('button[type="submit"]'),
+        page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
       ]);
     });
 
@@ -135,7 +124,7 @@ test.describe('Authorization', () => {
       await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
       await Promise.all([
         page.waitForURL(url => !url.toString().includes('/Auth/Login')),
-        page.click('button[type="submit"]'),
+        page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
       ]);
 
       // Owner should be able to access Admin
@@ -153,7 +142,7 @@ test.describe('Session Management', () => {
     await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
     await Promise.all([
       page.waitForURL(url => !url.toString().includes('/Auth/Login')),
-      page.click('button[type="submit"]'),
+      page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
     ]);
 
     // Verify session status endpoint exists

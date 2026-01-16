@@ -10,13 +10,14 @@ try {
 }
 
 // Credentials from environment variables
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'owner@test.com';
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
+// Default to 'admin@local' / 'easteregg' which matches the seeded Owner account
+const OWNER_EMAIL = process.env.OWNER_EMAIL || 'admin@local';
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'easteregg';
 
 // Role-based credentials (from discovery report)
 const ROLE_CREDENTIALS = {
-    Owner: { email: process.env.OWNER_EMAIL || 'admin@local', password: process.env.OWNER_PASSWORD || 'admin123' },
-    Director: { email: process.env.DIRECTOR_EMAIL || 'director@local', password: process.env.DIRECTOR_PASSWORD || 'director123' },
+    Owner: { email: process.env.OWNER_EMAIL || 'admin@local', password: process.env.OWNER_PASSWORD || 'easteregg' },
+    Director: { email: process.env.DIRECTOR_EMAIL || 'director@local', password: process.env.DIRECTOR_PASSWORD || 'easteregg' },
     Manager: { email: 'manager@test.com', password: 'Manager123!' },
     Assigner: { email: 'assigner@test.com', password: 'Assigner123!' },
     Employee: { email: 'employee@test.com', password: 'Employee123!' },
@@ -35,10 +36,11 @@ async function loginAsOwner(page) {
     await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
     await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
 
-    // Submit and wait for navigation
+    // Submit the LOCAL login form (not the Griffin ADFS form)
+    // Click the button within the form that has the Email/Password fields
     await Promise.all([
         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
-        page.click('button[type="submit"]'),
+        page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
     ]);
 
     // Verify login succeeded
@@ -77,9 +79,11 @@ async function loginAsRole(page, role) {
     await page.goto('/Auth/Login');
     await page.fill('input[name="Email"], input#Email', creds.email);
     await page.fill('input[name="Password"], input#Password', creds.password);
+
+    // Submit the LOCAL login form (not the Griffin ADFS form)
     await Promise.all([
-        page.waitForURL(url => !url.toString().includes('/Auth/Login')),
-        page.click('button[type="submit"]')
+        page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+        page.locator('form:has(input[name="Email"]) button[type="submit"]').click()
     ]);
 }
 
