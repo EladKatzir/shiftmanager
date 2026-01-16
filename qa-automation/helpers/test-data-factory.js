@@ -54,7 +54,8 @@ class TestDataFactory {
      * Generate user test data
      * @param {string} role - User role (Owner, Director, Manager, Assigner, Employee, Trainee)
      * @param {Object} overrides - Optional field overrides
-     * @returns {Object} User test data object
+     * @returns {Object} User test data object with both spec properties (username, fullName)
+     *                   and application properties (email, displayName)
      */
     static generateUser(role = 'Employee', overrides = {}) {
         const uniqueId = generateUniqueId();
@@ -64,9 +65,16 @@ class TestDataFactory {
             throw new Error(`Invalid role: ${role}. Valid roles are: ${validRoles.join(', ')}`);
         }
 
+        const emailValue = `user_${uniqueId}@test.local`;
+        const nameValue = `Test ${role} ${uniqueId}`;
+
         return {
-            email: `user_${uniqueId}@test.local`,
-            displayName: `Test ${role} ${uniqueId}`,
+            // Spec-required properties:
+            username: emailValue,
+            fullName: nameValue,
+            // Application-specific properties:
+            email: emailValue,
+            displayName: nameValue,
             password: 'TestPassword123!',
             role: role,
             isActive: true,
