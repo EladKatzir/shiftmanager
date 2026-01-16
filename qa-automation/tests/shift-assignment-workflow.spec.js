@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { RoleHelper } = require('../helpers/role-helper');
+const { loginAsOwner, loginAsRole } = require('../helpers/auth-helpers');
 const TestDataFactory = require('../helpers/test-data-factory');
 
 /**
@@ -33,10 +33,7 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
     };
 
     test.beforeAll(async () => {
-        // Verify required roles are configured
-        if (!RoleHelper.isRoleConfigured('Owner')) {
-            throw new Error('Owner credentials not configured. Set OWNER_EMAIL and OWNER_PASSWORD in .env');
-        }
+        // Owner credentials are configured by default in auth-helpers.js
     });
 
     test('Complete workflow: Blueprint → Program → Shift → Assignment', async ({ page }) => {
@@ -44,7 +41,7 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
         // PHASE 1: Create Blueprint (ShiftType)
         // ========================================
         await test.step('Phase 1: Create Blueprint', async () => {
-            await RoleHelper.loginAs(page, 'Owner');
+            await loginAsOwner(page);
 
             // Navigate to Blueprints page
             await page.goto('/Owner/Blueprints');
@@ -276,7 +273,7 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
 
             // Logout and login as Employee
             await RoleHelper.logout(page);
-            await RoleHelper.loginAs(page, 'Employee');
+            await loginAsRole(page, 'Employee');
 
             // Navigate to employee's schedule view
             const possibleViews = ['/Calendar/Month', '/My/Index', '/Schedule/Index'];
@@ -312,7 +309,7 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
         // PHASE 1: Create a Blueprint to Delete
         // ========================================
         await test.step('Create Blueprint to Delete', async () => {
-            await RoleHelper.loginAs(page, 'Owner');
+            await loginAsOwner(page);
 
             // Navigate to Blueprints page
             await page.goto('/Owner/Blueprints');
@@ -422,14 +419,12 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
 
 test.describe('Shift Assignment Workflow - Edge Cases', () => {
     test.beforeAll(async () => {
-        if (!RoleHelper.isRoleConfigured('Owner')) {
-            throw new Error('Owner credentials not configured. Set OWNER_EMAIL and OWNER_PASSWORD in .env');
-        }
+        // Owner credentials are configured by default in auth-helpers.js
     });
 
     test('Blueprint without start/end time validation', async ({ page }) => {
         await test.step('Test Blueprint Time Validation', async () => {
-            await RoleHelper.loginAs(page, 'Owner');
+            await loginAsOwner(page);
 
             await page.goto('/Owner/Blueprints');
             await page.waitForLoadState('networkidle');
@@ -463,7 +458,7 @@ test.describe('Shift Assignment Workflow - Edge Cases', () => {
 
     test('Program creation without selected days', async ({ page }) => {
         await test.step('Test Program Day Selection Validation', async () => {
-            await RoleHelper.loginAs(page, 'Owner');
+            await loginAsOwner(page);
 
             await page.goto('/Owner/Programs');
             await page.waitForLoadState('networkidle');
