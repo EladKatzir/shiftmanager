@@ -152,7 +152,7 @@ test.describe('Users Module - RBAC Authorization Matrix', () => {
             await navigateToUsers(page);
 
             // Set up dialog handler for confirmation
-            page.on('dialog', async dialog => {
+            page.once('dialog', async dialog => {
                 expect(dialog.type()).toBe('confirm');
                 await dialog.accept();
             });
@@ -496,17 +496,11 @@ test.describe('Users Module - RBAC Authorization Matrix', () => {
 
             // If success, verify the user was NOT created with Owner role
             // (backend should have rejected the invalid role)
-            if (hasSuccess) {
-                // Success might mean the role was changed to a valid one
-                // This is acceptable behavior
-                expect(true).toBeTruthy();
-            } else if (hasError) {
-                // Error is the expected behavior for role escalation attempt
-                expect(true).toBeTruthy();
-            } else {
-                // No explicit feedback, check URL - should still be on Users page
-                expect(page.url()).toContain('/Admin/Users');
-            }
+            // The system should show either success (role downgraded) or error (rejected)
+            expect(hasSuccess || hasError).toBeTruthy();
+
+            // Additional check: ensure we remain on the Users page
+            expect(page.url()).toContain('/Admin/Users');
         });
     });
 
