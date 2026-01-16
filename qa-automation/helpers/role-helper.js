@@ -12,31 +12,34 @@ try {
 /**
  * Role credentials from environment variables
  * Falls back to default test credentials if not set
+ *
+ * Note: Only admin@local has the real password 'easteregg'
+ * Other role users should be created as test users with password '123456'
  */
 const ROLE_CREDENTIALS = {
     Owner: {
-        email: process.env.OWNER_EMAIL || 'owner@test.com',
-        password: process.env.OWNER_PASSWORD || ''
+        email: process.env.OWNER_EMAIL || 'admin@local',
+        password: process.env.OWNER_PASSWORD || 'easteregg'
     },
     Director: {
         email: process.env.DIRECTOR_EMAIL || 'director@test.com',
-        password: process.env.DIRECTOR_PASSWORD || ''
+        password: process.env.DIRECTOR_PASSWORD || '123456'
     },
     Manager: {
         email: process.env.MANAGER_EMAIL || 'manager@test.com',
-        password: process.env.MANAGER_PASSWORD || ''
+        password: process.env.MANAGER_PASSWORD || '123456'
     },
     Assigner: {
         email: process.env.ASSIGNER_EMAIL || 'assigner@test.com',
-        password: process.env.ASSIGNER_PASSWORD || ''
+        password: process.env.ASSIGNER_PASSWORD || '123456'
     },
     Employee: {
         email: process.env.EMPLOYEE_EMAIL || 'employee@test.com',
-        password: process.env.EMPLOYEE_PASSWORD || ''
+        password: process.env.EMPLOYEE_PASSWORD || '123456'
     },
     Trainee: {
         email: process.env.TRAINEE_EMAIL || 'trainee@test.com',
-        password: process.env.TRAINEE_PASSWORD || ''
+        password: process.env.TRAINEE_PASSWORD || '123456'
     }
 };
 
@@ -81,10 +84,11 @@ class RoleHelper {
         await page.fill('input[name="Email"], input#Email', credentials.email);
         await page.fill('input[name="Password"], input#Password', credentials.password);
 
-        // Submit and wait for navigation
+        // Submit the LOCAL login form (not the Griffin ADFS form)
+        // Click the button within the form that has the Email/Password fields
         await Promise.all([
             page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
-            page.click('button[type="submit"]'),
+            page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
         ]);
 
         // Verify login succeeded

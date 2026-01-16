@@ -11,8 +11,8 @@ try {
 }
 
 // Credentials from environment variables
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'owner@test.com';
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
+const OWNER_EMAIL = process.env.OWNER_EMAIL || 'admin@local';
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'easteregg';
 
 /**
  * Companies CRUD Tests - Phase 1
@@ -41,10 +41,10 @@ test.describe('Companies CRUD - Owner Role', () => {
         await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
         await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
 
-        // Submit and wait for navigation
+        // Submit the LOCAL login form (not the Griffin ADFS form)
         await Promise.all([
             page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
-            page.click('button[type="submit"]'),
+            page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
         ]);
 
         // Verify login succeeded
@@ -70,6 +70,12 @@ test.describe('Companies CRUD - Owner Role', () => {
      * @param {boolean} clearFirst - Whether to clear form fields first (default: true)
      */
     async function fillCompanyForm(page, data, clearFirst = true) {
+        // Ensure the form is visible and scroll to it if needed
+        const companyNameInput = page.locator('input[name="CompanyName"]');
+        if (await companyNameInput.isVisible().catch(() => false)) {
+            await companyNameInput.scrollIntoViewIfNeeded();
+        }
+
         // Clear form fields first if requested (handles iteration in loop tests)
         if (clearFirst) {
             await page.fill('input[name="CompanyName"]', '');
@@ -117,7 +123,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             await fillCompanyForm(page, companyData);
 
             // Submit the form
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Verify success - check for success message or company in list
@@ -145,7 +151,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             };
 
             await fillCompanyForm(page, minimalData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Verify company was created
@@ -161,7 +167,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             await fillCompanyForm(page, companyData);
 
             // Try to submit - should fail HTML5 validation or show error
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
 
             // Either HTML5 validation prevents submission or error is shown
             const currentUrl = page.url();
@@ -194,7 +200,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             };
 
             await fillCompanyForm(page, duplicateData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Should show error about duplicate slug
@@ -301,7 +307,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             // First create a company to rename
             const companyData = TestDataFactory.generateCompanyCreationData();
             await fillCompanyForm(page, companyData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Find and click rename button for our company
@@ -354,7 +360,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             // First create a company to delete
             const companyData = TestDataFactory.generateCompanyCreationData();
             await fillCompanyForm(page, companyData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Set up dialog handler for confirmation
@@ -417,7 +423,7 @@ test.describe('Companies CRUD - Owner Role', () => {
                 companyData.companyName = xssAttempt;
 
                 await fillCompanyForm(page, companyData);
-                await page.click('button[type="submit"]:has-text("Create")');
+                await page.locator('button[type="submit"]:has-text("Create")').click();
                 await page.waitForLoadState('networkidle');
 
                 // If created, verify it's properly escaped in the DOM
@@ -446,7 +452,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             companyData.companyName = sqlAttempt;
 
             await fillCompanyForm(page, companyData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Either rejected with error OR stored as literal string (safe)
@@ -465,7 +471,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             companyData.companyName = securityInputs.boundaryInputs.veryLong;
 
             await fillCompanyForm(page, companyData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Should show error about length (based on Companies.cshtml.cs validation)
@@ -542,7 +548,7 @@ test.describe('Companies CRUD - Owner Role', () => {
 
             const companyData = TestDataFactory.generateCompanyCreationData();
             await fillCompanyForm(page, companyData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // After redirect, form should be empty
@@ -573,7 +579,7 @@ test.describe('Companies CRUD - Owner Role', () => {
             };
 
             await fillCompanyForm(page, duplicateData);
-            await page.click('button[type="submit"]:has-text("Create")');
+            await page.locator('button[type="submit"]:has-text("Create")').click();
             await page.waitForLoadState('networkidle');
 
             // Error should be shown
