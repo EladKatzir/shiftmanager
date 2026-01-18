@@ -349,6 +349,18 @@ using (var scope = app.Services.CreateScope())
             await db.SaveChangesAsync();
         }
     }
+
+    // Seed test data for QA automation
+    try
+    {
+        var seeder = new TestDataSeeder(db, scope.ServiceProvider.GetRequiredService<ILogger<TestDataSeeder>>());
+        await seeder.SeedTestUsersAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding test data");
+    }
 }
 
 if (app.Environment.IsDevelopment())
