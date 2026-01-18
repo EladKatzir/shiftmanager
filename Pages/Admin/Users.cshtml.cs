@@ -224,7 +224,7 @@ public class UsersModel : LocalizedPageModel
                 jr.Id,
                 jr.Email,
                 jr.DisplayName,
-                companies[jr.CompanyId].Name,
+                companies.TryGetValue(jr.CompanyId, out var company) ? company.Name : $"Company #{jr.CompanyId}",
                 jr.RequestedRole.ToString(),
                 jr.CreatedAt,
                 jr.Status
@@ -319,11 +319,16 @@ public class UsersModel : LocalizedPageModel
                 // Create one entry per managed company
                 foreach (var companyId in managedCompanyIds)
                 {
+                    // ✅ FIX: Use TryGetValue to prevent KeyNotFoundException if company is missing
+                    var companyName = managedCompanies.TryGetValue(companyId, out var company)
+                        ? company.Name
+                        : $"Company #{companyId}";
+
                     userList.Add(new UserVM(
                         u.Id,
                         u.DisplayName,
                         u.Email,
-                        managedCompanies[companyId].Name,
+                        companyName,
                         u.Role.ToString(),
                         u.IsActive
                     ));
@@ -335,11 +340,16 @@ public class UsersModel : LocalizedPageModel
                 // Apply company filter if specified
                 if (!UserFilterCompanyId.HasValue || u.CompanyId == UserFilterCompanyId.Value)
                 {
+                    // ✅ FIX: Use TryGetValue to prevent KeyNotFoundException if company is missing
+                    var companyName = userCompanies.TryGetValue(u.CompanyId, out var company)
+                        ? company.Name
+                        : $"Company #{u.CompanyId}";
+
                     userList.Add(new UserVM(
                         u.Id,
                         u.DisplayName,
                         u.Email,
-                        userCompanies[u.CompanyId].Name,
+                        companyName,
                         u.Role.ToString(),
                         u.IsActive
                     ));
