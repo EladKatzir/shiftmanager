@@ -1,6 +1,7 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const { loginAsOwner, getOwnerCredentials, OWNER_EMAIL, OWNER_PASSWORD } = require('../helpers/auth-helpers');
+const { waitAndScrollToElement } = require('../helpers/test-helpers');
 
 /**
  * Authentication Tests - Phase 1
@@ -15,15 +16,21 @@ test.describe('Authentication', () => {
       // Verify login form elements are present
       await expect(page.locator('input[name="Email"], input#Email')).toBeVisible();
       await expect(page.locator('input[name="Password"], input#Password')).toBeVisible();
-      await expect(page.locator('button[type="submit"]')).toBeVisible();
+      await expect(page.locator('form:has(input[name="Email"]) button[type="submit"]')).toBeVisible();
     });
 
     test('P1-01b: should show error for invalid credentials', async ({ page }) => {
       await page.goto('/Auth/Login');
 
-      // Fill in invalid credentials
-      await page.fill('input[name="Email"], input#Email', 'invalid@test.com');
-      await page.fill('input[name="Password"], input#Password', 'wrongpassword');
+      // Fill in invalid credentials (with visibility waits)
+      const emailInput = page.locator('input[name="Email"], input#Email');
+      await emailInput.waitFor({ state: 'visible' });
+      await emailInput.fill('invalid@test.com');
+
+      const passwordInput = page.locator('input[name="Password"], input#Password');
+      await passwordInput.waitFor({ state: 'visible' });
+      await passwordInput.fill('wrongpassword');
+
       await page.locator('form:has(input[name="Email"]) button[type="submit"]').click();
 
       // Should stay on login page with error
@@ -52,9 +59,14 @@ test.describe('Authentication', () => {
       // For now, just verify the login form handles multiple submissions
       await page.goto('/Auth/Login');
 
+      const emailInput = page.locator('input[name="Email"], input#Email');
+      const passwordInput = page.locator('input[name="Password"], input#Password');
+
       for (let i = 0; i < 3; i++) {
-        await page.fill('input[name="Email"], input#Email', 'test@test.com');
-        await page.fill('input[name="Password"], input#Password', 'wrong');
+        await emailInput.waitFor({ state: 'visible' });
+        await emailInput.fill('test@test.com');
+        await passwordInput.waitFor({ state: 'visible' });
+        await passwordInput.fill('wrong');
         await page.locator('form:has(input[name="Email"]) button[type="submit"]').click();
         await page.waitForLoadState('networkidle');
       }
@@ -91,9 +103,11 @@ test.describe('Authentication', () => {
     });
 
     test('P1-02: should clear session on logout', async ({ page }) => {
-      // Logout
-      await page.locator('form[action*="Logout"] button[type="submit"]').click();
-      await page.waitForURL(/\/Auth\/Login/);
+      // Logout (with proper navigation wait)
+      await Promise.all([
+        page.waitForURL(/\/Auth\/Login/),
+        page.locator('form[action*="Logout"] button[type="submit"]').click(),
+      ]);
 
       // Try to access protected page
       await page.goto('/Admin/Index');

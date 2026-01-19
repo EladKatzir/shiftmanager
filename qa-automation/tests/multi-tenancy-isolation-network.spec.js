@@ -92,10 +92,10 @@ test.describe('Multi-Tenancy Isolation - Network Level', () => {
     await page.fill('input[name="Name"]', xssPayload);
     await page.fill('input[name="Slug"]', `xss-test-${Date.now()}`);
 
-    page.once('dialog', dialog => {
+    page.once('dialog', async dialog => {
       // If alert fires, XSS is NOT sanitized (vulnerability)
-      expect(dialog.message()).not.toBe('XSS');
-      dialog.dismiss();
+      expect(dialog.message()).not.toContain('XSS');
+      await dialog.dismiss();
     });
 
     await page.click('button[type="submit"]');
@@ -112,23 +112,31 @@ test.describe('Multi-Tenancy Isolation - Network Level', () => {
   test('P6-04: Network request headers contain proper authentication', async ({ page }) => {
     await loginAsOwner(page);
 
-    let hasCookieAuth = false;
+    // Verify authentication cookies are set
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find(c => c.name === 'shiftmgr.auth');
+    expect(authCookie).toBeTruthy();
 
-    page.on('request', request => {
-      const headers = request.headers();
-      const url = request.url();
+    // Verify protected endpoints return 200 (not 401/302)
+    let hasSuccessfulAuthenticatedRequest = false;
 
-      if (url.includes('/Admin/') || url.includes('/api/')) {
-        // Should have Cookie header for authentication
-        if (headers['cookie']) {
-          hasCookieAuth = true;
-        }
+    page.on('response', response => {
+      const url = response.url();
+      const status = response.status();
+
+      // Check API requests are successful (not redirected to login)
+      if ((url.includes('/Admin/') || url.includes('/Api/')) && status === 200) {
+        hasSuccessfulAuthenticatedRequest = true;
       }
     });
 
     await page.goto('/Admin/Users');
     await page.waitForLoadState('networkidle');
 
-    expect(hasCookieAuth).toBe(true);
+    // Verify we got successful responses to protected endpoints
+    expect(hasSuccessfulAuthenticatedRequest).toBe(true);
+
+    // Verify we're not redirected to login page
+    expect(page.url()).not.toContain('/Auth/Login');
   });
 });

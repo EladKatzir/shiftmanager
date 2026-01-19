@@ -695,15 +695,6 @@ test.describe('Users CRUD Operations', () => {
         await RoleHelper.loginAs(page, 'Owner');
     });
 
-    /**
-     * Helper function to navigate to Users page
-     * @param {import('@playwright/test').Page} page
-     */
-    async function navigateToUsers(page) {
-        await page.goto('/Admin/Users');
-        await page.waitForLoadState('networkidle');
-    }
-
     test('P3-29: Users table displays expected columns', async ({ page }) => {
         await navigateToUsers(page);
 

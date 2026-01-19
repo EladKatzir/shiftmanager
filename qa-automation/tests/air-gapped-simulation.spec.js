@@ -106,7 +106,8 @@ test.describe('Air-Gapped Environment Simulation', () => {
     await page.goto('/Admin/Index');
 
     // Page should still render with fallback fonts
-    await expect(page.locator('h1, h2, body')).toBeVisible();
+    await expect(page.locator('body')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
 
     // Text should be readable (not invisible)
     const bodyText = await page.locator('body').textContent();

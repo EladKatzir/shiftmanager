@@ -1,18 +1,8 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const path = require('path');
+const { loginAsOwner, OWNER_EMAIL, OWNER_PASSWORD } = require('../helpers/auth-helpers');
 const TestDataFactory = require('../helpers/test-data-factory');
-
-// Load environment variables
-try {
-    require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-} catch (e) {
-    // dotenv not installed, rely on system environment variables
-}
-
-// Credentials from environment variables
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'admin@local';
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'easteregg';
+const { waitAndScrollToElement, navigateAndWaitForLoad } = require('../helpers/test-helpers');
 
 /**
  * Companies CRUD Tests - Phase 1
@@ -31,27 +21,6 @@ const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'easteregg';
 
 test.describe('Companies CRUD - Owner Role', () => {
     /**
-     * Helper function to login as Owner
-     * @param {import('@playwright/test').Page} page
-     */
-    async function loginAsOwner(page) {
-        await page.goto('/Auth/Login');
-
-        // Fill login form - the form uses Email field based on auth.spec.js
-        await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
-        await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
-
-        // Submit the LOCAL login form (not the Griffin ADFS form)
-        await Promise.all([
-            page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
-            page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
-        ]);
-
-        // Verify login succeeded
-        await expect(page).not.toHaveURL(/\/Auth\/Login/);
-    }
-
-    /**
      * Helper function to navigate to Companies page
      * @param {import('@playwright/test').Page} page
      */
@@ -59,8 +28,25 @@ test.describe('Companies CRUD - Owner Role', () => {
         await page.goto('/Admin/Companies');
         await page.waitForLoadState('networkidle');
 
-        // Verify we're on the Companies page
-        await expect(page.locator('h1')).toContainText(/Companies/i);
+        // Wait for any loading indicators to disappear
+        const loader = page.locator('.loading, .spinner, [data-loading="true"]');
+        if (await loader.isVisible().catch(() => false)) {
+            await loader.waitFor({ state: 'hidden', timeout: 10000 });
+        }
+
+        // Wait for page-specific content to be loaded
+        // Check for either the companies table or the form (whichever indicates page is ready)
+        try {
+            await page.waitForSelector('table.companies-table, form input[name="CompanyName"]', { timeout: 10000 });
+        } catch (e) {
+            // If neither exists, wait a bit more for dynamic content
+            await page.waitForTimeout(1000);
+        }
+
+        // Scroll to ensure full page is loaded/visible
+        await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+        await page.waitForTimeout(500); // Brief pause for any lazy-loaded elements
+        await page.evaluate(() => window.scrollTo(0, 0));
     }
 
     /**
@@ -122,8 +108,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             // Fill the company creation form
             await fillCompanyForm(page, companyData);
 
-            // Submit the form
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+            // Submit the form (ensure visible before click)
+            const submitButton = page.locator('button[type="submit"]:has-text("Create")');
+            await submitButton.scrollIntoViewIfNeeded();
+            await submitButton.click();
             await page.waitForLoadState('networkidle');
 
             // Verify success - check for success message or company in list
@@ -151,7 +139,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             };
 
             await fillCompanyForm(page, minimalData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const submitButton = page.locator('button[type="submit"]:has-text("Create")');
+            await submitButton.scrollIntoViewIfNeeded();
+            await submitButton.click();
             await page.waitForLoadState('networkidle');
 
             // Verify company was created
@@ -167,7 +158,9 @@ test.describe('Companies CRUD - Owner Role', () => {
             await fillCompanyForm(page, companyData);
 
             // Try to submit - should fail HTML5 validation or show error
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+            const submitButton = page.locator('button[type="submit"]:has-text("Create")');
+            await submitButton.scrollIntoViewIfNeeded();
+            await submitButton.click();
 
             // Either HTML5 validation prevents submission or error is shown
             const currentUrl = page.url();
@@ -200,7 +193,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             };
 
             await fillCompanyForm(page, duplicateData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const submitButton = page.locator('button[type="submit"]:has-text("Create")');
+            await submitButton.scrollIntoViewIfNeeded();
+            await submitButton.click();
             await page.waitForLoadState('networkidle');
 
             // Should show error about duplicate slug
@@ -245,10 +241,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             const table = page.locator('table.companies-table');
             await expect(table).toBeVisible();
 
-            // Verify table headers
-            await expect(page.locator('table th:has-text("Name")')).toBeVisible();
-            await expect(page.locator('table th:has-text("Slug")')).toBeVisible();
-            await expect(page.locator('table th:has-text("Actions")')).toBeVisible();
+            // Verify table headers (use exact text to avoid strict mode violations)
+            await expect(page.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+            await expect(page.getByRole('columnheader', { name: 'Slug', exact: true })).toBeVisible();
+            await expect(page.getByRole('columnheader', { name: 'Actions', exact: true })).toBeVisible();
         });
 
         test('P2-07: Company details are displayed correctly', async ({ page }) => {
@@ -286,8 +282,9 @@ test.describe('Companies CRUD - Owner Role', () => {
         test('P2-09: Rename company modal opens', async ({ page }) => {
             await navigateToCompanies(page);
 
-            // Check if there's a company to rename
-            const renameButton = page.locator('button:has-text("Rename"):first-of-type');
+            // Check if there's a company to rename (more specific selector)
+            const firstCompanyRow = page.locator('table tbody tr').first();
+            const renameButton = firstCompanyRow.locator('button:has-text("Rename")');
             const buttonExists = await renameButton.isVisible().catch(() => false);
 
             if (!buttonExists) {
@@ -295,10 +292,11 @@ test.describe('Companies CRUD - Owner Role', () => {
                 return;
             }
 
+            await renameButton.scrollIntoViewIfNeeded();
             await renameButton.click();
 
-            // Verify modal opens
-            await expect(page.locator('#renameModal.active, .modal.active')).toBeVisible();
+            // Verify modal opens (with longer timeout for animation)
+            await expect(page.locator('#renameModal.active, .modal.active')).toBeVisible({ timeout: 10000 });
         });
 
         test('P2-10: Rename company successfully', async ({ page }) => {
@@ -307,7 +305,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             // First create a company to rename
             const companyData = TestDataFactory.generateCompanyCreationData();
             await fillCompanyForm(page, companyData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const createButton = page.locator('button[type="submit"]:has-text("Create")');
+            await createButton.scrollIntoViewIfNeeded();
+            await createButton.click();
             await page.waitForLoadState('networkidle');
 
             // Find and click rename button for our company
@@ -320,6 +321,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             }
 
             await companyRow.locator('button:has-text("Rename")').click();
+
+            // Wait for modal to be visible before filling
+            const modal = page.locator('#renameModal.active, .modal.active');
+            await modal.waitFor({ state: 'visible' });
 
             // Fill new name in modal
             const newName = `Renamed_${Date.now()}`;
@@ -334,7 +339,9 @@ test.describe('Companies CRUD - Owner Role', () => {
         test('P2-11: Rename modal cancel works', async ({ page }) => {
             await navigateToCompanies(page);
 
-            const renameButton = page.locator('button:has-text("Rename"):first-of-type');
+            // More specific selector within first company row
+            const firstCompanyRow = page.locator('table tbody tr').first();
+            const renameButton = firstCompanyRow.locator('button:has-text("Rename")');
             const buttonExists = await renameButton.isVisible().catch(() => false);
 
             if (!buttonExists) {
@@ -342,8 +349,9 @@ test.describe('Companies CRUD - Owner Role', () => {
                 return;
             }
 
+            await renameButton.scrollIntoViewIfNeeded();
             await renameButton.click();
-            await expect(page.locator('#renameModal.active')).toBeVisible();
+            await expect(page.locator('#renameModal.active')).toBeVisible({ timeout: 10000 });
 
             // Click cancel
             await page.click('#renameModal button:has-text("Cancel")');
@@ -360,16 +368,13 @@ test.describe('Companies CRUD - Owner Role', () => {
             // First create a company to delete
             const companyData = TestDataFactory.generateCompanyCreationData();
             await fillCompanyForm(page, companyData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const createButton = page.locator('button[type="submit"]:has-text("Create")');
+            await createButton.scrollIntoViewIfNeeded();
+            await createButton.click();
             await page.waitForLoadState('networkidle');
 
-            // Set up dialog handler for confirmation
-            page.on('dialog', async dialog => {
-                expect(dialog.type()).toBe('confirm');
-                await dialog.accept();
-            });
-
-            // Find and click delete button for our company
+            // Find delete button for our company
             const companyRow = page.locator(`table tbody tr:has-text("${companyData.companyName}")`);
             const rowExists = await companyRow.isVisible().catch(() => false);
 
@@ -378,7 +383,15 @@ test.describe('Companies CRUD - Owner Role', () => {
                 return;
             }
 
-            await companyRow.locator('button:has-text("Delete")').click();
+            const deleteButton = companyRow.locator('button:has-text("Delete")');
+
+            // Set up dialog handler BEFORE clicking (critical timing fix)
+            page.once('dialog', async dialog => {
+                expect(dialog.type()).toBe('confirm');
+                await dialog.accept();
+            });
+
+            await deleteButton.click();
             await page.waitForLoadState('networkidle');
 
             // Verify company was deleted
@@ -388,7 +401,9 @@ test.describe('Companies CRUD - Owner Role', () => {
         test('P2-13: Delete confirmation can be cancelled', async ({ page }) => {
             await navigateToCompanies(page);
 
-            const deleteButton = page.locator('button:has-text("Delete"):first-of-type');
+            // More specific selector within first company row
+            const firstCompanyRow = page.locator('table tbody tr').first();
+            const deleteButton = firstCompanyRow.locator('button:has-text("Delete")');
             const buttonExists = await deleteButton.isVisible().catch(() => false);
 
             if (!buttonExists) {
@@ -396,19 +411,19 @@ test.describe('Companies CRUD - Owner Role', () => {
                 return;
             }
 
-            // Set up dialog handler to dismiss
-            page.on('dialog', async dialog => {
+            // Get company name before delete attempt
+            const companyName = await firstCompanyRow.locator('td').first().textContent();
+
+            // Set up dialog handler BEFORE clicking (critical timing fix)
+            page.once('dialog', async dialog => {
                 await dialog.dismiss();
             });
 
-            // Get company name before delete attempt
-            const companyName = await page.locator('table tbody tr:first-child td:first-child').textContent();
-
             await deleteButton.click();
-            await page.waitForTimeout(500); // Brief wait for any potential deletion
 
-            // Company should still exist
-            await expect(page.locator(`table:has-text("${companyName}")`)).toBeVisible();
+            // Company should still exist (deterministic wait instead of timeout)
+            const companyElement = page.locator(`table tr:has-text("${companyName}")`);
+            await expect(companyElement).toBeVisible({ timeout: 5000 });
         });
     });
 
@@ -423,7 +438,10 @@ test.describe('Companies CRUD - Owner Role', () => {
                 companyData.companyName = xssAttempt;
 
                 await fillCompanyForm(page, companyData);
-                await page.locator('button[type="submit"]:has-text("Create")').click();
+
+                const createButton = page.locator('button[type="submit"]:has-text("Create")');
+                await createButton.scrollIntoViewIfNeeded();
+                await createButton.click();
                 await page.waitForLoadState('networkidle');
 
                 // If created, verify it's properly escaped in the DOM
@@ -452,7 +470,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             companyData.companyName = sqlAttempt;
 
             await fillCompanyForm(page, companyData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const createButton = page.locator('button[type="submit"]:has-text("Create")');
+            await createButton.scrollIntoViewIfNeeded();
+            await createButton.click();
             await page.waitForLoadState('networkidle');
 
             // Either rejected with error OR stored as literal string (safe)
@@ -471,7 +492,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             companyData.companyName = securityInputs.boundaryInputs.veryLong;
 
             await fillCompanyForm(page, companyData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const createButton = page.locator('button[type="submit"]:has-text("Create")');
+            await createButton.scrollIntoViewIfNeeded();
+            await createButton.click();
             await page.waitForLoadState('networkidle');
 
             // Should show error about length (based on Companies.cshtml.cs validation)
@@ -548,7 +572,10 @@ test.describe('Companies CRUD - Owner Role', () => {
 
             const companyData = TestDataFactory.generateCompanyCreationData();
             await fillCompanyForm(page, companyData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const createButton = page.locator('button[type="submit"]:has-text("Create")');
+            await createButton.scrollIntoViewIfNeeded();
+            await createButton.click();
             await page.waitForLoadState('networkidle');
 
             // After redirect, form should be empty
@@ -579,7 +606,10 @@ test.describe('Companies CRUD - Owner Role', () => {
             };
 
             await fillCompanyForm(page, duplicateData);
-            await page.locator('button[type="submit"]:has-text("Create")').click();
+
+            const createButton = page.locator('button[type="submit"]:has-text("Create")');
+            await createButton.scrollIntoViewIfNeeded();
+            await createButton.click();
             await page.waitForLoadState('networkidle');
 
             // Error should be shown

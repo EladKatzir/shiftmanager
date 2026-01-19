@@ -36,17 +36,24 @@ test.describe('Session Management & Resilience', () => {
     await loginAsOwner(page);
     await page.goto('/Admin/Companies');
 
-    const initialCount = await page.locator('tbody tr, .company-row').count();
+    // Companies page has inline form, not separate create page
+    const timestamp = Date.now();
+    const companyName = `Company_${timestamp}`;
+    const companySlug = `slug-${timestamp}`;
 
-    // Create a company
-    await page.click('a:has-text("Create")');
-    const companyName = `Company_${Date.now()}`;
-    await page.fill('input[name="Name"]', companyName);
-    await page.fill('input[name="Slug"]', `slug-${Date.now()}`);
-    await page.click('button[type="submit"]');
+    // Fill inline form (requires company + manager info)
+    await page.fill('input[name="CompanyName"]', companyName);
+    await page.fill('input[name="CompanySlug"]', companySlug);
+    await page.fill('input[name="ManagerEmail"]', `manager${timestamp}@test.com`);
+    await page.fill('input[name="ManagerDisplayName"]', `Manager ${timestamp}`);
+    await page.fill('input[name="ManagerPassword"]', '123456');
+    await page.locator('form:has(input[name="CompanyName"]) button[type="submit"]').click();
 
-    // Wait for redirect back to list
-    await page.waitForURL(/.*\/Admin\/Companies(?!\/Create)/, { timeout: 5000 }).catch(() => {});
+    // Wait for page to reload after POST-REDIRECT-GET
+    await page.waitForLoadState('networkidle');
+
+    // Verify company was created (should appear in list)
+    await expect(page.locator(`text="${companyName}"`).first()).toBeVisible();
 
     // Go back
     await page.goBack();
@@ -56,10 +63,14 @@ test.describe('Session Management & Resilience', () => {
 
     // Reload to get fresh data
     await page.reload();
+    await page.waitForLoadState('networkidle');
 
-    // Should only have one instance of the company (no double-submit)
-    const companyMatches = await page.locator(`text="${companyName}"`).count();
-    expect(companyMatches).toBeLessThanOrEqual(1);
+    // Should only have ONE company row in the table (no double-submit from back button)
+    // The name might appear in success message too, so check table rows specifically
+    const companyRowMatches = await page.locator(`tbody tr:has-text("${companyName}")`).count();
+    expect(companyRowMatches).toBe(1);
+
+    console.log('✓ PRG pattern prevents double-submit via back button');
   });
 
   test('P7-04: Concurrent sessions from same user work independently', async ({ browser }) => {

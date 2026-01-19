@@ -202,22 +202,35 @@ test.describe('Network Performance & Efficiency', () => {
 
   test('P9-05: Identify slow endpoints', async ({ page }) => {
     const slowEndpoints = [];
+    const requestTimings = new Map();
 
+    // Track request start times
+    const requestListener = (request) => {
+      requestTimings.set(request.url(), Date.now());
+    };
+
+    // Track response times
     const responseListener = async (response) => {
       const request = response.request();
-      const timing = response.timing();
-      const responseTime = timing.responseEnd - timing.requestStart;
+      const url = request.url();
+      const startTime = requestTimings.get(url);
 
-      if (responseTime > 1000 && request.url().includes('/')) {
-        slowEndpoints.push({
-          url: request.url(),
-          status: response.status(),
-          time: Math.round(responseTime),
-          size: parseInt(response.headers()['content-length'] || '0')
-        });
+      if (startTime) {
+        const responseTime = Date.now() - startTime;
+        requestTimings.delete(url);
+
+        if (responseTime > 1000 && url.includes('/')) {
+          slowEndpoints.push({
+            url: url,
+            status: response.status(),
+            time: Math.round(responseTime),
+            size: parseInt(response.headers()['content-length'] || '0')
+          });
+        }
       }
     };
 
+    page.on('request', requestListener);
     page.on('response', responseListener);
 
     try {
@@ -230,6 +243,7 @@ test.describe('Network Performance & Efficiency', () => {
       console.log(`Slow endpoints (>1s): ${slowEndpoints.length}`);
       slowEndpoints.forEach(e => console.log(`  ${e.url}: ${e.time}ms`));
     } finally {
+      page.off('request', requestListener);
       page.off('response', responseListener);
     }
   });
