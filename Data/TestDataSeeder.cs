@@ -34,6 +34,7 @@ namespace ShiftManager.Data
             var testCompany = await EnsureTestCompanyExists();
 
             // Create test users with different roles
+            await CreateTestUser("owner@test.com", "123456", UserRole.Owner, "Test Owner", testCompany.Id);
             await CreateTestUser("director@test.com", "123456", UserRole.Director, "Test Director", testCompany.Id);
             await CreateTestUser("manager@test.com", "123456", UserRole.Manager, "Test Manager", testCompany.Id);
             await CreateTestUser("employee@test.com", "123456", UserRole.Employee, "Test Employee", testCompany.Id);

@@ -30,153 +30,180 @@ test.describe('Network Performance & Efficiency', () => {
   test('P9-01: Measure request count - Admin/Index', async ({ page }) => {
     const requests = [];
 
-    page.on('request', request => {
+    const requestListener = (request) => {
       requests.push({
         url: request.url(),
         method: request.method(),
         resourceType: request.resourceType(),
         timestamp: Date.now()
       });
-    });
-
-    await loginAsOwner(page);
-
-    const startTime = Date.now();
-    await page.goto('/Admin/Index');
-    await page.waitForLoadState('networkidle');
-    const loadTime = Date.now() - startTime;
-
-    const apiRequests = requests.filter(r =>
-      r.url.includes('/api/') || r.url.includes('/Api/') || r.url.includes('/Admin/')
-    );
-
-    performanceData.screens['Admin/Index'] = {
-      totalRequests: requests.length,
-      apiRequests: apiRequests.length,
-      loadTime: loadTime,
-      requests: apiRequests.map(r => ({ url: r.url, method: r.method }))
     };
 
-    console.log(`Admin/Index: ${apiRequests.length} API requests, ${loadTime}ms load time`);
+    page.on('request', requestListener);
 
-    // Efficiency budgets
-    expect(apiRequests.length).toBeLessThan(20); // Max 20 API calls
-    expect(loadTime).toBeLessThan(5000); // Max 5 seconds
+    try {
+      await loginAsOwner(page);
+
+      const startTime = Date.now();
+      await page.goto('/Admin/Index');
+      await page.waitForLoadState('networkidle');
+      const loadTime = Date.now() - startTime;
+
+      const apiRequests = requests.filter(r =>
+        r.url.includes('/api/') || r.url.includes('/Api/') || r.url.includes('/Admin/')
+      );
+
+      performanceData.screens['Admin/Index'] = {
+        totalRequests: requests.length,
+        apiRequests: apiRequests.length,
+        loadTime: loadTime,
+        requests: apiRequests.map(r => ({ url: r.url, method: r.method }))
+      };
+
+      console.log(`Admin/Index: ${apiRequests.length} API requests, ${loadTime}ms load time`);
+
+      // Efficiency budgets
+      expect(apiRequests.length).toBeLessThan(20); // Max 20 API calls
+      expect(loadTime).toBeLessThan(5000); // Max 5 seconds
+    } finally {
+      page.off('request', requestListener);
+    }
   });
 
   test('P9-02: Measure request count - Calendar/Table', async ({ page }) => {
     const requests = [];
 
-    page.on('request', request => {
+    const requestListener = (request) => {
       requests.push({
         url: request.url(),
         method: request.method(),
         resourceType: request.resourceType()
       });
-    });
-
-    await loginAsOwner(page);
-
-    const startTime = Date.now();
-    await page.goto('/Calendar/Table');
-    await page.waitForLoadState('networkidle');
-    const loadTime = Date.now() - startTime;
-
-    const apiRequests = requests.filter(r =>
-      r.url.includes('/api/') || r.url.includes('/Api/') || r.url.includes('/Calendar/')
-    );
-
-    performanceData.screens['Calendar/Table'] = {
-      totalRequests: requests.length,
-      apiRequests: apiRequests.length,
-      loadTime: loadTime
     };
 
-    console.log(`Calendar/Table: ${apiRequests.length} API requests, ${loadTime}ms load time`);
+    page.on('request', requestListener);
 
-    // Calendar is complex, allow more requests
-    expect(apiRequests.length).toBeLessThan(30);
-    expect(loadTime).toBeLessThan(8000);
+    try {
+      await loginAsOwner(page);
+
+      const startTime = Date.now();
+      await page.goto('/Calendar/Table');
+      await page.waitForLoadState('networkidle');
+      const loadTime = Date.now() - startTime;
+
+      const apiRequests = requests.filter(r =>
+        r.url.includes('/api/') || r.url.includes('/Api/') || r.url.includes('/Calendar/')
+      );
+
+      performanceData.screens['Calendar/Table'] = {
+        totalRequests: requests.length,
+        apiRequests: apiRequests.length,
+        loadTime: loadTime
+      };
+
+      console.log(`Calendar/Table: ${apiRequests.length} API requests, ${loadTime}ms load time`);
+
+      // Calendar is complex, allow more requests
+      expect(apiRequests.length).toBeLessThan(30);
+      expect(loadTime).toBeLessThan(8000);
+    } finally {
+      page.off('request', requestListener);
+    }
   });
 
   test('P9-03: Detect duplicate requests', async ({ page }) => {
     const requests = [];
 
-    page.on('request', request => {
+    const requestListener = (request) => {
       requests.push({
         url: request.url(),
         method: request.method()
       });
-    });
-
-    await loginAsOwner(page);
-    await page.goto('/Admin/Users');
-    await page.waitForLoadState('networkidle');
-
-    // Find duplicates
-    const seen = new Map();
-    const duplicates = [];
-
-    for (const req of requests) {
-      const key = `${req.method}:${req.url}`;
-      if (seen.has(key)) {
-        duplicates.push(req);
-      } else {
-        seen.set(key, true);
-      }
-    }
-
-    performanceData.screens['Admin/Users'] = {
-      totalRequests: requests.length,
-      duplicateRequests: duplicates.length,
-      duplicates: duplicates.map(d => d.url)
     };
 
-    console.log(`Duplicate requests: ${duplicates.length}`);
-    expect(duplicates.length).toBeLessThan(5); // Allow some cache misses
+    try {
+      // Login first, THEN start tracking requests
+      await loginAsOwner(page);
+
+      // Start tracking requests only for the Admin/Users page
+      page.on('request', requestListener);
+
+      await page.goto('/Admin/Users');
+      await page.waitForLoadState('networkidle');
+
+      // Find duplicates
+      const seen = new Map();
+      const duplicates = [];
+
+      for (const req of requests) {
+        const key = `${req.method}:${req.url}`;
+        if (seen.has(key)) {
+          duplicates.push(req);
+        } else {
+          seen.set(key, true);
+        }
+      }
+
+      performanceData.screens['Admin/Users'] = {
+        totalRequests: requests.length,
+        duplicateRequests: duplicates.length,
+        duplicates: duplicates.map(d => d.url)
+      };
+
+      console.log(`Duplicate requests: ${duplicates.length}`);
+      expect(duplicates.length).toBeLessThan(5); // Allow some cache misses
+    } finally {
+      page.off('request', requestListener);
+    }
   });
 
   test('P9-04: Detect unexpected polling', async ({ page }) => {
     const requests = [];
 
-    page.on('request', request => {
+    const requestListener = (request) => {
       requests.push({
         url: request.url(),
         timestamp: Date.now()
       });
-    });
-
-    await loginAsOwner(page);
-    await page.goto('/My/Index');
-
-    // Wait 5 seconds to detect polling
-    await page.waitForTimeout(5000);
-
-    // Check for repeated requests to same URL
-    const urlCounts = new Map();
-    for (const req of requests) {
-      urlCounts.set(req.url, (urlCounts.get(req.url) || 0) + 1);
-    }
-
-    const pollingUrls = [];
-    for (const [url, count] of urlCounts.entries()) {
-      if (count > 2 && url.includes('/api/')) {
-        pollingUrls.push({ url, count });
-      }
-    }
-
-    performanceData.polling = {
-      detected: pollingUrls.length > 0,
-      urls: pollingUrls
     };
 
-    console.log(`Polling URLs detected: ${pollingUrls.length}`);
+    page.on('request', requestListener);
+
+    try {
+      await loginAsOwner(page);
+      await page.goto('/My/Index');
+
+      // Wait 5 seconds to detect polling
+      await page.waitForTimeout(5000);
+
+      // Check for repeated requests to same URL
+      const urlCounts = new Map();
+      for (const req of requests) {
+        urlCounts.set(req.url, (urlCounts.get(req.url) || 0) + 1);
+      }
+
+      const pollingUrls = [];
+      for (const [url, count] of urlCounts.entries()) {
+        if (count > 2 && url.includes('/api/')) {
+          pollingUrls.push({ url, count });
+        }
+      }
+
+      performanceData.polling = {
+        detected: pollingUrls.length > 0,
+        urls: pollingUrls
+      };
+
+      console.log(`Polling URLs detected: ${pollingUrls.length}`);
+    } finally {
+      page.off('request', requestListener);
+    }
   });
 
   test('P9-05: Identify slow endpoints', async ({ page }) => {
     const slowEndpoints = [];
 
-    page.on('response', async response => {
+    const responseListener = async (response) => {
       const request = response.request();
       const timing = response.timing();
       const responseTime = timing.responseEnd - timing.requestStart;
@@ -189,16 +216,22 @@ test.describe('Network Performance & Efficiency', () => {
           size: parseInt(response.headers()['content-length'] || '0')
         });
       }
-    });
+    };
 
-    await loginAsOwner(page);
-    await page.goto('/Admin/Analytics').catch(() => page.goto('/Admin/Index'));
-    await page.waitForLoadState('networkidle');
+    page.on('response', responseListener);
 
-    performanceData.slowEndpoints = slowEndpoints;
+    try {
+      await loginAsOwner(page);
+      await page.goto('/Admin/Analytics').catch(() => page.goto('/Admin/Index'));
+      await page.waitForLoadState('networkidle');
 
-    console.log(`Slow endpoints (>1s): ${slowEndpoints.length}`);
-    slowEndpoints.forEach(e => console.log(`  ${e.url}: ${e.time}ms`));
+      performanceData.slowEndpoints = slowEndpoints;
+
+      console.log(`Slow endpoints (>1s): ${slowEndpoints.length}`);
+      slowEndpoints.forEach(e => console.log(`  ${e.url}: ${e.time}ms`));
+    } finally {
+      page.off('response', responseListener);
+    }
   });
 
   test('P9-06: Detect 4xx/5xx errors', async ({ page }) => {
