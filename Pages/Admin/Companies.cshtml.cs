@@ -132,6 +132,14 @@ public class CompaniesModel : LocalizedPageModel
             return Page();
         }
 
+        // Block path traversal attempts
+        if (CompanySlug.Contains("..") || CompanySlug.Contains("/") || CompanySlug.Contains("\\"))
+        {
+            Error = _localizer["Error_CompanySlugInvalidFormat"];
+            _logger.LogWarning("Path traversal attempt detected in company slug: {Slug}", CompanySlug);
+            return Page();
+        }
+
         // Check if Director is selected
         bool useDirector = SelectedDirectorId.HasValue && SelectedDirectorId.Value > 0;
 
