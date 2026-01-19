@@ -1,3 +1,4 @@
+@* MODIFIED FOR MODAL FIX *@
 @page
 @model ShiftManager.Pages.Admin.CompaniesModel
 @using Microsoft.Extensions.Localization
@@ -562,7 +563,9 @@
                         <td>
                             <div class="table-actions">
                                 <button type="button" class="btn btn-ghost"
-                                        onclick="renameCompany(@c.Id, '@c.Name')">
+                                        data-company-id="@c.Id"
+                                        data-company-name="@c.Name"
+                                        onclick="renameCompanyClick(this)">
                                     @Localizer["Rename"]
                                 </button>
                                 <form method="post" asp-page-handler="DeleteCompany" style="display:inline"
@@ -611,6 +614,13 @@
 </div>
 
 <script>
+// Rename company using data attributes to avoid XSS and quote issues
+function renameCompanyClick(button) {
+    const id = button.getAttribute('data-company-id');
+    const currentName = button.getAttribute('data-company-name');
+    renameCompany(id, currentName);
+}
+
 function renameCompany(id, currentName) {
     document.getElementById('renameCompanyId').value = id;
     document.getElementById('newCompanyName').value = currentName;
