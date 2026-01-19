@@ -35,40 +35,41 @@ try {
  * - Trainee: No user management access
  */
 
+/**
+ * Helper function to navigate to Users page
+ * @param {import('@playwright/test').Page} page
+ */
+async function navigateToUsers(page) {
+    await page.goto('/Admin/Users');
+    await page.waitForLoadState('networkidle');
+}
+
+/**
+ * Helper function to fill the Add User form
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} userData - User data to fill in the form
+ */
+async function fillAddUserForm(page, userData) {
+    await page.fill('input[name="NewEmail"], input#NewEmail', userData.email);
+    await page.fill('input[name="NewDisplayName"], input#NewDisplayName', userData.displayName);
+    await page.fill('input[name="NewPassword"], input#NewPassword', userData.password);
+
+    // Select role if dropdown is available
+    const roleSelect = page.locator('select[name="NewRole"], select#NewRole');
+    if (await roleSelect.isVisible()) {
+        await roleSelect.selectOption(userData.role || 'Employee');
+    }
+
+    // Select company if dropdown is available (Owner only)
+    if (userData.companyId) {
+        const companySelect = page.locator('select[name="NewUserCompanyId"], select#NewUserCompanyId');
+        if (await companySelect.isVisible()) {
+            await companySelect.selectOption(userData.companyId.toString());
+        }
+    }
+}
+
 test.describe('Users Module - RBAC Authorization Matrix', () => {
-    /**
-     * Helper function to navigate to Users page
-     * @param {import('@playwright/test').Page} page
-     */
-    async function navigateToUsers(page) {
-        await page.goto('/Admin/Users');
-        await page.waitForLoadState('networkidle');
-    }
-
-    /**
-     * Helper function to fill the Add User form
-     * @param {import('@playwright/test').Page} page
-     * @param {Object} userData - User data to fill in the form
-     */
-    async function fillAddUserForm(page, userData) {
-        await page.fill('input[name="NewEmail"], input#NewEmail', userData.email);
-        await page.fill('input[name="NewDisplayName"], input#NewDisplayName', userData.displayName);
-        await page.fill('input[name="NewPassword"], input#NewPassword', userData.password);
-
-        // Select role if dropdown is available
-        const roleSelect = page.locator('select[name="NewRole"], select#NewRole');
-        if (await roleSelect.isVisible()) {
-            await roleSelect.selectOption(userData.role || 'Employee');
-        }
-
-        // Select company if dropdown is available (Owner only)
-        if (userData.companyId) {
-            const companySelect = page.locator('select[name="NewUserCompanyId"], select#NewUserCompanyId');
-            if (await companySelect.isVisible()) {
-                await companySelect.selectOption(userData.companyId.toString());
-            }
-        }
-    }
 
     test.describe('Owner Role - Full Access', () => {
         test.beforeEach(async ({ page }) => {
