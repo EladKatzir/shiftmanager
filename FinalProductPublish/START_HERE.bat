@@ -108,43 +108,25 @@ if not exist "e_sqlite3.dll" (
     echo [WARNING] e_sqlite3.dll not found. SQLite may fail.
 )
 
-REM Optional: detect Zone.Identifier on a critical DLL (best-effort)
-REM If PowerShell is blocked, skip detection.
-if exist "UNBLOCK_FILES.bat" (
-    where powershell.exe >NUL 2>&1
+REM Verify all critical DLLs are unblocked (mandatory for air-gapped deployments)
+if exist "VERIFY_UNBLOCK.bat" (
+    echo.
+    echo Running unblock verification (checks 5 critical DLLs)...
+    call VERIFY_UNBLOCK.bat
     if errorlevel 1 (
-        REM PowerShell not available; cannot check Zone.Identifier.
-    ) else (
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-            "if (Test-Path 'SixLabors.ImageSharp.dll:Zone.Identifier') { exit 1 } else { exit 0 }" ^
-            >NUL 2>&1
-        if not errorlevel 1 (
-            REM Not blocked (exit 0)
-        ) else (
-            echo.
-            echo [CRITICAL] Files appear to be BLOCKED by Windows (Zone.Identifier present).
-            echo This is common after copying via USB.
-            echo.
-            echo Options:
-            echo   [U] Run UNBLOCK_FILES.bat now (recommended)
-            echo   [C] Continue anyway (may fail)
-            echo.
-            choice /C UC /N /M "Your choice: "
-            if errorlevel 2 (
-                echo Continuing without unblocking...
-            ) else (
-                echo.
-                echo Running UNBLOCK_FILES.bat...
-                call UNBLOCK_FILES.bat
-                if errorlevel 1 (
-                    echo [ERROR] Unblock failed. See AIR_GAPPED_DEPLOYMENT_GUIDE.txt.
-                    pause
-                    exit /b 1
-                )
-                echo Files unblocked.
-            )
-        )
+        echo.
+        echo [ERROR] Unblock verification failed.
+        echo Application startup has been blocked to prevent cryptic DLL errors.
+        echo.
+        echo Please follow the instructions above to unblock the files,
+        echo then run START_HERE.bat again.
+        echo.
+        pause
+        exit /b 1
     )
+    echo All critical DLLs verified as unblocked.
+) else (
+    echo [WARNING] VERIFY_UNBLOCK.bat not found - skipping unblock verification.
 )
 
 echo Deployment file checks passed.
