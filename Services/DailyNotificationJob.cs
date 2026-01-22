@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,18 +10,22 @@ namespace ShiftManager.Services;
 /// <summary>
 /// Phase 6: Background service that sends daily digest emails to users based on their preferences.
 /// Runs every 15 minutes to check for users whose preferred time matches the current time.
+/// Can be disabled via configuration flag: Features:EnableDailyNotifications
 /// </summary>
 public class DailyNotificationJob : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DailyNotificationJob> _logger;
     private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(15);
 
     public DailyNotificationJob(
         IServiceProvider serviceProvider,
+        IConfiguration configuration,
         ILogger<DailyNotificationJob> logger)
     {
         _serviceProvider = serviceProvider;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -28,11 +33,29 @@ public class DailyNotificationJob : BackgroundService
     {
         _logger.LogInformation("Daily Notification Job started");
 
+        // Check if daily notifications are enabled via feature flag
+        var isEnabled = _configuration.GetValue<bool>("Features:EnableDailyNotifications", true);
+
+        if (!isEnabled)
+        {
+            _logger.LogInformation("Daily notifications disabled by feature flag (Features:EnableDailyNotifications=false). Job will exit gracefully.");
+            return;
+        }
+
         // Wait 1 minute on startup to let the application fully initialize
         await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            // Re-check feature flag at start of each iteration to allow runtime disabling
+            isEnabled = _configuration.GetValue<bool>("Features:EnableDailyNotifications", true);
+
+            if (!isEnabled)
+            {
+                _logger.LogInformation("Daily notifications disabled by feature flag. Exiting job gracefully.");
+                break;
+            }
+
             try
             {
                 await ProcessDailyDigestsAsync(stoppingToken);

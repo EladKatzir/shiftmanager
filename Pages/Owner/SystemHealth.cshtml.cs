@@ -53,6 +53,7 @@ public class SystemHealthModel : PageModel
     // Configuration
     public bool EmailConfigured { get; set; }
     public bool AdfsConfigured { get; set; }
+    public bool DailyNotificationsEnabled { get; set; }
     public int CompanyCount { get; set; }
     public int UserCount { get; set; }
 
@@ -183,6 +184,9 @@ public class SystemHealthModel : PageModel
                             griffinConfig.Enabled &&
                             !string.IsNullOrEmpty(griffinConfig.BaseUrl) &&
                             !string.IsNullOrEmpty(griffinConfig.TokenConsumerUrl);
+
+            // Check daily notifications feature flag
+            DailyNotificationsEnabled = _configuration.GetValue<bool>("Features:EnableDailyNotifications", true);
 
             // Get counts
             CompanyCount = await _db.Companies.CountAsync();
