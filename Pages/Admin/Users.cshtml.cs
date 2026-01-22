@@ -49,7 +49,7 @@ public class UsersModel : LocalizedPageModel
         _notificationService = notificationService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, DateTime CreatedAt, JoinRequestStatus Status);
 
     // Batch approval support
@@ -330,7 +330,9 @@ public class UsersModel : LocalizedPageModel
                         u.Email,
                         companyName,
                         u.Role.ToString(),
-                        u.IsActive
+                        u.IsActive,
+                        u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
+                        u.LockoutEnd
                     ));
                 }
             }
@@ -351,7 +353,9 @@ public class UsersModel : LocalizedPageModel
                         u.Email,
                         companyName,
                         u.Role.ToString(),
-                        u.IsActive
+                        u.IsActive,
+                        u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
+                        u.LockoutEnd
                     ));
                 }
             }
@@ -722,6 +726,59 @@ public class UsersModel : LocalizedPageModel
 
             TempData["SuccessMessage"] = string.Format(_localizer["Success_PasswordUpdated"], u.DisplayName);
         }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostUnlockAccountAsync(int id)
+    {
+        // ✅ SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+            return RedirectToPage();
+        }
+
+        var targetUser = await _db.Users.FindAsync(id);
+        if (targetUser == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"];
+            return RedirectToPage();
+        }
+
+        // Check if current user has permission to unlock this user
+        if (!CanModifyUser(targetUser.Role))
+        {
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionToUnlock"], targetUser.Role);
+            return RedirectToPage();
+        }
+
+        // Unlock the account
+        targetUser.FailedLoginAttempts = 0;
+        targetUser.LockoutEnd = null;
+        await _db.SaveChangesAsync();
+
+        // Log the unlock action for security audit
+        await _auditLogService.LogUserActionAsync(
+            userId: currentUserId,
+            action: "AccountUnlock",
+            entityType: "User",
+            entityId: targetUser.Id,
+            description: $"Account unlocked for user {targetUser.DisplayName} ({targetUser.Email})"
+        );
+
+        _logger.LogInformation("User {CurrentUserId} unlocked account for user {TargetUserId} ({Email})",
+            currentUserId, targetUser.Id, targetUser.Email);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_AccountUnlocked"], targetUser.DisplayName);
         return RedirectToPage();
     }
 

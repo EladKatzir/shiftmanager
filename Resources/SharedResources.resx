@@ -3597,8 +3597,35 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
     <value>ADFS authentication is not configured. Please use local login or contact your administrator.</value>
   </data>
+  <data name="Login_FailedAttempts_Warning" xml:space="preserve">
+    <value>⚠️ Please verify your credentials carefully. Account will be locked after 10 failed attempts.</value>
+  </data>
+  <data name="Login_AccountLocked_Title" xml:space="preserve">
+    <value>Account Temporarily Locked</value>
+  </data>
+  <data name="Login_AccountLocked_Message" xml:space="preserve">
+    <value>Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.</value>
+  </data>
+  <data name="Success_AccountUnlocked" xml:space="preserve">
+    <value>Account unlocked for {0}. Failed login attempts have been reset.</value>
+  </data>
+  <data name="Error_NoPermissionToUnlock" xml:space="preserve">
+    <value>You do not have permission to unlock accounts for users with role {0}.</value>
+  </data>
+  <data name="UnlockAccount" xml:space="preserve">
+    <value>Unlock Account</value>
+  </data>
+  <data name="ConfirmUnlockAccount" xml:space="preserve">
+    <value>Unlock account for {0}? Failed login attempts will be reset.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Account Locked</value>
+  </data>
+  <data name="LockedUntil" xml:space="preserve">
+    <value>Locked until {0}</value>
+  </data>
 
-  
+
   <data name="Culture" xml:space="preserve">
     <value>en-US</value>
   </data>

@@ -640,7 +640,14 @@
         @foreach (var u in Model.Users)
         {
             <tr>
-                <td>@u.DisplayName</td>
+                <td>
+                    @u.DisplayName
+                    @if (u.IsLocked)
+                    {
+                        var lockoutTime = u.LockoutEnd.HasValue ? u.LockoutEnd.Value.ToLocalTime().ToString("HH:mm") : "";
+                        <span style="color: var(--danger); margin-left: 0.5rem;" title="@Localizer["LockedUntil", lockoutTime]">🔒</span>
+                    }
+                </td>
                 <td>@u.Email</td>
                 <td>@u.CompanyName</td>
                 <td>
@@ -675,6 +682,17 @@
                 </td>
                 <td>
                     <div class="btn-group">
+                        @if (u.IsLocked)
+                        {
+                            <form method="post" asp-page-handler="UnlockAccount" style="display:inline; margin: 0;"
+                                  onsubmit="return confirm('@Localizer["ConfirmUnlockAccount"]'.replace('{0}', '@u.DisplayName'));">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <button type="submit" class="btn btn-warning btn-sm" title="@Localizer["UnlockAccount"]">
+                                    🔓
+                                </button>
+                            </form>
+                        }
                         <a href="/Admin/EditProfile?UserId=@u.Id" class="btn btn-sm">
                             ✏️
                         </a>

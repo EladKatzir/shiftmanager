@@ -3422,8 +3422,35 @@
   <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
     <value>אימות ADFS לא מוגדר. אנא השתמש בהתחברות מקומית או פנה למנהל המערכת.</value>
   </data>
+  <data name="Login_FailedAttempts_Warning" xml:space="preserve">
+    <value>⚠️ אנא וודא את פרטי ההתחברות שלך בקפידה. החשבון יינעל לאחר 10 ניסיונות כושלים.</value>
+  </data>
+  <data name="Login_AccountLocked_Title" xml:space="preserve">
+    <value>החשבון נעול זמנית</value>
+  </data>
+  <data name="Login_AccountLocked_Message" xml:space="preserve">
+    <value>החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.</value>
+  </data>
+  <data name="Success_AccountUnlocked" xml:space="preserve">
+    <value>חשבון נפתח עבור {0}. ניסיונות כניסה כושלים אופסו.</value>
+  </data>
+  <data name="Error_NoPermissionToUnlock" xml:space="preserve">
+    <value>אין לך הרשאה לפתוח חשבונות למשתמשים עם תפקיד {0}.</value>
+  </data>
+  <data name="UnlockAccount" xml:space="preserve">
+    <value>פתח חשבון</value>
+  </data>
+  <data name="ConfirmUnlockAccount" xml:space="preserve">
+    <value>לפתוח חשבון עבור {0}? ניסיונות כניסה כושלים יאופסו.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>חשבון נעול</value>
+  </data>
+  <data name="LockedUntil" xml:space="preserve">
+    <value>נעול עד {0}</value>
+  </data>
 
-  
+
   <data name="Culture" xml:space="preserve">
     <value>he-IL</value>
   </data>
