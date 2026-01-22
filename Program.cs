@@ -206,9 +206,72 @@ using (var scope = app.Services.CreateScope())
     {
         if (string.IsNullOrEmpty(seedAdminPassword))
         {
-            throw new InvalidOperationException(
-                "SEED_ADMIN_PASSWORD environment variable must be set in production. " +
-                "Set this via environment variables or app configuration.");
+            var environmentName = app.Environment.EnvironmentName;
+            throw new InvalidOperationException($@"
+================================================================================
+MISSING REQUIRED CONFIGURATION: SEED_ADMIN_PASSWORD
+================================================================================
+
+Current Environment: {environmentName}
+
+The SEED_ADMIN_PASSWORD environment variable is REQUIRED in non-development
+environments but is currently not set.
+
+IMPORTANT: Configuration files (appsettings.json) do NOT work for this setting.
+You MUST use an environment variable or command-line argument.
+
+--------------------------------------------------------------------------------
+HOW TO FIX (Windows):
+--------------------------------------------------------------------------------
+
+Option 1 - System-wide environment variable (RECOMMENDED for Windows Services):
+  1. Open Command Prompt as Administrator
+  2. Run the following command:
+
+     setx SEED_ADMIN_PASSWORD ""YourStrongPassword123!"" /M
+
+  3. Verify the variable is set:
+
+     echo %SEED_ADMIN_PASSWORD%
+
+  4. Restart ShiftManager application
+
+Option 2 - User-level environment variable:
+  1. Open Command Prompt (no admin required)
+  2. Run:
+
+     setx SEED_ADMIN_PASSWORD ""YourStrongPassword123!""
+
+  3. Restart ShiftManager application
+
+Option 3 - Set for current session only (temporary):
+  1. In Command Prompt:
+
+     set SEED_ADMIN_PASSWORD=YourStrongPassword123!
+
+  2. Start ShiftManager.exe in the same command prompt window
+
+--------------------------------------------------------------------------------
+WHY APPSETTINGS.JSON DOESN'T WORK:
+--------------------------------------------------------------------------------
+
+Setting ""SEED_ADMIN_PASSWORD"" in appsettings.json is NOT supported for
+security reasons. Environment variables prevent accidental password commits
+to version control and ensure passwords are managed separately from code.
+
+--------------------------------------------------------------------------------
+WHAT HAPPENS NEXT:
+--------------------------------------------------------------------------------
+
+After setting the environment variable and restarting the application:
+  1. Database migrations will run automatically
+  2. Default admin user will be created with your password
+  3. Application will start normally on http://localhost:5000
+
+For more help, see DEPLOYMENT_GUIDE.txt in the application directory.
+
+================================================================================
+");
         }
     }
 
