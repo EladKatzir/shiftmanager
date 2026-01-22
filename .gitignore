@@ -30,6 +30,9 @@ obj/
 # Claude Code settings (local config only, shared config is tracked)
 .claude/settings.local.json
 
+# Git worktrees (isolated development workspaces)
+.worktrees/
+
 # .NET Core
 *.dll
 *.exe
