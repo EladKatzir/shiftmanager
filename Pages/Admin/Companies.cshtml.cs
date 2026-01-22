@@ -9,6 +9,7 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace ShiftManager.Pages.Admin;
 
@@ -90,6 +91,28 @@ public class CompaniesModel : LocalizedPageModel
         if (string.IsNullOrWhiteSpace(CompanyName) || string.IsNullOrWhiteSpace(CompanySlug))
         {
             Error = _localizer["Error_CompanyNameAndSlugRequired"];
+            return Page();
+        }
+
+        // ✅ SECURITY FIX: Validate input for XSS attempts
+        if (ContainsDangerousContent(CompanyName))
+        {
+            _logger.LogWarning("XSS attempt detected in company name: {CompanyName}", CompanyName);
+            Error = "Company name contains invalid characters or potentially dangerous content";
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(CompanyDisplayName) && ContainsDangerousContent(CompanyDisplayName))
+        {
+            _logger.LogWarning("XSS attempt detected in company display name: {DisplayName}", CompanyDisplayName);
+            Error = "Company display name contains invalid characters or potentially dangerous content";
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(ManagerDisplayName) && ContainsDangerousContent(ManagerDisplayName))
+        {
+            _logger.LogWarning("XSS attempt detected in manager display name: {DisplayName}", ManagerDisplayName);
+            Error = "Manager display name contains invalid characters or potentially dangerous content";
             return Page();
         }
 
@@ -292,6 +315,21 @@ public class CompaniesModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        // ✅ SECURITY FIX: Validate input for XSS attempts
+        if (ContainsDangerousContent(NewCompanyName))
+        {
+            _logger.LogWarning("XSS attempt detected in company rename: {CompanyName}", NewCompanyName);
+            TempData["ErrorMessage"] = "Company name contains invalid characters or potentially dangerous content";
+            return RedirectToPage();
+        }
+
+        // Validate field length
+        if (NewCompanyName.Length > 200)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNameOrSlugTooLong"];
+            return RedirectToPage();
+        }
+
         var company = await _db.Companies.FindAsync(RenameCompanyId);
         if (company == null)
         {
@@ -306,6 +344,40 @@ public class CompaniesModel : LocalizedPageModel
         TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"], NewCompanyName);
 
         return RedirectToPage();
+    }
+
+    /// <summary>
+    /// Detects potentially dangerous content like script tags, HTML tags, and JavaScript event handlers
+    /// </summary>
+    private static bool ContainsDangerousContent(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        // Check for script tags, HTML tags, and JavaScript event handlers
+        var dangerousPatterns = new[]
+        {
+            @"<script[^>]*>",
+            @"</script>",
+            @"javascript:",
+            @"on\w+\s*=",  // onclick, onerror, onload, etc.
+            @"<iframe[^>]*>",
+            @"<object[^>]*>",
+            @"<embed[^>]*>",
+            @"<img[^>]*>",
+            @"<link[^>]*>",
+            @"<style[^>]*>",
+            @"eval\s*\(",
+            @"expression\s*\(",
+        };
+
+        foreach (var pattern in dangerousPatterns)
+        {
+            if (Regex.IsMatch(input, pattern, RegexOptions.IgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     public async Task<IActionResult> OnPostDeleteCompanyAsync(int id)

@@ -357,7 +357,7 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
         await test.step('Delete Blueprint', async () => {
             // Find the delete button for our blueprint
             const blueprintRow = page.locator(`tr:has-text("${testContext.blueprintKey}")`).first();
-            const deleteButton = blueprintRow.locator('button:has-text("Delete"), form[action*="Delete"] button, a:has-text("Delete")').first();
+            const deleteButton = blueprintRow.locator('button:has-text("Delete")').first();
 
             const hasDeleteButton = await deleteButton.isVisible({ timeout: 2000 }).catch(() => false);
 
@@ -365,24 +365,51 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
                 test.skip(true, 'Delete functionality not available in UI');
             }
 
-            // Set up handler for browser confirm dialog (must be BEFORE click)
-            page.once('dialog', async dialog => {
-                console.log(`Dialog appeared: ${dialog.message()}`);
-                await dialog.accept();
-            });
+            console.log(`Clicking delete button for blueprint: ${testContext.blueprintKey}`);
 
-            // Click delete
+            // Click delete button - this triggers the async modal
             await deleteButton.click();
 
-            // Also check for modal confirmation dialog
-            const confirmationDialog = page.locator('.modal, .dialog, .confirm-dialog').first();
-            const hasConfirmation = await confirmationDialog.isVisible({ timeout: 2000 }).catch(() => false);
+            // Wait for modal to appear and enter loading state
+            const modal = page.locator('#deleteConfirmModal[data-modal-state="loading"]');
+            await modal.waitFor({ state: 'visible', timeout: 5000 });
+            console.log('Modal appeared in loading state');
 
-            if (hasConfirmation) {
-                const confirmButton = confirmationDialog.locator('button:has-text("Delete"), button:has-text("Confirm"), button.btn-danger').first();
-                await confirmButton.click();
+            // Wait for async API call to complete and modal to transition to ready state
+            // The modal will transition to one of: 'ready-safe', 'ready-with-warning', 'blocked', or 'error'
+            const readyModal = page.locator('#deleteConfirmModal[data-modal-state^="ready"]');
+            await readyModal.waitFor({ state: 'visible', timeout: 15000 });
+
+            // Get the final modal state
+            const modalState = await page.locator('#deleteConfirmModal').getAttribute('data-modal-state');
+            console.log(`Modal transitioned to state: ${modalState}`);
+
+            // Check if deletion is blocked
+            if (modalState === 'blocked') {
+                console.log('Deletion is blocked - blueprint is used by programs');
+                // Close the modal
+                await page.locator('#deleteConfirmModal .close-modal').click();
+                test.skip(true, 'Blueprint deletion blocked - used by programs');
+                return;
             }
 
+            // Check for error state
+            if (modalState === 'error') {
+                const errorText = await page.locator('#deleteErrorText').textContent();
+                console.log(`Modal error: ${errorText}`);
+                throw new Error(`Failed to check blueprint usage: ${errorText}`);
+            }
+
+            // Modal is ready - wait for confirm button to be enabled and visible
+            const confirmButton = page.locator('#deleteConfirmButton[data-can-submit="true"]');
+            await confirmButton.waitFor({ state: 'visible', timeout: 2000 });
+            console.log('Confirm button is visible and enabled');
+
+            // Click the confirm delete button
+            await confirmButton.click();
+            console.log('Clicked confirm delete button');
+
+            // Wait for navigation (form submission causes page reload)
             await page.waitForLoadState('networkidle');
 
             // Wait a moment for deletion to complete, then reload to get fresh data

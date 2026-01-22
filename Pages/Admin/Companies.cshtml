@@ -433,7 +433,7 @@
 {
     <div class="alert-success">
         <span style="font-size: 1.25rem;">✓</span>
-        <span>@Model.Success</span>
+        <span>@Html.Encode(Model.Success)</span>
     </div>
 }
 
@@ -446,7 +446,7 @@
     {
         <div class="alert-error">
             <span style="font-size: 1.25rem;">✗</span>
-            <span>@Model.Error</span>
+            <span>@Html.Encode(Model.Error)</span>
         </div>
     }
 
@@ -556,15 +556,15 @@
                 @foreach (var c in Model.Companies)
                 {
                     <tr>
-                        <td><strong>@c.Name</strong></td>
-                        <td><code>@c.Slug</code></td>
-                        <td>@(c.DisplayName ?? "-")</td>
+                        <td><strong>@Html.Encode(c.Name)</strong></td>
+                        <td><code>@Html.Encode(c.Slug)</code></td>
+                        <td>@Html.Encode(c.DisplayName ?? "-")</td>
                         <td>@c.UserCount</td>
                         <td>
                             <div class="table-actions">
                                 <button type="button" class="btn btn-ghost"
                                         data-company-id="@c.Id"
-                                        data-company-name="@c.Name"
+                                        data-company-name="@System.Web.HttpUtility.HtmlAttributeEncode(c.Name)"
                                         onclick="renameCompanyClick(this)">
                                     @Localizer["Rename"]
                                 </button>

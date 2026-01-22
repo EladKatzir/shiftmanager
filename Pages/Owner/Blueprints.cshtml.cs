@@ -266,18 +266,33 @@ public class BlueprintsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnPostDeleteShiftTypeAsync(int shiftTypeId, bool confirmed = false)
     {
+        _logger.LogWarning(
+            "=====> OnPostDeleteShiftTypeAsync CALLED! ShiftTypeId={ShiftTypeId}, Confirmed={Confirmed}",
+            shiftTypeId, confirmed);
+
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
             var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+
+            _logger.LogInformation(
+                "DELETE ATTEMPT: ShiftTypeId={ShiftTypeId}, Confirmed={Confirmed}, CompanyId={CompanyId}, UserId={UserId}",
+                shiftTypeId, confirmed, companyId, userId);
 
             var shiftType = await _db.ShiftTypes
                 .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
 
             if (shiftType == null)
             {
+                _logger.LogWarning(
+                    "DELETE FAILED: ShiftType not found - ShiftTypeId={ShiftTypeId}, CompanyId={CompanyId}",
+                    shiftTypeId, companyId);
                 return RedirectToPage(new { error = "Shift type not found" });
             }
+
+            _logger.LogInformation(
+                "DELETE: Found ShiftType - Id={Id}, Key={Key}, Name={Name}",
+                shiftType.Id, shiftType.Key, shiftType.Name);
 
             // Check if used by Programs (still prevent deletion)
             var usedByPrograms = await _db.ShiftPrograms
@@ -285,6 +300,9 @@ public class BlueprintsModel : PageModel
 
             if (usedByPrograms)
             {
+                _logger.LogWarning(
+                    "DELETE BLOCKED: ShiftType used by programs - ShiftTypeId={ShiftTypeId}, Key={Key}",
+                    shiftTypeId, shiftType.Key);
                 return RedirectToPage(new
                 {
                     error = $"Cannot delete '{shiftType.Name}' - it is used by one or more Programs. Please remove it from Programs first."
@@ -307,8 +325,16 @@ public class BlueprintsModel : PageModel
 
             // ✅ P1-4: Delete the ShiftType (ShiftInstances will keep their ShiftTypeId reference)
             // Note: ShiftInstance records are NOT deleted (historical data preserved)
+            _logger.LogInformation(
+                "DELETE EXECUTING: Removing ShiftType - ShiftTypeId={ShiftTypeId}, Key={Key}, InstanceCount={InstanceCount}",
+                shiftTypeId, shiftType.Key, instanceCount);
+
             _db.ShiftTypes.Remove(shiftType);
             await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "DELETE SUCCESS: ShiftType removed from database - ShiftTypeId={ShiftTypeId}, Key={Key}",
+                shiftTypeId, shiftType.Key);
 
             // Audit log
             await _auditLogService.LogAsync(
