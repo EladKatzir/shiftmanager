@@ -10,13 +10,13 @@ namespace ShiftManager.Pages.Api;
 /// <summary>
 /// API endpoint to check session authentication status
 /// Returns 200 with session state if authenticated, 401 if not
-/// State can be: "ok" (>30 min remaining), "warning" (≤30 min remaining), or 401 (expired)
+/// State can be: "ok" (>60 min remaining), "warning" (≤60 min remaining), or 401 (expired)
 /// </summary>
 [AllowAnonymous]
 public class SessionStatusModel : PageModel
 {
     private readonly ILogger<SessionStatusModel> _logger;
-    private static readonly TimeSpan WarningThreshold = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan WarningThreshold = TimeSpan.FromMinutes(60);
 
     public SessionStatusModel(ILogger<SessionStatusModel> logger)
     {
