@@ -46,6 +46,31 @@
 
 <div class="card" style="max-width:420px; margin:auto">
     <h2><loc key="Login" /></h2>
+
+    @* Account lockout countdown timer (when account is locked) *@
+    @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
+    {
+        <div class="alert alert-danger" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: #fef2f2; border: 1px solid #dc2626; color: #991b1b;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🔒</span>
+                <strong>@Localizer["Login_AccountLocked_Title"]</strong>
+            </div>
+            <div id="lockoutMessage">
+                @Localizer["Login_AccountLocked_Message", Model.LockoutMinutesRemaining.Value]
+            </div>
+        </div>
+    }
+    @* Warning after 3+ failed attempts (but not locked yet) *@
+    else if (Model.ShowLockoutWarning && !Model.IsAccountLocked)
+    {
+        <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: #fffbeb; border: 1px solid #f59e0b; color: #92400e;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">⚠️</span>
+                <div>@Localizer["Login_FailedAttempts_Warning"]</div>
+            </div>
+        </div>
+    }
+
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="small" style="color:var(--danger)">@Model.Error</div>
@@ -111,5 +136,43 @@
                 });
             }
         })();
+
+        // Lockout countdown timer
+        @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
+        {
+            @:
+            @:(function() {
+            @:    const lockoutMessageEl = document.getElementById('lockoutMessage');
+            @:    if (!lockoutMessageEl) return;
+            @:
+            @:    let minutesRemaining = @Model.LockoutMinutesRemaining.Value;
+            @:    const initialText = lockoutMessageEl.textContent;
+            @:    const isHebrew = document.documentElement.lang.startsWith('he');
+            @:
+            @:    const updateCountdown = () => {
+            @:        if (minutesRemaining <= 0) {
+            @:            const retryMessage = isHebrew ? 'ניתן לנסות להתחבר שוב כעת.' : 'You may try logging in again now.';
+            @:            lockoutMessageEl.textContent = retryMessage;
+            @:            lockoutMessageEl.parentElement.style.background = '#d4edda';
+            @:            lockoutMessageEl.parentElement.style.borderColor = '#28a745';
+            @:            lockoutMessageEl.parentElement.style.color = '#155724';
+            @:            return;
+            @:        }
+            @:        const messageTemplate = isHebrew ? 'החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.' : 'Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.';
+            @:        lockoutMessageEl.textContent = messageTemplate.replace('{0}', Math.ceil(minutesRemaining));
+            @:    };
+            @:
+            @:    const timer = setInterval(() => {
+            @:        minutesRemaining = Math.max(0, minutesRemaining - 0.17);
+            @:        if (minutesRemaining < 0.5) {
+            @:            minutesRemaining = 0;
+            @:            clearInterval(timer);
+            @:        }
+            @:        updateCountdown();
+            @:    }, 10000);
+            @:
+            @:    updateCountdown();
+            @:})();
+        }
     </script>
 }

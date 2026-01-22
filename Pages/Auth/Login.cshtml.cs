@@ -50,6 +50,12 @@ public class LoginModel : LocalizedPageModel
     public bool ShowGriffinUnavailableMessage { get; set; }
     public string? ReturnUrl { get; set; }
 
+    // Account lockout warning properties
+    public int? FailedAttemptsCount { get; set; }
+    public bool ShowLockoutWarning => FailedAttemptsCount.HasValue && FailedAttemptsCount.Value >= 3;
+    public bool IsAccountLocked { get; set; }
+    public int? LockoutMinutesRemaining { get; set; }
+
     public async Task OnGetAsync(string? reason = null, string? returnUrl = null)
     {
         ReturnUrl = returnUrl ?? "/Home/Index";
@@ -160,6 +166,10 @@ public class LoginModel : LocalizedPageModel
                 {
                     var remainingMinutes = (int)(user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes + 1;
                     _logger.LogWarning("Login attempt for locked account: {Email}. Lockout ends in {Minutes} minutes", Email, remainingMinutes);
+
+                    // Set lockout properties for UI display
+                    IsAccountLocked = true;
+                    LockoutMinutesRemaining = remainingMinutes;
                     Error = _localizer["Error_Login_AccountLocked", remainingMinutes];
                     return Page();
                 }
@@ -183,12 +193,19 @@ public class LoginModel : LocalizedPageModel
                         await _db.SaveChangesAsync();
 
                         _logger.LogWarning("Account locked for {Email} after {Attempts} failed attempts", Email, user.FailedLoginAttempts);
+
+                        // Set lockout properties for UI display
+                        IsAccountLocked = true;
+                        LockoutMinutesRemaining = 3;
                         Error = _localizer["Error_Login_AccountLockedAfterAttempts"];
                         return Page();
                     }
 
                     await _db.SaveChangesAsync();
                     _logger.LogWarning("Login failed for {Email} (attempt {Attempt}/10)", Email, user.FailedLoginAttempts);
+
+                    // Set failed attempts count for warning display (only if user exists)
+                    FailedAttemptsCount = user.FailedLoginAttempts;
                 }
                 else
                 {

@@ -3422,8 +3422,17 @@
   <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
     <value>אימות ADFS לא מוגדר. אנא השתמש בהתחברות מקומית או פנה למנהל המערכת.</value>
   </data>
+  <data name="Login_FailedAttempts_Warning" xml:space="preserve">
+    <value>⚠️ אנא וודא את פרטי ההתחברות שלך בקפידה. החשבון יינעל לאחר 10 ניסיונות כושלים.</value>
+  </data>
+  <data name="Login_AccountLocked_Title" xml:space="preserve">
+    <value>החשבון נעול זמנית</value>
+  </data>
+  <data name="Login_AccountLocked_Message" xml:space="preserve">
+    <value>החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.</value>
+  </data>
 
-  
+
   <data name="Culture" xml:space="preserve">
     <value>he-IL</value>
   </data>
