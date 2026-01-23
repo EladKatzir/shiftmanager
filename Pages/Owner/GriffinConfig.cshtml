@@ -15,16 +15,22 @@
     new BreadcrumbItem { Label = Localizer["Owner_GriffinConfig"], IsActive = true }
 })
 
-@* Owner Company Selector *@
-@await Component.InvokeAsync("OwnerCompanySelector")
-
 <div class="griffin-config-container">
+    @* System-Wide Feature Banner *@
+    <div class="system-wide-banner">
+        <div class="banner-icon">🌐</div>
+        <div class="banner-content">
+            <h3>System-Wide Authentication</h3>
+            <p>Griffin ADFS is configured once at the <strong>owner level</strong> and applies to <strong>all companies</strong> in your system. Users from any company can authenticate using their domain credentials.</p>
+        </div>
+    </div>
+
     <div class="page-header">
         <h1>
             <span class="page-icon">🛡️</span>
             <loc key="Owner_GriffinConfig" />
         </h1>
-        <p class="page-subtitle"><loc key="Owner_GriffinConfig_Subtitle" /></p>
+        <p class="page-subtitle">Configure centralized domain authentication for all companies</p>
     </div>
 
     @* Status Widget - At-a-glance health monitoring *@
@@ -109,7 +115,7 @@
     <form method="post">
         <div class="config-card">
             <div class="card-header">
-                <h2>🛡️ <loc key="Owner_Griffin_ServiceConfig" /></h2>
+                <h2>🛡️ Griffin Service Configuration</h2>
                 <div class="form-group-inline">
                     <label class="toggle-switch">
                         <input type="checkbox" asp-for="Enabled" />
@@ -122,18 +128,18 @@
             <div class="card-body">
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="BaseUrl"><loc key="Owner_Griffin_BaseUrl" /></label>
+                        <label asp-for="BaseUrl">Griffin Server URL</label>
                         <div class="help-buttons-group">
                             <button type="button" class="help-button" onclick="toggleFieldHelp('baseurl-help')" loc-title="Help_ShowDetails">
                                 ❓
                             </button>
                             <button type="button" class="find-this-button" onclick="openModal('find-baseurl-modal')" loc-title="FindThis_HowToFind">
-                                🔍 <loc key="FindThis_Button" />
+                                🔍 Find This
                             </button>
                         </div>
                     </div>
-                    <input asp-for="BaseUrl" class="form-control" placeholder="http://7108dev-auth.d8200.mil" id="baseurl-input" onblur="validateUrl(this)" />
-                    <small class="form-text"><loc key="Owner_Griffin_BaseUrl_Desc" /></small>
+                    <input asp-for="BaseUrl" class="form-control" placeholder="http://griffin-auth.example.mil" id="baseurl-input" onblur="validateUrl(this)" />
+                    <small class="form-text">Griffin service endpoint for the entire system (e.g., http://griffin-auth.example.mil). Must include http:// or https://</small>
 
                     <div class="context-panel" id="baseurl-help" style="display: none;">
                         <div class="context-panel-section">
@@ -154,14 +160,14 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="TokenConsumerUrl"><loc key="Owner_Griffin_CallbackUrl" /></label>
+                        <label asp-for="TokenConsumerUrl">Application Callback URL</label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('callback-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
                     <input asp-for="TokenConsumerUrl" class="form-control"
                            placeholder="https://your-app.local/Auth/GriffinCallback" id="callback-input" onblur="validateUrl(this)" />
-                    <small class="form-text"><loc key="Owner_Griffin_CallbackUrl_Desc" /></small>
+                    <small class="form-text">Your application's callback URL where Griffin redirects after authentication. Must include http:// or https:// and end with /Auth/GriffinCallback</small>
 
                     <div class="context-panel" id="callback-help" style="display: none;">
                         <div class="context-panel-section">
@@ -182,31 +188,31 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="TimeoutSeconds"><loc key="Owner_Griffin_Timeout" /></label>
+                        <label asp-for="TimeoutSeconds">API Timeout (seconds)</label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('timeout-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
-                    <input asp-for="TimeoutSeconds" type="number" min="1" max="60" class="form-control" />
+                    <input asp-for="TimeoutSeconds" type="number" min="1" max="60" class="form-control" placeholder="10" />
 
                     <div class="context-panel" id="timeout-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Purpose" /></strong>
-                            <p><loc key="ContextPanel_Griffin_Timeout_Purpose" /></p>
+                            <strong>Purpose</strong>
+                            <p>Maximum time to wait for Griffin API responses (validation, claims retrieval)</p>
                         </div>
                         <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Recommendation" /></strong>
-                            <p><loc key="ContextPanel_Griffin_Timeout_Recommendation" /></p>
+                            <strong>Recommendation</strong>
+                            <p>10 seconds is recommended for most environments. Increase to 20-30 seconds if experiencing network latency in air-gapped environments.</p>
                         </div>
                     </div>
-                    <small class="form-text"><loc key="Owner_Griffin_Timeout_Desc" /></small>
+                    <small class="form-text">Timeout for Griffin API calls (1-60 seconds). Recommended: 10 seconds</small>
                 </div>
             </div>
         </div>
 
         <div class="config-card">
             <div class="card-header">
-                <h2>👥 <loc key="Owner_Griffin_UserProvisioning" /></h2>
+                <h2>👥 User Provisioning (System-Wide)</h2>
             </div>
 
             <div class="card-body">
@@ -217,30 +223,36 @@
                             <span class="toggle-slider"></span>
                         </label>
                         <span class="toggle-status-text">
-                            <loc key="Owner_Griffin_AutoProvision" /> — @(Model.AutoProvisionUsers ? Localizer["Enabled"] : Localizer["Disabled"])
+                            Auto-Provision New Users — @(Model.AutoProvisionUsers ? Localizer["Enabled"] : Localizer["Disabled"])
                         </span>
                     </div>
-                    <small class="form-text"><loc key="Owner_Griffin_AutoProvision_Desc" /></small>
+                    <small class="form-text">Automatically create user accounts on first Griffin login. If disabled, users must be manually approved by administrators.</small>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="DefaultProvisionedRole"><loc key="Owner_Griffin_DefaultRole" /></label>
+                    <label asp-for="DefaultProvisionedRole">Default Role for Auto-Provisioned Users</label>
                     <select asp-for="DefaultProvisionedRole" class="form-control" asp-items="Model.RoleOptions"></select>
-                    <small class="form-text"><loc key="Owner_Griffin_DefaultRole_Desc" /></small>
+                    <small class="form-text">Default role assigned to auto-provisioned users across all companies</small>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-light, #fef3c7); border-left: 4px solid var(--warning, #f59e0b); border-radius: 6px;">
+                    <p style="margin: 0; color: var(--text); line-height: 1.6;">
+                        <strong>⚠️ Security Note:</strong> Auto-provisioning applies to <strong>all companies</strong>. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.
+                    </p>
                 </div>
             </div>
         </div>
 
         <div class="config-card">
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary">💾 <loc key="Save" /></button>
+                <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
                 <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
-                    🔌 <loc key="Owner_Griffin_TestConnection" />
+                    🔌 Test Connection
                 </button>
                 <a href="/GriffinDiagnostic" class="btn btn-secondary" target="_blank" style="background: #8b5cf6; border-color: #8b5cf6;">
                     🔍 Run Full Diagnostic
                 </a>
-                <a href="/Owner/Index" class="btn btn-outline"><loc key="Cancel" /></a>
+                <a href="/Owner/Index" class="btn btn-outline">Cancel</a>
             </div>
         </div>
     </form>
@@ -248,15 +260,31 @@
     @* Info Card *@
     <div class="config-card">
         <div class="card-header">
-            <h2>ℹ️ <loc key="Owner_Griffin_About" /></h2>
+            <h2>ℹ️ About Griffin ADFS</h2>
         </div>
         <div class="card-body">
-            <p><loc key="Owner_Griffin_About_Desc" /></p>
-            <ul>
-                <li><loc key="Owner_Griffin_About_Point1" /></li>
-                <li><loc key="Owner_Griffin_About_Point2" /></li>
-                <li><loc key="Owner_Griffin_About_Point3" /></li>
+            <p><strong>Griffin ADFS provides centralized domain authentication for air-gapped military/government environments.</strong></p>
+
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">Key Features:</h3>
+            <ul style="margin-bottom: 1.5rem;">
+                <li>Users authenticate with their domain credentials (CAC/username and password)</li>
+                <li>Local username/password authentication always available as fallback</li>
+                <li>No client secret needed - Griffin service handles ADFS communication</li>
             </ul>
+
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">System-Wide Configuration:</h3>
+            <ul style="margin-bottom: 0;">
+                <li><strong>Configured once</strong> by the system owner</li>
+                <li><strong>Applies to all companies</strong> in the system</li>
+                <li><strong>Single Griffin server</strong> serves the entire deployment</li>
+                <li><strong>Consistent authentication</strong> across all companies and users</li>
+            </ul>
+
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--info-light, #dbeafe); border-left: 4px solid var(--info, #3b82f6); border-radius: 6px;">
+                <p style="margin: 0; color: var(--text); line-height: 1.6;">
+                    <strong>💡 Note:</strong> Individual companies cannot override or disable ADFS authentication. If enabled here, all users across all companies will see the "Login with Griffin ADFS" option on the login page.
+                </p>
+            </div>
         </div>
     </div>
 
@@ -403,6 +431,48 @@
 </div>
 
 <style>
+/* System-Wide Banner */
+.system-wide-banner {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    color: white;
+}
+
+.banner-icon {
+    font-size: 3rem;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.banner-content {
+    flex: 1;
+}
+
+.banner-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.banner-content p {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.banner-content strong {
+    font-weight: 700;
+    color: white;
+}
+
 /* Status Widget */
 .status-widget {
     background: var(--surface);

@@ -75,6 +75,9 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
                 createButton.click()
             ]);
 
+            // Wait for either success message or blueprint to appear in table (with timeout)
+            await page.waitForSelector(`.alert-success, tr:has-text("${blueprintData.key}")`, { timeout: 5000 }).catch(() => {});
+
             // Verify success message or blueprint appears in table
             const successVisible = await page.locator('.alert-success').isVisible().catch(() => false);
             const blueprintInTable = await page.locator(`tr:has-text("${blueprintData.key}")`).isVisible().catch(() => false);
@@ -139,10 +142,18 @@ test.describe('Shift Assignment Workflow - End-to-End', () => {
             // Submit the form (with scrolling)
             const createProgramButton = page.locator('button[type="submit"]:has-text("Create Program")');
             await createProgramButton.scrollIntoViewIfNeeded();
-            await Promise.all([
-                page.waitForLoadState('networkidle'),
-                createProgramButton.click()
-            ]);
+            await createProgramButton.click();
+
+            // Wait for either success message, program card, or page to settle
+            await Promise.race([
+                page.waitForSelector('.alert-success, .program-card', { timeout: 10000 }),
+                page.waitForLoadState('networkidle', { timeout: 10000 })
+            ]).catch(() => {
+                // If both timeout, continue - will verify in next step
+            });
+
+            // Give a moment for DOM updates
+            await page.waitForTimeout(1000);
 
             // Verify success message or program appears
             const successVisible = await page.locator('.alert-success').isVisible().catch(() => false);

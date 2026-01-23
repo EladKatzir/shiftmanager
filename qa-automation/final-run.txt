@@ -1,0 +1,1510 @@
+
+Running 92 tests using 16 workers
+
+  ok  1 [chromium] › tests\companies-crud.spec.js:152:9 › Companies CRUD - Owner Role › Create Company › P2-03: Validation - empty company name rejected (24.2s)
+  ok  3 [chromium] › tests\auth.spec.js:152:3 › Session Management › should handle session timeout gracefully (27.6s)
+  ok  2 [chromium] › tests\companies-crud.spec.js:103:9 › Companies CRUD - Owner Role › Create Company › P2-01: Create company with valid data (33.8s)
+  ok  6 [chromium] › tests\auth.spec.js:131:5 › Authorization › Access Control › should show access denied for unauthorized role (31.6s)
+  ok  4 [chromium] › tests\companies-crud.spec.js:128:9 › Companies CRUD - Owner Role › Create Company › P2-02: Create company with minimum required fields (35.2s)
+  ok  8 [chromium] › tests\auth.spec.js:57:5 › Authentication › Login Page › P1-01d: should enforce rate limiting (42.8s)
+✓ All CSS loaded locally
+✓ Page renders with fallback fonts
+  ok  9 [chromium] › tests\auth.spec.js:123:5 › Authorization › Access Control › should redirect unauthenticated user to login (41.4s)
+  x   7 [chromium] › tests\auth.spec.js:91:5 › Authentication › Logout › P1-02: should logout successfully (46.1s)
+  ok 21 [chromium] › tests\companies-crud.spec.js:250:9 › Companies CRUD - Owner Role › Read/List Companies › P2-07: Company details are displayed correctly (24.9s)
+  ok 11 [chromium] › tests\auth.spec.js:13:5 › Authentication › Login Page › P1-01a: should display login page (45.2s)
+  ok 18 [chromium] › tests\air-gapped-simulation.spec.js:50:3 › Air-Gapped Environment Simulation › P8-02: CSS loads from local paths only (35.4s)
+  ok 19 [chromium] › tests\auth.spec.js:22:5 › Authentication › Login Page › P1-01b: should show error for invalid credentials (39.2s)
+  ok 17 [chromium] › tests\air-gapped-simulation.spec.js:92:3 › Air-Gapped Environment Simulation › P8-04: Font loading fails gracefully (40.3s)
+  ok 20 [chromium] › tests\companies-crud.spec.js:267:9 › Companies CRUD - Owner Role › Read/List Companies › P2-08: Empty state displayed when no companies (40.8s)
+  x   5 [chromium] › tests\auth.spec.js:105:5 › Authentication › Logout › P1-02: should clear session on logout (1.0m)
+  x  12 [chromium] › tests\companies-crud.spec.js:173:9 › Companies CRUD - Owner Role › Create Company › P2-04: Validation - duplicate slug rejected (46.0s)
+  ok 22 [chromium] › tests\companies-crud.spec.js:282:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-09: Rename company modal opens (30.2s)
+  x  14 [chromium] › tests\companies-crud.spec.js:206:9 › Companies CRUD - Owner Role › Create Company › P2-05: Validation - invalid slug format rejected (46.4s)
+  x  10 [chromium] › tests\auth.spec.js:40:5 › Authentication › Login Page › P1-01c: should login successfully as Owner (56.7s)
+  x  15 [chromium] › tests\companies-crud.spec.js:237:9 › Companies CRUD - Owner Role › Read/List Companies › P2-06: Companies list is displayed (45.9s)
+  x  16 [chromium] › tests\air-gapped-simulation.spec.js:7:3 › Air-Gapped Environment Simulation › P8-01: Block external requests and verify functionality (48.7s)
+  x  13 [chromium] › tests\air-gapped-simulation.spec.js:71:3 › Air-Gapped Environment Simulation › P8-03: JavaScript loads from local paths only (52.5s)
+  x  23 [chromium] › tests\companies-crud.spec.js:302:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-10: Rename company successfully (38.4s)
+  x  25 [chromium] › tests\companies-crud.spec.js:401:9 › Companies CRUD - Owner Role › Delete Company › P2-13: Delete confirmation can be cancelled (40.0s)
+  x  24 [chromium] › tests\companies-crud.spec.js:365:9 › Companies CRUD - Owner Role › Delete Company › P2-12: Delete company with confirmation (42.8s)
+  x  27 [chromium] › tests\companies-crud.spec.js:463:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-15: SQL injection attempts in company name are handled (32.4s)
+  x  28 [chromium] › tests\companies-crud.spec.js:510:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-17: Path traversal attempts in company slug are rejected (33.1s)
+  x  29 [chromium] › tests\companies-crud.spec.js:487:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-16: Very long company name handled (42.4s)
+  x  26 [chromium] › tests\companies-crud.spec.js:431:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-14: XSS attempts in company name are handled (49.2s)
+  x  30 [chromium] › tests\companies-crud.spec.js:570:9 › Companies CRUD - Owner Role › Form State › P2-20: Form clears after successful submission (41.8s)
+  ok 33 [chromium] › tests\companies-crud.spec.js:637:5 › Companies Access Control › P2-23: Page requires admin policy (14.0s)
+  ok 31 [chromium] › tests\companies-crud.spec.js:339:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-11: Rename modal cancel works (23.2s)
+Admin/Index: 6 API requests, 3487ms load time
+  ok 32 [chromium] › tests\companies-crud.spec.js:586:9 › Companies CRUD - Owner Role › Form State › P2-21: Form preserves values on validation error (32.9s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ok 35 [chromium] › tests\network-performance.spec.js:30:3 › Network Performance & Efficiency › P9-01: Measure request count - Admin/Index (44.9s)
+Error during cleanup: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+    at loginAsOwner [90m(C:\Users\katzi\Downloads\ShiftManager\qa-automation\[39mhelpers\auth-helpers.js:43:14[90m)[39m
+    at [90mC:\Users\katzi\Downloads\ShiftManager\qa-automation\[39mtests\multi-tenancy-isolation-ui.spec.js:47:7 {
+  name: [32m'TimeoutError'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\helpers\\auth-helpers.js'[39m,
+      line: [33m43[39m,
+      column: [33m14[39m,
+      function: [32m'loginAsOwner'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Wait for navigation'[39m,
+    apiName: [32m'page.waitForURL'[39m,
+    params: { info: [36m[Object][39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@72'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@72'[39m,
+      _title: [32m'Wait for navigation'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1768840212978[39m,
+    error: {
+      message: [32m'TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n'[39m +
+        [32m'=========================== logs ===========================\n'[39m +
+        [32m'waiting for navigation until "load"\n'[39m +
+        [32m'============================================================'[39m,
+      stack: [32m'TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n'[39m +
+        [32m'=========================== logs ===========================\n'[39m +
+        [32m'waiting for navigation until "load"\n'[39m +
+        [32m'============================================================\n'[39m +
+        [32m'    at loginAsOwner (C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\helpers\\auth-helpers.js:43:14)\n'[39m +
+        [32m'    at C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\tests\\multi-tenancy-isolation-ui.spec.js:47:7'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  x  46 [chromium] › tests\network-performance.spec.js:160:3 › Network Performance & Efficiency › P9-04: Detect unexpected polling (41.0s)
+  x  37 [chromium] › tests\companies-crud.spec.js:542:9 › Companies CRUD - Owner Role › Director Assignment › P2-19: Manager fields become optional when director selected (55.1s)
+Error during cleanup: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+    at loginAsOwner [90m(C:\Users\katzi\Downloads\ShiftManager\qa-automation\[39mhelpers\auth-helpers.js:43:14[90m)[39m
+    at [90mC:\Users\katzi\Downloads\ShiftManager\qa-automation\[39mtests\multi-tenancy-isolation-ui.spec.js:47:7 {
+  name: [32m'TimeoutError'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\helpers\\auth-helpers.js'[39m,
+      line: [33m43[39m,
+      column: [33m14[39m,
+      function: [32m'loginAsOwner'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Wait for navigation'[39m,
+    apiName: [32m'page.waitForURL'[39m,
+    params: { info: [36m[Object][39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@90'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@90'[39m,
+      _title: [32m'Wait for navigation'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1768840229676[39m,
+    error: {
+      message: [32m'TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n'[39m +
+        [32m'=========================== logs ===========================\n'[39m +
+        [32m'waiting for navigation until "load"\n'[39m +
+        [32m'============================================================'[39m,
+      stack: [32m'TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n'[39m +
+        [32m'=========================== logs ===========================\n'[39m +
+        [32m'waiting for navigation until "load"\n'[39m +
+        [32m'============================================================\n'[39m +
+        [32m'    at loginAsOwner (C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\helpers\\auth-helpers.js:43:14)\n'[39m +
+        [32m'    at C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\tests\\multi-tenancy-isolation-ui.spec.js:47:7'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+  ok 45 [chromium] › tests\companies-crud.spec.js:629:5 › Companies Access Control › P2-22: Unauthenticated user redirected to login (47.4s)
+Error during cleanup: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+    at loginAsOwner [90m(C:\Users\katzi\Downloads\ShiftManager\qa-automation\[39mhelpers\auth-helpers.js:43:14[90m)[39m
+    at [90mC:\Users\katzi\Downloads\ShiftManager\qa-automation\[39mtests\multi-tenancy-isolation-ui.spec.js:47:7 {
+  name: [32m'TimeoutError'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\helpers\\auth-helpers.js'[39m,
+      line: [33m43[39m,
+      column: [33m14[39m,
+      function: [32m'loginAsOwner'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Wait for navigation'[39m,
+    apiName: [32m'page.waitForURL'[39m,
+    params: { info: [36m[Object][39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@90'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@90'[39m,
+      _title: [32m'Wait for navigation'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1768840231991[39m,
+    error: {
+      message: [32m'TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n'[39m +
+        [32m'=========================== logs ===========================\n'[39m +
+        [32m'waiting for navigation until "load"\n'[39m +
+        [32m'============================================================'[39m,
+      stack: [32m'TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n'[39m +
+        [32m'=========================== logs ===========================\n'[39m +
+        [32m'waiting for navigation until "load"\n'[39m +
+        [32m'============================================================\n'[39m +
+        [32m'    at loginAsOwner (C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\helpers\\auth-helpers.js:43:14)\n'[39m +
+        [32m'    at C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\tests\\multi-tenancy-isolation-ui.spec.js:47:7'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+  x  38 [chromium] › tests\network-performance.spec.js:114:3 › Network Performance & Efficiency › P9-03: Detect duplicate requests (51.8s)
+  x  48 [chromium] › tests\network-performance.spec.js:203:3 › Network Performance & Efficiency › P9-05: Identify slow endpoints (42.1s)
+  x  34 [chromium] › tests\multi-tenancy-isolation-ui.spec.js:126:3 › Multi-Tenancy Isolation - UI Level › P5-03: Direct URL manipulation cannot access other tenant data (1ms)
+  x  36 [chromium] › tests\multi-tenancy-isolation-network.spec.js:7:3 › Multi-Tenancy Isolation - Network Level › P6-01: API responses contain only tenant-scoped data (59.3s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  x  43 [chromium] › tests\multi-tenancy-isolation-ui.spec.js:93:3 › Multi-Tenancy Isolation - UI Level › P5-02: Company selection isolates data view (0ms)
+  x  42 [chromium] › tests\companies-crud.spec.js:534:9 › Companies CRUD - Owner Role › Director Assignment › P2-18: Director dropdown is available (54.2s)
+  x  39 [chromium] › tests\multi-tenancy-isolation-ui.spec.js:82:3 › Multi-Tenancy Isolation - UI Level › P5-01: Owner can see all companies (1ms)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  x  40 [chromium] › tests\network-performance.spec.js:73:3 › Network Performance & Efficiency › P9-02: Measure request count - Calendar/Table (54.1s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  x  44 [chromium] › tests\multi-tenancy-isolation-network.spec.js:112:3 › Multi-Tenancy Isolation - Network Level › P6-04: Network request headers contain proper authentication (54.4s)
+  x  41 [chromium] › tests\multi-tenancy-isolation-network.spec.js:53:3 › Multi-Tenancy Isolation - Network Level › P6-02: SQL injection attempts do not bypass tenant filters (58.8s)
+  x  49 [chromium] › tests\network-performance.spec.js:251:3 › Network Performance & Efficiency › P9-06: Detect 4xx/5xx errors (45.7s)
+✓ PRG pattern prevents double-submit via back button
+  ok 51 [chromium] › tests\session-resilience.spec.js:35:3 › Session Management & Resilience › P7-03: Browser back button after form submit shows correct state (16.7s)
+  x  47 [chromium] › tests\multi-tenancy-isolation-network.spec.js:84:3 › Multi-Tenancy Isolation - Network Level › P6-03: XSS attempts are sanitized in responses (49.9s)
+  x  50 [chromium] › tests\network-performance.spec.js:289:3 › Network Performance & Efficiency › P9-07: Measure full workflow - Create Company (31.7s)
+  -  52 [chromium] › tests\users-crud-rbac.spec.js:185:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-06: Owner can assign any role to a user
+  ok 53 [chromium] › tests\users-crud-rbac.spec.js:235:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-09: Director cannot see company selection for new users (6.9s)
+  ok 54 [chromium] › tests\users-crud-rbac.spec.js:246:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-10: Director cannot assign Owner role (4.8s)
+  x  55 [chromium] › tests\users-crud-rbac.spec.js:267:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-11: Manager can access Users management page (5.1s)
+  -  56 [chromium] › tests\users-crud-rbac.spec.js:152:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-05: Owner can delete user from any company
+  ok 58 [chromium] › tests\users-crud-rbac.spec.js:103:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-03: Owner can see company selection for new user creation (22.4s)
+  ok 57 [chromium] › tests\users-crud-rbac.spec.js:115:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-04: Owner can create user with valid data (32.6s)
+  x  66 [chromium] › tests\session-resilience.spec.js:76:3 › Session Management & Resilience › P7-04: Concurrent sessions from same user work independently (32.1s)
+  x  64 [chromium] › tests\users-crud-rbac.spec.js:289:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-13: Manager cannot assign Director or Owner roles (46.8s)
+  x  60 [chromium] › tests\session-resilience.spec.js:22:3 › Session Management & Resilience › P7-02: Page refresh preserves authentication (1.0m)
+  ok 73 [chromium] › tests\users-crud-rbac.spec.js:218:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-08: Director sees only users from assigned companies (23.0s)
+  x  59 [chromium] › tests\shift-assignment-workflow.spec.js:313:5 › Shift Assignment Workflow - End-to-End › Data integrity: Deleting blueprint prevents new program creation (1.0m)
+  x  63 [chromium] › tests\session-resilience.spec.js:7:3 › Session Management & Resilience › P7-01: Session timeout redirects to login (1.0m)
+  x  62 [chromium] › tests\session-resilience.spec.js:101:3 › Session Management & Resilience › P7-05: Network interruption shows graceful error (55.8s)
+  x  65 [chromium] › tests\shift-assignment-workflow.spec.js:40:5 › Shift Assignment Workflow - End-to-End › Complete workflow: Blueprint → Program → Shift → Assignment (56.4s)
+  x  61 [chromium] › tests\users-crud-rbac.spec.js:80:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-01: Owner can access Users management page (1.0m)
+  x  67 [chromium] › tests\shift-assignment-workflow.spec.js:443:5 › Shift Assignment Workflow - Edge Cases › Blueprint without start/end time validation (57.5s)
+  x  70 [chromium] › tests\users-crud-rbac.spec.js:306:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-14: Manager can create Employee users (1.0m)
+  ok 74 [chromium] › tests\users-crud-rbac.spec.js:407:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-19: Backend rejects unauthorized user creation via direct POST (7.0s)
+  x  72 [chromium] › tests\users-crud-rbac.spec.js:344:9 › Users Module - RBAC Authorization Matrix › Employee Role - No Access › P3-15: Employee cannot access Users management page (52.0s)
+  ok 75 [chromium] › tests\users-crud-rbac.spec.js:667:9 › Users Module - RBAC Authorization Matrix › Join Requests - RBAC › P3-27: Owner can see join requests section (5.3s)
+  x  68 [chromium] › tests\users-crud-rbac.spec.js:90:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-02: Owner can see all companies in company filter (1.0m)
+  ok 76 [chromium] › tests\users-crud-rbac.spec.js:699:5 › Users CRUD Operations › P3-29: Users table displays expected columns (4.1s)
+  -  77 [chromium] › tests\users-crud-rbac.spec.js:749:5 › Users CRUD Operations › P3-31: User status can be toggled
+  x  71 [chromium] › tests\users-crud-rbac.spec.js:211:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-07: Director can access Users management page (47.9s)
+  x  69 [chromium] › tests\shift-assignment-workflow.spec.js:477:5 › Shift Assignment Workflow - Edge Cases › Program creation without selected days (49.9s)
+  -  79 [chromium] › tests\users-crud-rbac.spec.js:775:5 › Users CRUD Operations › P3-32: Password reset form exists and works
+  ok 78 [chromium] › tests\users-crud-rbac.spec.js:274:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-12: Manager sees only users from their company (8.4s)
+  ok 81 [chromium] › tests\users-crud-rbac.spec.js:384:9 › Users Module - RBAC Authorization Matrix › Assigner Role - No Access › P3-17: Assigner cannot access Users management page (10.9s)
+  ok 86 [chromium] › tests\users-crud-rbac.spec.js:399:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-18: Unauthenticated request to Users page is rejected (15.4s)
+  ok 83 [chromium] › tests\users-crud-rbac.spec.js:364:9 › Users Module - RBAC Authorization Matrix › Trainee Role - No Access › P3-16: Trainee cannot access Users management page (22.6s)
+  ok 85 [chromium] › tests\users-crud-rbac.spec.js:675:9 › Users Module - RBAC Authorization Matrix › Join Requests - RBAC › P3-28: Join requests table displays expected columns (27.9s)
+  ok 82 [chromium] › tests\users-crud-rbac.spec.js:630:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-26: Very long display name is handled (30.2s)
+  ok 84 [chromium] › tests\users-crud-rbac.spec.js:593:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-25: SQL injection attempts in email are handled (30.0s)
+  ok 89 [chromium] › tests\users-crud-rbac.spec.js:509:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-22: Manager cannot modify users from other companies (26.8s)
+  ok 90 [chromium] › tests\users-crud-rbac.spec.js:455:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-21: Backend rejects role escalation attempt (26.4s)
+  -  91 [chromium] › tests\users-crud-rbac.spec.js:717:5 › Users CRUD Operations › P3-30: User role can be changed via dropdown
+  ok 92 [chromium] › tests\users-crud-rbac.spec.js:803:5 › Users CRUD Operations › P3-33: Export CSV functionality exists (3.8s)
+  x  88 [chromium] › tests\users-crud-rbac.spec.js:526:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-23: Owner can filter users by company (27.0s)
+  x  87 [chromium] › tests\users-crud-rbac.spec.js:436:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-20: Backend rejects unauthorized user deletion via direct POST (30.8s)
+  x  80 [chromium] › tests\users-crud-rbac.spec.js:561:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-24: XSS attempts in user display name are handled (32.1s)
+
+
+  1) [chromium] › tests\air-gapped-simulation.spec.js:7:3 › Air-Gapped Environment Simulation › P8-01: Block external requests and verify functionality 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\air-gapped-simulation.spec.js:23:5
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+  2) [chromium] › tests\air-gapped-simulation.spec.js:71:3 › Air-Gapped Environment Simulation › P8-03: JavaScript loads from local paths only 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\air-gapped-simulation.spec.js:83:5
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\air-gapped-simulation-Air--d0e2a-loads-from-local-paths-only-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › tests\auth.spec.js:40:5 › Authentication › Login Page › P1-01c: should login successfully as Owner 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\auth-Authentication-Login--7943f-login-successfully-as-Owner-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\auth-Authentication-Login--7943f-login-successfully-as-Owner-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\auth-Authentication-Login--7943f-login-successfully-as-Owner-chromium\error-context.md
+
+  4) [chromium] › tests\auth.spec.js:91:5 › Authentication › Logout › P1-02: should logout successfully 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Auth/Logout"
+    ============================================================
+
+       95 |
+       96 |       await Promise.all([
+    >  97 |         page.waitForURL(/\/Auth\/Login/),
+          |              ^
+       98 |         logoutForm.locator('button[type="submit"]').click(),
+       99 |       ]);
+      100 |
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\auth.spec.js:97:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\auth-Authentication-Logout-P1-02-should-logout-successfully-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\auth-Authentication-Logout-P1-02-should-logout-successfully-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\auth-Authentication-Logout-P1-02-should-logout-successfully-chromium\error-context.md
+
+  5) [chromium] › tests\auth.spec.js:105:5 › Authentication › Logout › P1-02: should clear session on logout 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      78 |
+      79 |   test.describe('Logout', () => {
+    > 80 |     test.beforeEach(async ({ page }) => {
+         |          ^
+      81 |       // Login first using credentials from environment variables
+      82 |       await page.goto('/Auth/Login');
+      83 |       await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\auth.spec.js:80:10
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+      84 |       await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
+      85 |       await Promise.all([
+    > 86 |         page.waitForURL(url => !url.toString().includes('/Auth/Login')),
+         |              ^
+      87 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      88 |       ]);
+      89 |     });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\auth.spec.js:86:14
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+  6) [chromium] › tests\companies-crud.spec.js:173:9 › Companies CRUD - Owner Role › Create Company › P2-04: Validation - duplicate slug rejected 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-4231a-n---duplicate-slug-rejected-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-4231a-n---duplicate-slug-rejected-chromium\error-context.md
+
+  7) [chromium] › tests\companies-crud.spec.js:206:9 › Companies CRUD - Owner Role › Create Company › P2-05: Validation - invalid slug format rejected 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.scrollIntoViewIfNeeded: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[name="CompanyName"]')[22m
+    [2m    - locator resolved to visible <input value="" required="" type="text" data-val="true" id="CompanyName" class="form-input" name="CompanyName" placeholder="My Company Inc." data-val-required="The CompanyName field is required."/>[22m
+
+
+      60 |         const companyNameInput = page.locator('input[name="CompanyName"]');
+      61 |         if (await companyNameInput.isVisible().catch(() => false)) {
+    > 62 |             await companyNameInput.scrollIntoViewIfNeeded();
+         |                                    ^
+      63 |         }
+      64 |
+      65 |         // Clear form fields first if requested (handles iteration in loop tests)
+        at fillCompanyForm (C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:62:36)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:220:17
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-4ff97-nvalid-slug-format-rejected-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-4ff97-nvalid-slug-format-rejected-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-4ff97-nvalid-slug-format-rejected-chromium\error-context.md
+
+  8) [chromium] › tests\companies-crud.spec.js:237:9 › Companies CRUD - Owner Role › Read/List Companies › P2-06: Companies list is displayed 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-fccf8-Companies-list-is-displayed-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-fccf8-Companies-list-is-displayed-chromium\error-context.md
+
+  9) [chromium] › tests\companies-crud.spec.js:302:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-10: Rename company successfully 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+
+      331 |             await page.fill('#newCompanyName', newName);
+      332 |             await page.click('#renameModal button[type="submit"]');
+    > 333 |             await page.waitForLoadState('networkidle');
+          |                        ^
+      334 |
+      335 |             // Verify rename succeeded
+      336 |             await expect(page.locator(`table:has-text("${newName}")`)).toBeVisible();
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:333:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-94bf8-Rename-company-successfully-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-94bf8-Rename-company-successfully-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-94bf8-Rename-company-successfully-chromium\error-context.md
+
+  10) [chromium] › tests\companies-crud.spec.js:365:9 › Companies CRUD - Owner Role › Delete Company › P2-12: Delete company with confirmation 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-46c51-e-company-with-confirmation-chromium\error-context.md
+
+  11) [chromium] › tests\companies-crud.spec.js:401:9 › Companies CRUD - Owner Role › Delete Company › P2-13: Delete confirmation can be cancelled 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-b1de3-nfirmation-can-be-cancelled-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-b1de3-nfirmation-can-be-cancelled-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-b1de3-nfirmation-can-be-cancelled-chromium\error-context.md
+
+  12) [chromium] › tests\companies-crud.spec.js:431:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-14: XSS attempts in company name are handled 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-5bbae-in-company-name-are-handled-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13) [chromium] › tests\companies-crud.spec.js:463:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-15: SQL injection attempts in company name are handled 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-9db33-in-company-name-are-handled-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-9db33-in-company-name-are-handled-chromium\error-context.md
+
+  14) [chromium] › tests\companies-crud.spec.js:487:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-16: Very long company name handled 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.fill: Target page, context or browser has been closed
+
+      65 |         // Clear form fields first if requested (handles iteration in loop tests)
+      66 |         if (clearFirst) {
+    > 67 |             await page.fill('input[name="CompanyName"]', '');
+         |                        ^
+      68 |             await page.fill('input[name="CompanySlug"]', '');
+      69 |             await page.fill('input[name="CompanyDisplayName"]', '');
+      70 |             await page.fill('input[name="ManagerEmail"]', '');
+        at fillCompanyForm (C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:67:24)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:494:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-0b194-y-long-company-name-handled-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-0b194-y-long-company-name-handled-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-0b194-y-long-company-name-handled-chromium\error-context.md
+
+  15) [chromium] › tests\companies-crud.spec.js:510:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-17: Path traversal attempts in company slug are rejected 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-4edc5-n-company-slug-are-rejected-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-4edc5-n-company-slug-are-rejected-chromium\error-context.md
+
+  16) [chromium] › tests\companies-crud.spec.js:534:9 › Companies CRUD - Owner Role › Director Assignment › P2-18: Director dropdown is available 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:99:9
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-0ddcf-ector-dropdown-is-available-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  17) [chromium] › tests\companies-crud.spec.js:542:9 › Companies CRUD - Owner Role › Director Assignment › P2-19: Manager fields become optional when director selected 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+
+      27 |     async function navigateToCompanies(page) {
+      28 |         await page.goto('/Admin/Companies');
+    > 29 |         await page.waitForLoadState('networkidle');
+         |                    ^
+      30 |
+      31 |         // Wait for any loading indicators to disappear
+      32 |         const loader = page.locator('.loading, .spinner, [data-loading="true"]');
+        at navigateToCompanies (C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:29:20)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:543:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-58c69-onal-when-director-selected-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-58c69-onal-when-director-selected-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-58c69-onal-when-director-selected-chromium\error-context.md
+
+  18) [chromium] › tests\companies-crud.spec.js:570:9 › Companies CRUD - Owner Role › Form State › P2-20: Form clears after successful submission 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-4118c-after-successful-submission-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-4118c-after-successful-submission-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-4118c-after-successful-submission-chromium\error-context.md
+
+  19) [chromium] › tests\multi-tenancy-isolation-network.spec.js:7:3 › Multi-Tenancy Isolation - Network Level › P6-01: API responses contain only tenant-scoped data 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+    Call log:
+    [2m  - navigating to "http://localhost:5000/Calendar/Table", waiting until "load"[22m
+
+
+      27 |     // Navigate through multiple pages
+      28 |     await page.goto('/Admin/Users');
+    > 29 |     await page.goto('/Calendar/Table');
+         |                ^
+      30 |     await page.goto('/My/Index');
+      31 |     await page.waitForLoadState('networkidle');
+      32 |
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-network.spec.js:29:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-c1450-ain-only-tenant-scoped-data-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-c1450-ain-only-tenant-scoped-data-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  20) [chromium] › tests\multi-tenancy-isolation-network.spec.js:53:3 › Multi-Tenancy Isolation - Network Level › P6-02: SQL injection attempts do not bypass tenant filters 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[name="Email"], input#Email')[22m
+
+
+       at ..\helpers\auth-helpers.js:37
+
+      35 |
+      36 |     // Fill login form - the form uses Email field
+    > 37 |     await page.fill('input[name="Email"], input#Email', OWNER_EMAIL);
+         |                ^
+      38 |     await page.fill('input[name="Password"], input#Password', OWNER_PASSWORD);
+      39 |
+      40 |     // Submit the LOCAL login form (not the Griffin ADFS form)
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:37:16)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-network.spec.js:54:5
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-bc6f4-o-not-bypass-tenant-filters-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  21) [chromium] › tests\multi-tenancy-isolation-network.spec.js:84:3 › Multi-Tenancy Isolation - Network Level › P6-03: XSS attempts are sanitized in responses 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-network.spec.js:85:5
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-b451e--are-sanitized-in-responses-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  22) [chromium] › tests\multi-tenancy-isolation-network.spec.js:112:3 › Multi-Tenancy Isolation - Network Level › P6-04: Network request headers contain proper authentication 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-network.spec.js:113:5
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-1d084-ntain-proper-authentication-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  23) [chromium] › tests\multi-tenancy-isolation-ui.spec.js:82:3 › Multi-Tenancy Isolation - UI Level › P5-01: Owner can see all companies 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-ui.spec.js:12:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ui-e4e02-Owner-can-see-all-companies-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\multi-tenancy-isolation-ui-e4e02-Owner-can-see-all-companies-chromium\error-context.md
+
+  24) [chromium] › tests\multi-tenancy-isolation-ui.spec.js:93:3 › Multi-Tenancy Isolation - UI Level › P5-02: Company selection isolates data view 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-ui.spec.js:12:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ui-6df64-election-isolates-data-view-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\multi-tenancy-isolation-ui-6df64-election-isolates-data-view-chromium\error-context.md
+
+  25) [chromium] › tests\multi-tenancy-isolation-ui.spec.js:126:3 › Multi-Tenancy Isolation - UI Level › P5-03: Direct URL manipulation cannot access other tenant data 
+
+    [31m"beforeAll" hook timeout of 30000ms exceeded.[39m
+
+       8 |   let tenantA, tenantB;
+       9 |
+    > 10 |   test.beforeAll(async ({ browser }) => {
+         |        ^
+      11 |     const page = await browser.newPage();
+      12 |     await loginAsOwner(page);
+      13 |
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-ui.spec.js:10:8
+
+    Error: page.waitForLoadState: Test ended.
+
+      36 |     await page.fill('input[name="ManagerPassword"]', '123456');
+      37 |     await page.locator('form:has(input[name="CompanyName"]) button[type="submit"]').click();
+    > 38 |     await page.waitForLoadState('networkidle');
+         |                ^
+      39 |
+      40 |     await page.close();
+      41 |   });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-ui.spec.js:38:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ui-9e8d8-ot-access-other-tenant-data-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\multi-tenancy-isolation-ui-9e8d8-ot-access-other-tenant-data-chromium\error-context.md
+
+  26) [chromium] › tests\network-performance.spec.js:73:3 › Network Performance & Efficiency › P9-02: Measure request count - Calendar/Table 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:87:7
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-ae1f6-uest-count---Calendar-Table-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  27) [chromium] › tests\network-performance.spec.js:114:3 › Network Performance & Efficiency › P9-03: Detect duplicate requests 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:126:7
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-94745-3-Detect-duplicate-requests-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  28) [chromium] › tests\network-performance.spec.js:160:3 › Network Performance & Efficiency › P9-04: Detect unexpected polling 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:173:7
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-d132f-4-Detect-unexpected-polling-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\network-performance-Networ-d132f-4-Detect-unexpected-polling-chromium\error-context.md
+
+  29) [chromium] › tests\network-performance.spec.js:203:3 › Network Performance & Efficiency › P9-05: Identify slow endpoints 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:237:7
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-a0cba--05-Identify-slow-endpoints-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  30) [chromium] › tests\network-performance.spec.js:251:3 › Network Performance & Efficiency › P9-06: Detect 4xx/5xx errors 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:266:5
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-9c937-P9-06-Detect-4xx-5xx-errors-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  31) [chromium] › tests\network-performance.spec.js:289:3 › Network Performance & Efficiency › P9-07: Measure full workflow - Create Company 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:302:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-b1fbf-l-workflow---Create-Company-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-b1fbf-l-workflow---Create-Company-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\network-performance-Networ-b1fbf-l-workflow---Create-Company-chromium\error-context.md
+
+  32) [chromium] › tests\session-resilience.spec.js:7:3 › Session Management & Resilience › P7-01: Session timeout redirects to login 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForURL: net::ERR_ABORTED; maybe frame was detached?
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\session-resilience.spec.js:8:5
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\session-resilience-Session-65ed7--timeout-redirects-to-login-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\session-resilience-Session-65ed7--timeout-redirects-to-login-chromium\error-context.md
+
+  33) [chromium] › tests\session-resilience.spec.js:22:3 › Session Management & Resilience › P7-02: Page refresh preserves authentication 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\session-resilience-Session-3f758-sh-preserves-authentication-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\session-resilience-Session-3f758-sh-preserves-authentication-chromium\error-context.md
+
+  34) [chromium] › tests\session-resilience.spec.js:76:3 › Session Management & Resilience › P7-04: Concurrent sessions from same user work independently 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\session-resilience.spec.js:84:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\session-resilience-Session-e697f-ame-user-work-independently-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\session-resilience-Session-e697f-ame-user-work-independently-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\session-resilience-Session-e697f-ame-user-work-independently-chromium\error-context.md
+
+  35) [chromium] › tests\session-resilience.spec.js:101:3 › Session Management & Resilience › P7-05: Network interruption shows graceful error 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\session-resilience.spec.js:102:5
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\session-resilience-Session-31af4-uption-shows-graceful-error-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\session-resilience-Session-31af4-uption-shows-graceful-error-chromium\error-context.md
+
+  36) [chromium] › tests\shift-assignment-workflow.spec.js:40:5 › Shift Assignment Workflow - End-to-End › Complete workflow: Blueprint → Program → Shift → Assignment 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:45:13
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:44:9
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--5e3ef-rogram-→-Shift-→-Assignment-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\shift-assignment-workflow--5e3ef-rogram-→-Shift-→-Assignment-chromium\error-context.md
+
+  37) [chromium] › tests\shift-assignment-workflow.spec.js:313:5 › Shift Assignment Workflow - End-to-End › Data integrity: Deleting blueprint prevents new program creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: expect.toBeVisible: Target page, context or browser has been closed
+
+      347 |             // Verify blueprint exists
+      348 |             const blueprintRow = page.locator(`tr:has-text("${blueprintData.key}")`).first();
+    > 349 |             await expect(blueprintRow).toBeVisible({ timeout: 5000 });
+          |                                        ^
+      350 |
+      351 |             console.log(`✓ Blueprint created for deletion test: ${blueprintData.key}`);
+      352 |         });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:349:40
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:317:9
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--849fe-events-new-program-creation-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  38) [chromium] › tests\shift-assignment-workflow.spec.js:443:5 › Shift Assignment Workflow - Edge Cases › Blueprint without start/end time validation 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:445:13
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:444:9
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+  39) [chromium] › tests\shift-assignment-workflow.spec.js:477:5 › Shift Assignment Workflow - Edge Cases › Program creation without selected days › Test Program Day Selection Validation 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\auth-helpers.js:43
+
+      41 |     // Click the button within the form that has the Email/Password fields
+      42 |     await Promise.all([
+    > 43 |         page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |              ^
+      44 |         page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
+      45 |     ]);
+      46 |
+        at loginAsOwner (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\auth-helpers.js:43:14)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:479:13
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:478:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--04d2c-ation-without-selected-days-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--04d2c-ation-without-selected-days-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\shift-assignment-workflow--04d2c-ation-without-selected-days-chromium\error-context.md
+
+  40) [chromium] › tests\users-crud-rbac.spec.js:80:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-01: Owner can access Users management page 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      73 |
+      74 |     test.describe('Owner Role - Full Access', () => {
+    > 75 |         test.beforeEach(async ({ page }) => {
+         |              ^
+      76 |             test.skip(!RoleHelper.isRoleConfigured('Owner'), 'Owner credentials not configured');
+      77 |             await RoleHelper.loginAs(page, 'Owner');
+      78 |         });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:75:14
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\role-helper.js:92
+
+      90 |         await submitButton.scrollIntoViewIfNeeded();
+      91 |         await Promise.all([
+    > 92 |             page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |                  ^
+      93 |             submitButton.click(),
+      94 |         ]);
+      95 |
+        at Function.loginAs (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\role-helper.js:92:18)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:77:13
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-9d257-ccess-Users-management-page-chromium\error-context.md
+
+  41) [chromium] › tests\users-crud-rbac.spec.js:90:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-02: Owner can see all companies in company filter 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+
+      42 | async function navigateToUsers(page) {
+      43 |     await page.goto('/Admin/Users');
+    > 44 |     await page.waitForLoadState('networkidle');
+         |                ^
+      45 | }
+      46 |
+      47 | /**
+        at navigateToUsers (C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:44:16)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:91:13
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-142bc-companies-in-company-filter-chromium\error-context.md
+
+  42) [chromium] › tests\users-crud-rbac.spec.js:211:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-07: Director can access Users management page 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      204 |
+      205 |     test.describe('Director Role - Limited Multi-Company Access', () => {
+    > 206 |         test.beforeEach(async ({ page }) => {
+          |              ^
+      207 |             test.skip(!RoleHelper.isRoleConfigured('Director'), 'Director credentials not configured');
+      208 |             await RoleHelper.loginAs(page, 'Director');
+      209 |         });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:206:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-65065-ccess-Users-management-page-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-65065-ccess-Users-management-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-65065-ccess-Users-management-page-chromium\error-context.md
+
+  43) [chromium] › tests\users-crud-rbac.spec.js:267:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-11: Manager can access Users management page 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('h1')
+    Expected pattern: [32m/User Management|Users/i[39m
+    Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1 class="page-title"></h1> aka getByRole('heading').filter({ hasText: /^$/ })
+        2) <h1 class="page-title">UserManagement</h1> aka getByRole('heading', { name: 'UserManagement' })
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('h1')[22m
+
+
+      269 |
+      270 |             // Manager should have access to Users page (IsManagerOrAdmin policy)
+    > 271 |             await expect(page.locator('h1')).toContainText(/User Management|Users/i);
+          |                                              ^
+      272 |         });
+      273 |
+      274 |         test('P3-12: Manager sees only users from their company', async ({ page }) => {
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:271:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-1c8fd-ccess-Users-management-page-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-1c8fd-ccess-Users-management-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-1c8fd-ccess-Users-management-page-chromium\error-context.md
+
+  44) [chromium] › tests\users-crud-rbac.spec.js:289:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-13: Manager cannot assign Director or Owner roles 
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-c953c-ign-Director-or-Owner-roles-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  45) [chromium] › tests\users-crud-rbac.spec.js:306:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-14: Manager can create Employee users 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    [31mTearing down "context" exceeded the test timeout of 30000ms.[39m
+
+  46) [chromium] › tests\users-crud-rbac.spec.js:344:9 › Users Module - RBAC Authorization Matrix › Employee Role - No Access › P3-15: Employee cannot access Users management page 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\role-helper.js:92
+
+      90 |         await submitButton.scrollIntoViewIfNeeded();
+      91 |         await Promise.all([
+    > 92 |             page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |                  ^
+      93 |             submitButton.click(),
+      94 |         ]);
+      95 |
+        at Function.loginAs (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\role-helper.js:92:18)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:341:13
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-201a4-ccess-Users-management-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  47) [chromium] › tests\users-crud-rbac.spec.js:436:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-20: Backend rejects unauthorized user deletion via direct POST 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at ..\helpers\role-helper.js:92
+
+      90 |         await submitButton.scrollIntoViewIfNeeded();
+      91 |         await Promise.all([
+    > 92 |             page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |                  ^
+      93 |             submitButton.click(),
+      94 |         ]);
+      95 |
+        at Function.loginAs (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\role-helper.js:92:18)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:440:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-eaf25-er-deletion-via-direct-POST-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-eaf25-er-deletion-via-direct-POST-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-eaf25-er-deletion-via-direct-POST-chromium\error-context.md
+
+  48) [chromium] › tests\users-crud-rbac.spec.js:526:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-23: Owner can filter users by company 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"UserFilterCompanyId"[39m
+    Received string:    [31m"http://localhost:5000/Admin/Users"[39m
+
+      547 |
+      548 |                     // URL should contain the filter parameter
+    > 549 |                     expect(page.url()).toContain('UserFilterCompanyId');
+          |                                        ^
+      550 |                 }
+      551 |             }
+      552 |         });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:549:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-ce8ff-can-filter-users-by-company-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-ce8ff-can-filter-users-by-company-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-ce8ff-can-filter-users-by-company-chromium\error-context.md
+
+  49) [chromium] › tests\users-crud-rbac.spec.js:561:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-24: XSS attempts in user display name are handled 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:5000/Home"
+    ============================================================
+
+       at ..\helpers\role-helper.js:92
+
+      90 |         await submitButton.scrollIntoViewIfNeeded();
+      91 |         await Promise.all([
+    > 92 |             page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+         |                  ^
+      93 |             submitButton.click(),
+      94 |         ]);
+      95 |
+        at Function.loginAs (C:\Users\katzi\Downloads\ShiftManager\qa-automation\helpers\role-helper.js:92:18)
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:558:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-2eb0e-er-display-name-are-handled-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-2eb0e-er-display-name-are-handled-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-2eb0e-er-display-name-are-handled-chromium\error-context.md
+
+  49 failed
+    [chromium] › tests\air-gapped-simulation.spec.js:7:3 › Air-Gapped Environment Simulation › P8-01: Block external requests and verify functionality 
+    [chromium] › tests\air-gapped-simulation.spec.js:71:3 › Air-Gapped Environment Simulation › P8-03: JavaScript loads from local paths only 
+    [chromium] › tests\auth.spec.js:40:5 › Authentication › Login Page › P1-01c: should login successfully as Owner 
+    [chromium] › tests\auth.spec.js:91:5 › Authentication › Logout › P1-02: should logout successfully 
+    [chromium] › tests\auth.spec.js:105:5 › Authentication › Logout › P1-02: should clear session on logout 
+    [chromium] › tests\companies-crud.spec.js:173:9 › Companies CRUD - Owner Role › Create Company › P2-04: Validation - duplicate slug rejected 
+    [chromium] › tests\companies-crud.spec.js:206:9 › Companies CRUD - Owner Role › Create Company › P2-05: Validation - invalid slug format rejected 
+    [chromium] › tests\companies-crud.spec.js:237:9 › Companies CRUD - Owner Role › Read/List Companies › P2-06: Companies list is displayed 
+    [chromium] › tests\companies-crud.spec.js:302:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-10: Rename company successfully 
+    [chromium] › tests\companies-crud.spec.js:365:9 › Companies CRUD - Owner Role › Delete Company › P2-12: Delete company with confirmation 
+    [chromium] › tests\companies-crud.spec.js:401:9 › Companies CRUD - Owner Role › Delete Company › P2-13: Delete confirmation can be cancelled 
+    [chromium] › tests\companies-crud.spec.js:431:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-14: XSS attempts in company name are handled 
+    [chromium] › tests\companies-crud.spec.js:463:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-15: SQL injection attempts in company name are handled 
+    [chromium] › tests\companies-crud.spec.js:487:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-16: Very long company name handled 
+    [chromium] › tests\companies-crud.spec.js:510:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-17: Path traversal attempts in company slug are rejected 
+    [chromium] › tests\companies-crud.spec.js:534:9 › Companies CRUD - Owner Role › Director Assignment › P2-18: Director dropdown is available 
+    [chromium] › tests\companies-crud.spec.js:542:9 › Companies CRUD - Owner Role › Director Assignment › P2-19: Manager fields become optional when director selected 
+    [chromium] › tests\companies-crud.spec.js:570:9 › Companies CRUD - Owner Role › Form State › P2-20: Form clears after successful submission 
+    [chromium] › tests\multi-tenancy-isolation-network.spec.js:7:3 › Multi-Tenancy Isolation - Network Level › P6-01: API responses contain only tenant-scoped data 
+    [chromium] › tests\multi-tenancy-isolation-network.spec.js:53:3 › Multi-Tenancy Isolation - Network Level › P6-02: SQL injection attempts do not bypass tenant filters 
+    [chromium] › tests\multi-tenancy-isolation-network.spec.js:84:3 › Multi-Tenancy Isolation - Network Level › P6-03: XSS attempts are sanitized in responses 
+    [chromium] › tests\multi-tenancy-isolation-network.spec.js:112:3 › Multi-Tenancy Isolation - Network Level › P6-04: Network request headers contain proper authentication 
+    [chromium] › tests\multi-tenancy-isolation-ui.spec.js:82:3 › Multi-Tenancy Isolation - UI Level › P5-01: Owner can see all companies 
+    [chromium] › tests\multi-tenancy-isolation-ui.spec.js:93:3 › Multi-Tenancy Isolation - UI Level › P5-02: Company selection isolates data view 
+    [chromium] › tests\multi-tenancy-isolation-ui.spec.js:126:3 › Multi-Tenancy Isolation - UI Level › P5-03: Direct URL manipulation cannot access other tenant data 
+    [chromium] › tests\network-performance.spec.js:73:3 › Network Performance & Efficiency › P9-02: Measure request count - Calendar/Table 
+    [chromium] › tests\network-performance.spec.js:114:3 › Network Performance & Efficiency › P9-03: Detect duplicate requests 
+    [chromium] › tests\network-performance.spec.js:160:3 › Network Performance & Efficiency › P9-04: Detect unexpected polling 
+    [chromium] › tests\network-performance.spec.js:203:3 › Network Performance & Efficiency › P9-05: Identify slow endpoints 
+    [chromium] › tests\network-performance.spec.js:251:3 › Network Performance & Efficiency › P9-06: Detect 4xx/5xx errors 
+    [chromium] › tests\network-performance.spec.js:289:3 › Network Performance & Efficiency › P9-07: Measure full workflow - Create Company 
+    [chromium] › tests\session-resilience.spec.js:7:3 › Session Management & Resilience › P7-01: Session timeout redirects to login 
+    [chromium] › tests\session-resilience.spec.js:22:3 › Session Management & Resilience › P7-02: Page refresh preserves authentication 
+    [chromium] › tests\session-resilience.spec.js:76:3 › Session Management & Resilience › P7-04: Concurrent sessions from same user work independently 
+    [chromium] › tests\session-resilience.spec.js:101:3 › Session Management & Resilience › P7-05: Network interruption shows graceful error 
+    [chromium] › tests\shift-assignment-workflow.spec.js:40:5 › Shift Assignment Workflow - End-to-End › Complete workflow: Blueprint → Program → Shift → Assignment 
+    [chromium] › tests\shift-assignment-workflow.spec.js:313:5 › Shift Assignment Workflow - End-to-End › Data integrity: Deleting blueprint prevents new program creation 
+    [chromium] › tests\shift-assignment-workflow.spec.js:443:5 › Shift Assignment Workflow - Edge Cases › Blueprint without start/end time validation 
+    [chromium] › tests\shift-assignment-workflow.spec.js:477:5 › Shift Assignment Workflow - Edge Cases › Program creation without selected days 
+    [chromium] › tests\users-crud-rbac.spec.js:80:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-01: Owner can access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:90:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-02: Owner can see all companies in company filter 
+    [chromium] › tests\users-crud-rbac.spec.js:211:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-07: Director can access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:267:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-11: Manager can access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:289:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-13: Manager cannot assign Director or Owner roles 
+    [chromium] › tests\users-crud-rbac.spec.js:306:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-14: Manager can create Employee users 
+    [chromium] › tests\users-crud-rbac.spec.js:344:9 › Users Module - RBAC Authorization Matrix › Employee Role - No Access › P3-15: Employee cannot access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:436:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-20: Backend rejects unauthorized user deletion via direct POST 
+    [chromium] › tests\users-crud-rbac.spec.js:526:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-23: Owner can filter users by company 
+    [chromium] › tests\users-crud-rbac.spec.js:561:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-24: XSS attempts in user display name are handled 
+  5 skipped
+  38 passed (8.3m)

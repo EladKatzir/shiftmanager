@@ -1,0 +1,202 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 📊
+      - generic [ref=e6]: Shift Manager
+    - navigation [ref=e7]:
+      - generic [ref=e8]: 📅 My Shifty
+      - link "🏠 Home" [ref=e9] [cursor=pointer]:
+        - /url: /Home/Index
+        - generic [ref=e10]: 🏠
+        - generic [ref=e11]: Home
+      - link "📅 Schedule" [ref=e12] [cursor=pointer]:
+        - /url: /Calendar/Month
+        - generic [ref=e13]: 📅
+        - generic [ref=e14]: Schedule
+      - link "📝 Requests" [ref=e15] [cursor=pointer]:
+        - /url: /Requests/Index
+        - generic [ref=e16]: 📝
+        - generic [ref=e17]: Requests
+      - link "📊 Analytics" [ref=e18] [cursor=pointer]:
+        - /url: /Admin/Analytics
+        - generic [ref=e19]: 📊
+        - generic [ref=e20]: Analytics
+      - link "🔍 Audit Log" [ref=e21] [cursor=pointer]:
+        - /url: /Admin/AuditLog
+        - generic [ref=e22]: 🔍
+        - generic [ref=e23]: Audit Log
+      - link "👥 People" [ref=e24] [cursor=pointer]:
+        - /url: /Admin/Users
+        - generic [ref=e25]: 👥
+        - generic [ref=e26]: People
+      - link "🏢 Companies" [ref=e27] [cursor=pointer]:
+        - /url: /Admin/Companies
+        - generic [ref=e28]: 🏢
+        - generic [ref=e29]: Companies
+      - link "🎛️ Admin Hub" [ref=e30] [cursor=pointer]:
+        - /url: /Admin/Index
+        - generic [ref=e31]: 🎛️
+        - generic [ref=e32]: Admin Hub
+      - link "⚙️ Settings" [ref=e33] [cursor=pointer]:
+        - /url: /Admin/Config
+        - generic [ref=e34]: ⚙️
+        - generic [ref=e35]: Settings
+      - generic [ref=e36]: 🔧 Owner Administration
+      - link "🔧 Owner Administration" [ref=e37] [cursor=pointer]:
+        - /url: /Owner/Index
+        - generic [ref=e38]: 🔧
+        - generic [ref=e39]: Owner Administration
+      - generic [ref=e40]: ⚙️ Management
+      - link "📊 Scheduled Shifts" [ref=e41] [cursor=pointer]:
+        - /url: /Calendar/Table
+        - generic [ref=e42]: 📊
+        - generic [ref=e43]: Scheduled Shifts
+      - link "🗂️ Chores" [ref=e44] [cursor=pointer]:
+        - /url: /Public/Chores
+        - generic [ref=e45]: 🗂️
+        - generic [ref=e46]: Chores
+      - link "🎯 Day Shifts" [ref=e47] [cursor=pointer]:
+        - /url: /Public/OnDuty
+        - generic [ref=e48]: 🎯
+        - generic [ref=e49]: Day Shifts
+    - generic [ref=e50]:
+      - generic [ref=e51] [cursor=pointer]:
+        - generic [ref=e52]: O
+        - generic [ref=e53]:
+          - generic [ref=e54]: Owner
+          - generic [ref=e55]: Owner
+      - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e56]:
+        - generic [ref=e57]: ⌨️
+        - generic [ref=e58]: Ctrl+K
+  - generic [ref=e59]:
+    - banner [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - heading [level=1]
+        - generic [ref=e63]:
+          - link "✓" [ref=e65] [cursor=pointer]:
+            - /url: /Requests
+            - generic [ref=e66]: ✓
+          - link "🔔" [ref=e67] [cursor=pointer]:
+            - /url: /My/NotificationCenter
+            - generic [ref=e68]: 🔔
+          - button "Language" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: 🌐
+            - generic [ref=e72]: En
+          - button "Toggle dark mode" [ref=e73] [cursor=pointer]:
+            - generic [ref=e74]: 🌓
+          - button "🚪 Logout" [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]: 🚪
+            - generic [ref=e78]: Logout
+    - main [ref=e79]:
+      - navigation [ref=e80]:
+        - list [ref=e81]:
+          - listitem [ref=e82]:
+            - link "Admin" [ref=e83]:
+              - /url: /Admin/Users
+          - listitem "Companies" [ref=e84]: › Companies
+      - generic [ref=e85]:
+        - heading "Companies" [level=1] [ref=e86]
+        - paragraph [ref=e87]: Create and manage companies, assign managers, and configure multi-tenant settings
+      - generic [ref=e88]:
+        - heading "Add New Company" [level=3] [ref=e89]
+        - generic [ref=e90]:
+          - group "Company Details" [ref=e91]:
+            - generic [ref=e92]: Company Details
+            - generic [ref=e93]:
+              - generic [ref=e94]:
+                - generic [ref=e95]: Company Name *
+                - textbox "My Company Inc." [ref=e96]
+              - generic [ref=e97]:
+                - generic [ref=e98]: Slug * (lowercase, letters, numbers, hyphens)
+                - textbox "my-company" [ref=e99]
+              - generic [ref=e100]:
+                - generic [ref=e101]: Display name
+                - textbox "My Company" [ref=e102]
+          - group "Or assign an existing Director" [ref=e103]:
+            - generic [ref=e104]: Or assign an existing Director
+            - generic [ref=e105]:
+              - generic [ref=e106]: Existing Director
+              - combobox [ref=e107] [cursor=pointer]:
+                - option [selected]
+                - option "Test Director (director@local)"
+                - option "dirt (dir@t)"
+                - option "test director (test@dir)"
+              - generic [ref=e108]: If a Director is selected, they will be assigned to this company instead of creating a new Manager.
+          - group "Manager Account" [ref=e109]:
+            - generic [ref=e110]: Manager Account
+            - generic [ref=e111]:
+              - generic [ref=e112]:
+                - generic [ref=e113]: Manager Email *
+                - textbox "manager@company.com" [ref=e114]
+              - generic [ref=e115]:
+                - generic [ref=e116]: Manager Display Name *
+                - textbox "John Doe" [ref=e117]
+              - generic [ref=e118]:
+                - generic [ref=e119]: Manager Password *
+                - textbox "••••••••" [ref=e120]
+          - button "➕ Create Company & Manager" [ref=e121] [cursor=pointer]:
+            - generic [ref=e122]: ➕
+            - generic [ref=e123]: Create Company & Manager
+        - generic [ref=e125]:
+          - strong [ref=e126]: "Note:"
+          - text: "Creating a company will:"
+          - list [ref=e127]:
+            - listitem [ref=e128]: Create the company with the specified name and slug
+            - listitem [ref=e129]: Create a manager user account for this company
+            - listitem [ref=e130]: Generate default shift types (Morning, Noon, Night, Middle)
+            - listitem [ref=e131]: Set up default configuration (rest hours, weekly cap)
+      - generic [ref=e132]:
+        - heading "All Companies" [level=3] [ref=e133]
+        - table [ref=e135]:
+          - rowgroup [ref=e136]:
+            - row "Name Slug Display name Users Actions" [ref=e137]:
+              - columnheader "Name" [ref=e138]
+              - columnheader "Slug" [ref=e139]
+              - columnheader "Display name" [ref=e140]
+              - columnheader "Users" [ref=e141]
+              - columnheader "Actions" [ref=e142]
+          - rowgroup [ref=e143]:
+            - row "Demo Co - 18 Rename 🗑️ Delete" [ref=e144]:
+              - cell "Demo Co" [ref=e145]:
+                - strong [ref=e146]: Demo Co
+              - cell [ref=e147]:
+                - code [ref=e148]
+              - cell "-" [ref=e149]
+              - cell "18" [ref=e150]
+              - cell "Rename 🗑️ Delete" [ref=e151]:
+                - generic [ref=e152]:
+                  - button "Rename" [ref=e153] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e155] [cursor=pointer]:
+                    - generic [ref=e156]: 🗑️
+                    - generic [ref=e157]: Delete
+            - row "Test Corp test-corp Test Corporation 0 Rename 🗑️ Delete" [ref=e158]:
+              - cell "Test Corp" [ref=e159]:
+                - strong [ref=e160]: Test Corp
+              - cell "test-corp" [ref=e161]:
+                - code [ref=e162]: test-corp
+              - cell "Test Corporation" [ref=e163]
+              - cell "0" [ref=e164]
+              - cell "Rename 🗑️ Delete" [ref=e165]:
+                - generic [ref=e166]:
+                  - button "Rename" [ref=e167] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e169] [cursor=pointer]:
+                    - generic [ref=e170]: 🗑️
+                    - generic [ref=e171]: Delete
+            - row "newcompany companytest company to test 1 Rename 🗑️ Delete" [ref=e172]:
+              - cell "newcompany" [ref=e173]:
+                - strong [ref=e174]: newcompany
+              - cell "companytest" [ref=e175]:
+                - code [ref=e176]: companytest
+              - cell "company to test" [ref=e177]
+              - cell "1" [ref=e178]
+              - cell "Rename 🗑️ Delete" [ref=e179]:
+                - generic [ref=e180]:
+                  - button "Rename" [ref=e181] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e183] [cursor=pointer]:
+                    - generic [ref=e184]: 🗑️
+                    - generic [ref=e185]: Delete
+```

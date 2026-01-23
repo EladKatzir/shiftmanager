@@ -48,6 +48,30 @@ public class GriffinDiagnosticModel : PageModel
     public List<string> Checks { get; set; } = new();
     public Dictionary<string, bool> ValidationResults { get; set; } = new();
 
+    // URL encoding comparison properties
+    public string TestReturnUrl { get; set; } = "/Home/Index";
+    public string ReturnUrlEncoded1x { get; set; } = string.Empty;
+    public string ReturnUrlEncoded2x { get; set; } = string.Empty;
+    public string ReturnUrlEncoded3x { get; set; } = string.Empty;
+
+    // OLD approach (current - WRONG)
+    public string OldCallbackUrl { get; set; } = string.Empty;
+    public string OldFinalGriffinUrl { get; set; } = string.Empty;
+
+    // NEW approach (proposed fix - CORRECT)
+    public string NewCallbackUrl { get; set; } = string.Empty;
+    public string NewFinalGriffinUrl { get; set; } = string.Empty;
+
+    // DOOF approach (reference - WORKS)
+    public string DoofDestinationEncoded3x { get; set; } = string.Empty;
+    public string DoofCallbackUrl { get; set; } = string.Empty;
+    public string DoofFinalGriffinUrl { get; set; } = string.Empty;
+
+    // Analysis flags
+    public bool OldUrlLooksLikeUrl { get; set; }
+    public bool NewUrlLooksLikeUrl { get; set; }
+    public bool DoofUrlLooksLikeUrl { get; set; }
+
     public GriffinDiagnosticModel(
         IGriffinConfigService griffinConfigService,
         IGriffinService griffinService,
@@ -329,6 +353,9 @@ public class GriffinDiagnosticModel : PageModel
             // Determine root cause
             AnalyzeRootCause();
 
+            // Generate URL encoding comparison
+            GenerateUrlComparison();
+
             // Generate diagnostic JSON
             var diagnosticData = new
             {
@@ -470,5 +497,64 @@ public class GriffinDiagnosticModel : PageModel
                     <li>Check for any firewalls or network restrictions</li>
                 </ol>";
         }
+    }
+
+    private void GenerateUrlComparison()
+    {
+        if (GriffinConfig == null || string.IsNullOrWhiteSpace(GriffinConfig.TokenConsumerUrl))
+            return;
+
+        // Test with sample return URL
+        TestReturnUrl = "/Home/Index";
+
+        // Show encoding progression
+        ReturnUrlEncoded1x = Uri.EscapeDataString(TestReturnUrl);
+        ReturnUrlEncoded2x = Uri.EscapeDataString(ReturnUrlEncoded1x);
+        ReturnUrlEncoded3x = Uri.EscapeDataString(ReturnUrlEncoded2x);
+
+        // ===========================================
+        // OLD APPROACH (Current - WRONG)
+        // ===========================================
+        var oldCallback = GriffinConfig.TokenConsumerUrl + "?returnUrl=" + ReturnUrlEncoded1x;
+
+        // Simulate current GriffinService.BuildAuthenticationUrl() - double-encodes ENTIRE URL
+        var oldEncoded1x = Uri.EscapeDataString(oldCallback);
+        var oldEncoded2x = Uri.EscapeDataString(oldEncoded1x);
+
+        OldCallbackUrl = oldEncoded2x;  // This is gibberish!
+        OldFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={oldEncoded2x}";
+        OldUrlLooksLikeUrl = OldFinalGriffinUrl.Contains("tokenConsumerURL=https://") ||
+                             OldFinalGriffinUrl.Contains("tokenConsumerURL=http://");
+
+        // ===========================================
+        // NEW APPROACH (Proposed Fix - CORRECT)
+        // ===========================================
+        var newCallback = GriffinConfig.TokenConsumerUrl + "?returnUrl=" + ReturnUrlEncoded3x;
+
+        // New GriffinService.BuildAuthenticationUrl() - does NOT encode the entire URL
+        NewCallbackUrl = newCallback;  // Readable URL structure!
+        NewFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={newCallback}";
+        NewUrlLooksLikeUrl = NewFinalGriffinUrl.Contains("tokenConsumerURL=https://") ||
+                             NewFinalGriffinUrl.Contains("tokenConsumerURL=http://");
+
+        // ===========================================
+        // DOOF APPROACH (Reference - WORKS)
+        // ===========================================
+        // Doof encodes only the destination 3x, appends to base callback URL
+        DoofDestinationEncoded3x = ReturnUrlEncoded3x;  // Same as ours
+        DoofCallbackUrl = "https://doof.d8200.mil/api/login/" + DoofDestinationEncoded3x;
+        DoofFinalGriffinUrl = $"https://doof-auth-adfs.d8200.mil/authentication?tokenConsumerURL={DoofCallbackUrl}";
+        DoofUrlLooksLikeUrl = DoofFinalGriffinUrl.Contains("tokenConsumerURL=https://");
+
+        Checks.Add("📊 URL Comparison Generated:");
+        var oldUrlStart = OldFinalGriffinUrl.IndexOf("tokenConsumerURL=");
+        if (oldUrlStart >= 0)
+        {
+            oldUrlStart += 17; // Length of "tokenConsumerURL="
+            var previewLength = Math.Min(20, OldFinalGriffinUrl.Length - oldUrlStart);
+            Checks.Add($"   OLD (current): tokenConsumerURL starts with '{OldFinalGriffinUrl.Substring(oldUrlStart, previewLength)}...'");
+        }
+        Checks.Add($"   NEW (proposed): tokenConsumerURL starts with 'http://' or 'https://'");
+        Checks.Add($"   DOOF (working): tokenConsumerURL starts with 'https://'");
     }
 }

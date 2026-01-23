@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pattern Test</title>
+</head>
+<body>
+    <h1>Pattern Validation Test</h1>
+
+    <form>
+        <label>Slug (pattern="^[a-z0-9-]+$"):</label>
+        <input type="text" id="slug1" pattern="^[a-z0-9-]+$" required>
+        <button type="submit">Submit 1</button>
+    </form>
+
+    <br><br>
+
+    <form>
+        <label>Slug (pattern="[a-z0-9-]+"):</label>
+        <input type="text" id="slug2" pattern="[a-z0-9-]+" required>
+        <button type="submit">Submit 2</button>
+    </form>
+
+    <script>
+        // Test with different values
+        function testValidation() {
+            const values = ['UPPERCASE', 'with spaces', 'with.dots', 'with_underscores', 'valid-slug-123'];
+
+            console.log('Testing pattern="^[a-z0-9-]+$":');
+            values.forEach(val => {
+                const input = document.getElementById('slug1');
+                input.value = val;
+                console.log(`  "${val}": ${input.checkValidity()}`);
+            });
+
+            console.log('\nTesting pattern="[a-z0-9-]+":');
+            values.forEach(val => {
+                const input = document.getElementById('slug2');
+                input.value = val;
+                console.log(`  "${val}": ${input.checkValidity()}`);
+            });
+        }
+
+        // Run tests after page loads
+        window.addEventListener('load', testValidation);
+    </script>
+</body>
+</html>

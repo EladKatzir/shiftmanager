@@ -24,8 +24,9 @@ async function cleanupTestData(page) {
         await page.goto(`${BASE_URL}/Admin/Companies`);
         await page.waitForLoadState('networkidle');
 
-        // Delete companies with test prefixes
-        const testPrefixes = ['TenantA_', 'TenantB_', 'Company_', 'TestCompany_', 'E2E_', 'DEL_'];
+        // Delete companies with test prefixes and patterns
+        const testPrefixes = ['TenantA_', 'TenantB_', 'Company_', 'TestCompany_', 'E2E_', 'DEL_',
+                              'DROP TABLE', 'testcompany-', 'TestCo_'];
 
         for (const prefix of testPrefixes) {
             let deleted = 0;
@@ -34,8 +35,8 @@ async function cleanupTestData(page) {
             if (rows > 0) {
                 console.log(`  Found ${rows} test companies with prefix "${prefix}"`);
 
-                // Delete up to 10 companies with this prefix
-                for (let i = 0; i < Math.min(rows, 10); i++) {
+                // Delete all companies with this prefix (increased limit to 50)
+                for (let i = 0; i < Math.min(rows, 50); i++) {
                     const row = page.locator(`tbody tr:has-text("${prefix}")`).first();
                     const deleteButton = row.locator('button:has-text("Delete"), form[action*="Delete"] button').first();
 

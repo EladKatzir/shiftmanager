@@ -1,0 +1,1637 @@
+### Page state
+- Page URL: http://localhost:5000/Admin/Companies
+- Page Title: Test's shifty
+- Page Snapshot:
+```yaml
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 📊
+      - generic [ref=e6]: Shift Manager
+    - navigation [ref=e7]:
+      - generic [ref=e8]: 📅 My Shifty
+      - link "🏠 Home" [ref=e9] [cursor=pointer]:
+        - /url: /Home/Index
+        - generic [ref=e10]: 🏠
+        - generic [ref=e11]: Home
+      - link "📅 Schedule" [ref=e12] [cursor=pointer]:
+        - /url: /Calendar/Month
+        - generic [ref=e13]: 📅
+        - generic [ref=e14]: Schedule
+      - link "📝 Requests" [ref=e15] [cursor=pointer]:
+        - /url: /Requests/Index
+        - generic [ref=e16]: 📝
+        - generic [ref=e17]: Requests
+      - link "📊 Analytics" [ref=e18] [cursor=pointer]:
+        - /url: /Admin/Analytics
+        - generic [ref=e19]: 📊
+        - generic [ref=e20]: Analytics
+      - link "🔍 Audit Log" [ref=e21] [cursor=pointer]:
+        - /url: /Admin/AuditLog
+        - generic [ref=e22]: 🔍
+        - generic [ref=e23]: Audit Log
+      - link "👥 People" [ref=e24] [cursor=pointer]:
+        - /url: /Admin/Users
+        - generic [ref=e25]: 👥
+        - generic [ref=e26]: People
+      - link "🏢 Companies" [ref=e27] [cursor=pointer]:
+        - /url: /Admin/Companies
+        - generic [ref=e28]: 🏢
+        - generic [ref=e29]: Companies
+      - link "🎛️ Admin Hub" [ref=e30] [cursor=pointer]:
+        - /url: /Admin/Index
+        - generic [ref=e31]: 🎛️
+        - generic [ref=e32]: Admin Hub
+      - link "⚙️ Settings" [ref=e33] [cursor=pointer]:
+        - /url: /Admin/Config
+        - generic [ref=e34]: ⚙️
+        - generic [ref=e35]: Settings
+      - generic [ref=e36]: 🔧 Owner Administration
+      - link "🔧 Owner Administration" [ref=e37] [cursor=pointer]:
+        - /url: /Owner/Index
+        - generic [ref=e38]: 🔧
+        - generic [ref=e39]: Owner Administration
+      - generic [ref=e40]: ⚙️ Management
+      - link "📊 Scheduled Shifts" [ref=e41] [cursor=pointer]:
+        - /url: /Calendar/Table
+        - generic [ref=e42]: 📊
+        - generic [ref=e43]: Scheduled Shifts
+      - link "🗂️ Chores" [ref=e44] [cursor=pointer]:
+        - /url: /Public/Chores
+        - generic [ref=e45]: 🗂️
+        - generic [ref=e46]: Chores
+      - link "🎯 Day Shifts" [ref=e47] [cursor=pointer]:
+        - /url: /Public/OnDuty
+        - generic [ref=e48]: 🎯
+        - generic [ref=e49]: Day Shifts
+    - generic [ref=e50]:
+      - generic [ref=e51] [cursor=pointer]:
+        - generic [ref=e52]: T
+        - generic [ref=e53]:
+          - generic [ref=e54]: Test
+          - generic [ref=e55]: Owner
+      - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e56]:
+        - generic [ref=e57]: ⌨️
+        - generic [ref=e58]: Ctrl+K
+  - generic [ref=e59]:
+    - banner [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - heading [level=1]
+        - generic [ref=e63]:
+          - link "✓" [ref=e65] [cursor=pointer]:
+            - /url: /Requests
+            - generic [ref=e66]: ✓
+          - link "🔔" [ref=e67] [cursor=pointer]:
+            - /url: /My/NotificationCenter
+            - generic [ref=e68]: 🔔
+          - button "Language" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: 🌐
+            - generic [ref=e72]: En
+          - button "Toggle dark mode" [ref=e73] [cursor=pointer]:
+            - generic [ref=e74]: 🌓
+          - button "🚪 Logout" [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]: 🚪
+            - generic [ref=e78]: Logout
+    - main [ref=e79]:
+      - navigation [ref=e80]:
+        - list [ref=e81]:
+          - listitem [ref=e82]:
+            - link "Admin" [ref=e83]:
+              - /url: /Admin/Users
+          - listitem "Companies" [ref=e84]: › Companies
+      - generic [ref=e85]:
+        - heading "Companies" [level=1] [ref=e86]
+        - paragraph [ref=e87]: Create and manage companies, assign managers, and configure multi-tenant settings
+      - generic [ref=e88]:
+        - heading "Add New Company" [level=3] [ref=e89]
+        - generic [ref=e90]:
+          - group "Company Details" [ref=e91]:
+            - generic [ref=e92]: Company Details
+            - generic [ref=e93]:
+              - generic [ref=e94]:
+                - generic [ref=e95]: Company Name *
+                - textbox "My Company Inc." [ref=e96]: <script>alert('XSS')</script>
+              - generic [ref=e97]:
+                - generic [ref=e98]: Slug * (lowercase, letters, numbers, hyphens)
+                - textbox "Only lowercase letters, numbers, and hyphens allowed" [ref=e99]:
+                  - /placeholder: my-company
+                  - text: xss-test-company
+              - generic [ref=e100]:
+                - generic [ref=e101]: Display name
+                - textbox "My Company" [ref=e102]
+          - group "Or assign an existing Director" [ref=e103]:
+            - generic [ref=e104]: Or assign an existing Director
+            - generic [ref=e105]:
+              - generic [ref=e106]: Existing Director
+              - combobox [ref=e107] [cursor=pointer]:
+                - option [selected]
+                - option "Test Director (director@local)"
+                - option "Test Director (director@test.com)"
+                - option "dirt (dir@t)"
+                - option "test director (test@dir)"
+              - generic [ref=e108]: If a Director is selected, they will be assigned to this company instead of creating a new Manager.
+          - group "Manager Account" [ref=e109]:
+            - generic [ref=e110]: Manager Account
+            - generic [ref=e111]:
+              - generic [ref=e112]:
+                - generic [ref=e113]: Manager Email *
+                - textbox "manager@company.com" [ref=e114]: xss-manager@test.com
+              - generic [ref=e115]:
+                - generic [ref=e116]: Manager Display Name *
+                - textbox "John Doe" [ref=e117]: XSS Test Manager
+              - generic [ref=e118]:
+                - generic [ref=e119]: Manager Password *
+                - textbox "••••••••" [active] [ref=e120]: TestPass123!
+          - button "➕ Create Company & Manager" [ref=e121] [cursor=pointer]:
+            - generic [ref=e122]: ➕
+            - generic [ref=e123]: Create Company & Manager
+        - generic [ref=e125]:
+          - strong [ref=e126]: "Note:"
+          - text: "Creating a company will:"
+          - list [ref=e127]:
+            - listitem [ref=e128]: Create the company with the specified name and slug
+            - listitem [ref=e129]: Create a manager user account for this company
+            - listitem [ref=e130]: Generate default shift types (Morning, Noon, Night, Middle)
+            - listitem [ref=e131]: Set up default configuration (rest hours, weekly cap)
+      - generic [ref=e132]:
+        - heading "All Companies" [level=3] [ref=e133]
+        - table [ref=e135]:
+          - rowgroup [ref=e136]:
+            - row "Name Slug Display name Users Actions" [ref=e137]:
+              - columnheader "Name" [ref=e138]
+              - columnheader "Slug" [ref=e139]
+              - columnheader "Display name" [ref=e140]
+              - columnheader "Users" [ref=e141]
+              - columnheader "Actions" [ref=e142]
+          - rowgroup [ref=e143]:
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768616077301-0gk3cy Test Company 1768616077301_0gk3cy 1 Rename 🗑️ Delete" [ref=e144]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e145]:
+                - strong [ref=e146]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768616077301-0gk3cy" [ref=e147]:
+                - code [ref=e148]: testcompany-1768616077301-0gk3cy
+              - cell "Test Company 1768616077301_0gk3cy" [ref=e149]
+              - cell "1" [ref=e150]
+              - cell "Rename 🗑️ Delete" [ref=e151]:
+                - generic [ref=e152]:
+                  - button "Rename" [ref=e153] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e155] [cursor=pointer]:
+                    - generic [ref=e156]: 🗑️
+                    - generic [ref=e157]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768616358722-zlhmgi Test Company 1768616358722_zlhmgi 1 Rename 🗑️ Delete" [ref=e158]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e159]:
+                - strong [ref=e160]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768616358722-zlhmgi" [ref=e161]:
+                - code [ref=e162]: testcompany-1768616358722-zlhmgi
+              - cell "Test Company 1768616358722_zlhmgi" [ref=e163]
+              - cell "1" [ref=e164]
+              - cell "Rename 🗑️ Delete" [ref=e165]:
+                - generic [ref=e166]:
+                  - button "Rename" [ref=e167] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e169] [cursor=pointer]:
+                    - generic [ref=e170]: 🗑️
+                    - generic [ref=e171]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768617590532-ppypyg Test Company 1768617590532_ppypyg 1 Rename 🗑️ Delete" [ref=e172]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e173]:
+                - strong [ref=e174]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768617590532-ppypyg" [ref=e175]:
+                - code [ref=e176]: testcompany-1768617590532-ppypyg
+              - cell "Test Company 1768617590532_ppypyg" [ref=e177]
+              - cell "1" [ref=e178]
+              - cell "Rename 🗑️ Delete" [ref=e179]:
+                - generic [ref=e180]:
+                  - button "Rename" [ref=e181] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e183] [cursor=pointer]:
+                    - generic [ref=e184]: 🗑️
+                    - generic [ref=e185]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768617889014-ebgiex Test Company 1768617889014_ebgiex 1 Rename 🗑️ Delete" [ref=e186]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e187]:
+                - strong [ref=e188]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768617889014-ebgiex" [ref=e189]:
+                - code [ref=e190]: testcompany-1768617889014-ebgiex
+              - cell "Test Company 1768617889014_ebgiex" [ref=e191]
+              - cell "1" [ref=e192]
+              - cell "Rename 🗑️ Delete" [ref=e193]:
+                - generic [ref=e194]:
+                  - button "Rename" [ref=e195] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e197] [cursor=pointer]:
+                    - generic [ref=e198]: 🗑️
+                    - generic [ref=e199]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768621618339-k3bpcu Test Company 1768621618339_k3bpcu 1 Rename 🗑️ Delete" [ref=e200]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e201]:
+                - strong [ref=e202]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768621618339-k3bpcu" [ref=e203]:
+                - code [ref=e204]: testcompany-1768621618339-k3bpcu
+              - cell "Test Company 1768621618339_k3bpcu" [ref=e205]
+              - cell "1" [ref=e206]
+              - cell "Rename 🗑️ Delete" [ref=e207]:
+                - generic [ref=e208]:
+                  - button "Rename" [ref=e209] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e211] [cursor=pointer]:
+                    - generic [ref=e212]: 🗑️
+                    - generic [ref=e213]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768640051037-jkqde8 Test Company 1768640051037_jkqde8 1 Rename 🗑️ Delete" [ref=e214]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e215]:
+                - strong [ref=e216]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768640051037-jkqde8" [ref=e217]:
+                - code [ref=e218]: testcompany-1768640051037-jkqde8
+              - cell "Test Company 1768640051037_jkqde8" [ref=e219]
+              - cell "1" [ref=e220]
+              - cell "Rename 🗑️ Delete" [ref=e221]:
+                - generic [ref=e222]:
+                  - button "Rename" [ref=e223] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e225] [cursor=pointer]:
+                    - generic [ref=e226]: 🗑️
+                    - generic [ref=e227]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768782726686-vp4p0c Test Company 1768782726686_vp4p0c 1 Rename 🗑️ Delete" [ref=e228]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e229]:
+                - strong [ref=e230]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768782726686-vp4p0c" [ref=e231]:
+                - code [ref=e232]: testcompany-1768782726686-vp4p0c
+              - cell "Test Company 1768782726686_vp4p0c" [ref=e233]
+              - cell "1" [ref=e234]
+              - cell "Rename 🗑️ Delete" [ref=e235]:
+                - generic [ref=e236]:
+                  - button "Rename" [ref=e237] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e239] [cursor=pointer]:
+                    - generic [ref=e240]: 🗑️
+                    - generic [ref=e241]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768783312730-p907iw Test Company 1768783312730_p907iw 1 Rename 🗑️ Delete" [ref=e242]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e243]:
+                - strong [ref=e244]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768783312730-p907iw" [ref=e245]:
+                - code [ref=e246]: testcompany-1768783312730-p907iw
+              - cell "Test Company 1768783312730_p907iw" [ref=e247]
+              - cell "1" [ref=e248]
+              - cell "Rename 🗑️ Delete" [ref=e249]:
+                - generic [ref=e250]:
+                  - button "Rename" [ref=e251] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e253] [cursor=pointer]:
+                    - generic [ref=e254]: 🗑️
+                    - generic [ref=e255]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768796935310-xtnjyp Test Company 1768796935310_xtnjyp 1 Rename 🗑️ Delete" [ref=e256]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e257]:
+                - strong [ref=e258]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768796935310-xtnjyp" [ref=e259]:
+                - code [ref=e260]: testcompany-1768796935310-xtnjyp
+              - cell "Test Company 1768796935310_xtnjyp" [ref=e261]
+              - cell "1" [ref=e262]
+              - cell "Rename 🗑️ Delete" [ref=e263]:
+                - generic [ref=e264]:
+                  - button "Rename" [ref=e265] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e267] [cursor=pointer]:
+                    - generic [ref=e268]: 🗑️
+                    - generic [ref=e269]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768803613989-u2pj2q Test Company 1768803613989_u2pj2q 1 Rename 🗑️ Delete" [ref=e270]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e271]:
+                - strong [ref=e272]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768803613989-u2pj2q" [ref=e273]:
+                - code [ref=e274]: testcompany-1768803613989-u2pj2q
+              - cell "Test Company 1768803613989_u2pj2q" [ref=e275]
+              - cell "1" [ref=e276]
+              - cell "Rename 🗑️ Delete" [ref=e277]:
+                - generic [ref=e278]:
+                  - button "Rename" [ref=e279] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e281] [cursor=pointer]:
+                    - generic [ref=e282]: 🗑️
+                    - generic [ref=e283]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768838332754-01lnid Test Company 1768838332754_01lnid 1 Rename 🗑️ Delete" [ref=e284]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e285]:
+                - strong [ref=e286]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768838332754-01lnid" [ref=e287]:
+                - code [ref=e288]: testcompany-1768838332754-01lnid
+              - cell "Test Company 1768838332754_01lnid" [ref=e289]
+              - cell "1" [ref=e290]
+              - cell "Rename 🗑️ Delete" [ref=e291]:
+                - generic [ref=e292]:
+                  - button "Rename" [ref=e293] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e295] [cursor=pointer]:
+                    - generic [ref=e296]: 🗑️
+                    - generic [ref=e297]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768904951656-s27v18 Test Company 1768904951656_s27v18 1 Rename 🗑️ Delete" [ref=e298]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e299]:
+                - strong [ref=e300]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768904951656-s27v18" [ref=e301]:
+                - code [ref=e302]: testcompany-1768904951656-s27v18
+              - cell "Test Company 1768904951656_s27v18" [ref=e303]
+              - cell "1" [ref=e304]
+              - cell "Rename 🗑️ Delete" [ref=e305]:
+                - generic [ref=e306]:
+                  - button "Rename" [ref=e307] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e309] [cursor=pointer]:
+                    - generic [ref=e310]: 🗑️
+                    - generic [ref=e311]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768920871871-y69tf0 Test Company 1768920871871_y69tf0 1 Rename 🗑️ Delete" [ref=e312]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e313]:
+                - strong [ref=e314]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768920871871-y69tf0" [ref=e315]:
+                - code [ref=e316]: testcompany-1768920871871-y69tf0
+              - cell "Test Company 1768920871871_y69tf0" [ref=e317]
+              - cell "1" [ref=e318]
+              - cell "Rename 🗑️ Delete" [ref=e319]:
+                - generic [ref=e320]:
+                  - button "Rename" [ref=e321] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e323] [cursor=pointer]:
+                    - generic [ref=e324]: 🗑️
+                    - generic [ref=e325]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768945549616-pvr24a Test Company 1768945549616_pvr24a 1 Rename 🗑️ Delete" [ref=e326]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e327]:
+                - strong [ref=e328]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768945549616-pvr24a" [ref=e329]:
+                - code [ref=e330]: testcompany-1768945549616-pvr24a
+              - cell "Test Company 1768945549616_pvr24a" [ref=e331]
+              - cell "1" [ref=e332]
+              - cell "Rename 🗑️ Delete" [ref=e333]:
+                - generic [ref=e334]:
+                  - button "Rename" [ref=e335] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e337] [cursor=pointer]:
+                    - generic [ref=e338]: 🗑️
+                    - generic [ref=e339]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768947235235-yb9lic Test Company 1768947235235_yb9lic 1 Rename 🗑️ Delete" [ref=e340]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e341]:
+                - strong [ref=e342]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768947235235-yb9lic" [ref=e343]:
+                - code [ref=e344]: testcompany-1768947235235-yb9lic
+              - cell "Test Company 1768947235235_yb9lic" [ref=e345]
+              - cell "1" [ref=e346]
+              - cell "Rename 🗑️ Delete" [ref=e347]:
+                - generic [ref=e348]:
+                  - button "Rename" [ref=e349] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e351] [cursor=pointer]:
+                    - generic [ref=e352]: 🗑️
+                    - generic [ref=e353]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768975309791-0nn927 Test Company 1768975309791_0nn927 1 Rename 🗑️ Delete" [ref=e354]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e355]:
+                - strong [ref=e356]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768975309791-0nn927" [ref=e357]:
+                - code [ref=e358]: testcompany-1768975309791-0nn927
+              - cell "Test Company 1768975309791_0nn927" [ref=e359]
+              - cell "1" [ref=e360]
+              - cell "Rename 🗑️ Delete" [ref=e361]:
+                - generic [ref=e362]:
+                  - button "Rename" [ref=e363] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e365] [cursor=pointer]:
+                    - generic [ref=e366]: 🗑️
+                    - generic [ref=e367]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1768975993656-9xg2ig Test Company 1768975993656_9xg2ig 1 Rename 🗑️ Delete" [ref=e368]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e369]:
+                - strong [ref=e370]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1768975993656-9xg2ig" [ref=e371]:
+                - code [ref=e372]: testcompany-1768975993656-9xg2ig
+              - cell "Test Company 1768975993656_9xg2ig" [ref=e373]
+              - cell "1" [ref=e374]
+              - cell "Rename 🗑️ Delete" [ref=e375]:
+                - generic [ref=e376]:
+                  - button "Rename" [ref=e377] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e379] [cursor=pointer]:
+                    - generic [ref=e380]: 🗑️
+                    - generic [ref=e381]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1769017945484-r3pgqt Test Company 1769017945484_r3pgqt 1 Rename 🗑️ Delete" [ref=e382]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e383]:
+                - strong [ref=e384]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1769017945484-r3pgqt" [ref=e385]:
+                - code [ref=e386]: testcompany-1769017945484-r3pgqt
+              - cell "Test Company 1769017945484_r3pgqt" [ref=e387]
+              - cell "1" [ref=e388]
+              - cell "Rename 🗑️ Delete" [ref=e389]:
+                - generic [ref=e390]:
+                  - button "Rename" [ref=e391] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e393] [cursor=pointer]:
+                    - generic [ref=e394]: 🗑️
+                    - generic [ref=e395]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1769018073413-uxt82w Test Company 1769018073413_uxt82w 1 Rename 🗑️ Delete" [ref=e396]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e397]:
+                - strong [ref=e398]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1769018073413-uxt82w" [ref=e399]:
+                - code [ref=e400]: testcompany-1769018073413-uxt82w
+              - cell "Test Company 1769018073413_uxt82w" [ref=e401]
+              - cell "1" [ref=e402]
+              - cell "Rename 🗑️ Delete" [ref=e403]:
+                - generic [ref=e404]:
+                  - button "Rename" [ref=e405] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e407] [cursor=pointer]:
+                    - generic [ref=e408]: 🗑️
+                    - generic [ref=e409]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1769018151124-5vwp9c Test Company 1769018151124_5vwp9c 1 Rename 🗑️ Delete" [ref=e410]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e411]:
+                - strong [ref=e412]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1769018151124-5vwp9c" [ref=e413]:
+                - code [ref=e414]: testcompany-1769018151124-5vwp9c
+              - cell "Test Company 1769018151124_5vwp9c" [ref=e415]
+              - cell "1" [ref=e416]
+              - cell "Rename 🗑️ Delete" [ref=e417]:
+                - generic [ref=e418]:
+                  - button "Rename" [ref=e419] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e421] [cursor=pointer]:
+                    - generic [ref=e422]: 🗑️
+                    - generic [ref=e423]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1769018205469-go0brz Test Company 1769018205469_go0brz 1 Rename 🗑️ Delete" [ref=e424]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e425]:
+                - strong [ref=e426]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1769018205469-go0brz" [ref=e427]:
+                - code [ref=e428]: testcompany-1769018205469-go0brz
+              - cell "Test Company 1769018205469_go0brz" [ref=e429]
+              - cell "1" [ref=e430]
+              - cell "Rename 🗑️ Delete" [ref=e431]:
+                - generic [ref=e432]:
+                  - button "Rename" [ref=e433] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e435] [cursor=pointer]:
+                    - generic [ref=e436]: 🗑️
+                    - generic [ref=e437]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1769018259174-3xizw0 Test Company 1769018259174_3xizw0 1 Rename 🗑️ Delete" [ref=e438]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e439]:
+                - strong [ref=e440]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1769018259174-3xizw0" [ref=e441]:
+                - code [ref=e442]: testcompany-1769018259174-3xizw0
+              - cell "Test Company 1769018259174_3xizw0" [ref=e443]
+              - cell "1" [ref=e444]
+              - cell "Rename 🗑️ Delete" [ref=e445]:
+                - generic [ref=e446]:
+                  - button "Rename" [ref=e447] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e449] [cursor=pointer]:
+                    - generic [ref=e450]: 🗑️
+                    - generic [ref=e451]: Delete
+            - row "&#x27;; DROP TABLE Companies;-- testcompany-1769018315445-fpd55t Test Company 1769018315445_fpd55t 1 Rename 🗑️ Delete" [ref=e452]:
+              - cell "&#x27;; DROP TABLE Companies;--" [ref=e453]:
+                - strong [ref=e454]: "&#x27;; DROP TABLE Companies;--"
+              - cell "testcompany-1769018315445-fpd55t" [ref=e455]:
+                - code [ref=e456]: testcompany-1769018315445-fpd55t
+              - cell "Test Company 1769018315445_fpd55t" [ref=e457]
+              - cell "1" [ref=e458]
+              - cell "Rename 🗑️ Delete" [ref=e459]:
+                - generic [ref=e460]:
+                  - button "Rename" [ref=e461] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e463] [cursor=pointer]:
+                    - generic [ref=e464]: 🗑️
+                    - generic [ref=e465]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768616070931-q754yb Test Company 1768616070931_q754yb 1 Rename 🗑️ Delete" [ref=e466]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e467]:
+                - strong [ref=e468]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768616070931-q754yb" [ref=e469]:
+                - code [ref=e470]: testcompany-1768616070931-q754yb
+              - cell "Test Company 1768616070931_q754yb" [ref=e471]
+              - cell "1" [ref=e472]
+              - cell "Rename 🗑️ Delete" [ref=e473]:
+                - generic [ref=e474]:
+                  - button "Rename" [ref=e475] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e477] [cursor=pointer]:
+                    - generic [ref=e478]: 🗑️
+                    - generic [ref=e479]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768617586213-57jj7l Test Company 1768617586213_57jj7l 1 Rename 🗑️ Delete" [ref=e480]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e481]:
+                - strong [ref=e482]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768617586213-57jj7l" [ref=e483]:
+                - code [ref=e484]: testcompany-1768617586213-57jj7l
+              - cell "Test Company 1768617586213_57jj7l" [ref=e485]
+              - cell "1" [ref=e486]
+              - cell "Rename 🗑️ Delete" [ref=e487]:
+                - generic [ref=e488]:
+                  - button "Rename" [ref=e489] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e491] [cursor=pointer]:
+                    - generic [ref=e492]: 🗑️
+                    - generic [ref=e493]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768617882859-t3sjzd Test Company 1768617882859_t3sjzd 1 Rename 🗑️ Delete" [ref=e494]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e495]:
+                - strong [ref=e496]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768617882859-t3sjzd" [ref=e497]:
+                - code [ref=e498]: testcompany-1768617882859-t3sjzd
+              - cell "Test Company 1768617882859_t3sjzd" [ref=e499]
+              - cell "1" [ref=e500]
+              - cell "Rename 🗑️ Delete" [ref=e501]:
+                - generic [ref=e502]:
+                  - button "Rename" [ref=e503] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e505] [cursor=pointer]:
+                    - generic [ref=e506]: 🗑️
+                    - generic [ref=e507]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768621613950-lcm8pw Test Company 1768621613950_lcm8pw 1 Rename 🗑️ Delete" [ref=e508]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e509]:
+                - strong [ref=e510]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768621613950-lcm8pw" [ref=e511]:
+                - code [ref=e512]: testcompany-1768621613950-lcm8pw
+              - cell "Test Company 1768621613950_lcm8pw" [ref=e513]
+              - cell "1" [ref=e514]
+              - cell "Rename 🗑️ Delete" [ref=e515]:
+                - generic [ref=e516]:
+                  - button "Rename" [ref=e517] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e519] [cursor=pointer]:
+                    - generic [ref=e520]: 🗑️
+                    - generic [ref=e521]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768640053629-8mt0iu Test Company 1768640053629_8mt0iu 1 Rename 🗑️ Delete" [ref=e522]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e523]:
+                - strong [ref=e524]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768640053629-8mt0iu" [ref=e525]:
+                - code [ref=e526]: testcompany-1768640053629-8mt0iu
+              - cell "Test Company 1768640053629_8mt0iu" [ref=e527]
+              - cell "1" [ref=e528]
+              - cell "Rename 🗑️ Delete" [ref=e529]:
+                - generic [ref=e530]:
+                  - button "Rename" [ref=e531] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e533] [cursor=pointer]:
+                    - generic [ref=e534]: 🗑️
+                    - generic [ref=e535]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768782728151-unkigv Test Company 1768782728151_unkigv 1 Rename 🗑️ Delete" [ref=e536]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e537]:
+                - strong [ref=e538]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768782728151-unkigv" [ref=e539]:
+                - code [ref=e540]: testcompany-1768782728151-unkigv
+              - cell "Test Company 1768782728151_unkigv" [ref=e541]
+              - cell "1" [ref=e542]
+              - cell "Rename 🗑️ Delete" [ref=e543]:
+                - generic [ref=e544]:
+                  - button "Rename" [ref=e545] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e547] [cursor=pointer]:
+                    - generic [ref=e548]: 🗑️
+                    - generic [ref=e549]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768783314243-bi18y8 Test Company 1768783314243_bi18y8 1 Rename 🗑️ Delete" [ref=e550]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e551]:
+                - strong [ref=e552]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768783314243-bi18y8" [ref=e553]:
+                - code [ref=e554]: testcompany-1768783314243-bi18y8
+              - cell "Test Company 1768783314243_bi18y8" [ref=e555]
+              - cell "1" [ref=e556]
+              - cell "Rename 🗑️ Delete" [ref=e557]:
+                - generic [ref=e558]:
+                  - button "Rename" [ref=e559] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e561] [cursor=pointer]:
+                    - generic [ref=e562]: 🗑️
+                    - generic [ref=e563]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768796938010-a9pn7q Test Company 1768796938010_a9pn7q 1 Rename 🗑️ Delete" [ref=e564]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e565]:
+                - strong [ref=e566]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768796938010-a9pn7q" [ref=e567]:
+                - code [ref=e568]: testcompany-1768796938010-a9pn7q
+              - cell "Test Company 1768796938010_a9pn7q" [ref=e569]
+              - cell "1" [ref=e570]
+              - cell "Rename 🗑️ Delete" [ref=e571]:
+                - generic [ref=e572]:
+                  - button "Rename" [ref=e573] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e575] [cursor=pointer]:
+                    - generic [ref=e576]: 🗑️
+                    - generic [ref=e577]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768803557159-5961se Test Company 1768803557159_5961se 1 Rename 🗑️ Delete" [ref=e578]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e579]:
+                - strong [ref=e580]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768803557159-5961se" [ref=e581]:
+                - code [ref=e582]: testcompany-1768803557159-5961se
+              - cell "Test Company 1768803557159_5961se" [ref=e583]
+              - cell "1" [ref=e584]
+              - cell "Rename 🗑️ Delete" [ref=e585]:
+                - generic [ref=e586]:
+                  - button "Rename" [ref=e587] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e589] [cursor=pointer]:
+                    - generic [ref=e590]: 🗑️
+                    - generic [ref=e591]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768920873968-fygl6d Test Company 1768920873968_fygl6d 1 Rename 🗑️ Delete" [ref=e592]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e593]:
+                - strong [ref=e594]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768920873968-fygl6d" [ref=e595]:
+                - code [ref=e596]: testcompany-1768920873968-fygl6d
+              - cell "Test Company 1768920873968_fygl6d" [ref=e597]
+              - cell "1" [ref=e598]
+              - cell "Rename 🗑️ Delete" [ref=e599]:
+                - generic [ref=e600]:
+                  - button "Rename" [ref=e601] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e603] [cursor=pointer]:
+                    - generic [ref=e604]: 🗑️
+                    - generic [ref=e605]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768945542267-9k92tv Test Company 1768945542267_9k92tv 1 Rename 🗑️ Delete" [ref=e606]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e607]:
+                - strong [ref=e608]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768945542267-9k92tv" [ref=e609]:
+                - code [ref=e610]: testcompany-1768945542267-9k92tv
+              - cell "Test Company 1768945542267_9k92tv" [ref=e611]
+              - cell "1" [ref=e612]
+              - cell "Rename 🗑️ Delete" [ref=e613]:
+                - generic [ref=e614]:
+                  - button "Rename" [ref=e615] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e617] [cursor=pointer]:
+                    - generic [ref=e618]: 🗑️
+                    - generic [ref=e619]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768975315202-iqzz3y Test Company 1768975315202_iqzz3y 1 Rename 🗑️ Delete" [ref=e620]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e621]:
+                - strong [ref=e622]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768975315202-iqzz3y" [ref=e623]:
+                - code [ref=e624]: testcompany-1768975315202-iqzz3y
+              - cell "Test Company 1768975315202_iqzz3y" [ref=e625]
+              - cell "1" [ref=e626]
+              - cell "Rename 🗑️ Delete" [ref=e627]:
+                - generic [ref=e628]:
+                  - button "Rename" [ref=e629] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e631] [cursor=pointer]:
+                    - generic [ref=e632]: 🗑️
+                    - generic [ref=e633]: Delete
+            - row "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt; testcompany-1768975997013-ixc2mw Test Company 1768975997013_ixc2mw 1 Rename 🗑️ Delete" [ref=e634]:
+              - cell "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;" [ref=e635]:
+                - strong [ref=e636]: "&lt;img src=x onerror=alert(&quot;xss&quot;)&gt;"
+              - cell "testcompany-1768975997013-ixc2mw" [ref=e637]:
+                - code [ref=e638]: testcompany-1768975997013-ixc2mw
+              - cell "Test Company 1768975997013_ixc2mw" [ref=e639]
+              - cell "1" [ref=e640]
+              - cell "Rename 🗑️ Delete" [ref=e641]:
+                - generic [ref=e642]:
+                  - button "Rename" [ref=e643] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e645] [cursor=pointer]:
+                    - generic [ref=e646]: 🗑️
+                    - generic [ref=e647]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768616068405-5f75vs Test Company 1768616068405_5f75vs 1 Rename 🗑️ Delete" [ref=e648]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e649]:
+                - strong [ref=e650]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768616068405-5f75vs" [ref=e651]:
+                - code [ref=e652]: testcompany-1768616068405-5f75vs
+              - cell "Test Company 1768616068405_5f75vs" [ref=e653]
+              - cell "1" [ref=e654]
+              - cell "Rename 🗑️ Delete" [ref=e655]:
+                - generic [ref=e656]:
+                  - button "Rename" [ref=e657] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e659] [cursor=pointer]:
+                    - generic [ref=e660]: 🗑️
+                    - generic [ref=e661]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768617584332-fulkx3 Test Company 1768617584332_fulkx3 1 Rename 🗑️ Delete" [ref=e662]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e663]:
+                - strong [ref=e664]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768617584332-fulkx3" [ref=e665]:
+                - code [ref=e666]: testcompany-1768617584332-fulkx3
+              - cell "Test Company 1768617584332_fulkx3" [ref=e667]
+              - cell "1" [ref=e668]
+              - cell "Rename 🗑️ Delete" [ref=e669]:
+                - generic [ref=e670]:
+                  - button "Rename" [ref=e671] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e673] [cursor=pointer]:
+                    - generic [ref=e674]: 🗑️
+                    - generic [ref=e675]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768617880699-maqpa7 Test Company 1768617880699_maqpa7 1 Rename 🗑️ Delete" [ref=e676]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e677]:
+                - strong [ref=e678]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768617880699-maqpa7" [ref=e679]:
+                - code [ref=e680]: testcompany-1768617880699-maqpa7
+              - cell "Test Company 1768617880699_maqpa7" [ref=e681]
+              - cell "1" [ref=e682]
+              - cell "Rename 🗑️ Delete" [ref=e683]:
+                - generic [ref=e684]:
+                  - button "Rename" [ref=e685] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e687] [cursor=pointer]:
+                    - generic [ref=e688]: 🗑️
+                    - generic [ref=e689]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768621612046-wb44hu Test Company 1768621612046_wb44hu 1 Rename 🗑️ Delete" [ref=e690]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e691]:
+                - strong [ref=e692]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768621612046-wb44hu" [ref=e693]:
+                - code [ref=e694]: testcompany-1768621612046-wb44hu
+              - cell "Test Company 1768621612046_wb44hu" [ref=e695]
+              - cell "1" [ref=e696]
+              - cell "Rename 🗑️ Delete" [ref=e697]:
+                - generic [ref=e698]:
+                  - button "Rename" [ref=e699] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e701] [cursor=pointer]:
+                    - generic [ref=e702]: 🗑️
+                    - generic [ref=e703]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768640050761-73kcqp Test Company 1768640050761_73kcqp 1 Rename 🗑️ Delete" [ref=e704]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e705]:
+                - strong [ref=e706]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768640050761-73kcqp" [ref=e707]:
+                - code [ref=e708]: testcompany-1768640050761-73kcqp
+              - cell "Test Company 1768640050761_73kcqp" [ref=e709]
+              - cell "1" [ref=e710]
+              - cell "Rename 🗑️ Delete" [ref=e711]:
+                - generic [ref=e712]:
+                  - button "Rename" [ref=e713] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e715] [cursor=pointer]:
+                    - generic [ref=e716]: 🗑️
+                    - generic [ref=e717]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768782725812-u08fhp Test Company 1768782725812_u08fhp 1 Rename 🗑️ Delete" [ref=e718]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e719]:
+                - strong [ref=e720]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768782725812-u08fhp" [ref=e721]:
+                - code [ref=e722]: testcompany-1768782725812-u08fhp
+              - cell "Test Company 1768782725812_u08fhp" [ref=e723]
+              - cell "1" [ref=e724]
+              - cell "Rename 🗑️ Delete" [ref=e725]:
+                - generic [ref=e726]:
+                  - button "Rename" [ref=e727] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e729] [cursor=pointer]:
+                    - generic [ref=e730]: 🗑️
+                    - generic [ref=e731]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768783311980-xs2v1f Test Company 1768783311980_xs2v1f 1 Rename 🗑️ Delete" [ref=e732]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e733]:
+                - strong [ref=e734]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768783311980-xs2v1f" [ref=e735]:
+                - code [ref=e736]: testcompany-1768783311980-xs2v1f
+              - cell "Test Company 1768783311980_xs2v1f" [ref=e737]
+              - cell "1" [ref=e738]
+              - cell "Rename 🗑️ Delete" [ref=e739]:
+                - generic [ref=e740]:
+                  - button "Rename" [ref=e741] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e743] [cursor=pointer]:
+                    - generic [ref=e744]: 🗑️
+                    - generic [ref=e745]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768796935293-x4rxur Test Company 1768796935293_x4rxur 1 Rename 🗑️ Delete" [ref=e746]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e747]:
+                - strong [ref=e748]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768796935293-x4rxur" [ref=e749]:
+                - code [ref=e750]: testcompany-1768796935293-x4rxur
+              - cell "Test Company 1768796935293_x4rxur" [ref=e751]
+              - cell "1" [ref=e752]
+              - cell "Rename 🗑️ Delete" [ref=e753]:
+                - generic [ref=e754]:
+                  - button "Rename" [ref=e755] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e757] [cursor=pointer]:
+                    - generic [ref=e758]: 🗑️
+                    - generic [ref=e759]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768803548163-3lsljy Test Company 1768803548163_3lsljy 1 Rename 🗑️ Delete" [ref=e760]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e761]:
+                - strong [ref=e762]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768803548163-3lsljy" [ref=e763]:
+                - code [ref=e764]: testcompany-1768803548163-3lsljy
+              - cell "Test Company 1768803548163_3lsljy" [ref=e765]
+              - cell "1" [ref=e766]
+              - cell "Rename 🗑️ Delete" [ref=e767]:
+                - generic [ref=e768]:
+                  - button "Rename" [ref=e769] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e771] [cursor=pointer]:
+                    - generic [ref=e772]: 🗑️
+                    - generic [ref=e773]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768838332710-kngf9j Test Company 1768838332710_kngf9j 1 Rename 🗑️ Delete" [ref=e774]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e775]:
+                - strong [ref=e776]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768838332710-kngf9j" [ref=e777]:
+                - code [ref=e778]: testcompany-1768838332710-kngf9j
+              - cell "Test Company 1768838332710_kngf9j" [ref=e779]
+              - cell "1" [ref=e780]
+              - cell "Rename 🗑️ Delete" [ref=e781]:
+                - generic [ref=e782]:
+                  - button "Rename" [ref=e783] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e785] [cursor=pointer]:
+                    - generic [ref=e786]: 🗑️
+                    - generic [ref=e787]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768838771452-ux3xzl Test Company 1768838771452_ux3xzl 1 Rename 🗑️ Delete" [ref=e788]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e789]:
+                - strong [ref=e790]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768838771452-ux3xzl" [ref=e791]:
+                - code [ref=e792]: testcompany-1768838771452-ux3xzl
+              - cell "Test Company 1768838771452_ux3xzl" [ref=e793]
+              - cell "1" [ref=e794]
+              - cell "Rename 🗑️ Delete" [ref=e795]:
+                - generic [ref=e796]:
+                  - button "Rename" [ref=e797] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e799] [cursor=pointer]:
+                    - generic [ref=e800]: 🗑️
+                    - generic [ref=e801]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768904953596-srphj1 Test Company 1768904953596_srphj1 1 Rename 🗑️ Delete" [ref=e802]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e803]:
+                - strong [ref=e804]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768904953596-srphj1" [ref=e805]:
+                - code [ref=e806]: testcompany-1768904953596-srphj1
+              - cell "Test Company 1768904953596_srphj1" [ref=e807]
+              - cell "1" [ref=e808]
+              - cell "Rename 🗑️ Delete" [ref=e809]:
+                - generic [ref=e810]:
+                  - button "Rename" [ref=e811] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e813] [cursor=pointer]:
+                    - generic [ref=e814]: 🗑️
+                    - generic [ref=e815]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768920870905-v792at Test Company 1768920870905_v792at 1 Rename 🗑️ Delete" [ref=e816]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e817]:
+                - strong [ref=e818]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768920870905-v792at" [ref=e819]:
+                - code [ref=e820]: testcompany-1768920870905-v792at
+              - cell "Test Company 1768920870905_v792at" [ref=e821]
+              - cell "1" [ref=e822]
+              - cell "Rename 🗑️ Delete" [ref=e823]:
+                - generic [ref=e824]:
+                  - button "Rename" [ref=e825] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e827] [cursor=pointer]:
+                    - generic [ref=e828]: 🗑️
+                    - generic [ref=e829]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768945539200-p9vmed Test Company 1768945539200_p9vmed 1 Rename 🗑️ Delete" [ref=e830]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e831]:
+                - strong [ref=e832]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768945539200-p9vmed" [ref=e833]:
+                - code [ref=e834]: testcompany-1768945539200-p9vmed
+              - cell "Test Company 1768945539200_p9vmed" [ref=e835]
+              - cell "1" [ref=e836]
+              - cell "Rename 🗑️ Delete" [ref=e837]:
+                - generic [ref=e838]:
+                  - button "Rename" [ref=e839] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e841] [cursor=pointer]:
+                    - generic [ref=e842]: 🗑️
+                    - generic [ref=e843]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768947298621-n7663b Test Company 1768947298621_n7663b 1 Rename 🗑️ Delete" [ref=e844]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e845]:
+                - strong [ref=e846]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768947298621-n7663b" [ref=e847]:
+                - code [ref=e848]: testcompany-1768947298621-n7663b
+              - cell "Test Company 1768947298621_n7663b" [ref=e849]
+              - cell "1" [ref=e850]
+              - cell "Rename 🗑️ Delete" [ref=e851]:
+                - generic [ref=e852]:
+                  - button "Rename" [ref=e853] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e855] [cursor=pointer]:
+                    - generic [ref=e856]: 🗑️
+                    - generic [ref=e857]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768975310775-nr2hrx Test Company 1768975310775_nr2hrx 1 Rename 🗑️ Delete" [ref=e858]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e859]:
+                - strong [ref=e860]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768975310775-nr2hrx" [ref=e861]:
+                - code [ref=e862]: testcompany-1768975310775-nr2hrx
+              - cell "Test Company 1768975310775_nr2hrx" [ref=e863]
+              - cell "1" [ref=e864]
+              - cell "Rename 🗑️ Delete" [ref=e865]:
+                - generic [ref=e866]:
+                  - button "Rename" [ref=e867] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e869] [cursor=pointer]:
+                    - generic [ref=e870]: 🗑️
+                    - generic [ref=e871]: Delete
+            - row "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; testcompany-1768975993051-sfgkxz Test Company 1768975993051_sfgkxz 1 Rename 🗑️ Delete" [ref=e872]:
+              - cell "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;" [ref=e873]:
+                - strong [ref=e874]: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+              - cell "testcompany-1768975993051-sfgkxz" [ref=e875]:
+                - code [ref=e876]: testcompany-1768975993051-sfgkxz
+              - cell "Test Company 1768975993051_sfgkxz" [ref=e877]
+              - cell "1" [ref=e878]
+              - cell "Rename 🗑️ Delete" [ref=e879]:
+                - generic [ref=e880]:
+                  - button "Rename" [ref=e881] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e883] [cursor=pointer]:
+                    - generic [ref=e884]: 🗑️
+                    - generic [ref=e885]: Delete
+            - row "Demo Co - 52 Rename 🗑️ Delete" [ref=e886]:
+              - cell "Demo Co" [ref=e887]:
+                - strong [ref=e888]: Demo Co
+              - cell [ref=e889]:
+                - code [ref=e890]
+              - cell "-" [ref=e891]
+              - cell "52" [ref=e892]
+              - cell "Rename 🗑️ Delete" [ref=e893]:
+                - generic [ref=e894]:
+                  - button "Rename" [ref=e895] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e897] [cursor=pointer]:
+                    - generic [ref=e898]: 🗑️
+                    - generic [ref=e899]: Delete
+            - row "MinimalCo_1768616032273 minimal-1768616032273 MinimalCo_1768616032273 1 Rename 🗑️ Delete" [ref=e900]:
+              - cell "MinimalCo_1768616032273" [ref=e901]:
+                - strong [ref=e902]: MinimalCo_1768616032273
+              - cell "minimal-1768616032273" [ref=e903]:
+                - code [ref=e904]: minimal-1768616032273
+              - cell "MinimalCo_1768616032273" [ref=e905]
+              - cell "1" [ref=e906]
+              - cell "Rename 🗑️ Delete" [ref=e907]:
+                - generic [ref=e908]:
+                  - button "Rename" [ref=e909] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e911] [cursor=pointer]:
+                    - generic [ref=e912]: 🗑️
+                    - generic [ref=e913]: Delete
+            - row "MinimalCo_1768617541562 minimal-1768617541562 MinimalCo_1768617541562 1 Rename 🗑️ Delete" [ref=e914]:
+              - cell "MinimalCo_1768617541562" [ref=e915]:
+                - strong [ref=e916]: MinimalCo_1768617541562
+              - cell "minimal-1768617541562" [ref=e917]:
+                - code [ref=e918]: minimal-1768617541562
+              - cell "MinimalCo_1768617541562" [ref=e919]
+              - cell "1" [ref=e920]
+              - cell "Rename 🗑️ Delete" [ref=e921]:
+                - generic [ref=e922]:
+                  - button "Rename" [ref=e923] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e925] [cursor=pointer]:
+                    - generic [ref=e926]: 🗑️
+                    - generic [ref=e927]: Delete
+            - row "MinimalCo_1768617824049 minimal-1768617824049 MinimalCo_1768617824049 1 Rename 🗑️ Delete" [ref=e928]:
+              - cell "MinimalCo_1768617824049" [ref=e929]:
+                - strong [ref=e930]: MinimalCo_1768617824049
+              - cell "minimal-1768617824049" [ref=e931]:
+                - code [ref=e932]: minimal-1768617824049
+              - cell "MinimalCo_1768617824049" [ref=e933]
+              - cell "1" [ref=e934]
+              - cell "Rename 🗑️ Delete" [ref=e935]:
+                - generic [ref=e936]:
+                  - button "Rename" [ref=e937] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e939] [cursor=pointer]:
+                    - generic [ref=e940]: 🗑️
+                    - generic [ref=e941]: Delete
+            - row "MinimalCo_1768621557273 minimal-1768621557273 MinimalCo_1768621557273 1 Rename 🗑️ Delete" [ref=e942]:
+              - cell "MinimalCo_1768621557273" [ref=e943]:
+                - strong [ref=e944]: MinimalCo_1768621557273
+              - cell "minimal-1768621557273" [ref=e945]:
+                - code [ref=e946]: minimal-1768621557273
+              - cell "MinimalCo_1768621557273" [ref=e947]
+              - cell "1" [ref=e948]
+              - cell "Rename 🗑️ Delete" [ref=e949]:
+                - generic [ref=e950]:
+                  - button "Rename" [ref=e951] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e953] [cursor=pointer]:
+                    - generic [ref=e954]: 🗑️
+                    - generic [ref=e955]: Delete
+            - row "MinimalCo_1768640050173 minimal-1768640050173 MinimalCo_1768640050173 1 Rename 🗑️ Delete" [ref=e956]:
+              - cell "MinimalCo_1768640050173" [ref=e957]:
+                - strong [ref=e958]: MinimalCo_1768640050173
+              - cell "minimal-1768640050173" [ref=e959]:
+                - code [ref=e960]: minimal-1768640050173
+              - cell "MinimalCo_1768640050173" [ref=e961]
+              - cell "1" [ref=e962]
+              - cell "Rename 🗑️ Delete" [ref=e963]:
+                - generic [ref=e964]:
+                  - button "Rename" [ref=e965] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e967] [cursor=pointer]:
+                    - generic [ref=e968]: 🗑️
+                    - generic [ref=e969]: Delete
+            - row "MinimalCo_1768782724003 minimal-1768782724003 MinimalCo_1768782724003 1 Rename 🗑️ Delete" [ref=e970]:
+              - cell "MinimalCo_1768782724003" [ref=e971]:
+                - strong [ref=e972]: MinimalCo_1768782724003
+              - cell "minimal-1768782724003" [ref=e973]:
+                - code [ref=e974]: minimal-1768782724003
+              - cell "MinimalCo_1768782724003" [ref=e975]
+              - cell "1" [ref=e976]
+              - cell "Rename 🗑️ Delete" [ref=e977]:
+                - generic [ref=e978]:
+                  - button "Rename" [ref=e979] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e981] [cursor=pointer]:
+                    - generic [ref=e982]: 🗑️
+                    - generic [ref=e983]: Delete
+            - row "MinimalCo_1768783311757 minimal-1768783311757 MinimalCo_1768783311757 1 Rename 🗑️ Delete" [ref=e984]:
+              - cell "MinimalCo_1768783311757" [ref=e985]:
+                - strong [ref=e986]: MinimalCo_1768783311757
+              - cell "minimal-1768783311757" [ref=e987]:
+                - code [ref=e988]: minimal-1768783311757
+              - cell "MinimalCo_1768783311757" [ref=e989]
+              - cell "1" [ref=e990]
+              - cell "Rename 🗑️ Delete" [ref=e991]:
+                - generic [ref=e992]:
+                  - button "Rename" [ref=e993] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e995] [cursor=pointer]:
+                    - generic [ref=e996]: 🗑️
+                    - generic [ref=e997]: Delete
+            - row "MinimalCo_1768796931270 minimal-1768796931270 MinimalCo_1768796931270 1 Rename 🗑️ Delete" [ref=e998]:
+              - cell "MinimalCo_1768796931270" [ref=e999]:
+                - strong [ref=e1000]: MinimalCo_1768796931270
+              - cell "minimal-1768796931270" [ref=e1001]:
+                - code [ref=e1002]: minimal-1768796931270
+              - cell "MinimalCo_1768796931270" [ref=e1003]
+              - cell "1" [ref=e1004]
+              - cell "Rename 🗑️ Delete" [ref=e1005]:
+                - generic [ref=e1006]:
+                  - button "Rename" [ref=e1007] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1009] [cursor=pointer]:
+                    - generic [ref=e1010]: 🗑️
+                    - generic [ref=e1011]: Delete
+            - row "MinimalCo_1768804061817 minimal-1768804061817 MinimalCo_1768804061817 1 Rename 🗑️ Delete" [ref=e1012]:
+              - cell "MinimalCo_1768804061817" [ref=e1013]:
+                - strong [ref=e1014]: MinimalCo_1768804061817
+              - cell "minimal-1768804061817" [ref=e1015]:
+                - code [ref=e1016]: minimal-1768804061817
+              - cell "MinimalCo_1768804061817" [ref=e1017]
+              - cell "1" [ref=e1018]
+              - cell "Rename 🗑️ Delete" [ref=e1019]:
+                - generic [ref=e1020]:
+                  - button "Rename" [ref=e1021] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1023] [cursor=pointer]:
+                    - generic [ref=e1024]: 🗑️
+                    - generic [ref=e1025]: Delete
+            - row "MinimalCo_1768838229111 minimal-1768838229111 MinimalCo_1768838229111 1 Rename 🗑️ Delete" [ref=e1026]:
+              - cell "MinimalCo_1768838229111" [ref=e1027]:
+                - strong [ref=e1028]: MinimalCo_1768838229111
+              - cell "minimal-1768838229111" [ref=e1029]:
+                - code [ref=e1030]: minimal-1768838229111
+              - cell "MinimalCo_1768838229111" [ref=e1031]
+              - cell "1" [ref=e1032]
+              - cell "Rename 🗑️ Delete" [ref=e1033]:
+                - generic [ref=e1034]:
+                  - button "Rename" [ref=e1035] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1037] [cursor=pointer]:
+                    - generic [ref=e1038]: 🗑️
+                    - generic [ref=e1039]: Delete
+            - row "MinimalCo_1768840004853 minimal-1768840004853 MinimalCo_1768840004853 1 Rename 🗑️ Delete" [ref=e1040]:
+              - cell "MinimalCo_1768840004853" [ref=e1041]:
+                - strong [ref=e1042]: MinimalCo_1768840004853
+              - cell "minimal-1768840004853" [ref=e1043]:
+                - code [ref=e1044]: minimal-1768840004853
+              - cell "MinimalCo_1768840004853" [ref=e1045]
+              - cell "1" [ref=e1046]
+              - cell "Rename 🗑️ Delete" [ref=e1047]:
+                - generic [ref=e1048]:
+                  - button "Rename" [ref=e1049] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1051] [cursor=pointer]:
+                    - generic [ref=e1052]: 🗑️
+                    - generic [ref=e1053]: Delete
+            - row "MinimalCo_1768904903103 minimal-1768904903103 MinimalCo_1768904903103 1 Rename 🗑️ Delete" [ref=e1054]:
+              - cell "MinimalCo_1768904903103" [ref=e1055]:
+                - strong [ref=e1056]: MinimalCo_1768904903103
+              - cell "minimal-1768904903103" [ref=e1057]:
+                - code [ref=e1058]: minimal-1768904903103
+              - cell "MinimalCo_1768904903103" [ref=e1059]
+              - cell "1" [ref=e1060]
+              - cell "Rename 🗑️ Delete" [ref=e1061]:
+                - generic [ref=e1062]:
+                  - button "Rename" [ref=e1063] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1065] [cursor=pointer]:
+                    - generic [ref=e1066]: 🗑️
+                    - generic [ref=e1067]: Delete
+            - row "MinimalCo_1768920868813 minimal-1768920868813 MinimalCo_1768920868813 1 Rename 🗑️ Delete" [ref=e1068]:
+              - cell "MinimalCo_1768920868813" [ref=e1069]:
+                - strong [ref=e1070]: MinimalCo_1768920868813
+              - cell "minimal-1768920868813" [ref=e1071]:
+                - code [ref=e1072]: minimal-1768920868813
+              - cell "MinimalCo_1768920868813" [ref=e1073]
+              - cell "1" [ref=e1074]
+              - cell "Rename 🗑️ Delete" [ref=e1075]:
+                - generic [ref=e1076]:
+                  - button "Rename" [ref=e1077] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1079] [cursor=pointer]:
+                    - generic [ref=e1080]: 🗑️
+                    - generic [ref=e1081]: Delete
+            - row "MinimalCo_1768945526943 minimal-1768945526943 MinimalCo_1768945526943 1 Rename 🗑️ Delete" [ref=e1082]:
+              - cell "MinimalCo_1768945526943" [ref=e1083]:
+                - strong [ref=e1084]: MinimalCo_1768945526943
+              - cell "minimal-1768945526943" [ref=e1085]:
+                - code [ref=e1086]: minimal-1768945526943
+              - cell "MinimalCo_1768945526943" [ref=e1087]
+              - cell "1" [ref=e1088]
+              - cell "Rename 🗑️ Delete" [ref=e1089]:
+                - generic [ref=e1090]:
+                  - button "Rename" [ref=e1091] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1093] [cursor=pointer]:
+                    - generic [ref=e1094]: 🗑️
+                    - generic [ref=e1095]: Delete
+            - row "MinimalCo_1768947152064 minimal-1768947152064 MinimalCo_1768947152064 1 Rename 🗑️ Delete" [ref=e1096]:
+              - cell "MinimalCo_1768947152064" [ref=e1097]:
+                - strong [ref=e1098]: MinimalCo_1768947152064
+              - cell "minimal-1768947152064" [ref=e1099]:
+                - code [ref=e1100]: minimal-1768947152064
+              - cell "MinimalCo_1768947152064" [ref=e1101]
+              - cell "1" [ref=e1102]
+              - cell "Rename 🗑️ Delete" [ref=e1103]:
+                - generic [ref=e1104]:
+                  - button "Rename" [ref=e1105] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1107] [cursor=pointer]:
+                    - generic [ref=e1108]: 🗑️
+                    - generic [ref=e1109]: Delete
+            - row "MinimalCo_1768975306054 minimal-1768975306054 MinimalCo_1768975306054 1 Rename 🗑️ Delete" [ref=e1110]:
+              - cell "MinimalCo_1768975306054" [ref=e1111]:
+                - strong [ref=e1112]: MinimalCo_1768975306054
+              - cell "minimal-1768975306054" [ref=e1113]:
+                - code [ref=e1114]: minimal-1768975306054
+              - cell "MinimalCo_1768975306054" [ref=e1115]
+              - cell "1" [ref=e1116]
+              - cell "Rename 🗑️ Delete" [ref=e1117]:
+                - generic [ref=e1118]:
+                  - button "Rename" [ref=e1119] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1121] [cursor=pointer]:
+                    - generic [ref=e1122]: 🗑️
+                    - generic [ref=e1123]: Delete
+            - row "MinimalCo_1768975986938 minimal-1768975986938 MinimalCo_1768975986938 1 Rename 🗑️ Delete" [ref=e1124]:
+              - cell "MinimalCo_1768975986938" [ref=e1125]:
+                - strong [ref=e1126]: MinimalCo_1768975986938
+              - cell "minimal-1768975986938" [ref=e1127]:
+                - code [ref=e1128]: minimal-1768975986938
+              - cell "MinimalCo_1768975986938" [ref=e1129]
+              - cell "1" [ref=e1130]
+              - cell "Rename 🗑️ Delete" [ref=e1131]:
+                - generic [ref=e1132]:
+                  - button "Rename" [ref=e1133] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1135] [cursor=pointer]:
+                    - generic [ref=e1136]: 🗑️
+                    - generic [ref=e1137]: Delete
+            - row "MinimalCo_1769017942762 minimal-1769017942762 MinimalCo_1769017942762 1 Rename 🗑️ Delete" [ref=e1138]:
+              - cell "MinimalCo_1769017942762" [ref=e1139]:
+                - strong [ref=e1140]: MinimalCo_1769017942762
+              - cell "minimal-1769017942762" [ref=e1141]:
+                - code [ref=e1142]: minimal-1769017942762
+              - cell "MinimalCo_1769017942762" [ref=e1143]
+              - cell "1" [ref=e1144]
+              - cell "Rename 🗑️ Delete" [ref=e1145]:
+                - generic [ref=e1146]:
+                  - button "Rename" [ref=e1147] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1149] [cursor=pointer]:
+                    - generic [ref=e1150]: 🗑️
+                    - generic [ref=e1151]: Delete
+            - row "MinimalCo_1769018070754 minimal-1769018070754 MinimalCo_1769018070754 1 Rename 🗑️ Delete" [ref=e1152]:
+              - cell "MinimalCo_1769018070754" [ref=e1153]:
+                - strong [ref=e1154]: MinimalCo_1769018070754
+              - cell "minimal-1769018070754" [ref=e1155]:
+                - code [ref=e1156]: minimal-1769018070754
+              - cell "MinimalCo_1769018070754" [ref=e1157]
+              - cell "1" [ref=e1158]
+              - cell "Rename 🗑️ Delete" [ref=e1159]:
+                - generic [ref=e1160]:
+                  - button "Rename" [ref=e1161] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1163] [cursor=pointer]:
+                    - generic [ref=e1164]: 🗑️
+                    - generic [ref=e1165]: Delete
+            - row "MinimalCo_1769018147318 minimal-1769018147318 MinimalCo_1769018147318 1 Rename 🗑️ Delete" [ref=e1166]:
+              - cell "MinimalCo_1769018147318" [ref=e1167]:
+                - strong [ref=e1168]: MinimalCo_1769018147318
+              - cell "minimal-1769018147318" [ref=e1169]:
+                - code [ref=e1170]: minimal-1769018147318
+              - cell "MinimalCo_1769018147318" [ref=e1171]
+              - cell "1" [ref=e1172]
+              - cell "Rename 🗑️ Delete" [ref=e1173]:
+                - generic [ref=e1174]:
+                  - button "Rename" [ref=e1175] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1177] [cursor=pointer]:
+                    - generic [ref=e1178]: 🗑️
+                    - generic [ref=e1179]: Delete
+            - row "MinimalCo_1769018202964 minimal-1769018202964 MinimalCo_1769018202964 1 Rename 🗑️ Delete" [ref=e1180]:
+              - cell "MinimalCo_1769018202964" [ref=e1181]:
+                - strong [ref=e1182]: MinimalCo_1769018202964
+              - cell "minimal-1769018202964" [ref=e1183]:
+                - code [ref=e1184]: minimal-1769018202964
+              - cell "MinimalCo_1769018202964" [ref=e1185]
+              - cell "1" [ref=e1186]
+              - cell "Rename 🗑️ Delete" [ref=e1187]:
+                - generic [ref=e1188]:
+                  - button "Rename" [ref=e1189] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1191] [cursor=pointer]:
+                    - generic [ref=e1192]: 🗑️
+                    - generic [ref=e1193]: Delete
+            - row "MinimalCo_1769018256223 minimal-1769018256223 MinimalCo_1769018256223 1 Rename 🗑️ Delete" [ref=e1194]:
+              - cell "MinimalCo_1769018256223" [ref=e1195]:
+                - strong [ref=e1196]: MinimalCo_1769018256223
+              - cell "minimal-1769018256223" [ref=e1197]:
+                - code [ref=e1198]: minimal-1769018256223
+              - cell "MinimalCo_1769018256223" [ref=e1199]
+              - cell "1" [ref=e1200]
+              - cell "Rename 🗑️ Delete" [ref=e1201]:
+                - generic [ref=e1202]:
+                  - button "Rename" [ref=e1203] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1205] [cursor=pointer]:
+                    - generic [ref=e1206]: 🗑️
+                    - generic [ref=e1207]: Delete
+            - row "MinimalCo_1769018310550 minimal-1769018310550 MinimalCo_1769018310550 1 Rename 🗑️ Delete" [ref=e1208]:
+              - cell "MinimalCo_1769018310550" [ref=e1209]:
+                - strong [ref=e1210]: MinimalCo_1769018310550
+              - cell "minimal-1769018310550" [ref=e1211]:
+                - code [ref=e1212]: minimal-1769018310550
+              - cell "MinimalCo_1769018310550" [ref=e1213]
+              - cell "1" [ref=e1214]
+              - cell "Rename 🗑️ Delete" [ref=e1215]:
+                - generic [ref=e1216]:
+                  - button "Rename" [ref=e1217] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1219] [cursor=pointer]:
+                    - generic [ref=e1220]: 🗑️
+                    - generic [ref=e1221]: Delete
+            - row "Renamed_1768616055772 testcompany-1768616054791-d4r3qy Test Company 1768616054791_d4r3qy 1 Rename 🗑️ Delete" [ref=e1222]:
+              - cell "Renamed_1768616055772" [ref=e1223]:
+                - strong [ref=e1224]: Renamed_1768616055772
+              - cell "testcompany-1768616054791-d4r3qy" [ref=e1225]:
+                - code [ref=e1226]: testcompany-1768616054791-d4r3qy
+              - cell "Test Company 1768616054791_d4r3qy" [ref=e1227]
+              - cell "1" [ref=e1228]
+              - cell "Rename 🗑️ Delete" [ref=e1229]:
+                - generic [ref=e1230]:
+                  - button "Rename" [ref=e1231] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1233] [cursor=pointer]:
+                    - generic [ref=e1234]: 🗑️
+                    - generic [ref=e1235]: Delete
+            - row "Renamed_1768616347637 testcompany-1768616343495-7hl94x Test Company 1768616343495_7hl94x 1 Rename 🗑️ Delete" [ref=e1236]:
+              - cell "Renamed_1768616347637" [ref=e1237]:
+                - strong [ref=e1238]: Renamed_1768616347637
+              - cell "testcompany-1768616343495-7hl94x" [ref=e1239]:
+                - code [ref=e1240]: testcompany-1768616343495-7hl94x
+              - cell "Test Company 1768616343495_7hl94x" [ref=e1241]
+              - cell "1" [ref=e1242]
+              - cell "Rename 🗑️ Delete" [ref=e1243]:
+                - generic [ref=e1244]:
+                  - button "Rename" [ref=e1245] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1247] [cursor=pointer]:
+                    - generic [ref=e1248]: 🗑️
+                    - generic [ref=e1249]: Delete
+            - row "Renamed_1768617565897 testcompany-1768617565054-jjs1jn Test Company 1768617565054_jjs1jn 1 Rename 🗑️ Delete" [ref=e1250]:
+              - cell "Renamed_1768617565897" [ref=e1251]:
+                - strong [ref=e1252]: Renamed_1768617565897
+              - cell "testcompany-1768617565054-jjs1jn" [ref=e1253]:
+                - code [ref=e1254]: testcompany-1768617565054-jjs1jn
+              - cell "Test Company 1768617565054_jjs1jn" [ref=e1255]
+              - cell "1" [ref=e1256]
+              - cell "Rename 🗑️ Delete" [ref=e1257]:
+                - generic [ref=e1258]:
+                  - button "Rename" [ref=e1259] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1261] [cursor=pointer]:
+                    - generic [ref=e1262]: 🗑️
+                    - generic [ref=e1263]: Delete
+            - row "Renamed_1768617858004 testcompany-1768617856982-6ki8w8 Test Company 1768617856982_6ki8w8 1 Rename 🗑️ Delete" [ref=e1264]:
+              - cell "Renamed_1768617858004" [ref=e1265]:
+                - strong [ref=e1266]: Renamed_1768617858004
+              - cell "testcompany-1768617856982-6ki8w8" [ref=e1267]:
+                - code [ref=e1268]: testcompany-1768617856982-6ki8w8
+              - cell "Test Company 1768617856982_6ki8w8" [ref=e1269]
+              - cell "1" [ref=e1270]
+              - cell "Rename 🗑️ Delete" [ref=e1271]:
+                - generic [ref=e1272]:
+                  - button "Rename" [ref=e1273] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1275] [cursor=pointer]:
+                    - generic [ref=e1276]: 🗑️
+                    - generic [ref=e1277]: Delete
+            - row "Renamed_1768621588854 testcompany-1768621587960-5pmllu Test Company 1768621587960_5pmllu 1 Rename 🗑️ Delete" [ref=e1278]:
+              - cell "Renamed_1768621588854" [ref=e1279]:
+                - strong [ref=e1280]: Renamed_1768621588854
+              - cell "testcompany-1768621587960-5pmllu" [ref=e1281]:
+                - code [ref=e1282]: testcompany-1768621587960-5pmllu
+              - cell "Test Company 1768621587960_5pmllu" [ref=e1283]
+              - cell "1" [ref=e1284]
+              - cell "Rename 🗑️ Delete" [ref=e1285]:
+                - generic [ref=e1286]:
+                  - button "Rename" [ref=e1287] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1289] [cursor=pointer]:
+                    - generic [ref=e1290]: 🗑️
+                    - generic [ref=e1291]: Delete
+            - row "Renamed_1768640050770 testcompany-1768640049086-kh0jzw Test Company 1768640049086_kh0jzw 1 Rename 🗑️ Delete" [ref=e1292]:
+              - cell "Renamed_1768640050770" [ref=e1293]:
+                - strong [ref=e1294]: Renamed_1768640050770
+              - cell "testcompany-1768640049086-kh0jzw" [ref=e1295]:
+                - code [ref=e1296]: testcompany-1768640049086-kh0jzw
+              - cell "Test Company 1768640049086_kh0jzw" [ref=e1297]
+              - cell "1" [ref=e1298]
+              - cell "Rename 🗑️ Delete" [ref=e1299]:
+                - generic [ref=e1300]:
+                  - button "Rename" [ref=e1301] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1303] [cursor=pointer]:
+                    - generic [ref=e1304]: 🗑️
+                    - generic [ref=e1305]: Delete
+            - row "Renamed_1768782726280 testcompany-1768782725085-uzwxsz Test Company 1768782725085_uzwxsz 1 Rename 🗑️ Delete" [ref=e1306]:
+              - cell "Renamed_1768782726280" [ref=e1307]:
+                - strong [ref=e1308]: Renamed_1768782726280
+              - cell "testcompany-1768782725085-uzwxsz" [ref=e1309]:
+                - code [ref=e1310]: testcompany-1768782725085-uzwxsz
+              - cell "Test Company 1768782725085_uzwxsz" [ref=e1311]
+              - cell "1" [ref=e1312]
+              - cell "Rename 🗑️ Delete" [ref=e1313]:
+                - generic [ref=e1314]:
+                  - button "Rename" [ref=e1315] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1317] [cursor=pointer]:
+                    - generic [ref=e1318]: 🗑️
+                    - generic [ref=e1319]: Delete
+            - row "Renamed_1768783305947 testcompany-1768783304442-1b7co5 Test Company 1768783304442_1b7co5 1 Rename 🗑️ Delete" [ref=e1320]:
+              - cell "Renamed_1768783305947" [ref=e1321]:
+                - strong [ref=e1322]: Renamed_1768783305947
+              - cell "testcompany-1768783304442-1b7co5" [ref=e1323]:
+                - code [ref=e1324]: testcompany-1768783304442-1b7co5
+              - cell "Test Company 1768783304442_1b7co5" [ref=e1325]
+              - cell "1" [ref=e1326]
+              - cell "Rename 🗑️ Delete" [ref=e1327]:
+                - generic [ref=e1328]:
+                  - button "Rename" [ref=e1329] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1331] [cursor=pointer]:
+                    - generic [ref=e1332]: 🗑️
+                    - generic [ref=e1333]: Delete
+            - row "Renamed_1768796934923 testcompany-1768796933610-x2qv43 Test Company 1768796933610_x2qv43 1 Rename 🗑️ Delete" [ref=e1334]:
+              - cell "Renamed_1768796934923" [ref=e1335]:
+                - strong [ref=e1336]: Renamed_1768796934923
+              - cell "testcompany-1768796933610-x2qv43" [ref=e1337]:
+                - code [ref=e1338]: testcompany-1768796933610-x2qv43
+              - cell "Test Company 1768796933610_x2qv43" [ref=e1339]
+              - cell "1" [ref=e1340]
+              - cell "Rename 🗑️ Delete" [ref=e1341]:
+                - generic [ref=e1342]:
+                  - button "Rename" [ref=e1343] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1345] [cursor=pointer]:
+                    - generic [ref=e1346]: 🗑️
+                    - generic [ref=e1347]: Delete
+            - row "Renamed_1768838311311 testcompany-1768838300869-v9e8go Test Company 1768838300869_v9e8go 1 Rename 🗑️ Delete" [ref=e1348]:
+              - cell "Renamed_1768838311311" [ref=e1349]:
+                - strong [ref=e1350]: Renamed_1768838311311
+              - cell "testcompany-1768838300869-v9e8go" [ref=e1351]:
+                - code [ref=e1352]: testcompany-1768838300869-v9e8go
+              - cell "Test Company 1768838300869_v9e8go" [ref=e1353]
+              - cell "1" [ref=e1354]
+              - cell "Rename 🗑️ Delete" [ref=e1355]:
+                - generic [ref=e1356]:
+                  - button "Rename" [ref=e1357] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1359] [cursor=pointer]:
+                    - generic [ref=e1360]: 🗑️
+                    - generic [ref=e1361]: Delete
+            - row "Renamed_1768838707416 testcompany-1768838704034-zingt0 Test Company 1768838704034_zingt0 1 Rename 🗑️ Delete" [ref=e1362]:
+              - cell "Renamed_1768838707416" [ref=e1363]:
+                - strong [ref=e1364]: Renamed_1768838707416
+              - cell "testcompany-1768838704034-zingt0" [ref=e1365]:
+                - code [ref=e1366]: testcompany-1768838704034-zingt0
+              - cell "Test Company 1768838704034_zingt0" [ref=e1367]
+              - cell "1" [ref=e1368]
+              - cell "Rename 🗑️ Delete" [ref=e1369]:
+                - generic [ref=e1370]:
+                  - button "Rename" [ref=e1371] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1373] [cursor=pointer]:
+                    - generic [ref=e1374]: 🗑️
+                    - generic [ref=e1375]: Delete
+            - row "Renamed_1768840073751 testcompany-1768840057453-ic9eqd Test Company 1768840057453_ic9eqd 1 Rename 🗑️ Delete" [ref=e1376]:
+              - cell "Renamed_1768840073751" [ref=e1377]:
+                - strong [ref=e1378]: Renamed_1768840073751
+              - cell "testcompany-1768840057453-ic9eqd" [ref=e1379]:
+                - code [ref=e1380]: testcompany-1768840057453-ic9eqd
+              - cell "Test Company 1768840057453_ic9eqd" [ref=e1381]
+              - cell "1" [ref=e1382]
+              - cell "Rename 🗑️ Delete" [ref=e1383]:
+                - generic [ref=e1384]:
+                  - button "Rename" [ref=e1385] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1387] [cursor=pointer]:
+                    - generic [ref=e1388]: 🗑️
+                    - generic [ref=e1389]: Delete
+            - row "Renamed_1768920873093 testcompany-1768920869840-r8poe8 Test Company 1768920869840_r8poe8 1 Rename 🗑️ Delete" [ref=e1390]:
+              - cell "Renamed_1768920873093" [ref=e1391]:
+                - strong [ref=e1392]: Renamed_1768920873093
+              - cell "testcompany-1768920869840-r8poe8" [ref=e1393]:
+                - code [ref=e1394]: testcompany-1768920869840-r8poe8
+              - cell "Test Company 1768920869840_r8poe8" [ref=e1395]
+              - cell "1" [ref=e1396]
+              - cell "Rename 🗑️ Delete" [ref=e1397]:
+                - generic [ref=e1398]:
+                  - button "Rename" [ref=e1399] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1401] [cursor=pointer]:
+                    - generic [ref=e1402]: 🗑️
+                    - generic [ref=e1403]: Delete
+            - row "Renamed_1768945539699 testcompany-1768945538248-y6ocdi Test Company 1768945538248_y6ocdi 1 Rename 🗑️ Delete" [ref=e1404]:
+              - cell "Renamed_1768945539699" [ref=e1405]:
+                - strong [ref=e1406]: Renamed_1768945539699
+              - cell "testcompany-1768945538248-y6ocdi" [ref=e1407]:
+                - code [ref=e1408]: testcompany-1768945538248-y6ocdi
+              - cell "Test Company 1768945538248_y6ocdi" [ref=e1409]
+              - cell "1" [ref=e1410]
+              - cell "Rename 🗑️ Delete" [ref=e1411]:
+                - generic [ref=e1412]:
+                  - button "Rename" [ref=e1413] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1415] [cursor=pointer]:
+                    - generic [ref=e1416]: 🗑️
+                    - generic [ref=e1417]: Delete
+            - row "Renamed_1768947218133 testcompany-1768947209399-qds7gj Test Company 1768947209399_qds7gj 1 Rename 🗑️ Delete" [ref=e1418]:
+              - cell "Renamed_1768947218133" [ref=e1419]:
+                - strong [ref=e1420]: Renamed_1768947218133
+              - cell "testcompany-1768947209399-qds7gj" [ref=e1421]:
+                - code [ref=e1422]: testcompany-1768947209399-qds7gj
+              - cell "Test Company 1768947209399_qds7gj" [ref=e1423]
+              - cell "1" [ref=e1424]
+              - cell "Rename 🗑️ Delete" [ref=e1425]:
+                - generic [ref=e1426]:
+                  - button "Rename" [ref=e1427] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1429] [cursor=pointer]:
+                    - generic [ref=e1430]: 🗑️
+                    - generic [ref=e1431]: Delete
+            - row "Renamed_1768975309283 testcompany-1768975306774-9p0jq6 Test Company 1768975306774_9p0jq6 1 Rename 🗑️ Delete" [ref=e1432]:
+              - cell "Renamed_1768975309283" [ref=e1433]:
+                - strong [ref=e1434]: Renamed_1768975309283
+              - cell "testcompany-1768975306774-9p0jq6" [ref=e1435]:
+                - code [ref=e1436]: testcompany-1768975306774-9p0jq6
+              - cell "Test Company 1768975306774_9p0jq6" [ref=e1437]
+              - cell "1" [ref=e1438]
+              - cell "Rename 🗑️ Delete" [ref=e1439]:
+                - generic [ref=e1440]:
+                  - button "Rename" [ref=e1441] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1443] [cursor=pointer]:
+                    - generic [ref=e1444]: 🗑️
+                    - generic [ref=e1445]: Delete
+            - row "Renamed_1768975993696 testcompany-1768975991631-pfe3wg Test Company 1768975991631_pfe3wg 1 Rename 🗑️ Delete" [ref=e1446]:
+              - cell "Renamed_1768975993696" [ref=e1447]:
+                - strong [ref=e1448]: Renamed_1768975993696
+              - cell "testcompany-1768975991631-pfe3wg" [ref=e1449]:
+                - code [ref=e1450]: testcompany-1768975991631-pfe3wg
+              - cell "Test Company 1768975991631_pfe3wg" [ref=e1451]
+              - cell "1" [ref=e1452]
+              - cell "Rename 🗑️ Delete" [ref=e1453]:
+                - generic [ref=e1454]:
+                  - button "Rename" [ref=e1455] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1457] [cursor=pointer]:
+                    - generic [ref=e1458]: 🗑️
+                    - generic [ref=e1459]: Delete
+            - row "Renamed_1769017945789 testcompany-1769017943937-30jsbf Test Company 1769017943937_30jsbf 1 Rename 🗑️ Delete" [ref=e1460]:
+              - cell "Renamed_1769017945789" [ref=e1461]:
+                - strong [ref=e1462]: Renamed_1769017945789
+              - cell "testcompany-1769017943937-30jsbf" [ref=e1463]:
+                - code [ref=e1464]: testcompany-1769017943937-30jsbf
+              - cell "Test Company 1769017943937_30jsbf" [ref=e1465]
+              - cell "1" [ref=e1466]
+              - cell "Rename 🗑️ Delete" [ref=e1467]:
+                - generic [ref=e1468]:
+                  - button "Rename" [ref=e1469] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1471] [cursor=pointer]:
+                    - generic [ref=e1472]: 🗑️
+                    - generic [ref=e1473]: Delete
+            - row "Renamed_1769018073298 testcompany-1769018071486-bz4j3v Test Company 1769018071486_bz4j3v 1 Rename 🗑️ Delete" [ref=e1474]:
+              - cell "Renamed_1769018073298" [ref=e1475]:
+                - strong [ref=e1476]: Renamed_1769018073298
+              - cell "testcompany-1769018071486-bz4j3v" [ref=e1477]:
+                - code [ref=e1478]: testcompany-1769018071486-bz4j3v
+              - cell "Test Company 1769018071486_bz4j3v" [ref=e1479]
+              - cell "1" [ref=e1480]
+              - cell "Rename 🗑️ Delete" [ref=e1481]:
+                - generic [ref=e1482]:
+                  - button "Rename" [ref=e1483] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1485] [cursor=pointer]:
+                    - generic [ref=e1486]: 🗑️
+                    - generic [ref=e1487]: Delete
+            - row "Renamed_1769018150202 testcompany-1769018148608-nhj78o Test Company 1769018148608_nhj78o 1 Rename 🗑️ Delete" [ref=e1488]:
+              - cell "Renamed_1769018150202" [ref=e1489]:
+                - strong [ref=e1490]: Renamed_1769018150202
+              - cell "testcompany-1769018148608-nhj78o" [ref=e1491]:
+                - code [ref=e1492]: testcompany-1769018148608-nhj78o
+              - cell "Test Company 1769018148608_nhj78o" [ref=e1493]
+              - cell "1" [ref=e1494]
+              - cell "Rename 🗑️ Delete" [ref=e1495]:
+                - generic [ref=e1496]:
+                  - button "Rename" [ref=e1497] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1499] [cursor=pointer]:
+                    - generic [ref=e1500]: 🗑️
+                    - generic [ref=e1501]: Delete
+            - row "Renamed_1769018205109 testcompany-1769018203697-nxob00 Test Company 1769018203697_nxob00 1 Rename 🗑️ Delete" [ref=e1502]:
+              - cell "Renamed_1769018205109" [ref=e1503]:
+                - strong [ref=e1504]: Renamed_1769018205109
+              - cell "testcompany-1769018203697-nxob00" [ref=e1505]:
+                - code [ref=e1506]: testcompany-1769018203697-nxob00
+              - cell "Test Company 1769018203697_nxob00" [ref=e1507]
+              - cell "1" [ref=e1508]
+              - cell "Rename 🗑️ Delete" [ref=e1509]:
+                - generic [ref=e1510]:
+                  - button "Rename" [ref=e1511] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1513] [cursor=pointer]:
+                    - generic [ref=e1514]: 🗑️
+                    - generic [ref=e1515]: Delete
+            - row "Renamed_1769018258680 testcompany-1769018257080-go3pt3 Test Company 1769018257080_go3pt3 1 Rename 🗑️ Delete" [ref=e1516]:
+              - cell "Renamed_1769018258680" [ref=e1517]:
+                - strong [ref=e1518]: Renamed_1769018258680
+              - cell "testcompany-1769018257080-go3pt3" [ref=e1519]:
+                - code [ref=e1520]: testcompany-1769018257080-go3pt3
+              - cell "Test Company 1769018257080_go3pt3" [ref=e1521]
+              - cell "1" [ref=e1522]
+              - cell "Rename 🗑️ Delete" [ref=e1523]:
+                - generic [ref=e1524]:
+                  - button "Rename" [ref=e1525] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1527] [cursor=pointer]:
+                    - generic [ref=e1528]: 🗑️
+                    - generic [ref=e1529]: Delete
+            - row "Renamed_1769018313746 testcompany-1769018311424-lr3z0n Test Company 1769018311424_lr3z0n 1 Rename 🗑️ Delete" [ref=e1530]:
+              - cell "Renamed_1769018313746" [ref=e1531]:
+                - strong [ref=e1532]: Renamed_1769018313746
+              - cell "testcompany-1769018311424-lr3z0n" [ref=e1533]:
+                - code [ref=e1534]: testcompany-1769018311424-lr3z0n
+              - cell "Test Company 1769018311424_lr3z0n" [ref=e1535]
+              - cell "1" [ref=e1536]
+              - cell "Rename 🗑️ Delete" [ref=e1537]:
+                - generic [ref=e1538]:
+                  - button "Rename" [ref=e1539] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1541] [cursor=pointer]:
+                    - generic [ref=e1542]: 🗑️
+                    - generic [ref=e1543]: Delete
+            - row "Test Company test-company Test Company 26 Rename 🗑️ Delete" [ref=e1544]:
+              - cell "Test Company" [ref=e1545]:
+                - strong [ref=e1546]: Test Company
+              - cell "test-company" [ref=e1547]:
+                - code [ref=e1548]: test-company
+              - cell "Test Company" [ref=e1549]
+              - cell "26" [ref=e1550]
+              - cell "Rename 🗑️ Delete" [ref=e1551]:
+                - generic [ref=e1552]:
+                  - button "Rename" [ref=e1553] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1555] [cursor=pointer]:
+                    - generic [ref=e1556]: 🗑️
+                    - generic [ref=e1557]: Delete
+            - row "Test Corp test-corp Test Corporation 0 Rename 🗑️ Delete" [ref=e1558]:
+              - cell "Test Corp" [ref=e1559]:
+                - strong [ref=e1560]: Test Corp
+              - cell "test-corp" [ref=e1561]:
+                - code [ref=e1562]: test-corp
+              - cell "Test Corporation" [ref=e1563]
+              - cell "0" [ref=e1564]
+              - cell "Rename 🗑️ Delete" [ref=e1565]:
+                - generic [ref=e1566]:
+                  - button "Rename" [ref=e1567] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1569] [cursor=pointer]:
+                    - generic [ref=e1570]: 🗑️
+                    - generic [ref=e1571]: Delete
+            - row "Workflow_1768947085126 workflow-1768947085126 Workflow_1768947085126 1 Rename 🗑️ Delete" [ref=e1572]:
+              - cell "Workflow_1768947085126" [ref=e1573]:
+                - strong [ref=e1574]: Workflow_1768947085126
+              - cell "workflow-1768947085126" [ref=e1575]:
+                - code [ref=e1576]: workflow-1768947085126
+              - cell "Workflow_1768947085126" [ref=e1577]
+              - cell "1" [ref=e1578]
+              - cell "Rename 🗑️ Delete" [ref=e1579]:
+                - generic [ref=e1580]:
+                  - button "Rename" [ref=e1581] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1583] [cursor=pointer]:
+                    - generic [ref=e1584]: 🗑️
+                    - generic [ref=e1585]: Delete
+            - row "Workflow_1768947280841 workflow-1768947280841 Workflow_1768947280841 1 Rename 🗑️ Delete" [ref=e1586]:
+              - cell "Workflow_1768947280841" [ref=e1587]:
+                - strong [ref=e1588]: Workflow_1768947280841
+              - cell "workflow-1768947280841" [ref=e1589]:
+                - code [ref=e1590]: workflow-1768947280841
+              - cell "Workflow_1768947280841" [ref=e1591]
+              - cell "1" [ref=e1592]
+              - cell "Rename 🗑️ Delete" [ref=e1593]:
+                - generic [ref=e1594]:
+                  - button "Rename" [ref=e1595] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1597] [cursor=pointer]:
+                    - generic [ref=e1598]: 🗑️
+                    - generic [ref=e1599]: Delete
+            - row "Workflow_1768975316425 workflow-1768975316425 Workflow_1768975316425 1 Rename 🗑️ Delete" [ref=e1600]:
+              - cell "Workflow_1768975316425" [ref=e1601]:
+                - strong [ref=e1602]: Workflow_1768975316425
+              - cell "workflow-1768975316425" [ref=e1603]:
+                - code [ref=e1604]: workflow-1768975316425
+              - cell "Workflow_1768975316425" [ref=e1605]
+              - cell "1" [ref=e1606]
+              - cell "Rename 🗑️ Delete" [ref=e1607]:
+                - generic [ref=e1608]:
+                  - button "Rename" [ref=e1609] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1611] [cursor=pointer]:
+                    - generic [ref=e1612]: 🗑️
+                    - generic [ref=e1613]: Delete
+            - row "Workflow_1768975999244 workflow-1768975999244 Workflow_1768975999244 1 Rename 🗑️ Delete" [ref=e1614]:
+              - cell "Workflow_1768975999244" [ref=e1615]:
+                - strong [ref=e1616]: Workflow_1768975999244
+              - cell "workflow-1768975999244" [ref=e1617]:
+                - code [ref=e1618]: workflow-1768975999244
+              - cell "Workflow_1768975999244" [ref=e1619]
+              - cell "1" [ref=e1620]
+              - cell "Rename 🗑️ Delete" [ref=e1621]:
+                - generic [ref=e1622]:
+                  - button "Rename" [ref=e1623] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1625] [cursor=pointer]:
+                    - generic [ref=e1626]: 🗑️
+                    - generic [ref=e1627]: Delete
+            - row "Workflow_1769017949703 workflow-1769017949703 Workflow_1769017949703 1 Rename 🗑️ Delete" [ref=e1628]:
+              - cell "Workflow_1769017949703" [ref=e1629]:
+                - strong [ref=e1630]: Workflow_1769017949703
+              - cell "workflow-1769017949703" [ref=e1631]:
+                - code [ref=e1632]: workflow-1769017949703
+              - cell "Workflow_1769017949703" [ref=e1633]
+              - cell "1" [ref=e1634]
+              - cell "Rename 🗑️ Delete" [ref=e1635]:
+                - generic [ref=e1636]:
+                  - button "Rename" [ref=e1637] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1639] [cursor=pointer]:
+                    - generic [ref=e1640]: 🗑️
+                    - generic [ref=e1641]: Delete
+            - row "Workflow_1769018077371 workflow-1769018077371 Workflow_1769018077371 1 Rename 🗑️ Delete" [ref=e1642]:
+              - cell "Workflow_1769018077371" [ref=e1643]:
+                - strong [ref=e1644]: Workflow_1769018077371
+              - cell "workflow-1769018077371" [ref=e1645]:
+                - code [ref=e1646]: workflow-1769018077371
+              - cell "Workflow_1769018077371" [ref=e1647]
+              - cell "1" [ref=e1648]
+              - cell "Rename 🗑️ Delete" [ref=e1649]:
+                - generic [ref=e1650]:
+                  - button "Rename" [ref=e1651] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1653] [cursor=pointer]:
+                    - generic [ref=e1654]: 🗑️
+                    - generic [ref=e1655]: Delete
+            - row "Workflow_1769018155367 workflow-1769018155367 Workflow_1769018155367 1 Rename 🗑️ Delete" [ref=e1656]:
+              - cell "Workflow_1769018155367" [ref=e1657]:
+                - strong [ref=e1658]: Workflow_1769018155367
+              - cell "workflow-1769018155367" [ref=e1659]:
+                - code [ref=e1660]: workflow-1769018155367
+              - cell "Workflow_1769018155367" [ref=e1661]
+              - cell "1" [ref=e1662]
+              - cell "Rename 🗑️ Delete" [ref=e1663]:
+                - generic [ref=e1664]:
+                  - button "Rename" [ref=e1665] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1667] [cursor=pointer]:
+                    - generic [ref=e1668]: 🗑️
+                    - generic [ref=e1669]: Delete
+            - row "Workflow_1769018209604 workflow-1769018209604 Workflow_1769018209604 1 Rename 🗑️ Delete" [ref=e1670]:
+              - cell "Workflow_1769018209604" [ref=e1671]:
+                - strong [ref=e1672]: Workflow_1769018209604
+              - cell "workflow-1769018209604" [ref=e1673]:
+                - code [ref=e1674]: workflow-1769018209604
+              - cell "Workflow_1769018209604" [ref=e1675]
+              - cell "1" [ref=e1676]
+              - cell "Rename 🗑️ Delete" [ref=e1677]:
+                - generic [ref=e1678]:
+                  - button "Rename" [ref=e1679] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1681] [cursor=pointer]:
+                    - generic [ref=e1682]: 🗑️
+                    - generic [ref=e1683]: Delete
+            - row "Workflow_1769018263345 workflow-1769018263345 Workflow_1769018263345 1 Rename 🗑️ Delete" [ref=e1684]:
+              - cell "Workflow_1769018263345" [ref=e1685]:
+                - strong [ref=e1686]: Workflow_1769018263345
+              - cell "workflow-1769018263345" [ref=e1687]:
+                - code [ref=e1688]: workflow-1769018263345
+              - cell "Workflow_1769018263345" [ref=e1689]
+              - cell "1" [ref=e1690]
+              - cell "Rename 🗑️ Delete" [ref=e1691]:
+                - generic [ref=e1692]:
+                  - button "Rename" [ref=e1693] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1695] [cursor=pointer]:
+                    - generic [ref=e1696]: 🗑️
+                    - generic [ref=e1697]: Delete
+            - row "Workflow_1769018319686 workflow-1769018319686 Workflow_1769018319686 1 Rename 🗑️ Delete" [ref=e1698]:
+              - cell "Workflow_1769018319686" [ref=e1699]:
+                - strong [ref=e1700]: Workflow_1769018319686
+              - cell "workflow-1769018319686" [ref=e1701]:
+                - code [ref=e1702]: workflow-1769018319686
+              - cell "Workflow_1769018319686" [ref=e1703]
+              - cell "1" [ref=e1704]
+              - cell "Rename 🗑️ Delete" [ref=e1705]:
+                - generic [ref=e1706]:
+                  - button "Rename" [ref=e1707] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1709] [cursor=pointer]:
+                    - generic [ref=e1710]: 🗑️
+                    - generic [ref=e1711]: Delete
+            - row "newcompany companytest company to test 1 Rename 🗑️ Delete" [ref=e1712]:
+              - cell "newcompany" [ref=e1713]:
+                - strong [ref=e1714]: newcompany
+              - cell "companytest" [ref=e1715]:
+                - code [ref=e1716]: companytest
+              - cell "company to test" [ref=e1717]
+              - cell "1" [ref=e1718]
+              - cell "Rename 🗑️ Delete" [ref=e1719]:
+                - generic [ref=e1720]:
+                  - button "Rename" [ref=e1721] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e1723] [cursor=pointer]:
+                    - generic [ref=e1724]: 🗑️
+                    - generic [ref=e1725]: Delete
+```

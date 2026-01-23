@@ -40,20 +40,14 @@ public class GriffinService : IGriffinService
     {
         _logger.LogDebug("Building Griffin authentication URL:");
         _logger.LogDebug("  - Griffin BaseUrl: {BaseUrl}", griffinBaseUrl);
-        _logger.LogDebug("  - TokenConsumerUrl (before encoding): {TokenConsumerUrl}", tokenConsumerUrl);
+        _logger.LogDebug("  - TokenConsumerUrl (NOT encoded): {TokenConsumerUrl}", tokenConsumerUrl);
 
-        // Double URL-encode the token consumer URL as per Griffin documentation
-        var encodedOnce = Uri.EscapeDataString(tokenConsumerUrl);
-        var encodedTwice = Uri.EscapeDataString(encodedOnce);
+        // DON'T encode the entire URL - Griffin needs to see a valid URL structure!
+        // The tokenConsumerUrl already has its returnUrl parameter properly encoded by the caller.
+        // Encoding the entire URL would make it unrecognizable to Griffin's validation.
+        var finalUrl = $"{griffinBaseUrl.TrimEnd('/')}/authentication?tokenConsumerURL={tokenConsumerUrl}";
 
-        _logger.LogDebug("  - TokenConsumerUrl (after 1st encode): {Encoded1}", encodedOnce);
-        _logger.LogDebug("  - TokenConsumerUrl (after 2nd encode): {Encoded2}", encodedTwice);
-
-        var finalUrl = $"{griffinBaseUrl.TrimEnd('/')}/authentication?tokenConsumerURL={encodedTwice}";
-
-        _logger.LogInformation("Griffin authentication URL constructed: {GriffinBaseUrl}/authentication?tokenConsumerURL=...",
-            griffinBaseUrl.TrimEnd('/'));
-        _logger.LogDebug("  - Full URL with encoded parameter: {FinalUrl}", finalUrl);
+        _logger.LogInformation("Griffin authentication URL constructed: {FinalUrl}", finalUrl);
 
         return finalUrl;
     }

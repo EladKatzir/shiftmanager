@@ -111,8 +111,15 @@ public class GriffinCallbackModel : PageModel
         _securityLogger.LogAuthenticationSuccess(int.Parse(userId!), email!, role!, ipAddress);
 
         // 7. Redirect
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return Redirect(returnUrl);
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            // NOTE: ASP.NET Core should auto-decode the triple-encoded returnUrl via model binding.
+            // If testing shows returnUrl arrives still encoded, uncomment the line below:
+            // returnUrl = Uri.UnescapeDataString(returnUrl);
+
+            if (Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+        }
 
         return RedirectToPage("/Home/Index");
     }

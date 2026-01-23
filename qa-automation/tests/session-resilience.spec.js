@@ -34,7 +34,14 @@ test.describe('Session Management & Resilience', () => {
 
   test('P7-03: Browser back button after form submit shows correct state', async ({ page }) => {
     await loginAsOwner(page);
+
+    // Navigate to Home first to create navigation history
+    await page.goto('/Home/Index');
+    await page.waitForLoadState('networkidle');
+
+    // Then navigate to Companies page
     await page.goto('/Admin/Companies');
+    await page.waitForLoadState('networkidle');
 
     // Companies page has inline form, not separate create page
     const timestamp = Date.now();
@@ -55,10 +62,15 @@ test.describe('Session Management & Resilience', () => {
     // Verify company was created (should appear in list)
     await expect(page.locator(`text="${companyName}"`).first()).toBeVisible();
 
-    // Go back
+    // POST-REDIRECT-GET creates a new history entry at /Admin/Companies
+    // So history is: /Home/Index -> /Admin/Companies -> /Admin/Companies (after redirect)
+    // Going back once should take us to the first /Admin/Companies, then back again to /Home/Index
     await page.goBack();
+    await page.goBack();
+    await expect(page).toHaveURL(/\/Home\/Index/);
 
-    // Go forward again
+    // Go forward twice to get back to Companies page
+    await page.goForward();
     await page.goForward();
 
     // Reload to get fresh data

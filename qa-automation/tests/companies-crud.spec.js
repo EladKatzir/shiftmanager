@@ -39,13 +39,13 @@ test.describe('Companies CRUD - Owner Role', () => {
         try {
             await page.waitForSelector('table.companies-table, form input[name="CompanyName"]', { timeout: 10000 });
         } catch (e) {
-            // If neither exists, wait a bit more for dynamic content
-            await page.waitForTimeout(1000);
+            // If neither exists, wait for network to be idle for dynamic content
+            await page.waitForLoadState('networkidle');
         }
 
         // Scroll to ensure full page is loaded/visible
         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-        await page.waitForTimeout(500); // Brief pause for any lazy-loaded elements
+        await page.waitForLoadState('networkidle'); // Wait for any lazy-loaded elements
         await page.evaluate(() => window.scrollTo(0, 0));
     }
 
@@ -112,7 +112,15 @@ test.describe('Companies CRUD - Owner Role', () => {
             const submitButton = page.locator('button[type="submit"]:has-text("Create")');
             await submitButton.scrollIntoViewIfNeeded();
             await submitButton.click();
-            await page.waitForLoadState('networkidle');
+
+            // Wait for success indicators instead of networkidle
+            await Promise.race([
+                page.waitForSelector('.alert-success', { timeout: 10000 }),
+                page.waitForSelector(`table tbody tr:has-text("${companyData.companyName}")`, { timeout: 10000 })
+            ]).catch(() => {});
+
+            // Give DOM time to update
+            await page.waitForTimeout(1000);
 
             // Verify success - check for success message or company in list
             const successAlert = page.locator('.alert-success');
@@ -173,9 +181,12 @@ test.describe('Companies CRUD - Owner Role', () => {
         test('P2-04: Validation - duplicate slug rejected', async ({ page }) => {
             await navigateToCompanies(page);
 
+            // Wait for companies table to load
+            await page.waitForSelector('table tbody tr', { timeout: 10000 }).catch(() => {});
+
             // First, get an existing company slug from the table
             const existingSlugCell = page.locator('table tbody tr:first-child td:nth-child(2) code');
-            const existingSlug = await existingSlugCell.textContent().catch(() => null);
+            const existingSlug = await existingSlugCell.textContent({ timeout: 5000 }).catch(() => null);
 
             if (!existingSlug) {
                 test.skip(true, 'No existing companies to test duplicate slug');
@@ -197,7 +208,12 @@ test.describe('Companies CRUD - Owner Role', () => {
             const submitButton = page.locator('button[type="submit"]:has-text("Create")');
             await submitButton.scrollIntoViewIfNeeded();
             await submitButton.click();
-            await page.waitForLoadState('networkidle');
+
+            // Wait for error message to appear
+            await Promise.race([
+                page.waitForSelector('.alert-error', { timeout: 10000 }),
+                page.waitForLoadState('domcontentloaded', { timeout: 10000 })
+            ]).catch(() => {});
 
             // Should show error about duplicate slug
             await expect(page.locator('.alert-error')).toBeVisible();
@@ -330,7 +346,13 @@ test.describe('Companies CRUD - Owner Role', () => {
             const newName = `Renamed_${Date.now()}`;
             await page.fill('#newCompanyName', newName);
             await page.click('#renameModal button[type="submit"]');
-            await page.waitForLoadState('networkidle');
+
+            // Wait for modal to close and success message or table update
+            await Promise.race([
+                page.waitForSelector('.alert-success', { timeout: 10000 }),
+                page.waitForSelector(`table:has-text("${newName}")`, { timeout: 10000 }),
+                modal.waitFor({ state: 'hidden', timeout: 10000 })
+            ]).catch(() => {});
 
             // Verify rename succeeded
             await expect(page.locator(`table:has-text("${newName}")`)).toBeVisible();
@@ -376,14 +398,15 @@ test.describe('Companies CRUD - Owner Role', () => {
 
             // Find delete button for our company
             const companyRow = page.locator(`table tbody tr:has-text("${companyData.companyName}")`);
-            const rowExists = await companyRow.isVisible().catch(() => false);
 
-            if (!rowExists) {
-                test.skip(true, 'Could not create company for delete test');
-                return;
-            }
+            // Wait for the row to be visible with increased timeout
+            await companyRow.waitFor({ state: 'visible', timeout: 10000 });
 
             const deleteButton = companyRow.locator('button:has-text("Delete")');
+
+            // Scroll button into view and wait for it to be enabled
+            await deleteButton.scrollIntoViewIfNeeded();
+            await deleteButton.waitFor({ state: 'visible', timeout: 5000 });
 
             // Set up dialog handler BEFORE clicking (critical timing fix)
             page.once('dialog', async dialog => {
@@ -392,7 +415,16 @@ test.describe('Companies CRUD - Owner Role', () => {
             });
 
             await deleteButton.click();
-            await page.waitForLoadState('networkidle');
+
+            // Wait for either success message or company to disappear from table
+            await Promise.race([
+                page.waitForSelector('.alert-success', { timeout: 10000 }),
+                companyRow.waitFor({ state: 'hidden', timeout: 10000 }),
+                page.waitForLoadState('domcontentloaded', { timeout: 10000 })
+            ]).catch(() => {});
+
+            // Give DOM time to update
+            await page.waitForTimeout(1000);
 
             // Verify company was deleted
             await expect(page.locator(`table tr:has-text("${companyData.companyName}")`)).not.toBeVisible();
@@ -442,7 +474,14 @@ test.describe('Companies CRUD - Owner Role', () => {
                 const createButton = page.locator('button[type="submit"]:has-text("Create")');
                 await createButton.scrollIntoViewIfNeeded();
                 await createButton.click();
-                await page.waitForLoadState('networkidle');
+
+                // Wait for either success/error message or networkidle (XSS payloads may cause validation errors)
+                await Promise.race([
+                    page.waitForLoadState('networkidle', { timeout: 10000 }),
+                    page.waitForSelector('.alert-success, .alert-danger, .alert-warning', { timeout: 10000 })
+                ]).catch(() => {
+                    // If both timeout, continue anyway - validation might have rejected the payload
+                });
 
                 // If created, verify it's properly escaped in the DOM
                 const createdCompany = page.locator(`table td:has-text("${xssAttempt}")`);
@@ -455,8 +494,10 @@ test.describe('Companies CRUD - Owner Role', () => {
                     expect(cellHtml).not.toContain('onerror=');
                 }
 
-                // Navigate back to start fresh
-                await navigateToCompanies(page);
+                // Navigate back to start fresh (check if page is still open first)
+                if (!page.isClosed()) {
+                    await navigateToCompanies(page);
+                }
             }
         });
 

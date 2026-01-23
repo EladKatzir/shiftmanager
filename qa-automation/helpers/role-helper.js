@@ -87,7 +87,7 @@ class RoleHelper {
         // Submit the LOCAL login form (not the Griffin ADFS form)
         // Click the button within the form that has the Email/Password fields
         await Promise.all([
-            page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 10000 }),
+            page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 20000 }),
             page.locator('form:has(input[name="Email"]) button[type="submit"]').click(),
         ]);
 

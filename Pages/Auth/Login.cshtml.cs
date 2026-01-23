@@ -329,15 +329,30 @@ public class LoginModel : LocalizedPageModel
         // Append returnUrl as query parameter if present
         if (!string.IsNullOrEmpty(returnUrl))
         {
+            // Triple-encode the returnUrl to survive multiple decoding layers:
+            // 1st layer: Griffin's HTTP query parameter parsing
+            // 2nd layer: Griffin's internal processing/redirect
+            // 3rd layer: Our ASP.NET Core query parameter parsing
+            // This matches the Doof pattern of triple-encoding the destination path
+            var encodedReturn = Uri.EscapeDataString(returnUrl);
+            var encodedTwice = Uri.EscapeDataString(encodedReturn);
+            var encodedThrice = Uri.EscapeDataString(encodedTwice);
+
             var separator = callbackUrl.Contains('?') ? '&' : '?';
-            callbackUrl += $"{separator}returnUrl={Uri.EscapeDataString(returnUrl)}";
+            callbackUrl += $"{separator}returnUrl={encodedThrice}";
+
+            _logger.LogDebug("Triple-encoding returnUrl:");
+            _logger.LogDebug("  - Original returnUrl: {Original}", returnUrl);
+            _logger.LogDebug("  - After 1st encode: {Encoded1}", encodedReturn);
+            _logger.LogDebug("  - After 2nd encode: {Encoded2}", encodedTwice);
+            _logger.LogDebug("  - After 3rd encode: {Encoded3}", encodedThrice);
         }
 
         _logger.LogInformation("=== GRIFFIN ADFS REDIRECT DEBUG ===");
         _logger.LogInformation("Config from database:");
         _logger.LogInformation("  - BaseUrl: {BaseUrl}", griffinConfig.BaseUrl);
         _logger.LogInformation("  - TokenConsumerUrl: {TokenConsumerUrl}", griffinConfig.TokenConsumerUrl);
-        _logger.LogInformation("  - CallbackUrl (with returnUrl): {CallbackUrl}", callbackUrl);
+        _logger.LogInformation("  - CallbackUrl (with triple-encoded returnUrl): {CallbackUrl}", callbackUrl);
 
         // Build authentication URL
         var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl, callbackUrl);
