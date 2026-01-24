@@ -96,7 +96,7 @@
     }
 
     /**
-     * Load employees from the API
+     * Load employees from the API with 7-day availability
      */
     async function loadEmployees() {
         const employeeList = document.getElementById('rosterEmployeeList');
@@ -110,18 +110,8 @@
         employeeList.innerHTML = '<p class="loading-text">Loading employees...</p>';
 
         try {
-            // Get current date range from the table
-            const table = document.querySelector('.shift-table');
-            const startDate = table?.dataset.startDate;
-            const endDate = table?.dataset.endDate;
-
-            // Build URL with date range parameters
-            let url = '/Calendar/Table?handler=GetRosterEmployees';
-            if (startDate && endDate) {
-                url += `&startDate=${startDate}&endDate=${endDate}`;
-            }
-
-            const response = await fetch(url, {
+            // Use the new EmployeeAvailability endpoint for 7-day availability cubes
+            const response = await fetch('/Calendar/Table?handler=EmployeeAvailability', {
                 method: 'GET',
                 credentials: 'same-origin'
             });
@@ -130,8 +120,7 @@
                 throw new Error(`HTTP ${response.status}`);
             }
 
-            const data = await response.json();
-            employees = data.employees || [];
+            employees = await response.json();
 
             renderEmployeeList(employees);
         } catch (error) {
@@ -141,7 +130,7 @@
     }
 
     /**
-     * Render the employee list
+     * Render the employee list with 7-day availability cubes
      */
     function renderEmployeeList(employeesToRender) {
         const employeeList = document.getElementById('rosterEmployeeList');
@@ -155,8 +144,20 @@
 
         employeeList.innerHTML = employeesToRender.map(emp => {
             const initials = getInitials(emp.name);
-            const status = getEmployeeStatus(emp);
-            const statusClass = getStatusClass(status);
+
+            // Build availability cubes HTML
+            let cubesHtml = '<div class="availability-cubes">';
+            if (emp.availability && emp.availability.length > 0) {
+                emp.availability.forEach(day => {
+                    cubesHtml += `
+                        <div class="availability-cube ${day.status}" title="${day.tooltip}">
+                            <span class="cube-date">${day.date}</span>
+                            <span class="cube-tooltip">${day.dayName}: ${day.tooltip}</span>
+                        </div>
+                    `;
+                });
+            }
+            cubesHtml += '</div>';
 
             return `
                 <div class="roster-employee-item"
@@ -166,7 +167,7 @@
                     <div class="employee-avatar">${initials}</div>
                     <div class="employee-info">
                         <div class="employee-name">${escapeHtml(emp.name)}</div>
-                        <div class="employee-status ${statusClass}">${status}</div>
+                        ${cubesHtml}
                     </div>
                 </div>
             `;

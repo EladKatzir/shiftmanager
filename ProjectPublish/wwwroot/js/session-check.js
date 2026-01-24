@@ -2,9 +2,10 @@
  * Session Management System with Two-Tier Warning
  *
  * Features:
- * - WARNING state: Shows yellow banner when ≤30 minutes remaining
+ * - WARNING state: Shows yellow modal when ≤60 minutes remaining (first warning)
+ * - CRITICAL state: Shows modal again at ≤15 minutes if dismissed (second warning)
  * - EXPIRED state: Shows red banner when session truly expired (401)
- * - Adaptive polling: 5 min (ok) → 1 min (warning) → stop (expired)
+ * - Adaptive polling: 10 min (ok) → 1 min (warning) → stop (expired)
  * - Session extension: "Extend Session" button triggers sliding expiration
  * - Tab visibility optimization: Pauses when hidden
  * - Bilingual: Hebrew and English
@@ -20,7 +21,8 @@
         EXPIRED: 0              // Stop polling when expired
     };
 
-    const WARNING_THRESHOLD = 30 * 60; // 30 minutes in seconds
+    const WARNING_THRESHOLD = 60 * 60; // 60 minutes in seconds (first warning)
+    const CRITICAL_THRESHOLD = 15 * 60; // 15 minutes in seconds (second warning)
     const SESSION_STATUS_URL = '/Api/SessionStatus';
 
     // Session state machine
@@ -29,7 +31,8 @@
     let currentPollInterval = POLLING_INTERVALS.OK;
     let lastCheckTime = null;
     let secondsRemaining = null;
-    let warningDismissed = false;   // Track if user dismissed warning
+    let warningDismissed = false;   // Track if user dismissed first warning
+    let criticalWarningShown = false; // Track if critical warning was already shown
 
     // Localization
     const MESSAGES = {
@@ -115,15 +118,29 @@
 
         console.log(`Session check: ${data.state}, ${minutesRemaining} minutes remaining`);
 
-        if (data.state === 'warning' && sessionState !== 'warning') {
+        // Check if we've crossed into critical threshold
+        const isCritical = secondsRemaining <= CRITICAL_THRESHOLD;
+        const isWarning = secondsRemaining <= WARNING_THRESHOLD;
+
+        if (isWarning && sessionState !== 'warning') {
             // Transition from OK to WARNING
             transitionToWarning(minutesRemaining);
-        } else if (data.state === 'ok' && sessionState === 'warning') {
+        } else if (!isWarning && sessionState === 'warning') {
             // Transition from WARNING back to OK (session was extended)
             transitionToOk();
         } else if (sessionState === 'warning') {
-            // Already in warning, update the notification
-            updateWarningNotification(minutesRemaining);
+            // Already in warning state
+            // Check if we need to show critical warning (second warning at 15 minutes)
+            if (isCritical && !criticalWarningShown && warningDismissed) {
+                // User dismissed first warning, now show critical warning
+                console.log('Showing critical warning (15 minutes remaining)');
+                criticalWarningShown = true;
+                warningDismissed = false; // Reset so notification shows
+                showWarningNotification(minutesRemaining);
+            } else if (!warningDismissed) {
+                // Update the visible notification
+                updateWarningNotification(minutesRemaining);
+            }
         }
     }
 
@@ -151,6 +168,7 @@
         sessionState = 'ok';
         currentPollInterval = POLLING_INTERVALS.OK;
         warningDismissed = false; // Reset dismissal flag
+        criticalWarningShown = false; // Reset critical warning flag
         hideNotification();
         restartPolling();
     }
@@ -598,7 +616,8 @@
             secondsRemaining: secondsRemaining,
             pollInterval: currentPollInterval,
             lastCheckTime: lastCheckTime,
-            warningDismissed: warningDismissed
+            warningDismissed: warningDismissed,
+            criticalWarningShown: criticalWarningShown
         })
     };
 

@@ -73,19 +73,21 @@ document.addEventListener('DOMContentLoaded', function() {
           document.head.appendChild(cssLink);
         }
 
-        // Load JavaScript
-        const script = document.createElement('script');
-        script.src = '/js/shift-swap-game.js?v=' + Date.now();
-        document.head.appendChild(script);
+        // Load JavaScript (only if not already loaded)
+        if (!document.querySelector('script[src*="shift-swap-game.js"]')) {
+          const script = document.createElement('script');
+          script.src = '/js/shift-swap-game.js?v=' + Date.now();
+          document.head.appendChild(script);
 
-        // Wait for script to load
-        await new Promise((resolve) => {
-          script.onload = resolve;
-          script.onerror = () => {
-            console.error('Failed to load Shift Swap game script');
-            resolve();
-          };
-        });
+          // Wait for script to load
+          await new Promise((resolve) => {
+            script.onload = resolve;
+            script.onerror = () => {
+              console.error('Failed to load Shift Swap game script');
+              resolve();
+            };
+          });
+        }
       }
 
       // Open the Shift Swap game

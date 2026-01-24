@@ -5867,7 +5867,8 @@ code {
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   cursor: default;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  min-width: 120px;
 }
 
 [data-ui-version="v2"] .metric-item::before {
@@ -5909,6 +5910,7 @@ code {
   font-weight: 700;
   color: var(--primary-color);
   line-height: 1;
+  white-space: nowrap;
 }
 
 [data-ui-version="v2"] .metric-label {
@@ -5918,6 +5920,9 @@ code {
   opacity: 0.7;
   font-weight: 600;
   line-height: 1;
+  text-align: center;
+  word-wrap: break-word;
+  max-width: 100%;
 }
 
 /* Metric Type Variants */
@@ -5949,6 +5954,32 @@ code {
 
 [data-ui-version="v2"] .metric-item.metric-coverage .metric-value {
   color: #10b981;
+}
+
+/* Base Metric Item Styles (non-v2) */
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    min-width: 120px;
+    /* Fix text cutoff */
+    overflow: visible;
+    text-overflow: ellipsis;
+}
+
+.metric-item .metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.metric-item .metric-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+    text-align: center;
+    word-wrap: break-word;
+    max-width: 100%;
 }
 
 /* Dark Mode Adjustments */
@@ -6048,3 +6079,68 @@ code {
 /* ====================================================================
    End Phase 7: Calendar Header v2 Enhancements
    ==================================================================== */
+
+/* ========================================
+   7-Day Availability Cubes
+   ======================================== */
+.availability-cubes {
+    display: flex;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.availability-cube {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.5rem;
+    cursor: pointer;
+    position: relative;
+}
+
+.availability-cube .cube-date {
+    font-size: 0.5rem;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.8;
+}
+
+.availability-cube.free {
+    background-color: #22c55e;
+    color: white;
+}
+
+.availability-cube.busy {
+    background-color: #ef4444;
+    color: white;
+}
+
+.availability-cube.partial {
+    background-color: #f59e0b;
+    color: white;
+}
+
+/* Hover tooltip for cubes */
+.availability-cube .cube-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 4px;
+}
+
+.availability-cube:hover .cube-tooltip {
+    display: block;
+}
