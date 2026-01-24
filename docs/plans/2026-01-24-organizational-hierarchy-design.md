@@ -1,14 +1,14 @@
 # Organizational Hierarchy Redesign - Complete Design Document
 
 **Date:** 2026-01-24
-**Status:** Approved - Ready for Implementation
-**Version:** 1.0
+**Status:** ✅ FINALIZED - Ready for Implementation
+**Version:** 2.0
 
 ---
 
 ## Executive Summary
 
-This document describes the complete redesign of ShiftManager's organizational model from a single-level "Company" system to a 6-level hierarchy with explicit grant-based permissions, separated duty types, and JobType-based scheduling.
+This document describes the complete redesign of ShiftManager's organizational model from a single-level "Company" system to a 6-level hierarchy with explicit grant-based permissions (Own/Give capabilities), separated duty types, and JobType-based scheduling.
 
 **Current State:**
 - Single organizational level: Company
@@ -19,10 +19,12 @@ This document describes the complete redesign of ShiftManager's organizational m
 
 **Target State:**
 - 6-level hierarchy: Project → Area → Molecule → Department → Company → User
-- Grant-based permissions with hierarchical actions
-- JobType entity with ManagementPattern attribute
-- Separated Duty system (Responsibility vs Coverage)
+- Grant-based permissions with Own/Give capabilities (26 permissions + SystemAdmin)
+- JobType entity with ManagementPattern attribute + Primary JobType + hat switching
+- Separated Duty system (Responsibility vs Coverage) with Molecule-scoped DutyPrograms
 - Multi-level calendars with JobType filtering
+- Department-scoped Blueprints/Programs with REQUIRED CompanyId+JobTypeId
+- Settings: Department defaults + Company overrides
 
 ---
 
@@ -30,15 +32,16 @@ This document describes the complete redesign of ShiftManager's organizational m
 
 1. [Organizational Hierarchy](#1-organizational-hierarchy)
 2. [Grant System](#2-grant-system)
-3. [JobType Entity](#3-jobtype-entity)
+3. [JobType Entity & Hat Switching](#3-jobtype-entity--hat-switching)
 4. [Duty System](#4-duty-system)
 5. [Programs & Blueprints](#5-programs--blueprints)
-6. [Calendar System](#6-calendar-system)
-7. [Smart Task System](#7-smart-task-system)
-8. [Admin UI Organization](#8-admin-ui-organization)
-9. [Email/ADFS/Game Configuration](#9-emailadfsgame-configuration)
-10. [Seed Data Structure](#10-seed-data-structure)
-11. [Migration Strategy](#11-migration-strategy)
+6. [Settings System](#6-settings-system)
+7. [Calendar System](#7-calendar-system)
+8. [Smart Task System](#8-smart-task-system)
+9. [Admin UI Organization](#9-admin-ui-organization)
+10. [Email/ADFS/Game Configuration](#10-emailadfsgame-configuration)
+11. [Seed Data Structure](#11-seed-data-structure)
+12. [Migration Strategy](#12-migration-strategy)
 
 ---
 
@@ -69,14 +72,14 @@ Shifty (שיפטי) - Project
 
 ### 1.2 Purpose of Each Level
 
-| Level | Purpose | Permission Tier | Example |
-|-------|---------|-----------------|---------|
-| **Project** | Top-level organizational unit | (Reserved for future) | Shifty |
-| **Area** | Permission boundary for Area Admins | Area Admin grant scope | 190 |
-| **Molecule** | Operational boundary for chores and duties | Molecule Admin grant scope | Oren |
-| **Department** | Policy and JobType container | Department Admin grant scope | Defence and Manuver |
-| **Company** | Team/unit with shared calendar | Company Manager/Director grants | Radio, North, City, Hir |
-| **User** | Individual employee | N/A | Individual person |
+| Level | Purpose | Configuration Scope | Example |
+|-------|---------|---------------------|---------|
+| **Project** | Top-level organizational unit | SystemAdmin only | Shifty |
+| **Area** | Area Admin boundary | Cross-Molecule management | 190 |
+| **Molecule** | Operational boundary for chores, duties, DutyRoles, DutyPrograms | Molecule-scoped configs | Oren |
+| **Department** | Policy container for Blueprints, Programs, MasterPrograms, Settings | Department-scoped configs | Defence and Manuver |
+| **Company** | Team/unit with shared calendar, Settings overrides | Company-scoped instances | Radio, North, City, Hir |
+| **User** | Individual employee with Primary JobType | N/A | Individual person |
 
 ### 1.3 Database Schema
 
@@ -122,6 +125,8 @@ public class Molecule
     // Navigation
     public Area Area { get; set; } = null!;
     public List<Department> Departments { get; set; } = new();
+    public List<DutyRole> DutyRoles { get; set; } = new();  // ✅ Molecule-scoped
+    public List<DutyProgram> DutyPrograms { get; set; } = new();  // ✅ Molecule-scoped
 }
 
 public class Department
@@ -138,6 +143,10 @@ public class Department
     public Molecule Molecule { get; set; } = null!;
     public List<Company> Companies { get; set; } = new();
     public List<JobType> JobTypes { get; set; } = new();
+    public List<ShiftType> ShiftTypes { get; set; } = new();  // ✅ Department-scoped Blueprints
+    public List<ShiftProgram> ShiftPrograms { get; set; } = new();  // ✅ Department-scoped
+    public List<MasterProgram> MasterPrograms { get; set; } = new();  // ✅ Department-scoped
+    public DepartmentSettings Settings { get; set; } = null!;  // ✅ Department defaults
 }
 
 public class Company
@@ -154,6 +163,7 @@ public class Company
     // Navigation
     public Department Department { get; set; } = null!;
     public List<AppUser> Users { get; set; } = new();
+    public CompanySettings Settings { get; set; } = null!;  // ✅ Company overrides
 }
 
 public class AppUser
@@ -162,15 +172,13 @@ public class AppUser
 
     // Primary organizational association
     public int CompanyId { get; set; }
+    public int PrimaryJobTypeId { get; set; }  // ✅ REQUIRED: Primary JobType
 
-    // Cached hierarchy (for performance)
-    public int DepartmentId { get; set; }
-    public int MoleculeId { get; set; }
-    public int AreaId { get; set; }
-    public int ProjectId { get; set; }
+    // Cached hierarchy (for performance) - populated from Company navigation
+    // These are NOT user input, they are derived from CompanyId
+    // Claims will store: UserId + CompanyId (not full hierarchy)
 
     // Job & Rank
-    public int? PrimaryJobTypeId { get; set; }
     public MilitaryRank Rank { get; set; }
 
     // ... existing fields (Email, PasswordHash, etc.)
@@ -181,53 +189,39 @@ public class AppUser
 
     // Navigation
     public Company Company { get; set; } = null!;
-    public JobType? PrimaryJobType { get; set; }
+    public JobType PrimaryJobType { get; set; } = null!;
+    public List<UserJobType> JobTypes { get; set; } = new();  // ✅ Many-to-many
     public List<Grant> Grants { get; set; } = new();
+}
+
+// ✅ NEW: Many-to-many for multi-JobType users
+public class UserJobType
+{
+    public int UserId { get; set; }
+    public int JobTypeId { get; set; }
+
+    public User User { get; set; } = null!;
+    public JobType JobType { get; set; } = null!;
 }
 ```
 
-### 1.4 Hierarchy Context Service
+### 1.4 User Claims Structure
+
+**Q11 Answer: UserId + CompanyId (current context)**
 
 ```csharp
-public interface IHierarchyContext
-{
-    // Cached values (from user claims)
-    int? CompanyId { get; }
-    int? DepartmentId { get; }
+// Claims set at login (in JWT/cookie)
+new Claim("UserId", user.Id.ToString()),
+new Claim("CompanyId", user.CompanyId.ToString())
 
-    // Set context (for Owner multi-company management)
-    Task SetCompanyAsync(int companyId);
-    Task SetDepartmentAsync(int departmentId);
+// Session value (changes when user switches hats)
+HttpContext.Session.SetInt32("ActiveJobTypeId", user.PrimaryJobTypeId);
 
-    // Derived values (query when needed)
-    Task<int> GetMoleculeIdAsync();
-    Task<int> GetAreaIdAsync();
-    Task<int> GetProjectIdAsync();
-
-    // Convenience methods
-    Task<Department> GetDepartmentAsync();
-    Task<Molecule> GetMoleculeAsync();
-    Task<Area> GetAreaAsync();
-    Task<Project> GetProjectAsync();
-}
-
-public class HierarchyContext : IHierarchyContext
-{
-    private readonly IHttpContextAccessor _httpContext;
-    private readonly AppDbContext _db;
-
-    public int? CompanyId => GetClaimInt("CompanyId");
-    public int? DepartmentId => GetClaimInt("DepartmentId");
-
-    public async Task<int> GetMoleculeIdAsync()
-    {
-        var deptId = DepartmentId ?? throw new InvalidOperationException("No department context");
-        var dept = await _db.Departments.FindAsync(deptId);
-        return dept.MoleculeId;
-    }
-
-    // ... similar for Area, Project
-}
+// Hierarchy derived on-demand via navigation:
+var department = user.Company.Department;
+var molecule = user.Company.Department.Molecule;
+var area = user.Company.Department.Molecule.Area;
+var project = user.Company.Department.Molecule.Area.Project;
 ```
 
 ---
@@ -236,172 +230,291 @@ public class HierarchyContext : IHierarchyContext
 
 ### 2.1 Grant Model
 
+**COMPLETE REDESIGN:** Replaced hierarchical GrantAction enum with explicit permissions + Own/Give capabilities.
+
 ```csharp
 public class Grant
 {
     public int Id { get; set; }
     public int UserId { get; set; }
 
-    // Scope
-    public ScopeType ScopeType { get; set; }  // Project/Area/Molecule/Department/Company
-    public int ScopeId { get; set; }
+    // Hierarchical scope (nullable to support multiple levels)
+    public int? ProjectId { get; set; }
+    public int? AreaId { get; set; }
+    public int? MoleculeId { get; set; }
+    public int? DepartmentId { get; set; }
+    public int? CompanyId { get; set; }
+    public int? JobTypeId { get; set; }  // Optional filter
 
-    // Job dimension (null = all JobTypes)
-    public int? JobTypeId { get; set; }
+    // Permission
+    public GrantPermission Permission { get; set; }
 
-    // Action
-    public GrantAction Action { get; set; }
-
-    // Timebox (optional)
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
+    // ✅ Own/Give Capabilities
+    public bool CanOwn { get; set; }   // User can perform the action
+    public bool CanGive { get; set; }  // User can grant this permission to others
 
     // Audit
-    public int GrantedBy { get; set; }
+    public int? GrantedByUserId { get; set; }
     public DateTime GrantedAt { get; set; }
-    public bool IsRevoked { get; set; }
-    public DateTime? RevokedAt { get; set; }
-    public int? RevokedBy { get; set; }
+    public string? Notes { get; set; }
 
     // Navigation
-    public AppUser User { get; set; } = null!;
-    public AppUser GrantedByUser { get; set; } = null!;
+    public User User { get; set; } = null!;
+    public User? GrantedByUser { get; set; }
+    public Project? Project { get; set; }
+    public Area? Area { get; set; }
+    public Molecule? Molecule { get; set; }
+    public Department? Department { get; set; }
+    public Company? Company { get; set; }
     public JobType? JobType { get; set; }
 }
 
-public enum ScopeType
+public enum GrantPermission
 {
-    Project = 1,
-    Area = 2,
-    Molecule = 3,
-    Department = 4,
-    Company = 5
+    // === OPERATIONAL ACTIONS (5) ===
+    AssignShifts,
+    AssignChores,
+    AssignDuties,
+    ApproveVacations,
+    ApproveSwaps,
+
+    // === USER MANAGEMENT (5) ===
+    ViewUsers,
+    CreateUsers,
+    EditUsers,
+    DeleteUsers,
+    AssignJobTypes,
+
+    // === CONFIGURATION MANAGEMENT (4) ===
+    ManageBlueprints,     // Create/Edit/Delete Blueprints
+    ManagePrograms,       // Create/Edit/Delete Programs
+    ManageMasterPrograms,
+    EditSettings,         // RestHours, WeeklyCap, Company overrides
+
+    // === VIEWING PERMISSIONS (5) ===
+    ViewShiftCalendar,
+    ViewChoreCalendar,
+    ViewDutyCalendar,
+    ViewVacationCalendar,
+    ViewAnalytics,
+
+    // === GRANT MANAGEMENT (1) ===
+    ManageGrants,         // Own = view grants, Give = create grants
+
+    // === HIERARCHY MANAGEMENT (1) ===
+    EditHierarchy,        // Edit Companies, Departments, Molecules, Areas
+
+    // === EMAIL & COMMUNICATION (3) ===
+    ViewEmailTemplates,
+    EditEmailTemplates,
+    SendEmails,
+
+    // === SYSTEM ADMINISTRATION (1) ===
+    SystemAdmin           // ✅ SPECIAL: Full system access (covers all 26 permissions)
 }
-
-public enum GrantAction
-{
-    SystemAdmin = 0,   // Owner only - full system access
-    ManageGrants = 1,  // Approve/revoke grants within scope
-    ManageUsers = 2,   // Create/edit/delete users (JobType-scoped)
-    Configure = 3,     // Edit shift types, programs, department settings
-    Edit = 4,          // Assign/unassign shifts, manage schedules
-    Assign = 5,        // Quick-assign shifts only (limited Edit)
-    View = 6           // Read-only access
-}
 ```
 
-### 2.2 Grant Hierarchy
+**Total: 26 permissions + 1 SystemAdmin**
 
-```
-SystemAdmin (0)
-  └─ ManageGrants (1)
-      └─ ManageUsers (2)
-          └─ Configure (3)
-              └─ Edit (4)
-                  └─ Assign (5)
-                      └─ View (6)
-```
+### 2.2 Grant Rules
 
-**Inheritance:** User with `ManageGrants` automatically has `ManageUsers`, `Configure`, `Edit`, `Assign`, and `View`.
+| Rule | Behavior |
+|------|----------|
+| **Scope Hierarchy** | Project > Area > Molecule > Department > Company |
+| **CanGive Scope** | Can grant same scope or narrower (dropdown prompt) |
+| **Grant Composition** | Additive - multiple grants combine |
+| **SystemAdmin** | Single grant covers all 26 permissions (Own + Give) |
+| **Auto-Grants** | Stored as explicit grants (e.g., AssignShifts → ViewShiftCalendar) |
+| **No Enforcement** | Cross-molecule grants allowed (trust high-level admins) |
+| **Explicit Only** | No permission hierarchy - each grant is explicit |
 
-### 2.3 JobType-Scoped User Management
+### 2.3 Auto-Grant Rules
 
-`ManageUsers` action is JobType-scoped:
+**Q12 Answer: Stored as explicit grants (separate database rows)**
 
 ```csharp
-// Grant example: BR Job Director in Radio Company
-Grant
+private static readonly Dictionary<GrantPermission, GrantPermission> AutoGrants = new()
 {
-    UserId = 42,
-    ScopeType = ScopeType.Company,
-    ScopeId = 1,  // Radio Company
-    JobTypeId = 1,  // BR JobType
-    Action = GrantAction.ManageUsers
-}
+    { GrantPermission.AssignShifts, GrantPermission.ViewShiftCalendar },
+    { GrantPermission.AssignChores, GrantPermission.ViewChoreCalendar },
+    { GrantPermission.AssignDuties, GrantPermission.ViewDutyCalendar },
+    { GrantPermission.ApproveVacations, GrantPermission.ViewVacationCalendar },
+    { GrantPermission.EditUsers, GrantPermission.ViewUsers },
+    { GrantPermission.ManageGrants, GrantPermission.ViewUsers }
+};
 
-// This user can:
-// ✅ Create/edit/delete users with PrimaryJobTypeId = 1 (BR) in Radio Company
-// ❌ Cannot manage users with PrimaryJobTypeId = 2 (Producer)
-// ❌ Cannot manage users with PrimaryJobTypeId = 3 (Hakam)
-```
-
-### 2.4 Grant Examples
-
-```csharp
-// Example 1: Area Admin (full area control)
-new Grant
+// When granting AssignShifts, automatically create ViewShiftCalendar grant
+public async Task CreateGrantWithAutoGrantsAsync(Grant primaryGrant)
 {
-    UserId = 1,
-    ScopeType = ScopeType.Area,
-    ScopeId = 1,  // Area 190
-    JobTypeId = null,  // All JobTypes
-    Action = GrantAction.Configure
-}
-// Can configure all departments/molecules/companies in Area 190
+    _db.Grants.Add(primaryGrant);
 
-// Example 2: Department Job Director (BR only)
-new Grant
-{
-    UserId = 5,
-    ScopeType = ScopeType.Department,
-    ScopeId = 1,  // Defence and Manuver
-    JobTypeId = 1,  // BR
-    Action = GrantAction.ManageUsers
-}
-// Can manage BR employees across all companies in Defence and Manuver
-
-// Example 3: Company Job Lead (BR in Radio)
-new Grant
-{
-    UserId = 10,
-    ScopeType = ScopeType.Company,
-    ScopeId = 1,  // Radio
-    JobTypeId = 1,  // BR
-    Action = GrantAction.Edit
-}
-// Can assign BR shifts in Radio Company only
-
-// Example 4: Molecule Admin
-new Grant
-{
-    UserId = 3,
-    ScopeType = ScopeType.Molecule,
-    ScopeId = 1,  // Oren
-    JobTypeId = null,  // All JobTypes
-    Action = GrantAction.Configure
-}
-// Can configure all departments/companies in Oren Molecule
-// Default manager for employees without specific Job Directors
-```
-
-### 2.5 Molecule Boundary Rule
-
-**Critical constraint:** Users cannot receive `Edit` grants outside their home Molecule.
-
-```csharp
-// Validation in Grant creation:
-public async Task<bool> ValidateGrantAsync(Grant grant)
-{
-    if (grant.Action <= GrantAction.Edit)
+    // Check if auto-grant needed
+    if (AutoGrants.TryGetValue(primaryGrant.Permission, out var autoPermission))
     {
-        var user = await _db.Users.FindAsync(grant.UserId);
-        var grantMoleculeId = await GetMoleculeIdForScope(grant.ScopeType, grant.ScopeId);
-
-        if (user.MoleculeId != grantMoleculeId)
+        var autoGrant = new Grant
         {
-            return false; // Cannot grant Edit outside user's Molecule
-        }
+            UserId = primaryGrant.UserId,
+            ProjectId = primaryGrant.ProjectId,
+            AreaId = primaryGrant.AreaId,
+            MoleculeId = primaryGrant.MoleculeId,
+            DepartmentId = primaryGrant.DepartmentId,
+            CompanyId = primaryGrant.CompanyId,
+            JobTypeId = primaryGrant.JobTypeId,
+            Permission = autoPermission,
+            CanOwn = true,  // Auto-grant is always Own
+            CanGive = false,  // Auto-grant cannot delegate
+            GrantedByUserId = primaryGrant.GrantedByUserId,
+            GrantedAt = primaryGrant.GrantedAt,
+            Notes = $"Auto-granted from {primaryGrant.Permission}"
+        };
+
+        _db.Grants.Add(autoGrant);
     }
 
-    return true;
+    await _db.SaveChangesAsync();
 }
 ```
 
-**Reason:** Prevents cross-molecule interference. Users can only actively manage schedules within their own operational unit.
+### 2.4 Grant Checking Logic
+
+```csharp
+public class GrantService
+{
+    // Check if user can perform action
+    public async Task<bool> CanOwnAsync(int userId, GrantPermission permission,
+        int? projectId = null, int? areaId = null, int? moleculeId = null,
+        int? departmentId = null, int? companyId = null, int? jobTypeId = null)
+    {
+        // ✅ SPECIAL CASE: SystemAdmin covers everything
+        var hasSystemAdmin = await _db.Grants
+            .AnyAsync(g => g.UserId == userId
+                && g.Permission == GrantPermission.SystemAdmin
+                && g.CanOwn);
+        if (hasSystemAdmin) return true;
+
+        // Regular grant check
+        var grants = await _db.Grants
+            .Where(g => g.UserId == userId && g.Permission == permission && g.CanOwn)
+            .ToListAsync();
+
+        foreach (var grant in grants)
+        {
+            if (GrantCoversScope(grant, projectId, areaId, moleculeId, departmentId, companyId, jobTypeId))
+                return true;
+        }
+
+        return false;
+    }
+
+    // Check if user can grant permission to others
+    public async Task<bool> CanGiveAsync(int userId, GrantPermission permission,
+        int? projectId = null, int? areaId = null, int? moleculeId = null,
+        int? departmentId = null, int? companyId = null, int? jobTypeId = null)
+    {
+        // ✅ SPECIAL CASE: SystemAdmin can grant everything
+        var hasSystemAdmin = await _db.Grants
+            .AnyAsync(g => g.UserId == userId
+                && g.Permission == GrantPermission.SystemAdmin
+                && g.CanGive);
+        if (hasSystemAdmin) return true;
+
+        // Regular grant check
+        var grants = await _db.Grants
+            .Where(g => g.UserId == userId && g.Permission == permission && g.CanGive)
+            .ToListAsync();
+
+        foreach (var grant in grants)
+        {
+            if (GrantCoversScope(grant, projectId, areaId, moleculeId, departmentId, companyId, jobTypeId))
+                return true;
+        }
+
+        return false;
+    }
+
+    // Check if grant covers requested scope
+    private bool GrantCoversScope(Grant grant,
+        int? projectId, int? areaId, int? moleculeId,
+        int? departmentId, int? companyId, int? jobTypeId)
+    {
+        // Project-level grant covers everything
+        if (grant.ProjectId.HasValue)
+            return true;
+
+        // Area-level grant covers areas and below
+        if (grant.AreaId.HasValue)
+        {
+            if (areaId.HasValue && grant.AreaId != areaId) return false;
+            if (moleculeId.HasValue && !IsInArea(moleculeId.Value, grant.AreaId.Value)) return false;
+            // ... check department/company too
+        }
+
+        // Similar logic for Molecule, Department, Company levels
+
+        // JobType filter (cross-scope)
+        if (grant.JobTypeId.HasValue && jobTypeId.HasValue && grant.JobTypeId != jobTypeId)
+            return false;
+
+        return true;
+    }
+}
+```
+
+### 2.5 Example Grants
+
+**Employee (BR at North Company):**
+```csharp
+new Grant { UserId = emp.Id, Permission = GrantPermission.ViewShiftCalendar, CompanyId = northId, JobTypeId = brId, CanOwn = true, CanGive = false }
+new Grant { UserId = emp.Id, Permission = GrantPermission.ViewChoreCalendar, MoleculeId = orenId, CanOwn = true, CanGive = false }
+new Grant { UserId = emp.Id, Permission = GrantPermission.ViewDutyCalendar, MoleculeId = orenId, CanOwn = true, CanGive = false }
+new Grant { UserId = emp.Id, Permission = GrantPermission.ViewVacationCalendar, CompanyId = northId, JobTypeId = brId, CanOwn = true, CanGive = false }
+new Grant { UserId = emp.Id, Permission = GrantPermission.ViewUsers, CompanyId = northId, CanOwn = true, CanGive = false }
+```
+**Total: ~5 grants**
+
+**Company Job Lead (BR Lead at North):**
+```csharp
+// Shifts: Department-wide
+new Grant { UserId = lead.Id, Permission = GrantPermission.AssignShifts, DepartmentId = defenceId, JobTypeId = brId, CanOwn = true, CanGive = true }
+new Grant { UserId = lead.Id, Permission = GrantPermission.ViewShiftCalendar, DepartmentId = defenceId, JobTypeId = brId, CanOwn = true, CanGive = false } // Auto-grant
+
+// Chores: Molecule-wide
+new Grant { UserId = lead.Id, Permission = GrantPermission.AssignChores, MoleculeId = orenId, CanOwn = true, CanGive = true }
+
+// Vacations: Company-only
+new Grant { UserId = lead.Id, Permission = GrantPermission.ApproveVacations, CompanyId = northId, JobTypeId = brId, CanOwn = true, CanGive = true }
+
+// User Management: Company-only
+new Grant { UserId = lead.Id, Permission = GrantPermission.CreateUsers, CompanyId = northId, JobTypeId = brId, CanOwn = true, CanGive = true }
+new Grant { UserId = lead.Id, Permission = GrantPermission.EditUsers, CompanyId = northId, JobTypeId = brId, CanOwn = true, CanGive = true }
+
+// Configuration: Department-scoped
+new Grant { UserId = lead.Id, Permission = GrantPermission.ManageBlueprints, DepartmentId = defenceId, CanOwn = true, CanGive = true }
+new Grant { UserId = lead.Id, Permission = GrantPermission.ManagePrograms, DepartmentId = defenceId, CanOwn = true, CanGive = true }
+new Grant { UserId = lead.Id, Permission = GrantPermission.EditSettings, CompanyId = northId, CanOwn = true, CanGive = true }
+
+// Grants: Company-only
+new Grant { UserId = lead.Id, Permission = GrantPermission.ManageGrants, CompanyId = northId, JobTypeId = brId, CanOwn = true, CanGive = true }
+```
+**Total: ~22 grants** (demonstrates mixed scopes)
+
+**Owner (SystemAdmin):**
+```csharp
+// ✅ SINGLE GRANT covers all 26 permissions
+new Grant
+{
+    UserId = owner.Id,
+    Permission = GrantPermission.SystemAdmin,
+    ProjectId = shiftyId,
+    CanOwn = true,
+    CanGive = true
+}
+```
+**Total: 1 grant**
 
 ---
 
-## 3. JobType Entity
+## 3. JobType Entity & Hat Switching
 
 ### 3.1 JobType Model
 
@@ -415,16 +528,15 @@ public class JobType
     public ManagementPattern ManagementPattern { get; set; }
     public bool IsOnCallBased { get; set; }
     public string? Color { get; set; }  // For UI badges
-    public string? CertificationsJson { get; set; }  // Future: required certs
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public int CreatedBy { get; set; }
 
     // Navigation
     public Department Department { get; set; } = null!;
-    public List<AppUser> Users { get; set; } = new();
+    public List<AppUser> PrimaryUsers { get; set; } = new();  // Users with this as PrimaryJobType
+    public List<UserJobType> Users { get; set; } = new();     // All users with this JobType
     public List<Grant> Grants { get; set; } = new();
-    public List<ShiftTypeJobTypeAssignment> AssignedShiftTypes { get; set; } = new();
 }
 
 public enum ManagementPattern
@@ -434,92 +546,188 @@ public enum ManagementPattern
 }
 ```
 
-### 3.2 ManagementPattern Explained
+### 3.2 Hat Switching System
 
-**Hierarchical (BR, Producer):**
-```
-Department Job Director (ManageUsers at Department scope)
-  └─ Company Job Lead (Edit at Company scope)
-      └─ Employees
-```
+**Q14 Answers:**
+- Q14a: A (Primary + Secondary JobTypes)
+- Q14b: A (Filter by JobType when assigning)
+- Q14c: A (User switches hats - acts in one JobType at a time)
 
-**DirectDepartment (Hakam):**
-```
-Department Job Director (ManageUsers at Department scope)
-  └─ Employees (no intermediate Company Leads)
-```
-
-However, Hakam employees can report to another JobType's Company Job Lead via `CompanyJobTypeManager` configuration.
-
-### 3.3 Cross-JobType Reporting (CompanyJobTypeManager)
+**Q6 Answer: A (Hat switching is UI filter only, not permission filter)**
 
 ```csharp
-public class CompanyJobTypeManager
+// User model includes Primary JobType
+public class AppUser
 {
-    public int Id { get; set; }
-    public int CompanyId { get; set; }
-    public int JobTypeId { get; set; }           // Delegated JobType (e.g., Hakam)
-    public int ManagerJobTypeId { get; set; }    // Managing JobType (e.g., BR)
-    public int ConfiguredBy { get; set; }
-    public DateTime ConfiguredAt { get; set; }
-
-    // Navigation
-    public Company Company { get; set; } = null!;
-    public JobType JobType { get; set; } = null!;
-    public JobType ManagerJobType { get; set; } = null!;
+    public int PrimaryJobTypeId { get; set; }  // REQUIRED
+    public JobType PrimaryJobType { get; set; } = null!;
+    public List<UserJobType> JobTypes { get; set; } = new();  // Many-to-many
 }
 
-// Example: Hakam employees in Radio report to BR Job Lead in Radio
-new CompanyJobTypeManager
+// ActiveJobTypeId stored in Session (Q9 Answer: Session, not Claims)
+HttpContext.Session.SetInt32("ActiveJobTypeId", user.PrimaryJobTypeId);  // Default to primary
+
+// Hat switching endpoint
+public async Task<IActionResult> OnPostSwitchJobTypeAsync(int jobTypeId)
 {
-    CompanyId = 1,  // Radio
-    JobTypeId = 3,  // Hakam
-    ManagerJobTypeId = 1,  // BR
-    ConfiguredBy = moleculeAdminId
+    // Verify user has this JobType
+    var hasJobType = await _db.UserJobTypes
+        .AnyAsync(ujt => ujt.UserId == CurrentUserId && ujt.JobTypeId == jobTypeId);
+
+    if (!hasJobType) return Forbid();
+
+    HttpContext.Session.SetInt32("ActiveJobTypeId", jobTypeId);
+    return Ok();
 }
 
-// Result: BR Job Lead in Radio can manage Hakam employees' schedules
+// UI: Top navigation hat selector
+var activeJobTypeId = HttpContext.Session.GetInt32("ActiveJobTypeId") ?? User.PrimaryJobTypeId;
 ```
 
-### 3.4 Seed JobTypes
-
+**Hat switching affects UI filtering, NOT permissions:**
 ```csharp
-new JobType { Name = "BR", DisplayName = "ב\"ר", ManagementPattern = Hierarchical, IsOnCallBased = false, Color = "#1565C0" }
-new JobType { Name = "Producer", DisplayName = "אלחוטן", ManagementPattern = Hierarchical, IsOnCallBased = false, Color = "#00695C" }
-new JobType { Name = "Hakam", DisplayName = "חק\"מ", ManagementPattern = DirectDepartment, IsOnCallBased = true, Color = "#E65100" }
+// Calendar page - UI filtering
+public async Task OnGetAsync()
+{
+    var activeJobTypeId = HttpContext.Session.GetInt32("ActiveJobTypeId") ?? User.PrimaryJobTypeId;
+
+    // ✅ Filter shifts DISPLAYED by active hat
+    Shifts = await _db.ShiftInstances
+        .Include(si => si.ShiftType)
+        .Where(si => si.ShiftType.JobTypeId == activeJobTypeId)  // UI filter
+        .ToListAsync();
+}
+
+// Assignment action - Permission check IGNORES ActiveJobTypeId
+public async Task<IActionResult> OnPostAssignShiftAsync(int shiftInstanceId, int userId)
+{
+    // ✅ Check grant WITHOUT filtering by ActiveJobTypeId
+    // User can assign ANY JobType they have grants for (even while wearing different hat)
+    var canAssign = await _grantService.CanOwnAsync(
+        userId: CurrentUserId,
+        permission: GrantPermission.AssignShifts,
+        departmentId: shiftInstance.ShiftType.DepartmentId
+        // ❌ NOT filtering by jobTypeId - user can assign any JobType they have grants for
+    );
+
+    if (!canAssign) return Forbid();
+
+    shiftInstance.AssignedToUserId = userId;
+    await _db.SaveChangesAsync();
+    return Ok();
+}
+```
+
+**UI Example:**
+```html
+<div class="user-context">
+    <span>Acting as:</span>
+    <select id="activeJobType" onchange="switchJobType(this.value)">
+        <option value="1" selected>🎖️ BR (Primary)</option>
+        <option value="2">📻 Producer</option>
+    </select>
+</div>
 ```
 
 ---
 
 ## 4. Duty System
 
-### 4.1 DutyRole Model (Replaces OnDutyType)
+### 4.1 DutyRole Model - Molecule-Scoped
+
+**Q8 Answer: B (Molecule-scoped)**
 
 ```csharp
 public class DutyRole
 {
     public int Id { get; set; }
+    public int MoleculeId { get; set; }  // ✅ Molecule-scoped
+
     public string Name { get; set; } = string.Empty;  // "On-Duty Lead", "Hakam On-Call"
     public string DisplayName { get; set; } = string.Empty;
-    public int? JobTypeId { get; set; }  // null = all jobs (On-Duty Lead), set = job-specific (Hakam On-Call)
+    public int? JobTypeId { get; set; }  // null = all jobs, set = job-specific
     public bool RequiresTimeBlocks { get; set; }  // false = all-day, true = time-specific
     public TimeOnly? DefaultStartTime { get; set; }
     public TimeOnly? DefaultEndTime { get; set; }
-    public string? EligibilityRuleJson { get; set; }  // {"MinimumRank": "Officer", "MinimumGrantLevel": "Department"}
-    public ScopeType DefaultScope { get; set; }  // Molecule
+    public string? EligibilityRuleJson { get; set; }
+    public bool RequiresOfficerRank { get; set; }
     public string? Color { get; set; }
-    public string? Icon { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public int CreatedBy { get; set; }
 
     // Navigation
+    public Molecule Molecule { get; set; } = null!;
     public JobType? JobType { get; set; }
     public List<DutyAssignment> Assignments { get; set; } = new();
+    public List<DutyProgram> Programs { get; set; } = new();  // ✅ NEW
 }
 ```
 
-### 4.2 DutyAssignment Model (Unified)
+### 4.2 DutyProgram Model - Molecule-Scoped
+
+**Q1 Correction: DutyProgram is Molecule-scoped (NOT Department-scoped like ShiftProgram)**
+
+**Q5 Answer: A (Create DutyProgram for automatic rotation)**
+**Q7c Answer: YES (DutyCalendar supports Programs)**
+
+```csharp
+public class DutyProgram
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }       // ✅ Molecule-scoped (different from ShiftProgram)
+    public int DutyRoleId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DutyProgramFrequency Frequency { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+
+    // Navigation
+    public Molecule Molecule { get; set; } = null!;
+    public DutyRole DutyRole { get; set; } = null!;
+    public List<DutyProgramItem> Items { get; set; } = new();
+}
+
+public class DutyProgramItem
+{
+    public int Id { get; set; }
+    public int DutyProgramId { get; set; }
+    public int Order { get; set; }        // Rotation order (1, 2, 3...)
+    public int UserId { get; set; }       // Who is assigned in this rotation slot
+
+    public DutyProgram DutyProgram { get; set; } = null!;
+    public User User { get; set; } = null!;
+}
+
+public enum DutyProgramFrequency
+{
+    Daily,
+    Weekly,
+    Biweekly,
+    Monthly
+}
+```
+
+**Example:**
+```csharp
+// Hakam On-Call weekly rotation for Oren Molecule
+new DutyProgram
+{
+    MoleculeId = orenId,
+    DutyRoleId = hakamOnCallId,
+    Name = "Hakam Weekly Rotation",
+    Frequency = DutyProgramFrequency.Weekly,
+    Items = new List<DutyProgramItem>
+    {
+        new() { Order = 1, UserId = userA.Id },  // Week 1
+        new() { Order = 2, UserId = userB.Id },  // Week 2
+        new() { Order = 3, UserId = userC.Id }   // Week 3 (cycles back to userA)
+    }
+}
+```
+
+### 4.3 DutyAssignment Model
 
 ```csharp
 public class DutyAssignment
@@ -527,18 +735,12 @@ public class DutyAssignment
     public int Id { get; set; }
     public int DutyRoleId { get; set; }
     public int UserId { get; set; }
-
-    // Scope
-    public ScopeType ScopeType { get; set; }
-    public int ScopeId { get; set; }
+    public int? BackupUserId { get; set; }
 
     // Date & Time
     public DateOnly Date { get; set; }
-    public TimeOnly? StartTime { get; set; }  // null if DutyRole.RequiresTimeBlocks = false
+    public TimeOnly? StartTime { get; set; }  // null if RequiresTimeBlocks = false
     public TimeOnly? EndTime { get; set; }
-
-    // Backup
-    public int? BackupUserId { get; set; }
 
     // Audit
     public int CreatedBy { get; set; }
@@ -553,144 +755,34 @@ public class DutyAssignment
 }
 ```
 
-### 4.3 Responsibility vs Coverage Duties
+### 4.4 Responsibility vs Coverage Duties
 
-**Responsibility Duties (all-day, no time blocks):**
+**Responsibility Duties (all-day, RequiresTimeBlocks = false):**
 ```csharp
 new DutyRole
 {
+    MoleculeId = orenId,
     Name = "On-Duty Lead",
     DisplayName = "מוביל תורנות",
     JobTypeId = null,  // All JobTypes eligible
     RequiresTimeBlocks = false,  // All-day duty
-    DefaultScope = ScopeType.Molecule,
-    EligibilityRuleJson = "{\"MinimumRank\": \"SegenMishne\", \"MinimumGrantLevel\": \"Department\"}"
-}
-
-// Assignment:
-new DutyAssignment
-{
-    DutyRoleId = 1,
-    UserId = 5,
-    ScopeType = ScopeType.Molecule,
-    ScopeId = 1,  // Oren
-    Date = new DateOnly(2026, 1, 24),
-    StartTime = null,  // All-day
-    EndTime = null
+    RequiresOfficerRank = true
 }
 ```
 
-**Coverage Duties (time-specific blocks):**
+**Coverage Duties (time-specific, RequiresTimeBlocks = true):**
 ```csharp
 new DutyRole
 {
+    MoleculeId = orenId,
     Name = "Hakam On-Call",
     DisplayName = "חק\"מ בכוננות",
-    JobTypeId = 3,  // Hakam only
+    JobTypeId = hakamId,  // Hakam only
     RequiresTimeBlocks = true,  // Time-specific
     DefaultStartTime = new TimeOnly(8, 0),
-    DefaultEndTime = new TimeOnly(20, 0),
-    DefaultScope = ScopeType.Molecule
-}
-
-// Assignment:
-new DutyAssignment
-{
-    DutyRoleId = 2,
-    UserId = 10,
-    ScopeType = ScopeType.Molecule,
-    ScopeId = 1,
-    Date = new DateOnly(2026, 1, 24),
-    StartTime = new TimeOnly(8, 0),  // Coverage block
-    EndTime = new TimeOnly(20, 0)
+    DefaultEndTime = new TimeOnly(20, 0)
 }
 ```
-
-### 4.4 Officer Rank Requirement
-
-```csharp
-public enum MilitaryRank
-{
-    // Enlisted / NCO (0-8)
-    Turai = 0,              // טוראי
-    RavTurai = 1,           // רב־טוראי
-    Samal = 2,              // סמל
-    SamalRishon = 3,        // סמל ראשון
-    RavSamal = 4,           // רב־סמל
-    RavSamalRishon = 5,     // רב־סמל ראשון
-    RavSamalMitkadem = 6,   // רב־סמל מתקדם
-    RavSamalBakhir = 7,     // רב־סמל בכיר
-    RavNagad = 8,           // רב־נגד
-
-    // Commissioned Officers (9-17)
-    SegenMishne = 9,        // סגן־משנה  ← Officer rank starts here
-    Segen = 10,             // סגן
-    Seren = 11,             // סרן
-    RavSeren = 12,          // רב סרן
-    SganAluf = 13,          // סגן־אלוף
-    AlufMishne = 14,        // אלוף משנה
-    TatAluf = 15,           // תת־אלוף
-    Aluf = 16,              // אלוף
-    RavAluf = 17            // רב־אלוף
-}
-
-public static bool IsCommissionedOfficer(MilitaryRank rank)
-{
-    return rank >= MilitaryRank.SegenMishne;  // 9+
-}
-
-// Usage in DutyRole eligibility check:
-public bool IsUserEligible(AppUser user, DutyRole role)
-{
-    var rules = JsonSerializer.Deserialize<EligibilityRules>(role.EligibilityRuleJson);
-
-    // Check rank requirement
-    if (rules.MinimumRank == "Officer" && !IsCommissionedOfficer(user.Rank))
-        return false;
-
-    // Check grant level requirement
-    if (rules.MinimumGrantLevel == "Department" && !user.Grants.Any(g =>
-        g.ScopeType <= ScopeType.Department && g.Action <= GrantAction.Configure))
-        return false;
-
-    return true;
-}
-```
-
-**Important:** Rank only affects duty eligibility and future vacation rules. It does NOT affect Grant eligibility.
-
-### 4.5 DutyProgram (Manual with Programs/Blueprints Support)
-
-```csharp
-public class DutyProgram
-{
-    public int Id { get; set; }
-    public int DutyRoleId { get; set; }
-    public ScopeType ScopeType { get; set; }
-    public int ScopeId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? UserRotationJson { get; set; }  // ["UserId:5", "UserId:10", "UserId:15"]
-    public bool IsActive { get; set; } = true;
-    public DateTime CreatedAt { get; set; }
-    public int CreatedBy { get; set; }
-
-    // Navigation
-    public DutyRole DutyRole { get; set; } = null!;
-}
-
-// Example: On-Duty Lead rotation for Oren Molecule
-new DutyProgram
-{
-    DutyRoleId = 1,
-    ScopeType = ScopeType.Molecule,
-    ScopeId = 1,
-    Name = "Oren Lead Rotation",
-    UserRotationJson = "[5, 10, 15, 20]",  // 4 officers rotate
-    IsActive = true
-}
-```
-
-**No DutyMasterProgram initially (YAGNI)** - just DutyProgram with rotation list.
 
 ---
 
@@ -698,14 +790,20 @@ new DutyProgram
 
 ### 5.1 ShiftType (Blueprints) - Department-Scoped
 
+**Q1 Clarification:** Blueprints/Programs/MasterPrograms are **DEPARTMENT-scoped** (not Molecule).
+
+**Q3 Answer: REQUIRED** - CompanyId and JobTypeId are REQUIRED fields (not nullable).
+
 ```csharp
-public class ShiftType
+public class ShiftType  // Blueprint
 {
     public int Id { get; set; }
-    public int DepartmentId { get; set; }  // Changed from CompanyId
+    public int DepartmentId { get; set; }  // ✅ PRIMARY SCOPE: Department
+    public int CompanyId { get; set; }     // ✅ REQUIRED (not nullable)
+    public int JobTypeId { get; set; }     // ✅ REQUIRED (not nullable)
+
     public string Key { get; set; } = string.Empty;
-    public string? CustomName { get; set; }
-    public string? NameKey { get; set; }
+    public string NameKey { get; set; } = string.Empty;  // Localization key
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; }
     public bool IsActive { get; set; } = true;
@@ -714,179 +812,275 @@ public class ShiftType
 
     // Navigation
     public Department Department { get; set; } = null!;
-    public List<ShiftTypeJobTypeAssignment> AssignedJobTypes { get; set; } = new();
-}
-```
-
-### 5.2 ShiftTypeJobTypeAssignment (Many-to-Many)
-
-```csharp
-public class ShiftTypeJobTypeAssignment
-{
-    public int Id { get; set; }
-    public int ShiftTypeId { get; set; }
-    public int JobTypeId { get; set; }
-    public bool IsActive { get; set; } = true;
-    public DateTime AssignedAt { get; set; }
-    public int AssignedBy { get; set; }
-
-    // Navigation
-    public ShiftType ShiftType { get; set; } = null!;
+    public Company Company { get; set; } = null!;
     public JobType JobType { get; set; } = null!;
+    public List<ShiftInstance> ShiftInstances { get; set; } = new();
 }
 ```
 
-### 5.3 Blueprint Creation Rules
-
-**Rule 1: Must select at least one JobType**
+**Example Blueprint:**
 ```csharp
-// UI validation:
-if (selectedJobTypeIds.Count == 0)
+new ShiftType
 {
-    Error = "You must select at least one JobType for this blueprint";
-    return Page();
+    DepartmentId = defenceId,
+    CompanyId = northId,      // REQUIRED: "North"
+    JobTypeId = producerId,   // REQUIRED: "Producer"
+    Key = "MORNING_NORTH_PRODUCER",
+    NameKey = "ShiftType_MORNING_NORTH_PRODUCER_Name",  // "Morning - North Defence - Producer" / "בוקר - הגנה צפון - אלחוטן"
+    Start = new TimeOnly(8, 0),
+    End = new TimeOnly(16, 0)
 }
 ```
 
-**Rule 2: No auto-assignment**
-- User sees unchecked checkboxes for all JobTypes in Department
-- Must manually check which jobs can use this shift
+**No generic blueprints** - every blueprint MUST have both CompanyId AND JobTypeId.
 
-**UI:**
-```
-Create Shift Blueprint - Defence and Manuver
-─────────────────────────────────────────────
-
-Shift Name (EN): Morning Shift
-Shift Name (HE): משמרת בוקר
-Start Time: [08:00]
-End Time: [16:00]
-
-Apply to JobTypes: *
-[ ] BR (ב"ר)
-[ ] Producer (אלחוטן)
-[ ] Hakam (חק"מ)
-
-⚠️ You must select at least one JobType
-
-[Create]  [Cancel]
-```
-
-### 5.4 JobType Creation - Optional Shift Assignment
-
-```
-Create New JobType
-──────────────────────────────────────
-
-Step 1: Basic Information
-  Name (EN): Analyst
-  Name (HE): מנתח
-  Management Pattern: ● Hierarchical  ○ DirectDepartment
-  On-Call Based: [ ]
-
-[Next: Assign to Shifts →]
-
-──────────────────────────────────────
-
-Step 2: Assign to Existing Shift Blueprints (Optional)
-
-Which shifts should Analyst employees work?
-
-[ ] Morning Shift (08:00-16:00)
-    Currently used by: BR, Producer
-
-[ ] Afternoon Shift (16:00-00:00)
-    Currently used by: BR, Producer
-
-ℹ️ You can skip this and assign shifts later
-
-[Create JobType]  [← Back]
-```
-
-**No auto-assignment:** New JobType does NOT automatically get all Blueprints. User assigns manually.
-
-### 5.5 ShiftProgram - JobType-Scoped
+### 5.2 ShiftProgram - Department-Scoped
 
 ```csharp
 public class ShiftProgram
 {
     public int Id { get; set; }
-    public int JobTypeId { get; set; }  // NEW: JobType-specific programs
-    public int CompanyId { get; set; }  // Still company-scoped for instance
+    public int DepartmentId { get; set; }  // ✅ Department-scoped
     public string Name { get; set; } = string.Empty;
-    public string? ProgramDataJson { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public int CreatedBy { get; set; }
 
     // Navigation
-    public JobType JobType { get; set; } = null!;
+    public Department Department { get; set; } = null!;
+    public List<ShiftProgramItem> Items { get; set; } = new();
+}
+
+public class ShiftProgramItem
+{
+    public int Id { get; set; }
+    public int ShiftProgramId { get; set; }
+    public int ShiftTypeId { get; set; }  // References Blueprint
+    public DayOfWeek DayOfWeek { get; set; }
+    public int Quantity { get; set; }  // How many instances of this shift on this day
+
+    public ShiftProgram ShiftProgram { get; set; } = null!;
+    public ShiftType ShiftType { get; set; } = null!;
+}
+```
+
+### 5.3 MasterProgram - Department-Scoped
+
+**Q16 Answer: Department-scoped (same as Programs/Blueprints)**
+
+```csharp
+public class MasterProgram
+{
+    public int Id { get; set; }
+    public int DepartmentId { get; set; }  // ✅ Department-scoped
+    public string Name { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+
+    // Navigation
+    public Department Department { get; set; } = null!;
+    public List<MasterProgramItem> Items { get; set; } = new();
+}
+```
+
+### 5.4 Cascade Deletion Rules
+
+**Q6 Answer: C (Allow deletion, auto-remove from Programs - cascade)**
+**Q5 Answer: Delete ShiftInstances too (CASCADE DELETE)**
+**Q10 Answer: YES (Delete ProgramItems entirely, not set to NULL)**
+
+```csharp
+// In AppDbContext.OnModelCreating
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // ✅ CASCADE DELETE: Deleting Blueprint deletes all ShiftInstances
+    modelBuilder.Entity<ShiftInstance>()
+        .HasOne(si => si.ShiftType)
+        .WithMany(st => st.ShiftInstances)
+        .HasForeignKey(si => si.ShiftTypeId)
+        .OnDelete(DeleteBehavior.Cascade);  // ✅ Delete instances
+
+    // ✅ CASCADE DELETE: Deleting Blueprint deletes all ProgramItems
+    modelBuilder.Entity<ShiftProgramItem>()
+        .HasOne(spi => spi.ShiftType)
+        .WithMany()
+        .HasForeignKey(spi => spi.ShiftTypeId)
+        .OnDelete(DeleteBehavior.Cascade);  // ✅ Delete program items
+}
+```
+
+**Deletion Flow:**
+```csharp
+public async Task<IActionResult> OnPostDeleteBlueprintAsync(int shiftTypeId, bool confirmed)
+{
+    if (!confirmed)
+    {
+        // Show confirmation modal
+        var instanceCount = await _db.ShiftInstances.CountAsync(si => si.ShiftTypeId == shiftTypeId);
+        var programItemCount = await _db.ShiftProgramItems.CountAsync(spi => spi.ShiftTypeId == shiftTypeId);
+
+        return new JsonResult(new
+        {
+            requiresConfirmation = true,
+            message = $"This will DELETE {instanceCount} shift assignments and remove from {programItemCount} programs. Continue?",
+            instanceCount,
+            programItemCount
+        });
+    }
+
+    var shiftType = await _db.ShiftTypes.FindAsync(shiftTypeId);
+
+    // ✅ EF Core cascades automatically - both ShiftInstances AND ProgramItems deleted
+    _db.ShiftTypes.Remove(shiftType);
+    await _db.SaveChangesAsync();
+
+    return RedirectToPage(new { success = "Blueprint deleted (cascade deleted instances and program items)" });
+}
+```
+
+---
+
+## 6. Settings System
+
+### 6.1 Department Defaults + Company Overrides
+
+**Q2 Answer: B (Department defaults + Company overrides)**
+
+```csharp
+public class DepartmentSettings
+{
+    public int Id { get; set; }
+    public int DepartmentId { get; set; }
+
+    // Department-wide defaults
+    public int DefaultRestHours { get; set; } = 11;
+    public int DefaultWeeklyCap { get; set; } = 60;
+
+    public Department Department { get; set; } = null!;
+}
+
+public class CompanySettings
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+
+    // Optional company-specific overrides (NULL = use department default)
+    public int? RestHoursOverride { get; set; }
+    public int? WeeklyCapOverride { get; set; }
+
     public Company Company { get; set; } = null!;
 }
+```
 
-// Example: BR rotation in Radio Company
-new ShiftProgram
+### 6.2 Settings Service
+
+```csharp
+public class SettingsService
 {
-    JobTypeId = 1,  // BR
-    CompanyId = 1,  // Radio
-    Name = "BR Standard Rotation",
-    ProgramDataJson = "..." // Monday: 2× Morning, 1× Afternoon, etc.
+    public async Task<int> GetRestHoursAsync(int companyId)
+    {
+        var company = await _db.Companies
+            .Include(c => c.Settings)
+            .Include(c => c.Department.Settings)
+            .FirstAsync(c => c.Id == companyId);
+
+        // Company override takes precedence
+        if (company.Settings?.RestHoursOverride.HasValue == true)
+            return company.Settings.RestHoursOverride.Value;
+
+        // Otherwise use department default
+        return company.Department.Settings.DefaultRestHours;
+    }
+
+    public async Task<int> GetWeeklyCapAsync(int companyId)
+    {
+        var company = await _db.Companies
+            .Include(c => c.Settings)
+            .Include(c => c.Department.Settings)
+            .FirstAsync(c => c.Id == companyId);
+
+        if (company.Settings?.WeeklyCapOverride.HasValue == true)
+            return company.Settings.WeeklyCapOverride.Value;
+
+        return company.Department.Settings.DefaultWeeklyCap;
+    }
 }
 ```
 
-When creating a Program for BR, user only sees Blueprints that have BR checked in `ShiftTypeJobTypeAssignment`.
+### 6.3 Settings UI
+
+**Department Director sees:**
+```
+Department Settings - Defence Department
+────────────────────────────────────────
+Default Rest Hours:  [11] hours
+Default Weekly Cap:  [60] hours
+
+[Save Department Defaults]
+```
+
+**Company Job Lead sees:**
+```
+Company Settings - North Company
+────────────────────────────────────────
+Rest Hours:  ● Use department default (11 hours)
+             ○ Override: [__] hours
+
+Weekly Cap:  ● Use department default (60 hours)
+             ○ Override: [__] hours
+
+[Save Company Settings]
+```
 
 ---
 
-## 6. Calendar System
+## 7. Calendar System
 
-### 6.1 Calendar Naming Pattern
+### 7.1 Calendar Scoping
 
-**Format:** `Scope + JobType`
+**Q7a Answer: A (VacationCalendar = Company + JobType)**
+**Q7b Answer: NO (ChoreCalendar does NOT support Programs)**
+**Q7c Answer: YES (DutyCalendar supports Programs)**
 
-Examples:
-- "Radio — BR" (Company Job Calendar)
-- "Defence Dept — BR" (Department Job Rollup Calendar)
-- "Oren — On-Duty Leads" (Molecule Duty Calendar)
+| Calendar Type | Scope | Supports Programs | Notes |
+|---------------|-------|-------------------|-------|
+| **Shift Calendar** | Department + JobType | YES (ShiftProgram) | Department-scoped blueprints |
+| **Chore Calendar** | Molecule | ❌ NO | Manual assignment only |
+| **Duty Calendar** | Molecule | ✅ YES (DutyProgram) | Automatic rotation |
+| **Vacation Calendar** | Company + JobType | N/A | Shows approved vacations |
 
-### 6.2 Calendar Sidebar Navigation
+### 7.2 Chore Model - Molecule-Scoped
 
+**Q10 Answer: A (No CompanyId filter - truly Molecule-wide)**
+
+```csharp
+public class Chore
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }  // ✅ Molecule-scoped (no CompanyId filter)
+
+    public string Name { get; set; } = string.Empty;
+    public DateOnly Date { get; set; }
+    public int? AssignedToUserId { get; set; }
+
+    // Audit
+    public int CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    // Navigation
+    public Molecule Molecule { get; set; } = null!;
+    public User? AssignedToUser { get; set; }
+}
 ```
-📅 Scheduling
 
-Calendars:
-  ├─ 📊 Radio — BR (Company Calendar)
-  ├─ 📊 Radio — Producer
-  ├─ 📊 Radio — Hakam
-  ├─ 📋 Defence Dept — BR (Department Rollup)
-  ├─ 🎯 Oren — On-Duty Leads (Molecule Duties)
-  └─ 🏖️ My Shifts (Personal Calendar)
-
-Filters:
-  ├─ Circle (Team/Friend Filter)
-  ├─ Shift Types
-  ├─ Chores
-  └─ Vacations
-```
-
-**Collapsible sections:**
-- "Company Calendars" (expand to show Radio—BR, Radio—Producer, etc.)
-- "Department Rollups"
-- "Duties"
-
-### 6.3 Circle Functionality
-
-**Dual implementation:**
-1. **Dedicated Circle page** (`/Circle/Index`) - Manage friend list
-2. **Calendar filter toggle** - Show/hide non-Circle members in calendar
-
-User can add teammates to "Circle" (friends list), then toggle calendar filter to focus on Circle members only.
+**No company filtering** - chores are truly molecule-wide.
 
 ---
 
-## 7. Smart Task System
+## 8. Smart Task System
 
-### 7.1 Task Model
+(No changes from original design - retained for completeness)
 
 ```csharp
 public class Task
@@ -899,205 +1093,84 @@ public class Task
     // Auto-suggested candidate
     public int? SuggestedUserId { get; set; }
     public string? SuggestionReason { get; set; }
-    public string? AlternativeCandidatesJson { get; set; }  // Ranked list with scores
+    public string? AlternativeCandidatesJson { get; set; }
 
     // Grant details (for grant-creation tasks)
-    public ScopeType? ScopeType { get; set; }
-    public int? ScopeId { get; set; }
+    public int? DepartmentId { get; set; }
+    public int? CompanyId { get; set; }
     public int? JobTypeId { get; set; }
-    public GrantAction? Action { get; set; }
+    public GrantPermission? Permission { get; set; }
+    public bool? CanOwn { get; set; }
+    public bool? CanGive { get; set; }
 
     // Task assignment
     public int AssignedTo { get; set; }
     public TaskStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
-
-    // Navigation
-    public AppUser? SuggestedUser { get; set; }
-    public AppUser AssignedToUser { get; set; } = null!;
 }
 
 public enum TaskType
 {
-    AssignMoleculeAdmin,      // Find Molecule Admin
-    ConfigureJobTypes,        // Set up Department JobTypes
-    AssignJobDirector,        // Find Department Job Director
-    AssignJobLead,            // Find Company Job Lead
-    ConfigureCompanyJobTypeManager,  // Set up cross-JobType reporting
-    SetupDutyPrograms         // Create duty rotations
+    AssignMoleculeAdmin,
+    AssignJobDirector,
+    AssignJobLead,
+    SetupDutyPrograms
 }
-
-public enum TaskStatus
-{
-    Pending,      // Awaiting action
-    Approved,     // Accepted auto-suggestion
-    Modified,     // User picked alternative candidate
-    Rejected      // User dismissed task
-}
-```
-
-### 7.2 Candidate Scoring Algorithm
-
-```csharp
-public class CandidateScore
-{
-    public int UserId { get; set; }
-    public string UserName { get; set; } = string.Empty;
-    public int TotalScore { get; set; }
-    public Dictionary<string, int> ScoreBreakdown { get; set; } = new();
-}
-
-public async Task<List<CandidateScore>> ScoreCandidatesAsync(
-    TaskType taskType,
-    ScopeType scopeType,
-    int scopeId,
-    int? jobTypeId = null)
-{
-    var candidates = await GetEligibleCandidatesAsync(scopeType, scopeId, jobTypeId);
-    var scores = new List<CandidateScore>();
-
-    foreach (var candidate in candidates)
-    {
-        var score = new CandidateScore { UserId = candidate.Id, UserName = candidate.FullName };
-
-        // +30 points: Primary JobType match (if JobType-scoped task)
-        if (jobTypeId.HasValue && candidate.PrimaryJobTypeId == jobTypeId)
-        {
-            score.ScoreBreakdown["JobType Match"] = 30;
-        }
-
-        // +25 points: Same scope (Company/Department)
-        if (candidate.CompanyId == scopeId || candidate.DepartmentId == scopeId)
-        {
-            score.ScoreBreakdown["Same Scope"] = 25;
-        }
-
-        // +20 points: No existing grants (fresh candidate, no conflicts)
-        if (!candidate.Grants.Any())
-        {
-            score.ScoreBreakdown["No Existing Grants"] = 20;
-        }
-
-        // +15 points max: Seniority (1 point per year)
-        var yearsOfService = (DateTime.UtcNow - candidate.CreatedAt).TotalDays / 365;
-        var seniorityPoints = Math.Min((int)yearsOfService, 15);
-        score.ScoreBreakdown["Seniority"] = seniorityPoints;
-
-        // +10 points: Senior officer rank (Seren+)
-        if (candidate.Rank >= MilitaryRank.Seren)
-        {
-            score.ScoreBreakdown["Senior Officer"] = 10;
-        }
-
-        score.TotalScore = score.ScoreBreakdown.Values.Sum();
-        scores.Add(score);
-    }
-
-    return scores.OrderByDescending(s => s.TotalScore).ToList();
-}
-```
-
-### 7.3 One-Click Grant Approval
-
-```csharp
-public async Task<IActionResult> OnPostApproveTaskAsync(int taskId, int? selectedUserId = null)
-{
-    var task = await _db.Tasks.FindAsync(taskId);
-    if (task == null) return NotFound();
-
-    // Use suggested user or user-selected alternative
-    var userId = selectedUserId ?? task.SuggestedUserId ?? throw new InvalidOperationException();
-
-    // Create grant based on task details
-    var grant = new Grant
-    {
-        UserId = userId,
-        ScopeType = task.ScopeType!.Value,
-        ScopeId = task.ScopeId!.Value,
-        JobTypeId = task.JobTypeId,
-        Action = task.Action!.Value,
-        GrantedBy = GetCurrentUserId(),
-        GrantedAt = DateTime.UtcNow
-    };
-
-    _db.Grants.Add(grant);
-
-    // Update task status
-    task.Status = selectedUserId.HasValue ? TaskStatus.Modified : TaskStatus.Approved;
-    task.CompletedAt = DateTime.UtcNow;
-
-    await _db.SaveChangesAsync();
-
-    return RedirectToPage("/Admin/Tasks");
-}
-```
-
-### 7.4 Task Creation Triggers
-
-```csharp
-// When new Molecule is created:
-var task = new Task
-{
-    Type = TaskType.AssignMoleculeAdmin,
-    Title = $"Assign Molecule Admin for {molecule.DisplayName}",
-    Description = $"The new Molecule '{molecule.DisplayName}' needs an admin to manage its configuration.",
-    ScopeType = ScopeType.Molecule,
-    ScopeId = molecule.Id,
-    Action = GrantAction.Configure,
-    AssignedTo = areaAdminId  // Assign to Area Admin
-};
-
-var candidates = await ScoreCandidatesAsync(task.Type, ScopeType.Molecule, molecule.Id);
-if (candidates.Any())
-{
-    task.SuggestedUserId = candidates[0].UserId;
-    task.SuggestionReason = $"Top match: {candidates[0].UserName} (Score: {candidates[0].TotalScore})";
-    task.AlternativeCandidatesJson = JsonSerializer.Serialize(candidates.Skip(1).Take(3));
-}
-
-_db.Tasks.Add(task);
 ```
 
 ---
 
-## 8. Admin UI Organization
+## 9. Admin UI Organization
 
-### 8.1 OwnerHub Structure
+### 9.1 Owner Company Selector
 
+**Q3 Answer: A (Top navigation bar + clear indication + can access global settings while in company context)**
+
+**Q7 Answer: YES (Owner can access global settings while in Company Mode)**
+
+```html
+<nav class="top-navbar">
+    <div class="navbar-brand">📊 ShiftManager</div>
+
+    <!-- ✅ Owner context (only for SystemAdmin) -->
+    @if (HasSystemAdmin)
+    {
+        <div class="owner-context">
+            <span class="context-label">Managing:</span>
+            <select class="company-selector" onchange="selectCompany(this.value)">
+                <option value="0">🌐 Global Settings</option>
+                <optgroup label="Defence Department">
+                    <option value="1" selected>North Company</option>
+                    <option value="2">Radio Company</option>
+                    <option value="3">City Company</option>
+                    <option value="4">Hir Company</option>
+                </optgroup>
+            </select>
+
+            @if (CurrentCompanyId == 0)
+            {
+                <span class="context-badge global">Global Mode</span>
+            }
+            else
+            {
+                <span class="context-badge company">
+                    Company Mode: @CurrentCompanyName
+                    <span class="global-access-note">(Global settings accessible)</span>
+                </span>
+            }
+        </div>
+    }
+
+    <div class="navbar-user"><!-- user dropdown --></div>
+</nav>
 ```
-🔧 Owner Administration
 
-🌍 Global System Configuration
-  ├─ 📧 Email Configuration (SMTP settings only)
-  ├─ 🔐 Griffin ADFS (global auth settings)
-  ├─ 🎮 Game Configuration (global game rules)
-  ├─ 🚩 Feature Flags
-  ├─ 🌐 Language Management
-  ├─ 💾 Database Console
-  ├─ 💼 Backups & Data Lifecycle
-  └─ 🏥 System Health
+**Behavior:**
+- **Global Mode (CompanyId = 0):** Owner sees only global settings pages
+- **Company Mode (CompanyId > 0):** Owner sees company data AND can still access global settings (shown in sidebar under "🌐 Global Settings" section)
 
-🏢 Multi-Company Management
-  [Company Selector Dropdown: Radio (טקטי) ▼]
-    ├─ Radio (טקטי)
-    ├─ North (צפון)
-    ├─ City (העיר)
-    └─ Hir (ח'י"ר)
-
-  Per-Selected-Company:
-    ├─ 📧 Email Templates (company-specific templates)
-    ├─ 📘 Blueprints (shift type definitions)
-    ├─ 📅 Programs (weekly schedule templates)
-    └─ 🎯 Master Programs (program compositions)
-```
-
-**Key Features:**
-- **Company Selector** prominently displayed at top of "Multi-Company Management" section
-- Clear visual separation: Global (no selector) vs Per-Company (requires selector)
-- Owner selects company via dropdown → cookie stores CompanyId → context applies to Email Templates, Blueprints, Programs, MasterPrograms
-
-### 8.2 Admin Navigation Sidebar
+### 9.2 Sidebar Navigation
 
 ```
 📅 My Shifty
@@ -1115,743 +1188,257 @@ _db.Tasks.Add(task);
   ├─ 💼 JobTypes
   └─ 🎖️ Grants
 
-📅 Scheduling
+📅 Scheduling (Q1 Answer: B - in Admin section, not Owner)
   ├─ 📘 Blueprints
   ├─ 📅 Programs
   ├─ 🎯 Master Programs
-  └─ ⚙️ Department Settings (RestHours, WeeklyCap, DutyRoles)
+  └─ ⚙️ Department Settings (RestHours, WeeklyCap)
 
 🎯 Operations
-  ├─ 📊 Scheduled Shifts (Calendar/Table)
+  ├─ 📊 Scheduled Shifts
   ├─ 🗂️ Chores
   └─ 🎯 Duties
 
 🔔 Tasks
 
-🎛️ Admin Hub (Dashboard)
-
 🔧 Owner Administration (if SystemAdmin grant)
+  🌍 Global Settings
+    ├─ 📧 Email Configuration (SMTP)
+    ├─ 🔐 Griffin ADFS
+    ├─ 🎮 Game Configuration
+    ├─ 🚩 Feature Flags
+    ├─ 🌐 Language Management
+    ├─ 💾 Database Console
+    └─ 🏥 System Health
+
+  (If in Company Mode, global settings shown here + company data above)
 ```
-
-**Key Changes:**
-1. **New "People & Structure" section:**
-   - 🏗️ Organizational Structure (manage hierarchy)
-   - 💼 JobTypes (JobType CRUD)
-   - 🎖️ Grants (grant management UI)
-
-2. **New "Scheduling" section:**
-   - Consolidates Blueprints, Programs, MasterPrograms
-   - Adds Department Settings (absorbs old Admin/Config)
-
-3. **Renamed "Day Shifts" → "Duties":**
-   - Reflects new DutyRole/DutyAssignment model
-
-4. **New "Tasks" section:**
-   - Smart task system for grant assignments
-
-5. **OwnerHub isolation:**
-   - Only visible with SystemAdmin grant
-   - No duplication of technical features in Admin sidebar
-
-### 8.3 Director Hub - Filtered View
-
-Director Hub uses same sidebar navigation, but scoped to their grants:
-- Show only Companies/Departments they have grants for
-- Hierarchy tree filtered to their scope
-- Same pages, just permission-filtered data
 
 ---
 
-## 9. Email/ADFS/Game Configuration
+## 10. Email/ADFS/Game Configuration
 
-### 9.1 Email Configuration - Global SMTP + Per-Company Templates
+(No changes from original design)
 
-#### **EmailConfig Model (Global)**
+### 10.1 Email: Global SMTP + Per-Company Templates
 
 ```csharp
-public class EmailConfig
+public class EmailConfig  // ✅ Global (no CompanyId)
 {
     public int Id { get; set; }
-    // No CompanyId - single global record
-
     public bool Enabled { get; set; }
     public string? EncryptedApiKey { get; set; }
     public string? ApiUrl { get; set; }
     public string? FromAddress { get; set; }  // Same for all companies
-
-    public DateTime LastUpdated { get; set; }
-    public string? LastUpdatedBy { get; set; }
 }
-```
 
-#### **EmailTemplate Model (Per-Company)**
-
-```csharp
-public class EmailTemplate : IBelongsToCompany
+public class EmailTemplate  // ✅ Per-Company
 {
     public int Id { get; set; }
     public int CompanyId { get; set; }
-    public string TemplateKey { get; set; } = string.Empty;  // "ShiftAssigned", "VacationApproved", etc.
+    public string TemplateKey { get; set; } = string.Empty;
     public string SubjectEn { get; set; } = string.Empty;
     public string SubjectHe { get; set; } = string.Empty;
-    public string BodyEn { get; set; } = string.Empty;  // Supports {{variables}}
+    public string BodyEn { get; set; } = string.Empty;
     public string BodyHe { get; set; } = string.Empty;
-    public bool IsActive { get; set; } = true;
-    public DateTime LastUpdated { get; set; }
-    public int LastUpdatedBy { get; set; }
-
-    public Company Company { get; set; } = null!;
 }
 ```
 
-#### **Template Keys**
+### 10.2 ADFS & Game: Global Only
 
 ```csharp
-public static class EmailTemplateKeys
-{
-    public const string SHIFT_ASSIGNED = "ShiftAssigned";
-    public const string SHIFT_REMOVED = "ShiftRemoved";
-    public const string VACATION_REQUEST_SUBMITTED = "VacationRequestSubmitted";
-    public const string VACATION_REQUEST_APPROVED = "VacationRequestApproved";
-    public const string VACATION_REQUEST_REJECTED = "VacationRequestRejected";
-    public const string SWAP_REQUEST_RECEIVED = "SwapRequestReceived";
-    public const string SWAP_REQUEST_APPROVED = "SwapRequestApproved";
-    public const string SWAP_REQUEST_REJECTED = "SwapRequestRejected";
-    public const string PASSWORD_RESET = "PasswordReset";
-    public const string WELCOME_NEW_USER = "WelcomeNewUser";
-    public const string DUTY_ASSIGNED = "DutyAssigned";
-    public const string CHORE_ASSIGNED = "ChoreAssigned";
-}
-```
-
-### 9.2 ADFS Configuration - Global Only
-
-```csharp
-public class GriffinConfig
+public class GriffinConfig  // ✅ Global (no CompanyId)
 {
     public int Id { get; set; }
-    // No CompanyId - single global record
-
     public bool Enabled { get; set; }
     public string? BaseUrl { get; set; }
     public string? TokenConsumerUrl { get; set; }
-    public bool AutoProvisionUsers { get; set; } = true;
-    public UserRole DefaultProvisionedRole { get; set; } = UserRole.Employee;
-    public int TimeoutSeconds { get; set; } = 10;
-
-    public DateTime LastUpdated { get; set; }
-    public string? LastUpdatedBy { get; set; }
+    public bool AutoProvisionUsers { get; set; }
 }
-```
 
-### 9.3 Game Configuration - Global Only
-
-```csharp
-public class GameConfig
+public class GameConfig  // ✅ Global (no CompanyId)
 {
     public int Id { get; set; }
-    // No CompanyId - single global record
-
     public bool Enabled { get; set; }
     public int GridSize { get; set; }
     public int PointsPer3Match { get; set; }
-    public int PointsPer4Match { get; set; }
-    public int PointsPer5PlusMatch { get; set; }
-    public int MegaComboMultiplier { get; set; }
-    public int MegaCombo3MatchMinLines { get; set; }
-    public int MegaCombo4MatchMinLines { get; set; }
-    public int MegaCombo5MatchMinLines { get; set; }
-    public string Milestones { get; set; } = "1000,2500,5000,7500,10000,15000,20000";
-
-    public DateTime LastUpdated { get; set; }
-    public string? LastUpdatedBy { get; set; }
-}
-```
-
-### 9.4 Configuration Summary
-
-| Configuration | Scope | Model | Notes |
-|---------------|-------|-------|-------|
-| **Email SMTP** | Global | `EmailConfig` (no CompanyId) | API URL, API Key, From Address |
-| **Email Templates** | Per-Company | `EmailTemplate` (with CompanyId) | Subject/Body in EN/HE with {{variables}} |
-| **Griffin ADFS** | Global | `GriffinConfig` (no CompanyId) | All companies use same OAuth |
-| **Game Settings** | Global | `GameConfig` (no CompanyId) | All companies use same game rules |
-
----
-
-## 10. Seed Data Structure
-
-### 10.1 appsettings.json Configuration
-
-```json
-{
-  "HierarchySeed": {
-    "Project": {
-      "Name": "Shifty",
-      "DisplayName": "שיפטי"
-    },
-    "Area": {
-      "Name": "190",
-      "DisplayName": "190"
-    },
-    "Molecules": [
-      { "Name": "Oren", "DisplayName": "אורן" }
-    ],
-    "Departments": [
-      {
-        "MoleculeName": "Oren",
-        "Name": "Defence and Manuver",
-        "DisplayName": "הגנה ותמרון"
-      }
-    ],
-    "Companies": [
-      { "DepartmentName": "Defence and Manuver", "Name": "Radio", "DisplayName": "טקטי" },
-      { "DepartmentName": "Defence and Manuver", "Name": "North", "DisplayName": "צפון" },
-      { "DepartmentName": "Defence and Manuver", "Name": "City", "DisplayName": "העיר" },
-      { "DepartmentName": "Defence and Manuver", "Name": "Hir", "DisplayName": "ח'י\"ר" }
-    ],
-    "JobTypeTemplates": [
-      {
-        "Key": "BR",
-        "NameEnglish": "BR",
-        "NameHebrew": "ב\"ר",
-        "IsOnCallBased": false,
-        "ManagementPattern": "Hierarchical",
-        "Color": "#1565C0"
-      },
-      {
-        "Key": "PRODUCER",
-        "NameEnglish": "Producer",
-        "NameHebrew": "אלחוטן",
-        "IsOnCallBased": false,
-        "ManagementPattern": "Hierarchical",
-        "Color": "#00695C"
-      },
-      {
-        "Key": "HAKAM",
-        "NameEnglish": "Hakam",
-        "NameHebrew": "חק\"מ",
-        "IsOnCallBased": true,
-        "ManagementPattern": "DirectDepartment",
-        "Color": "#E65100"
-      }
-    ],
-    "DutyRoleTemplates": [
-      {
-        "Key": "ON_DUTY_LEAD",
-        "NameEnglish": "On-Duty Lead",
-        "NameHebrew": "מוביל תורנות",
-        "RequiresTimeBlocks": false,
-        "DefaultScope": "Molecule",
-        "EligibilityRuleJson": "{\"MinimumRank\": \"Officer\", \"MinimumGrantLevel\": \"Department\"}"
-      },
-      {
-        "Key": "HAKAM_ON_CALL",
-        "NameEnglish": "Hakam On-Call",
-        "NameHebrew": "חק\"מ בכוננות",
-        "JobTypeKey": "HAKAM",
-        "RequiresTimeBlocks": true,
-        "DefaultStartTime": "08:00",
-        "DefaultEndTime": "20:00",
-        "DefaultScope": "Molecule"
-      }
-    ],
-    "EmailTemplateDefaults": [
-      {
-        "Key": "ShiftAssigned",
-        "SubjectEn": "You've been assigned to a shift",
-        "SubjectHe": "שובצת למשמרת",
-        "BodyEn": "Hi {{UserName}},\n\nYou've been assigned to {{ShiftName}} on {{Date}} from {{StartTime}} to {{EndTime}}.\n\nThank you.",
-        "BodyHe": "שלום {{UserName}},\n\nשובצת ל{{ShiftName}} בתאריך {{Date}} משעה {{StartTime}} עד {{EndTime}}.\n\nתודה."
-      }
-    ]
-  }
-}
-```
-
-### 10.2 Seed Script Logic
-
-```csharp
-public async Task SeedHierarchyAsync()
-{
-    var config = _configuration.GetSection("HierarchySeed");
-
-    // 1. Create Project
-    var project = new Project
-    {
-        Name = config["Project:Name"]!,
-        DisplayName = config["Project:DisplayName"]!,
-        CreatedAt = DateTime.UtcNow,
-        CreatedBy = ownerId
-    };
-    _db.Projects.Add(project);
-    await _db.SaveChangesAsync();
-
-    // 2. Create Area
-    var area = new Area
-    {
-        ProjectId = project.Id,
-        Name = config["Area:Name"]!,
-        DisplayName = config["Area:DisplayName"]!,
-        CreatedAt = DateTime.UtcNow,
-        CreatedBy = ownerId
-    };
-    _db.Areas.Add(area);
-    await _db.SaveChangesAsync();
-
-    // 3. Create Molecules
-    var molecules = config.GetSection("Molecules").Get<List<MoleculeSeedData>>();
-    foreach (var molData in molecules)
-    {
-        var molecule = new Molecule
-        {
-            AreaId = area.Id,
-            Name = molData.Name,
-            DisplayName = molData.DisplayName,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = ownerId
-        };
-        _db.Molecules.Add(molecule);
-    }
-    await _db.SaveChangesAsync();
-
-    // 4. Create Departments
-    var departments = config.GetSection("Departments").Get<List<DepartmentSeedData>>();
-    foreach (var deptData in departments)
-    {
-        var molecule = _db.Molecules.First(m => m.Name == deptData.MoleculeName);
-        var department = new Department
-        {
-            MoleculeId = molecule.Id,
-            Name = deptData.Name,
-            DisplayName = deptData.DisplayName,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = ownerId
-        };
-        _db.Departments.Add(department);
-    }
-    await _db.SaveChangesAsync();
-
-    // 5. Create Companies
-    var companies = config.GetSection("Companies").Get<List<CompanySeedData>>();
-    foreach (var compData in companies)
-    {
-        var department = _db.Departments.First(d => d.Name == compData.DepartmentName);
-        var company = new Company
-        {
-            DepartmentId = department.Id,
-            Name = compData.Name,
-            DisplayName = compData.DisplayName,
-            Slug = compData.Name.ToLowerInvariant(),
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = ownerId
-        };
-        _db.Companies.Add(company);
-    }
-    await _db.SaveChangesAsync();
-
-    // 6. Create JobTypes (per Department)
-    var jobTypeTemplates = config.GetSection("JobTypeTemplates").Get<List<JobTypeTemplate>>();
-    var department = _db.Departments.First();
-    foreach (var template in jobTypeTemplates)
-    {
-        var jobType = new JobType
-        {
-            DepartmentId = department.Id,
-            Name = template.NameEnglish,
-            DisplayName = template.NameHebrew,
-            ManagementPattern = Enum.Parse<ManagementPattern>(template.ManagementPattern),
-            IsOnCallBased = template.IsOnCallBased,
-            Color = template.Color,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = ownerId
-        };
-        _db.JobTypes.Add(jobType);
-    }
-    await _db.SaveChangesAsync();
-
-    // 7. Create DutyRoles
-    var dutyRoleTemplates = config.GetSection("DutyRoleTemplates").Get<List<DutyRoleTemplate>>();
-    foreach (var template in dutyRoleTemplates)
-    {
-        int? jobTypeId = null;
-        if (!string.IsNullOrEmpty(template.JobTypeKey))
-        {
-            var jobTypeTemplate = jobTypeTemplates.First(jt => jt.Key == template.JobTypeKey);
-            jobTypeId = _db.JobTypes.First(jt => jt.Name == jobTypeTemplate.NameEnglish).Id;
-        }
-
-        var dutyRole = new DutyRole
-        {
-            Name = template.NameEnglish,
-            DisplayName = template.NameHebrew,
-            JobTypeId = jobTypeId,
-            RequiresTimeBlocks = template.RequiresTimeBlocks,
-            DefaultStartTime = template.DefaultStartTime.HasValue ? TimeOnly.Parse(template.DefaultStartTime) : null,
-            DefaultEndTime = template.DefaultEndTime.HasValue ? TimeOnly.Parse(template.DefaultEndTime) : null,
-            DefaultScope = Enum.Parse<ScopeType>(template.DefaultScope),
-            EligibilityRuleJson = template.EligibilityRuleJson,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = ownerId
-        };
-        _db.DutyRoles.Add(dutyRole);
-    }
-    await _db.SaveChangesAsync();
-
-    // 8. Seed Email Templates for each Company
-    var emailDefaults = config.GetSection("EmailTemplateDefaults").Get<List<EmailTemplateDefault>>();
-    foreach (var company in _db.Companies)
-    {
-        foreach (var template in emailDefaults)
-        {
-            var emailTemplate = new EmailTemplate
-            {
-                CompanyId = company.Id,
-                TemplateKey = template.Key,
-                SubjectEn = template.SubjectEn,
-                SubjectHe = template.SubjectHe,
-                BodyEn = template.BodyEn,
-                BodyHe = template.BodyHe,
-                IsActive = true,
-                LastUpdated = DateTime.UtcNow,
-                LastUpdatedBy = ownerId
-            };
-            _db.EmailTemplates.Add(emailTemplate);
-        }
-    }
-    await _db.SaveChangesAsync();
-
-    // 9. Create Global Configurations
-    var emailConfig = new EmailConfig
-    {
-        Enabled = false,
-        FromAddress = "noreply@shiftmanager.mil",
-        LastUpdated = DateTime.UtcNow
-    };
-    _db.EmailConfigs.Add(emailConfig);
-
-    var adfsConfig = new GriffinConfig
-    {
-        Enabled = false,
-        AutoProvisionUsers = true,
-        DefaultProvisionedRole = UserRole.Employee,
-        TimeoutSeconds = 10,
-        LastUpdated = DateTime.UtcNow
-    };
-    _db.GriffinConfigs.Add(adfsConfig);
-
-    var gameConfig = new GameConfig
-    {
-        Enabled = true,
-        GridSize = 6,
-        PointsPer3Match = 40,
-        PointsPer4Match = 100,
-        PointsPer5PlusMatch = 200,
-        MegaComboMultiplier = 2,
-        MegaCombo3MatchMinLines = 0,
-        MegaCombo4MatchMinLines = 2,
-        MegaCombo5MatchMinLines = 0,
-        Milestones = "1000,2500,5000,7500,10000,15000,20000",
-        LastUpdated = DateTime.UtcNow
-    };
-    _db.GameConfigs.Add(gameConfig);
-
-    await _db.SaveChangesAsync();
-}
-```
-
----
-
-## 11. Migration Strategy
-
-### 11.1 Data Migration Steps
-
-**Step 1: Create new hierarchy tables**
-```sql
-CREATE TABLE Projects (...);
-CREATE TABLE Areas (...);
-CREATE TABLE Molecules (...);
-CREATE TABLE Departments (...);
--- Companies table already exists, add DepartmentId column
-ALTER TABLE Companies ADD DepartmentId INT NOT NULL DEFAULT 1;
-```
-
-**Step 2: Seed hierarchy from appsettings.json**
-- Run seed script to create Project → Area → Molecule → Department → Company structure
-
-**Step 3: Update AppUser table**
-```sql
-ALTER TABLE AppUsers ADD DepartmentId INT NOT NULL DEFAULT 1;
-ALTER TABLE AppUsers ADD MoleculeId INT NOT NULL DEFAULT 1;
-ALTER TABLE AppUsers ADD AreaId INT NOT NULL DEFAULT 1;
-ALTER TABLE AppUsers ADD ProjectId INT NOT NULL DEFAULT 1;
-ALTER TABLE AppUsers ADD PrimaryJobTypeId INT NULL;
-ALTER TABLE AppUsers ADD Rank INT NOT NULL DEFAULT 0; -- Turai
-```
-
-**Step 4: Migrate existing users**
-```csharp
-// For each existing user, populate hierarchy fields from their Company
-foreach (var user in _db.Users)
-{
-    var company = await _db.Companies
-        .Include(c => c.Department)
-            .ThenInclude(d => d.Molecule)
-                .ThenInclude(m => m.Area)
-                    .ThenInclude(a => a.Project)
-        .FirstAsync(c => c.Id == user.CompanyId);
-
-    user.DepartmentId = company.DepartmentId;
-    user.MoleculeId = company.Department.MoleculeId;
-    user.AreaId = company.Department.Molecule.AreaId;
-    user.ProjectId = company.Department.Molecule.Area.ProjectId;
-
-    // Assign default rank
-    user.Rank = MilitaryRank.Turai;
-}
-await _db.SaveChangesAsync();
-```
-
-**Step 5: Create Grants from old Roles**
-```csharp
-foreach (var user in _db.Users)
-{
-    var grants = new List<Grant>();
-
-    switch (user.Role)
-    {
-        case UserRole.Owner:
-            grants.Add(new Grant
-            {
-                UserId = user.Id,
-                ScopeType = ScopeType.Project,
-                ScopeId = 1,
-                Action = GrantAction.SystemAdmin,
-                GrantedBy = user.Id,
-                GrantedAt = DateTime.UtcNow
-            });
-            break;
-
-        case UserRole.Director:
-            grants.Add(new Grant
-            {
-                UserId = user.Id,
-                ScopeType = ScopeType.Department,
-                ScopeId = user.DepartmentId,
-                Action = GrantAction.ManageUsers,
-                GrantedBy = ownerId,
-                GrantedAt = DateTime.UtcNow
-            });
-            break;
-
-        case UserRole.Manager:
-            grants.Add(new Grant
-            {
-                UserId = user.Id,
-                ScopeType = ScopeType.Company,
-                ScopeId = user.CompanyId,
-                Action = GrantAction.Edit,
-                GrantedBy = ownerId,
-                GrantedAt = DateTime.UtcNow
-            });
-            break;
-
-        case UserRole.Employee:
-            grants.Add(new Grant
-            {
-                UserId = user.Id,
-                ScopeType = ScopeType.Company,
-                ScopeId = user.CompanyId,
-                Action = GrantAction.View,
-                GrantedBy = ownerId,
-                GrantedAt = DateTime.UtcNow
-            });
-            break;
-    }
-
-    _db.Grants.AddRange(grants);
-}
-await _db.SaveChangesAsync();
-```
-
-**Step 6: Migrate ShiftTypes to Department-scoped**
-```sql
--- ShiftTypes were Company-scoped, now Department-scoped
-UPDATE ShiftTypes SET DepartmentId = (
-    SELECT DepartmentId FROM Companies WHERE Companies.Id = ShiftTypes.CompanyId
-);
-ALTER TABLE ShiftTypes DROP COLUMN CompanyId;
-```
-
-**Step 7: Create ShiftTypeJobTypeAssignments**
-```csharp
-// Initially, assign all ShiftTypes to all JobTypes (migration default)
-// User can adjust later via Blueprints page
-foreach (var shiftType in _db.ShiftTypes)
-{
-    var department = await _db.Departments.FindAsync(shiftType.DepartmentId);
-    var jobTypes = await _db.JobTypes.Where(jt => jt.DepartmentId == department.Id).ToListAsync();
-
-    foreach (var jobType in jobTypes)
-    {
-        _db.ShiftTypeJobTypeAssignments.Add(new ShiftTypeJobTypeAssignment
-        {
-            ShiftTypeId = shiftType.Id,
-            JobTypeId = jobType.Id,
-            IsActive = true,
-            AssignedAt = DateTime.UtcNow,
-            AssignedBy = ownerId
-        });
-    }
-}
-await _db.SaveChangesAsync();
-```
-
-**Step 8: Migrate OnDuty to DutyAssignments**
-```csharp
-// OnDuty → DutyAssignment
-foreach (var onDuty in _db.OnDuties)
-{
-    // Determine DutyRole based on Type
-    int dutyRoleId = onDuty.Type == OnDutyType.Hakam
-        ? hakamOnCallRoleId
-        : onDutyLeadRoleId;
-
-    var assignment = new DutyAssignment
-    {
-        DutyRoleId = dutyRoleId,
-        UserId = onDuty.UserId,
-        ScopeType = ScopeType.Molecule,  // Assume Molecule scope
-        ScopeId = await GetMoleculeIdForUser(onDuty.UserId),
-        Date = onDuty.Date,
-        StartTime = null,  // Legacy OnDuty had no time blocks
-        EndTime = null,
-        CreatedBy = ownerId,
-        CreatedAt = onDuty.CreatedAt,
-        CanceledAt = onDuty.CanceledAt,
-        CanceledBy = onDuty.CanceledBy
-    };
-
-    _db.DutyAssignments.Add(assignment);
-}
-await _db.SaveChangesAsync();
-```
-
-**Step 9: Migrate AppConfig RestHours/WeeklyCap to Department-scoped**
-```csharp
-// Old: AppConfig with CompanyId
-// New: DepartmentConfig table (or keep AppConfig but use DepartmentId)
-
-foreach (var config in _db.Configs.Where(c => c.Key == "RestHours" || c.Key == "WeeklyHoursCap"))
-{
-    var company = await _db.Companies.FindAsync(config.CompanyId);
-
-    // Check if Department already has this config
-    var existingDeptConfig = await _db.Configs
-        .FirstOrDefaultAsync(c => c.DepartmentId == company.DepartmentId && c.Key == config.Key);
-
-    if (existingDeptConfig == null)
-    {
-        // Create Department-level config
-        _db.Configs.Add(new AppConfig
-        {
-            DepartmentId = company.DepartmentId,
-            Key = config.Key,
-            Value = config.Value
-        });
-    }
-
-    // Delete old Company-level config
-    _db.Configs.Remove(config);
-}
-await _db.SaveChangesAsync();
-```
-
-**Step 10: Migrate Game/Email/ADFS to global**
-```csharp
-// Extract Game settings from first company's AppConfig
-var gameSettings = await _db.Configs
-    .Where(c => c.CompanyId == firstCompanyId && c.Key.StartsWith("Game"))
-    .ToListAsync();
-
-var gameConfig = new GameConfig
-{
-    Enabled = GetBoolValue(gameSettings, "GameEnabled", true),
-    GridSize = GetIntValue(gameSettings, "GameGridSize", 6),
-    PointsPer3Match = GetIntValue(gameSettings, "GamePointsPer3Match", 40),
     // ... etc
-    LastUpdated = DateTime.UtcNow
+}
+```
+
+---
+
+## 11. Seed Data Structure
+
+### 11.1 Bootstrap Sequence
+
+**Q4 Answer: A (Single SystemAdmin grant)**
+**Q15 Answer: B (User + SystemAdmin grant - auto-bootstrap)**
+
+```csharp
+// After database wipe, seed script auto-creates:
+
+// 1. admin@local user
+var admin = new User
+{
+    Id = 1,
+    Username = "admin@local",
+    Email = "admin@local",
+    CompanyId = 1,  // First company created
+    PrimaryJobTypeId = 1,  // First JobType created
+    Rank = MilitaryRank.RavAluf,
+    PasswordHash = "<hashed_Easteregg>"
 };
-_db.GameConfigs.Add(gameConfig);
+_db.Users.Add(admin);
+await _db.SaveChangesAsync();
 
-// Delete all Game configs from AppConfig
-_db.Configs.RemoveRange(_db.Configs.Where(c => c.Key.StartsWith("Game")));
-
+// 2. ✅ AUTO-CREATE SystemAdmin grant (Q15: auto-bootstrap)
+var systemAdminGrant = new Grant
+{
+    UserId = admin.Id,
+    ProjectId = shiftyProject.Id,
+    Permission = GrantPermission.SystemAdmin,
+    CanOwn = true,
+    CanGive = true,
+    GrantedByUserId = admin.Id,  // Self-granted
+    GrantedAt = DateTime.UtcNow,
+    Notes = "Bootstrap admin user"
+};
+_db.Grants.Add(systemAdminGrant);
 await _db.SaveChangesAsync();
 ```
 
-**Step 11: Delete all existing data except admin@local**
+**After wipe:**
+- ✅ admin@local user exists
+- ✅ admin@local has SystemAdmin grant (can do everything)
+- ✅ No manual SQL needed
+
+### 11.2 Seed Hierarchy
+
 ```csharp
-// ⚠️ DESTRUCTIVE OPERATION - delete all data except Owner user
-var ownerUser = await _db.Users.FirstAsync(u => u.Email == "admin@local");
+// Create hierarchy from appsettings.json
+var shifty = new Project { Name = "Shifty", DisplayName = "שיפטי" };
+var area190 = new Area { ProjectId = shifty.Id, Name = "190", DisplayName = "190" };
+var oren = new Molecule { AreaId = area190.Id, Name = "Oren", DisplayName = "אורן" };
+var defence = new Department { MoleculeId = oren.Id, Name = "Defence and Manuver", DisplayName = "הגנה ותמרון" };
 
-_db.Users.RemoveRange(_db.Users.Where(u => u.Id != ownerUser.Id));
-_db.ShiftInstances.RemoveRange(_db.ShiftInstances);
-_db.Requests.RemoveRange(_db.Requests);
-_db.Chores.RemoveRange(_db.Chores);
-_db.OnDuties.RemoveRange(_db.OnDuties);
-_db.Companies.RemoveRange(_db.Companies);
-// ... delete all entity data
+// Companies
+var north = new Company { DepartmentId = defence.Id, Name = "North", DisplayName = "צפון" };
+var radio = new Company { DepartmentId = defence.Id, Name = "Radio", DisplayName = "טקטי" };
+var city = new Company { DepartmentId = defence.Id, Name = "City", DisplayName = "העיר" };
+var hir = new Company { DepartmentId = defence.Id, Name = "Hir", DisplayName = "ח'י\"ר" };
 
-await _db.SaveChangesAsync();
+// JobTypes (Department-scoped)
+var br = new JobType { DepartmentId = defence.Id, Name = "BR", DisplayName = "ב\"ר", ManagementPattern = Hierarchical };
+var producer = new JobType { DepartmentId = defence.Id, Name = "Producer", DisplayName = "אלחוטן", ManagementPattern = Hierarchical };
+var hakam = new JobType { DepartmentId = defence.Id, Name = "Hakam", DisplayName = "חק\"מ", ManagementPattern = DirectDepartment, IsOnCallBased = true };
 
-// Run seed script to create fresh hierarchy
-await SeedHierarchyAsync();
+// DutyRoles (Molecule-scoped)
+var onDutyLead = new DutyRole
+{
+    MoleculeId = oren.Id,
+    Name = "On-Duty Lead",
+    DisplayName = "מוביל תורנות",
+    RequiresTimeBlocks = false,
+    RequiresOfficerRank = true
+};
+
+var hakamOnCall = new DutyRole
+{
+    MoleculeId = oren.Id,
+    Name = "Hakam On-Call",
+    DisplayName = "חק\"מ בכוננות",
+    JobTypeId = hakam.Id,
+    RequiresTimeBlocks = true,
+    DefaultStartTime = new TimeOnly(8, 0),
+    DefaultEndTime = new TimeOnly(20, 0)
+};
+
+// Department Settings
+var defenceSettings = new DepartmentSettings
+{
+    DepartmentId = defence.Id,
+    DefaultRestHours = 11,
+    DefaultWeeklyCap = 60
+};
+
+// Company Settings (no overrides initially)
+var northSettings = new CompanySettings { CompanyId = north.Id };
+var radioSettings = new CompanySettings { CompanyId = radio.Id };
+
+// Global Configs
+var emailConfig = new EmailConfig { Enabled = false, FromAddress = "noreply@shiftmanager.mil" };
+var adfsConfig = new GriffinConfig { Enabled = false };
+var gameConfig = new GameConfig { Enabled = true, GridSize = 6, PointsPer3Match = 40, /* ... */ };
 ```
 
-### 11.2 UI Migration
+---
 
-**Step 1: Update all permission checks**
-```csharp
-// Old:
-if (User.IsInRole("Manager"))
+## 12. Migration Strategy
 
-// New:
-if (await _grantService.HasGrantAsync(userId, GrantAction.Edit, scopeType, scopeId))
-```
+### 12.1 Migration Phases
 
-**Step 2: Update CompanyContext to HierarchyContext**
-```csharp
-// Old:
-var companyId = _companyContext.GetCompanyIdOrThrow();
+**Phase 1: Schema Updates**
+1. Create new tables: Projects, Areas, Molecules, Departments
+2. Alter Companies table: Add DepartmentId
+3. Alter Users table: Add PrimaryJobTypeId, remove Role enum
+4. Create Grants table
+5. Create UserJobTypes table (many-to-many)
+6. Create DutyRole, DutyProgram, DutyProgramItem tables
+7. Create DepartmentSettings, CompanySettings tables
+8. Alter ShiftType: Change CompanyId → DepartmentId, Add REQUIRED CompanyId + JobTypeId
+9. Remove IBelongsToCompany from EmailConfig, GriffinConfig, GameConfig
 
-// New:
-var companyId = _hierarchyContext.CompanyId ?? throw new InvalidOperationException();
-var departmentId = _hierarchyContext.DepartmentId ?? throw new InvalidOperationException();
-```
+**Phase 2: Data Wipe & Reseed**
+1. ⚠️ DELETE all data except admin@local user
+2. Run seed script (hierarchy + JobTypes + DutyRoles + Settings + Global configs)
+3. Auto-create admin@local SystemAdmin grant
 
-**Step 3: Add hierarchy navigation UI**
-- Organizational Structure page (`/Admin/Structure`)
-- JobTypes page (`/Admin/JobTypes`)
-- Grants page (`/Admin/Grants`)
-- Tasks page (`/Admin/Tasks`)
+**Phase 3: UI Migration**
+1. Replace all `User.IsInRole()` checks with `_grantService.CanOwnAsync()`
+2. Add HierarchyContext service
+3. Add hat switching UI (top nav + session storage)
+4. Update calendar filtering (JobType-aware)
+5. Add grant management UI
+6. Add organizational structure management UI
 
-**Step 4: Update calendar navigation**
-- Add JobType filtering
-- Add multi-level scope (Company, Department, Molecule)
+**Phase 4: Testing**
+1. Test SystemAdmin can access everything
+2. Test hat switching affects UI but not permissions
+3. Test cascade deletion (Blueprint → ShiftInstances + ProgramItems)
+4. Test Department defaults + Company overrides
+5. Test DutyProgram automatic rotation
+6. Test auto-grants creation
+7. Test Owner company selector + global settings access
 
 ---
 
 ## End of Design Document
 
-**Status:** ✅ Complete - Ready for Implementation
-**Next Steps:**
-1. Review design with stakeholders
-2. Create implementation plan
-3. Begin Phase 1: Database schema updates
-4. Implement hierarchy seeding
-5. Build grant system
-6. Migrate UI
+**Status:** ✅ FINALIZED - All contradictions resolved - Ready for Implementation
 
-**Document Version:** 1.0
+**Next Steps:**
+1. ✅ Design complete
+2. Write detailed implementation plan (separate session)
+3. Begin database migrations
+4. Implement grant system
+5. Build UI components
+6. Test & deploy
+
+**Document Version:** 2.0 (Finalized)
 **Last Updated:** 2026-01-24
+**Changes from v1.0:**
+- ✅ DutyProgram changed to Molecule-scoped (was incorrectly Department)
+- ✅ Settings now Department defaults + Company overrides (was Department-only)
+- ✅ Blueprint CompanyId/JobTypeId changed to REQUIRED (was optional)
+- ✅ Cascade deletion for ShiftInstances clarified (deletes instances)
+- ✅ Hat switching clarified as UI filter only (not permission filter)
+- ✅ Owner company selector can access global settings while in company mode
+- ✅ DutyRole confirmed as Molecule-scoped
+- ✅ Grant system completely redesigned (26 permissions + Own/Give capabilities)
+- ✅ Bootstrap sequence clarified (admin@local auto-gets SystemAdmin grant)
+- ✅ ChoreCalendar does NOT support Programs (manual only)
+- ✅ DutyCalendar DOES support Programs (automatic rotation)
+- ✅ VacationCalendar scoped to Company + JobType
+- ✅ User claims simplified to UserId + CompanyId
+- ✅ ActiveJobTypeId stored in Session (not Claims)
