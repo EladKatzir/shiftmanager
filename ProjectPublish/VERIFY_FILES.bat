@@ -91,7 +91,7 @@ echo Counting total DLL files...
 echo.
 
 REM Count DLLs
-for /f %%A in ('dir /s /b *.dll 2^>nul ^| find.exe /c ".dll"') do set DLL_COUNT=%%A
+for /f %%A in ('dir /s /b *.dll 2^>nul ^| %SystemRoot%\System32\find.exe /c ".dll"') do set DLL_COUNT=%%A
 
 echo   Total DLL files found: %DLL_COUNT%
 echo   Expected range: 330-340 DLL files
