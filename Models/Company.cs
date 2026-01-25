@@ -11,4 +11,8 @@ public class Company
 
     // JSON column for company-specific settings overrides
     public string? SettingsJson { get; set; }
+
+    // Organizational hierarchy - Molecule FK (nullable during migration, required after)
+    public int? MoleculeId { get; set; }
+    public Molecule? Molecule { get; set; }
 }
