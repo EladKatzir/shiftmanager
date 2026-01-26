@@ -1,0 +1,100 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.Projects.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Projects"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 0; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input { width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; }
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-danger { background: var(--danger); color: white; border-color: var(--danger); font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost { background: transparent; color: var(--text-primary); border-color: transparent; font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 0.875rem; text-align: left; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .table-actions { display: flex; gap: 0.5rem; }
+        .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; }
+        .badge-active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-inactive { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageProjects" /></h1>
+    <p class="page-subtitle"><loc key="CreateAndManageProjects" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="CreateNewProject" /></h3>
+    <form method="post" asp-page-handler="Create">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">@Localizer["Name"] <span class="form-label-required">*</span></label>
+                <input class="form-input" asp-for="ProjectName" placeholder="project-key" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["DisplayName"]</label>
+                <input class="form-input" asp-for="ProjectDisplayName" placeholder="Project Name" />
+            </div>
+        </div>
+        <button class="btn btn-primary" type="submit"><loc key="CreateProject" /></button>
+    </form>
+</div>
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="AllProjects" /> (@Model.Projects.Count)</h3>
+    @if (Model.Projects.Any())
+    {
+        <table class="data-table">
+            <thead><tr><th><loc key="Name" /></th><th><loc key="Areas" /></th><th><loc key="Status" /></th><th><loc key="Created" /></th><th style="width:1%"><loc key="Actions" /></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model.Projects)
+            {
+                <tr>
+                    <td><strong>@Html.Encode(p.DisplayName)</strong><br /><small style="color: var(--text-muted);">@Html.Encode(p.Name)</small></td>
+                    <td>@p.AreaCount</td>
+                    <td>@if (p.IsActive) { <span class="badge badge-active"><loc key="Active" /></span> } else { <span class="badge badge-inactive"><loc key="Inactive" /></span> }</td>
+                    <td>@p.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <div class="table-actions">
+                            <form method="post" asp-page-handler="ToggleActive" style="display:inline"><input type="hidden" name="id" value="@p.Id" /><button type="submit" class="btn btn-ghost">@(p.IsActive ? Localizer["Deactivate"] : Localizer["Activate"])</button></form>
+                            @if (p.AreaCount == 0) { <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmDeleteProject"]');"><input type="hidden" name="id" value="@p.Id" /><button type="submit" class="btn btn-danger"><loc key="Delete" /></button></form> }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else { <p class="empty-state"><loc key="NoProjectsYet" /></p> }
+</div>
