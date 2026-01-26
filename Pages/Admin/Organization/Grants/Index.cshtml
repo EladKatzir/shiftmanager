@@ -1,0 +1,192 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.Grants.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Grants"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .filters-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .form-select { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; min-width: 150px; }
+        .view-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .view-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-primary); }
+        .view-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 0.875rem; text-align: left; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border-color: transparent; }
+        .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; }
+        .badge-auto { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .badge-manual { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-own { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .badge-give { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-count { background: var(--primary-bg); color: var(--primary); font-size: 0.75rem; padding: 0.25rem 0.625rem; }
+        .scope-text { font-size: 0.75rem; color: var(--text-muted); }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .table-actions { display: flex; gap: 0.5rem; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageGrants" /></h1>
+    <p class="page-subtitle"><loc key="ViewAndManageUserGrants" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<div class="section-card">
+    <div class="view-tabs">
+        <a href="?ViewMode=users" class="view-tab @(Model.ViewMode == "users" ? "active" : "")"><loc key="ByUser" /></a>
+        <a href="?ViewMode=grants" class="view-tab @(Model.ViewMode == "grants" ? "active" : "")"><loc key="AllGrants" /></a>
+    </div>
+
+    @if (Model.ViewMode == "grants")
+    {
+        <form method="get" class="filters-bar">
+            <input type="hidden" name="ViewMode" value="grants" />
+            <div class="filter-group">
+                <label><loc key="GrantType" /></label>
+                <select name="FilterGrantTypeId" class="form-select" onchange="this.form.submit()">
+                    <option value="">@Localizer["AllGrantTypes"]</option>
+                    @foreach (var gt in Model.AvailableGrantTypes)
+                    {
+                        <option value="@gt.Id" selected="@(Model.FilterGrantTypeId == gt.Id)">@Localizer[gt.NameKey]</option>
+                    }
+                </select>
+            </div>
+            @if (Model.FilterGrantTypeId.HasValue || Model.FilterUserId.HasValue)
+            {
+                <a href="?ViewMode=grants" class="btn btn-ghost"><loc key="ClearFilters" /></a>
+            }
+        </form>
+
+        @if (Model.Grants.Any())
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><loc key="User" /></th>
+                        <th><loc key="GrantType" /></th>
+                        <th><loc key="Scope" /></th>
+                        <th><loc key="Capabilities" /></th>
+                        <th><loc key="Source" /></th>
+                        <th><loc key="GrantedAt" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var g in Model.Grants)
+                {
+                    <tr>
+                        <td><a href="/Admin/EditProfile?UserId=@g.UserId">@Html.Encode(g.UserName)</a></td>
+                        <td><strong>@Localizer[g.GrantTypeName]</strong></td>
+                        <td><span class="scope-text">@Html.Encode(g.ScopeDescription)</span></td>
+                        <td>
+                            @if (g.CanOwn) { <span class="badge badge-own"><loc key="Own" /></span> }
+                            @if (g.CanGive) { <span class="badge badge-give"><loc key="Give" /></span> }
+                        </td>
+                        <td>
+                            @if (g.IsAutoGrant)
+                            {
+                                <span class="badge badge-auto"><loc key="Auto" /></span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-manual">@(g.GrantedByName ?? Localizer["Manual"])</span>
+                            }
+                        </td>
+                        <td>@g.GrantedAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <div class="table-actions">
+                                @if (!g.IsAutoGrant)
+                                {
+                                    <form method="post" asp-page-handler="Revoke" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmRevokeGrant"]');">
+                                        <input type="hidden" name="id" value="@g.Id" />
+                                        <button type="submit" class="btn btn-danger"><loc key="Revoke" /></button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted); font-size: 0.75rem;">@Localizer["ManagedByRole"]</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoGrantsFound" /></p>
+        }
+    }
+    else
+    {
+        @if (Model.UserSummaries.Any())
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><loc key="User" /></th>
+                        <th><loc key="Email" /></th>
+                        <th><loc key="Grants" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var u in Model.UserSummaries)
+                {
+                    <tr>
+                        <td><strong>@Html.Encode(u.UserName)</strong></td>
+                        <td>@Html.Encode(u.Email)</td>
+                        <td><span class="badge badge-count">@u.GrantCount</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="?ViewMode=grants&FilterUserId=@u.UserId" class="btn"><loc key="ViewGrants" /></a>
+                                <a href="/Admin/Organization/Grants/Assign?userId=@u.UserId" class="btn btn-primary"><loc key="AssignGrant" /></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoUsersWithGrants" /></p>
+        }
+    }
+</div>
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="AssignNewGrant" /></h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1rem;"><loc key="SelectUserToAssignGrant" /></p>
+    <a href="/Admin/Organization/Grants/Assign" class="btn btn-primary"><loc key="AssignGrant" /></a>
+</div>
