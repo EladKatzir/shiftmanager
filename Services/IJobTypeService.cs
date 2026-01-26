@@ -1,0 +1,21 @@
+using ShiftManager.Models;
+
+namespace ShiftManager.Services;
+
+public interface IJobTypeService
+{
+    // Query operations
+    Task<JobType?> GetJobTypeAsync(int jobTypeId);
+    Task<List<JobType>> GetJobTypesAsync(int areaId);
+    Task<List<JobType>> GetAllJobTypesAsync();
+    Task<JobType?> GetUserJobTypeAsync(int userId);
+    Task<List<AppUser>> GetUsersWithJobTypeAsync(int jobTypeId);
+
+    // Assignment operations
+    Task<bool> AssignJobTypeAsync(int userId, int jobTypeId, int? assignedByUserId = null);
+    Task<bool> ChangeJobTypeAsync(int userId, int newJobTypeId, int? changedByUserId = null);
+    Task<bool> RemoveJobTypeAsync(int userId, int? removedByUserId = null);
+
+    // Validation
+    Task<bool> CanUserHaveJobTypeAsync(int userId, int jobTypeId);
+}
