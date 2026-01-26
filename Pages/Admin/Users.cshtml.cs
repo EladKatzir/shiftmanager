@@ -49,8 +49,10 @@ public class UsersModel : LocalizedPageModel
         _notificationService = notificationService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, string? JobTypeName, string? DepartmentName, int GrantsCount);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, DateTime CreatedAt, JoinRequestStatus Status);
+    public record MoleculeOption(int Id, string Name, string AreaName);
+    public record JobTypeOption(int Id, string Name, string AreaName);
 
     // Batch approval support
     public class BatchApprovalItem
@@ -62,6 +64,8 @@ public class UsersModel : LocalizedPageModel
     public List<UserVM> Users { get; set; } = new();
     public List<JoinRequestVM> JoinRequests { get; set; } = new();
     public List<Company> AvailableCompanies { get; set; } = new();
+    public List<MoleculeOption> AvailableMolecules { get; set; } = new();
+    public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
 
     // Pagination properties
     [BindProperty(SupportsGet = true)]
@@ -111,6 +115,12 @@ public class UsersModel : LocalizedPageModel
 
     [BindProperty(SupportsGet = true)]
     public UserRole? UserFilterRole { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? UserFilterMoleculeId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? UserFilterJobTypeId { get; set; }
 
     [BindProperty, EmailAddress] public string NewEmail { get; set; } = string.Empty;
     [BindProperty] public string NewDisplayName { get; set; } = string.Empty;
@@ -247,6 +257,24 @@ public class UsersModel : LocalizedPageModel
                 .ToListAsync();
         }
 
+        // Load available molecules for filter dropdown
+        AvailableMolecules = await _db.Molecules
+            .IgnoreQueryFilters()
+            .Where(m => m.IsActive)
+            .Include(m => m.Area)
+            .OrderBy(m => m.Area.Name).ThenBy(m => m.Name)
+            .Select(m => new MoleculeOption(m.Id, m.DisplayName, m.Area.DisplayName))
+            .ToListAsync();
+
+        // Load available job types for filter dropdown
+        AvailableJobTypes = await _db.JobTypes
+            .IgnoreQueryFilters()
+            .Where(jt => jt.IsActive)
+            .Include(jt => jt.Area)
+            .OrderBy(jt => jt.Area.Name).ThenBy(jt => jt.Name)
+            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName))
+            .ToListAsync();
+
         // Load existing users with filters
         IQueryable<AppUser> usersQuery;
         if (IsOwner)
@@ -254,12 +282,16 @@ public class UsersModel : LocalizedPageModel
             // Owner sees ALL users across all companies
             usersQuery = _db.Users
                 .IgnoreQueryFilters()
+                .Include(u => u.JobType)
+                .Include(u => u.Department)
                 .AsNoTracking();
         }
         else
         {
             // Other roles see filtered by accessible companies
             usersQuery = _db.Users
+                .Include(u => u.JobType)
+                .Include(u => u.Department)
                 .AsNoTracking()
                 .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
         }
@@ -270,7 +302,33 @@ public class UsersModel : LocalizedPageModel
             usersQuery = usersQuery.Where(u => u.Role == UserFilterRole.Value);
         }
 
+        // Apply molecule filter (via Company -> Molecule relationship)
+        if (UserFilterMoleculeId.HasValue)
+        {
+            var companyIdsForMolecule = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.MoleculeId == UserFilterMoleculeId.Value)
+                .Select(c => c.Id)
+                .ToListAsync();
+            usersQuery = usersQuery.Where(u => companyIdsForMolecule.Contains(u.CompanyId));
+        }
+
+        // Apply job type filter
+        if (UserFilterJobTypeId.HasValue)
+        {
+            usersQuery = usersQuery.Where(u => u.JobTypeId == UserFilterJobTypeId.Value);
+        }
+
         var userData = await usersQuery.ToListAsync();
+
+        // Load grants count per user
+        var userIds = userData.Select(u => u.Id).ToList();
+        var userGrantCounts = await _db.Grants
+            .IgnoreQueryFilters()
+            .Where(g => userIds.Contains(g.UserId))
+            .GroupBy(g => g.UserId)
+            .Select(grp => new { UserId = grp.Key, Count = grp.Count() })
+            .ToDictionaryAsync(x => x.UserId, x => x.Count);
 
         // Load companies for users
         var userCompanyIds = userData.Select(u => u.CompanyId).Distinct().ToList();
@@ -332,7 +390,10 @@ public class UsersModel : LocalizedPageModel
                         u.Role.ToString(),
                         u.IsActive,
                         u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
-                        u.LockoutEnd
+                        u.LockoutEnd,
+                        u.JobType?.DisplayName,
+                        u.Department?.DisplayName,
+                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0
                     ));
                 }
             }
@@ -355,7 +416,10 @@ public class UsersModel : LocalizedPageModel
                         u.Role.ToString(),
                         u.IsActive,
                         u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
-                        u.LockoutEnd
+                        u.LockoutEnd,
+                        u.JobType?.DisplayName,
+                        u.Department?.DisplayName,
+                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0
                     ));
                 }
             }
@@ -1377,6 +1441,21 @@ public class UsersModel : LocalizedPageModel
             if (UserFilterCompanyId.HasValue)
             {
                 usersQuery = usersQuery.Where(u => u.CompanyId == UserFilterCompanyId.Value);
+            }
+
+            if (UserFilterMoleculeId.HasValue)
+            {
+                var companyIdsForMolecule = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.MoleculeId == UserFilterMoleculeId.Value)
+                    .Select(c => c.Id)
+                    .ToListAsync();
+                usersQuery = usersQuery.Where(u => companyIdsForMolecule.Contains(u.CompanyId));
+            }
+
+            if (UserFilterJobTypeId.HasValue)
+            {
+                usersQuery = usersQuery.Where(u => u.JobTypeId == UserFilterJobTypeId.Value);
             }
 
             var users = await usersQuery
