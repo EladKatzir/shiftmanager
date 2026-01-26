@@ -13,9 +13,21 @@ public class ShiftType : IBelongsToCompany
     public const string KEY_OFFLINE = "OFFLINE";
     public const string KEY_EVENING = "EVENING";
 
+    // Tech shift type keys
+    public const string TECH_HANAVA = "HANAVA";
+    public const string TECH_DELTA = "DELTA";
+    public const string TECH_SUPPORT = "SUPPORT";
+    public const string TECH_ONCALL = "ONCALL";
+
     public int Id { get; set; }
     public int CompanyId { get; set; }
     public string Key { get; set; } = string.Empty; // MORNING, NOON, NIGHT, MIDDLE, OFFLINE, or CUSTOM_*
+
+    // v3.0: Organizational hierarchy scope
+    public int? MoleculeId { get; set; }
+    public int? JobTypeId { get; set; }        // For workforce shifts (Alhut, Text)
+    public int? ShiftGroupingId { get; set; }  // For grouped shifts (Tzafon, Darom)
+    public string? TechShiftType { get; set; } // For tech shifts (Hanava, Delta, Support)
 
     /// <summary>
     /// Custom display name for this shift type (company-specific).
@@ -85,4 +97,9 @@ public class ShiftType : IBelongsToCompany
             };
         }
     }
+
+    // v3.0: Navigation properties
+    public Molecule? Molecule { get; set; }
+    public JobType? JobType { get; set; }
+    public ShiftGrouping? ShiftGrouping { get; set; }
 }
