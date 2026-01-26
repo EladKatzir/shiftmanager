@@ -15,6 +15,5 @@ public class Area
 
     public List<JobType> JobTypes { get; set; } = new();
 
-    // TODO: Uncomment when AreaSettings entity is created
-    // public AreaSettings? Settings { get; set; }
+    public AreaSettings? Settings { get; set; }
 }

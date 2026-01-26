@@ -22,6 +22,5 @@ public class Molecule
     // TODO: Uncomment when ChoreType entity is created
     // public List<ChoreType> ChoreTypes { get; set; } = new();
 
-    // TODO: Uncomment when MoleculeSettings entity is created
-    // public MoleculeSettings? Settings { get; set; }
+    public MoleculeSettings? Settings { get; set; }
 }
