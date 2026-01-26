@@ -23,7 +23,7 @@ public class AppUser : IBelongsToCompany
     public DateOnly? DateOfBirth { get; set; }      // For age verification, birthday greetings
 
     // Profile Enhancements - Professional Information
-    public string? Department { get; set; }         // e.g., "Kitchen", "Front of House", "Management"
+    public string? LegacyDepartment { get; set; }   // DEPRECATED: Use DepartmentId/Department navigation. e.g., "Kitchen", "Front of House", "Management"
     public string? JobTitle { get; set; }           // e.g., "Line Cook", "Server", "Shift Manager"
     public DateOnly? HireDate { get; set; }         // When they started
     public string? Skills { get; set; }             // JSON array, e.g., ["Grill", "Prep", "Cleaning"]
@@ -43,4 +43,12 @@ public class AppUser : IBelongsToCompany
     public int FailedLoginAttempts { get; set; } = 0;
     public DateTime? LockoutEnd { get; set; }
     public DateTime? LastLoginAttempt { get; set; }
+
+    // Organizational - workforce users have JobType, tech users have Department
+    public int? JobTypeId { get; set; }    // Workforce molecules only
+    public int? DepartmentId { get; set; }  // Tech molecules only
+
+    // Navigation
+    public JobType? JobType { get; set; }
+    public Department? Department { get; set; }
 }

@@ -140,7 +140,7 @@ public class UserApiService
             DisplayName = displayName,
             Role = roleEnum,
             IsActive = true,
-            Department = department,
+            LegacyDepartment = department,
             JobTitle = jobTitle
         };
 
@@ -216,7 +216,7 @@ public class UserApiService
 
         if (department != null)
         {
-            user.Department = department;
+            user.LegacyDepartment = department;
         }
 
         if (jobTitle != null)

@@ -70,7 +70,7 @@ public class UserDto
             DisplayName = user.DisplayName,
             Role = user.Role.ToString(),
             IsActive = user.IsActive,
-            Department = user.Department,
+            Department = user.LegacyDepartment,
             JobTitle = user.JobTitle
         };
 

@@ -369,7 +369,7 @@ public class EditProfileModel : PageModel
         Phone = user.Phone;
         City = user.City;
         DateOfBirth = user.DateOfBirth;
-        Department = user.Department;
+        Department = user.LegacyDepartment;
         JobTitle = user.JobTitle;
         HireDate = user.HireDate;
         EmergencyContactName = user.EmergencyContactName;

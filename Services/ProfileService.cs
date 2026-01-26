@@ -195,14 +195,14 @@ public class ProfileService : IProfileService
             }
 
             // Update Department (Manager/Director/Owner only)
-            if (dto.Department != targetUser.Department)
+            if (dto.Department != targetUser.LegacyDepartment)
             {
                 if (!hasManagerPermissions)
                     return (false, _localizer["OnlyManagersCanChangeDepartment"]);
 
                 changes.Add(CreateAuditEntry(companyId, targetUserId, editorUserId,
-                    nameof(AppUser.Department), targetUser.Department, dto.Department, timestamp));
-                targetUser.Department = dto.Department;
+                    nameof(AppUser.LegacyDepartment), targetUser.LegacyDepartment, dto.Department, timestamp));
+                targetUser.LegacyDepartment = dto.Department;
             }
 
             // Update JobTitle (Manager/Director/Owner only)
@@ -370,7 +370,7 @@ public class ProfileService : IProfileService
                 (u.DisplayName.ToLower().Contains(term) ||
                  (u.PreferredName != null && u.PreferredName.ToLower().Contains(term)) ||
                  u.Email.ToLower().Contains(term) ||
-                 (u.Department != null && u.Department.ToLower().Contains(term)) ||
+                 (u.LegacyDepartment != null && u.LegacyDepartment.ToLower().Contains(term)) ||
                  (u.JobTitle != null && u.JobTitle.ToLower().Contains(term))))
             .OrderBy(u => u.DisplayName)
             .Take(maxResults)

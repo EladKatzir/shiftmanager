@@ -13,8 +13,7 @@ public class Area
     public Project Project { get; set; } = null!;
     public List<Molecule> Molecules { get; set; } = new();
 
-    // TODO: Uncomment when JobType entity is created
-    // public List<JobType> JobTypes { get; set; } = new();
+    public List<JobType> JobTypes { get; set; } = new();
 
     // TODO: Uncomment when AreaSettings entity is created
     // public AreaSettings? Settings { get; set; }
