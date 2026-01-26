@@ -52,6 +52,12 @@ public class MonthModel : PageModel
     public bool ShowMyItemsOnly { get; set; }
     public int CurrentUserId { get; set; }
 
+    // v3.0: Hierarchy filters
+    public int? FilterJobTypeId { get; set; }
+    public int? FilterShiftGroupingId { get; set; }
+    public List<(int Id, string Name)> AvailableJobTypes { get; set; } = new();
+    public List<(int Id, string Name)> AvailableShiftGroupings { get; set; } = new();
+
     // ✅ PHASE 20: Dropdown data for quick-add functionality
     public List<AppUser> EligibleAssignees { get; set; } = new();
     public List<OnDutyTypeConfig> CustomOnDutyTypes { get; set; } = new();
@@ -70,7 +76,7 @@ public class MonthModel : PageModel
         public List<CalendarItemViewModel> Items { get; set; } = new();
     }
 
-    public async Task OnGetAsync(int? year, int? month)
+    public async Task OnGetAsync(int? year, int? month, int? jobTypeId = null, int? shiftGroupingId = null)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         var target = year.HasValue && month.HasValue ? new DateOnly(year.Value, month.Value, 1) : new DateOnly(today.Year, today.Month, 1);
@@ -92,6 +98,35 @@ public class MonthModel : PageModel
         ShowMyItemsOnly = _userPreferenceService.GetShowMyItemsOnly();
 
         var companyId = _companyContext.GetCompanyIdOrThrow();
+
+        // v3.0: Apply hierarchy filters
+        FilterJobTypeId = jobTypeId;
+        FilterShiftGroupingId = shiftGroupingId;
+
+        // v3.0: Load filter options from current user's area
+        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == companyId);
+        if (company?.MoleculeId != null)
+        {
+            var molecule = await _db.Molecules.IgnoreQueryFilters()
+                .Include(m => m.Area)
+                .FirstOrDefaultAsync(m => m.Id == company.MoleculeId);
+
+            if (molecule?.AreaId != null)
+            {
+                AvailableJobTypes = await _db.JobTypes.IgnoreQueryFilters()
+                    .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
+                    .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
+                    .Select(jt => ValueTuple.Create(jt.Id, jt.DisplayName))
+                    .ToListAsync();
+            }
+
+            AvailableShiftGroupings = await _db.ShiftGroupings.IgnoreQueryFilters()
+                .Where(sg => sg.MoleculeId == company.MoleculeId && sg.IsActive)
+                .OrderBy(sg => sg.Name)
+                .Select(sg => ValueTuple.Create(sg.Id, sg.DisplayName))
+                .ToListAsync();
+        }
+
         _logger.LogInformation("✅ PHASE 20: Month calendar for User {UserId}, CompanyId={CompanyId}, ShowMyItemsOnly={ShowMyItemsOnly}",
             currentUserId, companyId, ShowMyItemsOnly);
 
@@ -170,10 +205,23 @@ public class MonthModel : PageModel
         var items = new List<CalendarItemViewModel>();
 
         // Load shift instances
-        var instances = await _db.ShiftInstances
+        var instancesQuery = _db.ShiftInstances
             .Include(si => si.ShiftType)
-            .Where(si => si.CompanyId == companyId && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last())
-            .ToListAsync();
+            .Where(si => si.CompanyId == companyId && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last());
+
+        // v3.0: Apply JobType filter
+        if (FilterJobTypeId.HasValue)
+        {
+            instancesQuery = instancesQuery.Where(si => si.ShiftType.JobTypeId == FilterJobTypeId.Value);
+        }
+
+        // v3.0: Apply ShiftGrouping filter
+        if (FilterShiftGroupingId.HasValue)
+        {
+            instancesQuery = instancesQuery.Where(si => si.ShiftType.ShiftGroupingId == FilterShiftGroupingId.Value);
+        }
+
+        var instances = await instancesQuery.ToListAsync();
 
         var instanceIds = instances.Select(i => i.Id).ToList();
 
