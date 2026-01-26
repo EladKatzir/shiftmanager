@@ -19,6 +19,7 @@ public class GriffinService : IGriffinService
     private readonly ISecurityLogger _securityLogger;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<GriffinService> _logger;
+    private readonly IHierarchyService _hierarchyService;
 
     public GriffinService(
         IHttpClientFactory httpClientFactory,
@@ -26,7 +27,8 @@ public class GriffinService : IGriffinService
         IMemoryCache cache,
         ISecurityLogger securityLogger,
         IAuditLogService auditLogService,
-        ILogger<GriffinService> logger)
+        ILogger<GriffinService> logger,
+        IHierarchyService hierarchyService)
     {
         _httpClientFactory = httpClientFactory;
         _dbContext = dbContext;
@@ -34,6 +36,7 @@ public class GriffinService : IGriffinService
         _securityLogger = securityLogger;
         _auditLogService = auditLogService;
         _logger = logger;
+        _hierarchyService = hierarchyService;
     }
 
     public string BuildAuthenticationUrl(string griffinBaseUrl, string tokenConsumerUrl)
@@ -219,6 +222,23 @@ public class GriffinService : IGriffinService
             new Claim("Griffin:AuthTime", griffinClaims.auth_time),
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o"))
         };
+
+        // v3.0 Organizational Hierarchy claims
+        var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+        if (hierarchyContext != null)
+        {
+            claims.Add(new Claim("MoleculeId", hierarchyContext.Path.Molecule.Id.ToString()));
+            claims.Add(new Claim("AreaId", hierarchyContext.Path.Area.Id.ToString()));
+            claims.Add(new Claim("ProjectId", hierarchyContext.Path.Project.Id.ToString()));
+            claims.Add(new Claim("IsWorkforce", hierarchyContext.IsWorkforce.ToString()));
+            claims.Add(new Claim("IsTech", hierarchyContext.IsTech.ToString()));
+
+            if (hierarchyContext.JobType != null)
+                claims.Add(new Claim("JobTypeId", hierarchyContext.JobType.Id.ToString()));
+
+            if (hierarchyContext.Path.Department != null)
+                claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
+        }
 
         var identity = new ClaimsIdentity(claims, "Griffin");
         var principal = new ClaimsPrincipal(identity);

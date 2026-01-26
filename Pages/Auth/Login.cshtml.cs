@@ -24,6 +24,7 @@ public class LoginModel : LocalizedPageModel
     private readonly IValidationService _validation;
     private readonly IGriffinConfigService _griffinConfigService;
     private readonly IGriffinService _griffinService;
+    private readonly IHierarchyService _hierarchyService;
 
     public LoginModel(
         AppDbContext db,
@@ -32,7 +33,8 @@ public class LoginModel : LocalizedPageModel
         IRateLimitingService rateLimiting,
         IValidationService validation,
         IGriffinConfigService griffinConfigService,
-        IGriffinService griffinService)
+        IGriffinService griffinService,
+        IHierarchyService hierarchyService)
         : base(localizer)
     {
         _db = db;
@@ -41,6 +43,7 @@ public class LoginModel : LocalizedPageModel
         _validation = validation;
         _griffinConfigService = griffinConfigService;
         _griffinService = griffinService;
+        _hierarchyService = hierarchyService;
     }
 
     [BindProperty] public string Email { get; set; } = string.Empty;
@@ -231,6 +234,24 @@ public class LoginModel : LocalizedPageModel
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim("CompanyId", user.CompanyId.ToString())
             };
+
+            // v3.0 Organizational Hierarchy claims
+            var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+            if (hierarchyContext != null)
+            {
+                claims.Add(new Claim("MoleculeId", hierarchyContext.Path.Molecule.Id.ToString()));
+                claims.Add(new Claim("AreaId", hierarchyContext.Path.Area.Id.ToString()));
+                claims.Add(new Claim("ProjectId", hierarchyContext.Path.Project.Id.ToString()));
+                claims.Add(new Claim("IsWorkforce", hierarchyContext.IsWorkforce.ToString()));
+                claims.Add(new Claim("IsTech", hierarchyContext.IsTech.ToString()));
+
+                if (hierarchyContext.JobType != null)
+                    claims.Add(new Claim("JobTypeId", hierarchyContext.JobType.Id.ToString()));
+
+                if (hierarchyContext.Path.Department != null)
+                    claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
+            }
+
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
