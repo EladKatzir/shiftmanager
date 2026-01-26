@@ -8,6 +8,7 @@ using ShiftManager.Models.Support;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using ShiftManager.Middleware;
+using ShiftManager.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -151,6 +152,18 @@ builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
 builder.Services.AddScoped<IArchiveService, ArchiveService>();
 builder.Services.AddScoped<IPurgeService, PurgeService>();
 builder.Services.AddScoped<IImportService, ImportService>();
+
+// v3.0 Organizational Hierarchy Services
+builder.Services.AddScoped<IHierarchyService, HierarchyService>();
+builder.Services.AddScoped<IJobTypeService, JobTypeService>();
+builder.Services.AddScoped<IGrantService, GrantService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// v3.0 Grant Authorization
+builder.Services.AddScoped<IAuthorizationHandler, GrantAuthorizationHandler>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, GrantPolicyProvider>();
 
 // Language Management Services
 builder.Services.AddScoped<ICompanyLocalizationService, CompanyLocalizationService>();
