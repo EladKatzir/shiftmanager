@@ -17,8 +17,7 @@ public class Molecule
     public List<Company> Companies { get; set; } = new();       // Workforce molecules
     public List<Department> Departments { get; set; } = new();  // Tech molecules
 
-    // TODO: Uncomment when ShiftGrouping entity is created
-    // public List<ShiftGrouping> ShiftGroupings { get; set; } = new();
+    public List<ShiftGrouping> ShiftGroupings { get; set; } = new();
 
     // TODO: Uncomment when ChoreType entity is created
     // public List<ChoreType> ChoreTypes { get; set; } = new();
