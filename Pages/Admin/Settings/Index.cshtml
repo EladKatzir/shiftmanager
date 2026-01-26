@@ -1,0 +1,252 @@
+@page
+@model ShiftManager.Pages.Admin.Settings.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Settings"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .view-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .view-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-primary); }
+        .view-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input, .form-select { width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
+        .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-secondary { background: var(--surface-soft); color: var(--text-primary); }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .setting-card { background: var(--surface-soft); border-radius: 8px; padding: 1rem; }
+        .setting-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .setting-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .setting-source { font-size: 0.6875rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .source-badge { display: inline-flex; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.625rem; font-weight: 600; text-transform: uppercase; }
+        .source-area { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .source-molecule { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .source-company { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .source-default { background: var(--border); color: var(--text-muted); }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .checkbox-group input { width: auto; margin: 0; }
+        .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .info-box { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="HierarchySettings" /></h1>
+    <p class="page-subtitle"><loc key="HierarchySettingsDescription" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<div class="section-card">
+    <div class="view-tabs">
+        <a href="?Level=area" class="view-tab @(Model.Level == "area" ? "active" : "")"><loc key="AreaSettings" /></a>
+        <a href="?Level=molecule" class="view-tab @(Model.Level == "molecule" ? "active" : "")"><loc key="MoleculeSettings" /></a>
+        <a href="?Level=company" class="view-tab @(Model.Level == "company" ? "active" : "")"><loc key="CompanySettings" /></a>
+    </div>
+
+    <div class="info-box">
+        <loc key="SettingsCascadeInfo" />
+    </div>
+
+    <form method="get" class="form-group">
+        <input type="hidden" name="Level" value="@Model.Level" />
+        <label class="form-label">
+            @switch (Model.Level)
+            {
+                case "area":
+                    @Localizer["SelectArea"]
+                    break;
+                case "molecule":
+                    @Localizer["SelectMolecule"]
+                    break;
+                case "company":
+                    @Localizer["SelectCompany"]
+                    break;
+            }
+        </label>
+        <select name="SelectedId" class="form-select" onchange="this.form.submit()" style="max-width: 400px;">
+            <option value="">@Localizer["Choose"]...</option>
+            @switch (Model.Level)
+            {
+                case "area":
+                    @foreach (var area in Model.AvailableAreas)
+                    {
+                        <option value="@area.Id" selected="@(Model.SelectedId == area.Id)">@area.Name</option>
+                    }
+                    break;
+                case "molecule":
+                    @foreach (var molecule in Model.AvailableMolecules)
+                    {
+                        <option value="@molecule.Id" selected="@(Model.SelectedId == molecule.Id)">@molecule.Name</option>
+                    }
+                    break;
+                case "company":
+                    @foreach (var company in Model.AvailableCompanies)
+                    {
+                        <option value="@company.Id" selected="@(Model.SelectedId == company.Id)">@company.Name</option>
+                    }
+                    break;
+            }
+        </select>
+    </form>
+</div>
+
+@if (Model.SelectedId.HasValue)
+{
+    @if (Model.Level != "area" && Model.EffectiveSettings != null)
+    {
+        <div class="section-card">
+            <h3 class="section-header"><loc key="EffectiveSettings" /></h3>
+            <div class="settings-grid">
+                <div class="setting-card">
+                    <p class="setting-label"><loc key="RestHoursBetweenShifts" /></p>
+                    <p class="setting-value">@Model.EffectiveSettings.RestHours <span style="font-size: 0.875rem; font-weight: normal;">@Localizer["Hours"]</span></p>
+                    <p class="setting-source">
+                        <loc key="Source" />:
+                        <span class="source-badge @GetSourceClass(Model.EffectiveSettings.RestHoursSource)">@Model.EffectiveSettings.RestHoursSource</span>
+                    </p>
+                </div>
+                <div class="setting-card">
+                    <p class="setting-label"><loc key="WeeklyHoursCap" /></p>
+                    <p class="setting-value">@Model.EffectiveSettings.WeeklyCap <span style="font-size: 0.875rem; font-weight: normal;">@Localizer["Hours"]</span></p>
+                    <p class="setting-source">
+                        <loc key="Source" />:
+                        <span class="source-badge @GetSourceClass(Model.EffectiveSettings.WeeklyCapSource)">@Model.EffectiveSettings.WeeklyCapSource</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="section-card">
+        <h3 class="section-header">
+            @switch (Model.Level)
+            {
+                case "area":
+                    @Localizer["EditAreaSettings"]
+                    break;
+                case "molecule":
+                    @Localizer["EditMoleculeOverrides"]
+                    break;
+                case "company":
+                    @Localizer["EditCompanyOverrides"]
+                    break;
+            }
+        </h3>
+
+        <form method="post">
+            <input type="hidden" name="Level" value="@Model.Level" />
+            <input type="hidden" name="SelectedId" value="@Model.SelectedId" />
+
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["RestHoursBetweenShifts"]
+                        @if (Model.Level == "area") { <span class="form-label-required">*</span> }
+                    </label>
+                    <input type="number" class="form-input" asp-for="EditRestHours"
+                           min="0" max="24"
+                           placeholder="@(Model.Level == "area" ? "" : Localizer["LeaveEmptyToInherit"])"
+                           style="max-width: 150px;" />
+                    @if (Model.Level != "area")
+                    {
+                        <div class="checkbox-group">
+                            <input type="checkbox" asp-for="ClearRestHoursOverride" id="clearRestHours" />
+                            <label for="clearRestHours"><loc key="ClearOverrideInheritFromParent" /></label>
+                        </div>
+                    }
+                    <span class="form-hint"><loc key="RestHoursHint" /></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["WeeklyHoursCap"]
+                        @if (Model.Level == "area") { <span class="form-label-required">*</span> }
+                    </label>
+                    <input type="number" class="form-input" asp-for="EditWeeklyCap"
+                           min="0" max="168"
+                           placeholder="@(Model.Level == "area" ? "" : Localizer["LeaveEmptyToInherit"])"
+                           style="max-width: 150px;" />
+                    @if (Model.Level != "area")
+                    {
+                        <div class="checkbox-group">
+                            <input type="checkbox" asp-for="ClearWeeklyCapOverride" id="clearWeeklyCap" />
+                            <label for="clearWeeklyCap"><loc key="ClearOverrideInheritFromParent" /></label>
+                        </div>
+                    }
+                    <span class="form-hint"><loc key="WeeklyCapHint" /></span>
+                </div>
+            </div>
+
+            @if (Model.Level == "area" && Model.AreaSettings != null && Model.AreaSettings.Id > 0)
+            {
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+                    <loc key="LastUpdated" />: @Model.AreaSettings.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+                    @if (!string.IsNullOrEmpty(Model.AreaSettings.UpdatedByName))
+                    {
+                        <span>@Localizer["By"] @Model.AreaSettings.UpdatedByName</span>
+                    }
+                </p>
+            }
+            @if (Model.Level == "molecule" && Model.MoleculeSettings != null && Model.MoleculeSettings.Id > 0)
+            {
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+                    <loc key="LastUpdated" />: @Model.MoleculeSettings.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+                    @if (!string.IsNullOrEmpty(Model.MoleculeSettings.UpdatedByName))
+                    {
+                        <span>@Localizer["By"] @Model.MoleculeSettings.UpdatedByName</span>
+                    }
+                </p>
+            }
+            @if (Model.Level == "company" && Model.CompanySettings != null && Model.CompanySettings.Id > 0)
+            {
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+                    <loc key="LastUpdated" />: @Model.CompanySettings.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+                    @if (!string.IsNullOrEmpty(Model.CompanySettings.UpdatedByName))
+                    {
+                        <span>@Localizer["By"] @Model.CompanySettings.UpdatedByName</span>
+                    }
+                </p>
+            }
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary"><loc key="SaveSettings" /></button>
+            </div>
+        </form>
+    </div>
+}
+
+@functions {
+    string GetSourceClass(string source)
+    {
+        return source switch
+        {
+            "Area" => "source-area",
+            "Molecule" => "source-molecule",
+            "Company" => "source-company",
+            _ => "source-default"
+        };
+    }
+}
