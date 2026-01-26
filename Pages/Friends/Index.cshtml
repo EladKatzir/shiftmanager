@@ -1,0 +1,197 @@
+@page
+@model ShiftManager.Pages.Friends.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Friends"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .search-input { flex: 1; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-success { background: var(--success); color: white; border-color: var(--success); }
+        .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border-color: transparent; }
+        .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: var(--primary-bg); color: var(--primary); }
+        .friend-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--border); }
+        .friend-card:last-child { border-bottom: none; }
+        .friend-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem; }
+        .friend-info { flex: 1; }
+        .friend-name { font-weight: 600; color: var(--text-primary); margin: 0; }
+        .friend-meta { font-size: 0.8125rem; color: var(--text-secondary); margin: 0.25rem 0 0 0; }
+        .friend-actions { display: flex; gap: 0.5rem; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .request-card { background: var(--surface-soft); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; }
+        .request-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .request-time { font-size: 0.75rem; color: var(--text-muted); }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="MyFriends" /></h1>
+    <p class="page-subtitle"><loc key="FriendsDescription" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="AddFriend" /></h3>
+    <form method="get" class="search-bar">
+        <input type="text" name="SearchQuery" class="search-input"
+               value="@Model.SearchQuery"
+               placeholder="@Localizer["SearchByNameOrEmail"]" />
+        <button type="submit" class="btn btn-primary"><loc key="Search" /></button>
+        @if (!string.IsNullOrEmpty(Model.SearchQuery))
+        {
+            <a href="/Friends" class="btn btn-ghost"><loc key="Clear" /></a>
+        }
+    </form>
+
+    @if (Model.SearchResults.Any())
+    {
+        <div>
+            @foreach (var user in Model.SearchResults)
+            {
+                <div class="friend-card">
+                    <div class="friend-avatar">@(user.DisplayName.Length > 0 ? user.DisplayName[0].ToString().ToUpper() : "?")</div>
+                    <div class="friend-info">
+                        <p class="friend-name">@user.DisplayName</p>
+                        <p class="friend-meta">
+                            @if (!string.IsNullOrEmpty(user.CompanyName)) { <span>@user.CompanyName</span> }
+                            @if (!string.IsNullOrEmpty(user.JobTypeName)) { <span> · @user.JobTypeName</span> }
+                        </p>
+                    </div>
+                    <div class="friend-actions">
+                        @if (user.IsAlreadyFriend)
+                        {
+                            <span class="badge"><loc key="AlreadyFriends" /></span>
+                        }
+                        else if (user.HasPendingRequest)
+                        {
+                            <span class="badge"><loc key="RequestPending" /></span>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="SendRequest" style="display:inline">
+                                <input type="hidden" name="friendId" value="@user.UserId" />
+                                <button type="submit" class="btn btn-primary"><loc key="SendRequest" /></button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.SearchQuery))
+    {
+        <p class="empty-state"><loc key="NoUsersFound" /></p>
+    }
+</div>
+
+@if (Model.PendingRequests.Any())
+{
+    <div class="section-card">
+        <h3 class="section-header">
+            <loc key="PendingRequests" />
+            <span class="badge">@Model.PendingRequests.Count</span>
+        </h3>
+        @foreach (var request in Model.PendingRequests)
+        {
+            <div class="request-card">
+                <div class="request-header">
+                    <strong>@request.FromUserName</strong>
+                    <span class="request-time">@request.RequestedAt.ToString("MMM dd, yyyy")</span>
+                </div>
+                <div class="friend-actions">
+                    <form method="post" asp-page-handler="Accept" style="display:inline">
+                        <input type="hidden" name="id" value="@request.FriendshipId" />
+                        <button type="submit" class="btn btn-success"><loc key="Accept" /></button>
+                    </form>
+                    <form method="post" asp-page-handler="Reject" style="display:inline">
+                        <input type="hidden" name="id" value="@request.FriendshipId" />
+                        <button type="submit" class="btn btn-danger"><loc key="Reject" /></button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (Model.OutgoingRequests.Any())
+{
+    <div class="section-card">
+        <h3 class="section-header">
+            <loc key="OutgoingRequests" />
+            <span class="badge">@Model.OutgoingRequests.Count</span>
+        </h3>
+        @foreach (var request in Model.OutgoingRequests)
+        {
+            <div class="request-card">
+                <div class="request-header">
+                    <span><loc key="RequestSentTo" /> <strong>@request.ToUserName</strong></span>
+                    <span class="request-time">@request.RequestedAt.ToString("MMM dd, yyyy")</span>
+                </div>
+                <div class="friend-actions">
+                    <form method="post" asp-page-handler="CancelRequest" style="display:inline"
+                          onsubmit="return confirm('@Localizer["ConfirmCancelRequest"]');">
+                        <input type="hidden" name="id" value="@request.FriendshipId" />
+                        <button type="submit" class="btn btn-ghost"><loc key="Cancel" /></button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="section-card">
+    <h3 class="section-header">
+        <loc key="Friends" />
+        <span class="badge">@Model.Friends.Count</span>
+    </h3>
+
+    @if (Model.Friends.Any())
+    {
+        @foreach (var friend in Model.Friends)
+        {
+            <div class="friend-card">
+                <div class="friend-avatar">@(friend.DisplayName.Length > 0 ? friend.DisplayName[0].ToString().ToUpper() : "?")</div>
+                <div class="friend-info">
+                    <p class="friend-name">@friend.DisplayName</p>
+                    <p class="friend-meta">
+                        @if (!string.IsNullOrEmpty(friend.CompanyName)) { <span>@friend.CompanyName</span> }
+                        @if (!string.IsNullOrEmpty(friend.JobTypeName)) { <span> · @friend.JobTypeName</span> }
+                        <span> · @Localizer["FriendsSince"] @friend.FriendsSince.ToString("MMM yyyy")</span>
+                    </p>
+                </div>
+                <div class="friend-actions">
+                    <form method="post" asp-page-handler="Remove" style="display:inline"
+                          onsubmit="return confirm('@Localizer["ConfirmRemoveFriend"]');">
+                        <input type="hidden" name="id" value="@friend.FriendshipId" />
+                        <button type="submit" class="btn btn-danger"><loc key="Remove" /></button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="empty-state"><loc key="NoFriendsYet" /></p>
+    }
+</div>
