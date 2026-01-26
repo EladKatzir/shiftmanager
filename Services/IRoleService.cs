@@ -1,0 +1,28 @@
+using ShiftManager.Models;
+
+namespace ShiftManager.Services;
+
+public interface IRoleService
+{
+    // Role template queries
+    Task<RoleTemplate?> GetRoleTemplateAsync(int roleTemplateId);
+    Task<RoleTemplate?> GetRoleTemplateByKeyAsync(string key);
+    Task<List<RoleTemplate>> GetRoleTemplatesAsync();
+    Task<List<RoleTemplate>> GetRoleTemplatesByScopeLevelAsync(Models.Support.RoleScopeLevel scopeLevel);
+
+    // User role queries
+    Task<List<UserRoleAssignment>> GetUserRolesAsync(int userId);
+    Task<List<UserRoleAssignment>> GetUserRolesInScopeAsync(int userId, GrantScope scope);
+    Task<UserRoleAssignment?> GetUserRoleAssignmentAsync(int userRoleId);
+    Task<bool> UserHasRoleAsync(int userId, string roleKey);
+    Task<bool> UserHasRoleAsync(int userId, int roleTemplateId);
+
+    // Role assignment management
+    Task<UserRoleAssignment?> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId);
+    Task<bool> RemoveRoleAsync(int userRoleId, int? removedByUserId = null);
+    Task<bool> RemoveAllUserRolesAsync(int userId);
+
+    // Queries for role holders
+    Task<List<AppUser>> GetUsersWithRoleAsync(int roleTemplateId);
+    Task<List<AppUser>> GetUsersWithRoleInScopeAsync(int roleTemplateId, GrantScope scope);
+}
