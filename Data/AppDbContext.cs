@@ -65,6 +65,40 @@ public class AppDbContext : DbContext
     // ✅ PHASE 19: Game leaderboard scores (tenant-scoped)
     public DbSet<GameScore> GameScores => Set<GameScore>();
 
+    // ========================================
+    // v3.0 Organizational Hierarchy Entities
+    // ========================================
+
+    // Hierarchy (Project → Area → Molecule → Company/Department → User)
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<Area> Areas => Set<Area>();
+    public DbSet<Molecule> Molecules => Set<Molecule>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<JobType> JobTypes => Set<JobType>();
+
+    // Shift Groupings (Company + JobType combinations for shift scheduling)
+    public DbSet<ShiftGrouping> ShiftGroupings => Set<ShiftGrouping>();
+    public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
+    public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
+
+    // Grant System (107 built-in grants, 11 role templates)
+    public DbSet<GrantType> GrantTypes => Set<GrantType>();
+    public DbSet<Grant> Grants => Set<Grant>();
+    public DbSet<RoleTemplate> RoleTemplates => Set<RoleTemplate>();
+    public DbSet<RoleTemplateGrant> RoleTemplateGrants => Set<RoleTemplateGrant>();
+    public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
+
+    // Settings Hierarchy (Area → Molecule → Company cascade)
+    public DbSet<AreaSettings> AreaSettings => Set<AreaSettings>();
+    public DbSet<MoleculeSettings> MoleculeSettings => Set<MoleculeSettings>();
+    public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
+
+    // Circle/Friends System (cross-molecule visibility)
+    public DbSet<UserFriendship> UserFriendships => Set<UserFriendship>();
+
+    // Smart Task System (onboarding tasks)
+    public DbSet<SetupTask> SetupTasks => Set<SetupTask>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var dateConverter = new ValueConverter<DateOnly, string>(
@@ -707,6 +741,407 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(e => e.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // ========================================
+        // v3.0 Organizational Hierarchy Configurations
+        // ========================================
+
+        // Project → Area relationship
+        modelBuilder.Entity<Area>()
+            .HasOne(a => a.Project)
+            .WithMany(p => p.Areas)
+            .HasForeignKey(a => a.ProjectId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Area → Molecule relationship
+        modelBuilder.Entity<Molecule>()
+            .HasOne(m => m.Area)
+            .WithMany(a => a.Molecules)
+            .HasForeignKey(m => m.AreaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Molecule → Company relationship
+        modelBuilder.Entity<Company>()
+            .HasOne(c => c.Molecule)
+            .WithMany(m => m.Companies)
+            .HasForeignKey(c => c.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Nullable during migration period
+
+        // Molecule → Department relationship
+        modelBuilder.Entity<Department>()
+            .HasOne(d => d.Molecule)
+            .WithMany(m => m.Departments)
+            .HasForeignKey(d => d.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Area → JobType relationship (JobTypes are Area-scoped)
+        modelBuilder.Entity<JobType>()
+            .HasOne(jt => jt.Area)
+            .WithMany(a => a.JobTypes)
+            .HasForeignKey(jt => jt.AreaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // AppUser → JobType relationship
+        modelBuilder.Entity<AppUser>()
+            .HasOne(u => u.JobType)
+            .WithMany(jt => jt.Users)
+            .HasForeignKey(u => u.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // AppUser → Department relationship
+        modelBuilder.Entity<AppUser>()
+            .HasOne(u => u.Department)
+            .WithMany(d => d.Users)
+            .HasForeignKey(u => u.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // ========================================
+        // ShiftGrouping Configurations
+        // ========================================
+
+        // ShiftGrouping → Molecule relationship
+        modelBuilder.Entity<ShiftGrouping>()
+            .HasOne(sg => sg.Molecule)
+            .WithMany(m => m.ShiftGroupings)
+            .HasForeignKey(sg => sg.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ShiftGroupingCompany: Composite primary key
+        modelBuilder.Entity<ShiftGroupingCompany>()
+            .HasKey(sgc => new { sgc.ShiftGroupingId, sgc.CompanyId });
+
+        modelBuilder.Entity<ShiftGroupingCompany>()
+            .HasOne(sgc => sgc.ShiftGrouping)
+            .WithMany(sg => sg.Companies)
+            .HasForeignKey(sgc => sgc.ShiftGroupingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ShiftGroupingCompany>()
+            .HasOne(sgc => sgc.Company)
+            .WithMany()
+            .HasForeignKey(sgc => sgc.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ShiftGroupingJobType: Composite primary key
+        modelBuilder.Entity<ShiftGroupingJobType>()
+            .HasKey(sgjt => new { sgjt.ShiftGroupingId, sgjt.JobTypeId });
+
+        modelBuilder.Entity<ShiftGroupingJobType>()
+            .HasOne(sgjt => sgjt.ShiftGrouping)
+            .WithMany(sg => sg.JobTypes)
+            .HasForeignKey(sgjt => sgjt.ShiftGroupingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ShiftGroupingJobType>()
+            .HasOne(sgjt => sgjt.JobType)
+            .WithMany()
+            .HasForeignKey(sgjt => sgjt.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ========================================
+        // Grant System Configurations
+        // ========================================
+
+        // GrantType unique key constraint
+        modelBuilder.Entity<GrantType>()
+            .HasIndex(gt => gt.Key)
+            .IsUnique();
+
+        modelBuilder.Entity<GrantType>()
+            .HasOne(gt => gt.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(gt => gt.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // Grant relationships
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.User)
+            .WithMany()
+            .HasForeignKey(g => g.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.GrantType)
+            .WithMany(gt => gt.Grants)
+            .HasForeignKey(g => g.GrantTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.GrantedByUser)
+            .WithMany()
+            .HasForeignKey(g => g.GrantedByUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.Project)
+            .WithMany()
+            .HasForeignKey(g => g.ProjectId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.Area)
+            .WithMany()
+            .HasForeignKey(g => g.AreaId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.Molecule)
+            .WithMany()
+            .HasForeignKey(g => g.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.Department)
+            .WithMany()
+            .HasForeignKey(g => g.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.Company)
+            .WithMany()
+            .HasForeignKey(g => g.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Grant>()
+            .HasOne(g => g.JobType)
+            .WithMany()
+            .HasForeignKey(g => g.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // Grant indexes for query performance
+        modelBuilder.Entity<Grant>()
+            .HasIndex(g => new { g.UserId, g.GrantTypeId });
+
+        modelBuilder.Entity<Grant>()
+            .HasIndex(g => g.GrantTypeId);
+
+        // RoleTemplate unique key constraint
+        modelBuilder.Entity<RoleTemplate>()
+            .HasIndex(rt => rt.Key)
+            .IsUnique();
+
+        // RoleTemplateGrant relationships
+        modelBuilder.Entity<RoleTemplateGrant>()
+            .HasOne(rtg => rtg.RoleTemplate)
+            .WithMany(rt => rt.AutoGrants)
+            .HasForeignKey(rtg => rtg.RoleTemplateId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RoleTemplateGrant>()
+            .HasOne(rtg => rtg.GrantType)
+            .WithMany(gt => gt.RoleTemplateGrants)
+            .HasForeignKey(rtg => rtg.GrantTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // RoleTemplateGrant unique constraint (one grant per role template)
+        modelBuilder.Entity<RoleTemplateGrant>()
+            .HasIndex(rtg => new { rtg.RoleTemplateId, rtg.GrantTypeId })
+            .IsUnique();
+
+        // UserRoleAssignment relationships
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.User)
+            .WithMany()
+            .HasForeignKey(ura => ura.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.RoleTemplate)
+            .WithMany(rt => rt.UserRoles)
+            .HasForeignKey(ura => ura.RoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.AssignedByUser)
+            .WithMany()
+            .HasForeignKey(ura => ura.AssignedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.Company)
+            .WithMany()
+            .HasForeignKey(ura => ura.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.Department)
+            .WithMany()
+            .HasForeignKey(ura => ura.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.Molecule)
+            .WithMany()
+            .HasForeignKey(ura => ura.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.Area)
+            .WithMany()
+            .HasForeignKey(ura => ura.AreaId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasOne(ura => ura.JobType)
+            .WithMany()
+            .HasForeignKey(ura => ura.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // UserRoleAssignment indexes
+        modelBuilder.Entity<UserRoleAssignment>()
+            .HasIndex(ura => new { ura.UserId, ura.RoleTemplateId, ura.IsActive });
+
+        // ========================================
+        // Settings Hierarchy Configurations
+        // ========================================
+
+        // AreaSettings: One settings per Area
+        modelBuilder.Entity<AreaSettings>()
+            .HasIndex(asetting => asetting.AreaId)
+            .IsUnique();
+
+        modelBuilder.Entity<AreaSettings>()
+            .HasOne(asetting => asetting.Area)
+            .WithOne(a => a.Settings)
+            .HasForeignKey<AreaSettings>(asetting => asetting.AreaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AreaSettings>()
+            .HasOne(asetting => asetting.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(asetting => asetting.UpdatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // MoleculeSettings: One settings per Molecule
+        modelBuilder.Entity<MoleculeSettings>()
+            .HasIndex(msetting => msetting.MoleculeId)
+            .IsUnique();
+
+        modelBuilder.Entity<MoleculeSettings>()
+            .HasOne(msetting => msetting.Molecule)
+            .WithOne(m => m.Settings)
+            .HasForeignKey<MoleculeSettings>(msetting => msetting.MoleculeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MoleculeSettings>()
+            .HasOne(msetting => msetting.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(msetting => msetting.UpdatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // CompanySettings: One settings per Company
+        modelBuilder.Entity<CompanySettings>()
+            .HasIndex(csetting => csetting.CompanyId)
+            .IsUnique();
+
+        modelBuilder.Entity<CompanySettings>()
+            .HasOne(csetting => csetting.Company)
+            .WithMany()
+            .HasForeignKey(csetting => csetting.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompanySettings>()
+            .HasOne(csetting => csetting.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(csetting => csetting.UpdatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // ========================================
+        // Circle/Friends System Configurations
+        // ========================================
+
+        // UserFriendship: Self-referencing relationship
+        modelBuilder.Entity<UserFriendship>()
+            .HasOne(uf => uf.User)
+            .WithMany()
+            .HasForeignKey(uf => uf.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserFriendship>()
+            .HasOne(uf => uf.Friend)
+            .WithMany()
+            .HasForeignKey(uf => uf.FriendId)
+            .OnDelete(DeleteBehavior.Restrict);  // Prevent cascade loop
+
+        // Unique constraint: One friendship per user pair
+        modelBuilder.Entity<UserFriendship>()
+            .HasIndex(uf => new { uf.UserId, uf.FriendId })
+            .IsUnique();
+
+        // Index for querying user's friends
+        modelBuilder.Entity<UserFriendship>()
+            .HasIndex(uf => uf.FriendId);
+
+        // ========================================
+        // Smart Task System Configurations
+        // ========================================
+
+        modelBuilder.Entity<SetupTask>()
+            .HasOne(st => st.Molecule)
+            .WithMany()
+            .HasForeignKey(st => st.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<SetupTask>()
+            .HasOne(st => st.Company)
+            .WithMany()
+            .HasForeignKey(st => st.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<SetupTask>()
+            .HasOne(st => st.JobType)
+            .WithMany()
+            .HasForeignKey(st => st.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<SetupTask>()
+            .HasOne(st => st.SuggestedUser)
+            .WithMany()
+            .HasForeignKey(st => st.SuggestedUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<SetupTask>()
+            .HasOne(st => st.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(st => st.AssignedToUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SetupTask>()
+            .HasOne(st => st.CompletedByUser)
+            .WithMany()
+            .HasForeignKey(st => st.CompletedByUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // SetupTask indexes
+        modelBuilder.Entity<SetupTask>()
+            .HasIndex(st => new { st.AssignedToUserId, st.Status });
+
+        modelBuilder.Entity<SetupTask>()
+            .HasIndex(st => new { st.MoleculeId, st.Status });
 
         base.OnModelCreating(modelBuilder);
     }
