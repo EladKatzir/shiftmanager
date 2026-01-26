@@ -103,10 +103,50 @@
     </div>
 
     <div class="card">
+        <h3 style="margin-top:0">Organizational Assignment</h3>
+
+        @if (Model.IsWorkforceMolecule && Model.AvailableJobTypes.Any())
+        {
+            <label>@Localizer["JobType"]</label>
+            <select asp-for="JobTypeId">
+                <option value="">-- @Localizer["NoJobType"] --</option>
+                @foreach (var jt in Model.AvailableJobTypes)
+                {
+                    <option value="@jt.Id">@jt.Name</option>
+                }
+            </select>
+            <small style="color: #666; display: block; margin-bottom: 1rem;">@Localizer["JobTypeDescription"]</small>
+        }
+
+        @if (Model.IsTechMolecule && Model.AvailableDepartments.Any())
+        {
+            <label>@Localizer["Department"]</label>
+            <select asp-for="DepartmentId">
+                <option value="">-- @Localizer["NoDepartment"] --</option>
+                @foreach (var dept in Model.AvailableDepartments)
+                {
+                    <option value="@dept.Id">@dept.Name</option>
+                }
+            </select>
+            <small style="color: #666; display: block; margin-bottom: 1rem;">@Localizer["DepartmentDescription"]</small>
+        }
+
+        <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--surface-soft); border-radius: 8px; margin-bottom: 1rem;">
+            <span style="font-weight: 600;">@Localizer["Grants"]:</span>
+            <span style="background: var(--primary-bg); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">@Model.GrantsCount</span>
+            @if (Model.GrantsCount > 0)
+            {
+                <a href="/Admin/Organization/Grants?userId=@Model.UserId" style="color: var(--primary); font-size: 0.875rem;">@Localizer["ManageGrants"] →</a>
+            }
+        </div>
+    </div>
+
+    <div class="card">
         <h3 style="margin-top:0">Professional Information</h3>
 
-        <label>Department</label>
+        <label>Department (Legacy)</label>
         <input type="text" asp-for="Department" placeholder="e.g., Kitchen, Front of House, Management" />
+        <small style="color: #666; display: block; margin-bottom: 1rem;">@Localizer["LegacyDepartmentNote"]</small>
 
         <label>Job Title</label>
         <input type="text" asp-for="JobTitle" placeholder="e.g., Line Cook, Server, Shift Manager" />

@@ -86,12 +86,28 @@ public class EditProfileModel : PageModel
     [BindProperty]
     public IFormFile? AvatarFile { get; set; }
 
+    // v3.0 Organizational Hierarchy
+    [BindProperty]
+    public int? JobTypeId { get; set; }
+
+    [BindProperty]
+    public int? DepartmentId { get; set; }
+
     public string? AvatarUrl { get; set; }
     public string? InitialsForAvatar { get; set; }
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
 
     public List<ProfileChangeAudit> RecentChanges { get; set; } = new();
+
+    // v3.0 Dropdown options
+    public record JobTypeOption(int Id, string Name, string AreaName);
+    public record DepartmentOption(int Id, string Name, string MoleculeName);
+    public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
+    public List<DepartmentOption> AvailableDepartments { get; set; } = new();
+    public int GrantsCount { get; set; }
+    public bool IsWorkforceMolecule { get; set; }
+    public bool IsTechMolecule { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -101,7 +117,10 @@ public class EditProfileModel : PageModel
             return BadRequest("Invalid user ID");
         }
 
-        var user = await _db.Users.FindAsync(UserId);
+        var user = await _db.Users
+            .Include(u => u.JobType)
+            .Include(u => u.Department)
+            .FirstOrDefaultAsync(u => u.Id == UserId);
         if (user == null)
         {
             return NotFound();
@@ -115,6 +134,7 @@ public class EditProfileModel : PageModel
         }
 
         LoadUserData(user);
+        await LoadOrganizationalOptionsAsync(user);
         await LoadRecentChangesAsync();
 
         return Page();
@@ -133,7 +153,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Email and Display Name are required.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -143,7 +167,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Email must not exceed 255 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -152,7 +180,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Display name must not exceed 200 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -161,7 +193,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Preferred name must not exceed 100 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -170,7 +206,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Phone must not exceed 50 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -179,7 +219,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "City must not exceed 100 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -188,7 +232,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Department must not exceed 100 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -197,7 +245,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Job title must not exceed 100 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -206,7 +258,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Skills must not exceed 5000 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -215,7 +271,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Certifications must not exceed 5000 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -224,7 +284,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Emergency contact name must not exceed 200 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -233,7 +297,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Emergency contact phone must not exceed 50 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -242,7 +310,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Emergency contact relation must not exceed 100 characters.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -252,7 +324,11 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = "Invalid email format.";
             var user = await _db.Users.FindAsync(UserId);
-            if (user != null) LoadUserData(user);
+            if (user != null)
+            {
+                LoadUserData(user);
+                await LoadOrganizationalOptionsAsync(user);
+            }
             await LoadRecentChangesAsync();
             return Page();
         }
@@ -285,6 +361,7 @@ public class EditProfileModel : PageModel
             {
                 ErrorMessage = error;
                 LoadUserData(targetUser);
+                await LoadOrganizationalOptionsAsync(targetUser);
                 await LoadRecentChangesAsync();
                 return Page();
             }
@@ -321,15 +398,25 @@ public class EditProfileModel : PageModel
         {
             ErrorMessage = updateError;
             LoadUserData(targetUser);
+            await LoadOrganizationalOptionsAsync(targetUser);
             await LoadRecentChangesAsync();
             return Page();
         }
 
+        // Update v3.0 organizational fields directly (not in ProfileUpdateDto)
+        targetUser.JobTypeId = JobTypeId;
+        targetUser.DepartmentId = DepartmentId;
+        await _db.SaveChangesAsync();
+
         SuccessMessage = "Profile updated successfully!";
 
         // Reload user data
-        targetUser = await _db.Users.FindAsync(UserId);
+        targetUser = await _db.Users
+            .Include(u => u.JobType)
+            .Include(u => u.Department)
+            .FirstOrDefaultAsync(u => u.Id == UserId);
         LoadUserData(targetUser!);
+        await LoadOrganizationalOptionsAsync(targetUser!);
         await LoadRecentChangesAsync();
 
         return Page();
@@ -354,8 +441,12 @@ public class EditProfileModel : PageModel
             ErrorMessage = "Failed to delete avatar.";
         }
 
-        var user = await _db.Users.FindAsync(UserId);
+        var user = await _db.Users
+            .Include(u => u.JobType)
+            .Include(u => u.Department)
+            .FirstOrDefaultAsync(u => u.Id == UserId);
         LoadUserData(user!);
+        await LoadOrganizationalOptionsAsync(user!);
         await LoadRecentChangesAsync();
 
         return Page();
@@ -377,6 +468,8 @@ public class EditProfileModel : PageModel
         EmergencyContactRelation = user.EmergencyContactRelation;
         Role = user.Role;
         IsActive = user.IsActive;
+        JobTypeId = user.JobTypeId;
+        DepartmentId = user.DepartmentId;
 
         // Parse skills and certifications
         var skillsList = ParseJsonArray(user.Skills);
@@ -392,6 +485,53 @@ public class EditProfileModel : PageModel
     private async Task LoadRecentChangesAsync()
     {
         RecentChanges = await _profileService.GetProfileHistoryAsync(UserId, days: 30);
+    }
+
+    private async Task LoadOrganizationalOptionsAsync(AppUser user)
+    {
+        // Get the user's company and determine molecule type
+        var company = await _db.Companies
+            .IgnoreQueryFilters()
+            .Include(c => c.Molecule)
+            .ThenInclude(m => m!.Area)
+            .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+
+        if (company?.Molecule != null)
+        {
+            var moleculeType = company.Molecule.Type;
+            IsWorkforceMolecule = moleculeType == Models.Support.MoleculeType.Workforce;
+            IsTechMolecule = moleculeType == Models.Support.MoleculeType.Tech;
+
+            if (IsWorkforceMolecule)
+            {
+                // Load job types for the area
+                var areaId = company.Molecule.AreaId;
+                AvailableJobTypes = await _db.JobTypes
+                    .IgnoreQueryFilters()
+                    .Where(jt => jt.AreaId == areaId && jt.IsActive)
+                    .Include(jt => jt.Area)
+                    .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
+                    .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName))
+                    .ToListAsync();
+            }
+            else if (IsTechMolecule)
+            {
+                // Load departments for the molecule
+                var moleculeId = company.MoleculeId!.Value;
+                AvailableDepartments = await _db.Departments
+                    .IgnoreQueryFilters()
+                    .Where(d => d.MoleculeId == moleculeId && d.IsActive)
+                    .Include(d => d.Molecule)
+                    .OrderBy(d => d.Name)
+                    .Select(d => new DepartmentOption(d.Id, d.DisplayName, d.Molecule.DisplayName))
+                    .ToListAsync();
+            }
+        }
+
+        // Load grants count
+        GrantsCount = await _db.Grants
+            .IgnoreQueryFilters()
+            .CountAsync(g => g.UserId == user.Id);
     }
 
     private List<string> ParseJsonArray(string? json)
