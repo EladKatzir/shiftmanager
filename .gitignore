@@ -130,3 +130,6 @@ ProjectPublish/**
 
 !FinalProductPublish/
 !FinalProductPublish/**
+
+# Git worktrees (isolated workspaces)
+.worktrees/
