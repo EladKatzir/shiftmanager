@@ -49,6 +49,8 @@
     {
         <link rel="stylesheet" href="~/css/language-edit-mode.css" asp-append-version="true" />
     }
+    @* Lucide Icons - MIT licensed SVG icon library (local copy for air-gapped environments) *@
+    <script src="~/lib/lucide/lucide.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Styles", required: false)
     @await Html.PartialAsync("_LocalizationScript")
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
@@ -99,13 +101,24 @@
     @await Component.InvokeAsync("LanguageEditModeBanner")
 
     <div class="app-shell">
-        @* Sidebar Navigation *@
-        <aside class="app-sidebar">
-            @* Brand *@
-            <div class="app-sidebar-brand brand">
-                <span class="app-sidebar-brand-icon">📊</span>
-                <span><loc key="ShiftManager" /></span>
+        @if (User?.Identity?.IsAuthenticated ?? false)
+        {
+        @* Sidebar Navigation - UI Overhaul v3.0 *@
+        <aside class="app-sidebar" id="appSidebar">
+            @* Brand Section *@
+            <div class="sidebar-brand">
+                <div class="sidebar-brand__logo">
+                    <img src="~/images/shifty-logo.svg" alt="Shifty" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <span class="sidebar-brand__logo-fallback" style="display:none; font-size:24px;">📊</span>
+                </div>
+                <div class="sidebar-brand__text">
+                    <span class="sidebar-brand__name">SHIFTY</span>
+                    <span class="sidebar-brand__tagline"><loc key="ShiftManager" /></span>
+                </div>
             </div>
+
+            @* Context Switcher - Only shown if user has multiple contexts *@
+            @await Component.InvokeAsync("ContextSwitcher")
 
             @* Navigation *@
             <nav class="app-sidebar-nav">
@@ -259,26 +272,51 @@
                 }
             </nav>
 
+            @* On-Call Widget (in sidebar for quick access) *@
+            @if (User?.Identity?.IsAuthenticated == true)
+            {
+                <div class="sidebar-widget-container">
+                    @await Component.InvokeAsync("OnCallWidget", new { showInSidebar = true })
+                </div>
+            }
+
             @* Sidebar Footer *@
-            <div class="app-sidebar-footer">
+            <div class="sidebar-footer">
                 @if (User?.Identity?.IsAuthenticated == true)
                 {
-                    <div class="user-menu">
-                        <div class="user-avatar">@firstName.Substring(0, 1).ToUpper()</div>
-                        <div class="user-details">
-                            <div class="user-name">@firstName</div>
-                            <div class="user-role">@role</div>
+                    <div class="sidebar-user" tabindex="0" role="button" aria-haspopup="menu">
+                        <div class="sidebar-user__avatar">@firstName.Substring(0, 1).ToUpper()</div>
+                        <div class="sidebar-user__info">
+                            <div class="sidebar-user__name">@firstName</div>
+                            <div class="sidebar-user__role">@role</div>
                         </div>
+                        <span class="sidebar-user__menu-icon">▼</span>
                     </div>
 
-                    @* ✅ PHASE 18: Ctrl+K tooltip for command palette discovery *@
-                    <div class="sidebar-footer-shortcut" loc-title="Sidebar_CtrlKTooltip">
-                        <span class="shortcut-icon">⌨️</span>
-                        <span class="shortcut-text"><loc key="Sidebar_CtrlKLabel" /></span>
+                    @* Ctrl+K shortcut hint *@
+                    <div class="sidebar-shortcut" loc-title="Sidebar_CtrlKTooltip">
+                        <span class="sidebar-shortcut__icon">⌨️</span>
+                        <span class="sidebar-shortcut__key">Ctrl</span>
+                        <span>+</span>
+                        <span class="sidebar-shortcut__key">K</span>
                     </div>
                 }
             </div>
+
+            @* Sidebar Toggle Button *@
+            <button class="sidebar-toggle" id="sidebarToggle" loc-aria-label="Sidebar_Toggle">
+                <span class="sidebar-toggle__icon">◀</span>
+            </button>
         </aside>
+
+        @* Mobile Navigation Overlay *@
+        <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+        @* Mobile Navigation Toggle *@
+        <button class="mobile-nav-toggle" id="mobileNavToggle" loc-aria-label="Sidebar_MobileToggle">
+            <span>☰</span>
+        </button>
+        }
 
         @* Main Content Area *@
         <div class="app-main">
@@ -371,5 +409,108 @@
     </div>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* Initialize Lucide icons *@
+    <script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+        // Re-initialize icons after any dynamic content updates
+        document.addEventListener('htmx:afterSwap', function() {
+            lucide.createIcons();
+        });
+    }
+    </script>
+
+    @* Sidebar & Mobile Navigation Scripts *@
+    <script>
+    (function() {
+        const SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
+        const sidebar = document.getElementById('appSidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mobileToggle = document.getElementById('mobileNavToggle');
+        const mobileOverlay = document.getElementById('mobileNavOverlay');
+
+        if (!sidebar) return;
+
+        // Restore collapsed state
+        const isCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('is-collapsed');
+        }
+
+        // Desktop sidebar toggle
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('is-collapsed');
+                const collapsed = sidebar.classList.contains('is-collapsed');
+                localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed);
+            });
+        }
+
+        // Mobile navigation toggle
+        if (mobileToggle && mobileOverlay) {
+            mobileToggle.addEventListener('click', function() {
+                sidebar.classList.add('is-mobile-open');
+                mobileOverlay.classList.add('is-visible');
+                document.body.style.overflow = 'hidden';
+            });
+
+            mobileOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('is-mobile-open');
+                mobileOverlay.classList.remove('is-visible');
+                document.body.style.overflow = '';
+            });
+
+            // Close on escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('is-mobile-open')) {
+                    sidebar.classList.remove('is-mobile-open');
+                    mobileOverlay.classList.remove('is-visible');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Collapsible nav categories
+        const categoryHeaders = document.querySelectorAll('.nav-category__header');
+        categoryHeaders.forEach(function(header) {
+            header.addEventListener('click', function() {
+                const category = this.closest('.nav-category');
+                if (category) {
+                    category.classList.toggle('is-collapsed');
+                    const isExpanded = !category.classList.contains('is-collapsed');
+                    this.setAttribute('aria-expanded', isExpanded);
+                    
+                    // Save preference
+                    const categoryId = category.dataset.categoryId;
+                    if (categoryId) {
+                        const prefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
+                        prefs[categoryId] = !isExpanded;
+                        localStorage.setItem('shifty_nav_prefs', JSON.stringify(prefs));
+                    }
+                }
+            });
+
+            // Keyboard support
+            header.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Restore category collapsed states
+        const navPrefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
+        document.querySelectorAll('.nav-category[data-category-id]').forEach(function(category) {
+            const categoryId = category.dataset.categoryId;
+            if (navPrefs[categoryId]) {
+                category.classList.add('is-collapsed');
+                const header = category.querySelector('.nav-category__header');
+                if (header) header.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

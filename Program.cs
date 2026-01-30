@@ -157,6 +157,7 @@ builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<IHierarchyService, HierarchyService>();
 builder.Services.AddScoped<IJobTypeService, JobTypeService>();
 builder.Services.AddScoped<IGrantService, GrantService>();
+builder.Services.AddScoped<IWidgetService, WidgetService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -208,98 +209,181 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     await db.Database.MigrateAsync();
 
-    // Get seed passwords from environment (required in production)
-    var seedAdminPassword = app.Configuration["SEED_ADMIN_PASSWORD"] ?? Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD");
-    var seedDirectorPassword = app.Configuration["SEED_DIRECTOR_PASSWORD"] ?? Environment.GetEnvironmentVariable("SEED_DIRECTOR_PASSWORD");
+    // ============================================================
+    // LOAD SEEDING CONFIGURATION FROM appsettings.json
+    // ============================================================
+    var seedingOptions = new ShiftManager.Configuration.SeedingOptions();
+    app.Configuration.GetSection(ShiftManager.Configuration.SeedingOptions.SectionName).Bind(seedingOptions);
 
-    // In production, require explicit seed passwords
-    if (!app.Environment.IsDevelopment())
+    // Validate owner password in production
+    if (!app.Environment.IsDevelopment() && seedingOptions.Owner.Password == "admin123")
     {
-        if (string.IsNullOrEmpty(seedAdminPassword))
-        {
-            var environmentName = app.Environment.EnvironmentName;
-            throw new InvalidOperationException($@"
-================================================================================
-MISSING REQUIRED CONFIGURATION: SEED_ADMIN_PASSWORD
-================================================================================
-
-Current Environment: {environmentName}
-
-The SEED_ADMIN_PASSWORD environment variable is REQUIRED in non-development
-environments but is currently not set.
-
-IMPORTANT: Configuration files (appsettings.json) do NOT work for this setting.
-You MUST use an environment variable or command-line argument.
-
---------------------------------------------------------------------------------
-HOW TO FIX (Windows):
---------------------------------------------------------------------------------
-
-Option 1 - System-wide environment variable (RECOMMENDED for Windows Services):
-  1. Open Command Prompt as Administrator
-  2. Run the following command:
-
-     setx SEED_ADMIN_PASSWORD ""YourStrongPassword123!"" /M
-
-  3. Verify the variable is set:
-
-     echo %SEED_ADMIN_PASSWORD%
-
-  4. Restart ShiftManager application
-
-Option 2 - User-level environment variable:
-  1. Open Command Prompt (no admin required)
-  2. Run:
-
-     setx SEED_ADMIN_PASSWORD ""YourStrongPassword123!""
-
-  3. Restart ShiftManager application
-
-Option 3 - Set for current session only (temporary):
-  1. In Command Prompt:
-
-     set SEED_ADMIN_PASSWORD=YourStrongPassword123!
-
-  2. Start ShiftManager.exe in the same command prompt window
-
---------------------------------------------------------------------------------
-WHY APPSETTINGS.JSON DOESN'T WORK:
---------------------------------------------------------------------------------
-
-Setting ""SEED_ADMIN_PASSWORD"" in appsettings.json is NOT supported for
-security reasons. Environment variables prevent accidental password commits
-to version control and ensure passwords are managed separately from code.
-
---------------------------------------------------------------------------------
-WHAT HAPPENS NEXT:
---------------------------------------------------------------------------------
-
-After setting the environment variable and restarting the application:
-  1. Database migrations will run automatically
-  2. Default admin user will be created with your password
-  3. Application will start normally on http://localhost:5000
-
-For more help, see DEPLOYMENT_GUIDE.txt in the application directory.
-
-================================================================================
-");
-        }
+        logger.LogWarning(
+            "⚠️ SECURITY WARNING: Using default owner password in {Environment} environment. " +
+            "Please set a secure password in appsettings.json under Seeding:Owner:Password",
+            app.Environment.EnvironmentName);
     }
 
-    // Use defaults only in development
-    seedAdminPassword ??= "admin123";
-    seedDirectorPassword ??= "director123";
-
-    // Seed company
-    if (!db.Companies.Any())
+    // Also support environment variable override for backward compatibility
+    var envPassword = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD");
+    if (!string.IsNullOrEmpty(envPassword))
     {
-        db.Companies.Add(new Company { Name = "Demo Co" });
+        seedingOptions.Owner.Password = envPassword;
+    }
+
+    var seedDirectorPassword = Environment.GetEnvironmentVariable("SEED_DIRECTOR_PASSWORD") ?? "director123";
+
+    // ============================================================
+    // SEED V3 HIERARCHY FIRST (before creating users)
+    // ============================================================
+
+    // Seed GrantTypes (107 grants)
+    if (!await db.GrantTypes.AnyAsync())
+    {
+        var grantTypes = ShiftManager.Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        db.GrantTypes.AddRange(grantTypes);
         await db.SaveChangesAsync();
     }
 
-    var company = db.Companies.First();
+    // Seed RoleTemplates (11 roles)
+    if (!await db.RoleTemplates.AnyAsync())
+    {
+        var roleTemplates = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
+        db.RoleTemplates.AddRange(roleTemplates);
+        await db.SaveChangesAsync();
+
+        var roleTemplateGrants = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
+        db.RoleTemplateGrants.AddRange(roleTemplateGrants);
+        await db.SaveChangesAsync();
+    }
+
+    // Seed Shifty Organization (Project → Area → Molecules → Companies including SystemAdmins)
+    await ShiftManager.Data.SeedData.ShiftyOrganizationSeed.SeedAsync(db);
+
+    // ============================================================
+    // SEED ADDITIONAL MOLECULES/COMPANIES FROM appsettings.json
+    // ============================================================
+
+    // Seed additional molecules from configuration
+    foreach (var molConfig in seedingOptions.AdditionalMolecules)
+    {
+        if (string.IsNullOrWhiteSpace(molConfig.Name))
+            continue;
+
+        // Check if molecule already exists
+        if (await db.Molecules.AnyAsync(m => m.Name == molConfig.Name))
+        {
+            logger.LogDebug("Molecule {Name} already exists, skipping", molConfig.Name);
+            continue;
+        }
+
+        // Find the area
+        var area = await db.Areas.FirstOrDefaultAsync(a => a.Name == molConfig.AreaName);
+        if (area == null)
+        {
+            logger.LogWarning("Area {AreaName} not found for molecule {MoleculeName}, skipping", molConfig.AreaName, molConfig.Name);
+            continue;
+        }
+
+        // Parse molecule type
+        if (!Enum.TryParse<MoleculeType>(molConfig.Type, true, out var moleculeType))
+        {
+            logger.LogWarning("Invalid molecule type {Type} for {Name}, defaulting to Workforce", molConfig.Type, molConfig.Name);
+            moleculeType = MoleculeType.Workforce;
+        }
+
+        var molecule = new Molecule
+        {
+            AreaId = area.Id,
+            Name = molConfig.Name,
+            DisplayName = string.IsNullOrWhiteSpace(molConfig.DisplayName) ? molConfig.Name : molConfig.DisplayName,
+            Type = moleculeType
+        };
+        db.Molecules.Add(molecule);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded additional molecule: {Name} ({Type})", molConfig.Name, moleculeType);
+    }
+
+    // Seed additional companies from configuration
+    foreach (var compConfig in seedingOptions.AdditionalCompanies)
+    {
+        if (string.IsNullOrWhiteSpace(compConfig.Name))
+            continue;
+
+        // Find the molecule first (we need it for the uniqueness check)
+        var molecule = await db.Molecules.FirstOrDefaultAsync(m => m.Name == compConfig.MoleculeName);
+        if (molecule == null)
+        {
+            logger.LogWarning("Molecule {MoleculeName} not found for company {CompanyName}, skipping", compConfig.MoleculeName, compConfig.Name);
+            continue;
+        }
+
+        // Check if company already exists IN THIS MOLECULE (same name can exist in different molecules)
+        if (await db.Companies.AnyAsync(c => c.Name == compConfig.Name && c.MoleculeId == molecule.Id))
+        {
+            logger.LogDebug("Company {Name} already exists in molecule {Molecule}, skipping", compConfig.Name, compConfig.MoleculeName);
+            continue;
+        }
+
+        var newCompany = new Company
+        {
+            MoleculeId = molecule.Id,
+            Name = compConfig.Name,
+            DisplayName = string.IsNullOrWhiteSpace(compConfig.DisplayName) ? compConfig.Name : compConfig.DisplayName,
+            Slug = compConfig.Slug ?? compConfig.Name.ToLowerInvariant().Replace(" ", "-")
+        };
+        db.Companies.Add(newCompany);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded additional company: {Name} in molecule {Molecule}", compConfig.Name, compConfig.MoleculeName);
+    }
+
+    // Seed additional departments from configuration (for Tech molecules)
+    foreach (var deptConfig in seedingOptions.AdditionalDepartments)
+    {
+        if (string.IsNullOrWhiteSpace(deptConfig.Name))
+            continue;
+
+        // Find the molecule first (we need it for the uniqueness check)
+        var molecule = await db.Molecules.FirstOrDefaultAsync(m => m.Name == deptConfig.MoleculeName);
+        if (molecule == null)
+        {
+            logger.LogWarning("Molecule {MoleculeName} not found for department {DepartmentName}, skipping", deptConfig.MoleculeName, deptConfig.Name);
+            continue;
+        }
+
+        // Check if department already exists IN THIS MOLECULE
+        if (await db.Departments.AnyAsync(d => d.Name == deptConfig.Name && d.MoleculeId == molecule.Id))
+        {
+            logger.LogDebug("Department {Name} already exists in molecule {Molecule}, skipping", deptConfig.Name, deptConfig.MoleculeName);
+            continue;
+        }
+
+        var newDepartment = new Department
+        {
+            MoleculeId = molecule.Id,
+            Name = deptConfig.Name,
+            DisplayName = string.IsNullOrWhiteSpace(deptConfig.DisplayName) ? deptConfig.Name : deptConfig.DisplayName,
+            IsActive = true
+        };
+        db.Departments.Add(newDepartment);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded additional department: {Name} in molecule {Molecule}", deptConfig.Name, deptConfig.MoleculeName);
+    }
+
+    // ============================================================
+    // GET SYSTEM COMPANY FOR OWNER USER
+    // ============================================================
+
+    // Get SystemAdmins company from the hierarchy (created by ShiftyOrganizationSeed)
+    var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == "SystemAdmins");
+    if (company == null)
+    {
+        // Fallback: get first company if SystemAdmins doesn't exist
+        company = db.Companies.First();
+    }
 
     // Seed shift types (fixed keys) - company-specific
     if (!db.ShiftTypes.IgnoreQueryFilters().Any(st => st.CompanyId == company.Id))
@@ -336,21 +420,22 @@ For more help, see DEPLOYMENT_GUIDE.txt in the application directory.
         await db.SaveChangesAsync();
     }
 
-    // Seed owner user
+    // Seed owner user (using configuration from appsettings.json)
     if (!db.Users.IgnoreQueryFilters().Any())
     {
-        var (hash, salt) = PasswordHasher.CreateHash(seedAdminPassword);
+        var (hash, salt) = PasswordHasher.CreateHash(seedingOptions.Owner.Password);
         db.Users.Add(new AppUser
         {
             CompanyId = company.Id,
-            Email = "admin@local",
-            DisplayName = "Owner",
+            Email = seedingOptions.Owner.Email,
+            DisplayName = seedingOptions.Owner.DisplayName,
             Role = UserRole.Owner,
             IsActive = true,
             PasswordHash = hash,
             PasswordSalt = salt
         });
         await db.SaveChangesAsync();
+        logger.LogInformation("Created owner user: {Email}", seedingOptions.Owner.Email);
     }
 
     // Seed test Director user and companies (for QA)
@@ -426,6 +511,43 @@ For more help, see DEPLOYMENT_GUIDE.txt in the application directory.
         }
     }
 
+    // Seed Owner user's grants - GODMODE: ALL 107 grants at Project level
+    var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
+    if (ownerUserForGrants != null)
+    {
+        // Get all grant types
+        var allGrantTypes = await db.GrantTypes.ToListAsync();
+
+        // Get existing owner grants to avoid duplicates
+        var existingOwnerGrants = await db.Grants
+            .Where(g => g.UserId == ownerUserForGrants.Id)
+            .Select(g => g.GrantTypeId)
+            .ToHashSetAsync();
+
+        // Get the project ID for project-scoped grants (if Shifty organization exists)
+        var project = await db.Projects.FirstOrDefaultAsync();
+
+        foreach (var grantType in allGrantTypes)
+        {
+            if (!existingOwnerGrants.Contains(grantType.Id))
+            {
+                db.Grants.Add(new Grant
+                {
+                    UserId = ownerUserForGrants.Id,
+                    GrantTypeId = grantType.Id,
+                    ProjectId = project?.Id, // Project-level scope for godmode
+                    CanOwn = true,
+                    CanGive = true,
+                    GrantedAt = DateTime.UtcNow,
+                    IsAutoGrant = false,
+                    Notes = "Owner godmode grant"
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
     // Seed test data for QA automation
     try
     {
@@ -434,7 +556,6 @@ For more help, see DEPLOYMENT_GUIDE.txt in the application directory.
     }
     catch (Exception ex)
     {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while seeding test data");
     }
 }
@@ -497,7 +618,7 @@ app.Use(async (context, next) =>
     // Prevent loading resources from untrusted sources
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " + // Allow inline scripts for Razor
+        "script-src 'self' 'unsafe-inline'; " + // Allow inline scripts for Razor (all libs bundled locally for air-gapped environments)
         "style-src 'self' 'unsafe-inline'; " +  // Allow inline styles
         "img-src 'self' data:; " +               // Allow inline images for avatars
         "font-src 'self'; " +

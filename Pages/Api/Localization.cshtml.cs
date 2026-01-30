@@ -12,7 +12,7 @@ namespace ShiftManager.Pages.Api;
 /// API endpoint for client-side JavaScript localization
 /// Fetches localized strings for given keys, respecting current culture and company overrides
 /// </summary>
-[Authorize]
+[AllowAnonymous]
 [IgnoreAntiforgeryToken]
 public class LocalizationModel : PageModel
 {
