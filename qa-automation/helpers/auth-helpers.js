@@ -12,12 +12,12 @@ try {
 // Credentials from environment variables
 // Default to test seeded Owner account
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'admin@local';
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'easteregg';
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'admin123';
 
 // Role-based credentials (from TestDataSeeder.cs)
 // All test users use password '123456'
 const ROLE_CREDENTIALS = {
-    Owner: { email: process.env.OWNER_EMAIL || 'admin@local', password: process.env.OWNER_PASSWORD || 'easteregg' },
+    Owner: { email: process.env.OWNER_EMAIL || 'admin@local', password: process.env.OWNER_PASSWORD || 'admin123' },
     Director: { email: process.env.DIRECTOR_EMAIL || 'director@test.com', password: process.env.DIRECTOR_PASSWORD || '123456' },
     Manager: { email: 'manager@test.com', password: '123456' },
     Assigner: { email: 'assigner@test.com', password: '123456' },

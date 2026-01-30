@@ -1,15 +1,24 @@
 // @ts-check
-const { test, expect, devices } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 const { loginAsOwner } = require('../helpers/auth-helpers');
 const { verifySidebarPresence, verifyShiftyLogo } = require('../helpers/ui-helpers');
 const { runAccessibilityAudit, getCriticalViolations } = require('../helpers/accessibility-helpers');
 
+// Mobile viewport dimensions (iPhone 12)
+const MOBILE_VIEWPORT = { width: 390, height: 844 };
+
+// Tablet viewport dimensions (iPad Pro 11)
+const TABLET_VIEWPORT = { width: 834, height: 1194 };
+
+// Desktop wide viewport
+const DESKTOP_VIEWPORT = { width: 1920, height: 1080 };
+
 test.describe('UI Overhaul: Responsive Design', () => {
 
-    test.describe('Mobile View (iPhone 12)', () => {
-        test.use({ ...devices['iPhone 12'] });
+    test.describe('Mobile View', () => {
 
         test('UI-RESP-MOB-01: Login page works on mobile', async ({ page }) => {
+            await page.setViewportSize(MOBILE_VIEWPORT);
             await page.goto('/Auth/Login');
             await page.waitForLoadState('networkidle');
 
@@ -29,6 +38,7 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
 
         test('UI-RESP-MOB-02: Sidebar collapsed on mobile', async ({ page }) => {
+            await page.setViewportSize(MOBILE_VIEWPORT);
             await loginAsOwner(page);
             await page.waitForLoadState('networkidle');
 
@@ -50,6 +60,7 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
 
         test('UI-RESP-MOB-03: Mobile sidebar opens on hamburger click', async ({ page }) => {
+            await page.setViewportSize(MOBILE_VIEWPORT);
             await loginAsOwner(page);
             await page.waitForLoadState('networkidle');
 
@@ -66,6 +77,7 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
 
         test('UI-RESP-MOB-04: Calendar adapts to mobile width', async ({ page }) => {
+            await page.setViewportSize(MOBILE_VIEWPORT);
             await loginAsOwner(page);
             await page.goto('/Calendar/Month');
             await page.waitForLoadState('networkidle');
@@ -80,6 +92,7 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
 
         test('UI-RESP-MOB-A11Y-01: Mobile view passes accessibility', async ({ page }) => {
+            await page.setViewportSize(MOBILE_VIEWPORT);
             await page.goto('/Auth/Login');
             await page.waitForLoadState('networkidle');
 
@@ -90,10 +103,10 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
     });
 
-    test.describe('Tablet View (iPad)', () => {
-        test.use({ ...devices['iPad Pro 11'] });
+    test.describe('Tablet View', () => {
 
         test('UI-RESP-TAB-01: Layout adapts for tablet', async ({ page }) => {
+            await page.setViewportSize(TABLET_VIEWPORT);
             await loginAsOwner(page);
             await page.waitForLoadState('networkidle');
 
@@ -105,6 +118,7 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
 
         test('UI-RESP-TAB-02: Calendar shows full week on tablet', async ({ page }) => {
+            await page.setViewportSize(TABLET_VIEWPORT);
             await loginAsOwner(page);
             await page.goto('/Calendar/Week');
             await page.waitForLoadState('networkidle');
@@ -118,9 +132,9 @@ test.describe('UI Overhaul: Responsive Design', () => {
     });
 
     test.describe('Desktop Wide View', () => {
-        test.use({ viewport: { width: 1920, height: 1080 } });
 
         test('UI-RESP-DESK-01: Layout uses wide viewport', async ({ page }) => {
+            await page.setViewportSize(DESKTOP_VIEWPORT);
             await loginAsOwner(page);
             await page.waitForLoadState('networkidle');
 
@@ -135,6 +149,7 @@ test.describe('UI Overhaul: Responsive Design', () => {
         });
 
         test('UI-RESP-DESK-02: No wasted space on wide screens', async ({ page }) => {
+            await page.setViewportSize(DESKTOP_VIEWPORT);
             await loginAsOwner(page);
             await page.goto('/Calendar/Month');
             await page.waitForLoadState('networkidle');
