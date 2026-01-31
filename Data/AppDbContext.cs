@@ -99,6 +99,9 @@ public class AppDbContext : DbContext
     // Smart Task System (onboarding tasks)
     public DbSet<SetupTask> SetupTasks => Set<SetupTask>();
 
+    // Feature Flags (UI Overhaul)
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var dateConverter = new ValueConverter<DateOnly, string>(
@@ -1142,6 +1145,35 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<SetupTask>()
             .HasIndex(st => new { st.MoleculeId, st.Status });
+
+        // ========================================
+        // Feature Flag Configurations
+        // ========================================
+
+        // Unique index: one flag per name/company/user combination
+        modelBuilder.Entity<FeatureFlag>()
+            .HasIndex(ff => new { ff.Name, ff.CompanyId, ff.UserId })
+            .IsUnique();
+
+        // Index for querying by flag name (most common query)
+        modelBuilder.Entity<FeatureFlag>()
+            .HasIndex(ff => ff.Name);
+
+        // Optional relationship to Company
+        modelBuilder.Entity<FeatureFlag>()
+            .HasOne(ff => ff.Company)
+            .WithMany()
+            .HasForeignKey(ff => ff.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
+
+        // Optional relationship to User
+        modelBuilder.Entity<FeatureFlag>()
+            .HasOne(ff => ff.User)
+            .WithMany()
+            .HasForeignKey(ff => ff.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         base.OnModelCreating(modelBuilder);
     }

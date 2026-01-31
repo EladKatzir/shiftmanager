@@ -153,6 +153,9 @@ builder.Services.AddScoped<IArchiveService, ArchiveService>();
 builder.Services.AddScoped<IPurgeService, PurgeService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 
+// Feature Flag Service (UI Overhaul)
+builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
+
 // v3.0 Organizational Hierarchy Services
 builder.Services.AddScoped<IHierarchyService, HierarchyService>();
 builder.Services.AddScoped<IJobTypeService, JobTypeService>();
@@ -546,6 +549,17 @@ using (var scope = app.Services.CreateScope())
         }
 
         await db.SaveChangesAsync();
+    }
+
+    // ============================================================
+    // SEED FEATURE FLAGS
+    // ============================================================
+    if (!await db.FeatureFlags.AnyAsync())
+    {
+        var featureFlags = ShiftManager.Data.SeedData.FeatureFlagSeed.GetFeatureFlags();
+        db.FeatureFlags.AddRange(featureFlags);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} feature flags", featureFlags.Count);
     }
 
     // Seed test data for QA automation
