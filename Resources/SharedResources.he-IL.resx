@@ -4565,4 +4565,609 @@
   <data name="Users_Company" xml:space="preserve">
     <value>חברה</value>
   </data>
+
+  <!-- UI Overhaul v3.0 - Navigation -->
+  <data name="Nav_MyShifty" xml:space="preserve">
+    <value>השיפטי שלי</value>
+  </data>
+  <data name="Nav_Calendars" xml:space="preserve">
+    <value>לוחות שנה</value>
+  </data>
+  <data name="Nav_People" xml:space="preserve">
+    <value>אנשים</value>
+  </data>
+  <data name="Nav_Scheduling" xml:space="preserve">
+    <value>שיבוץ</value>
+  </data>
+  <data name="Nav_Admin" xml:space="preserve">
+    <value>ניהול</value>
+  </data>
+  <data name="Nav_System" xml:space="preserve">
+    <value>מערכת</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Context Switcher -->
+  <data name="ContextSwitcher_CurrentlyViewing" xml:space="preserve">
+    <value>צפייה נוכחית</value>
+  </data>
+  <data name="ContextSwitcher_SelectContext" xml:space="preserve">
+    <value>בחר חברה או מולקולה</value>
+  </data>
+  <data name="ContextSwitcher_SearchPlaceholder" xml:space="preserve">
+    <value>חפש חברות...</value>
+  </data>
+  <data name="ContextSwitcher_SearchLabel" xml:space="preserve">
+    <value>חפש חברה</value>
+  </data>
+  <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
+    <value>החלף חברה</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Scope Switcher -->
+  <data name="ScopeSwitcher_ViewLabel" xml:space="preserve">
+    <value>תצוגה</value>
+  </data>
+  <data name="ScopeSwitcher_AriaLabel" xml:space="preserve">
+    <value>בורר היקף לוח שנה</value>
+  </data>
+  <data name="ScopeSwitcher_MineOnly" xml:space="preserve">
+    <value>שלי בלבד</value>
+  </data>
+  <data name="ScopeSwitcher_MyCompany" xml:space="preserve">
+    <value>החברה שלי</value>
+  </data>
+  <data name="ScopeSwitcher_FullMolecule" xml:space="preserve">
+    <value>מולקולה מלאה</value>
+  </data>
+  <data name="ScopeSwitcher_FullArea" xml:space="preserve">
+    <value>אזור מלא</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - On-Call Widget -->
+  <data name="Widget_OnCallNow" xml:space="preserve">
+    <value>בכוננות עכשיו</value>
+  </data>
+  <data name="Widget_OnCallCall" xml:space="preserve">
+    <value>התקשר</value>
+  </data>
+  <data name="Widget_OnCallEmpty" xml:space="preserve">
+    <value>אף אחד לא בכוננות כרגע</value>
+  </data>
+  <data name="Widget_OnCallEmptyHint" xml:space="preserve">
+    <value>זה חריג. פנה למפקד שלך במידת הצורך.</value>
+  </data>
+  <data name="Widget_OfficeNumbers" xml:space="preserve">
+    <value>מספרי משרד</value>
+  </data>
+  <data name="Widget_FriendsOnCall" xml:space="preserve">
+    <value>חברים בכוננות</value>
+  </data>
+  <data name="Widget_AddFriendsHint" xml:space="preserve">
+    <value>הוסף חברים כדי לראות את סטטוס הכוננות שלהם</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Empty States -->
+  <data name="Calendar_Empty_NoShiftsMine" xml:space="preserve">
+    <value>אין משמרות משויכות אליך החודש</value>
+  </data>
+  <data name="Calendar_Empty_NoShiftsCompany" xml:space="preserve">
+    <value>אין משמרות מתוכננות ל{0} החודש</value>
+  </data>
+  <data name="Calendar_Empty_NotPublished" xml:space="preserve">
+    <value>לוח הזמנים טרם פורסם ל{0}</value>
+  </data>
+  <data name="Calendar_Empty_NoAccess" xml:space="preserve">
+    <value>אין לך גישה ללוח זמנים זה</value>
+  </data>
+  <data name="Calendar_Empty_SwitchScope" xml:space="preserve">
+    <value>נסה להרחיב את התצוגה שלך</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Loading States -->
+  <data name="Loading_Calendar" xml:space="preserve">
+    <value>טוען לוח זמנים...</value>
+  </data>
+  <data name="Loading_Saving" xml:space="preserve">
+    <value>שומר...</value>
+  </data>
+  <data name="Loading_Saved" xml:space="preserve">
+    <value>נשמר</value>
+  </data>
+  <data name="Loading_TryAgain" xml:space="preserve">
+    <value>נסה שוב</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>טוען...</value>
+  </data>
+  <data name="Loading_PleaseWait" xml:space="preserve">
+    <value>אנא המתן...</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Error States -->
+  <data name="Error_Generic" xml:space="preserve">
+    <value>משהו השתבש</value>
+  </data>
+  <data name="Error_Network" xml:space="preserve">
+    <value>אתה במצב לא מקוון</value>
+  </data>
+  <data name="Error_SessionExpiring" xml:space="preserve">
+    <value>הפגישה תפוג בעוד {0}</value>
+  </data>
+  <data name="Error_SessionExpired" xml:space="preserve">
+    <value>הפגישה שלך פגה</value>
+  </data>
+  <data name="Action_Retry" xml:space="preserve">
+    <value>נסה שוב</value>
+  </data>
+  <data name="Action_StayLoggedIn" xml:space="preserve">
+    <value>הישאר מחובר</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Search -->
+  <data name="Search_Empty_NoResults" xml:space="preserve">
+    <value>אין תוצאות עבור "{0}"</value>
+  </data>
+  <data name="Search_Hint_CheckSpelling" xml:space="preserve">
+    <value>בדוק איות</value>
+  </data>
+  <data name="Search_Hint_FewerWords" xml:space="preserve">
+    <value>השתמש בפחות מילים</value>
+  </data>
+  <data name="Search_Hint_ClearFilters" xml:space="preserve">
+    <value>נקה מסננים</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Tables -->
+  <data name="Table_Showing" xml:space="preserve">
+    <value>מציג {0}-{1} מתוך {2}</value>
+  </data>
+  <data name="Table_PerPage" xml:space="preserve">
+    <value>לדף</value>
+  </data>
+  <data name="Table_NoResults" xml:space="preserve">
+    <value>לא נמצאו תוצאות</value>
+  </data>
+  <data name="Table_SortAsc" xml:space="preserve">
+    <value>מיון עולה</value>
+  </data>
+  <data name="Table_SortDesc" xml:space="preserve">
+    <value>מיון יורד</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Print -->
+  <data name="Action_Print" xml:space="preserve">
+    <value>הדפס</value>
+  </data>
+  <data name="Print_Header_Printed" xml:space="preserve">
+    <value>הודפס</value>
+  </data>
+  <data name="Print_Legend" xml:space="preserve">
+    <value>מקרא</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Date/Time -->
+  <data name="DateTime_JustNow" xml:space="preserve">
+    <value>עכשיו</value>
+  </data>
+  <data name="DateTime_MinutesAgo" xml:space="preserve">
+    <value>לפני {0} דקות</value>
+  </data>
+  <data name="DateTime_HoursAgo" xml:space="preserve">
+    <value>לפני {0} שעות</value>
+  </data>
+  <data name="DateTime_Yesterday" xml:space="preserve">
+    <value>אתמול ב-{0}</value>
+  </data>
+  <data name="DateTime_DaysAgo" xml:space="preserve">
+    <value>לפני {0} ימים</value>
+  </data>
+  <data name="DateTime_Hours" xml:space="preserve">
+    <value>{0} שעות</value>
+  </data>
+  <data name="DateTime_Remaining" xml:space="preserve">
+    <value>נותרו</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Modals -->
+  <data name="Modal_Close" xml:space="preserve">
+    <value>סגור</value>
+  </data>
+  <data name="Modal_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
+  <data name="Modal_Confirm" xml:space="preserve">
+    <value>אישור</value>
+  </data>
+  <data name="Modal_Delete" xml:space="preserve">
+    <value>מחק</value>
+  </data>
+  <data name="Modal_DeleteConfirmTitle" xml:space="preserve">
+    <value>למחוק את {0}?</value>
+  </data>
+  <data name="Modal_DeleteConfirmMessage" xml:space="preserve">
+    <value>פעולה זו לא ניתנת לביטול.</value>
+  </data>
+
+  <!-- Common Keys for Owner Pages -->
+  <data name="Enabled" xml:space="preserve">
+    <value>מופעל</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>מושבת</value>
+  </data>
+  <data name="Configured" xml:space="preserve">
+    <value>מוגדר</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>שגיאה</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>אזהרה</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>כן</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>לא</value>
+  </data>
+  <data name="And" xml:space="preserve">
+    <value>ו</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>נמחק</value>
+  </data>
+  <data name="Inserted" xml:space="preserve">
+    <value>נוסף</value>
+  </data>
+  <data name="Skipped" xml:space="preserve">
+    <value>דולג</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>נכשל</value>
+  </data>
+  <data name="Recipient" xml:space="preserve">
+    <value>נמען</value>
+  </data>
+  <data name="Subject" xml:space="preserve">
+    <value>נושא</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>ייצא</value>
+  </data>
+  <data name="Never" xml:space="preserve">
+    <value>אף פעם</value>
+  </data>
+  <data name="SaveConfiguration" xml:space="preserve">
+    <value>שמור הגדרות</value>
+  </data>
+
+  <!-- Owner/Index.cshtml - Language Management -->
+  <data name="Owner_LanguageManagement" xml:space="preserve">
+    <value>ניהול שפות</value>
+  </data>
+  <data name="Owner_LanguageManagement_Desc" xml:space="preserve">
+    <value>הגדרת שפות והתאמת תרגומים</value>
+  </data>
+
+  <!-- Owner/Backup.cshtml -->
+  <data name="Owner_Backup_Subtitle" xml:space="preserve">
+    <value>יצירה וניהול של גיבויי מסד נתונים</value>
+  </data>
+  <data name="Owner_Backup_Actions" xml:space="preserve">
+    <value>פעולות גיבוי</value>
+  </data>
+  <data name="Owner_Backup_CreateNew" xml:space="preserve">
+    <value>צור גיבוי חדש</value>
+  </data>
+  <data name="Owner_Backup_HelpText" xml:space="preserve">
+    <value>יוצר תמונה של מסד הנתונים הנוכחי. הגיבויים נשמרים בתיקיית Backups.</value>
+  </data>
+  <data name="Owner_Backup_AvailableBackups" xml:space="preserve">
+    <value>גיבויים זמינים</value>
+  </data>
+  <data name="Owner_Backup_NoBackupsFound" xml:space="preserve">
+    <value>לא נמצאו גיבויים</value>
+  </data>
+  <data name="Owner_Backup_CreateFirstBackup" xml:space="preserve">
+    <value>צור את הגיבוי הראשון שלך באמצעות הכפתור למעלה</value>
+  </data>
+  <data name="Owner_Backup_FileName" xml:space="preserve">
+    <value>שם קובץ</value>
+  </data>
+  <data name="Owner_Backup_Size" xml:space="preserve">
+    <value>גודל</value>
+  </data>
+  <data name="Owner_Backup_CreatedDate" xml:space="preserve">
+    <value>תאריך יצירה</value>
+  </data>
+  <data name="Owner_Backup_Download" xml:space="preserve">
+    <value>הורד</value>
+  </data>
+  <data name="Owner_Backup_Restore" xml:space="preserve">
+    <value>שחזר</value>
+  </data>
+  <data name="Owner_Backup_Delete" xml:space="preserve">
+    <value>מחק</value>
+  </data>
+  <data name="Owner_Backup_RestoreConfirm" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לשחזר גיבוי זה? מסד הנתונים הנוכחי יגובה תחילה.</value>
+  </data>
+  <data name="Owner_Backup_DeleteConfirm" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק גיבוי זה?</value>
+  </data>
+  <data name="Owner_Backup_ImportantInfo" xml:space="preserve">
+    <value>מידע חשוב</value>
+  </data>
+  <data name="Owner_Backup_AutoBackups" xml:space="preserve">
+    <value>גיבויים אוטומטיים</value>
+  </data>
+  <data name="Owner_Backup_AutoBackups_Desc" xml:space="preserve">
+    <value>גיבויים נוצרים ידנית באמצעות הכפתור למעלה.</value>
+  </data>
+  <data name="Owner_Backup_BeforeRestore" xml:space="preserve">
+    <value>לפני שחזור</value>
+  </data>
+  <data name="Owner_Backup_BeforeRestore_Desc" xml:space="preserve">
+    <value>מסד הנתונים הנוכחי מגובה אוטומטית לפני כל פעולת שחזור.</value>
+  </data>
+  <data name="Owner_Backup_AppRestart" xml:space="preserve">
+    <value>הפעלה מחדש של האפליקציה</value>
+  </data>
+  <data name="Owner_Backup_AppRestart_Desc" xml:space="preserve">
+    <value>לאחר שחזור גיבוי, הפעל מחדש את האפליקציה כדי שהשינויים ייכנסו לתוקף.</value>
+  </data>
+  <data name="Owner_Backup_StorageLocation" xml:space="preserve">
+    <value>מיקום אחסון</value>
+  </data>
+  <data name="Owner_Backup_StorageLocation_Desc" xml:space="preserve">
+    <value>גיבויים נשמרים בתיקיית Backups בשורש האפליקציה.</value>
+  </data>
+  <data name="Owner_Backup_DownloadInfo" xml:space="preserve">
+    <value>הורדה</value>
+  </data>
+  <data name="Owner_Backup_DownloadInfo_Desc" xml:space="preserve">
+    <value>ניתן להוריד גיבויים לאחסון חיצוני לבטיחות נוספת.</value>
+  </data>
+
+  <!-- Owner/DataLifecycle.cshtml -->
+  <data name="Owner_DataLifecycle" xml:space="preserve">
+    <value>מחזור חיי נתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_Subtitle" xml:space="preserve">
+    <value>ארכוב, ניקוי וייבוא מחדש של נתונים היסטוריים</value>
+  </data>
+  <data name="Owner_DataLifecycle_CreateArchive" xml:space="preserve">
+    <value>יצירת ארכיון</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeData" xml:space="preserve">
+    <value>מחיקת נתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_ReImport" xml:space="preserve">
+    <value>ייבוא מחדש</value>
+  </data>
+  <data name="Owner_DataLifecycle_CutoffDate" xml:space="preserve">
+    <value>תאריך גבול</value>
+  </data>
+  <data name="Owner_DataLifecycle_DataTypes" xml:space="preserve">
+    <value>סוגי נתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_Shifts" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidationPassed" xml:space="preserve">
+    <value>האימות עבר</value>
+  </data>
+  <data name="Owner_DataLifecycle_CompanyMatch" xml:space="preserve">
+    <value>התאמת חברה</value>
+  </data>
+  <data name="Owner_DataLifecycle_ArchiveCompany" xml:space="preserve">
+    <value>חברת ארכיון</value>
+  </data>
+  <data name="Owner_DataLifecycle_CurrentCompany" xml:space="preserve">
+    <value>חברה נוכחית</value>
+  </data>
+  <data name="Owner_DataLifecycle_MissingUsers" xml:space="preserve">
+    <value>משתמשים חסרים</value>
+  </data>
+  <data name="Owner_DataLifecycle_MissingUsers_Help" xml:space="preserve">
+    <value>ניתן לבחור לדלג על רשומות עם משתמשים חסרים או לבטל את הייבוא.</value>
+  </data>
+  <data name="Owner_DataLifecycle_ConflictPolicy" xml:space="preserve">
+    <value>מדיניות התנגשות</value>
+  </data>
+  <data name="Owner_DataLifecycle_SkipDuplicates" xml:space="preserve">
+    <value>דלג על כפולים (מומלץ)</value>
+  </data>
+  <data name="Owner_DataLifecycle_OverwriteExisting" xml:space="preserve">
+    <value>דרוס קיימים</value>
+  </data>
+  <data name="Owner_DataLifecycle_FailOnConflict" xml:space="preserve">
+    <value>כשל בהתנגשות</value>
+  </data>
+  <data name="Owner_DataLifecycle_SkipMissingUsers" xml:space="preserve">
+    <value>דלג על רשומות עם משתמשים חסרים</value>
+  </data>
+  <data name="Owner_DataLifecycle_ImportData" xml:space="preserve">
+    <value>ייבא נתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_ImportResults" xml:space="preserve">
+    <value>תוצאות ייבוא</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalInserted" xml:space="preserve">
+    <value>סה"כ נוספו</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalSkipped" xml:space="preserve">
+    <value>סה"כ דולגו</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalFailed" xml:space="preserve">
+    <value>סה"כ נכשלו</value>
+  </data>
+
+  <!-- Owner/DatabaseConsole.cshtml -->
+  <data name="Owner_DatabaseConsole_Subtitle" xml:space="preserve">
+    <value>הרץ שאילתות SQL ישירות על מסד הנתונים</value>
+  </data>
+  <data name="Owner_DatabaseConsole_Tables" xml:space="preserve">
+    <value>טבלאות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_QuickQueries" xml:space="preserve">
+    <value>שאילתות מהירות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_ListUsers" xml:space="preserve">
+    <value>רשימת משתמשים</value>
+  </data>
+  <data name="Owner_DatabaseConsole_ListCompanies" xml:space="preserve">
+    <value>רשימת חברות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_SqlQuery" xml:space="preserve">
+    <value>שאילתת SQL</value>
+  </data>
+  <data name="Owner_DatabaseConsole_QueryPlaceholder" xml:space="preserve">
+    <value>הכנס את שאילתת ה-SQL שלך כאן...</value>
+  </data>
+  <data name="Owner_DatabaseConsole_Execute" xml:space="preserve">
+    <value>בצע</value>
+  </data>
+  <data name="Owner_DatabaseConsole_QueryResults" xml:space="preserve">
+    <value>תוצאות שאילתה</value>
+  </data>
+
+  <!-- Owner/EmailConfig.cshtml -->
+  <data name="Owner_EmailConfig_Subtitle" xml:space="preserve">
+    <value>הגדרת התראות דוא"ל למערכת</value>
+  </data>
+  <data name="Owner_EmailConfig_ServiceConfig" xml:space="preserve">
+    <value>הגדרות שירות דוא"ל</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiUrl" xml:space="preserve">
+    <value>כתובת API</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiUrl_Help" xml:space="preserve">
+    <value>כתובת ה-URL לשירות שליחת הדוא"ל</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiKey" xml:space="preserve">
+    <value>מפתח API</value>
+  </data>
+  <data name="Owner_EmailConfig_FromAddress" xml:space="preserve">
+    <value>כתובת שולח</value>
+  </data>
+  <data name="Owner_EmailConfig_TestEmail" xml:space="preserve">
+    <value>דוא"ל בדיקה</value>
+  </data>
+  <data name="Owner_EmailConfig_RecipientEmail" xml:space="preserve">
+    <value>כתובת דוא"ל נמען</value>
+  </data>
+  <data name="Owner_EmailConfig_SendTestEmail" xml:space="preserve">
+    <value>שלח דוא"ל בדיקה</value>
+  </data>
+  <data name="Owner_EmailConfig_RecentLogs" xml:space="preserve">
+    <value>לוגים אחרונים</value>
+  </data>
+  <data name="Owner_EmailConfig_NoLogs" xml:space="preserve">
+    <value>אין לוגים זמינים</value>
+  </data>
+  <data name="Owner_EmailConfig_RecentFailures" xml:space="preserve">
+    <value>כשלונות אחרונים</value>
+  </data>
+  <data name="Owner_EmailConfig_Statistics" xml:space="preserve">
+    <value>סטטיסטיקות</value>
+  </data>
+  <data name="Owner_EmailConfig_TotalSent" xml:space="preserve">
+    <value>סה"כ נשלחו</value>
+  </data>
+  <data name="Owner_EmailConfig_SentToday" xml:space="preserve">
+    <value>נשלחו היום</value>
+  </data>
+  <data name="Owner_EmailConfig_LastSent" xml:space="preserve">
+    <value>נשלח לאחרונה</value>
+  </data>
+  <data name="Owner_EmailConfig_Templates" xml:space="preserve">
+    <value>תבניות</value>
+  </data>
+  <data name="Owner_EmailConfig_Templates_Desc" xml:space="preserve">
+    <value>ערוך תבניות דוא"ל</value>
+  </data>
+  <data name="Owner_EmailConfig_ManageTemplates" xml:space="preserve">
+    <value>נהל תבניות</value>
+  </data>
+
+  <!-- Error State Components (B-004) -->
+  <data name="Error_Retry" xml:space="preserve">
+    <value>נסה שוב</value>
+  </data>
+  <data name="Error_Dismiss" xml:space="preserve">
+    <value>סגור</value>
+  </data>
+  <data name="Error_NetworkError" xml:space="preserve">
+    <value>לא ניתן להתחבר. אנא בדוק את החיבור שלך.</value>
+  </data>
+  <data name="Error_NetworkError_Title" xml:space="preserve">
+    <value>שגיאת חיבור</value>
+  </data>
+  <data name="Error_ServerError" xml:space="preserve">
+    <value>משהו השתבש. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_ServerError_Title" xml:space="preserve">
+    <value>שגיאת שרת</value>
+  </data>
+  <data name="Error_SessionExpired" xml:space="preserve">
+    <value>פג תוקף ההפעלה שלך. אנא התחבר שוב.</value>
+  </data>
+  <data name="Error_SessionExpired_Title" xml:space="preserve">
+    <value>פג תוקף ההפעלה</value>
+  </data>
+  <data name="Error_SessionExpiring" xml:space="preserve">
+    <value>תוקף ההפעלה שלך יפוג בעוד {0}. האם תרצה להישאר מחובר?</value>
+  </data>
+  <data name="Error_SessionExpiring_Title" xml:space="preserve">
+    <value>ההפעלה עומדת לפוג</value>
+  </data>
+  <data name="Error_SessionExpiring_StayLoggedIn" xml:space="preserve">
+    <value>הישאר מחובר</value>
+  </data>
+  <data name="Error_SessionExpiring_Logout" xml:space="preserve">
+    <value>התנתק עכשיו</value>
+  </data>
+  <data name="Error_AccessDenied" xml:space="preserve">
+    <value>אין לך גישה למשאב זה.</value>
+  </data>
+  <data name="Error_AccessDenied_Title" xml:space="preserve">
+    <value>הגישה נדחתה</value>
+  </data>
+  <data name="Error_LoadingFailed" xml:space="preserve">
+    <value>טעינת הנתונים נכשלה. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_LoadingFailed_Title" xml:space="preserve">
+    <value>הטעינה נכשלה</value>
+  </data>
+  <data name="Error_SaveFailed" xml:space="preserve">
+    <value>שמירת השינויים נכשלה. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_SaveFailed_Title" xml:space="preserve">
+    <value>השמירה נכשלה</value>
+  </data>
+  <data name="Error_ValidationFailed" xml:space="preserve">
+    <value>אנא תקן את השגיאות למטה ונסה שוב.</value>
+  </data>
+  <data name="Error_ValidationFailed_Title" xml:space="preserve">
+    <value>שגיאת אימות</value>
+  </data>
+  <data name="Error_NotFound" xml:space="preserve">
+    <value>המשאב המבוקש לא נמצא.</value>
+  </data>
+  <data name="Error_NotFound_Title" xml:space="preserve">
+    <value>לא נמצא</value>
+  </data>
+  <data name="Error_Offline" xml:space="preserve">
+    <value>אתה כרגע לא מחובר. חלק מהתכונות עשויות להיות לא זמינות.</value>
+  </data>
+  <data name="Error_Offline_Title" xml:space="preserve">
+    <value>לא מחובר</value>
+  </data>
+  <data name="Error_BackOnline" xml:space="preserve">
+    <value>החיבור שוחזר.</value>
+  </data>
+  <data name="Error_BackOnline_Title" xml:space="preserve">
+    <value>מחובר שוב</value>
+  </data>
 </root>

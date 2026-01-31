@@ -4740,4 +4740,914 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Users_Company" xml:space="preserve">
     <value>Company</value>
   </data>
+
+  <!-- Grant Type Localizations - Shift Calendars -->
+  <data name="Grant_ViewAlhutShiftCalendar" xml:space="preserve">
+    <value>View Alhut Shift Calendar</value>
+  </data>
+  <data name="Grant_ViewAlhutShiftCalendar_Desc" xml:space="preserve">
+    <value>View the Alhut shift calendar for assigned areas</value>
+  </data>
+  <data name="Grant_ViewTextShiftCalendar" xml:space="preserve">
+    <value>View Text Shift Calendar</value>
+  </data>
+  <data name="Grant_ViewTextShiftCalendar_Desc" xml:space="preserve">
+    <value>View the Text shift calendar for assigned areas</value>
+  </data>
+  <data name="Grant_ViewBRShiftCalendar" xml:space="preserve">
+    <value>View BR Shift Calendar</value>
+  </data>
+  <data name="Grant_ViewBRShiftCalendar_Desc" xml:space="preserve">
+    <value>View the BR shift calendar for assigned areas</value>
+  </data>
+  <data name="Grant_ViewHakamShiftCalendar" xml:space="preserve">
+    <value>View Hakam Shift Calendar</value>
+  </data>
+  <data name="Grant_ViewHakamShiftCalendar_Desc" xml:space="preserve">
+    <value>View the Hakam on-call shift calendar</value>
+  </data>
+
+  <!-- Grant Type Localizations - Shift Eligibility -->
+  <data name="Grant_CanBeAssignedAlhutShifts" xml:space="preserve">
+    <value>Eligible for Alhut Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedAlhutShifts_Desc" xml:space="preserve">
+    <value>User can be assigned to Alhut shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedTextShifts" xml:space="preserve">
+    <value>Eligible for Text Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedTextShifts_Desc" xml:space="preserve">
+    <value>User can be assigned to Text shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedBRShifts" xml:space="preserve">
+    <value>Eligible for BR Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedBRShifts_Desc" xml:space="preserve">
+    <value>User can be assigned to BR shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedHakamShifts" xml:space="preserve">
+    <value>Eligible for Hakam On-Call</value>
+  </data>
+  <data name="Grant_CanBeAssignedHakamShifts_Desc" xml:space="preserve">
+    <value>User can be assigned to Hakam on-call duties</value>
+  </data>
+
+  <!-- Grant Type Localizations - Blueprint/Program by Type -->
+  <data name="Grant_ManageAlhutBlueprints" xml:space="preserve">
+    <value>Manage Alhut Blueprints</value>
+  </data>
+  <data name="Grant_ManageAlhutBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Alhut shift blueprints</value>
+  </data>
+  <data name="Grant_ManageAlhutPrograms" xml:space="preserve">
+    <value>Manage Alhut Programs</value>
+  </data>
+  <data name="Grant_ManageAlhutPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Alhut shift programs</value>
+  </data>
+  <data name="Grant_ManageTextBlueprints" xml:space="preserve">
+    <value>Manage Text Blueprints</value>
+  </data>
+  <data name="Grant_ManageTextBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Text shift blueprints</value>
+  </data>
+  <data name="Grant_ManageTextPrograms" xml:space="preserve">
+    <value>Manage Text Programs</value>
+  </data>
+  <data name="Grant_ManageTextPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Text shift programs</value>
+  </data>
+  <data name="Grant_ManageBRBlueprints" xml:space="preserve">
+    <value>Manage BR Blueprints</value>
+  </data>
+  <data name="Grant_ManageBRBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit BR shift blueprints</value>
+  </data>
+  <data name="Grant_ManageBRPrograms" xml:space="preserve">
+    <value>Manage BR Programs</value>
+  </data>
+  <data name="Grant_ManageBRPrograms_Desc" xml:space="preserve">
+    <value>Create and edit BR shift programs</value>
+  </data>
+  <data name="Grant_ManageHakamBlueprints" xml:space="preserve">
+    <value>Manage Hakam Blueprints</value>
+  </data>
+  <data name="Grant_ManageHakamBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Hakam on-call blueprints</value>
+  </data>
+  <data name="Grant_ManageHakamPrograms" xml:space="preserve">
+    <value>Manage Hakam Programs</value>
+  </data>
+  <data name="Grant_ManageHakamPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Hakam on-call programs</value>
+  </data>
+
+  <!-- Grant Type Localizations - Tech Calendars -->
+  <data name="Grant_ViewHanavaCalendar" xml:space="preserve">
+    <value>View Hanava Calendar</value>
+  </data>
+  <data name="Grant_ViewHanavaCalendar_Desc" xml:space="preserve">
+    <value>View the Hanava tech shift calendar</value>
+  </data>
+  <data name="Grant_ViewDeltaCalendar" xml:space="preserve">
+    <value>View Delta Calendar</value>
+  </data>
+  <data name="Grant_ViewDeltaCalendar_Desc" xml:space="preserve">
+    <value>View the Delta tech shift calendar</value>
+  </data>
+  <data name="Grant_ViewYekevCalendar" xml:space="preserve">
+    <value>View Yekev Calendar</value>
+  </data>
+  <data name="Grant_ViewYekevCalendar_Desc" xml:space="preserve">
+    <value>View the Yekev tech shift calendar</value>
+  </data>
+  <data name="Grant_ViewMoviltechCalendar" xml:space="preserve">
+    <value>View Moviltech Calendar</value>
+  </data>
+  <data name="Grant_ViewMoviltechCalendar_Desc" xml:space="preserve">
+    <value>View the Moviltech tech shift calendar</value>
+  </data>
+
+  <!-- Grant Type Localizations - Tech Assignment -->
+  <data name="Grant_AssignHanavaShifts" xml:space="preserve">
+    <value>Assign Hanava Shifts</value>
+  </data>
+  <data name="Grant_AssignHanavaShifts_Desc" xml:space="preserve">
+    <value>Assign users to Hanava tech shifts</value>
+  </data>
+  <data name="Grant_AssignDeltaShifts" xml:space="preserve">
+    <value>Assign Delta Shifts</value>
+  </data>
+  <data name="Grant_AssignDeltaShifts_Desc" xml:space="preserve">
+    <value>Assign users to Delta tech shifts</value>
+  </data>
+  <data name="Grant_AssignYekevShifts" xml:space="preserve">
+    <value>Assign Yekev Shifts</value>
+  </data>
+  <data name="Grant_AssignYekevShifts_Desc" xml:space="preserve">
+    <value>Assign users to Yekev tech shifts</value>
+  </data>
+  <data name="Grant_AssignMoviltechShifts" xml:space="preserve">
+    <value>Assign Moviltech Shifts</value>
+  </data>
+  <data name="Grant_AssignMoviltechShifts_Desc" xml:space="preserve">
+    <value>Assign users to Moviltech tech shifts</value>
+  </data>
+
+  <!-- Grant Type Localizations - Tech Blueprints/Programs -->
+  <data name="Grant_ManageHanavaBlueprints" xml:space="preserve">
+    <value>Manage Hanava Blueprints</value>
+  </data>
+  <data name="Grant_ManageHanavaBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Hanava tech shift blueprints</value>
+  </data>
+  <data name="Grant_ManageHanavaPrograms" xml:space="preserve">
+    <value>Manage Hanava Programs</value>
+  </data>
+  <data name="Grant_ManageHanavaPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Hanava tech shift programs</value>
+  </data>
+  <data name="Grant_ManageDeltaBlueprints" xml:space="preserve">
+    <value>Manage Delta Blueprints</value>
+  </data>
+  <data name="Grant_ManageDeltaBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Delta tech shift blueprints</value>
+  </data>
+  <data name="Grant_ManageDeltaPrograms" xml:space="preserve">
+    <value>Manage Delta Programs</value>
+  </data>
+  <data name="Grant_ManageDeltaPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Delta tech shift programs</value>
+  </data>
+  <data name="Grant_ManageYekevBlueprints" xml:space="preserve">
+    <value>Manage Yekev Blueprints</value>
+  </data>
+  <data name="Grant_ManageYekevBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Yekev tech shift blueprints</value>
+  </data>
+  <data name="Grant_ManageYekevPrograms" xml:space="preserve">
+    <value>Manage Yekev Programs</value>
+  </data>
+  <data name="Grant_ManageYekevPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Yekev tech shift programs</value>
+  </data>
+  <data name="Grant_ManageMoviltechBlueprints" xml:space="preserve">
+    <value>Manage Moviltech Blueprints</value>
+  </data>
+  <data name="Grant_ManageMoviltechBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Moviltech tech shift blueprints</value>
+  </data>
+  <data name="Grant_ManageMoviltechPrograms" xml:space="preserve">
+    <value>Manage Moviltech Programs</value>
+  </data>
+  <data name="Grant_ManageMoviltechPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Moviltech tech shift programs</value>
+  </data>
+
+  <!-- Grant Type Localizations - Tech Eligibility -->
+  <data name="Grant_CanBeAssignedHanava" xml:space="preserve">
+    <value>Eligible for Hanava Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedHanava_Desc" xml:space="preserve">
+    <value>User can be assigned to Hanava tech shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedDelta" xml:space="preserve">
+    <value>Eligible for Delta Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedDelta_Desc" xml:space="preserve">
+    <value>User can be assigned to Delta tech shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedYekev" xml:space="preserve">
+    <value>Eligible for Yekev Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedYekev_Desc" xml:space="preserve">
+    <value>User can be assigned to Yekev tech shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedMoviltech" xml:space="preserve">
+    <value>Eligible for Moviltech Shifts</value>
+  </data>
+  <data name="Grant_CanBeAssignedMoviltech_Desc" xml:space="preserve">
+    <value>User can be assigned to Moviltech tech shifts</value>
+  </data>
+
+  <!-- Grant Type Localizations - Helper Molecules: Shiklut -->
+  <data name="Grant_ViewShiklutCalendar" xml:space="preserve">
+    <value>View Shiklut Calendar</value>
+  </data>
+  <data name="Grant_ViewShiklutCalendar_Desc" xml:space="preserve">
+    <value>View the Shiklut chore calendar</value>
+  </data>
+  <data name="Grant_AssignShiklutChores" xml:space="preserve">
+    <value>Assign Shiklut Chores</value>
+  </data>
+  <data name="Grant_AssignShiklutChores_Desc" xml:space="preserve">
+    <value>Assign users to Shiklut chores</value>
+  </data>
+  <data name="Grant_ManageShiklutBlueprints" xml:space="preserve">
+    <value>Manage Shiklut Blueprints</value>
+  </data>
+  <data name="Grant_ManageShiklutBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Shiklut chore blueprints</value>
+  </data>
+  <data name="Grant_ManageShiklutPrograms" xml:space="preserve">
+    <value>Manage Shiklut Programs</value>
+  </data>
+  <data name="Grant_ManageShiklutPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Shiklut chore programs</value>
+  </data>
+  <data name="Grant_CanBeAssignedShiklut" xml:space="preserve">
+    <value>Eligible for Shiklut Chores</value>
+  </data>
+  <data name="Grant_CanBeAssignedShiklut_Desc" xml:space="preserve">
+    <value>User can be assigned to Shiklut chores</value>
+  </data>
+
+  <!-- Grant Type Localizations - Helper Molecules: NOC -->
+  <data name="Grant_ViewNOCCalendar" xml:space="preserve">
+    <value>View NOC Calendar</value>
+  </data>
+  <data name="Grant_ViewNOCCalendar_Desc" xml:space="preserve">
+    <value>View the NOC chore calendar</value>
+  </data>
+  <data name="Grant_AssignNOCChores" xml:space="preserve">
+    <value>Assign NOC Chores</value>
+  </data>
+  <data name="Grant_AssignNOCChores_Desc" xml:space="preserve">
+    <value>Assign users to NOC chores</value>
+  </data>
+  <data name="Grant_ManageNOCBlueprints" xml:space="preserve">
+    <value>Manage NOC Blueprints</value>
+  </data>
+  <data name="Grant_ManageNOCBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit NOC chore blueprints</value>
+  </data>
+  <data name="Grant_ManageNOCPrograms" xml:space="preserve">
+    <value>Manage NOC Programs</value>
+  </data>
+  <data name="Grant_ManageNOCPrograms_Desc" xml:space="preserve">
+    <value>Create and edit NOC chore programs</value>
+  </data>
+  <data name="Grant_CanBeAssignedNOC" xml:space="preserve">
+    <value>Eligible for NOC Chores</value>
+  </data>
+  <data name="Grant_CanBeAssignedNOC_Desc" xml:space="preserve">
+    <value>User can be assigned to NOC chores</value>
+  </data>
+
+  <!-- Grant Type Localizations - Katzin Duty -->
+  <data name="Grant_ManageKatzinBlueprints" xml:space="preserve">
+    <value>Manage Katzin Blueprints</value>
+  </data>
+  <data name="Grant_ManageKatzinBlueprints_Desc" xml:space="preserve">
+    <value>Create and edit Katzin on-call blueprints</value>
+  </data>
+  <data name="Grant_ManageKatzinPrograms" xml:space="preserve">
+    <value>Manage Katzin Programs</value>
+  </data>
+  <data name="Grant_ManageKatzinPrograms_Desc" xml:space="preserve">
+    <value>Create and edit Katzin on-call programs</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Navigation -->
+  <data name="Nav_MyShifty" xml:space="preserve">
+    <value>My Shifty</value>
+  </data>
+  <data name="Nav_Calendars" xml:space="preserve">
+    <value>Calendars</value>
+  </data>
+  <data name="Nav_People" xml:space="preserve">
+    <value>People</value>
+  </data>
+  <data name="Nav_Scheduling" xml:space="preserve">
+    <value>Scheduling</value>
+  </data>
+  <data name="Nav_Admin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Nav_System" xml:space="preserve">
+    <value>System</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Context Switcher -->
+  <data name="ContextSwitcher_CurrentlyViewing" xml:space="preserve">
+    <value>Currently Viewing</value>
+  </data>
+  <data name="ContextSwitcher_SelectContext" xml:space="preserve">
+    <value>Select a company or molecule</value>
+  </data>
+  <data name="ContextSwitcher_SearchPlaceholder" xml:space="preserve">
+    <value>Search companies...</value>
+  </data>
+  <data name="ContextSwitcher_SearchLabel" xml:space="preserve">
+    <value>Search for a company</value>
+  </data>
+  <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
+    <value>Switch Company</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Scope Switcher -->
+  <data name="ScopeSwitcher_ViewLabel" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="ScopeSwitcher_AriaLabel" xml:space="preserve">
+    <value>Calendar scope selector</value>
+  </data>
+  <data name="ScopeSwitcher_MineOnly" xml:space="preserve">
+    <value>Mine Only</value>
+  </data>
+  <data name="ScopeSwitcher_MyCompany" xml:space="preserve">
+    <value>My Company</value>
+  </data>
+  <data name="ScopeSwitcher_FullMolecule" xml:space="preserve">
+    <value>Full Molecule</value>
+  </data>
+  <data name="ScopeSwitcher_FullArea" xml:space="preserve">
+    <value>Full Area</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - On-Call Widget -->
+  <data name="Widget_OnCallNow" xml:space="preserve">
+    <value>On-Call Now</value>
+  </data>
+  <data name="Widget_OnCallCall" xml:space="preserve">
+    <value>Call</value>
+  </data>
+  <data name="Widget_OnCallEmpty" xml:space="preserve">
+    <value>No one is on-call right now</value>
+  </data>
+  <data name="Widget_OnCallEmptyHint" xml:space="preserve">
+    <value>This is unusual. Contact your supervisor if needed.</value>
+  </data>
+  <data name="Widget_OfficeNumbers" xml:space="preserve">
+    <value>Office Numbers</value>
+  </data>
+  <data name="Widget_FriendsOnCall" xml:space="preserve">
+    <value>Friends On-Call</value>
+  </data>
+  <data name="Widget_AddFriendsHint" xml:space="preserve">
+    <value>Add friends to see their on-call status</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Empty States -->
+  <data name="Calendar_Empty_NoShiftsMine" xml:space="preserve">
+    <value>No shifts assigned to you this month</value>
+  </data>
+  <data name="Calendar_Empty_NoShiftsCompany" xml:space="preserve">
+    <value>No shifts scheduled for {0} this month</value>
+  </data>
+  <data name="Calendar_Empty_NotPublished" xml:space="preserve">
+    <value>Schedule not yet published for {0}</value>
+  </data>
+  <data name="Calendar_Empty_NoAccess" xml:space="preserve">
+    <value>You don't have access to this calendar</value>
+  </data>
+  <data name="Calendar_Empty_SwitchScope" xml:space="preserve">
+    <value>Try expanding your view</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Loading States -->
+  <data name="Loading_Calendar" xml:space="preserve">
+    <value>Loading calendar...</value>
+  </data>
+  <data name="Loading_Saving" xml:space="preserve">
+    <value>Saving...</value>
+  </data>
+  <data name="Loading_Saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="Loading_TryAgain" xml:space="preserve">
+    <value>Try Again</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Loading_PleaseWait" xml:space="preserve">
+    <value>Please wait...</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Error States -->
+  <data name="Error_Generic" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="Error_Network" xml:space="preserve">
+    <value>You're offline</value>
+  </data>
+  <data name="Error_SessionExpiring" xml:space="preserve">
+    <value>Session expiring in {0}</value>
+  </data>
+  <data name="Error_SessionExpired" xml:space="preserve">
+    <value>Your session has expired</value>
+  </data>
+  <data name="Action_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Action_StayLoggedIn" xml:space="preserve">
+    <value>Stay Logged In</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Search -->
+  <data name="Search_Empty_NoResults" xml:space="preserve">
+    <value>No results for "{0}"</value>
+  </data>
+  <data name="Search_Hint_CheckSpelling" xml:space="preserve">
+    <value>Check spelling</value>
+  </data>
+  <data name="Search_Hint_FewerWords" xml:space="preserve">
+    <value>Use fewer words</value>
+  </data>
+  <data name="Search_Hint_ClearFilters" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Tables -->
+  <data name="Table_Showing" xml:space="preserve">
+    <value>Showing {0}-{1} of {2}</value>
+  </data>
+  <data name="Table_PerPage" xml:space="preserve">
+    <value>Per page</value>
+  </data>
+  <data name="Table_NoResults" xml:space="preserve">
+    <value>No results found</value>
+  </data>
+  <data name="Table_SortAsc" xml:space="preserve">
+    <value>Sort ascending</value>
+  </data>
+  <data name="Table_SortDesc" xml:space="preserve">
+    <value>Sort descending</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Print -->
+  <data name="Action_Print" xml:space="preserve">
+    <value>Print</value>
+  </data>
+  <data name="Print_Header_Printed" xml:space="preserve">
+    <value>Printed</value>
+  </data>
+  <data name="Print_Legend" xml:space="preserve">
+    <value>Legend</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Date/Time -->
+  <data name="DateTime_JustNow" xml:space="preserve">
+    <value>Just now</value>
+  </data>
+  <data name="DateTime_MinutesAgo" xml:space="preserve">
+    <value>{0} minutes ago</value>
+  </data>
+  <data name="DateTime_HoursAgo" xml:space="preserve">
+    <value>{0} hours ago</value>
+  </data>
+  <data name="DateTime_Yesterday" xml:space="preserve">
+    <value>Yesterday at {0}</value>
+  </data>
+  <data name="DateTime_DaysAgo" xml:space="preserve">
+    <value>{0} days ago</value>
+  </data>
+  <data name="DateTime_Hours" xml:space="preserve">
+    <value>{0} hours</value>
+  </data>
+  <data name="DateTime_Remaining" xml:space="preserve">
+    <value>remaining</value>
+  </data>
+
+  <!-- UI Overhaul v3.0 - Modals -->
+  <data name="Modal_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Modal_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Modal_Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="Modal_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Modal_DeleteConfirmTitle" xml:space="preserve">
+    <value>Delete {0}?</value>
+  </data>
+  <data name="Modal_DeleteConfirmMessage" xml:space="preserve">
+    <value>This action cannot be undone.</value>
+  </data>
+
+  <!-- Common Keys for Owner Pages -->
+  <data name="Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="Configured" xml:space="preserve">
+    <value>Configured</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="And" xml:space="preserve">
+    <value>And</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>Deleted</value>
+  </data>
+  <data name="Inserted" xml:space="preserve">
+    <value>Inserted</value>
+  </data>
+  <data name="Skipped" xml:space="preserve">
+    <value>Skipped</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Recipient" xml:space="preserve">
+    <value>Recipient</value>
+  </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="SaveConfiguration" xml:space="preserve">
+    <value>Save Configuration</value>
+  </data>
+
+  <!-- Owner/Index.cshtml - Language Management -->
+  <data name="Owner_LanguageManagement" xml:space="preserve">
+    <value>Language Management</value>
+  </data>
+  <data name="Owner_LanguageManagement_Desc" xml:space="preserve">
+    <value>Configure languages and customize translations</value>
+  </data>
+
+  <!-- Owner/Backup.cshtml -->
+  <data name="Owner_Backup_Subtitle" xml:space="preserve">
+    <value>Create and manage database backups</value>
+  </data>
+  <data name="Owner_Backup_Actions" xml:space="preserve">
+    <value>Backup Actions</value>
+  </data>
+  <data name="Owner_Backup_CreateNew" xml:space="preserve">
+    <value>Create New Backup</value>
+  </data>
+  <data name="Owner_Backup_HelpText" xml:space="preserve">
+    <value>Creates a snapshot of the current database. Backups are stored in the Backups folder.</value>
+  </data>
+  <data name="Owner_Backup_AvailableBackups" xml:space="preserve">
+    <value>Available Backups</value>
+  </data>
+  <data name="Owner_Backup_NoBackupsFound" xml:space="preserve">
+    <value>No backups found</value>
+  </data>
+  <data name="Owner_Backup_CreateFirstBackup" xml:space="preserve">
+    <value>Create your first backup using the button above</value>
+  </data>
+  <data name="Owner_Backup_FileName" xml:space="preserve">
+    <value>File Name</value>
+  </data>
+  <data name="Owner_Backup_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Owner_Backup_CreatedDate" xml:space="preserve">
+    <value>Created Date</value>
+  </data>
+  <data name="Owner_Backup_Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="Owner_Backup_Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="Owner_Backup_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Owner_Backup_RestoreConfirm" xml:space="preserve">
+    <value>Are you sure you want to restore this backup? The current database will be backed up first.</value>
+  </data>
+  <data name="Owner_Backup_DeleteConfirm" xml:space="preserve">
+    <value>Are you sure you want to delete this backup?</value>
+  </data>
+  <data name="Owner_Backup_ImportantInfo" xml:space="preserve">
+    <value>Important Information</value>
+  </data>
+  <data name="Owner_Backup_AutoBackups" xml:space="preserve">
+    <value>Automatic Backups</value>
+  </data>
+  <data name="Owner_Backup_AutoBackups_Desc" xml:space="preserve">
+    <value>Backups are created manually using the button above.</value>
+  </data>
+  <data name="Owner_Backup_BeforeRestore" xml:space="preserve">
+    <value>Before Restore</value>
+  </data>
+  <data name="Owner_Backup_BeforeRestore_Desc" xml:space="preserve">
+    <value>The current database is automatically backed up before any restore operation.</value>
+  </data>
+  <data name="Owner_Backup_AppRestart" xml:space="preserve">
+    <value>Application Restart</value>
+  </data>
+  <data name="Owner_Backup_AppRestart_Desc" xml:space="preserve">
+    <value>After restoring a backup, restart the application for changes to take effect.</value>
+  </data>
+  <data name="Owner_Backup_StorageLocation" xml:space="preserve">
+    <value>Storage Location</value>
+  </data>
+  <data name="Owner_Backup_StorageLocation_Desc" xml:space="preserve">
+    <value>Backups are stored in the Backups folder at the application root.</value>
+  </data>
+  <data name="Owner_Backup_DownloadInfo" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="Owner_Backup_DownloadInfo_Desc" xml:space="preserve">
+    <value>Backups can be downloaded to external storage for additional safety.</value>
+  </data>
+
+  <!-- Owner/DataLifecycle.cshtml -->
+  <data name="Owner_DataLifecycle" xml:space="preserve">
+    <value>Data Lifecycle</value>
+  </data>
+  <data name="Owner_DataLifecycle_Subtitle" xml:space="preserve">
+    <value>Archive, purge, and re-import historical data</value>
+  </data>
+  <data name="Owner_DataLifecycle_CreateArchive" xml:space="preserve">
+    <value>Create Archive</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeData" xml:space="preserve">
+    <value>Purge Data</value>
+  </data>
+  <data name="Owner_DataLifecycle_ReImport" xml:space="preserve">
+    <value>Re-Import</value>
+  </data>
+  <data name="Owner_DataLifecycle_CutoffDate" xml:space="preserve">
+    <value>Cutoff Date</value>
+  </data>
+  <data name="Owner_DataLifecycle_DataTypes" xml:space="preserve">
+    <value>Data Types</value>
+  </data>
+  <data name="Owner_DataLifecycle_Shifts" xml:space="preserve">
+    <value>Shifts</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidationPassed" xml:space="preserve">
+    <value>Validation Passed</value>
+  </data>
+  <data name="Owner_DataLifecycle_CompanyMatch" xml:space="preserve">
+    <value>Company Match</value>
+  </data>
+  <data name="Owner_DataLifecycle_ArchiveCompany" xml:space="preserve">
+    <value>Archive Company</value>
+  </data>
+  <data name="Owner_DataLifecycle_CurrentCompany" xml:space="preserve">
+    <value>Current Company</value>
+  </data>
+  <data name="Owner_DataLifecycle_MissingUsers" xml:space="preserve">
+    <value>Missing Users</value>
+  </data>
+  <data name="Owner_DataLifecycle_MissingUsers_Help" xml:space="preserve">
+    <value>You can choose to skip records with missing users or cancel the import.</value>
+  </data>
+  <data name="Owner_DataLifecycle_ConflictPolicy" xml:space="preserve">
+    <value>Conflict Policy</value>
+  </data>
+  <data name="Owner_DataLifecycle_SkipDuplicates" xml:space="preserve">
+    <value>Skip duplicates (recommended)</value>
+  </data>
+  <data name="Owner_DataLifecycle_OverwriteExisting" xml:space="preserve">
+    <value>Overwrite existing</value>
+  </data>
+  <data name="Owner_DataLifecycle_FailOnConflict" xml:space="preserve">
+    <value>Fail on conflict</value>
+  </data>
+  <data name="Owner_DataLifecycle_SkipMissingUsers" xml:space="preserve">
+    <value>Skip records with missing users</value>
+  </data>
+  <data name="Owner_DataLifecycle_ImportData" xml:space="preserve">
+    <value>Import Data</value>
+  </data>
+  <data name="Owner_DataLifecycle_ImportResults" xml:space="preserve">
+    <value>Import Results</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalInserted" xml:space="preserve">
+    <value>Total Inserted</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalSkipped" xml:space="preserve">
+    <value>Total Skipped</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalFailed" xml:space="preserve">
+    <value>Total Failed</value>
+  </data>
+
+  <!-- Owner/DatabaseConsole.cshtml -->
+  <data name="Owner_DatabaseConsole_Subtitle" xml:space="preserve">
+    <value>Run SQL queries directly against the database</value>
+  </data>
+  <data name="Owner_DatabaseConsole_Tables" xml:space="preserve">
+    <value>Tables</value>
+  </data>
+  <data name="Owner_DatabaseConsole_QuickQueries" xml:space="preserve">
+    <value>Quick Queries</value>
+  </data>
+  <data name="Owner_DatabaseConsole_ListUsers" xml:space="preserve">
+    <value>List Users</value>
+  </data>
+  <data name="Owner_DatabaseConsole_ListCompanies" xml:space="preserve">
+    <value>List Companies</value>
+  </data>
+  <data name="Owner_DatabaseConsole_SqlQuery" xml:space="preserve">
+    <value>SQL Query</value>
+  </data>
+  <data name="Owner_DatabaseConsole_QueryPlaceholder" xml:space="preserve">
+    <value>Enter your SQL query here...</value>
+  </data>
+  <data name="Owner_DatabaseConsole_Execute" xml:space="preserve">
+    <value>Execute</value>
+  </data>
+  <data name="Owner_DatabaseConsole_QueryResults" xml:space="preserve">
+    <value>Query Results</value>
+  </data>
+
+  <!-- Owner/EmailConfig.cshtml -->
+  <data name="Owner_EmailConfig_Subtitle" xml:space="preserve">
+    <value>Configure system email notifications</value>
+  </data>
+  <data name="Owner_EmailConfig_ServiceConfig" xml:space="preserve">
+    <value>Email Service Configuration</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiUrl" xml:space="preserve">
+    <value>API URL</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiUrl_Help" xml:space="preserve">
+    <value>The URL for the email sending service</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiKey" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="Owner_EmailConfig_FromAddress" xml:space="preserve">
+    <value>From Address</value>
+  </data>
+  <data name="Owner_EmailConfig_TestEmail" xml:space="preserve">
+    <value>Test Email</value>
+  </data>
+  <data name="Owner_EmailConfig_RecipientEmail" xml:space="preserve">
+    <value>Recipient Email Address</value>
+  </data>
+  <data name="Owner_EmailConfig_SendTestEmail" xml:space="preserve">
+    <value>Send Test Email</value>
+  </data>
+  <data name="Owner_EmailConfig_RecentLogs" xml:space="preserve">
+    <value>Recent Logs</value>
+  </data>
+  <data name="Owner_EmailConfig_NoLogs" xml:space="preserve">
+    <value>No logs available</value>
+  </data>
+  <data name="Owner_EmailConfig_RecentFailures" xml:space="preserve">
+    <value>Recent Failures</value>
+  </data>
+  <data name="Owner_EmailConfig_Statistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="Owner_EmailConfig_TotalSent" xml:space="preserve">
+    <value>Total Sent</value>
+  </data>
+  <data name="Owner_EmailConfig_SentToday" xml:space="preserve">
+    <value>Sent Today</value>
+  </data>
+  <data name="Owner_EmailConfig_LastSent" xml:space="preserve">
+    <value>Last Sent</value>
+  </data>
+  <data name="Owner_EmailConfig_Templates" xml:space="preserve">
+    <value>Templates</value>
+  </data>
+  <data name="Owner_EmailConfig_Templates_Desc" xml:space="preserve">
+    <value>Edit email templates</value>
+  </data>
+  <data name="Owner_EmailConfig_ManageTemplates" xml:space="preserve">
+    <value>Manage Templates</value>
+  </data>
+
+  <!-- Error State Components (B-004) -->
+  <data name="Error_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Error_Dismiss" xml:space="preserve">
+    <value>Dismiss</value>
+  </data>
+  <data name="Error_NetworkError" xml:space="preserve">
+    <value>Unable to connect. Please check your connection.</value>
+  </data>
+  <data name="Error_NetworkError_Title" xml:space="preserve">
+    <value>Connection Error</value>
+  </data>
+  <data name="Error_ServerError" xml:space="preserve">
+    <value>Something went wrong. Please try again.</value>
+  </data>
+  <data name="Error_ServerError_Title" xml:space="preserve">
+    <value>Server Error</value>
+  </data>
+  <data name="Error_SessionExpired" xml:space="preserve">
+    <value>Your session has expired. Please log in again.</value>
+  </data>
+  <data name="Error_SessionExpired_Title" xml:space="preserve">
+    <value>Session Expired</value>
+  </data>
+  <data name="Error_SessionExpiring" xml:space="preserve">
+    <value>Your session will expire in {0}. Would you like to stay logged in?</value>
+  </data>
+  <data name="Error_SessionExpiring_Title" xml:space="preserve">
+    <value>Session Expiring Soon</value>
+  </data>
+  <data name="Error_SessionExpiring_StayLoggedIn" xml:space="preserve">
+    <value>Stay Logged In</value>
+  </data>
+  <data name="Error_SessionExpiring_Logout" xml:space="preserve">
+    <value>Log Out Now</value>
+  </data>
+  <data name="Error_AccessDenied" xml:space="preserve">
+    <value>You don't have access to this resource.</value>
+  </data>
+  <data name="Error_AccessDenied_Title" xml:space="preserve">
+    <value>Access Denied</value>
+  </data>
+  <data name="Error_LoadingFailed" xml:space="preserve">
+    <value>Failed to load data. Please try again.</value>
+  </data>
+  <data name="Error_LoadingFailed_Title" xml:space="preserve">
+    <value>Loading Failed</value>
+  </data>
+  <data name="Error_SaveFailed" xml:space="preserve">
+    <value>Failed to save changes. Please try again.</value>
+  </data>
+  <data name="Error_SaveFailed_Title" xml:space="preserve">
+    <value>Save Failed</value>
+  </data>
+  <data name="Error_ValidationFailed" xml:space="preserve">
+    <value>Please correct the errors below and try again.</value>
+  </data>
+  <data name="Error_ValidationFailed_Title" xml:space="preserve">
+    <value>Validation Error</value>
+  </data>
+  <data name="Error_NotFound" xml:space="preserve">
+    <value>The requested resource was not found.</value>
+  </data>
+  <data name="Error_NotFound_Title" xml:space="preserve">
+    <value>Not Found</value>
+  </data>
+  <data name="Error_Offline" xml:space="preserve">
+    <value>You are currently offline. Some features may be unavailable.</value>
+  </data>
+  <data name="Error_Offline_Title" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="Error_BackOnline" xml:space="preserve">
+    <value>Connection restored.</value>
+  </data>
+  <data name="Error_BackOnline_Title" xml:space="preserve">
+    <value>Back Online</value>
+  </data>
 </root>
