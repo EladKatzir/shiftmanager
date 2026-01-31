@@ -115,6 +115,9 @@
     <a class="btn btn-primary" href="/Calendar/Day"><loc key="Day" /></a>
 </div>
 
+@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) *@
+@await Component.InvokeAsync("ScopeSwitcher", new { currentScope = "company", calendarType = "shifts" })
+
 @* ✅ PHASE 20: Quick actions for managers *@
 @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
 {
@@ -317,15 +320,6 @@
         .day-item.other {
             opacity: 0.7;
         }
-
-        /* ✅ PHASE 20: Type-specific colors */
-        .day-item.shift-morning { border-left: 6px solid #FF6B6B; }
-        .day-item.shift-middle { border-left: 6px solid #4ECDC4; }
-        .day-item.shift-noon { border-left: 6px solid #FFE66D; }
-        .day-item.shift-night { border-left: 6px solid #95E1D3; }
-        .day-item.chore-green { border-left: 6px solid #51CF66; }
-        .day-item.onduty-hakam { border-left: 6px solid #845EC2; }
-        .day-item.onduty-lead { border-left: 6px solid #FF9671; }
 
         .item-main {
             flex: 1;
