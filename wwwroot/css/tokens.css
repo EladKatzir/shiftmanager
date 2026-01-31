@@ -97,6 +97,14 @@
   --shift-br-soft: #EDF2F7;
   --shift-br-text: #FFFFFF;
 
+  --shift-noon: #FFE66D;
+  --shift-noon-soft: #FFF8E6;
+  --shift-noon-text: #1A1F2B;
+
+  --shift-lead: #FF9671;
+  --shift-lead-soft: #FFE6DC;
+  --shift-lead-text: #FFFFFF;
+
   /* Focus Ring */
   --focus-ring: 0 0 0 3px var(--primary-soft);
   --focus-ring-danger: 0 0 0 3px var(--danger-soft);
@@ -194,6 +202,14 @@
   --shift-br: #6B7B8F;
   --shift-br-soft: #2D3748;
   --shift-br-text: #0F1419;
+
+  --shift-noon: #D4B63F;
+  --shift-noon-soft: #3D3520;
+  --shift-noon-text: #0F1419;
+
+  --shift-lead: #FF8A65;
+  --shift-lead-soft: #3D2520;
+  --shift-lead-text: #0F1419;
 
   /* Focus Ring */
   --focus-ring: 0 0 0 3px var(--primary-soft);
