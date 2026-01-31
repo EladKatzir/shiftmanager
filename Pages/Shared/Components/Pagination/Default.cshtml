@@ -1,0 +1,103 @@
+@model ShiftManager.ViewComponents.PaginationModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* B-009: Table Pagination Controls
+   - "Showing X-Y of Z" always visible
+   - Page numbers: first, last, current ±1 with ellipsis
+   - Prev/Next disabled at boundaries
+   - Per-page dropdown
+   - Localized text
+   - RTL support
+*@
+
+@if (Model.TotalPages > 0)
+{
+    <nav class="pagination" role="navigation" aria-label="@Localizer["Pagination_Label"]">
+        @* Info: Showing X-Y of Z *@
+        <div class="pagination__info" aria-live="polite">
+            @if (Model.TotalItems > 0)
+            {
+                @Localizer["Pagination_Showing", Model.StartItem, Model.EndItem, Model.TotalItems]
+            }
+            else
+            {
+                @Localizer["Pagination_NoItems"]
+            }
+        </div>
+
+        @* Page controls *@
+        <div class="pagination__controls">
+            @* Previous button *@
+            <a href="@(Model.HasPreviousPage ? Model.GetPageUrl(Model.CurrentPage - 1) : "#")"
+               class="pagination__btn pagination__btn--nav"
+               @(Model.HasPreviousPage ? "" : "disabled aria-disabled=\"true\" tabindex=\"-1\"")
+               aria-label="@Localizer["Pagination_Previous"]"
+               title="@Localizer["Pagination_Previous"]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span class="visually-hidden">@Localizer["Pagination_Previous"]</span>
+            </a>
+
+            @* Page numbers with ellipsis *@
+            @foreach (var item in Model.GetPageItems())
+            {
+                if (item.IsEllipsis)
+                {
+                    <span class="pagination__ellipsis" aria-hidden="true">...</span>
+                }
+                else
+                {
+                    <a href="@Model.GetPageUrl(item.PageNumber)"
+                       class="pagination__btn @(item.IsActive ? "is-active" : "")"
+                       @(item.IsActive ? "aria-current=\"page\"" : "")
+                       aria-label="@Localizer["Pagination_GoToPage", item.PageNumber]"
+                       title="@Localizer["Pagination_GoToPage", item.PageNumber]">
+                        @item.PageNumber
+                    </a>
+                }
+            }
+
+            @* Next button *@
+            <a href="@(Model.HasNextPage ? Model.GetPageUrl(Model.CurrentPage + 1) : "#")"
+               class="pagination__btn pagination__btn--nav"
+               @(Model.HasNextPage ? "" : "disabled aria-disabled=\"true\" tabindex=\"-1\"")
+               aria-label="@Localizer["Pagination_Next"]"
+               title="@Localizer["Pagination_Next"]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+                <span class="visually-hidden">@Localizer["Pagination_Next"]</span>
+            </a>
+        </div>
+
+        @* Per-page selector *@
+        <div class="pagination__per-page">
+            <label for="pagination-page-size" class="visually-hidden">
+                @Localizer["Pagination_ItemsPerPage"]
+            </label>
+            <select id="pagination-page-size"
+                    onchange="window.location.href = this.value"
+                    aria-label="@Localizer["Pagination_ItemsPerPage"]">
+                @foreach (var size in Model.PageSizeOptions)
+                {
+                    if (size == Model.PageSize)
+                    {
+                        <option value="@Model.GetPageSizeUrl(size)" selected>@size</option>
+                    }
+                    else
+                    {
+                        <option value="@Model.GetPageSizeUrl(size)">@size</option>
+                    }
+                }
+            </select>
+            <span aria-hidden="true">@Localizer["Pagination_PerPage"]</span>
+        </div>
+    </nav>
+}

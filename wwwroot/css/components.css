@@ -800,20 +800,30 @@ select.form-field__input {
 }
 
 /* ========================================
-   9. PAGINATION
+   9. PAGINATION (B-009)
+   Enhanced table pagination controls with:
+   - "Showing X-Y of Z" always visible
+   - Page numbers: first, last, current ±1
+   - Prev/Next disabled at boundaries
+   - Per-page dropdown
+   - Localized & RTL support
    ======================================== */
 
 .pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-4);
 }
 
 .pagination__info {
   font-size: var(--text-small);
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .pagination__controls {
@@ -823,37 +833,72 @@ select.form-field__input {
 }
 
 .pagination__btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
+  min-width: 2.25rem;
+  height: 2.25rem;
   padding: 0 var(--space-2);
-  font-size: var(--text-small);
-  color: var(--text);
-  background-color: transparent;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-small);
+  font-family: inherit;
+  text-decoration: none;
   cursor: pointer;
-  transition: var(--transition-colors);
+  transition: var(--transition-colors), var(--transition-shadow);
 }
 
-.pagination__btn:hover:not(:disabled) {
+.pagination__btn:hover:not(:disabled):not(.is-active) {
   background-color: var(--surface-soft);
-  border-color: var(--border-strong);
+  border-color: var(--primary);
 }
 
-.pagination__btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pagination__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .pagination__btn.is-active {
   background-color: var(--primary);
   border-color: var(--primary);
   color: var(--primary-contrast);
+  font-weight: var(--font-medium);
 }
 
+.pagination__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Navigation buttons (Prev/Next) */
+.pagination__btn--nav {
+  padding: 0 var(--space-3);
+  gap: var(--space-1);
+}
+
+.pagination__btn--nav svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Ellipsis between page numbers */
+.pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  user-select: none;
+}
+
+/* Per-page selector */
 .pagination__per-page {
   display: flex;
   align-items: center;
@@ -863,12 +908,74 @@ select.form-field__input {
 }
 
 .pagination__per-page select {
-  height: 32px;
+  height: 2.25rem;
   padding: 0 var(--space-6) 0 var(--space-2);
   font-size: var(--text-small);
+  font-family: inherit;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
+}
+
+.pagination__per-page select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+
+/* RTL adjustments */
+[dir="rtl"] .pagination__per-page select {
+  padding: 0 var(--space-2) 0 var(--space-6);
+  background-position: left var(--space-2) center;
+}
+
+[dir="rtl"] .pagination__btn--nav svg {
+  transform: scaleX(-1);
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .pagination__info {
+    text-align: center;
+    order: -1;
+  }
+
+  .pagination__controls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pagination__per-page {
+    justify-content: center;
+  }
+
+  /* Hide page numbers on very small screens, keep only nav */
+  .pagination__btn:not(.pagination__btn--nav):not(.is-active) {
+    display: none;
+  }
+
+  .pagination__ellipsis {
+    display: none;
+  }
+}
+
+/* Print: hide pagination */
+@media print {
+  .pagination {
+    display: none;
+  }
 }
 
 /* ========================================
@@ -2250,5 +2357,273 @@ a:not(.btn):not(.card):not([aria-disabled="true"]):active {
   a:active {
     outline: 2px solid currentColor;
     outline-offset: 2px;
+  }
+}
+
+/* ========================================
+   26. FORM VALIDATION ERROR STATES (B-008)
+   ========================================
+
+   Consistent form validation error display with:
+   - Error messages below fields
+   - Red text with warning icon
+   - aria-live="polite" for screen readers
+   - Localized messages
+   - Field highlights with red border on error
+   ======================================== */
+
+/* ----------------------------------------
+   Error State for Inputs
+   ---------------------------------------- */
+.input--error,
+input.input-validation-error,
+select.input-validation-error,
+textarea.input-validation-error {
+  border-color: var(--danger) !important;
+  background-color: color-mix(in srgb, var(--danger) 5%, var(--surface));
+}
+
+.input--error:focus,
+input.input-validation-error:focus,
+select.input-validation-error:focus,
+textarea.input-validation-error:focus {
+  outline-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent);
+}
+
+/* ----------------------------------------
+   Validation Message Container
+   ---------------------------------------- */
+.field-validation-error,
+.validation-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--text-small);
+  color: var(--danger);
+}
+
+.field-validation-error::before,
+.validation-message::before {
+  content: "\26A0"; /* Warning triangle */
+  flex-shrink: 0;
+  font-size: var(--text-small);
+}
+
+/* Hide empty validation messages */
+.field-validation-valid,
+.field-validation-error:empty {
+  display: none;
+}
+
+/* ----------------------------------------
+   Validation Summary (Top of Form)
+   ---------------------------------------- */
+.validation-summary-errors {
+  background-color: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.validation-summary-errors ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--danger);
+}
+
+[dir="rtl"] .validation-summary-errors ul {
+  padding-left: 0;
+  padding-right: var(--space-4);
+}
+
+.validation-summary-errors li {
+  margin-bottom: var(--space-1);
+}
+
+.validation-summary-errors li:last-child {
+  margin-bottom: 0;
+}
+
+/* Validation summary header */
+.validation-summary-errors::before {
+  content: "\26A0"; /* Warning triangle */
+  display: inline-block;
+  margin-right: var(--space-2);
+  font-size: var(--text-body);
+}
+
+[dir="rtl"] .validation-summary-errors::before {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* Hide valid summary */
+.validation-summary-valid {
+  display: none;
+}
+
+/* ----------------------------------------
+   Form Group with Error
+   ---------------------------------------- */
+.form-group--error label,
+.form-field.has-error .form-field__label {
+  color: var(--danger);
+}
+
+.form-group--error .form-field__input,
+.form-group--error input,
+.form-group--error select,
+.form-group--error textarea {
+  border-color: var(--danger);
+}
+
+.form-group--error .form-field__input:focus,
+.form-group--error input:focus,
+.form-group--error select:focus,
+.form-group--error textarea:focus {
+  box-shadow: var(--focus-ring-danger);
+}
+
+/* ----------------------------------------
+   Success State (Valid Input)
+   ---------------------------------------- */
+.input--success,
+input.input-validation-valid:not(:placeholder-shown),
+select.input-validation-valid,
+textarea.input-validation-valid:not(:placeholder-shown) {
+  border-color: var(--success);
+}
+
+.input--success:focus,
+input.input-validation-valid:focus,
+select.input-validation-valid:focus,
+textarea.input-validation-valid:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent);
+}
+
+/* ----------------------------------------
+   Validation Hint (Helper Text)
+   ---------------------------------------- */
+.validation-hint {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.validation-hint--error {
+  color: var(--danger);
+}
+
+.validation-hint--success {
+  color: var(--success);
+}
+
+/* ----------------------------------------
+   Inline Error Icon
+   ---------------------------------------- */
+.input-wrapper--with-icon {
+  position: relative;
+}
+
+.input-wrapper--with-icon input,
+.input-wrapper--with-icon select,
+.input-wrapper--with-icon textarea {
+  padding-right: var(--space-10);
+}
+
+[dir="rtl"] .input-wrapper--with-icon input,
+[dir="rtl"] .input-wrapper--with-icon select,
+[dir="rtl"] .input-wrapper--with-icon textarea {
+  padding-right: var(--input-padding-x);
+  padding-left: var(--space-10);
+}
+
+.input-wrapper__icon {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+[dir="rtl"] .input-wrapper__icon {
+  right: auto;
+  left: var(--space-3);
+}
+
+.input-wrapper__icon--error {
+  color: var(--danger);
+}
+
+.input-wrapper__icon--success {
+  color: var(--success);
+}
+
+/* ----------------------------------------
+   Accessibility: Screen Reader Support
+   ---------------------------------------- */
+.field-validation-error[aria-live],
+.validation-message[aria-live] {
+  /* Ensure proper announcement timing */
+  contain: layout;
+}
+
+/* ----------------------------------------
+   Form Field Required Indicator
+   ---------------------------------------- */
+.form-field__label .required,
+.form-label .required,
+label .required {
+  color: var(--danger);
+  margin-inline-start: var(--space-1);
+}
+
+/* ----------------------------------------
+   Animated Error Highlight
+   ---------------------------------------- */
+@keyframes error-highlight {
+  0%, 100% {
+    background-color: color-mix(in srgb, var(--danger) 5%, var(--surface));
+  }
+  50% {
+    background-color: color-mix(in srgb, var(--danger) 15%, var(--surface));
+  }
+}
+
+.input--error-highlight {
+  animation: error-highlight 0.5s ease-in-out 2;
+}
+
+/* ----------------------------------------
+   Touch Device Adjustments
+   ---------------------------------------- */
+@media (hover: none) {
+  /* Slightly larger touch targets for error messages */
+  .field-validation-error,
+  .validation-message {
+    padding: var(--space-1) 0;
+    min-height: 32px;
+  }
+}
+
+/* ----------------------------------------
+   High Contrast Mode Support
+   ---------------------------------------- */
+@media (forced-colors: active) {
+  .input--error,
+  input.input-validation-error,
+  select.input-validation-error,
+  textarea.input-validation-error {
+    border-width: 2px;
+    border-style: solid;
+  }
+
+  .field-validation-error,
+  .validation-message,
+  .validation-summary-errors {
+    forced-color-adjust: none;
   }
 }

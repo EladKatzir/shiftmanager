@@ -4767,6 +4767,15 @@
   <data name="DateTime_Remaining" xml:space="preserve">
     <value>נותרו</value>
   </data>
+  <data name="DateTime_WeeksAgo" xml:space="preserve">
+    <value>לפני {0} שבועות</value>
+  </data>
+  <data name="DateTime_Today" xml:space="preserve">
+    <value>היום</value>
+  </data>
+  <data name="DateTime_Tomorrow" xml:space="preserve">
+    <value>מחר</value>
+  </data>
 
   <!-- UI Overhaul v3.0 - Modals -->
   <data name="Modal_Close" xml:space="preserve">
@@ -5169,5 +5178,69 @@
   </data>
   <data name="Error_BackOnline_Title" xml:space="preserve">
     <value>מחובר שוב</value>
+  </data>
+
+  <!-- Form Validation Messages (B-008) -->
+  <data name="Validation_Required" xml:space="preserve">
+    <value>שדה חובה</value>
+  </data>
+  <data name="Validation_Email" xml:space="preserve">
+    <value>נא להזין כתובת דוא"ל תקינה</value>
+  </data>
+  <data name="Validation_MinLength" xml:space="preserve">
+    <value>חייב להכיל לפחות {0} תווים</value>
+  </data>
+  <data name="Validation_MaxLength" xml:space="preserve">
+    <value>חייב להכיל לכל היותר {0} תווים</value>
+  </data>
+  <data name="Validation_Range" xml:space="preserve">
+    <value>חייב להיות בין {0} ל-{1}</value>
+  </data>
+  <data name="Validation_Date" xml:space="preserve">
+    <value>נא להזין תאריך תקין</value>
+  </data>
+  <data name="Validation_Phone" xml:space="preserve">
+    <value>נא להזין מספר טלפון תקין</value>
+  </data>
+  <data name="Validation_Mismatch" xml:space="preserve">
+    <value>הערכים אינם תואמים</value>
+  </data>
+  <data name="Validation_Number" xml:space="preserve">
+    <value>נא להזין מספר תקין</value>
+  </data>
+  <data name="Validation_PasswordStrength" xml:space="preserve">
+    <value>הסיסמה חייבת להכיל לפחות אות גדולה אחת, אות קטנה אחת ומספר אחד</value>
+  </data>
+
+  <!-- Pagination (B-009) -->
+  <data name="Pagination_Label" xml:space="preserve">
+    <value>עימוד</value>
+  </data>
+  <data name="Pagination_Showing" xml:space="preserve">
+    <value>מציג {0}-{1} מתוך {2}</value>
+  </data>
+  <data name="Pagination_NoItems" xml:space="preserve">
+    <value>אין פריטים להצגה</value>
+  </data>
+  <data name="Pagination_Previous" xml:space="preserve">
+    <value>הקודם</value>
+  </data>
+  <data name="Pagination_Next" xml:space="preserve">
+    <value>הבא</value>
+  </data>
+  <data name="Pagination_PerPage" xml:space="preserve">
+    <value>לעמוד</value>
+  </data>
+  <data name="Pagination_GoToPage" xml:space="preserve">
+    <value>עבור לעמוד {0}</value>
+  </data>
+  <data name="Pagination_ItemsPerPage" xml:space="preserve">
+    <value>פריטים לעמוד</value>
+  </data>
+
+  <!-- B-011: Mobile Navigation -->
+  <data name="Navigation_Toggle" xml:space="preserve">
+    <value>פתח/סגור תפריט</value>
+    <comment>B-011 - Mobile hamburger menu toggle button aria-label</comment>
   </data>
 </root>
