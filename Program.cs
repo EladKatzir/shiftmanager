@@ -12,10 +12,23 @@ using ShiftManager.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Logging
+// B-022: Structured JSON Logging Configuration
+// - JSON structured format for production observability
+// - Log levels configured per environment (Debug in dev, Info in prod)
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+
+// Add JSON console logging for structured output (useful for log aggregation systems)
+builder.Logging.AddJsonConsole(options =>
+{
+    options.JsonWriterOptions = new System.Text.Json.JsonWriterOptions
+    {
+        Indented = false // Compact JSON for log aggregation
+    };
+    options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ"; // ISO 8601 format
+    options.UseUtcTimestamp = true;
+});
 
 
 
@@ -662,6 +675,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // API Middleware (only for /api routes)
+app.UseMiddleware<ShiftManager.Middleware.ApiExceptionMiddleware>(); // B-028: Standardized error responses
 app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>();

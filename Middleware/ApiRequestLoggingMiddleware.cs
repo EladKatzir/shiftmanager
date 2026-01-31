@@ -36,15 +36,20 @@ public class ApiRequestLoggingMiddleware
         }
 
         var stopwatch = Stopwatch.StartNew();
-        var correlationId = context.Items["CorrelationId"]?.ToString() ?? Guid.NewGuid().ToString();
 
-        // Store correlation ID for later use
-        context.Items["CorrelationId"] = correlationId;
+        // B-022: Use RequestId from upstream RequestLoggingMiddleware (supports X-Request-ID header propagation)
+        var requestId = context.Items["RequestId"]?.ToString()
+            ?? context.Items["CorrelationId"]?.ToString()
+            ?? Guid.NewGuid().ToString("N")[..12];
 
-        // Add correlation ID to response headers
+        // Store for consistency
+        context.Items["RequestId"] = requestId;
+        context.Items["CorrelationId"] = requestId; // Backward compatibility
+
+        // Add correlation ID to response headers (X-Request-ID is already set by RequestLoggingMiddleware)
         context.Response.OnStarting(() =>
         {
-            context.Response.Headers["X-Correlation-ID"] = correlationId;
+            context.Response.Headers["X-Correlation-ID"] = requestId;
             return Task.CompletedTask;
         });
 
@@ -79,7 +84,7 @@ public class ApiRequestLoggingMiddleware
                 try
                 {
                     await LogRequestAsync(scopeFactory, apiKey, method, path, queryString,
-                        statusCode, stopwatch.ElapsedMilliseconds, correlationId, ipAddress,
+                        statusCode, stopwatch.ElapsedMilliseconds, requestId, ipAddress,
                         userAgent, caughtException);
                 }
                 catch (Exception ex)
@@ -98,7 +103,7 @@ public class ApiRequestLoggingMiddleware
         string? queryString,
         int statusCode,
         long durationMs,
-        string correlationId,
+        string requestId,
         string ipAddress,
         string userAgent,
         Exception? exception)
@@ -117,7 +122,7 @@ public class ApiRequestLoggingMiddleware
             DurationMs = (int)durationMs,
             IpAddress = ipAddress,
             UserAgent = userAgent,
-            CorrelationId = correlationId,
+            CorrelationId = requestId, // Store as CorrelationId in DB for backward compatibility
             ErrorMessage = exception?.Message,
             Timestamp = DateTime.UtcNow
         };
@@ -125,18 +130,18 @@ public class ApiRequestLoggingMiddleware
         dbContext.ApiRequestLogs.Add(log);
         await dbContext.SaveChangesAsync();
 
-        // Log to structured logger as well
+        // B-022: Log to structured logger with consistent field names
         if (exception != null)
         {
             _logger.LogError(exception,
-                "API request failed: {Method} {Path} - Status: {StatusCode}, Duration: {Duration}ms, CorrelationId: {CorrelationId}",
-                log.Method, log.Path, log.StatusCode, log.DurationMs, correlationId);
+                "API {Method} {Path} failed with {StatusCode} in {DurationMs}ms | RequestId={RequestId} ApiKeyId={ApiKeyId} IP={IpAddress} UserAgent={UserAgent} Error={ErrorType}",
+                method, path, statusCode, durationMs, requestId, apiKey?.Id, ipAddress, userAgent, exception.GetType().Name);
         }
         else
         {
             _logger.LogInformation(
-                "API request: {Method} {Path} - Status: {StatusCode}, Duration: {Duration}ms, CorrelationId: {CorrelationId}",
-                log.Method, log.Path, log.StatusCode, log.DurationMs, correlationId);
+                "API {Method} {Path} completed with {StatusCode} in {DurationMs}ms | RequestId={RequestId} ApiKeyId={ApiKeyId} IP={IpAddress} UserAgent={UserAgent}",
+                method, path, statusCode, durationMs, requestId, apiKey?.Id, ipAddress, userAgent);
         }
     }
 
