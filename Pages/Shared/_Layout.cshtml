@@ -52,6 +52,40 @@
     @* Lucide Icons - MIT licensed SVG icon library (local copy for air-gapped environments) *@
     <script src="~/lib/lucide/lucide.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Styles", required: false)
+    @* B-034: Anti-forgery token for AJAX requests - must load before other scripts *@
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        @Html.AntiForgeryToken()
+        <script>
+        // Anti-forgery token for AJAX (B-034)
+        (function() {
+            'use strict';
+            document.addEventListener('DOMContentLoaded', function() {
+                var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                var token = tokenInput ? tokenInput.value : null;
+                if (token) {
+                    // Store token globally for explicit use
+                    window.__RequestVerificationToken = token;
+
+                    // Intercept all fetch requests to add token
+                    var originalFetch = window.fetch;
+                    window.fetch = function(url, options) {
+                        options = options || {};
+                        if (options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(options.method.toUpperCase()) !== -1) {
+                            options.headers = options.headers || {};
+                            // Only add if not already present
+                            if (!options.headers['RequestVerificationToken'] && !options.headers['X-XSRF-TOKEN']) {
+                                options.headers['RequestVerificationToken'] = token;
+                            }
+                        }
+                        return originalFetch.call(this, url, options);
+                    };
+                    console.log('[CSRF] Anti-forgery token interceptor initialized');
+                }
+            });
+        })();
+        </script>
+    }
     @await Html.PartialAsync("_LocalizationScript")
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
