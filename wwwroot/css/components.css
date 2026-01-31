@@ -1992,3 +1992,263 @@ select.form-field__input {
   color: var(--primary-contrast, #fff);
   text-decoration: none;
 }
+
+/* ========================================
+   25. UI STATES - Disabled, Hover, Active (B-047, B-048, B-049)
+   ========================================
+
+   Consistent interactive state styling across all UI elements.
+   Works in both light and dark modes using design tokens.
+   ======================================== */
+
+/* ----------------------------------------
+   B-047: Disabled State Styling
+   ----------------------------------------
+   - 50% opacity for disabled buttons
+   - Grayed background for disabled inputs
+   - No hover effects for disabled links
+   - cursor: not-allowed visual feedback
+   ---------------------------------------- */
+
+/* Button disabled state - extends existing .btn:disabled */
+.btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Generic form element disabled states */
+input:disabled,
+select:disabled,
+textarea:disabled,
+.input--disabled {
+  background-color: var(--surface-soft);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  border-color: var(--border);
+  opacity: 0.7;
+}
+
+/* Disabled placeholder text */
+input:disabled::placeholder,
+textarea:disabled::placeholder {
+  color: var(--text-subtle);
+}
+
+/* Disabled links */
+a[aria-disabled="true"],
+.link--disabled {
+  color: var(--text-muted);
+  cursor: default;
+  pointer-events: none;
+  text-decoration: none;
+  opacity: 0.6;
+}
+
+a[aria-disabled="true"]:hover,
+.link--disabled:hover {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+/* Disabled checkbox and radio */
+.form-check__input:disabled,
+.form-check__input:disabled + .form-check__label {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------
+   B-048: Hover State Consistency
+   ----------------------------------------
+   - All interactive elements have hover states
+   - Transitions use design token duration (200ms)
+   - Works in both light and dark mode
+   ---------------------------------------- */
+
+/* Anchor/Link hover states */
+a:not(.btn):not(.card):not([aria-disabled="true"]):not(.link--disabled) {
+  transition: color var(--transition-normal);
+}
+
+a:not(.btn):not(.card):not([aria-disabled="true"]):not(.link--disabled):hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Button outline hover enhancement */
+.btn--outline:hover:not(:disabled) {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* Button danger outline variant hover */
+.btn--outline.btn--danger:hover:not(:disabled) {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* Clickable card (alias for interactive) */
+.card--clickable {
+  cursor: pointer;
+  transition: box-shadow var(--transition-normal),
+              border-color var(--transition-normal),
+              transform var(--transition-normal);
+}
+
+.card--clickable:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* Generic clickable element hover */
+[role="button"]:not(.btn):hover,
+[tabindex="0"]:not(.btn):not(input):not(select):not(textarea):hover {
+  cursor: pointer;
+}
+
+/* Dropdown item hover consistency */
+.dropdown__item:hover:not(:disabled) {
+  background-color: var(--surface-soft);
+  transition: background-color var(--transition-normal);
+}
+
+/* Tab hover consistency */
+.tabs__item:hover:not(.is-active):not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface-soft);
+  transition: color var(--transition-normal), background-color var(--transition-normal);
+}
+
+/* ----------------------------------------
+   B-049: Active/Pressed State
+   ----------------------------------------
+   - Distinct from hover state (darker/scaled)
+   - Visible during click/tap interaction
+   - Touch devices: active triggers on touch start
+   ---------------------------------------- */
+
+/* Button active states - enhanced with scale */
+.btn:active:not(:disabled):not(.is-loading) {
+  transform: scale(0.98);
+  transition: transform 0.05s ease;
+}
+
+.btn--primary:active:not(:disabled):not(.is-loading) {
+  background-color: color-mix(in srgb, var(--primary) 85%, black);
+  transform: scale(0.98);
+}
+
+.btn--secondary:active:not(:disabled):not(.is-loading) {
+  background-color: var(--surface-soft);
+  border-color: var(--border-strong);
+  transform: scale(0.98);
+}
+
+.btn--outline:active:not(:disabled):not(.is-loading) {
+  background-color: var(--primary-soft);
+  transform: scale(0.98);
+}
+
+.btn--ghost:active:not(:disabled):not(.is-loading) {
+  background-color: var(--surface-soft);
+  transform: scale(0.98);
+}
+
+.btn--danger:active:not(:disabled):not(.is-loading) {
+  background-color: color-mix(in srgb, var(--danger) 85%, black);
+  transform: scale(0.98);
+}
+
+.btn--success:active:not(:disabled):not(.is-loading) {
+  background-color: color-mix(in srgb, var(--success) 85%, black);
+  transform: scale(0.98);
+}
+
+/* Anchor active state */
+a:not(.btn):not(.card):not([aria-disabled="true"]):active {
+  color: color-mix(in srgb, var(--primary) 80%, black);
+}
+
+/* Clickable card active state */
+.card--clickable:active,
+.card--interactive:active {
+  transform: scale(0.99);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+
+/* Dropdown item active state */
+.dropdown__item:active:not(:disabled) {
+  background-color: var(--primary-soft);
+}
+
+/* Tab active/pressed state (not to be confused with .is-active selected state) */
+.tabs__item:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Pagination button active state */
+.pagination__btn:active:not(:disabled) {
+  transform: scale(0.95);
+  background-color: var(--surface-soft);
+}
+
+/* ----------------------------------------
+   Touch Device Support
+   ----------------------------------------
+   For devices without hover capability,
+   active states trigger immediately on touch.
+   ---------------------------------------- */
+
+@media (hover: none) {
+  /* Faster active state transitions for touch */
+  .btn:active:not(:disabled),
+  .card--clickable:active,
+  .card--interactive:active,
+  .dropdown__item:active,
+  .tabs__item:active,
+  .pagination__btn:active {
+    transition: transform 0.1s ease, background-color 0.1s ease;
+  }
+
+  /* Remove hover-dependent styles on touch devices */
+  .card--clickable:hover,
+  .card--interactive:hover {
+    transform: none;
+    box-shadow: var(--card-shadow);
+  }
+
+  /* Ensure active states are prominent on touch */
+  .btn:active:not(:disabled) {
+    opacity: 0.9;
+  }
+}
+
+/* ----------------------------------------
+   High Contrast Mode Support
+   ----------------------------------------
+   Ensures states are visible in forced colors mode.
+   ---------------------------------------- */
+
+@media (forced-colors: active) {
+  .btn:disabled,
+  .btn--disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  a[aria-disabled="true"],
+  .link--disabled {
+    opacity: 1;
+    border-style: dashed;
+  }
+
+  .btn:hover:not(:disabled),
+  .btn:active:not(:disabled),
+  a:hover,
+  a:active {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
