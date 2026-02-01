@@ -365,7 +365,7 @@ public class DayModel : PageModel
         PendingItemsCount = Items
             .Where(i => i.Type == CalendarItemType.Shift && !string.IsNullOrEmpty(i.StaffingInfo))
             .Count(i => {
-                var parts = i.StaffingInfo.Split('/');
+                var parts = i.StaffingInfo!.Split('/');
                 return parts.Length == 2 &&
                        int.TryParse(parts[0], out var filled) &&
                        int.TryParse(parts[1], out var total) &&
@@ -384,7 +384,7 @@ public class DayModel : PageModel
                 int totalSlots = 0, filledSlots = 0;
                 foreach (var shift in shiftsWithStaffing)
                 {
-                    var parts = shift.StaffingInfo.Split('/');
+                    var parts = shift.StaffingInfo!.Split('/');
                     if (parts.Length == 2 &&
                         int.TryParse(parts[0], out var filled) &&
                         int.TryParse(parts[1], out var total))

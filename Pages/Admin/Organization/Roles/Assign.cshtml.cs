@@ -180,22 +180,22 @@ public class AssignModel : LocalizedPageModel
         return scopeLevel switch
         {
             RoleScopeLevel.Company when !ScopeCompanyId.HasValue =>
-                _localizer["Error_CompanyScopeRequired"],
+                _localizer["Error_CompanyScopeRequired"].Value,
 
             RoleScopeLevel.CompanyJobType when !ScopeCompanyId.HasValue || !ScopeJobTypeId.HasValue =>
-                _localizer["Error_CompanyAndJobTypeScopeRequired"],
+                _localizer["Error_CompanyAndJobTypeScopeRequired"].Value,
 
             RoleScopeLevel.Department when !ScopeDepartmentId.HasValue =>
-                _localizer["Error_DepartmentScopeRequired"],
+                _localizer["Error_DepartmentScopeRequired"].Value,
 
             RoleScopeLevel.Molecule when !ScopeMoleculeId.HasValue =>
-                _localizer["Error_MoleculeScopeRequired"],
+                _localizer["Error_MoleculeScopeRequired"].Value,
 
             RoleScopeLevel.MoleculeJobType when !ScopeMoleculeId.HasValue || !ScopeJobTypeId.HasValue =>
-                _localizer["Error_MoleculeAndJobTypeScopeRequired"],
+                _localizer["Error_MoleculeAndJobTypeScopeRequired"].Value,
 
             RoleScopeLevel.Area when !ScopeAreaId.HasValue =>
-                _localizer["Error_AreaScopeRequired"],
+                _localizer["Error_AreaScopeRequired"].Value,
 
             _ => null
         };

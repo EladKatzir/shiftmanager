@@ -38,7 +38,7 @@ public interface ICompanyLocalizationService
     Task UpsertOverrideAsync(int companyId, string culture, string resourceKey, string overrideValue, int userId);
 
     /// <summary>
-    /// Bulk upsert overrides (used for "Save & Exit" in edit mode).
+    /// Bulk upsert overrides (used for "Save and Exit" in edit mode).
     /// Validates all overrides before committing.
     /// </summary>
     Task UpsertOverridesBulkAsync(int companyId, string culture, Dictionary<string, string> overrides, int userId);

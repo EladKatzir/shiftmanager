@@ -443,7 +443,7 @@ public class ImportService : IImportService
                 CompanyId = companyId,
                 ShiftTypeId = shiftType.Id,
                 WorkDate = workDate,
-                Name = dataElement.GetProperty("name").GetString(),
+                Name = dataElement.GetProperty("name").GetString() ?? string.Empty,
                 StaffingRequired = dataElement.GetProperty("staffingRequired").GetInt32(),
                 UpdatedAt = DateTime.UtcNow
             };

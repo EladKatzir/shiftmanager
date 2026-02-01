@@ -69,10 +69,10 @@ public class EmailConfigModel : LocalizedPageModel
         {
             var emailConfig = await _emailConfigService.GetEmailConfigAsync();
 
-            EmailEnabled = emailConfig.Enabled;
-            EmailApiUrl = emailConfig.ApiUrl ?? string.Empty;
-            EmailFromAddress = emailConfig.FromAddress ?? string.Empty;
-            HasExistingKey = !string.IsNullOrWhiteSpace(emailConfig.EncryptedApiKey);
+            EmailEnabled = emailConfig?.Enabled ?? false;
+            EmailApiUrl = emailConfig?.ApiUrl ?? string.Empty;
+            EmailFromAddress = emailConfig?.FromAddress ?? string.Empty;
+            HasExistingKey = !string.IsNullOrWhiteSpace(emailConfig?.EncryptedApiKey);
 
             // Load recent logs and failures for diagnostics
             RecentLogs = await _emailApiLogService.GetRecentLogsAsync(10);

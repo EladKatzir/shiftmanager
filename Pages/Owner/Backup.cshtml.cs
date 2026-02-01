@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace ShiftManager.Pages.Owner;
 
 /// <summary>
-/// Backup & Restore - Manage database backups
+/// Backup and Restore - Manage database backups.
 /// </summary>
 [Authorize(Policy = "Grant:AdminAccess")]
 public class BackupModel : PageModel

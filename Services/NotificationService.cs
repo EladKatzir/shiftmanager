@@ -604,8 +604,8 @@ public class NotificationService : INotificationService
 
                 pendingSwapsTask = _db.SwapRequests
                     .Include(sr => sr.FromAssignment)
-                    .ThenInclude(sa => sa.ShiftInstance)
-                    .ThenInclude(si => si.ShiftType)
+                    .ThenInclude(sa => sa!.ShiftInstance)
+                    .ThenInclude(si => si!.ShiftType)
                     .Where(sr => (sr.FromUserId == userId || sr.ToUserId == userId)
                               && sr.CompanyId == companyId
                               && sr.Status == RequestStatus.Pending)
@@ -699,8 +699,10 @@ public class NotificationService : INotificationService
                         requestsHtml += $"<h4>{_localizer["Email_SwapRequests"]}</h4><ul>";
                         foreach (var swap in pendingSwaps)
                         {
-                            var shiftInfo = $"{swap.FromAssignment.ShiftInstance.WorkDate:MMM dd, yyyy} - " +
-                                          $"{swap.FromAssignment.ShiftInstance.ShiftType.Name}";
+                            var shiftInstance = swap.FromAssignment?.ShiftInstance;
+                            var shiftInfo = shiftInstance != null
+                                ? $"{shiftInstance.WorkDate:MMM dd, yyyy} - {shiftInstance.ShiftType?.Name ?? "Unknown"}"
+                                : "Unknown shift";
                             requestsHtml += $"<li>{shiftInfo} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
                         requestsHtml += "</ul>";
@@ -897,9 +899,11 @@ public class NotificationService : INotificationService
                     var shiftsHtml = $"<h3 style='color: #6366f1;'>{_localizer["Email_UpcomingShiftsTomorrow"]}</h3><ul>";
                     foreach (var sa in tomorrowShifts)
                     {
-                        var shiftTypeName = sa.ShiftInstance.ShiftType?.Name ?? _localizer["Email_Shift"];
-                        shiftsHtml += $"<li><strong>{shiftTypeName}</strong> - " +
-                                     $"{sa.ShiftInstance.ShiftType.Start:HH:mm} to {sa.ShiftInstance.ShiftType.End:HH:mm}</li>";
+                        var shiftType = sa.ShiftInstance?.ShiftType;
+                        var shiftTypeName = shiftType?.Name ?? _localizer["Email_Shift"];
+                        var startTime = shiftType?.Start.ToString("HH:mm") ?? "--:--";
+                        var endTime = shiftType?.End.ToString("HH:mm") ?? "--:--";
+                        shiftsHtml += $"<li><strong>{shiftTypeName}</strong> - {startTime} to {endTime}</li>";
                     }
                     shiftsHtml += "</ul>";
                     reminderParts.Add(shiftsHtml);

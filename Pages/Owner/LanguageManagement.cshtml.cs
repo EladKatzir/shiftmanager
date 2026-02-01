@@ -217,8 +217,8 @@ public class LanguageManagementModel : PageModel
     }
 
     /// <summary>
-    /// API handler for saving draft translations from edit mode
-    /// Called by language-edit-mode.js when user clicks "Save & Exit"
+    /// API handler for saving draft translations from edit mode.
+    /// Called by language-edit-mode.js when user clicks "Save and Exit".
     /// </summary>
     public async Task<IActionResult> OnPostApiSaveDraftsAsync([FromBody] SaveDraftsRequest request)
     {

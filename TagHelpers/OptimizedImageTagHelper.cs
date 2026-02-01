@@ -5,11 +5,14 @@ namespace ShiftManager.TagHelpers;
 /// <summary>
 /// Tag helper for optimizing image loading and preventing CLS (Cumulative Layout Shift).
 /// B-031: Image Optimization Audit
-///
-/// Usage:
-///   Basic: <img optimize src="~/images/photo.jpg" alt="Description" width="300" height="200" />
-///   No lazy load: <img optimize lazy="false" src="~/images/hero.jpg" alt="Hero" width="1200" height="600" />
 /// </summary>
+/// <remarks>
+/// Usage:
+/// <code>
+/// Basic: &lt;img optimize src="~/images/photo.jpg" alt="Description" width="300" height="200" /&gt;
+/// No lazy load: &lt;img optimize lazy="false" src="~/images/hero.jpg" alt="Hero" width="1200" height="600" /&gt;
+/// </code>
+/// </remarks>
 [HtmlTargetElement("img", Attributes = "optimize")]
 public class OptimizedImageTagHelper : TagHelper
 {
@@ -82,16 +85,20 @@ public class OptimizedImageTagHelper : TagHelper
 /// <summary>
 /// Tag helper for generating responsive picture elements with WebP fallback.
 /// B-031: Image Optimization Audit
-///
-/// Usage:
-///   <picture-responsive src="~/images/photo.jpg" alt="Description" width="800" height="600" />
-///
-/// Generates:
-///   <picture>
-///     <source srcset="~/images/photo.webp" type="image/webp">
-///     <img src="~/images/photo.jpg" alt="Description" width="800" height="600" loading="lazy" decoding="async">
-///   </picture>
 /// </summary>
+/// <remarks>
+/// Usage:
+/// <code>
+/// &lt;picture-responsive src="~/images/photo.jpg" alt="Description" width="800" height="600" /&gt;
+/// </code>
+/// Generates:
+/// <code>
+/// &lt;picture&gt;
+///   &lt;source srcset="~/images/photo.webp" type="image/webp"&gt;
+///   &lt;img src="~/images/photo.jpg" alt="Description" width="800" height="600" loading="lazy" decoding="async"&gt;
+/// &lt;/picture&gt;
+/// </code>
+/// </remarks>
 [HtmlTargetElement("picture-responsive", TagStructure = TagStructure.WithoutEndTag)]
 public class PictureResponsiveTagHelper : TagHelper
 {

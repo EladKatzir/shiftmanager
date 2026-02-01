@@ -234,8 +234,10 @@ public class PurgeService : IPurgeService
         // Filter by FromAssignment.ShiftInstance.WorkDate < cutoff
         var swapRequestIds = await _db.SwapRequests
             .Include(sr => sr.FromAssignment)
-            .ThenInclude(fa => fa.ShiftInstance)
-            .Where(sr => sr.FromAssignment.CompanyId == companyId &&
+            .ThenInclude(fa => fa!.ShiftInstance)
+            .Where(sr => sr.FromAssignment != null &&
+                         sr.FromAssignment.CompanyId == companyId &&
+                         sr.FromAssignment.ShiftInstance != null &&
                          sr.FromAssignment.ShiftInstance.WorkDate < cutoffDate)
             .Select(sr => sr.Id)
             .ToListAsync();

@@ -74,8 +74,7 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, opt) =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("Default"))
        .EnableDetailedErrors()
        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-       .AddInterceptors(interceptor)
-       .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+       .AddInterceptors(interceptor);
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

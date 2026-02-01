@@ -41,7 +41,7 @@ public class BusyStatus
     }
 
     /// <summary>
-    /// User-friendly display text like "Busy: vacation" or "Busy: shift & chore".
+    /// User-friendly display text like "Busy: vacation" or "Busy: shift and chore".
     /// </summary>
     public string DisplayText => string.Join(" & ", Reasons);
 

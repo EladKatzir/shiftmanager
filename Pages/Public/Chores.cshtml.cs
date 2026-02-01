@@ -108,7 +108,7 @@ public class ChoresModel : PageModel
 
         // ✅ PHASE 7: Calculate header metrics
         TotalChoresCount = Chores.Count;
-        UnassignedChoresCount = Chores.Count(c => c.UserId == null);
+        UnassignedChoresCount = Chores.Count(c => c.UserId == 0); // UserId is required int, 0 means unset
 
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (int.TryParse(userIdClaim, out var currentUserId))

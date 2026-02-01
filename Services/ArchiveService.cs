@@ -75,8 +75,10 @@ public class ArchiveService : IArchiveService
                 // Count by related shift WorkDate
                 var swapIds = await _db.SwapRequests
                     .Include(sr => sr.FromAssignment)
-                    .ThenInclude(fa => fa.ShiftInstance)
-                    .Where(sr => sr.FromAssignment.ShiftInstance.WorkDate < cutoffDate)
+                    .ThenInclude(fa => fa!.ShiftInstance)
+                    .Where(sr => sr.FromAssignment != null &&
+                                 sr.FromAssignment.ShiftInstance != null &&
+                                 sr.FromAssignment.ShiftInstance.WorkDate < cutoffDate)
                     .Select(sr => sr.Id)
                     .ToListAsync();
 
@@ -292,8 +294,10 @@ public class ArchiveService : IArchiveService
         {
             var swapIds = await _db.SwapRequests
                 .Include(sr => sr.FromAssignment)
-                .ThenInclude(fa => fa.ShiftInstance)
-                .Where(sr => sr.FromAssignment.ShiftInstance.WorkDate < cutoffDate)
+                .ThenInclude(fa => fa!.ShiftInstance)
+                .Where(sr => sr.FromAssignment != null &&
+                             sr.FromAssignment.ShiftInstance != null &&
+                             sr.FromAssignment.ShiftInstance.WorkDate < cutoffDate)
                 .Select(sr => sr.Id)
                 .ToListAsync();
 
