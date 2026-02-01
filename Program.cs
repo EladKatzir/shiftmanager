@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.OpenApi.Models;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -74,7 +75,8 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, opt) =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("Default"))
        .EnableDetailedErrors()
        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-       .AddInterceptors(interceptor);
+       .AddInterceptors(interceptor)
+       .ConfigureWarnings(w => w.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
