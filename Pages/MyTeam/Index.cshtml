@@ -97,7 +97,7 @@
 
         .btn-primary {
             background: var(--primary);
-            color: white;
+            color: var(--primary-contrast);
             border-color: var(--primary);
         }
 
@@ -193,7 +193,7 @@
             height: 42px;
             border-radius: 50%;
             background: var(--primary);
-            color: white;
+            color: var(--primary-contrast);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -956,7 +956,7 @@
         </div>
         <div class="modal-footer">
             <button class="btn" onclick="closeModal('modalDeleteConfirm')">@Localizer["Cancel"]</button>
-            <button class="btn" style="background: var(--danger); color: white; border-color: var(--danger);"
+            <button class="btn" style="background: var(--danger); color: var(--danger-text); border-color: var(--danger);"
                     id="btnConfirmDelete"><loc key="Delete" /></button>
         </div>
     </div>

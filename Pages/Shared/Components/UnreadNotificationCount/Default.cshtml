@@ -2,7 +2,7 @@
 
 @if (Model > 0)
 {
-    <span class="notification-badge" style="position: absolute; top: 5px; right: 5px; background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: 600; min-width: 18px; text-align: center; line-height: 1;">
+    <span class="notification-badge" style="position: absolute; top: 5px; right: 5px; background: var(--danger); color: var(--danger-text); border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: 600; min-width: 18px; text-align: center; line-height: 1;">
         @(Model > 99 ? "99+" : Model.ToString())
     </span>
 }

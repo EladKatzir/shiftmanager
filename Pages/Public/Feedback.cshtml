@@ -246,7 +246,7 @@
                 @Html.AntiForgeryToken()
 
                 <div class="form-group">
-                    <label class="form-label"><loc key="FeedbackType" /><span style="color: red;">*</span></label>
+                    <label class="form-label"><loc key="FeedbackType" /><span style="color: var(--danger);">*</span></label>
                     <select asp-for="SelectedType" class="input" required>
                         <option value="">-- @Localizer["Select"] --</option>
                         <option value="@((int)FeedbackType.Error)"><loc key="FeedbackTypeError" /></option>
@@ -255,7 +255,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label"><loc key="FeedbackContent" /><span style="color: red;">*</span></label>
+                    <label class="form-label"><loc key="FeedbackContent" /><span style="color: var(--danger);">*</span></label>
                     <textarea asp-for="FeedbackContent"
                               class="input"
                               rows="6"

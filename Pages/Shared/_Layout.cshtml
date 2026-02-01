@@ -123,6 +123,8 @@
     <script defer src="~/js/modal-focus.js" asp-append-version="true"></script>
     @* Keyboard Navigation (B-037) - Comprehensive keyboard accessibility *@
     <script defer src="~/js/keyboard-nav.js" asp-append-version="true"></script>
+    @* Accessibility Enhancements (Task 17) - aria-describedby, landmarks, aria-busy utilities *@
+    <script defer src="~/js/a11y-enhancements.js" asp-append-version="true"></script>
     @* Mobile Navigation (B-011) - Hamburger menu with focus trap *@
     <script defer src="~/js/mobile-nav.js" asp-append-version="true"></script>
     @* Form Validation Enhancement (B-008) - Accessible error states and field highlighting *@
@@ -254,7 +256,7 @@
         <div class="page-loader__brand">
             <div class="page-loader__logo">
                 <img src="~/images/shifty-logo.svg" alt="" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                <span class="page-loader__logo-fallback" style="display:none; color:white;">S</span>
+                <span class="page-loader__logo-fallback" style="display:none; color: var(--primary-contrast);">S</span>
             </div>
             <span class="page-loader__name">SHIFTY</span>
         </div>
@@ -574,7 +576,7 @@
                         {
                             <form method="post" asp-page="/Auth/Logout" style="display:inline; margin: 0;">
                                 @Html.AntiForgeryToken()
-                                <button class="action-btn" type="submit" style="background: var(--danger); color: white;">
+                                <button class="action-btn" type="submit" style="background: var(--danger); color: var(--danger-text);">
                                     <span>🚪</span>
                                     <span><loc key="Logout" /></span>
                                 </button>

@@ -183,7 +183,7 @@
 
         .btn-primary {
             background: var(--primary);
-            color: white;
+            color: var(--primary-contrast);
             border-color: var(--primary);
         }
 
@@ -196,7 +196,7 @@
 
         .btn-success {
             background: var(--success);
-            color: white;
+            color: var(--success-text);
             border-color: var(--success);
         }
 
@@ -209,7 +209,7 @@
 
         .btn-danger {
             background: var(--danger);
-            color: white;
+            color: var(--danger-text);
             border-color: var(--danger);
         }
 
@@ -566,7 +566,7 @@
                             </div>
                         </div>
                         <div class="type-actions">
-                            <span class="type-badge type-badge-custom" style="background: @type.Color; color: white;">
+                            <span class="type-badge type-badge-custom" style="background: @type.Color; color: var(--primary-contrast);">
                                 @Localizer["Custom"]
                             </span>
                             <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;"

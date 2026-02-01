@@ -35,6 +35,11 @@
         var focusedIndex = -1;
         var options = [];
 
+        // TypeAhead support
+        var typeAheadBuffer = '';
+        var typeAheadTimeout = null;
+        var TYPE_AHEAD_DELAY = 500; // ms before buffer clears
+
         function getVisibleOptions() {
             return Array.from(dropdown.querySelectorAll(optionSelector)).filter(function(opt) {
                 return opt.offsetParent !== null && 
@@ -88,6 +93,48 @@
             trigger.setAttribute('aria-expanded', 'true');
             options = getVisibleOptions();
             focusedIndex = -1;
+        }
+
+        /**
+         * TypeAhead: Jump to option starting with typed characters
+         */
+        function handleTypeAhead(char) {
+            if (!isOpen()) return false;
+
+            // Clear timeout and add to buffer
+            if (typeAheadTimeout) {
+                clearTimeout(typeAheadTimeout);
+            }
+            typeAheadBuffer += char.toLowerCase();
+
+            // Set timeout to clear buffer
+            typeAheadTimeout = setTimeout(function() {
+                typeAheadBuffer = '';
+            }, TYPE_AHEAD_DELAY);
+
+            // Find matching option
+            options = getVisibleOptions();
+            var startIdx = focusedIndex >= 0 ? focusedIndex + 1 : 0;
+
+            // Search from current position to end
+            for (var i = startIdx; i < options.length; i++) {
+                var text = (options[i].textContent || '').trim().toLowerCase();
+                if (text.startsWith(typeAheadBuffer)) {
+                    setFocusedOption(i);
+                    return true;
+                }
+            }
+
+            // Wrap around and search from beginning
+            for (var j = 0; j < startIdx; j++) {
+                var text2 = (options[j].textContent || '').trim().toLowerCase();
+                if (text2.startsWith(typeAheadBuffer)) {
+                    setFocusedOption(j);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         function selectCurrentOption() {
@@ -174,6 +221,15 @@
                         closeDropdown();
                     }
                     break;
+
+                default:
+                    // TypeAhead: handle printable characters
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        if (handleTypeAhead(e.key)) {
+                            e.preventDefault();
+                        }
+                    }
+                    break;
             }
         });
 
@@ -231,6 +287,11 @@
 
         var focusedIndex = -1;
 
+        // TypeAhead support
+        var typeAheadBuffer = '';
+        var typeAheadTimeout = null;
+        var TYPE_AHEAD_DELAY = 500;
+
         function getVisibleItems() {
             return Array.from(menu.querySelectorAll(itemSelector)).filter(function(item) {
                 return item.offsetParent !== null &&
@@ -276,6 +337,45 @@
             setTimeout(function() {
                 setFocusedItem(0);
             }, 50);
+        }
+
+        /**
+         * TypeAhead: Jump to menu item starting with typed characters
+         */
+        function handleTypeAhead(char) {
+            if (!isOpen()) return false;
+
+            if (typeAheadTimeout) {
+                clearTimeout(typeAheadTimeout);
+            }
+            typeAheadBuffer += char.toLowerCase();
+
+            typeAheadTimeout = setTimeout(function() {
+                typeAheadBuffer = '';
+            }, TYPE_AHEAD_DELAY);
+
+            var items = getVisibleItems();
+            var startIdx = focusedIndex >= 0 ? focusedIndex + 1 : 0;
+
+            // Search from current position
+            for (var i = startIdx; i < items.length; i++) {
+                var text = (items[i].textContent || '').trim().toLowerCase();
+                if (text.startsWith(typeAheadBuffer)) {
+                    setFocusedItem(i);
+                    return true;
+                }
+            }
+
+            // Wrap around
+            for (var j = 0; j < startIdx; j++) {
+                var text2 = (items[j].textContent || '').trim().toLowerCase();
+                if (text2.startsWith(typeAheadBuffer)) {
+                    setFocusedItem(j);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         menu.addEventListener('keydown', function(e) {
@@ -330,6 +430,15 @@
 
                 case 'Tab':
                     closeMenu();
+                    break;
+
+                default:
+                    // TypeAhead: handle printable characters
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        if (handleTypeAhead(e.key)) {
+                            e.preventDefault();
+                        }
+                    }
                     break;
             }
         });
@@ -754,6 +863,4 @@
         unregisterOverlay: unregisterOverlayEsc,
         autoInit: autoInitDropdowns
     };
-
-    console.log('[KeyboardNav] B-037 Keyboard Navigation initialized');
 })();

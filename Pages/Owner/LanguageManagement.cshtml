@@ -88,13 +88,13 @@
                 <h2>✏️ In-App Translation Editor</h2>
             </div>
             <div class="card-body">
-                <p style="color: white;">Edit translations directly by clicking on text throughout the application.</p>
-                <p style="color: rgba(255,255,255,0.9); font-size: 0.875rem;">Navigate anywhere in the app and click on any localized text to edit it. Changes are saved as drafts until you click "Save & Exit".</p>
+                <p style="color: var(--primary-contrast);">Edit translations directly by clicking on text throughout the application.</p>
+                <p style="color: var(--primary-contrast); opacity: 0.9; font-size: 0.875rem;">Navigate anywhere in the app and click on any localized text to edit it. Changes are saved as drafts until you click "Save & Exit".</p>
 
                 <form method="get" action="/Owner/LanguageEditMode">
                     <input type="hidden" name="companyId" value="@Model.SelectedCompanyId" />
                     <div class="form-group" style="margin-top: 1rem;">
-                        <label style="color: white;">Select Culture to Edit</label>
+                        <label style="color: var(--primary-contrast);">Select Culture to Edit</label>
                         <select name="culture" class="form-control">
                             @foreach (var culture in Model.SupportedCultures)
                             {
@@ -268,13 +268,13 @@
 
     .edit-mode-card {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-        color: white;
+        color: var(--primary-contrast);
         border: none;
     }
 
     .edit-mode-card label,
     .edit-mode-card .form-text {
-        color: white;
+        color: var(--primary-contrast);
     }
 
     .card-header {
@@ -296,7 +296,7 @@
     }
 
     .edit-mode-card .card-header h2 {
-        color: white;
+        color: var(--primary-contrast);
     }
 
     .card-body {
@@ -371,7 +371,7 @@
 
     .btn-primary {
         background: var(--primary);
-        color: white;
+        color: var(--primary-contrast);
     }
 
     .btn-primary:hover {
@@ -514,7 +514,7 @@
         display: inline-block;
         padding: 0.25rem 0.625rem;
         background: var(--primary);
-        color: white;
+        color: var(--primary-contrast);
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 600;

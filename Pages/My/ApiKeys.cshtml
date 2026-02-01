@@ -17,21 +17,21 @@
 <div style="max-width: 1200px; margin: 0 auto;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2 style="color: var(--text); margin: 0;">@Localizer["MyApiKeys"]</h2>
-        <button type="button" onclick="showRequestModal()" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+        <button type="button" onclick="showRequestModal()" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
             @Localizer["RequestNewApiKey"]
         </button>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
+        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: var(--success-text); border-radius: 0.5rem;">
             @Model.Message
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
-        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
+        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: var(--danger-text); border-radius: 0.5rem;">
             @Model.Error
         </div>
     }
@@ -44,7 +44,7 @@
             <div style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); font-family: monospace; word-break: break-all; margin-bottom: 1rem;">
                 @Model.GeneratedApiKey
             </div>
-            <button type="button" onclick="copyToClipboard('@Model.GeneratedApiKey')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
+            <button type="button" onclick="copyToClipboard('@Model.GeneratedApiKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
                 @Localizer["CopyToClipboard"]
             </button>
         </div>
@@ -81,7 +81,7 @@
                                     {
                                         <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
                                             <span style="user-select: all;">@key.PlainTextKey</span>
-                                            <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
+                                            <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
                                                 📋 Copy
                                             </button>
                                         </div>
@@ -108,14 +108,14 @@
                                         <form method="post" asp-page-handler="Refresh" style="display: inline;">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="keyId" value="@key.Id" />
-                                            <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                            <button type="submit" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
                                                 🔄 Refresh
                                             </button>
                                         </form>
                                         <form method="post" asp-page-handler="Revoke" style="display: inline;">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="keyId" value="@key.Id" />
-                                            <button type="submit" onclick="return confirm('@Localizer["ConfirmRevokeKey"]')" style="background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                            <button type="submit" onclick="return confirm('@Localizer["ConfirmRevokeKey"]')" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
                                                 @Localizer["Revoke"]
                                             </button>
                                         </form>
@@ -270,7 +270,7 @@
                                         @request.RequestedAt.ToString("MMM dd, yyyy HH:mm")
                                     </p>
                                 </div>
-                                <span style="background: var(--warning); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                                <span style="background: var(--warning); color: var(--warning-text); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                                     @Localizer["Pending"]
                                 </span>
                             </div>
@@ -293,10 +293,10 @@
                             </div>
 
                             <div style="display: flex; gap: 1rem;">
-                                <button type="button" onclick="showApproveModal(@request.Id, '@request.Name', '@request.RequestedScopes')" style="flex: 1; background: var(--success); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                                <button type="button" onclick="showApproveModal(@request.Id, '@request.Name', '@request.RequestedScopes')" style="flex: 1; background: var(--success); color: var(--success-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                                     ✓ @Localizer["Approve"]
                                 </button>
-                                <button type="button" onclick="showRejectModal(@request.Id, '@request.Name')" style="flex: 1; background: var(--danger); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                                <button type="button" onclick="showRejectModal(@request.Id, '@request.Name')" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                                     ✗ @Localizer["Reject"]
                                 </button>
                             </div>
@@ -341,7 +341,7 @@
                                             {
                                                 <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
                                                     <span style="user-select: all; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@key.PlainTextKey</span>
-                                                    <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;">
+                                                    <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;">
                                                         📋 Copy
                                                     </button>
                                                 </div>
@@ -368,7 +368,7 @@
                                             @key.CreatedAt.ToString("MMM dd, yyyy")
                                         </td>
                                         <td style="padding: 1rem;">
-                                            <button type="button" onclick="showRevokeAdminModal(@key.Id, '@key.Name')" style="background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                            <button type="button" onclick="showRevokeAdminModal(@key.Id, '@key.Name')" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
                                                 @Localizer["Revoke"]
                                             </button>
                                         </td>
@@ -441,7 +441,7 @@
             </div>
 
             <div style="display: flex; gap: 1rem;">
-                <button type="submit" style="flex: 1; background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                <button type="submit" style="flex: 1; background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                     @Localizer["SubmitRequest"]
                 </button>
                 <button type="button" onclick="hideRequestModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
@@ -489,7 +489,7 @@
             </div>
 
             <div style="display: flex; gap: 1rem;">
-                <button type="submit" style="flex: 1; background: var(--success); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                <button type="submit" style="flex: 1; background: var(--success); color: var(--success-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                     ✓ @Localizer["ApproveAndGenerateKey"]
                 </button>
                 <button type="button" onclick="hideApproveModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
@@ -521,7 +521,7 @@
             </div>
 
             <div style="display: flex; gap: 1rem;">
-                <button type="submit" style="flex: 1; background: var(--danger); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                <button type="submit" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                     ✗ @Localizer["RejectRequest"]
                 </button>
                 <button type="button" onclick="hideRejectModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
@@ -555,7 +555,7 @@
             </div>
 
             <div style="display: flex; gap: 1rem;">
-                <button type="submit" style="flex: 1; background: var(--danger); color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                <button type="submit" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                     @Localizer["RevokeKey"]
                 </button>
                 <button type="button" onclick="hideRevokeAdminModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">

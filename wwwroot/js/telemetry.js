@@ -438,11 +438,12 @@
 
     window.addEventListener('pagehide', flushAll);
 
-    // Expose for debugging
+    // Expose for debugging and integration with error-boundary.js
     window.__telemetry = {
         config: CONFIG,
         queues: queues,
-        flush: flushAll
+        flush: flushAll,
+        trackError: trackError
     };
 
     console.debug('[Telemetry] Initialized with session:', CONFIG.sessionId);
