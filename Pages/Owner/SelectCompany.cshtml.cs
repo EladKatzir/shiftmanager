@@ -9,7 +9,7 @@ namespace ShiftManager.Pages.Owner;
 /// Page handler for Owner to select which company to manage.
 /// Sets cookie with selected company ID for multi-company management.
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class SelectCompanyModel : PageModel
 {
     private readonly IOwnerCompanySelectorService _ownerCompanySelector;

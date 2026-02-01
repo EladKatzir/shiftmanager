@@ -72,11 +72,12 @@
             display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
             font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
         }
-        .badge-inactive { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
-        .badge-active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .badge-tech { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted); }
+        .badge-active { background: var(--success-soft); color: var(--success); }
+        .badge-tech { background: var(--accent-soft); color: var(--accent); }
 
         .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+        .table-wrapper { overflow-x: auto; }
 
         @@media (max-width: 768px) {
             .page-title { font-size: 1.75rem; }
@@ -143,7 +144,7 @@
     <h3 class="section-header"><loc key="AllDepartments" /> (@Model.Departments.Count)</h3>
     @if (Model.Departments.Any())
     {
-        <div style="overflow-x: auto;">
+        <div class="table-wrapper">
             <table class="data-table">
                 <thead>
                     <tr>

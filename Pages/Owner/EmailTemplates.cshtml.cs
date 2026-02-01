@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Owner;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class EmailTemplatesModel : LocalizedPageModel
 {
     private readonly IEmailTemplateService _templateService;

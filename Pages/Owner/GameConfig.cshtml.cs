@@ -11,7 +11,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Game Configuration - Configure Shift Swap match-3 game settings
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class GameConfigModel : PageModel
 {
     private readonly AppDbContext _db;

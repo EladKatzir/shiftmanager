@@ -94,16 +94,15 @@
                 </div>
             }
 
-            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-            {
-                <div class="metric-item metric-coverage">
-                    <span class="metric-icon">✅</span>
-                    <div class="metric-content">
-                        <span class="metric-value">@Model.CoveragePercent%</span>
-                        <span class="metric-label"><loc key="Calendar_Coverage" /></span>
-                    </div>
+            <require-grant key="ViewAnalytics">
+            <div class="metric-item metric-coverage">
+                <span class="metric-icon">✅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.CoveragePercent%</span>
+                    <span class="metric-label"><loc key="Calendar_Coverage" /></span>
                 </div>
-            }
+            </div>
+            </require-grant>
         </div>
     }
 </div>
@@ -115,31 +114,36 @@
     <a class="btn btn-ghost" href="/Calendar/Day"><loc key="Day" /></a>
 </div>
 
-@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) *@
-@await Component.InvokeAsync("ScopeSwitcher", new { currentScope = "company", calendarType = "shifts" })
+@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) - reads from URL/cookie *@
+@await Component.InvokeAsync("ScopeSwitcher", new { calendarType = "shifts" })
 
-@* ✅ PHASE 20: Quick actions for managers *@
-@if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-{
-    <div class="calendar-quick-actions">
-        <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
-        <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
-            <span>📊</span>
-            <loc key="Calendar_ManageShifts" />
-        </a>
-        <a class="btn btn-secondary btn-sm" href="/Public/Chores">
-            <span>🧹</span>
-            <loc key="Calendar_ManageChores" />
-        </a>
-        <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
-            <span>🛡️</span>
-            <loc key="Calendar_ManageOnDuty" />
-        </a>
-    </div>
-}
+@* ✅ PHASE 20: Quick actions - Grant protected *@
+<require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
+<div class="calendar-quick-actions">
+    <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
+    <require-grant key="ViewShifts">
+    <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
+        <span>📊</span>
+        <loc key="Calendar_ManageShifts" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewChores">
+    <a class="btn btn-secondary btn-sm" href="/Public/Chores">
+        <span>🧹</span>
+        <loc key="Calendar_ManageChores" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewDuties">
+    <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
+        <span>🛡️</span>
+        <loc key="Calendar_ManageOnDuty" />
+    </a>
+    </require-grant>
+</div>
+</require-grant>
 
 @* Hidden template for assignee select (rendered once, cloned via JS) *@
-<select id="assignee-options-template" style="display: none;">
+<select id="assignee-options-template" class="calendar-template-hidden">
     <option value=""><loc key="Calendar_SelectAssignee" /></option>
     @foreach (var user in Model.EligibleAssignees)
     {
@@ -147,8 +151,58 @@
     }
 </select>
 
+@* ✅ UI Overhaul: Overall empty state for month view *@
+@if (Model.TotalItemCount == 0)
+{
+    <div class="calendar-empty">
+        <div class="calendar-empty__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+                <line x1="9" y1="18" x2="15" y2="18"></line>
+            </svg>
+        </div>
+        <h3 class="calendar-empty__title"><loc key="Calendar_Empty_NoShiftsMonth" /></h3>
+        <p class="calendar-empty__message">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <loc key="Calendar_Empty_Subtitle_Mine" />
+            }
+            else
+            {
+                <loc key="Calendar_Empty_Subtitle_All" />
+            }
+        </p>
+        <div class="calendar-empty__actions">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <a href="/Calendar/Month?year=@Model.CurrentMonth.Year&month=@Model.CurrentMonth.Month&showMyItems=false" class="btn btn-secondary">
+                    <loc key="Calendar_Empty_Action_ViewAll" />
+                </a>
+            }
+            <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+            <a href="/Calendar/Table" class="btn btn-primary">
+                <loc key="Calendar_Empty_Action_CreateShift" />
+            </a>
+            </require-grant>
+            @{
+                var todayMonth = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
+            }
+            @if (Model.CurrentMonth != todayMonth)
+            {
+                <a href="/Calendar/Month" class="btn btn-ghost">
+                    <loc key="Calendar_Empty_Action_GoToToday" />
+                </a>
+            }
+        </div>
+    </div>
+}
+
 @* ✅ PHASE 20: Unified calendar grid *@
-<div class="calendar-grid">
+<div class="calendar-grid @(Model.TotalItemCount == 0 ? "calendar-grid--empty" : "")">
     <!-- Weekday headers -->
     <div class="calendar-weekdays">
         <div class="weekday-header"><loc key="Sun" /></div>
@@ -199,23 +253,34 @@
                             <div class="item-header">
                                 <span class="item-icon">@item.Icon</span>
                                 <span class="item-title">@item.Title</span>
-                                @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
-                                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                                @* ✅ PHASE 20: Delete button for chores and on-duty - Grant protected *@
+                                @if (item.Type == CalendarItemType.Chore)
                                 {
-                                    @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
-                                    {
-                                        <button class="btn-delete-item"
-                                                onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
-                                                loc-title="Delete">
-                                            ×
-                                        </button>
-                                    }
-                                    else if (item.Type == CalendarItemType.Shift)
-                                    {
-                                        <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
-                                            <span class="manage-icon">⚙️</span>
-                                        </a>
-                                    }
+                                    <require-grant key="AssignChores">
+                                    <button class="btn-delete-item"
+                                            onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                            loc-title="Delete">
+                                        ×
+                                    </button>
+                                    </require-grant>
+                                }
+                                else if (item.Type == CalendarItemType.OnDuty)
+                                {
+                                    <require-grant key="AssignHakamDuties,AssignKatzinDuties" mode="any">
+                                    <button class="btn-delete-item"
+                                            onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                            loc-title="Delete">
+                                        ×
+                                    </button>
+                                    </require-grant>
+                                }
+                                else if (item.Type == CalendarItemType.Shift)
+                                {
+                                    <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+                                    <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
+                                        <span class="manage-icon">⚙️</span>
+                                    </a>
+                                    </require-grant>
                                 }
                             </div>
                             <div class="item-assignee">@item.AssigneeName</div>
@@ -239,7 +304,7 @@
                         </button>
 
                         @* Hidden items (shown when expanded) *@
-                        <div class="hidden-items" style="display: none;">
+                        <div class="hidden-items calendar-hidden-items">
                             @foreach (var item in day.Items.Skip(3))
                             {
                                 <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
@@ -249,23 +314,34 @@
                                     <div class="item-header">
                                         <span class="item-icon">@item.Icon</span>
                                         <span class="item-title">@item.Title</span>
-                                        @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
-                                        @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                                        @* ✅ PHASE 20: Delete button for chores and on-duty - Grant protected *@
+                                        @if (item.Type == CalendarItemType.Chore)
                                         {
-                                            @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
-                                            {
-                                                <button class="btn-delete-item"
-                                                        onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
-                                                        loc-title="Delete">
-                                                    ×
-                                                </button>
-                                            }
-                                            else if (item.Type == CalendarItemType.Shift)
-                                            {
-                                                <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
-                                                    <span class="manage-icon">⚙️</span>
-                                                </a>
-                                            }
+                                            <require-grant key="AssignChores">
+                                            <button class="btn-delete-item"
+                                                    onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                                    loc-title="Delete">
+                                                ×
+                                            </button>
+                                            </require-grant>
+                                        }
+                                        else if (item.Type == CalendarItemType.OnDuty)
+                                        {
+                                            <require-grant key="AssignHakamDuties,AssignKatzinDuties" mode="any">
+                                            <button class="btn-delete-item"
+                                                    onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                                    loc-title="Delete">
+                                                ×
+                                            </button>
+                                            </require-grant>
+                                        }
+                                        else if (item.Type == CalendarItemType.Shift)
+                                        {
+                                            <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+                                            <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
+                                                <span class="manage-icon">⚙️</span>
+                                            </a>
+                                            </require-grant>
                                         }
                                     </div>
                                     <div class="item-assignee">@item.AssigneeName</div>
@@ -282,17 +358,21 @@
                         </div>
                     }
 
-                    @* ✅ PHASE 20: Quick-add form (managers only) *@
-                    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-                    {
-                        <div class="quick-add-container">
-                            <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@day.Date.ToString("yyyy-MM-dd")')">
-                                + <loc key="Calendar_AddChore" />
-                            </button>
-                            <button class="btn-quick-add" onclick="toggleQuickAdd('onduty', '@day.Date.ToString("yyyy-MM-dd")')">
-                                + <loc key="Calendar_AddOnDuty" />
-                            </button>
-                        </div>
+                    @* ✅ PHASE 20: Quick-add form - Grant protected *@
+                    <require-grant key="AssignChores,AssignHakamDuties,AssignKatzinDuties" mode="any">
+                    <div class="quick-add-container">
+                        <require-grant key="AssignChores">
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + <loc key="Calendar_AddChore" />
+                        </button>
+                        </require-grant>
+                        <require-grant key="AssignHakamDuties,AssignKatzinDuties" mode="any">
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('onduty', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + <loc key="Calendar_AddOnDuty" />
+                        </button>
+                        </require-grant>
+                    </div>
+                    </require-grant>
 
                         <div id="quickAddForm-@day.Date.ToString("yyyy-MM-dd")" class="quick-add-form hidden" data-type="">
                             <select id="assigneeSelect-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm assignee-select-clone">
@@ -363,14 +443,14 @@
             const hiddenItems = cell.querySelector('.hidden-items');
             const btnText = button.querySelector('.show-more-text');
 
-            if (hiddenItems.style.display === 'none') {
+            if (!hiddenItems.classList.contains('is-visible')) {
                 // Show all
-                hiddenItems.style.display = 'block';
+                hiddenItems.classList.add('is-visible');
                 button.classList.add('expanded');
                 btnText.textContent = '<loc key="Calendar_ShowLess" />';
             } else {
                 // Hide extra items
-                hiddenItems.style.display = 'none';
+                hiddenItems.classList.remove('is-visible');
                 button.classList.remove('expanded');
                 const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
                 btnText.textContent = `+${hiddenCount} <loc key="Calendar_MoreItems" />`;
@@ -511,6 +591,62 @@
             color: var(--primary);
             font-size: 1.5rem;
             margin-left: 4px;
+        }
+
+        /* ✅ UI Overhaul: Empty state styles */
+        .calendar-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-empty__icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-empty__icon svg {
+            width: 64px;
+            height: 64px;
+        }
+
+        .calendar-empty__title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .calendar-empty__message {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0 0 1.5rem 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .calendar-empty__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .calendar-empty__actions .btn {
+            min-width: 120px;
+        }
+
+        /* Dim grid when empty */
+        .calendar-grid--empty {
+            opacity: 0.6;
         }
     </style>
 }

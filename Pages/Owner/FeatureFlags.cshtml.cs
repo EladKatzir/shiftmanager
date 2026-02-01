@@ -9,7 +9,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Feature Flags Management - Toggle system features on/off
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:SystemConfiguration")]
 public class FeatureFlagsModel : PageModel
 {
     private readonly IConfiguration _configuration;

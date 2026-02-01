@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Grants;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AssignGrants")]
 public class AssignModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

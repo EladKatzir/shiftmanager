@@ -10,7 +10,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// System Health Dashboard - Monitor application health and performance
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class SystemHealthModel : PageModel
 {
     private readonly AppDbContext _db;

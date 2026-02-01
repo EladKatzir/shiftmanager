@@ -10,7 +10,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Backup & Restore - Manage database backups
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class BackupModel : PageModel
 {
     private readonly IWebHostEnvironment _env;

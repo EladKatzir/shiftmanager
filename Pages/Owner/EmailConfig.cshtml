@@ -24,7 +24,7 @@
             <span class="page-icon">📧</span>
             <loc key="Owner_EmailConfig" />
         </h1>
-        <p class="page-subtitle">Configure email notifications for the system</p>
+        <p class="page-subtitle"><loc key="Owner_EmailConfig_Subtitle" /></p>
     </div>
 
     @* Status Widget - At-a-glance health monitoring *@
@@ -93,26 +93,26 @@
     <form method="post">
         <div class="config-card">
             <div class="card-header">
-                <h2>📧 Email Service Configuration</h2>
+                <h2>📧 <loc key="Owner_EmailConfig_ServiceConfig" /></h2>
                 <div class="form-group-inline">
                     <label class="toggle-switch">
                         <input type="checkbox" asp-for="EmailEnabled" />
                         <span class="toggle-slider"></span>
                     </label>
-                    <span class="toggle-status-text">@(Model.EmailEnabled ? "Enabled" : "Disabled")</span>
+                    <span class="toggle-status-text">@(Model.EmailEnabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
                 </div>
             </div>
 
             <div class="card-body">
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="EmailApiUrl">API URL</label>
+                        <label asp-for="EmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
                     <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
-                    <small class="form-text">The endpoint URL for your email service API</small>
+                    <small class="form-text"><loc key="Owner_EmailConfig_ApiUrl_Help" /></small>
 
                     <div class="context-panel" id="email-url-help" style="display: none;">
                         <div class="context-panel-section">
@@ -134,10 +134,10 @@
                 <div class="form-group">
                     <div class="label-with-help">
                         <label asp-for="EmailApiKey">
-                            API Key
+                            <loc key="Owner_EmailConfig_ApiKey" />
                             @if (Model.HasExistingKey)
                             {
-                                <span class="badge badge-success">✅ Configured</span>
+                                <span class="badge badge-success">✅ <loc key="Configured" /></span>
                             }
                         </label>
                         <div class="help-buttons-group">
@@ -150,15 +150,15 @@
                         </div>
                     </div>
                     <input asp-for="EmailApiKey" type="password" class="form-control"
-                           placeholder="@(Model.HasExistingKey ? "••••••••••••" : "Enter API key")" />
+                           placeholder="@(Model.HasExistingKey ? "••••••••••••" : Localizer["Owner_EmailConfig_EnterApiKey"])" />
                     <small class="form-text">
                         @if (Model.HasExistingKey)
                         {
-                            <span>Leave blank to keep existing key. Enter new key to update.</span>
+                            <span><loc key="Owner_EmailConfig_ApiKey_ExistingHelp" /></span>
                         }
                         else
                         {
-                            <span>Your email service API key (stored encrypted)</span>
+                            <span><loc key="Owner_EmailConfig_ApiKey_Help" /></span>
                         }
                     </small>
 
@@ -180,13 +180,13 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="EmailFromAddress">From Address</label>
+                        <label asp-for="EmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
                     <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
-                    <small class="form-text">The email address that will appear as the sender</small>
+                    <small class="form-text"><loc key="Owner_EmailConfig_FromAddress_Help" /></small>
 
                     <div class="context-panel" id="email-from-help" style="display: none;">
                         <div class="context-panel-section">
@@ -207,9 +207,9 @@
             </div>
 
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                <button type="submit" class="btn btn-primary">💾 <loc key="SaveConfiguration" /></button>
                 <button type="button" class="btn btn-secondary" onclick="location.href='/Owner/EmailConfig?handler=Test'">
-                    📨 Send Test Email
+                    📨 <loc key="Owner_EmailConfig_SendTestEmail" />
                 </button>
             </div>
         </div>
@@ -220,16 +220,16 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>🧪 Test Email</h2>
+                <h2>🧪 <loc key="Owner_EmailConfig_TestEmail" /></h2>
             </div>
             <div class="card-body">
-                <p>Send a test email to verify your configuration is working correctly.</p>
+                <p><loc key="Owner_EmailConfig_TestEmail_Desc" /></p>
                 <form method="post" asp-page-handler="SendTest">
                     <div class="form-group">
-                        <label for="testEmail">Recipient Email</label>
+                        <label for="testEmail"><loc key="Owner_EmailConfig_RecipientEmail" /></label>
                         <input type="email" name="testEmail" class="form-control" placeholder="test@example.com" required />
                     </div>
-                    <button type="submit" class="btn btn-secondary">📨 Send Test Email</button>
+                    <button type="submit" class="btn btn-secondary">📨 <loc key="Owner_EmailConfig_SendTestEmail" /></button>
                 </form>
             </div>
         </div>
@@ -240,7 +240,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>🔍 Test Email Diagnostics</h2>
+                <h2>🔍 <loc key="Owner_EmailConfig_TestDiagnostics" /></h2>
             </div>
             <div class="card-body">
                 <div class="diagnostics-output">
@@ -253,13 +253,13 @@
     @* Recent Email Logs *@
     <div class="config-card">
         <div class="card-header">
-            <h2>📋 Recent Email Logs</h2>
+            <h2>📋 <loc key="Owner_EmailConfig_RecentLogs" /></h2>
             <div class="header-actions">
                 <a href="/Owner/EmailConfig?handler=ExportLogsJson&count=100" class="btn btn-secondary btn-sm">
-                    📥 Export JSON (100)
+                    📥 <loc key="Export" /> JSON (100)
                 </a>
                 <a href="/Owner/EmailConfig?handler=ExportLogsCsv&count=100" class="btn btn-secondary btn-sm">
-                    📥 Export CSV (100)
+                    📥 <loc key="Export" /> CSV (100)
                 </a>
             </div>
         </div>
@@ -269,11 +269,11 @@
                 <table class="logs-table">
                     <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>Recipient</th>
-                            <th>Subject</th>
-                            <th>Status</th>
-                            <th>Duration</th>
+                            <th><loc key="Time" /></th>
+                            <th><loc key="Recipient" /></th>
+                            <th><loc key="Subject" /></th>
+                            <th><loc key="Status" /></th>
+                            <th><loc key="Duration" /></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -301,7 +301,7 @@
             }
             else
             {
-                <p class="empty-state">No email logs yet. Send a test email to see diagnostics.</p>
+                <p class="empty-state"><loc key="Owner_EmailConfig_NoLogs" /></p>
             }
         </div>
     </div>
@@ -311,7 +311,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>⚠️ Recent Failures</h2>
+                <h2>⚠️ <loc key="Owner_EmailConfig_RecentFailures" /></h2>
             </div>
             <div class="card-body">
                 @foreach (var log in Model.RecentFailures)
@@ -331,25 +331,25 @@
     @* Email Status *@
     <div class="config-card">
         <div class="card-header">
-            <h2>📊 Email Statistics</h2>
+            <h2>📊 <loc key="Owner_EmailConfig_Statistics" /></h2>
         </div>
         <div class="card-body">
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-value">@Model.TotalEmailsSent</div>
-                    <div class="stat-label">Total Sent</div>
+                    <div class="stat-label"><loc key="Owner_EmailConfig_TotalSent" /></div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">@Model.EmailsToday</div>
-                    <div class="stat-label">Sent Today</div>
+                    <div class="stat-label"><loc key="Owner_EmailConfig_SentToday" /></div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">@Model.FailedEmails</div>
-                    <div class="stat-label">Failed</div>
+                    <div class="stat-label"><loc key="Failed" /></div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">@(Model.LastEmailSent?.ToString("g") ?? "Never")</div>
-                    <div class="stat-label">Last Sent</div>
+                    <div class="stat-value">@(Model.LastEmailSent?.ToString("g") ?? Localizer["Never"])</div>
+                    <div class="stat-label"><loc key="Owner_EmailConfig_LastSent" /></div>
                 </div>
             </div>
         </div>
@@ -358,12 +358,12 @@
     @* Email Templates Navigation *@
     <div class="card mt-4">
         <div class="card-header">
-            <h5 class="mb-0">📝 Email Templates</h5>
+            <h5 class="mb-0">📝 <loc key="Owner_EmailConfig_Templates" /></h5>
         </div>
         <div class="card-body">
-            <p class="text-muted">Customize email templates for notifications, password resets, and other system emails.</p>
+            <p class="text-muted"><loc key="Owner_EmailConfig_Templates_Desc" /></p>
             <a href="/Owner/EmailTemplates" class="btn btn-primary">
-                <span>📝</span> Manage Email Templates
+                <span>📝</span> <loc key="Owner_EmailConfig_ManageTemplates" />
             </a>
         </div>
     </div>
@@ -442,18 +442,18 @@
 }
 
 .status-indicator.status-success {
-    background: #10b981;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    background: var(--success);
+    box-shadow: 0 0 0 4px var(--success-soft);
 }
 
 .status-indicator.status-error {
-    background: #ef4444;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    background: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-soft);
 }
 
 .status-indicator.status-unknown {
-    background: #9ca3af;
-    box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.2);
+    background: var(--text-muted);
+    box-shadow: 0 0 0 4px var(--surface-soft);
 }
 
 .status-info {
@@ -475,7 +475,7 @@
 
 .status-error-message {
     font-size: 0.875rem;
-    color: var(--danger, #ef4444);
+    color: var(--danger);
     margin-top: 0.25rem;
 }
 
@@ -671,7 +671,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: var(--border);
     transition: .4s;
     border-radius: 30px;
 }
@@ -689,7 +689,7 @@
 }
 
 input:checked + .toggle-slider {
-    background-color: var(--primary, #3b82f6);
+    background-color: var(--primary);
 }
 
 input:checked + .toggle-slider:before {
@@ -734,20 +734,20 @@ input:checked + .toggle-slider:before {
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid var(--success, #10b981);
-    color: var(--success, #10b981);
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
 }
 
 .alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid var(--danger, #ef4444);
-    color: var(--danger, #ef4444);
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
 }
 
 /* Diagnostics */
 .diagnostics-output {
-    background: #f5f5f5;
+    background: var(--surface-soft);
     padding: 1rem;
     border-radius: 8px;
     overflow-x: auto;
@@ -773,7 +773,7 @@ input:checked + .toggle-slider:before {
 .logs-table td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border);
 }
 
 .logs-table th {
@@ -784,11 +784,11 @@ input:checked + .toggle-slider:before {
 }
 
 .log-success {
-    background: rgba(16, 185, 129, 0.05);
+    background: var(--success-soft);
 }
 
 .log-failure {
-    background: rgba(239, 68, 68, 0.05);
+    background: var(--danger-soft);
 }
 
 .status-badge {
@@ -799,20 +799,20 @@ input:checked + .toggle-slider:before {
 }
 
 .status-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: #059669;
+    background: var(--success-soft);
+    color: var(--success);
 }
 
 .status-failure {
-    background: rgba(239, 68, 68, 0.2);
-    color: #dc2626;
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 /* Failures */
 .failure-item {
     padding: 1rem;
-    background: rgba(239, 68, 68, 0.1);
-    border-left: 4px solid #dc2626;
+    background: var(--danger-soft);
+    border-left: 4px solid var(--danger);
     border-radius: 4px;
     margin-bottom: 0.5rem;
 }
@@ -825,7 +825,7 @@ input:checked + .toggle-slider:before {
 }
 
 .failure-error {
-    color: #dc2626;
+    color: var(--danger);
     font-weight: 500;
 }
 
@@ -872,7 +872,7 @@ input:checked + .toggle-slider:before {
 }
 
 .find-this-button:hover {
-    background: var(--primary-dark, #2563eb);
+    background: var(--primary-hover);
     transform: translateY(-1px);
 }
 

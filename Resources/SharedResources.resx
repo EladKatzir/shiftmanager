@@ -2567,6 +2567,18 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Ctrl+K</value>
     <comment>Phase 18 - Sidebar Ctrl+K label</comment>
   </data>
+  <data name="Sidebar_Toggle" xml:space="preserve">
+    <value>Toggle sidebar (Ctrl+B)</value>
+    <comment>A-002 - Sidebar toggle button accessibility label</comment>
+  </data>
+  <data name="Sidebar_Collapsed" xml:space="preserve">
+    <value>Sidebar collapsed</value>
+    <comment>A-002 - Screen reader announcement when sidebar is collapsed</comment>
+  </data>
+  <data name="Sidebar_Expanded" xml:space="preserve">
+    <value>Sidebar expanded</value>
+    <comment>A-002 - Screen reader announcement when sidebar is expanded</comment>
+  </data>
   <data name="AnalyticsSummary" xml:space="preserve">
     <value>Analytics Summary</value>
     <comment>Phase 18 - Owner dashboard analytics section</comment>
@@ -5085,6 +5097,24 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
     <value>Switch Company</value>
   </data>
+  <data name="ContextSwitcher_NoResults" xml:space="preserve">
+    <value>No matching companies found</value>
+  </data>
+  <data name="ContextSwitcher_LoadError" xml:space="preserve">
+    <value>Unable to load companies</value>
+  </data>
+  <data name="ContextSwitcher_Retry" xml:space="preserve">
+    <value>Retry loading companies</value>
+  </data>
+  <data name="ContextSwitcher_NoContextsAvailable" xml:space="preserve">
+    <value>No companies available</value>
+  </data>
+  <data name="ContextSwitcher_ContextUnavailable" xml:space="preserve">
+    <value>Your previous selection is no longer available</value>
+  </data>
+  <data name="ContextSwitcher_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
 
   <!-- UI Overhaul v3.0 - Scope Switcher -->
   <data name="ScopeSwitcher_ViewLabel" xml:space="preserve">
@@ -5144,6 +5174,42 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Calendar_Empty_SwitchScope" xml:space="preserve">
     <value>Try expanding your view</value>
+  </data>
+  <data name="Calendar_Empty_NoShiftsWeek" xml:space="preserve">
+    <value>No shifts scheduled this week</value>
+    <comment>Empty state for week calendar view</comment>
+  </data>
+  <data name="Calendar_Empty_NoShiftsMonth" xml:space="preserve">
+    <value>No shifts scheduled this month</value>
+    <comment>Empty state for month calendar view</comment>
+  </data>
+  <data name="Calendar_Empty_NoShiftsDay" xml:space="preserve">
+    <value>No shifts scheduled for this day</value>
+    <comment>Empty state for day calendar view</comment>
+  </data>
+  <data name="Calendar_Empty_Subtitle_Mine" xml:space="preserve">
+    <value>You have no assignments during this period. Check back later or switch to view all items.</value>
+    <comment>Subtitle for empty state when viewing my items</comment>
+  </data>
+  <data name="Calendar_Empty_Subtitle_All" xml:space="preserve">
+    <value>No shifts, chores, or on-duty assignments have been scheduled yet.</value>
+    <comment>Subtitle for empty state when viewing all items</comment>
+  </data>
+  <data name="Calendar_Empty_Action_ViewAll" xml:space="preserve">
+    <value>View All Items</value>
+    <comment>Action button to switch scope from mine to all</comment>
+  </data>
+  <data name="Calendar_Empty_Action_CreateShift" xml:space="preserve">
+    <value>Create a Shift</value>
+    <comment>Action button for managers to create shift</comment>
+  </data>
+  <data name="Calendar_Empty_Action_GoToToday" xml:space="preserve">
+    <value>Go to Today</value>
+    <comment>Action to navigate to current date</comment>
+  </data>
+  <data name="Calendar_Empty_Action_ChangeDate" xml:space="preserve">
+    <value>Try a Different Date</value>
+    <comment>Suggestion to navigate to another date</comment>
   </data>
 
   <!-- UI Overhaul v3.0 - Loading States -->
@@ -5722,5 +5788,27 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Navigation_Toggle" xml:space="preserve">
     <value>Toggle navigation</value>
     <comment>B-011 - Mobile hamburger menu toggle button aria-label</comment>
+  </data>
+
+  <!-- B-018: Concurrent Edit Conflict Detection -->
+  <data name="ConcurrencyConflict_Title" xml:space="preserve">
+    <value>Edit Conflict</value>
+    <comment>B-018 - Title for the concurrency conflict dialog</comment>
+  </data>
+  <data name="ConcurrencyConflict_Message" xml:space="preserve">
+    <value>This record was modified by another user while you were editing.</value>
+    <comment>B-018 - Message explaining the concurrent edit conflict</comment>
+  </data>
+  <data name="ConcurrencyConflict_Reload" xml:space="preserve">
+    <value>Reload</value>
+    <comment>B-018 - Button to reload and see latest changes</comment>
+  </data>
+  <data name="ConcurrencyConflict_Overwrite" xml:space="preserve">
+    <value>Overwrite</value>
+    <comment>B-018 - Button to force save and overwrite other user's changes</comment>
+  </data>
+  <data name="ConcurrencyConflict_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>B-018 - Button to cancel the conflicting operation</comment>
   </data>
 </root>

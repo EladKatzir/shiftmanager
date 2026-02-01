@@ -94,16 +94,15 @@
                 </div>
             }
 
-            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-            {
-                <div class="metric-item metric-coverage">
-                    <span class="metric-icon">✅</span>
-                    <div class="metric-content">
-                        <span class="metric-value">@Model.CoveragePercent%</span>
-                        <span class="metric-label"><loc key="Calendar_Coverage" /></span>
-                    </div>
+            <require-grant key="ViewAnalytics">
+            <div class="metric-item metric-coverage">
+                <span class="metric-icon">✅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.CoveragePercent%</span>
+                    <span class="metric-label"><loc key="Calendar_Coverage" /></span>
                 </div>
-            }
+            </div>
+            </require-grant>
         </div>
     }
 </div>
@@ -115,31 +114,36 @@
     <a class="btn btn-primary" href="/Calendar/Day"><loc key="Day" /></a>
 </div>
 
-@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) *@
-@await Component.InvokeAsync("ScopeSwitcher", new { currentScope = "company", calendarType = "shifts" })
+@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) - reads from URL/cookie *@
+@await Component.InvokeAsync("ScopeSwitcher", new { calendarType = "shifts" })
 
-@* ✅ PHASE 20: Quick actions for managers *@
-@if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-{
-    <div class="calendar-quick-actions">
-        <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
-        <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
-            <span>📊</span>
-            <loc key="Calendar_ManageShifts" />
-        </a>
-        <a class="btn btn-secondary btn-sm" href="/Public/Chores">
-            <span>🧹</span>
-            <loc key="Calendar_ManageChores" />
-        </a>
-        <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
-            <span>🛡️</span>
-            <loc key="Calendar_ManageOnDuty" />
-        </a>
-    </div>
-}
+@* ✅ PHASE 20: Quick actions - Grant protected *@
+<require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
+<div class="calendar-quick-actions">
+    <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
+    <require-grant key="ViewShifts">
+    <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
+        <span>📊</span>
+        <loc key="Calendar_ManageShifts" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewChores">
+    <a class="btn btn-secondary btn-sm" href="/Public/Chores">
+        <span>🧹</span>
+        <loc key="Calendar_ManageChores" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewDuties">
+    <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
+        <span>🛡️</span>
+        <loc key="Calendar_ManageOnDuty" />
+    </a>
+    </require-grant>
+</div>
+</require-grant>
 
 @* Hidden template for assignee select (rendered once, cloned via JS) *@
-<select id="assignee-options-template" style="display: none;">
+<select id="assignee-options-template" class="calendar-template-hidden">
     <option value=""><loc key="Calendar_SelectAssignee" /></option>
     @foreach (var user in Model.EligibleAssignees)
     {
@@ -220,10 +224,48 @@
     }
     else
     {
-        <div class="empty-day-state">
-            <div class="empty-icon">📭</div>
-            <div class="empty-title"><loc key="Calendar_NoItems" /></div>
-            <div class="empty-subtitle"><loc key="Calendar_NoItemsForDay" /></div>
+        <div class="calendar-empty">
+            <div class="calendar-empty__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <line x1="9" y1="14" x2="15" y2="14"></line>
+                    <line x1="9" y1="18" x2="15" y2="18"></line>
+                </svg>
+            </div>
+            <h3 class="calendar-empty__title"><loc key="Calendar_Empty_NoShiftsDay" /></h3>
+            <p class="calendar-empty__message">
+                @if (Model.ShowMyItemsOnly)
+                {
+                    <loc key="Calendar_Empty_Subtitle_Mine" />
+                }
+                else
+                {
+                    <loc key="Calendar_Empty_Subtitle_All" />
+                }
+            </p>
+            <div class="calendar-empty__actions">
+                @if (Model.ShowMyItemsOnly)
+                {
+                    <a href="/Calendar/Day?year=@Model.CurrentDate.Year&month=@Model.CurrentDate.Month&day=@Model.CurrentDate.Day&showMyItems=false" class="btn btn-secondary">
+                        <loc key="Calendar_Empty_Action_ViewAll" />
+                    </a>
+                }
+                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                {
+                    <a href="/Calendar/Table" class="btn btn-primary">
+                        <loc key="Calendar_Empty_Action_CreateShift" />
+                    </a>
+                }
+                @if (Model.CurrentDate != DateOnly.FromDateTime(DateTime.Today))
+                {
+                    <a href="/Calendar/Day" class="btn btn-ghost">
+                        <loc key="Calendar_Empty_Action_GoToToday" />
+                    </a>
+                }
+            </div>
         </div>
     }
 
@@ -388,8 +430,12 @@
             gap: 0.5rem;
         }
 
-        /* ✅ PHASE 20: Empty state */
-        .empty-day-state {
+        /* ✅ PHASE 20: Enhanced empty state */
+        .calendar-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
             padding: 4rem 2rem;
             background: var(--surface);
@@ -397,21 +443,41 @@
             border: 2px dashed var(--border);
         }
 
-        .empty-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+        .calendar-empty__icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
         }
 
-        .empty-title {
+        .calendar-empty__icon svg {
+            width: 64px;
+            height: 64px;
+        }
+
+        .calendar-empty__title {
             font-size: 1.25rem;
             font-weight: 600;
             color: var(--text);
-            margin-bottom: 0.5rem;
+            margin: 0 0 0.75rem 0;
         }
 
-        .empty-subtitle {
+        .calendar-empty__message {
             color: var(--muted);
             font-size: 0.95rem;
+            margin: 0 0 1.5rem 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .calendar-empty__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .calendar-empty__actions .btn {
+            min-width: 120px;
         }
 
         /* ✅ PHASE 20: Quick actions bar */

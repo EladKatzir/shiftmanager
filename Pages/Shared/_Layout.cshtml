@@ -11,6 +11,8 @@
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
     var role = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    // Note: Roles are still used for backward compatibility in the layout
+    // but actual authorization is enforced via grant-based policies on pages
     var isAdmin = User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director");
     var isDirector = User.IsInRole("Owner") || User.IsInRole("Director");
     var isOwner = User.IsInRole("Owner");
@@ -31,13 +33,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@(string.IsNullOrEmpty(firstName) ? (isHebrew ? "השיפטי שלך" : "your shifty") : (isHebrew ? $"השיפטי של {firstName}" : $"{firstName}'s shifty"))</title>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
-    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" />
-    <link rel="manifest" href="~/site.webmanifest" />
+    <!-- Favicon and App Icons (B-014) -->
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="~/icons/apple-touch-icon.png">
+    <link rel="manifest" href="~/site.webmanifest">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Shifty">
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @if (isHebrew)
@@ -87,11 +91,17 @@
         </script>
     }
     @await Html.PartialAsync("_LocalizationScript")
+    @* B-001-EXT: Reduced Motion Utility - Must load before animation scripts *@
+    <script defer src="~/js/reduced-motion.js" asp-append-version="true"></script>
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
     @* Localization API - Load on all pages for attribute localization and JavaScript string access *@
     <script defer src="~/js/localization-api.js" asp-append-version="true"></script>
     <script defer src="~/js/localization-attributes.js" asp-append-version="true"></script>
+    @* B-010: Date/Time Format Localization - Client-side date formatting *@
+    <script defer src="~/js/date-format.js" asp-append-version="true"></script>
+    @* B-016: Stale Cache Handling - Ensures fresh data after mutations *@
+    <script defer src="~/js/cache-management.js" asp-append-version="true"></script>
     @* Only load session check on authenticated pages (prevents infinite redirect loop on login page) *@
     @if (User?.Identity?.IsAuthenticated ?? false)
     {
@@ -107,6 +117,93 @@
     }
     @* Modal Focus Management (B-013) - Accessibility focus trap and keyboard handling *@
     <script defer src="~/js/modal-focus.js" asp-append-version="true"></script>
+    @* Mobile Navigation (B-011) - Hamburger menu with focus trap *@
+    <script defer src="~/js/mobile-nav.js" asp-append-version="true"></script>
+    @* Form Validation Enhancement (B-008) - Accessible error states and field highlighting *@
+    <script defer src="~/js/form-validation.js" asp-append-version="true"></script>
+    @* API Client with Rate Limit Handling (B-027) - Automatic retry with backoff *@
+    <script defer src="~/js/api-client.js" asp-append-version="true"></script>
+    @* Client Telemetry (B-019, B-020, B-021) - Local observability for air-gapped environments *@
+    <script defer src="~/js/telemetry.js" asp-append-version="true"></script>
+    @* Code Splitting Utilities (B-030) - Lazy loading for reduced initial payload *@
+    <script defer src="~/js/lazy-loader.js" asp-append-version="true"></script>
+    <script defer src="~/js/modal-loader.js" asp-append-version="true"></script>
+    @* A-008: Widget Collapse Persistence - Remember widget expanded/collapsed state *@
+    <script defer src="~/js/widget-persistence.js" asp-append-version="true"></script>
+    @* A-002: Sidebar Collapse State Persistence - Apply BEFORE first paint to prevent flash *@
+    <script>
+    (function() {
+        'use strict';
+        var SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
+        var isCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+        
+        // Write CSS class directly to <html> element before DOM is ready
+        // This prevents flash of wrong state (FOUC)
+        if (isCollapsed) {
+            document.documentElement.classList.add('sidebar-initially-collapsed');
+        }
+        
+        // Also add a class to disable transitions during initial render
+        document.documentElement.classList.add('sidebar-no-transition');
+        
+        // Remove no-transition class after first paint
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Use requestAnimationFrame to ensure we're after first paint
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        document.documentElement.classList.remove('sidebar-no-transition');
+                    });
+                });
+            });
+        } else {
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    document.documentElement.classList.remove('sidebar-no-transition');
+                });
+            });
+        }
+    })();
+    </script>
+    @* A-008: Widget Collapse State - Apply BEFORE first paint to prevent flash *@
+    <script>
+    (function() {
+        'use strict';
+        var STORAGE_PREFIX = 'shifty_widget_';
+
+        // Early application of widget collapsed states to prevent FOUC
+        // This runs synchronously before DOM is fully ready
+        function applyWidgetStates() {
+            var widgets = document.querySelectorAll('.widget[data-widget-id]');
+            widgets.forEach(function(widget) {
+                var widgetId = widget.dataset.widgetId;
+                var key = STORAGE_PREFIX + widgetId + '_collapsed';
+                var isCollapsed = localStorage.getItem(key);
+
+                if (isCollapsed === 'true') {
+                    widget.classList.add('is-collapsed');
+                    var header = widget.querySelector(':scope > .widget__header');
+                    if (header) {
+                        header.setAttribute('aria-expanded', 'false');
+                    }
+                } else if (isCollapsed === 'false') {
+                    widget.classList.remove('is-collapsed');
+                    var header = widget.querySelector(':scope > .widget__header');
+                    if (header) {
+                        header.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            });
+        }
+
+        // Apply states as soon as possible and again on DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyWidgetStates);
+        } else {
+            applyWidgetStates();
+        }
+    })();
+    </script>
     @* Offline deployment diagnostic: Verify sidebar CSS loads correctly *@
     <script>
     (function() {
@@ -133,6 +230,50 @@
     </script>
 </head>
 <body>
+    @* B-015: Brand Loading Animation - Shows during initial page load *@
+    <div class="page-loader" id="pageLoader" role="status" aria-label="Loading page">
+        <div class="page-loader__brand">
+            <div class="page-loader__logo">
+                <img src="~/images/shifty-logo.svg" alt="" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <span class="page-loader__logo-fallback" style="display:none; color:white;">S</span>
+            </div>
+            <span class="page-loader__name">SHIFTY</span>
+        </div>
+        <div class="page-loader__spinner" aria-hidden="true"></div>
+        <span class="page-loader__text">@(isHebrew ? "טוען..." : "Loading...")</span>
+    </div>
+    <script>
+    // B-015: Hide loader when DOM is ready or after 5s timeout
+    (function() {
+        'use strict';
+        var loader = document.getElementById('pageLoader');
+        if (!loader) return;
+
+        var hideLoader = function() {
+            if (!loader.classList.contains('is-hidden')) {
+                loader.classList.add('is-hidden');
+                // Remove from DOM after transition completes
+                setTimeout(function() {
+                    if (loader.parentNode) {
+                        loader.parentNode.removeChild(loader);
+                    }
+                }, 350);
+            }
+        };
+
+        // Hide when DOM is interactive/complete
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideLoader);
+        } else {
+            // DOM already loaded (e.g., script deferred or async)
+            hideLoader();
+        }
+
+        // Fallback timeout: 5 seconds max to prevent blocking
+        setTimeout(hideLoader, 5000);
+    })();
+    </script>
+
     @* Language Edit Mode Banner (only shown when edit mode cookies are set) *@
     @await Component.InvokeAsync("LanguageEditModeBanner")
 
@@ -144,7 +285,7 @@
             @* Brand Section *@
             <div class="sidebar-brand">
                 <div class="sidebar-brand__logo">
-                    <img src="~/images/shifty-logo.svg" alt="Shifty" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <img src="~/images/shifty-logo.svg" alt="Shifty" width="32" height="32" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                     <span class="sidebar-brand__logo-fallback" style="display:none; font-size:24px;">📊</span>
                 </div>
                 <div class="sidebar-brand__text">
@@ -195,14 +336,18 @@
                         <span class="app-sidebar-nav-icon">📝</span>
                         <span><loc key="Requests" /></span>
                     </a>
+                    <require-grant key="ViewAnalytics">
                     <a href="/Admin/Analytics" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Analytics") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📊</span>
                         <span><loc key="Analytics" /></span>
                     </a>
+                    </require-grant>
+                    <require-grant key="ViewAuditLog">
                     <a href="/Admin/AuditLog" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/AuditLog") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🔍</span>
                         <span><loc key="AuditLog" /></span>
                     </a>
+                    </require-grant>
 
                     @* Phase 8.2.2: Show different People links based on role *@
                     @if (User.IsInRole("Manager"))
@@ -222,49 +367,59 @@
                         </a>
                     }
 
-                    @if (isOwner)
-                    {
-                        <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
-                            <span class="app-sidebar-nav-icon">🏢</span>
-                            <span><loc key="Companies" /></span>
-                        </a>
-                    }
+                    <require-grant key="EditCompany">
+                    <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🏢</span>
+                        <span><loc key="Companies" /></span>
+                    </a>
+                    </require-grant>
 
+                    <require-grant key="AdminAccess" mode="any">
                     <a href="/Admin/Index" class="app-sidebar-nav-item @(currentPath == "/Admin/Index" || currentPath == "/Admin" ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🎛️</span>
                         <span>Admin Hub</span>
                     </a>
+                    </require-grant>
 
+                    <require-grant key="ViewSettings">
                     <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/ShiftTypes") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">⚙️</span>
                         <span><loc key="Settings" /></span>
                     </a>
+                    </require-grant>
 
-                    @* Owner Administration Panel *@
-                    @if (isOwner)
-                    {
-                        <div class="nav-section-header">🔧 <loc key="Owner_AdminPanel" /></div>
-                        <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
-                            <span class="app-sidebar-nav-icon">🔧</span>
-                            <span><loc key="Owner_AdminPanel" /></span>
-                        </a>
-                    }
+                    @* Owner Administration Panel - Grant protected *@
+                    <require-grant key="AdminAccess">
+                    <div class="nav-section-header">🔧 <loc key="Owner_AdminPanel" /></div>
+                    <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🔧</span>
+                        <span><loc key="Owner_AdminPanel" /></span>
+                    </a>
+                    </require-grant>
 
-                    @* ✅ PHASE 20: Management Section *@
+                    @* ✅ PHASE 20: Management Section - Grant protected *@
+                    <require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
                     <div class="nav-section-header">⚙️ <loc key="Calendar_Management" /></div>
+                    </require-grant>
 
+                    <require-grant key="ViewShifts">
                     <a href="/Calendar/Table" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Table") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📊</span>
                         <span><loc key="Calendar_ShiftsManagement" /></span>
                     </a>
+                    </require-grant>
+                    <require-grant key="ViewChores">
                     <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🗂️</span>
                         <span><loc key="Calendar_ChoresManagement" /></span>
                     </a>
+                    </require-grant>
+                    <require-grant key="ViewDuties">
                     <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🎯</span>
                         <span><loc key="Calendar_OnDutyManagement" /></span>
                     </a>
+                    </require-grant>
                 }
                 else
                 {
@@ -339,18 +494,28 @@
                 }
             </div>
 
-            @* Sidebar Toggle Button *@
-            <button class="sidebar-toggle" id="sidebarToggle" loc-aria-label="Sidebar_Toggle">
-                <span class="sidebar-toggle__icon">◀</span>
+            @* Sidebar Toggle Button (A-002: Accessible keyboard toggle) *@
+            <button class="sidebar-toggle" 
+                    id="sidebarToggle" 
+                    type="button"
+                    loc-aria-label="Sidebar_Toggle"
+                    aria-expanded="true"
+                    aria-controls="appSidebar"
+                    title="@Localizer["Sidebar_Toggle"]">
+                <span class="sidebar-toggle__icon" aria-hidden="true">◀</span>
             </button>
         </aside>
 
         @* Mobile Navigation Overlay *@
         <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
 
-        @* Mobile Navigation Toggle *@
-        <button class="mobile-nav-toggle" id="mobileNavToggle" loc-aria-label="Sidebar_MobileToggle">
-            <span>☰</span>
+        @* Mobile Navigation Toggle (B-011) *@
+        <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="@Localizer["Navigation_Toggle"]" aria-expanded="false" aria-controls="appSidebar">
+            <span class="mobile-nav-toggle__icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
         </button>
         }
 
@@ -445,6 +610,8 @@
     </div>
 
     @await RenderSectionAsync("Scripts", required: false)
+    @* Page-specific deferred scripts (B-030) - Loads after main scripts for code splitting *@
+    @await RenderSectionAsync("PageScripts", required: false)
 
     @* Initialize Lucide icons *@
     <script>
@@ -457,30 +624,76 @@
     }
     </script>
 
-    @* Sidebar & Mobile Navigation Scripts *@
+    @* Sidebar & Mobile Navigation Scripts (A-002: Enhanced with state persistence) *@
     <script>
     (function() {
-        const SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
-        const sidebar = document.getElementById('appSidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const mobileToggle = document.getElementById('mobileNavToggle');
-        const mobileOverlay = document.getElementById('mobileNavOverlay');
+        'use strict';
+        var SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
+        var sidebar = document.getElementById('appSidebar');
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        var mobileToggle = document.getElementById('mobileNavToggle');
+        var mobileOverlay = document.getElementById('mobileNavOverlay');
 
         if (!sidebar) return;
 
-        // Restore collapsed state
-        const isCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+        // A-002: Apply collapsed state from pre-render (set on <html> element in <head>)
+        // This prevents flash of wrong state since CSS applies immediately
+        var isCollapsed = document.documentElement.classList.contains('sidebar-initially-collapsed');
         if (isCollapsed) {
             sidebar.classList.add('is-collapsed');
         }
 
-        // Desktop sidebar toggle
+        // Update toggle button ARIA state to match current collapsed state
+        function updateToggleAriaState() {
+            if (sidebarToggle) {
+                var expanded = !sidebar.classList.contains('is-collapsed');
+                sidebarToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            }
+        }
+
+        // Initialize ARIA state
+        updateToggleAriaState();
+
+        // Desktop sidebar toggle with localStorage persistence
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', function() {
                 sidebar.classList.toggle('is-collapsed');
-                const collapsed = sidebar.classList.contains('is-collapsed');
+                var collapsed = sidebar.classList.contains('is-collapsed');
                 localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed);
+                updateToggleAriaState();
+                
+                // Announce state change to screen readers
+                var announcement = collapsed ? 'Sidebar collapsed' : 'Sidebar expanded';
+                announceToScreenReader(announcement);
             });
+
+            // Keyboard support - Enter and Space already work for buttons,
+            // but let's also support Ctrl+B as a common sidebar toggle shortcut
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+B (or Cmd+B on Mac) to toggle sidebar
+                if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                    e.preventDefault();
+                    sidebarToggle.click();
+                }
+            });
+        }
+
+        // Helper function for screen reader announcements
+        function announceToScreenReader(message) {
+            var announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.style.cssText = 'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            
+            // Remove after announcement is read
+            setTimeout(function() {
+                if (announcement.parentNode) {
+                    announcement.parentNode.removeChild(announcement);
+                }
+            }, 1000);
         }
 
         // Mobile navigation toggle
@@ -489,38 +702,43 @@
                 sidebar.classList.add('is-mobile-open');
                 mobileOverlay.classList.add('is-visible');
                 document.body.style.overflow = 'hidden';
+                mobileToggle.classList.add('is-open');
+                mobileToggle.setAttribute('aria-expanded', 'true');
             });
 
-            mobileOverlay.addEventListener('click', function() {
+            function closeMobileNav() {
                 sidebar.classList.remove('is-mobile-open');
                 mobileOverlay.classList.remove('is-visible');
                 document.body.style.overflow = '';
-            });
+                mobileToggle.classList.remove('is-open');
+                mobileToggle.setAttribute('aria-expanded', 'false');
+            }
+
+            mobileOverlay.addEventListener('click', closeMobileNav);
 
             // Close on escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && sidebar.classList.contains('is-mobile-open')) {
-                    sidebar.classList.remove('is-mobile-open');
-                    mobileOverlay.classList.remove('is-visible');
-                    document.body.style.overflow = '';
+                    closeMobileNav();
+                    mobileToggle.focus(); // Return focus to toggle button
                 }
             });
         }
 
         // Collapsible nav categories
-        const categoryHeaders = document.querySelectorAll('.nav-category__header');
+        var categoryHeaders = document.querySelectorAll('.nav-category__header');
         categoryHeaders.forEach(function(header) {
             header.addEventListener('click', function() {
-                const category = this.closest('.nav-category');
+                var category = this.closest('.nav-category');
                 if (category) {
                     category.classList.toggle('is-collapsed');
-                    const isExpanded = !category.classList.contains('is-collapsed');
+                    var isExpanded = !category.classList.contains('is-collapsed');
                     this.setAttribute('aria-expanded', isExpanded);
                     
                     // Save preference
-                    const categoryId = category.dataset.categoryId;
+                    var categoryId = category.dataset.categoryId;
                     if (categoryId) {
-                        const prefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
+                        var prefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
                         prefs[categoryId] = !isExpanded;
                         localStorage.setItem('shifty_nav_prefs', JSON.stringify(prefs));
                     }
@@ -537,12 +755,12 @@
         });
 
         // Restore category collapsed states
-        const navPrefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
+        var navPrefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
         document.querySelectorAll('.nav-category[data-category-id]').forEach(function(category) {
-            const categoryId = category.dataset.categoryId;
+            var categoryId = category.dataset.categoryId;
             if (navPrefs[categoryId]) {
                 category.classList.add('is-collapsed');
-                const header = category.querySelector('.nav-category__header');
+                var header = category.querySelector('.nav-category__header');
                 if (header) header.setAttribute('aria-expanded', 'false');
             }
         });

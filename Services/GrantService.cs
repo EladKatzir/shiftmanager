@@ -62,6 +62,12 @@ public class GrantService : IGrantService
             // Project scope covers everything below
             if (grant.ProjectId.HasValue)
             {
+                // Project-level grants provide access even when no specific scope is requested
+                // (e.g., user has no hierarchy context but has a project-wide grant)
+                if (!projectId.HasValue && !areaId.HasValue && !moleculeId.HasValue &&
+                    !departmentId.HasValue && !companyId.HasValue && !jobTypeId.HasValue)
+                    return true;
+
                 if (projectId.HasValue && grant.ProjectId == projectId)
                     return true;
                 // Project scope also covers area, molecule, etc. if they belong to this project
@@ -158,6 +164,14 @@ public class GrantService : IGrantService
         var grantType = await _db.GrantTypes.FindAsync(grantTypeId);
         if (grantType == null || !grantType.IsActive)
             return null;
+
+        // Enforce CanGive delegation - granter must have CanGive permission for this grant type
+        if (grantedByUserId.HasValue)
+        {
+            var canGrant = await CanUserGrantAsync(grantedByUserId.Value, grantTypeId, scope);
+            if (!canGrant)
+                throw new UnauthorizedAccessException("User does not have permission to grant this type or scope");
+        }
 
         // Check if grant already exists with same scope
         var existingGrant = await _db.Grants
@@ -301,5 +315,109 @@ public class GrantService : IGrantService
             GrantScopeMode.Custom => roleScope,
             _ => roleScope
         };
+    }
+
+    /// <summary>
+    /// Checks if a user can grant a specific grant type at the given scope.
+    /// User must have CanGive=true for the grant type and the scope must be
+    /// same or narrower than the user's grant scope.
+    /// </summary>
+    public async Task<bool> CanUserGrantAsync(int granterId, int grantTypeId, GrantScope targetScope)
+    {
+        // Get granter's grants with CanGive=true for this grant type
+        var granterGrants = await _db.Grants
+            .Where(g => g.UserId == granterId && g.GrantTypeId == grantTypeId && g.CanGive)
+            .ToListAsync();
+
+        if (!granterGrants.Any())
+            return false;
+
+        // Check if any of the granter's grants covers the target scope
+        foreach (var grant in granterGrants)
+        {
+            if (ScopeCovers(grant, targetScope))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Determines if a grant's scope covers (is same or broader than) the target scope.
+    /// Broader scopes cover narrower scopes: Project > Area > Molecule > Company/Department
+    /// </summary>
+    private bool ScopeCovers(Grant granterGrant, GrantScope targetScope)
+    {
+        // Project scope covers everything
+        if (granterGrant.ProjectId.HasValue)
+        {
+            // If target has a project scope, it must match
+            if (targetScope.ProjectId.HasValue)
+                return granterGrant.ProjectId == targetScope.ProjectId;
+            // Project scope covers all sub-scopes
+            return true;
+        }
+
+        // Area scope covers molecules, companies, departments within that area
+        if (granterGrant.AreaId.HasValue)
+        {
+            if (targetScope.AreaId.HasValue)
+                return granterGrant.AreaId == targetScope.AreaId;
+            // Area cannot cover project scope
+            if (targetScope.ProjectId.HasValue)
+                return false;
+            // Area scope covers molecule/company/department if they're within the area
+            // For simplicity, require area match or narrower scope
+            return !targetScope.AreaId.HasValue;
+        }
+
+        // Molecule scope covers companies, departments within that molecule
+        if (granterGrant.MoleculeId.HasValue)
+        {
+            if (targetScope.MoleculeId.HasValue)
+                return granterGrant.MoleculeId == targetScope.MoleculeId;
+            // Molecule cannot cover project or area scope
+            if (targetScope.ProjectId.HasValue || targetScope.AreaId.HasValue)
+                return false;
+            // Molecule scope can cover company/department within molecule
+            return true;
+        }
+
+        // Company scope
+        if (granterGrant.CompanyId.HasValue)
+        {
+            if (targetScope.CompanyId.HasValue)
+                return granterGrant.CompanyId == targetScope.CompanyId;
+            // Company cannot cover broader scopes
+            if (targetScope.ProjectId.HasValue || targetScope.AreaId.HasValue || targetScope.MoleculeId.HasValue)
+                return false;
+        }
+
+        // Department scope
+        if (granterGrant.DepartmentId.HasValue)
+        {
+            if (targetScope.DepartmentId.HasValue)
+                return granterGrant.DepartmentId == targetScope.DepartmentId;
+            // Department cannot cover broader scopes
+            return false;
+        }
+
+        // JobType scope
+        if (granterGrant.JobTypeId.HasValue)
+        {
+            if (targetScope.JobTypeId.HasValue)
+            {
+                if (granterGrant.JobTypeId != targetScope.JobTypeId)
+                    return false;
+                // If both have company, they must match
+                if (granterGrant.CompanyId.HasValue && targetScope.CompanyId.HasValue)
+                    return granterGrant.CompanyId == targetScope.CompanyId;
+                return true;
+            }
+            return false;
+        }
+
+        // Self-scoped grant (no scope defined) - cannot grant to others
+        return false;
     }
 }

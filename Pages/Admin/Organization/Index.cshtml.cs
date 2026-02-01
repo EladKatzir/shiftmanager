@@ -10,7 +10,7 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:ViewHierarchy")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

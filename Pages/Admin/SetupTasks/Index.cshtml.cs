@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.SetupTasks;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:SystemConfiguration")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

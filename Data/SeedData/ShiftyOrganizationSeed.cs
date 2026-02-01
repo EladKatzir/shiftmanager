@@ -6,8 +6,10 @@ namespace ShiftManager.Data.SeedData;
 
 /// <summary>
 /// Seeds the Shifty organization hierarchy:
-/// Project: Shifty → Area: 190 → Molecules (Oren, Ella, Harava, Shaked, Shikma, NOC, Shiklut, Gefen)
+/// Project: Shifty → Area: 190 → Molecules (Oren, Ella, Harava, Shaked, Gefen, Shikma, NOC, Shiklut, System)
 /// with their companies, departments, job types, and shift groupings.
+///
+/// System molecule contains SystemAdmins company for administrative users (Owner, etc.)
 /// </summary>
 public static class ShiftyOrganizationSeed
 {
@@ -82,7 +84,10 @@ public static class ShiftyOrganizationSeed
         var noc = new Molecule { AreaId = area.Id, Name = "NOC", DisplayName = "נגדים", Type = MoleculeType.Helper };
         var shiklut = new Molecule { AreaId = area.Id, Name = "Shiklut", DisplayName = "שקלוט", Type = MoleculeType.Helper };
 
-        db.Molecules.AddRange(oren, ella, harava, shaked, gefen, shikma, noc, shiklut);
+        // --- System Molecule (for admin users) ---
+        var system = new Molecule { AreaId = area.Id, Name = "System", DisplayName = "מערכת", Type = MoleculeType.System };
+
+        db.Molecules.AddRange(oren, ella, harava, shaked, gefen, shikma, noc, shiklut, system);
         await db.SaveChangesAsync();
 
         // ============================================================
@@ -132,6 +137,10 @@ public static class ShiftyOrganizationSeed
             new() { Name = "Matot", DisplayName = "מטות", MoleculeId = gefen.Id }
         };
         db.Companies.AddRange(gefenCompanies);
+
+        // --- System Company (for admin users) ---
+        var systemAdmins = new Company { Name = "SystemAdmins", DisplayName = "מנהלי מערכת", MoleculeId = system.Id };
+        db.Companies.Add(systemAdmins);
 
         await db.SaveChangesAsync();
 

@@ -2627,3 +2627,539 @@ label .required {
     forced-color-adjust: none;
   }
 }
+
+/* ========================================
+   27. IMAGE OPTIMIZATION (B-031)
+   ========================================
+
+   Utilities for:
+   - Responsive images
+   - Preventing CLS (Cumulative Layout Shift)
+   - Lazy loading placeholders
+   - Avatar images
+   ======================================== */
+
+/* ----------------------------------------
+   Responsive Images Base
+   ---------------------------------------- */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Images with explicit dimensions */
+img[width][height] {
+  /* Allow browser to calculate aspect ratio from attributes */
+  aspect-ratio: attr(width) / attr(height);
+}
+
+/* ----------------------------------------
+   Image Container for CLS Prevention
+   ---------------------------------------- */
+.img-container {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+
+.img-container--16-9 {
+  aspect-ratio: 16 / 9;
+}
+
+.img-container--4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+.img-container--1-1 {
+  aspect-ratio: 1 / 1;
+}
+
+.img-container--3-2 {
+  aspect-ratio: 3 / 2;
+}
+
+.img-container--21-9 {
+  aspect-ratio: 21 / 9;
+}
+
+.img-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-container--contain img {
+  object-fit: contain;
+}
+
+/* ----------------------------------------
+   Lazy Loading Placeholder
+   ---------------------------------------- */
+img[loading="lazy"] {
+  background: var(--surface-soft);
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+img[loading="lazy"].loaded {
+  background: transparent;
+}
+
+/* Skeleton placeholder for images */
+.img-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-soft) 0%,
+    var(--surface) 50%,
+    var(--surface-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* ----------------------------------------
+   Avatar Images (Enhanced)
+   ---------------------------------------- */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity var(--duration-normal);
+}
+
+.avatar img[loading="lazy"] {
+  opacity: 0;
+}
+
+.avatar img.loaded {
+  opacity: 1;
+}
+
+.avatar__fallback {
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* ----------------------------------------
+   Picture Element Styles
+   ---------------------------------------- */
+picture {
+  display: block;
+}
+
+picture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ----------------------------------------
+   Brand/Logo Images
+   ---------------------------------------- */
+.brand-image {
+  /* Ensure brand images never lazy load */
+  loading: eager !important;
+}
+
+.brand-image img {
+  loading: eager;
+}
+
+/* ----------------------------------------
+   Gallery/Thumbnail Images
+   ---------------------------------------- */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.gallery-item {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+/* ----------------------------------------
+   Responsive Image Sizes (srcset helper)
+   ---------------------------------------- */
+.img-full {
+  width: 100%;
+  height: auto;
+}
+
+.img-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-contain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ----------------------------------------
+   Hero Images
+   ---------------------------------------- */
+.hero-image {
+  width: 100%;
+  height: auto;
+  /* Hero images should not lazy load */
+}
+
+.hero-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* ----------------------------------------
+   Print Optimization
+   ---------------------------------------- */
+@media print {
+  img[loading="lazy"] {
+    /* Force load all images for print */
+    loading: eager !important;
+  }
+
+  .img-container {
+    break-inside: avoid;
+  }
+}
+
+/* ----------------------------------------
+   Reduced Motion
+   ---------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-item img {
+    transition: none;
+  }
+
+  .gallery-item:hover img {
+    transform: none;
+  }
+
+  img[loading="lazy"] {
+    transition: none;
+  }
+}
+
+/* ========================================
+   28. LAZY LOADING STATES (B-030)
+   Code splitting and lazy loading utilities
+   ======================================== */
+
+/* Loading spinner animation */
+@keyframes lazy-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Generic loading spinner */
+.modal-loading-spinner,
+.lazy-loading-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: lazy-spinner 0.75s linear infinite;
+  vertical-align: middle;
+}
+
+/* Loading state for interactive elements */
+.is-loading {
+  position: relative;
+  opacity: 0.7;
+  pointer-events: none;
+  cursor: wait;
+}
+
+.is-loading::after {
+  content: '';
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-left: var(--space-2);
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: lazy-spinner 0.75s linear infinite;
+  vertical-align: middle;
+}
+
+/* Lazy-loaded modal container */
+.lazy-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: var(--space-4);
+}
+
+.lazy-modal.modal--open {
+  display: flex;
+}
+
+.lazy-modal .modal-content {
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Skeleton loading placeholder */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-soft) 25%,
+    var(--surface) 50%,
+    var(--surface-soft) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton--text {
+  height: 1em;
+  width: 100%;
+}
+
+.skeleton--text-sm {
+  height: 0.75em;
+  width: 60%;
+}
+
+.skeleton--avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton--card {
+  height: 120px;
+  width: 100%;
+}
+
+/* RTL support for loading states */
+[dir="rtl"] .is-loading::after {
+  margin-left: 0;
+  margin-right: var(--space-2);
+}
+
+/* Reduced motion for lazy loading */
+@media (prefers-reduced-motion: reduce) {
+  .modal-loading-spinner,
+  .lazy-loading-spinner,
+  .is-loading::after {
+    animation: none;
+  }
+
+  .skeleton {
+    animation: none;
+    background: var(--surface-soft);
+  }
+}
+
+/* ========================================
+   29. PAGE LOAD ANIMATION (B-015)
+   ========================================
+
+   Branded loading animation for initial page load:
+   - Uses ShiftManager brand colors
+   - Respects prefers-reduced-motion
+   - Auto-dismisses when DOM ready or after timeout
+   - Works in light and dark mode
+   ======================================== */
+
+/* Full-page loading overlay */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-max, 9999);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background-color: var(--bg, #F8F9FB);
+  transition: opacity 0.3s var(--ease-out), visibility 0.3s var(--ease-out);
+}
+
+/* Dark mode background */
+:root[data-theme="dark"] .page-loader {
+  background-color: var(--bg, #0F1419);
+}
+
+/* Hidden state */
+.page-loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Brand logo container */
+.page-loader__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Logo with pulse animation */
+.page-loader__logo {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary, #1E3A5F);
+  border-radius: var(--radius-lg, 12px);
+  animation: page-loader-pulse 1.5s ease-in-out infinite;
+}
+
+.page-loader__logo img {
+  width: 48px;
+  height: 48px;
+  filter: brightness(0) invert(1);
+}
+
+/* Fallback icon if image fails */
+.page-loader__logo-fallback {
+  font-size: 32px;
+  line-height: 1;
+}
+
+/* Brand name text */
+.page-loader__name {
+  font-family: var(--font-sans, system-ui);
+  font-size: var(--text-title, 1.5rem);
+  font-weight: var(--font-bold, 700);
+  color: var(--primary, #1E3A5F);
+  letter-spacing: var(--tracking-wide, 0.02em);
+}
+
+:root[data-theme="dark"] .page-loader__name {
+  color: var(--accent, #87CEEB);
+}
+
+/* Animated spinner ring */
+.page-loader__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border, #E2E8F0);
+  border-top-color: var(--primary, #1E3A5F);
+  border-radius: 50%;
+  animation: page-loader-spin 0.8s linear infinite;
+}
+
+:root[data-theme="dark"] .page-loader__spinner {
+  border-color: var(--border, #2D3B4E);
+  border-top-color: var(--accent, #87CEEB);
+}
+
+/* Loading text */
+.page-loader__text {
+  font-family: var(--font-sans, system-ui);
+  font-size: var(--text-small, 0.875rem);
+  color: var(--text-muted, #64748B);
+}
+
+/* Pulse animation for logo */
+@keyframes page-loader-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 30, 58, 95), 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 12px rgba(var(--primary-rgb, 30, 58, 95), 0);
+  }
+}
+
+/* Spin animation for spinner */
+@keyframes page-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ----------------------------------------
+   Reduced Motion: Static Version
+   Shows a static, non-animated loading state
+   ---------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .page-loader__logo {
+    animation: none;
+    box-shadow: var(--shadow-md);
+  }
+
+  .page-loader__spinner {
+    /* Replace spinning animation with a static indicator */
+    animation: none;
+    border-color: var(--primary, #1E3A5F);
+    border-width: 3px;
+    background:
+      linear-gradient(var(--primary, #1E3A5F), var(--primary, #1E3A5F)) top/100% 3px no-repeat,
+      transparent;
+  }
+
+  :root[data-theme="dark"] .page-loader__spinner {
+    border-color: var(--accent, #87CEEB);
+    background:
+      linear-gradient(var(--accent, #87CEEB), var(--accent, #87CEEB)) top/100% 3px no-repeat,
+      transparent;
+  }
+
+  /* Faster fade-out transition */
+  .page-loader {
+    transition: opacity 0.1s, visibility 0.1s;
+  }
+}
+
+/* ----------------------------------------
+   Print: Hide loader
+   ---------------------------------------- */
+@media print {
+  .page-loader {
+    display: none !important;
+  }
+}

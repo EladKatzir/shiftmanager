@@ -9,7 +9,7 @@ namespace ShiftManager.Pages.Owner;
 /// Page handler for Owner to clear company selection and return to home company.
 /// Deletes the owner_selected_company cookie.
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class ClearCompanySelectionModel : PageModel
 {
     private readonly IOwnerCompanySelectorService _ownerCompanySelector;

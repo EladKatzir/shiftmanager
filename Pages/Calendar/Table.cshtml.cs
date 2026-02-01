@@ -76,14 +76,29 @@ public class TableModel : PageModel
         }
 
         // Default to current week if no start date provided
+        // ✅ A-019: Safe date parsing with fallback to today on invalid input
+        var today = DateOnly.FromDateTime(DateTime.Today);
         if (string.IsNullOrEmpty(start))
         {
-            var today = DateOnly.FromDateTime(DateTime.Today);
             StartDate = today.AddDays(-(int)today.DayOfWeek); // Start of week (Sunday)
+        }
+        else if (DateOnly.TryParse(start, out var parsedDate))
+        {
+            // Validate parsed date is within reasonable bounds
+            if (parsedDate.Year >= 1900 && parsedDate.Year <= 2100)
+            {
+                StartDate = parsedDate;
+            }
+            else
+            {
+                _logger.LogWarning("Invalid start date year: {Start}, defaulting to current week", start);
+                StartDate = today.AddDays(-(int)today.DayOfWeek);
+            }
         }
         else
         {
-            StartDate = DateOnly.Parse(start);
+            _logger.LogWarning("Invalid start date format: {Start}, defaulting to current week", start);
+            StartDate = today.AddDays(-(int)today.DayOfWeek);
         }
 
         // Calculate end date based on view mode

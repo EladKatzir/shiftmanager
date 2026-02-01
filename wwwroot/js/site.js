@@ -174,11 +174,16 @@ async function adjustStaffing(url, payload, onOk, onError) {
   }
 }
 
-// Toast notification system
+// Toast notification system (B-001-EXT: Respects prefers-reduced-motion)
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
+
+  // Check for reduced motion preference
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+  const transitionDuration = reducedMotion ? 0 : 0.3;
+
   toast.style.cssText = `
     position: fixed;
     top: 20px;
@@ -188,8 +193,8 @@ function showToast(message, type = 'info') {
     color: white;
     font-weight: 500;
     z-index: 1000;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
+    transform: translateX(${reducedMotion ? '0' : '400px'});
+    transition: ${reducedMotion ? 'none' : 'transform 0.3s ease'};
     max-width: 300px;
     word-wrap: break-word;
     ${type === 'error' ? 'background: #dc3545;' : 'background: #2e7d32;'}
@@ -197,18 +202,27 @@ function showToast(message, type = 'info') {
 
   document.body.appendChild(toast);
 
-  // Slide in
-  setTimeout(() => {
-    toast.style.transform = 'translateX(0)';
-  }, 10);
+  // Slide in (skip animation if reduced motion)
+  if (!reducedMotion) {
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 10);
+  }
 
   // Slide out and remove
+  const displayTime = 3000;
+  const animationTime = reducedMotion ? 0 : 300;
+
   setTimeout(() => {
-    toast.style.transform = 'translateX(400px)';
+    if (!reducedMotion) {
+      toast.style.transform = 'translateX(400px)';
+    }
     setTimeout(() => {
-      document.body.removeChild(toast);
-    }, 300);
-  }, 3000);
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, animationTime);
+  }, displayTime);
 }
 
 // Add keyboard shortcuts for calendar navigation
@@ -583,11 +597,15 @@ async function createShift() {
   }
 }
 
-// Enhanced toast with success styling
+// Enhanced toast with success styling (B-001-EXT: Respects prefers-reduced-motion)
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
+
+  // Check for reduced motion preference
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+
   toast.style.cssText = `
     position: fixed;
     top: 20px;
@@ -597,8 +615,8 @@ function showToast(message, type = 'info') {
     color: white;
     font-weight: 500;
     z-index: 10001;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
+    transform: translateX(${reducedMotion ? '0' : '400px'});
+    transition: ${reducedMotion ? 'none' : 'transform 0.3s ease'};
     max-width: 300px;
     word-wrap: break-word;
     ${type === 'error' ? 'background: #dc3545;' : type === 'success' ? 'background: #28a745;' : 'background: #2e7d32;'}
@@ -606,20 +624,27 @@ function showToast(message, type = 'info') {
 
   document.body.appendChild(toast);
 
-  // Slide in
-  setTimeout(() => {
-    toast.style.transform = 'translateX(0)';
-  }, 10);
+  // Slide in (skip animation if reduced motion)
+  if (!reducedMotion) {
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 10);
+  }
 
   // Slide out and remove
+  const displayTime = 4000;
+  const animationTime = reducedMotion ? 0 : 300;
+
   setTimeout(() => {
-    toast.style.transform = 'translateX(400px)';
+    if (!reducedMotion) {
+      toast.style.transform = 'translateX(400px)';
+    }
     setTimeout(() => {
       if (document.body.contains(toast)) {
         document.body.removeChild(toast);
       }
-    }, 300);
-  }, 4000);
+    }, animationTime);
+  }, displayTime);
 }
 
 window.adjustStaffing = adjustStaffing;
@@ -640,6 +665,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showAccessDeniedPopup() {
+  // Check for reduced motion preference (B-001-EXT)
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+
   // Create popup overlay
   const overlay = document.createElement('div');
   overlay.style.cssText = `
@@ -653,7 +681,7 @@ function showAccessDeniedPopup() {
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease;
+    ${reducedMotion ? '' : 'animation: fadeIn 0.3s ease;'}
   `;
 
   // Create popup content
@@ -666,7 +694,7 @@ function showAccessDeniedPopup() {
     max-width: 400px;
     text-align: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.3s ease;
+    ${reducedMotion ? '' : 'animation: slideIn 0.3s ease;'}
   `;
 
   popup.innerHTML = `
@@ -704,10 +732,15 @@ function showAccessDeniedPopup() {
   `;
   document.head.appendChild(style);
 
-  // Close popup handlers
+  // Close popup handlers (B-001-EXT: Respects prefers-reduced-motion)
   function closePopup() {
-    overlay.style.animation = 'fadeIn 0.3s ease reverse';
-    popup.style.animation = 'slideIn 0.3s ease reverse';
+    const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+    const animationTime = reducedMotion ? 0 : 300;
+
+    if (!reducedMotion) {
+      overlay.style.animation = 'fadeIn 0.3s ease reverse';
+      popup.style.animation = 'slideIn 0.3s ease reverse';
+    }
     setTimeout(() => {
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -715,7 +748,7 @@ function showAccessDeniedPopup() {
       if (document.head.contains(style)) {
         document.head.removeChild(style);
       }
-    }, 300);
+    }, animationTime);
   }
 
   document.getElementById('closeAccessDenied').addEventListener('click', closePopup);
@@ -1022,10 +1055,14 @@ function navigateCommandPalette(direction) {
 
 function updateSelectedItem() {
   const items = document.querySelectorAll('.command-palette-item');
+  // B-001-EXT: Respect reduced motion preference for scroll behavior
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+  const scrollBehavior = reducedMotion ? 'auto' : 'smooth';
+
   items.forEach((item, index) => {
     if (index === commandPaletteState.selectedIndex) {
       item.classList.add('selected');
-      item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      item.scrollIntoView({ block: 'nearest', behavior: scrollBehavior });
     } else {
       item.classList.remove('selected');
     }

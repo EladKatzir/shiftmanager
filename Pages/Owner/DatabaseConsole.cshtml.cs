@@ -11,7 +11,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Database Console - Execute SQL queries and view database schema
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:SystemConfiguration")]
 public class DatabaseConsoleModel : PageModel
 {
     private readonly AppDbContext _db;

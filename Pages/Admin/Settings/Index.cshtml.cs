@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Settings;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:ViewSettings")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

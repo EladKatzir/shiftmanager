@@ -238,12 +238,12 @@ public class GrantServiceTests : IDisposable
         // Arrange
         var entities = await SetupTestEntitiesAsync();
 
-        // Act
+        // Act - System grant (no granter) to bypass CanGive enforcement
         var grant = await _service.GrantAsync(
             entities.User.Id,
             entities.GrantTypes["Shift.View"].Id,
             GrantScope.Company(entities.Companies[0].Id),
-            grantedByUserId: 999,
+            grantedByUserId: null,
             notes: "Test grant"
         );
 
@@ -252,7 +252,7 @@ public class GrantServiceTests : IDisposable
         grant!.UserId.Should().Be(entities.User.Id);
         grant.GrantTypeId.Should().Be(entities.GrantTypes["Shift.View"].Id);
         grant.CompanyId.Should().Be(entities.Companies[0].Id);
-        grant.GrantedByUserId.Should().Be(999);
+        grant.GrantedByUserId.Should().BeNull("System grants have no granter");
         grant.Notes.Should().Be("Test grant");
     }
 
@@ -540,4 +540,448 @@ public class RoleAssignmentTests : IDisposable
         RoleTemplate RoleTemplate,
         AppUser User
     );
+}
+
+/// <summary>
+/// Tests for V3 Audit - CanGive Delegation Enforcement
+/// Verifies that CanGive permission is required to grant permissions to others.
+/// </summary>
+public class CanGiveDelegationTests : IDisposable
+{
+    private readonly AppDbContext _db;
+    private readonly GrantService _grantService;
+    private readonly Mock<IHierarchyService> _hierarchyServiceMock;
+
+    public CanGiveDelegationTests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _db = new AppDbContext(options);
+        _hierarchyServiceMock = new Mock<IHierarchyService>();
+        _grantService = new GrantService(_db, _hierarchyServiceMock.Object);
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+    }
+
+    private async Task<CanGiveTestEntities> SetupCanGiveTestEntitiesAsync()
+    {
+        // Create hierarchy
+        var project = new Project { Name = "TestProject", DisplayName = "Test Project" };
+        _db.Projects.Add(project);
+        await _db.SaveChangesAsync();
+
+        var area = new Area { ProjectId = project.Id, Name = "TestArea", DisplayName = "Test Area" };
+        _db.Areas.Add(area);
+        await _db.SaveChangesAsync();
+
+        var molecule = new Molecule { AreaId = area.Id, Name = "TestMolecule", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(molecule);
+        await _db.SaveChangesAsync();
+
+        var company = new Company { MoleculeId = molecule.Id, Name = "TestCompany", DisplayName = "Test Company" };
+        _db.Companies.Add(company);
+        await _db.SaveChangesAsync();
+
+        // Create grant types
+        var viewShiftGrantType = new GrantType { Key = "ViewShifts", NameKey = "Grant_ViewShifts", Category = GrantCategory.Shift };
+        var assignShiftGrantType = new GrantType { Key = "AssignAlhutShifts", NameKey = "Grant_AssignAlhutShifts", Category = GrantCategory.Shift };
+        _db.GrantTypes.AddRange(viewShiftGrantType, assignShiftGrantType);
+        await _db.SaveChangesAsync();
+
+        // Create users - one with CanGive, one without
+        var granterWithCanGive = new AppUser
+        {
+            CompanyId = company.Id,
+            Email = "granter-cangive@test.com",
+            DisplayName = "Granter With CanGive",
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        var granterWithoutCanGive = new AppUser
+        {
+            CompanyId = company.Id,
+            Email = "granter-nocangive@test.com",
+            DisplayName = "Granter Without CanGive",
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        var targetUser = new AppUser
+        {
+            CompanyId = company.Id,
+            Email = "target@test.com",
+            DisplayName = "Target User",
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.AddRange(granterWithCanGive, granterWithoutCanGive, targetUser);
+        await _db.SaveChangesAsync();
+
+        // Give granterWithCanGive a grant with CanGive=true
+        var grantWithCanGive = new Grant
+        {
+            UserId = granterWithCanGive.Id,
+            GrantTypeId = assignShiftGrantType.Id,
+            MoleculeId = molecule.Id,
+            CanOwn = true,
+            CanGive = true,
+            GrantedAt = DateTime.UtcNow,
+            IsAutoGrant = false
+        };
+        _db.Grants.Add(grantWithCanGive);
+
+        // Give granterWithoutCanGive a grant with CanGive=false
+        var grantWithoutCanGive = new Grant
+        {
+            UserId = granterWithoutCanGive.Id,
+            GrantTypeId = assignShiftGrantType.Id,
+            MoleculeId = molecule.Id,
+            CanOwn = true,
+            CanGive = false,
+            GrantedAt = DateTime.UtcNow,
+            IsAutoGrant = false
+        };
+        _db.Grants.Add(grantWithoutCanGive);
+        await _db.SaveChangesAsync();
+
+        return new CanGiveTestEntities(
+            Project: project,
+            Area: area,
+            Molecule: molecule,
+            Company: company,
+            GrantTypes: new Dictionary<string, GrantType>
+            {
+                ["ViewShifts"] = viewShiftGrantType,
+                ["AssignAlhutShifts"] = assignShiftGrantType
+            },
+            GranterWithCanGive: granterWithCanGive,
+            GranterWithoutCanGive: granterWithoutCanGive,
+            TargetUser: targetUser
+        );
+    }
+
+    [Fact]
+    public async Task CanUserGrantAsync_WithCanGiveTrue_ReturnsTrue()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // Act
+        var canGrant = await _grantService.CanUserGrantAsync(
+            entities.GranterWithCanGive.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Molecule(entities.Molecule.Id)
+        );
+
+        // Assert
+        canGrant.Should().BeTrue("User with CanGive=true should be able to grant");
+    }
+
+    [Fact]
+    public async Task CanUserGrantAsync_WithCanGiveFalse_ReturnsFalse()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // Act
+        var canGrant = await _grantService.CanUserGrantAsync(
+            entities.GranterWithoutCanGive.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Molecule(entities.Molecule.Id)
+        );
+
+        // Assert
+        canGrant.Should().BeFalse("User with CanGive=false should not be able to grant");
+    }
+
+    [Fact]
+    public async Task CanUserGrantAsync_WithNoGrant_ReturnsFalse()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // Act - Target user has no grants at all
+        var canGrant = await _grantService.CanUserGrantAsync(
+            entities.TargetUser.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Molecule(entities.Molecule.Id)
+        );
+
+        // Assert
+        canGrant.Should().BeFalse("User without any grants should not be able to grant");
+    }
+
+    [Fact]
+    public async Task GrantAsync_WithCanGivePermission_Succeeds()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // Act
+        var grant = await _grantService.GrantAsync(
+            entities.TargetUser.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Company(entities.Company.Id),
+            grantedByUserId: entities.GranterWithCanGive.Id
+        );
+
+        // Assert
+        grant.Should().NotBeNull("Granting with CanGive permission should succeed");
+        grant!.UserId.Should().Be(entities.TargetUser.Id);
+    }
+
+    [Fact]
+    public async Task GrantAsync_WithoutCanGivePermission_ThrowsUnauthorized()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // Act & Assert
+        await FluentActions.Invoking(() => _grantService.GrantAsync(
+            entities.TargetUser.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Company(entities.Company.Id),
+            grantedByUserId: entities.GranterWithoutCanGive.Id
+        )).Should().ThrowAsync<UnauthorizedAccessException>("Granting without CanGive permission should throw");
+    }
+
+    [Fact]
+    public async Task GrantAsync_WithNarrowerScope_Succeeds()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // GranterWithCanGive has molecule-level grant, try to grant company-level (narrower)
+        var grant = await _grantService.GrantAsync(
+            entities.TargetUser.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Company(entities.Company.Id), // Company is narrower than Molecule
+            grantedByUserId: entities.GranterWithCanGive.Id
+        );
+
+        // Assert
+        grant.Should().NotBeNull("Granting at narrower scope should succeed");
+    }
+
+    [Fact]
+    public async Task GrantAsync_WithBroaderScope_ThrowsUnauthorized()
+    {
+        // Arrange
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // GranterWithCanGive has molecule-level grant, try to grant area-level (broader)
+        await FluentActions.Invoking(() => _grantService.GrantAsync(
+            entities.TargetUser.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Area(entities.Area.Id), // Area is broader than Molecule
+            grantedByUserId: entities.GranterWithCanGive.Id
+        )).Should().ThrowAsync<UnauthorizedAccessException>("Granting at broader scope should fail");
+    }
+
+    [Fact]
+    public async Task GrantAsync_WithNoGranter_Succeeds()
+    {
+        // Arrange - System/admin grants without a granter
+        var entities = await SetupCanGiveTestEntitiesAsync();
+
+        // Act - No grantedByUserId (system grant)
+        var grant = await _grantService.GrantAsync(
+            entities.TargetUser.Id,
+            entities.GrantTypes["AssignAlhutShifts"].Id,
+            GrantScope.Company(entities.Company.Id),
+            grantedByUserId: null
+        );
+
+        // Assert
+        grant.Should().NotBeNull("System grants without granter should succeed");
+    }
+
+    private record CanGiveTestEntities(
+        Project Project,
+        Area Area,
+        Molecule Molecule,
+        Company Company,
+        Dictionary<string, GrantType> GrantTypes,
+        AppUser GranterWithCanGive,
+        AppUser GranterWithoutCanGive,
+        AppUser TargetUser
+    );
+}
+
+/// <summary>
+/// Tests for V3 Audit - Assigner Role Configuration
+/// Verifies that Assigner role has only chore grants, not shift grants.
+/// </summary>
+public class AssignerRoleTests : IDisposable
+{
+    private readonly AppDbContext _db;
+
+    public AssignerRoleTests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _db = new AppDbContext(options);
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+    }
+
+    [Fact]
+    public void RoleTemplateSeed_AssignerRole_HasOnlyChoreGrants()
+    {
+        // Arrange
+        var roleTemplates = Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
+        var roleGrants = Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+
+        // Find Assigner role (ID 8)
+        var assignerRole = roleTemplates.FirstOrDefault(rt => rt.Key == "Assigner");
+        assignerRole.Should().NotBeNull("Assigner role should exist");
+
+        // Get grants for Assigner role
+        var assignerGrants = roleGrants.Where(rg => rg.RoleTemplateId == assignerRole!.Id).ToList();
+
+        // Get the grant types for those grants
+        var assignerGrantTypes = assignerGrants
+            .Select(ag => grantTypes.FirstOrDefault(gt => gt.Id == ag.GrantTypeId))
+            .Where(gt => gt != null)
+            .ToList();
+
+        // Assert - Should only have chore grants
+        assignerGrantTypes.Should().NotBeEmpty("Assigner should have some grants");
+        assignerGrantTypes.Should().AllSatisfy(gt =>
+        {
+            gt!.Category.Should().Be(GrantCategory.Chore,
+                $"Assigner grant '{gt.Key}' should be a chore grant, not {gt.Category}");
+        });
+
+        // Verify specific grants
+        var grantKeys = assignerGrantTypes.Select(gt => gt!.Key).ToList();
+        grantKeys.Should().Contain("AssignChores", "Assigner should have AssignChores grant");
+        grantKeys.Should().Contain("ViewChores", "Assigner should have ViewChores grant");
+
+        // Verify NO shift grants
+        grantKeys.Should().NotContain(k => k.Contains("Shift"), "Assigner should NOT have any shift grants");
+    }
+}
+
+/// <summary>
+/// Tests for V3 Audit - Grant Type Seed Count
+/// Verifies that all 107 grant types are properly seeded.
+/// </summary>
+public class GrantTypeSeedTests
+{
+    [Fact]
+    public void GrantTypeSeed_Creates_ExpectedNumberOfGrants()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+
+        // Assert - The plan calls for 107 grants (59 original + 48 new)
+        grantTypes.Should().HaveCount(107, "Should have exactly 107 grant types as per spec");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasUniqueIds()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var ids = grantTypes.Select(gt => gt.Id).ToList();
+
+        // Assert
+        ids.Should().OnlyHaveUniqueItems("All grant type IDs should be unique");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasUniqueKeys()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var keys = grantTypes.Select(gt => gt.Key).ToList();
+
+        // Assert
+        keys.Should().OnlyHaveUniqueItems("All grant type keys should be unique");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasAllRequiredShiftCalendarGrants()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var keys = grantTypes.Select(gt => gt.Key).ToList();
+
+        // Assert - Shift calendars
+        keys.Should().Contain("ViewAlhutShiftCalendar");
+        keys.Should().Contain("ViewTextShiftCalendar");
+        keys.Should().Contain("ViewBRShiftCalendar");
+        keys.Should().Contain("ViewHakamShiftCalendar");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasAllRequiredTechGrants()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var keys = grantTypes.Select(gt => gt.Key).ToList();
+
+        // Assert - Tech calendars
+        keys.Should().Contain("ViewHanavaCalendar");
+        keys.Should().Contain("ViewDeltaCalendar");
+        keys.Should().Contain("ViewYekevCalendar");
+        keys.Should().Contain("ViewMoviltechCalendar");
+
+        // Assert - Tech assignment
+        keys.Should().Contain("AssignHanavaShifts");
+        keys.Should().Contain("AssignDeltaShifts");
+        keys.Should().Contain("AssignYekevShifts");
+        keys.Should().Contain("AssignMoviltechShifts");
+
+        // Assert - Tech eligibility
+        keys.Should().Contain("CanBeAssignedHanava");
+        keys.Should().Contain("CanBeAssignedDelta");
+        keys.Should().Contain("CanBeAssignedYekev");
+        keys.Should().Contain("CanBeAssignedMoviltech");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasAllRequiredHelperMoleculeGrants()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var keys = grantTypes.Select(gt => gt.Key).ToList();
+
+        // Assert - Shiklut grants
+        keys.Should().Contain("ViewShiklutCalendar");
+        keys.Should().Contain("AssignShiklutChores");
+        keys.Should().Contain("ManageShiklutBlueprints");
+        keys.Should().Contain("ManageShiklutPrograms");
+        keys.Should().Contain("CanBeAssignedShiklut");
+
+        // Assert - NOC grants
+        keys.Should().Contain("ViewNOCCalendar");
+        keys.Should().Contain("AssignNOCChores");
+        keys.Should().Contain("ManageNOCBlueprints");
+        keys.Should().Contain("ManageNOCPrograms");
+        keys.Should().Contain("CanBeAssignedNOC");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasKatzinDutyGrants()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var keys = grantTypes.Select(gt => gt.Key).ToList();
+
+        // Assert - Katzin duty grants
+        keys.Should().Contain("ManageKatzinBlueprints");
+        keys.Should().Contain("ManageKatzinPrograms");
+    }
 }

@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Roles;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AssignRoles")]
 public class AssignModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

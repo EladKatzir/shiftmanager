@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Services;
 using ShiftManager.Models.Support;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
+using System.Reflection;
 using ShiftManager.Middleware;
 using ShiftManager.Authorization;
 
@@ -169,10 +171,17 @@ builder.Services.AddScoped<IImportService, ImportService>();
 // Feature Flag Service (UI Overhaul)
 builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
 
+// Client Telemetry Service (B-019, B-020, B-021) - Local observability for air-gapped environments
+builder.Services.AddScoped<IClientTelemetryService, ClientTelemetryService>();
+
 // v3.0 Organizational Hierarchy Services
 builder.Services.AddScoped<IHierarchyService, HierarchyService>();
 builder.Services.AddScoped<IJobTypeService, JobTypeService>();
 builder.Services.AddScoped<IGrantService, GrantService>();
+builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018: Scope-based data filtering
+
+// B-018: Concurrent Edit Conflict Detection
+builder.Services.AddScoped<IConcurrencyService, ConcurrencyService>();
 builder.Services.AddScoped<IWidgetService, WidgetService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
@@ -218,6 +227,56 @@ builder.Services.AddControllers()
 // Add health checks for container orchestration
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
+
+// B-026: Swagger/OpenAPI configuration
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "ShiftManager API",
+        Version = "v1",
+        Description = "REST API for ShiftManager - Military Shift Scheduling System. " +
+                      "Provides endpoints for managing shifts, users, time-off requests, notifications, and more.",
+        Contact = new OpenApiContact
+        {
+            Name = "ShiftManager Support"
+        }
+    });
+
+    // Add API key authentication to Swagger
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "API Key authentication via X-API-Key header",
+        Name = "X-API-Key",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "ApiKeyScheme"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Include XML comments for better documentation
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
 
 var app = builder.Build();
 
@@ -575,7 +634,7 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Seeded {Count} feature flags", featureFlags.Count);
     }
 
-    // Seed test data for QA automation
+    // Seed test data for QA automation (legacy seeder)
     try
     {
         var seeder = new TestDataSeeder(db, scope.ServiceProvider.GetRequiredService<ILogger<TestDataSeeder>>());
@@ -585,12 +644,34 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "An error occurred while seeding test data");
     }
+
+    // ============================================================
+    // SEED E2E TEST DATA (B-041)
+    // Seeds consistent test scenarios for Playwright UI testing
+    // Only runs in Development/Test environments
+    // ============================================================
+    try
+    {
+        await ShiftManager.Data.SeedData.TestDataSeed.SeedTestDataAsync(db, logger);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding E2E test data");
+    }
 }
 
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseStatusCodePages("text/plain", "HTTP {0}");
+
+    // B-026: Enable Swagger UI in development
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ShiftManager API v1");
+        c.RoutePrefix = "swagger";
+    });
 }
 else
 {
@@ -674,11 +755,36 @@ app.UseMiddleware<CompanyContextMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// B-016: Cache-Control headers for API responses
+// Ensures calendar data is not cached stale, other users see changes within 30 seconds
+app.Use(async (context, next) =>
+{
+    await next();
+
+    // Set cache headers for API responses (after the response is generated)
+    if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase) ||
+        context.Request.Path.StartsWithSegments("/Api", StringComparison.OrdinalIgnoreCase))
+    {
+        // Only modify if response hasn't already set cache headers
+        if (!context.Response.Headers.ContainsKey("Cache-Control"))
+        {
+            // No caching for API data - prevents stale calendar data
+            context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            context.Response.Headers["Pragma"] = "no-cache";
+            context.Response.Headers["Expires"] = "0";
+        }
+    }
+});
+
+// B-027: UI Rate Limiting Middleware (for calendar, context, widget endpoints)
+// Uses user ID or IP for rate limiting, separate from API key-based limits
+app.UseMiddleware<ShiftManager.Middleware.RateLimitingMiddleware>();
+
 // API Middleware (only for /api routes)
 app.UseMiddleware<ShiftManager.Middleware.ApiExceptionMiddleware>(); // B-028: Standardized error responses
 app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
-app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>();
+app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>(); // API key-based rate limiting
 app.MapControllers(); // Map API controllers
 app.MapRazorPages();
 

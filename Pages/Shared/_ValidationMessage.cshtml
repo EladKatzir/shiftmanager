@@ -1,0 +1,17 @@
+@*
+    Accessible Validation Message Partial (B-008)
+
+    Usage:
+    @await Html.PartialAsync("_ValidationMessage", "PropertyName")
+
+    Or with Tag Helper:
+    <partial name="_ValidationMessage" model="@("PropertyName")" />
+
+    This partial renders a validation message span with:
+    - aria-live="polite" for screen reader announcements
+    - Proper styling from components.css
+    - Warning icon (via CSS ::before pseudo-element)
+*@
+@model string
+
+<span asp-validation-for="@Model" class="field-validation-error" aria-live="polite"></span>

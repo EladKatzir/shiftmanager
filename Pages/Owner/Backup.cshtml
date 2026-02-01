@@ -24,7 +24,7 @@
             <span class="page-icon">💾</span>
             @Localizer["Owner_Backup"]
         </h1>
-        <p class="page-subtitle">Create and manage database backups</p>
+        <p class="page-subtitle"><loc key="Owner_Backup_Subtitle" /></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Success))
@@ -42,24 +42,24 @@
     }
 
     <div class="backup-actions-card">
-        <h2>🔧 Backup Actions</h2>
+        <h2>🔧 <loc key="Owner_Backup_Actions" /></h2>
         <form method="post" asp-page-handler="CreateBackup">
-            <button type="submit" class="btn btn-primary">💾 Create New Backup</button>
+            <button type="submit" class="btn btn-primary">💾 <loc key="Owner_Backup_CreateNew" /></button>
         </form>
         <p class="help-text">
-            Creates a snapshot of the current database. Backups are stored in the Backups folder.
+            <loc key="Owner_Backup_HelpText" />
         </p>
     </div>
 
     <div class="backups-list-card">
-        <h2>📦 Available Backups</h2>
+        <h2>📦 <loc key="Owner_Backup_AvailableBackups" /></h2>
 
         @if (!Model.Backups.Any())
         {
             <div class="empty-state">
                 <div class="empty-icon">📦</div>
-                <p>No backups found</p>
-                <small>Create your first backup using the button above</small>
+                <p><loc key="Owner_Backup_NoBackupsFound" /></p>
+                <small><loc key="Owner_Backup_CreateFirstBackup" /></small>
             </div>
         }
         else
@@ -68,10 +68,10 @@
                 <table class="backups-table">
                     <thead>
                         <tr>
-                            <th>File Name</th>
-                            <th>Size</th>
-                            <th>Created Date</th>
-                            <th>Actions</th>
+                            <th><loc key="Owner_Backup_FileName" /></th>
+                            <th><loc key="Owner_Backup_Size" /></th>
+                            <th><loc key="Owner_Backup_CreatedDate" /></th>
+                            <th><loc key="Owner_Backup_Actions" /></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,24 +88,24 @@
                                     <div class="action-buttons">
                                         <a href="/Owner/Backup?handler=DownloadBackup&backupFileName=@backup.FileName"
                                            class="btn-action btn-download"
-                                           title="Download">
+                                           loc-title="Owner_Backup_Download">
                                             ⬇️
                                         </a>
-                                        <form method="post" asp-page-handler="RestoreBackup" style="display: inline;">
+                                        <form method="post" asp-page-handler="RestoreBackup" class="inline-form">
                                             <input type="hidden" name="backupFileName" value="@backup.FileName" />
                                             <button type="submit"
                                                     class="btn-action btn-restore"
-                                                    title="Restore"
-                                                    onclick="return confirm('Are you sure you want to restore this backup? The current database will be backed up first.')">
+                                                    loc-title="Owner_Backup_Restore"
+                                                    onclick="return confirm('@Localizer["Owner_Backup_RestoreConfirm"]')">
                                                 ♻️
                                             </button>
                                         </form>
-                                        <form method="post" asp-page-handler="DeleteBackup" style="display: inline;">
+                                        <form method="post" asp-page-handler="DeleteBackup" class="inline-form">
                                             <input type="hidden" name="backupFileName" value="@backup.FileName" />
                                             <button type="submit"
                                                     class="btn-action btn-delete"
-                                                    title="Delete"
-                                                    onclick="return confirm('Are you sure you want to delete this backup?')">
+                                                    loc-title="Owner_Backup_Delete"
+                                                    onclick="return confirm('@Localizer["Owner_Backup_DeleteConfirm"]')">
                                                 🗑️
                                             </button>
                                         </form>
@@ -120,13 +120,13 @@
     </div>
 
     <div class="info-card">
-        <h3>ℹ️ Important Information</h3>
+        <h3>ℹ️ <loc key="Owner_Backup_ImportantInfo" /></h3>
         <ul>
-            <li><strong>Automatic Backups:</strong> Backups are created manually using the button above.</li>
-            <li><strong>Before Restore:</strong> The current database is automatically backed up before any restore operation.</li>
-            <li><strong>Application Restart:</strong> After restoring a backup, restart the application for changes to take effect.</li>
-            <li><strong>Storage Location:</strong> Backups are stored in the <code>Backups</code> folder in the application root.</li>
-            <li><strong>Download:</strong> You can download backups to store them externally for additional safety.</li>
+            <li><strong><loc key="Owner_Backup_AutoBackups" />:</strong> <loc key="Owner_Backup_AutoBackups_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_BeforeRestore" />:</strong> <loc key="Owner_Backup_BeforeRestore_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_AppRestart" />:</strong> <loc key="Owner_Backup_AppRestart_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_StorageLocation" />:</strong> <loc key="Owner_Backup_StorageLocation_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_DownloadInfo" />:</strong> <loc key="Owner_Backup_DownloadInfo_Desc" /></li>
         </ul>
     </div>
 </div>
@@ -234,13 +234,17 @@
 }
 
 .btn-restore:hover {
-    background: var(--success, #10b981);
-    border-color: var(--success, #10b981);
+    background: var(--success);
+    border-color: var(--success);
 }
 
 .btn-delete:hover {
-    background: var(--danger, #ef4444);
-    border-color: var(--danger, #ef4444);
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.inline-form {
+    display: inline;
 }
 
 .info-card h3 {
@@ -273,14 +277,14 @@
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid var(--success, #10b981);
-    color: var(--success, #10b981);
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
 }
 
 .alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid var(--danger, #ef4444);
-    color: var(--danger, #ef4444);
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
 }
 </style>

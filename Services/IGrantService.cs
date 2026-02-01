@@ -21,6 +21,7 @@ public interface IGrantService
     Task<Grant?> GrantAsync(int userId, int grantTypeId, GrantScope scope, int? grantedByUserId = null, string? notes = null);
     Task<bool> RevokeAsync(int grantId, int? revokedByUserId = null);
     Task<bool> RevokeAllUserGrantsAsync(int userId);
+    Task<bool> CanUserGrantAsync(int granterId, int grantTypeId, GrantScope targetScope);
 
     // Auto-grants from roles
     Task ApplyAutoGrantsAsync(int userId, int roleTemplateId, GrantScope roleScope);

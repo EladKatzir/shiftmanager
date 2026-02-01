@@ -1,10 +1,12 @@
 # ShiftManager - Complete Genesis Documentation
 ## Master Index & Navigation Hub
 
-**Document Version:** 1.3
-**Last Updated:** 2026-01-09
-**Codebase Version:** v2.2.0+ (Branch: newestafterpl)
+**Document Version:** 2.0
+**Last Updated:** 2026-01-29
+**Codebase Version:** v3.0 (Branch: Ui)
 **Documentation Purpose:** Enable complete system reconstruction from scratch
+
+> **V3 Update**: Documentation updated for V3 organizational hierarchy, grant-based authorization, and enhanced scheduling features. See documents 21-23 for V3-specific content.
 
 ---
 
@@ -91,12 +93,16 @@ Follow the reconstruction guide:
 |--------|-------|
 | **Technology Stack** | .NET 8.0, ASP.NET Core, EF Core 9.0.9 |
 | **Database** | SQLite (single-file, air-gapped ready) |
-| **Database Tables** | 29 tables |
-| **EF Core Migrations** | 37 migrations (Sept 2025 - Present) |
-| **Razor Pages** | 67 pages |
+| **Database Tables** | **54 tables** (81 DbSets incl. join tables) |
+| **EF Core Migrations** | 38+ migrations (Sept 2025 - Present) |
+| **Razor Pages** | **110+ pages** *(incl. V3 Organization, Owner Console)* |
 | **REST API Endpoints** | 27 external + 12 internal endpoints |
-| **Injectable Services** | 40+ services |
-| **User Roles** | 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee) |
+| **Injectable Services** | **97 services** *(V3 update: from 63)* |
+| **API Controllers** | 10 REST controllers + 1 MVC controller |
+| **View Components** | 7 reusable UI components |
+| **Tag Helpers** | 3 custom tag helpers |
+| **User Roles** | 6 legacy roles + **11 V3 role templates** |
+| **Grant Types** | **90+ grant types** *(V3 new)* |
 | **Supported Languages** | English (en-US), Hebrew (he-IL) with RTL support |
 | **CSS Lines** | 5,375 lines (100% custom, no framework) |
 | **JavaScript Lines** | 2,700+ lines (100% vanilla, no jQuery/React/Vue) |
@@ -125,8 +131,11 @@ Follow the reconstruction guide:
 ### Architectural Highlights
 
 - **Multi-Tenancy:** Row-level security via EF Core global query filters + CompanyIdInterceptor
+- **V3 Organizational Hierarchy:** Project → Area → Molecule → Company/Department structure *(NEW)*
+- **V3 Grant-Based Authorization:** 90+ grant types with hierarchical scoping *(NEW)*
+- **V3 Role Templates:** 11 built-in templates with auto-grant application *(NEW)*
 - **Air-Gapped First:** Self-contained deployment, no internet required, USB transfer support
-- **Security:** PBKDF2 password hashing (100k iterations), role-based access control, audit trails
+- **Security:** PBKDF2 password hashing (100k iterations), grant + role-based access control, audit trails
 - **Localization:** Full Hebrew RTL support with conditional CSS loading
 - **No External Dependencies:** Zero npm packages, no jQuery, no CSS frameworks
 - **Gamification:** Match-3 easter egg game for shift swap engagement
@@ -815,7 +824,67 @@ Follow the reconstruction guide:
 
 ---
 
-### Part VIII: Data Management & Lifecycle (Document 20)
+### Part VIII: V3 Organizational & Authorization (Documents 21-23) *(NEW)*
+
+#### [21-V3-ORGANIZATIONAL-HIERARCHY.md](21-V3-ORGANIZATIONAL-HIERARCHY.md) ⭐ NEW
+**Purpose:** V3 organizational hierarchy structure
+
+**Contents:**
+- **Hierarchy Tree:** Project → Area → Molecule → Company/Department
+- **Molecule Types:** Workforce, Tech, Helper, System
+- **Entity Documentation:** Project, Area, Molecule, Department, JobType
+- **Scope Inheritance:** How permissions cascade through the hierarchy
+- **ShiftGrouping:** Coordinated scheduling across companies/job types
+- **Migration Notes:** From flat company model to hierarchical
+- **Shifty Organization Example:** Complete hierarchy seed data
+
+**Key Questions Answered:**
+- How is the organization structured in V3?
+- What are the different molecule types?
+- How do permissions cascade through the hierarchy?
+
+---
+
+#### [22-V3-GRANT-AUTHORIZATION.md](22-V3-GRANT-AUTHORIZATION.md) ⭐ NEW
+**Purpose:** V3 grant-based authorization system
+
+**Contents:**
+- **Grant Model:** GrantType, Grant, RoleTemplate, UserRoleAssignment
+- **90+ Grant Types:** Organized across 12 categories
+- **Grant Scoping:** GrantScope with hierarchical levels
+- **Role Templates:** 11 built-in templates with auto-grants
+- **Permission Checking:** IGrantService API and patterns
+- **Grant Delegation:** CanOwn and CanGive flags
+- **Integration:** ASP.NET Core authorization policies
+
+**Key Questions Answered:**
+- How does grant-based authorization work?
+- What grant types are available?
+- How do role templates automatically apply grants?
+- How do permissions inherit through the hierarchy?
+
+---
+
+#### [23-V3-SCHEDULING-SYSTEM.md](23-V3-SCHEDULING-SYSTEM.md) ⭐ NEW
+**Purpose:** V3 scheduling enhancements
+
+**Contents:**
+- **ShiftProgram:** Weekly shift templates with instance generation
+- **MasterProgram:** Collections of programs for batch scheduling
+- **ShiftGrouping:** Regional/cross-company coordination (Tzafon, Darom)
+- **Tech Shifts:** HANAVA, DELTA, SUPPORT, ONCALL shift types
+- **SetupTask:** Guided onboarding workflow
+- **JobType Integration:** Job role assignment
+
+**Key Questions Answered:**
+- How do shift programs work?
+- How do I generate shifts for a date range?
+- What are shift groupings used for?
+- How does the onboarding workflow work?
+
+---
+
+### Part IX: Data Management & Lifecycle (Document 20)
 
 #### [20-DATA-LIFECYCLE-MANAGEMENT.md](20-DATA-LIFECYCLE-MANAGEMENT.md) (2,000+ lines) ⭐ NEW
 **Purpose:** Historical data archival, purge, and re-import
@@ -1123,19 +1192,38 @@ All diagrams are in Mermaid format (render in GitHub, VS Code, or any Mermaid-co
 | **CSS** | Custom (no framework) | 5,375 lines |
 | **JavaScript** | Vanilla (no framework) | 2,700+ lines |
 
-### Database Tables (28 Total)
+### Database Tables (50+ Total)
 
 **Core Domain:**
 - Company (tenant root)
-- AppUser (users, 6 roles)
+- AppUser (users, 6 legacy roles + V3 role assignments)
 - ShiftType → ShiftInstance → ShiftAssignment (shift scheduling hierarchy)
 - TimeOffRequest, SwapRequest (request workflows)
 - Chore, OnDuty, OnDutyRoleSubscription (task assignments)
+
+**V3 Organizational Hierarchy (NEW):**
+- Project → Area → Molecule → Company/Department
+- JobType (job role definitions at Area level)
+- ShiftGrouping (coordinated scheduling)
+- AreaSettings, MoleculeSettings, CompanySettings (hierarchy config)
+
+**V3 Authorization (NEW):**
+- GrantType (90+ permission definitions)
+- Grant (individual permissions with scope)
+- RoleTemplate (11 built-in templates)
+- RoleTemplateGrant (template-to-grant mapping)
+- UserRoleAssignment (user-to-role mapping)
+
+**V3 Scheduling (NEW):**
+- ShiftProgram, ProgramDay (weekly templates)
+- MasterProgram, MasterProgramItem (program collections)
+- SetupTask (guided onboarding)
 
 **Collaboration:**
 - TeamCalendar, TeamCalendarMember (team calendars)
 - UserNotification, DailyNotificationPreference (notifications)
 - Feedback (user feedback)
+- UserFriendship (social features)
 
 **Audit & Compliance:**
 - AuditLog, RoleAssignmentAudit, ProfileChangeAudit (audit trails)
@@ -1156,6 +1244,8 @@ All diagrams are in Mermaid format (render in GitHub, VS Code, or any Mermaid-co
 
 ### User Roles & Permissions
 
+**Legacy Roles (UserRole Enum):**
+
 | Role | Code | Key Permissions |
 |------|------|-----------------|
 | **Owner** | 0 | Full system, company config, director assignment, audit log, database console, backup |
@@ -1164,6 +1254,20 @@ All diagrams are in Mermaid format (render in GitHub, VS Code, or any Mermaid-co
 | **Assigner** | 5 | Edit chores only (limited role) |
 | **Employee** | 2 | View schedule, submit time-off/swap requests, view chores/on-duty |
 | **Trainee** | 4 | Limited view, shadowing, cannot request swaps |
+
+**V3 Role Templates (NEW):**
+
+| Template | Scope Level | Key Grants |
+|----------|-------------|------------|
+| **Owner** | System | All grants with CanOwn=true, CanGive=true |
+| **AreaAdmin** | Area | Admin.Area, User.Manage, Role.Assign, Shift.Manage |
+| **MoleculeAdmin** | Molecule | Admin.Molecule, User.Manage, Shift.Manage |
+| **CompanyManager** | Company | User.Edit, Shift.Assign, Vacation.Approve |
+| **Assigner** | Company | Shift.Assign, Chore.Assign, Duty.Assign |
+| **Employee** | Self | Shift.View, Vacation.Request, Swap.Request |
+| **Trainee** | Self | Shift.View (read-only) |
+
+See [22-V3-GRANT-AUTHORIZATION.md](22-V3-GRANT-AUTHORIZATION.md) for complete list.
 
 ### API Endpoint Categories (27 Total)
 
@@ -1218,6 +1322,9 @@ All documents include cross-references to related sections. Example:
 ### Search Strategy
 
 **By Topic:**
+- **V3 Hierarchy:** [21-V3-ORGANIZATIONAL-HIERARCHY.md](#21-v3-organizational-hierarchymd) *(NEW)*
+- **V3 Authorization:** [22-V3-GRANT-AUTHORIZATION.md](#22-v3-grant-authorizationmd) *(NEW)*
+- **V3 Scheduling:** [23-V3-SCHEDULING-SYSTEM.md](#23-v3-scheduling-systemmd) *(NEW)*
 - **Multi-Tenancy:** [05-MULTI-TENANCY-DEEP-DIVE.md](#05-multi-tenancy-deep-divemd)
 - **Database:** [03-DATABASE-SCHEMA.md](#03-database-schemamd), [06-DOMAIN-MODELS.md](#06-domain-modelsmd), [12-DATA-MIGRATIONS.md](#12-data-migrationsmd)
 - **Authentication:** [10-AUTHENTICATION-AND-AUTHORIZATION.md](#10-authentication-and-authorizationmd)
@@ -1242,27 +1349,30 @@ All documents include cross-references to related sections. Example:
 
 | Document | Status | Last Updated |
 |----------|--------|--------------|
-| 00-INDEX.md | ✅ Complete | 2026-01-06 |
-| 01-EXECUTIVE-OVERVIEW.md | 🚧 Pending | - |
-| 02-ARCHITECTURE-BLUEPRINT.md | 🚧 Pending | - |
-| 03-DATABASE-SCHEMA.md | 🚧 Pending | - |
-| 04-STARTUP-AND-MIDDLEWARE.md | 🚧 Pending | - |
-| 05-MULTI-TENANCY-DEEP-DIVE.md | 🚧 Pending | - |
-| 06-DOMAIN-MODELS.md | 🚧 Pending | - |
-| 07-SERVICE-LAYER.md | 🚧 Pending | - |
-| 08-UI-UX-ARCHITECTURE.md | 🚧 Pending | - |
-| 09-API-LAYER.md | 🚧 Pending | - |
-| 10-AUTHENTICATION-AND-AUTHORIZATION.md | 🚧 Pending | - |
-| 11-LOCALIZATION-AND-RTL.md | 🚧 Pending | - |
-| 12-DATA-MIGRATIONS.md | 🚧 Pending | - |
-| 13-CACHING-STRATEGY.md | 🚧 Pending | - |
-| 14-WORKFLOWS-AND-BUSINESS-LOGIC.md | 🚧 Pending | - |
-| 15-AIR-GAPPED-DEPLOYMENT.md | 🚧 Pending | - |
-| 16-BUILD-AND-RELEASE-PIPELINE.md | 🚧 Pending | - |
-| 17-TESTING-STRATEGY.md | 🚧 Pending | - |
-| 18-DESIGN-DECISIONS-AND-TRADEOFFS.md | 🚧 Pending | - |
-| 19-RECONSTRUCTION-RECIPE.md | 🚧 Pending | - |
+| 00-INDEX.md | ✅ Complete | 2026-01-29 (V3) |
+| 01-EXECUTIVE-OVERVIEW.md | ✅ Complete | 2025-12 |
+| 02-ARCHITECTURE-BLUEPRINT.md | ✅ Complete | 2025-12 |
+| 03-DATABASE-SCHEMA.md | ✅ V3 Updated | 2026-01-29 |
+| 04-STARTUP-AND-MIDDLEWARE.md | ✅ Complete | 2025-12 |
+| 05-MULTI-TENANCY-DEEP-DIVE.md | ✅ Complete | 2025-12 |
+| 06-DOMAIN-MODELS.md | ✅ V3 Updated | 2026-01-29 |
+| 07-SERVICE-LAYER.md | ✅ V3 Updated | 2026-01-29 |
+| 08-UI-UX-ARCHITECTURE.md | ✅ Complete | 2026-01 |
+| 09-API-LAYER.md | ✅ Complete | 2025-12 |
+| 10-AUTHENTICATION-AND-AUTHORIZATION.md | ✅ V3 Updated | 2026-01-29 |
+| 11-LOCALIZATION-AND-RTL.md | ✅ Complete | 2025-12 |
+| 12-DATA-MIGRATIONS.md | ✅ Complete | 2025-12 |
+| 13-CACHING-STRATEGY.md | ✅ Complete | 2025-12 |
+| 14-WORKFLOWS-AND-BUSINESS-LOGIC.md | ✅ Complete | 2025-12 |
+| 15-AIR-GAPPED-DEPLOYMENT.md | ✅ Complete | 2025-12 |
+| 16-BUILD-AND-RELEASE-PIPELINE.md | ✅ Complete | 2025-12 |
+| 17-TESTING-STRATEGY.md | ✅ Complete | 2025-12 |
+| 18-DESIGN-DECISIONS-AND-TRADEOFFS.md | ✅ Complete | 2025-12 |
+| 19-RECONSTRUCTION-RECIPE.md | ✅ Complete | 2025-12 |
 | 20-DATA-LIFECYCLE-MANAGEMENT.md | ✅ Complete | 2026-01-06 |
+| **21-V3-ORGANIZATIONAL-HIERARCHY.md** | ✅ NEW | 2026-01-29 |
+| **22-V3-GRANT-AUTHORIZATION.md** | ✅ NEW | 2026-01-29 |
+| **23-V3-SCHEDULING-SYSTEM.md** | ✅ NEW | 2026-01-29 |
 
 ---
 

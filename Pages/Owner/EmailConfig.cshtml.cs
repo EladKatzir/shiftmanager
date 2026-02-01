@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Email Configuration - Configure email notifications for the system
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:ConfigureEmailSettings")]
 public class EmailConfigModel : LocalizedPageModel
 {
     private readonly IEmailConfigService _emailConfigService;

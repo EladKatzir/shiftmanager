@@ -1,7 +1,9 @@
 # 10-AUTHENTICATION-AND-AUTHORIZATION.md - Authentication Flows and Authorization
 
 **Part of the ShiftManager Genesis Documentation**
-**Document 10 of 19 - Complete auth architecture, roles, and session management**
+**Document 10 of 19 - Complete auth architecture, roles, grants, and session management**
+**Last Updated:** 2026-01 (V3 Grant Authorization Update)
+**Version:** 2.0
 
 ---
 
@@ -14,13 +16,15 @@
 5. [Griffin ADFS Integration (SAML SSO)](#griffin-adfs-integration-saml-sso)
 6. [Password Hashing (PBKDF2)](#password-hashing-pbkdf2)
 7. [Session Management](#session-management)
-8. [Role-Based Authorization](#role-based-authorization)
-9. [Authorization Policies](#authorization-policies)
-10. [Security Features](#security-features)
-11. [Account Lockout](#account-lockout)
-12. [Rate Limiting](#rate-limiting)
-13. [Claims Structure](#claims-structure)
-14. [Security Considerations](#security-considerations)
+8. [Role-Based Authorization (Legacy)](#role-based-authorization-legacy)
+9. [**V3 Grant-Based Authorization**](#v3-grant-based-authorization) *(NEW - PRIMARY)*
+10. [**V3 Role Templates**](#v3-role-templates) *(NEW)*
+11. [Authorization Policies](#authorization-policies)
+12. [Security Features](#security-features)
+13. [Account Lockout](#account-lockout)
+14. [Rate Limiting](#rate-limiting)
+15. [Claims Structure](#claims-structure)
+16. [Security Considerations](#security-considerations)
 
 ---
 
@@ -87,10 +91,14 @@ ShiftManager implements a **dual authentication system**:
 - ✅ **Account lockout** - 10 failed attempts = 30-minute lockout
 - ✅ **Rate limiting** - 10 login attempts per 15 minutes per IP
 - ✅ **Multi-tenancy** - CompanyId claim for tenant isolation
-- ✅ **Role-based authorization** - 6 roles with granular policies
+- ✅ **V3 Grant-based authorization** - Hierarchical permissions with scoping *(NEW)*
+- ✅ **V3 Role templates** - Bundles of grants with auto-application *(NEW)*
+- ✅ **Legacy role-based authorization** - 6 roles (supplementary)
 - ✅ **SAML SSO support** - Griffin ADFS integration
 - ✅ **Session timeout** - 7 days sliding expiration with client-side warning
 - ✅ **Auto-provisioning** - Optional user creation from ADFS claims
+
+> **V3 Update**: The primary authorization mechanism changed from `UserRole` enum to **grant-based authorization**. UserRole is retained for backward compatibility and coarse-grained checks, but new features use `IGrantService` for permission checks. See [V3 Grant-Based Authorization](#v3-grant-based-authorization).
 
 ---
 
@@ -1009,7 +1017,13 @@ public async Task<IActionResult> OnGet()
 
 ---
 
-## Role-Based Authorization
+## Role-Based Authorization (Legacy)
+
+> **⚠️ V3 Note**: The `UserRole` enum is now a **legacy/supplementary** authorization mechanism. The primary authorization system is **grant-based** (see [V3 Grant-Based Authorization](#v3-grant-based-authorization)). UserRole is retained for:
+> - Backward compatibility with existing code
+> - Coarse-grained role checks (Owner, Director, Manager)
+> - Post-login routing and UI visibility
+> - Integration with ASP.NET Core's built-in `[Authorize(Roles = "...")]`
 
 ### User Roles
 
@@ -1029,19 +1043,376 @@ public enum UserRole
 
 **Role Hierarchy (permissions descending):**
 
-| Role | Capabilities | Examples |
-|------|--------------|----------|
-| **Owner** | Full system access, company config, billing, Griffin setup | CEO, System Admin |
-| **Director** | Cross-company access, on-duty management, reporting | Regional Director, COO |
-| **Manager** | Shift creation, approval workflows, user management | Department Manager, Team Lead |
-| **Assigner** | Shift assignment, chore creation | Shift Coordinator |
-| **Employee** | View schedule, request time-off/swaps, submit feedback | Standard Staff |
-| **Trainee** | View-only, shadowing shifts (trainee assignments) | New Hire, Intern |
+| Role | Capabilities | V3 Migration |
+|------|--------------|--------------|
+| **Owner** | Full system access, company config, billing, Griffin setup | Maps to `Owner` RoleTemplate with all grants |
+| **Director** | Cross-company access, on-duty management, reporting | Maps to `Director` RoleTemplate (scoped to Area) |
+| **Manager** | Shift creation, approval workflows, user management | Maps to `MoleculeAdmin` or `CompanyManager` RoleTemplate |
+| **Assigner** | Shift assignment, chore creation | Maps to `Assigner` RoleTemplate with shift grants |
+| **Employee** | View schedule, request time-off/swaps, submit feedback | Maps to `Employee` RoleTemplate with read grants |
+| **Trainee** | View-only, shadowing shifts (trainee assignments) | Maps to `Trainee` RoleTemplate with limited grants |
 
 **Role Assignment:**
 - Set by Owner/Director on user creation or profile edit
 - Stored in `AppUsers.Role` (integer)
 - Enforced via `[Authorize(Roles = "...")]` or policies
+- **V3**: Also triggers `UserRoleAssignment` creation with corresponding `RoleTemplate`
+
+---
+
+## V3 Grant-Based Authorization
+
+> **V3 Primary Authorization Mechanism** - Grant-based authorization replaced the legacy `UserRole` enum as the primary permission system. Grants provide fine-grained, hierarchical permissions with organizational scoping.
+
+### Core Concepts
+
+**Grant System Overview:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    V3 Grant Authorization Model                   │
+└─────────────────────────────────────────────────────────────────┘
+
+                        ┌──────────────┐
+                        │  GrantType   │  (Permission Definition)
+                        │  Key: "Shift.│  - 90+ system grant types
+                        │   Assign"    │  - Category grouping
+                        └──────┬───────┘  - DefaultScope
+                               │
+                               │ defines
+                               ▼
+                        ┌──────────────┐
+                        │    Grant     │  (Individual Permission)
+                        │              │  - Assigned to specific user
+                        │  GrantTypeId │  - Scoped to hierarchy level
+                        │  UserId      │  - CanOwn / CanGive flags
+                        │  GrantScope  │  - IsAutoGrant (from template)
+                        └──────────────┘
+                               ▲
+                               │ auto-applied via
+                               │
+                    ┌──────────┴───────────┐
+                    │  UserRoleAssignment  │  (Role Assignment)
+                    │                      │  - Links user to RoleTemplate
+                    │  RoleTemplateId      │  - Scoped to hierarchy level
+                    │  GrantScope          │  - Auto-creates grants
+                    └──────────────────────┘
+                               ▲
+                               │ references
+                               │
+                    ┌──────────┴───────────┐
+                    │    RoleTemplate      │  (Bundle of Grants)
+                    │                      │  - 11 built-in templates
+                    │  Key: "MoleculeAdmin"│  - ScopeLevel defines scope
+                    │  RoleTemplateGrants[]│  - Contains grant types
+                    └──────────────────────┘
+```
+
+### Grant Types
+
+**Location:** `Data/SeedData/GrantTypeSeed.cs`
+
+ShiftManager defines **90+ grant types** across **12 categories**:
+
+| Category | Grant Types | Description |
+|----------|-------------|-------------|
+| **Shift** | Shift.View, Shift.Assign, Shift.Create, Shift.Delete, Shift.Manage | Shift instance operations |
+| **Duty** | Duty.View, Duty.Assign, Duty.Create, Duty.Delete, Duty.Manage | On-duty assignments |
+| **Chore** | Chore.View, Chore.Assign, Chore.Create, Chore.Delete, Chore.Manage | Chore operations |
+| **Vacation** | Vacation.View, Vacation.Request, Vacation.Approve, Vacation.Manage | Time-off requests |
+| **Swap** | Swap.View, Swap.Request, Swap.Approve, Swap.Manage | Shift swap requests |
+| **User** | User.View, User.Create, User.Edit, User.Delete, User.Manage | User management |
+| **Role** | Role.View, Role.Assign, Role.Create, Role.Manage | Role assignments |
+| **Grant** | Grant.View, Grant.Give, Grant.Revoke, Grant.Manage | Grant management |
+| **Settings** | Settings.View, Settings.Edit, Settings.Manage | Configuration |
+| **Reports** | Reports.View, Reports.Create, Reports.Export | Analytics/reports |
+| **Admin** | Admin.Company, Admin.Molecule, Admin.Area, Admin.Project | Administrative access |
+| **System** | System.Owner, System.Maintenance, System.Audit | System-level access |
+
+### GrantScope (Hierarchical Scoping)
+
+**Record:** `Services/IGrantService.cs`
+
+```csharp
+public record GrantScope(
+    int? ProjectId = null,
+    int? AreaId = null,
+    int? MoleculeId = null,
+    int? CompanyId = null,
+    int? DepartmentId = null,
+    int? JobTypeId = null
+);
+```
+
+**Scope Hierarchy (broadest → narrowest):**
+
+```
+Project (broadest)
+    └── Area
+        └── Molecule
+            ├── Company (Workforce)
+            │   └── JobType
+            └── Department (Tech)
+```
+
+**Scope Inheritance Rules:**
+- A grant at `Area` level covers ALL Molecules, Companies, Departments under that Area
+- A grant at `Molecule` level covers ALL Companies/Departments in that Molecule
+- More specific scopes can override broader ones
+
+### Permission Checking
+
+**Service:** `IGrantService.HasGrantAsync()`
+
+```csharp
+// Check if user has a specific grant in scope
+bool canAssign = await _grantService.HasGrantAsync(
+    userId: currentUserId,
+    grantTypeKey: "Shift.Assign",
+    scope: new GrantScope(MoleculeId: moleculeId)
+);
+
+// Check if user has ANY of the specified grants
+bool canManage = await _grantService.HasAnyGrantAsync(
+    userId: currentUserId,
+    grantTypeKeys: new[] { "Shift.Manage", "Admin.Molecule" },
+    scope: new GrantScope(MoleculeId: moleculeId)
+);
+
+// Check if user has ALL of the specified grants
+bool isFullAdmin = await _grantService.HasAllGrantsAsync(
+    userId: currentUserId,
+    grantTypeKeys: new[] { "User.Manage", "Role.Manage", "Grant.Manage" },
+    scope: new GrantScope(AreaId: areaId)
+);
+```
+
+**Permission Check Algorithm:**
+
+1. Look for direct grant matching exact scope
+2. If not found, check parent scopes (Area → Project → global)
+3. Apply GrantScopeMode rules (some grants apply to all children)
+4. Return `true` if any matching grant found
+
+### Grant Delegation
+
+**Flags:** `CanOwn` and `CanGive`
+
+```csharp
+public class Grant
+{
+    // ...
+    public bool CanOwn { get; set; }   // User can manage this grant
+    public bool CanGive { get; set; }  // User can delegate to others
+}
+```
+
+**Delegation Flow:**
+
+```csharp
+// User A has Shift.Assign with CanGive=true
+// User A can delegate to User B:
+await _grantService.DelegateGrantAsync(
+    delegatorId: userA.Id,
+    targetUserId: userB.Id,
+    grantTypeKey: "Shift.Assign",
+    scope: new GrantScope(MoleculeId: moleculeId)
+);
+```
+
+**Business Rules:**
+- Can only delegate grants you have with `CanGive=true`
+- Delegated grants inherit the delegator's scope (or narrower)
+- Delegated grants do NOT have `CanOwn` or `CanGive` by default
+
+### Auto-Grants from Role Templates
+
+When a `UserRoleAssignment` is created, the system automatically:
+
+1. Reads all `RoleTemplateGrant` entries for the template
+2. Creates corresponding `Grant` records for the user
+3. Sets `IsAutoGrant=true` on these grants
+4. Scopes the grants based on the assignment's scope
+
+```csharp
+// Assign role template to user
+var assignment = await _roleService.AssignRoleAsync(
+    userId: newManagerId,
+    roleTemplateId: moleculeAdminTemplateId,
+    scope: new GrantScope(MoleculeId: moleculeId),
+    assignedByUserId: currentUserId
+);
+
+// System automatically creates grants:
+// - Admin.Molecule at MoleculeId scope
+// - User.Manage at MoleculeId scope
+// - Shift.Manage at MoleculeId scope
+// - etc. (all grants defined in MoleculeAdmin template)
+```
+
+### Integration with ASP.NET Core Authorization
+
+**Custom Policy Handler:**
+
+```csharp
+// In Program.cs
+builder.Services.AddAuthorization(options =>
+{
+    // Grant-based policy example
+    options.AddPolicy("CanAssignShifts", policy =>
+        policy.Requirements.Add(new GrantRequirement("Shift.Assign")));
+});
+
+// Custom requirement
+public class GrantRequirement : IAuthorizationRequirement
+{
+    public string GrantTypeKey { get; }
+    public GrantRequirement(string grantTypeKey) => GrantTypeKey = grantTypeKey;
+}
+
+// Custom handler (checks IGrantService)
+public class GrantAuthorizationHandler : AuthorizationHandler<GrantRequirement>
+{
+    private readonly IGrantService _grantService;
+
+    protected override async Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        GrantRequirement requirement)
+    {
+        var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var scope = ExtractScopeFromRoute(context);  // Extract from route data
+
+        if (await _grantService.HasGrantAsync(userId, requirement.GrantTypeKey, scope))
+        {
+            context.Succeed(requirement);
+        }
+    }
+}
+```
+
+---
+
+## V3 Role Templates
+
+> **Role Templates** are bundles of grants that can be assigned to users. When assigned, all grants in the template are automatically applied to the user.
+
+### Built-in Role Templates
+
+**Location:** `Data/SeedData/RoleTemplateSeed.cs`
+
+| Template Key | Scope Level | Description | Key Grants |
+|--------------|-------------|-------------|------------|
+| **Owner** | System | Full system access | All grants with CanOwn=true, CanGive=true |
+| **AreaAdmin** | Area | Area-wide administration | Admin.Area, User.Manage, Role.Assign, Shift.Manage |
+| **MoleculeAdmin** | Molecule | Molecule administration | Admin.Molecule, User.Manage, Shift.Manage, Chore.Manage |
+| **CompanyManager** | Company | Company management | User.Edit, Shift.Assign, Chore.Assign, Vacation.Approve |
+| **Assigner** | Company | Shift/chore assignment | Shift.Assign, Chore.Assign, Duty.Assign |
+| **Employee** | Self | Standard employee | Shift.View, Vacation.Request, Swap.Request |
+| **Trainee** | Self | Limited view access | Shift.View (read-only) |
+| **AlhutDirector** | Area | Alhut area director | All grants scoped to Alhut Area |
+| **MutzDirector** | Area | Mutz area director | All grants scoped to Mutz Area |
+| **TechLead** | Department | Technical team lead | User.View, Shift.View, Settings.View (tech scope) |
+| **Helper** | Molecule | Helper molecule access | Chore.View, Duty.View (helper scope) |
+
+### RoleTemplate Entity
+
+**Model:** `Models/Authorization/RoleTemplate.cs`
+
+```csharp
+public class RoleTemplate
+{
+    public int Id { get; set; }
+    public string Key { get; set; }                    // "MoleculeAdmin"
+    public string DisplayName { get; set; }            // "Molecule Administrator"
+    public string? Description { get; set; }
+    public RoleScopeLevel ScopeLevel { get; set; }     // Area, Molecule, Company, etc.
+    public int SortOrder { get; set; }
+    public bool IsSystem { get; set; }                 // Cannot be deleted
+    public bool IsActive { get; set; }
+
+    public ICollection<RoleTemplateGrant> RoleTemplateGrants { get; set; }
+    public ICollection<UserRoleAssignment> UserRoleAssignments { get; set; }
+}
+```
+
+### UserRoleAssignment Entity
+
+**Model:** `Models/Authorization/UserRoleAssignment.cs`
+
+```csharp
+public class UserRoleAssignment
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int RoleTemplateId { get; set; }
+
+    // Scope of this assignment
+    public int? ProjectId { get; set; }
+    public int? AreaId { get; set; }
+    public int? MoleculeId { get; set; }
+    public int? CompanyId { get; set; }
+    public int? DepartmentId { get; set; }
+
+    public int? AssignedByUserId { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public bool IsActive { get; set; }
+
+    // Navigation
+    public AppUser User { get; set; }
+    public RoleTemplate RoleTemplate { get; set; }
+    public AppUser? AssignedBy { get; set; }
+}
+```
+
+### Role Assignment Flow
+
+```
+1. Admin assigns RoleTemplate to User with Scope
+   └── POST /Admin/Organization/Roles/Assign
+
+2. RoleService.AssignRoleAsync() creates UserRoleAssignment
+   └── Sets scope fields (AreaId, MoleculeId, etc.)
+
+3. System calls GrantService.ApplyAutoGrantsAsync()
+   └── Reads RoleTemplateGrants for the template
+   └── Creates Grant records for each grant type
+   └── Sets IsAutoGrant=true, scopes from assignment
+
+4. User now has all grants from the template
+   └── GrantService.HasGrantAsync() returns true
+
+5. When role is removed:
+   └── RoleService.RemoveRoleAsync() deletes assignment
+   └── GrantService.RemoveAutoGrantsAsync() deletes auto-grants
+   └── Manual grants (IsAutoGrant=false) are preserved
+```
+
+### Service Interface
+
+**Interface:** `Services/IRoleService.cs`
+
+```csharp
+public interface IRoleService
+{
+    // Role template queries
+    Task<RoleTemplate?> GetRoleTemplateAsync(int roleTemplateId);
+    Task<RoleTemplate?> GetRoleTemplateByKeyAsync(string key);
+    Task<List<RoleTemplate>> GetRoleTemplatesAsync();
+    Task<List<RoleTemplate>> GetRoleTemplatesByScopeLevelAsync(RoleScopeLevel scopeLevel);
+
+    // User role queries
+    Task<List<UserRoleAssignment>> GetUserRolesAsync(int userId);
+    Task<bool> UserHasRoleAsync(int userId, string roleKey);
+
+    // Role assignment management
+    Task<UserRoleAssignment?> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId);
+    Task<bool> RemoveRoleAsync(int userRoleId, int? removedByUserId = null);
+
+    // Queries for role holders
+    Task<List<AppUser>> GetUsersWithRoleAsync(int roleTemplateId);
+    Task<List<AppUser>> GetUsersWithRoleInScopeAsync(int roleTemplateId, GrantScope scope);
+}
+```
 
 ---
 
@@ -1073,6 +1444,8 @@ builder.Services.AddAuthorization(options =>
 
 ### Policy Catalog
 
+**Legacy Role-Based Policies (Still Active):**
+
 | Policy | Roles | Use Case |
 |--------|-------|----------|
 | **IsAdmin** | Owner | Company config, billing, Griffin setup |
@@ -1083,6 +1456,26 @@ builder.Services.AddAuthorization(options =>
 | **CanEditChores** | Manager, Owner, Director, Assigner | Create/edit chores |
 | **CanViewOnDuty** | All authenticated | View on-duty schedule |
 | **CanEditOnDuty** | Manager, Owner, Director | Create/edit on-duty assignments |
+
+**V3 Grant-Based Policies (New):**
+
+| Policy | Grant Type | Scope | Use Case |
+|--------|-----------|-------|----------|
+| **CanAssignShifts** | Shift.Assign | Molecule/Company | Assign users to shifts |
+| **CanManageShifts** | Shift.Manage | Molecule/Company | Full shift CRUD |
+| **CanApproveVacation** | Vacation.Approve | Molecule/Company | Approve time-off requests |
+| **CanManageUsers** | User.Manage | Molecule/Company | User CRUD in scope |
+| **CanAssignRoles** | Role.Assign | Area/Molecule | Assign role templates |
+| **CanManageGrants** | Grant.Manage | Area/Molecule | Direct grant management |
+| **CanViewReports** | Reports.View | Area/Molecule | Access analytics |
+| **IsAreaAdmin** | Admin.Area | Area | Area administration |
+| **IsMoleculeAdmin** | Admin.Molecule | Molecule | Molecule administration |
+| **IsCompanyManager** | Admin.Company | Company | Company management |
+
+**Policy Resolution Order:**
+1. Check V3 grant-based policy first (via `IGrantService`)
+2. Fall back to legacy role-based policy if no grant policy exists
+3. Legacy policies remain for backward compatibility
 
 ### Usage in Razor Pages
 
@@ -1452,10 +1845,13 @@ var displayName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 - ✅ Client-side timeout warning (5 minutes)
 - ✅ Session status API (`/Api/SessionStatus`)
 
-**Authorization:**
-- ✅ 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee)
-- ✅ 8 policies (IsAdmin, CanEditChores, etc.)
-- ✅ Role-based and policy-based enforcement
+**Authorization (V3 Update):**
+- ✅ **V3 Grant-based authorization** - Primary mechanism with 90+ grant types
+- ✅ **V3 Role Templates** - 11 built-in templates with auto-grant application
+- ✅ **Hierarchical scoping** - Project → Area → Molecule → Company/Department
+- ✅ **Grant delegation** - CanOwn/CanGive flags for permission sharing
+- ✅ **Legacy role support** - 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee)
+- ✅ **18+ policies** - Both grant-based and role-based enforcement
 
 **Security Features:**
 - ✅ PBKDF2 password hashing (100,000 iterations, SHA-256)
@@ -1480,8 +1876,16 @@ var displayName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 - `Middleware/GriffinAuthenticationMiddleware.cs` (127 lines) - Token validation
 - `Models/PasswordHasher.cs` (22 lines) - PBKDF2 implementation
 - `Program.cs` (lines 48-110) - Cookie + policy configuration
+- `Services/GrantService.cs` *(V3)* - Grant-based authorization
+- `Services/RoleService.cs` *(V3)* - Role template management
+- `Models/Authorization/Grant.cs` *(V3)* - Grant entity
+- `Models/Authorization/RoleTemplate.cs` *(V3)* - Role template entity
+- `Data/SeedData/GrantTypeSeed.cs` *(V3)* - 90+ grant types
+- `Data/SeedData/RoleTemplateSeed.cs` *(V3)* - 11 role templates
 
 **Next Steps:**
+- See 21-V3-ORGANIZATIONAL-HIERARCHY.md for hierarchy structure
+- See 22-V3-GRANT-AUTHORIZATION.md for detailed grant documentation
 - See 11-LOCALIZATION-AND-RTL.md for culture-based UI adaptation
 - See 09-API-LAYER.md for API key authentication
 - See 14-WORKFLOWS-AND-BUSINESS-LOGIC.md for approval workflows
@@ -1489,13 +1893,16 @@ var displayName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 ---
 
 **Document Status:** ✅ Complete
-**Last Updated:** 2026-01-06 (Added Post-Login Routing documentation)
-**Lines:** 1,420+
-**Coverage:** All authentication methods, authorization policies, security features, role-based routing documented
+**Last Updated:** 2026-01 (V3 Grant Authorization Update)
+**Version:** 2.0
+**Lines:** 1,800+
+**Coverage:** All authentication methods, V3 grant-based authorization, V3 role templates, security features, role-based routing documented
 
 **Cross-References:**
 - 05-MULTI-TENANCY-DEEP-DIVE.md - CompanyId enforcement
-- 06-DOMAIN-MODELS.md - AppUser, GriffinConfig schemas
-- 07-SERVICE-LAYER.md - GriffinService, RateLimitingService
+- 06-DOMAIN-MODELS.md - AppUser, GriffinConfig, V3 authorization entities
+- 07-SERVICE-LAYER.md - GriffinService, RateLimitingService, GrantService, RoleService
 - 09-API-LAYER.md - API key authentication
 - 14-WORKFLOWS-AND-BUSINESS-LOGIC.md - Request approval workflows
+- 21-V3-ORGANIZATIONAL-HIERARCHY.md - Hierarchy structure for scoping
+- 22-V3-GRANT-AUTHORIZATION.md - Detailed grant documentation

@@ -6,7 +6,7 @@ using ShiftManager.Data;
 
 namespace ShiftManager.Pages;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class DiagnosticModel : PageModel
 {
     private readonly AppDbContext _db;

@@ -177,11 +177,9 @@ public static class RoleTemplateSeed
         grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 47, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageShiftGroupings
         grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 51, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditMoleculeSettings
 
-        // Assigner (Role 8) - Basic assignment capabilities
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 3, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignAlhutShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 4, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignTextShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 5, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignBRShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 2, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllShifts
+        // Assigner (Role 8) - Chore assignment only (NOT shift assignment)
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 17, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignChores (ID 17)
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 16, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewChores (ID 16)
 
         // Department Lead (Role 9) - Tech department management
         grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 6, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignTechShifts

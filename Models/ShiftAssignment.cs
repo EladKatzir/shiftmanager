@@ -19,4 +19,11 @@ public class ShiftAssignment : IBelongsToCompany
     public AppUser? Trainee { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Row version for optimistic concurrency control.
+    /// Automatically managed by SQL Server - do not modify manually.
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Timestamp]
+    public byte[]? RowVersion { get; set; }
 }

@@ -8,7 +8,7 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.JobTypes;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:ManageJobTypes")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

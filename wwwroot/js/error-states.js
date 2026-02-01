@@ -39,7 +39,12 @@
             accessDenied: "You don't have access to this resource.",
             accessDeniedTitle: 'Access Denied',
             notFound: 'The requested resource was not found.',
-            notFoundTitle: 'Not Found'
+            notFoundTitle: 'Not Found',
+            concurrencyConflict: 'This record was modified by another user while you were editing.',
+            concurrencyConflictTitle: 'Edit Conflict',
+            concurrencyReload: 'Reload',
+            concurrencyOverwrite: 'Overwrite',
+            concurrencyCancel: 'Cancel'
         },
         'he-IL': {
             networkError: 'לא ניתן להתחבר. אנא בדוק את החיבור שלך.',
@@ -59,7 +64,12 @@
             accessDenied: 'אין לך גישה למשאב זה.',
             accessDeniedTitle: 'הגישה נדחתה',
             notFound: 'המשאב המבוקש לא נמצא.',
-            notFoundTitle: 'לא נמצא'
+            notFoundTitle: 'לא נמצא',
+            concurrencyConflict: 'רשומה זו שונתה על ידי משתמש אחר בזמן שערכת אותה.',
+            concurrencyConflictTitle: 'התנגשות עריכה',
+            concurrencyReload: 'טען מחדש',
+            concurrencyOverwrite: 'דרוס',
+            concurrencyCancel: 'ביטול'
         }
     };
 
@@ -215,17 +225,21 @@
     }
 
     /**
-     * Dismiss a toast with animation
+     * Dismiss a toast with animation (B-001-EXT: Respects prefers-reduced-motion)
      */
     function dismissToast(toast) {
         if (!toast || !toast.parentElement) return;
+
+        // Check for reduced motion preference
+        const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+        const animationTime = reducedMotion ? 0 : 300;
 
         toast.classList.add('toast--dismissing');
         setTimeout(() => {
             if (toast.parentElement) {
                 toast.remove();
             }
-        }, 300);
+        }, animationTime);
     }
 
     /**
@@ -419,6 +433,15 @@
                     message = getMessage('notFound');
                     title = getMessage('notFoundTitle');
                     break;
+                case 409:
+                    // Concurrency conflict - show special dialog instead of toast
+                    showConcurrencyConflictDialog({
+                        entityType: options.entityType || 'record',
+                        onReload: options.onReload,
+                        onOverwrite: options.onOverwrite,
+                        onCancel: options.onCancel
+                    });
+                    return null;
                 case 422:
                     message = options.message || getMessage('serverError');
                     title = options.title || getMessage('serverErrorTitle');
@@ -463,6 +486,124 @@
     }
 
     /**
+     * Show concurrency conflict dialog with options
+     * @param {Object} options - Dialog options
+     * @param {string} [options.entityType] - Type of entity that conflicted
+     * @param {Function} [options.onReload] - Callback when user chooses to reload
+     * @param {Function} [options.onOverwrite] - Callback when user chooses to overwrite
+     * @param {Function} [options.onCancel] - Callback when user cancels
+     * @returns {HTMLElement} The dialog element
+     */
+    function showConcurrencyConflictDialog(options = {}) {
+        const {
+            entityType = 'record',
+            onReload,
+            onOverwrite,
+            onCancel
+        } = options;
+
+        // Remove any existing conflict dialogs
+        const existingDialog = document.querySelector('.conflict-dialog-overlay');
+        if (existingDialog) {
+            existingDialog.remove();
+        }
+
+        const dialogId = `conflict-dialog-${Date.now()}`;
+        const overlay = document.createElement('div');
+        overlay.className = 'conflict-dialog-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', `${dialogId}-title`);
+
+        overlay.innerHTML = `
+            <div class="conflict-dialog">
+                <div class="conflict-dialog__header">
+                    <div class="conflict-dialog__icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <h2 id="${dialogId}-title" class="conflict-dialog__title">${getMessage('concurrencyConflictTitle')}</h2>
+                </div>
+                <div class="conflict-dialog__body">
+                    <p>${getMessage('concurrencyConflict')}</p>
+                    <p class="conflict-dialog__hint">${entityType !== 'record' ? `(${escapeHtml(entityType)})` : ''}</p>
+                </div>
+                <div class="conflict-dialog__actions">
+                    <button type="button" class="btn btn--secondary conflict-dialog__btn" data-action="cancel">
+                        ${getMessage('concurrencyCancel')}
+                    </button>
+                    <button type="button" class="btn btn--primary conflict-dialog__btn" data-action="reload">
+                        ${getMessage('concurrencyReload')}
+                    </button>
+                    ${onOverwrite ? `
+                        <button type="button" class="btn btn--danger conflict-dialog__btn" data-action="overwrite">
+                            ${getMessage('concurrencyOverwrite')}
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        // Event listeners for buttons
+        overlay.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            if (action === 'cancel' || e.target === overlay) {
+                overlay.remove();
+                if (onCancel) onCancel();
+            } else if (action === 'reload') {
+                overlay.remove();
+                if (onReload) {
+                    onReload();
+                } else {
+                    // Default: reload the page
+                    window.location.reload();
+                }
+            } else if (action === 'overwrite') {
+                overlay.remove();
+                if (onOverwrite) onOverwrite();
+            }
+        });
+
+        // Handle escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                overlay.remove();
+                if (onCancel) onCancel();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+
+        document.body.appendChild(overlay);
+
+        // Focus on the reload button
+        const reloadBtn = overlay.querySelector('[data-action="reload"]');
+        if (reloadBtn) {
+            setTimeout(() => reloadBtn.focus(), 100);
+        }
+
+        return overlay;
+    }
+
+    /**
+     * Handle concurrency conflict event from API client
+     */
+    function handleConcurrencyConflict(event) {
+        const { entityType, entityId } = event.detail;
+        
+        console.warn(`[ErrorStates] Concurrency conflict for ${entityType}${entityId ? ` (ID: ${entityId})` : ''}`);
+        
+        showConcurrencyConflictDialog({
+            entityType: entityType,
+            onReload: () => window.location.reload(),
+            onCancel: () => console.log('User cancelled conflict resolution')
+        });
+    }
+
+    /**
      * Initialize error states system
      */
     function initialize() {
@@ -471,6 +612,9 @@
         // Set up network status listeners
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+
+        // Set up concurrency conflict listener
+        window.addEventListener('api:concurrencyconflict', handleConcurrencyConflict);
 
         // Check initial state
         if (!navigator.onLine) {
@@ -603,6 +747,116 @@
                     cursor: pointer;
                 }
                 .network-banner__retry:hover { background-color: rgba(255, 255, 255, 0.3); }
+
+                /* Conflict Dialog Styles (B-018) */
+                .conflict-dialog-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 1090;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    animation: conflict-fade-in 0.2s ease-out;
+                }
+                @keyframes conflict-fade-in {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                .conflict-dialog {
+                    max-width: 420px;
+                    width: calc(100% - 32px);
+                    background-color: #fff;
+                    border-radius: 12px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    animation: conflict-scale-in 0.2s ease-out;
+                }
+                @keyframes conflict-scale-in {
+                    from { opacity: 0; transform: scale(0.95); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+                .conflict-dialog__header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 20px 24px 0;
+                }
+                .conflict-dialog__icon {
+                    flex-shrink: 0;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: #FEF3C7;
+                    color: #D97706;
+                    border-radius: 50%;
+                }
+                .conflict-dialog__title {
+                    margin: 0;
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #1F2937;
+                }
+                .conflict-dialog__body {
+                    padding: 16px 24px;
+                    color: #4B5563;
+                    font-size: 14px;
+                    line-height: 1.5;
+                }
+                .conflict-dialog__body p {
+                    margin: 0 0 8px;
+                }
+                .conflict-dialog__hint {
+                    font-size: 12px;
+                    color: #6B7280;
+                }
+                .conflict-dialog__actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 8px;
+                    padding: 16px 24px;
+                    border-top: 1px solid #E5E7EB;
+                }
+                [dir="rtl"] .conflict-dialog__actions {
+                    flex-direction: row-reverse;
+                }
+                .conflict-dialog__btn {
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background-color 0.15s, box-shadow 0.15s;
+                }
+                .conflict-dialog__btn:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+                }
+                .btn--secondary {
+                    background-color: #F3F4F6;
+                    border: 1px solid #D1D5DB;
+                    color: #374151;
+                }
+                .btn--secondary:hover {
+                    background-color: #E5E7EB;
+                }
+                .btn--primary {
+                    background-color: #1E3A5F;
+                    border: 1px solid #1E3A5F;
+                    color: #fff;
+                }
+                .btn--primary:hover {
+                    background-color: #2D4A6F;
+                }
+                .btn--danger {
+                    background-color: #DC2626;
+                    border: 1px solid #DC2626;
+                    color: #fff;
+                }
+                .btn--danger:hover {
+                    background-color: #B91C1C;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -621,6 +875,8 @@
         hideNetworkBanner,
         checkNetworkStatus,
         getMessage,
+        // Concurrency conflict handling (B-018)
+        showConcurrencyConflictDialog,
         // Configuration
         config: CONFIG
     };

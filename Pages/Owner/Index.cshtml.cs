@@ -10,7 +10,7 @@ namespace ShiftManager.Pages.Owner;
 /// Owner Administration Panel - Main Dashboard
 /// Provides overview and quick access to developer/owner tools
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;

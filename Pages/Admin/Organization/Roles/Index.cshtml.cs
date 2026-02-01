@@ -9,7 +9,7 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Roles;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AssignRoles")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

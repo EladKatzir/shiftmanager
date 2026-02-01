@@ -35,10 +35,11 @@ ShiftManager's frontend architecture is built on **ASP.NET Core Razor Pages** wi
 
 ### Key Statistics
 
-- **66 Razor Pages** organized across 11 functional folders
+- **110+ Razor Pages** organized across 14 functional folders (incl. V3 Organization)
 - **4,698 lines of CSS** (3,800 main + 123 RTL + 775 game)
 - **4,248 lines of vanilla JavaScript** across 6 files
-- **3 View Components** for reusable UI elements
+- **7 View Components** for reusable UI elements
+- **3 Tag Helpers** for localization and authorization
 - **0 npm packages** - no build process required
 - **111 MB deployment** - includes everything (runtime, assets, database)
 
@@ -89,17 +90,21 @@ ShiftManager's frontend architecture is built on **ASP.NET Core Razor Pages** wi
 
 ## Page Organization
 
-### Folder Structure (11 Functional Areas)
+### Folder Structure (12 Functional Areas including V3 Organization)
 
 ```
 Pages/
 ├── Shared/
 │   ├── _Layout.cshtml                 # Main app shell (sidebar + header + content)
 │   ├── _LocalizationScript.cshtml     # JavaScript localization helper
-│   ├── Components/                    # View Components (3 total)
-│   │   ├── UnreadNotificationCount/
-│   │   ├── LanguageToggle/
-│   │   └── ShowMyItemsToggle/
+│   ├── Components/                    # View Components (7 total)
+│   │   ├── UnreadNotificationCount/   # Notification badge
+│   │   ├── LanguageToggle/            # Language switcher
+│   │   ├── ShowMyItemsToggle/         # Filter toggle
+│   │   ├── BreadcrumbViewComponent/   # Navigation breadcrumbs
+│   │   ├── DecisionRibbonViewComponent/ # Approval ribbons
+│   │   ├── LanguageEditModeBannerViewComponent/ # Edit mode banner
+│   │   └── OwnerCompanySelectorViewComponent/ # Company selector
 │
 ├── Auth/                              # Authentication (4 pages)
 │   ├── Login.cshtml                   # Login page (role-based routing)
@@ -134,6 +139,9 @@ Pages/
 ├── MyTeam/                            # Team calendars (1 page)
 │   └── Index.cshtml                   # Custom calendar management
 │
+├── Friends/                           # Social features (1 page)
+│   └── Index.cshtml                   # Friend/circle management
+│
 ├── Requests/                          # Request management (4 pages)
 │   ├── Index.cshtml                   # All requests overview
 │   ├── TimeOff/
@@ -152,7 +160,7 @@ Pages/
 ├── Chores/                            # Chore management (1 page)
 │   └── Calendar.cshtml                # Chore assignment calendar
 │
-├── Admin/                             # Administrative pages (9 pages)
+├── Admin/                             # Administrative pages (9 pages + Organization)
 │   ├── Users.cshtml                   # User management
 │   ├── EditProfile.cshtml             # Edit user profiles
 │   ├── Companies.cshtml               # Company management (Owner only)
@@ -160,17 +168,40 @@ Pages/
 │   ├── ShiftTypes.cshtml              # Shift type configuration
 │   ├── Config.cshtml                  # System configuration
 │   ├── Analytics.cshtml               # Reports and analytics
-│   └── AuditLog.cshtml                # Audit log viewer
+│   ├── AuditLog.cshtml                # Audit log viewer
+│   ├── Organization/                  # V3 Organizational Hierarchy Management *(NEW)*
+│   │   ├── Index.cshtml               # Organization dashboard
+│   │   ├── Areas/Index.cshtml         # Area management
+│   │   ├── Departments/Index.cshtml   # Department management
+│   │   ├── Grants/Index.cshtml        # Grant management
+│   │   ├── Grants/Assign.cshtml       # Grant assignment
+│   │   ├── JobTypes/Index.cshtml      # Job type management
+│   │   ├── Molecules/Index.cshtml     # Molecule management
+│   │   ├── Projects/Index.cshtml      # Project management
+│   │   ├── Roles/Index.cshtml         # Role template management
+│   │   ├── Roles/Assign.cshtml        # Role assignment to users
+│   │   └── ShiftGroupings/Index.cshtml # Shift grouping management
+│   ├── Settings/Index.cshtml          # V3 Settings management *(NEW)*
+│   └── SetupTasks/Index.cshtml        # V3 Setup tasks/onboarding *(NEW)*
 │
-├── Owner/                             # Owner-only pages (8 pages)
+├── Owner/                             # Owner-only pages (17 pages)
 │   ├── Index.cshtml                   # Owner admin panel
 │   ├── EmailConfig.cshtml             # Email configuration
+│   ├── EmailTemplates.cshtml          # Email template customization
 │   ├── GriffinConfig.cshtml           # Griffin ADFS config
 │   ├── GameConfig.cshtml              # Game feature toggle
 │   ├── FeatureFlags.cshtml            # Feature flag management
 │   ├── SystemHealth.cshtml            # System diagnostics
 │   ├── Backup.cshtml                  # Database backup
-│   └── DatabaseConsole.cshtml         # SQL console (diagnostic)
+│   ├── DatabaseConsole.cshtml         # SQL console (diagnostic)
+│   ├── LanguageManagement.cshtml      # Language settings management
+│   ├── LanguageEditMode.cshtml        # Localization override editor
+│   ├── DataLifecycle.cshtml           # Archive/purge/import management
+│   ├── SelectCompany.cshtml           # Cross-company selection
+│   ├── ClearCompanySelection.cshtml   # Clear company selection
+│   ├── Blueprints.cshtml              # Shift program blueprints
+│   ├── MasterPrograms.cshtml          # Master program management
+│   └── Programs.cshtml                # Shift programs management
 │
 ├── Director/                          # Director-only pages (3 pages)
 │   ├── NotificationHub.cshtml         # Cross-company notifications

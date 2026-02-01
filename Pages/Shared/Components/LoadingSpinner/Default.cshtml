@@ -1,0 +1,40 @@
+@model ShiftManager.ViewComponents.LoadingSpinnerModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    var sizeClass = Model.Size switch
+    {
+        "small" => "spinner--sm",
+        "large" => "spinner--lg",
+        _ => ""
+    };
+}
+
+<div class="loading-spinner @sizeClass" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    @if (Model.ShowLabel)
+    {
+        <span class="loading-spinner__label">
+            @if (!string.IsNullOrEmpty(Model.Label))
+            {
+                @Model.Label
+            }
+            else
+            {
+                <loc key="Loading" />
+            }
+        </span>
+    }
+    <span class="visually-hidden">
+        @if (!string.IsNullOrEmpty(Model.Label))
+        {
+            @Model.Label
+        }
+        else
+        {
+            @Localizer["Loading"]
+        }
+    </span>
+</div>

@@ -9,7 +9,7 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.ShiftGroupings;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:ManageShiftGroupings")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

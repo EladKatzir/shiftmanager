@@ -136,6 +136,104 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ViewAuditLog", NameKey = "Grant_ViewAuditLog", DescriptionKey = "Grant_ViewAuditLog_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ManageApiKeys", NameKey = "Grant_ManageApiKeys", DescriptionKey = "Grant_ManageApiKeys_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
 
+        // ============================================
+        // SHIFT CALENDARS (Category.Shift) - View specific shift type calendars
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ViewAlhutShiftCalendar", NameKey = "Grant_ViewAlhutShiftCalendar", DescriptionKey = "Grant_ViewAlhutShiftCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewTextShiftCalendar", NameKey = "Grant_ViewTextShiftCalendar", DescriptionKey = "Grant_ViewTextShiftCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewBRShiftCalendar", NameKey = "Grant_ViewBRShiftCalendar", DescriptionKey = "Grant_ViewBRShiftCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewHakamShiftCalendar", NameKey = "Grant_ViewHakamShiftCalendar", DescriptionKey = "Grant_ViewHakamShiftCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+
+        // ============================================
+        // SHIFT ELIGIBILITY (Category.Shift) - Controls who can be assigned to shifts
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedAlhutShifts", NameKey = "Grant_CanBeAssignedAlhutShifts", DescriptionKey = "Grant_CanBeAssignedAlhutShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedTextShifts", NameKey = "Grant_CanBeAssignedTextShifts", DescriptionKey = "Grant_CanBeAssignedTextShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedBRShifts", NameKey = "Grant_CanBeAssignedBRShifts", DescriptionKey = "Grant_CanBeAssignedBRShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedHakamShifts", NameKey = "Grant_CanBeAssignedHakamShifts", DescriptionKey = "Grant_CanBeAssignedHakamShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+
+        // ============================================
+        // BLUEPRINT/PROGRAM GRANTS BY TYPE (Category.Shift)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageAlhutBlueprints", NameKey = "Grant_ManageAlhutBlueprints", DescriptionKey = "Grant_ManageAlhutBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageAlhutPrograms", NameKey = "Grant_ManageAlhutPrograms", DescriptionKey = "Grant_ManageAlhutPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageTextBlueprints", NameKey = "Grant_ManageTextBlueprints", DescriptionKey = "Grant_ManageTextBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageTextPrograms", NameKey = "Grant_ManageTextPrograms", DescriptionKey = "Grant_ManageTextPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageBRBlueprints", NameKey = "Grant_ManageBRBlueprints", DescriptionKey = "Grant_ManageBRBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageBRPrograms", NameKey = "Grant_ManageBRPrograms", DescriptionKey = "Grant_ManageBRPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageHakamBlueprints", NameKey = "Grant_ManageHakamBlueprints", DescriptionKey = "Grant_ManageHakamBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageHakamPrograms", NameKey = "Grant_ManageHakamPrograms", DescriptionKey = "Grant_ManageHakamPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+
+        // ============================================
+        // TECH CALENDARS (Category.Shift) - Department-specific tech shift calendars
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ViewHanavaCalendar", NameKey = "Grant_ViewHanavaCalendar", DescriptionKey = "Grant_ViewHanavaCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewDeltaCalendar", NameKey = "Grant_ViewDeltaCalendar", DescriptionKey = "Grant_ViewDeltaCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewYekevCalendar", NameKey = "Grant_ViewYekevCalendar", DescriptionKey = "Grant_ViewYekevCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewMoviltechCalendar", NameKey = "Grant_ViewMoviltechCalendar", DescriptionKey = "Grant_ViewMoviltechCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+
+        // ============================================
+        // TECH ASSIGNMENT (Category.Shift) - Department-specific tech shift assignment
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "AssignHanavaShifts", NameKey = "Grant_AssignHanavaShifts", DescriptionKey = "Grant_AssignHanavaShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "AssignDeltaShifts", NameKey = "Grant_AssignDeltaShifts", DescriptionKey = "Grant_AssignDeltaShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "AssignYekevShifts", NameKey = "Grant_AssignYekevShifts", DescriptionKey = "Grant_AssignYekevShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "AssignMoviltechShifts", NameKey = "Grant_AssignMoviltechShifts", DescriptionKey = "Grant_AssignMoviltechShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+
+        // ============================================
+        // TECH BLUEPRINTS/PROGRAMS (Category.Shift) - Department-specific management
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageHanavaBlueprints", NameKey = "Grant_ManageHanavaBlueprints", DescriptionKey = "Grant_ManageHanavaBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageHanavaPrograms", NameKey = "Grant_ManageHanavaPrograms", DescriptionKey = "Grant_ManageHanavaPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageDeltaBlueprints", NameKey = "Grant_ManageDeltaBlueprints", DescriptionKey = "Grant_ManageDeltaBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageDeltaPrograms", NameKey = "Grant_ManageDeltaPrograms", DescriptionKey = "Grant_ManageDeltaPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageYekevBlueprints", NameKey = "Grant_ManageYekevBlueprints", DescriptionKey = "Grant_ManageYekevBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageYekevPrograms", NameKey = "Grant_ManageYekevPrograms", DescriptionKey = "Grant_ManageYekevPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageMoviltechBlueprints", NameKey = "Grant_ManageMoviltechBlueprints", DescriptionKey = "Grant_ManageMoviltechBlueprints_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageMoviltechPrograms", NameKey = "Grant_ManageMoviltechPrograms", DescriptionKey = "Grant_ManageMoviltechPrograms_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Department, IsSystem = true });
+
+        // ============================================
+        // TECH ELIGIBILITY (Category.Shift) - Controls who can be assigned tech shifts
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedHanava", NameKey = "Grant_CanBeAssignedHanava", DescriptionKey = "Grant_CanBeAssignedHanava_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedDelta", NameKey = "Grant_CanBeAssignedDelta", DescriptionKey = "Grant_CanBeAssignedDelta_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedYekev", NameKey = "Grant_CanBeAssignedYekev", DescriptionKey = "Grant_CanBeAssignedYekev_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedMoviltech", NameKey = "Grant_CanBeAssignedMoviltech", DescriptionKey = "Grant_CanBeAssignedMoviltech_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+
+        // ============================================
+        // HELPER MOLECULE GRANTS - Shiklut (Category.Chore)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ViewShiklutCalendar", NameKey = "Grant_ViewShiklutCalendar", DescriptionKey = "Grant_ViewShiklutCalendar_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "AssignShiklutChores", NameKey = "Grant_AssignShiklutChores", DescriptionKey = "Grant_AssignShiklutChores_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageShiklutBlueprints", NameKey = "Grant_ManageShiklutBlueprints", DescriptionKey = "Grant_ManageShiklutBlueprints_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageShiklutPrograms", NameKey = "Grant_ManageShiklutPrograms", DescriptionKey = "Grant_ManageShiklutPrograms_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedShiklut", NameKey = "Grant_CanBeAssignedShiklut", DescriptionKey = "Grant_CanBeAssignedShiklut_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+
+        // ============================================
+        // HELPER MOLECULE GRANTS - NOC (Category.Chore)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ViewNOCCalendar", NameKey = "Grant_ViewNOCCalendar", DescriptionKey = "Grant_ViewNOCCalendar_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "AssignNOCChores", NameKey = "Grant_AssignNOCChores", DescriptionKey = "Grant_AssignNOCChores_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageNOCBlueprints", NameKey = "Grant_ManageNOCBlueprints", DescriptionKey = "Grant_ManageNOCBlueprints_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageNOCPrograms", NameKey = "Grant_ManageNOCPrograms", DescriptionKey = "Grant_ManageNOCPrograms_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "CanBeAssignedNOC", NameKey = "Grant_CanBeAssignedNOC", DescriptionKey = "Grant_CanBeAssignedNOC_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
+
+        // ============================================
+        // KATZIN DUTY GRANTS (Category.Duty)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageKatzinBlueprints", NameKey = "Grant_ManageKatzinBlueprints", DescriptionKey = "Grant_ManageKatzinBlueprints_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageKatzinPrograms", NameKey = "Grant_ManageKatzinPrograms", DescriptionKey = "Grant_ManageKatzinPrograms_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+
         return grants;
     }
 }

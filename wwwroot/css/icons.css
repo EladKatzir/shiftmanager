@@ -1,0 +1,366 @@
+/* ========================================
+   ShiftManager Icons - SVG Icon System
+   Version: 3.1 (B-005 Icon System Migration)
+   ======================================== */
+
+/* ========================================
+   1. BASE ICON STYLES
+   ======================================== */
+
+/* Base SVG icon styles */
+.icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  /* SVG icons inherit color via currentColor */
+  color: inherit;
+}
+
+/* Fallback support for data-lucide (legacy) */
+[data-lucide] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Ensure SVG icons inherit size (legacy support) */
+[data-lucide] svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ========================================
+   2. ICON SIZES
+   ======================================== */
+
+.icon--xs,
+.icon-xs {
+  width: 14px;
+  height: 14px;
+}
+
+.icon--sm,
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon--md,
+.icon-md {
+  width: 20px;
+  height: 20px;
+}
+
+.icon--lg,
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon--xl,
+.icon-xl {
+  width: 32px;
+  height: 32px;
+}
+
+.icon--2xl,
+.icon-2xl {
+  width: 48px;
+  height: 48px;
+}
+
+/* ========================================
+   3. ICON COLORS
+   ======================================== */
+
+.icon--primary { color: var(--primary); }
+.icon--accent { color: var(--accent); }
+.icon--success { color: var(--success); }
+.icon--warning { color: var(--warning); }
+.icon--danger { color: var(--danger); }
+.icon--info { color: var(--info); }
+.icon--muted { color: var(--text-muted); }
+.icon--subtle { color: var(--text-subtle); }
+
+/* ========================================
+   4. ICON ANIMATIONS
+   ======================================== */
+
+.icon--spin {
+  animation: icon-spin 1s linear infinite;
+}
+
+@keyframes icon-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.icon--pulse {
+  animation: icon-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.icon--bounce {
+  animation: icon-bounce 0.6s ease-in-out;
+}
+
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ========================================
+   5. ICON BUTTONS
+   ======================================== */
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-colors);
+}
+
+.icon-btn:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-btn--sm {
+  width: 28px;
+  height: 28px;
+}
+
+.icon-btn--lg {
+  width: 44px;
+  height: 44px;
+}
+
+.icon-btn--primary {
+  color: var(--primary);
+}
+
+.icon-btn--primary:hover {
+  background: var(--primary-soft);
+}
+
+.icon-btn--danger {
+  color: var(--danger);
+}
+
+.icon-btn--danger:hover {
+  background: var(--danger-soft);
+}
+
+/* ========================================
+   6. ICON WITH TEXT
+   ======================================== */
+
+.icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.icon-text--reverse {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .icon-text:not(.icon-text--reverse) {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .icon-text--reverse {
+  flex-direction: row;
+}
+
+/* ========================================
+   7. ICON BADGES
+   ======================================== */
+
+.icon-badge {
+  position: relative;
+  display: inline-flex;
+}
+
+.icon-badge__indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-full);
+}
+
+[dir="rtl"] .icon-badge__indicator {
+  right: auto;
+  left: -2px;
+}
+
+.icon-badge__count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  line-height: 18px;
+  text-align: center;
+  color: var(--primary-contrast);
+  background: var(--danger);
+  border-radius: var(--radius-full);
+}
+
+[dir="rtl"] .icon-badge__count {
+  right: auto;
+  left: -6px;
+}
+
+/* ========================================
+   8. ICON CIRCLES
+   ======================================== */
+
+.icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--surface-soft);
+  color: var(--text-muted);
+}
+
+.icon-circle--sm {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-circle--lg {
+  width: 56px;
+  height: 56px;
+}
+
+.icon-circle--primary {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.icon-circle--success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.icon-circle--warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.icon-circle--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ========================================
+   9. FALLBACK EMOJI ICONS
+   ======================================== */
+
+/* For graceful degradation when Lucide fails to load */
+.emoji-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.emoji-icon--sm { font-size: 14px; }
+.emoji-icon--lg { font-size: 20px; }
+.emoji-icon--xl { font-size: 24px; }
+
+/* ========================================
+   10. RTL SUPPORT
+   ======================================== */
+
+/* Icons that should flip in RTL */
+[dir="rtl"] .icon--flip-rtl {
+  transform: scaleX(-1);
+}
+
+/* Specific icons that need flipping (inline SVG icons) */
+[dir="rtl"] .icon--arrow-left,
+[dir="rtl"] .icon--arrow-right,
+[dir="rtl"] .icon--chevron-left,
+[dir="rtl"] .icon--chevron-right,
+[dir="rtl"] .icon--log-out,
+[dir="rtl"] .icon--external-link,
+[dir="rtl"] .icon--undo,
+[dir="rtl"] .icon--redo {
+  transform: scaleX(-1);
+}
+
+/* Legacy support for data-lucide icons */
+[dir="rtl"] [data-lucide="arrow-left"],
+[dir="rtl"] [data-lucide="arrow-right"],
+[dir="rtl"] [data-lucide="chevron-left"],
+[dir="rtl"] [data-lucide="chevron-right"],
+[dir="rtl"] [data-lucide="log-out"],
+[dir="rtl"] [data-lucide="external-link"],
+[dir="rtl"] [data-lucide="undo"],
+[dir="rtl"] [data-lucide="redo"] {
+  transform: scaleX(-1);
+}
+
+/* ========================================
+   11. UNKNOWN ICON FALLBACK
+   ======================================== */
+
+.icon--unknown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text-muted, #666);
+  background: var(--surface-soft, #f5f5f5);
+  border: 1px dashed var(--border, #ccc);
+  border-radius: 3px;
+}

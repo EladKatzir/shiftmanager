@@ -1,0 +1,823 @@
+/* ========================================
+   ShiftManager Widget System - "Shifty" Design System
+   Version: 3.0 (UI Overhaul)
+   ======================================== */
+
+/* ========================================
+   1. WIDGET CONTAINER
+   ======================================== */
+
+.widget {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition-shadow);
+}
+
+.widget:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.widget--elevated {
+  box-shadow: var(--shadow-md);
+}
+
+/* ========================================
+   2. WIDGET HEADER
+   ======================================== */
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface-soft);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition-colors);
+}
+
+.widget__header:hover {
+  background-color: var(--surface);
+}
+
+.widget__header:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.widget__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.widget__icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.widget__title {
+  font-size: var(--text-small);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.widget__badge {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-1);
+  font-size: var(--text-tiny);
+  font-weight: var(--font-semibold);
+  color: var(--primary-contrast);
+  background-color: var(--primary);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.widget__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  transition: transform var(--duration-normal) var(--ease-out),
+              color var(--duration-normal) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.widget__header:hover .widget__toggle {
+  color: var(--text);
+}
+
+.widget.is-collapsed .widget__toggle {
+  transform: rotate(-90deg);
+}
+
+[dir="rtl"] .widget.is-collapsed .widget__toggle {
+  transform: rotate(90deg);
+}
+
+/* Initial load state - no transition flash */
+.widget[data-widget-id]:not([data-widget-initialized]) .widget__body {
+  transition: none;
+}
+
+.widget[data-widget-id]:not([data-widget-initialized]) .widget__toggle {
+  transition: none;
+}
+
+/* Ensure icon inside toggle is properly sized */
+.widget__toggle .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========================================
+   3. WIDGET BODY
+   ======================================== */
+
+.widget__body {
+  padding: var(--space-3) var(--space-4);
+  max-height: 400px;
+  overflow-y: auto;
+  transition: max-height var(--duration-slow) var(--ease-in-out),
+              opacity var(--duration-normal) var(--ease-out),
+              padding var(--duration-normal) var(--ease-out);
+}
+
+.widget.is-collapsed .widget__body {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+/* ========================================
+   4. ON-CALL CONTACT WIDGET
+   ======================================== */
+
+.oncall-widget {
+  /* Inherits from .widget */
+}
+
+.oncall-contact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--surface-soft);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+  transition: var(--transition-colors);
+}
+
+.oncall-contact:last-child {
+  margin-bottom: 0;
+}
+
+.oncall-contact:hover {
+  background-color: var(--primary-soft);
+}
+
+.oncall-contact__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-small);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.oncall-contact__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.oncall-contact__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.oncall-contact__role {
+  font-size: var(--text-tiny);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.oncall-contact__name {
+  font-size: var(--text-small);
+  font-weight: var(--font-medium);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oncall-contact__phone {
+  font-size: var(--text-tiny);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.oncall-contact__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.oncall-contact__call-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: var(--success);
+  color: var(--success-text);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-transform), var(--transition-shadow);
+  text-decoration: none;
+}
+
+.oncall-contact__call-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-success);
+}
+
+.oncall-contact__call-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ========================================
+   5. OFFICE NUMBERS WIDGET
+   ======================================== */
+
+.office-numbers {
+  /* Inherits from .widget */
+}
+
+.office-number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.office-number:last-child {
+  border-bottom: none;
+}
+
+.office-number__label {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.office-number__value {
+  font-size: var(--text-small);
+  font-weight: var(--font-medium);
+  color: var(--text);
+  font-family: var(--font-mono);
+  direction: ltr;
+}
+
+.office-number__value a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: var(--transition-colors);
+}
+
+.office-number__value a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   6. FRIENDS ON-CALL WIDGET
+   ======================================== */
+
+.friends-oncall {
+  /* Inherits from .widget */
+}
+
+.friend-oncall {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-colors);
+}
+
+.friend-oncall:hover {
+  background-color: var(--surface-soft);
+}
+
+.friend-oncall__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: var(--camo-sky-soft);
+  color: var(--camo-sky);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-tiny);
+  flex-shrink: 0;
+}
+
+.friend-oncall__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-oncall__name {
+  font-size: var(--text-small);
+  font-weight: var(--font-medium);
+  color: var(--text);
+}
+
+.friend-oncall__status {
+  font-size: var(--text-tiny);
+  color: var(--text-muted);
+}
+
+.friend-oncall__status--oncall {
+  color: var(--success);
+}
+
+.friend-oncall__status--off {
+  color: var(--text-subtle);
+}
+
+/* ========================================
+   7. MY NEXT SHIFT WIDGET
+   ======================================== */
+
+.next-shift-widget {
+  /* Inherits from .widget */
+}
+
+.next-shift {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  background-color: var(--surface-soft);
+  border-radius: var(--radius-md);
+}
+
+.next-shift__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.next-shift__day {
+  font-size: var(--text-display);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.next-shift__month {
+  font-size: var(--text-tiny);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+}
+
+.next-shift__details {
+  flex: 1;
+  min-width: 0;
+}
+
+.next-shift__type {
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  margin-bottom: var(--space-1);
+}
+
+.next-shift__time {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.next-shift__countdown {
+  font-size: var(--text-tiny);
+  font-weight: var(--font-medium);
+  color: var(--primary);
+  background-color: var(--primary-soft);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+/* ========================================
+   8. PENDING REQUESTS WIDGET
+   ======================================== */
+
+.pending-widget {
+  /* Inherits from .widget */
+}
+
+.pending-request {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--surface-soft);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+}
+
+.pending-request:last-child {
+  margin-bottom: 0;
+}
+
+.pending-request__icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--warning-soft);
+  color: var(--warning);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.pending-request__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pending-request__title {
+  font-size: var(--text-small);
+  font-weight: var(--font-medium);
+  color: var(--text);
+  margin-bottom: var(--space-1);
+}
+
+.pending-request__meta {
+  font-size: var(--text-tiny);
+  color: var(--text-muted);
+}
+
+.pending-request__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* ========================================
+   9. ANNOUNCEMENTS WIDGET
+   ======================================== */
+
+.announcements-widget {
+  /* Inherits from .widget */
+}
+
+.announcement {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.announcement:last-child {
+  border-bottom: none;
+}
+
+.announcement__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.announcement__priority {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.announcement__priority--high {
+  background-color: var(--danger);
+}
+
+.announcement__priority--medium {
+  background-color: var(--warning);
+}
+
+.announcement__priority--low {
+  background-color: var(--info);
+}
+
+.announcement__title {
+  font-size: var(--text-small);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  flex: 1;
+}
+
+.announcement__time {
+  font-size: var(--text-tiny);
+  color: var(--text-muted);
+}
+
+.announcement__body {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+/* ========================================
+   10. WIDGET EMPTY STATE
+   ======================================== */
+
+.widget-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.widget-empty__icon {
+  font-size: 32px;
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+
+.widget-empty__text {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.widget-empty__hint {
+  font-size: var(--text-tiny);
+  color: var(--text-subtle);
+  margin-top: var(--space-1);
+}
+
+.widget-empty__action {
+  margin-top: var(--space-3);
+}
+
+/* On-Call Widget specific empty state */
+.widget-empty--oncall {
+  padding: var(--space-8) var(--space-4);
+}
+
+.widget-empty__icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.widget-empty--oncall .icon-circle {
+  background-color: var(--surface-soft);
+  color: var(--text-subtle);
+}
+
+.widget-empty--oncall .widget-empty__text {
+  font-weight: var(--font-medium);
+  color: var(--text);
+  margin-bottom: var(--space-1);
+}
+
+.widget-empty--oncall .widget-empty__hint {
+  font-size: var(--text-tiny);
+  color: var(--text-muted);
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: var(--leading-relaxed);
+}
+
+/* ========================================
+   11. WIDGET LOADING STATE
+   ======================================== */
+
+.widget-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.widget-loading__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.widget-loading__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+}
+
+.widget-loading__content {
+  flex: 1;
+}
+
+.widget-loading__line {
+  height: 12px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.widget-loading__line:last-child {
+  margin-bottom: 0;
+  width: 60%;
+}
+
+/* ========================================
+   12. QUICK ACTIONS WIDGET
+   ======================================== */
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background-color: var(--surface-soft);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-colors), var(--transition-transform);
+  text-decoration: none;
+}
+
+.quick-action:hover {
+  background-color: var(--primary-soft);
+  transform: translateY(-2px);
+}
+
+.quick-action:active {
+  transform: translateY(0);
+}
+
+.quick-action:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.quick-action__icon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary);
+}
+
+.quick-action__label {
+  font-size: var(--text-tiny);
+  font-weight: var(--font-medium);
+  color: var(--text);
+  text-align: center;
+}
+
+/* ========================================
+   13. METRICS WIDGET
+   ======================================== */
+
+.metrics-widget {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.metric {
+  padding: var(--space-3);
+  background-color: var(--surface-soft);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.metric__value {
+  font-size: var(--text-title);
+  font-weight: var(--font-bold);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.metric__label {
+  font-size: var(--text-tiny);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.metric--highlight {
+  background-color: var(--primary-soft);
+}
+
+.metric--highlight .metric__value {
+  color: var(--primary);
+}
+
+.metric--success .metric__value {
+  color: var(--success);
+}
+
+.metric--warning .metric__value {
+  color: var(--warning);
+}
+
+.metric--danger .metric__value {
+  color: var(--danger);
+}
+
+/* ========================================
+   14. WIDGET GRID LAYOUT
+   ======================================== */
+
+.widgets-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.widgets-grid--2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.widgets-grid--3col {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .widgets-grid--3col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .widgets-grid--2col,
+  .widgets-grid--3col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   15. SIDEBAR WIDGET VARIANTS
+   ======================================== */
+
+.sidebar-widget-container {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-widget {
+  background-color: var(--surface-soft);
+  border-radius: var(--radius-md);
+}
+
+.sidebar-widget .widget__header {
+  background-color: transparent;
+  border-bottom: none;
+  padding: var(--space-2) var(--space-3);
+}
+
+.sidebar-widget .widget__body {
+  padding: 0 var(--space-3) var(--space-3);
+  max-height: 200px;
+}
+
+.sidebar-widget .oncall-contact {
+  background-color: var(--surface);
+  padding: var(--space-2);
+}
+
+.sidebar-widget .oncall-contact__avatar {
+  width: 32px;
+  height: 32px;
+}
+
+/* Hidden in collapsed sidebar */
+.app-sidebar.is-collapsed .sidebar-widget-container {
+  display: none;
+}

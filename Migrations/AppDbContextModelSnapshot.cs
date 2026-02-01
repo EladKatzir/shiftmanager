@@ -2198,6 +2198,158 @@ namespace ShiftManager.Migrations
                     b.ToTable("TeamCalendarMembers");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.Telemetry.ClientAnalyticsEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventData")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PageUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SessionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserIdHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("UserIdHash");
+
+                    b.HasIndex("EventType", "Timestamp");
+
+                    b.ToTable("ClientAnalyticsEvents");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.Telemetry.ClientError", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BrowserInfo")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ColumnNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ErrorType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("LineNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PageUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StackTrace")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserIdHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PageUrl");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("UserIdHash");
+
+                    b.HasIndex("ErrorType", "Timestamp");
+
+                    b.ToTable("ClientErrors");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.Telemetry.PerformanceMetric", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BrowserInfo")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("DeviceMemory")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("EffectiveType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("HardwareConcurrency")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MetricName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PageUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Rating")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("MetricName", "PageUrl");
+
+                    b.HasIndex("MetricName", "Rating");
+
+                    b.HasIndex("MetricName", "Timestamp");
+
+                    b.ToTable("PerformanceMetrics");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.TimeOffRequest", b =>
                 {
                     b.Property<int>("Id")

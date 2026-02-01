@@ -9,7 +9,7 @@ namespace ShiftManager.Pages.Owner;
 /// Entry point for Language Edit Mode.
 /// Sets cookies and redirects to home page for in-app translation editing.
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class LanguageEditModeModel : PageModel
 {
     private readonly IOwnerCompanySelectorService _ownerCompanySelector;

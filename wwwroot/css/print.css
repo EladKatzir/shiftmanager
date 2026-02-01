@@ -1,0 +1,888 @@
+/* ========================================
+   ShiftManager Print Styles - "Shifty" Design System
+   Version: 3.0 (UI Overhaul)
+   ======================================== */
+
+@media print {
+  /* ========================================
+     1. RESET & BASE STYLES
+     ======================================== */
+
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html,
+  body {
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    color: #000 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ========================================
+     2. HIDE UI CHROME
+     ======================================== */
+
+  /* Navigation & Sidebar */
+  .app-sidebar,
+  .sidebar-toggle,
+  .mobile-nav-toggle,
+  .mobile-nav-overlay {
+    display: none !important;
+  }
+
+  /* Header Actions */
+  .app-header__right,
+  .header-action,
+  .btn--logout,
+  #themeToggle {
+    display: none !important;
+  }
+
+  /* Interactive Elements */
+  .modal,
+  .modal-backdrop,
+  .toast,
+  .toast-container,
+  .dropdown__menu,
+  .tooltip::after,
+  .command-palette {
+    display: none !important;
+  }
+
+  /* Widgets (except print-friendly ones) */
+  .sidebar-widget-container,
+  .widget--no-print {
+    display: none !important;
+  }
+
+  /* Footer & Non-essential */
+  .app-footer,
+  .footer,
+  .pagination,
+  .quick-actions,
+  .fab,
+  .floating-action {
+    display: none !important;
+  }
+
+  /* Buttons & Forms (unless marked for print) */
+  .btn:not(.btn--print),
+  form:not(.form--print),
+  input[type="submit"],
+  input[type="button"] {
+    display: none !important;
+  }
+
+  /* Loading States */
+  .spinner,
+  .skeleton,
+  .loading-overlay {
+    display: none !important;
+  }
+
+  /* ========================================
+     3. LAYOUT ADJUSTMENTS
+     ======================================== */
+
+  .app-main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-content {
+    padding: 0.5cm !important;
+  }
+
+  .app-header {
+    position: relative !important;
+    border-bottom: 2px solid #000 !important;
+    padding: 0.5cm 0 !important;
+    margin-bottom: 0.5cm !important;
+  }
+
+  .app-header__title {
+    font-size: 16pt !important;
+    color: #000 !important;
+  }
+
+  /* ========================================
+     4. PRINT HEADER
+     ======================================== */
+
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5cm;
+    padding-bottom: 0.3cm;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .print-header__logo {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1E3A5F;
+  }
+
+  .print-header__meta {
+    text-align: right;
+    font-size: 9pt;
+    color: #666;
+  }
+
+  .print-header__context {
+    font-weight: bold;
+  }
+
+  .print-header__date {
+    margin-top: 2pt;
+  }
+
+  /* Default hidden, shown on print */
+  .print-only {
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* ========================================
+     5. TYPOGRAPHY
+     ======================================== */
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #000 !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  h1 { font-size: 16pt !important; }
+  h2 { font-size: 14pt !important; }
+  h3 { font-size: 12pt !important; }
+  h4, h5, h6 { font-size: 10pt !important; }
+
+  p, li, td, th {
+    orphans: 3;
+    widows: 3;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  /* Don't show href for internal links */
+  a[href^="/"]::after,
+  a[href^="#"]::after {
+    content: none !important;
+  }
+
+  /* ========================================
+     6. CALENDAR PRINT STYLES
+     ======================================== */
+
+  .calendar-header {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 0.3cm !important;
+  }
+
+  .calendar-header__title {
+    font-size: 14pt !important;
+  }
+
+  .calendar-header__nav,
+  .calendar-header__right,
+  .view-switcher,
+  .scope-switcher {
+    display: none !important;
+  }
+
+  .calendar-grid {
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+  }
+
+  .calendar-grid__day-name {
+    background-color: #f0f0f0 !important;
+    border-bottom: 1px solid #000 !important;
+    font-size: 9pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+
+  .calendar-cell {
+    min-height: 2cm !important;
+    border: 1px solid #ccc !important;
+    padding: 2pt !important;
+    background: #fff !important;
+  }
+
+  .calendar-cell--today {
+    background-color: #f5f5f5 !important;
+  }
+
+  .calendar-cell--today .calendar-cell__date {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-radius: 50% !important;
+  }
+
+  .calendar-cell--weekend {
+    background-color: #fafafa !important;
+  }
+
+  .calendar-cell__date {
+    font-size: 10pt !important;
+    font-weight: bold !important;
+  }
+
+  .calendar-cell__coverage {
+    display: none !important;
+  }
+
+  /* Shift Badges for Print */
+  .shift-badge {
+    font-size: 8pt !important;
+    padding: 1pt 3pt !important;
+    margin-bottom: 2pt !important;
+    border: 1px solid #ccc !important;
+    border-radius: 2pt !important;
+    background: none !important;
+    color: #000 !important;
+  }
+
+  .shift-badge__indicator {
+    width: 6pt !important;
+    height: 6pt !important;
+    border: 1px solid #000 !important;
+  }
+
+  /* Print-specific shift colors (use patterns for B&W) */
+  .shift-badge--morning .shift-badge__indicator {
+    background-color: #F0C14B !important;
+  }
+
+  .shift-badge--afternoon .shift-badge__indicator {
+    background-color: #6B7F59 !important;
+  }
+
+  .shift-badge--night .shift-badge__indicator {
+    background-color: #1E3A5F !important;
+  }
+
+  .shift-badge--hakam .shift-badge__indicator {
+    background-color: #8B4513 !important;
+  }
+
+  .shift-badge--br .shift-badge__indicator {
+    background-color: #4A5568 !important;
+  }
+
+  /* Page breaks */
+  .calendar-grid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .calendar-week-row {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ========================================
+     7. CALENDAR LEGEND
+     ======================================== */
+
+  .calendar-legend {
+    display: flex !important;
+    justify-content: center;
+    gap: 1cm;
+    margin-top: 0.5cm;
+    padding-top: 0.3cm;
+    border-top: 1px solid #ccc;
+    font-size: 8pt;
+  }
+
+  .calendar-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 3pt;
+  }
+
+  .calendar-legend__color {
+    width: 8pt;
+    height: 8pt;
+    border: 1px solid #000;
+    border-radius: 2pt;
+  }
+
+  /* ========================================
+     8. TABLE PRINT STYLES
+     ======================================== */
+
+  .table-container {
+    overflow: visible !important;
+    border: none !important;
+  }
+
+  .table {
+    border: 1px solid #000 !important;
+    border-collapse: collapse !important;
+    width: 100% !important;
+    font-size: 9pt !important;
+  }
+
+  .table th,
+  .table td {
+    border: 1px solid #000 !important;
+    padding: 4pt 6pt !important;
+    background: none !important;
+    color: #000 !important;
+  }
+
+  .table th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  .table tbody tr:nth-child(even) {
+    background-color: #fafafa !important;
+  }
+
+  .table__actions {
+    display: none !important;
+  }
+
+  /* Page breaks for tables */
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ========================================
+     9. CARDS FOR PRINT
+     ======================================== */
+
+  .card {
+    border: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 0.5cm;
+  }
+
+  .card__header {
+    border-bottom: 1px solid #ccc !important;
+    background: #f5f5f5 !important;
+  }
+
+  .card__title {
+    color: #000 !important;
+    font-size: 11pt !important;
+  }
+
+  /* ========================================
+     10. BADGES FOR PRINT
+     ======================================== */
+
+  .badge {
+    border: 1px solid #ccc !important;
+    background: none !important;
+    color: #000 !important;
+    font-size: 8pt !important;
+  }
+
+  .badge--success {
+    border-color: #2D6A4F !important;
+  }
+
+  .badge--warning {
+    border-color: #D4A017 !important;
+  }
+
+  .badge--danger {
+    border-color: #9B2C2C !important;
+  }
+
+  /* ========================================
+     11. AVATARS FOR PRINT
+     ======================================== */
+
+  .avatar {
+    border: 1px solid #ccc !important;
+    background: #f5f5f5 !important;
+    color: #000 !important;
+  }
+
+  /* ========================================
+     12. ALERTS FOR PRINT
+     ======================================== */
+
+  .alert {
+    border: 1px solid #000 !important;
+    background: none !important;
+    color: #000 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ========================================
+     13. PAGE SETUP
+     ======================================== */
+
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  @page :first {
+    margin-top: 1cm;
+  }
+
+  /* Landscape for calendars */
+  .calendar-print-landscape {
+    page: landscape;
+  }
+
+  @page landscape {
+    size: A4 landscape;
+  }
+
+  /* ========================================
+     14. PRINT FOOTER
+     ======================================== */
+
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.3cm 0;
+    border-top: 1px solid #ccc;
+    font-size: 8pt;
+    color: #666;
+    text-align: center;
+  }
+
+  .print-footer__page {
+    content: "Page " counter(page) " of " counter(pages);
+  }
+
+  /* ========================================
+     15. UTILITY CLASSES
+     ======================================== */
+
+  .page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* ========================================
+   16. PRINT PREVIEW STYLES (Screen Only)
+   ======================================== */
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+
+  .print-preview-frame {
+    border: 1px solid var(--border);
+    padding: 2rem;
+    background: white;
+    box-shadow: var(--shadow-lg);
+    max-width: 210mm;
+    margin: 2rem auto;
+  }
+}
+
+/* ========================================
+   17. PRINT STYLES ENHANCEMENT (B-006)
+   Calendar printing with B&W support
+   ======================================== */
+
+@media print {
+  /* Additional UI Chrome to Hide */
+  .sidebar,
+  .nav-toggle,
+  .nav-overlay,
+  .topbar,
+  .context-switcher,
+  .error-banner,
+  .loading-spinner,
+  [data-print-hide],
+  .calendar-nav,
+  .calendar-view-switcher,
+  .calendar-quick-actions,
+  .quick-add-container,
+  .quick-add-form,
+  .btn-quick-add,
+  .btn-delete-item,
+  .item-manage-link,
+  .show-more-btn,
+  .hidden-items {
+    display: none !important;
+  }
+
+  /* Calendar Header Print Adjustments */
+  .calendar-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
+    margin-bottom: 0.5cm !important;
+    border-bottom: 2px solid #000 !important;
+    background: none !important;
+  }
+
+  .header-main h2 {
+    font-size: 14pt !important;
+    color: #000 !important;
+    margin: 0 !important;
+  }
+
+  .calendar-icon {
+    display: none !important;
+  }
+
+  .calendar-controls {
+    display: none !important;
+  }
+
+  /* Calendar Metrics for Print */
+  .calendar-metrics {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5cm !important;
+    margin-top: 0.3cm !important;
+    padding-top: 0.3cm !important;
+    border-top: 1px solid #ccc !important;
+  }
+
+  .metric-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3pt !important;
+    font-size: 9pt !important;
+    color: #000 !important;
+    background: none !important;
+  }
+
+  .metric-icon {
+    display: none !important;
+  }
+
+  .metric-value {
+    font-weight: bold !important;
+  }
+
+  .metric-label {
+    color: #666 !important;
+  }
+
+  /* Calendar Grid Month View Print */
+  .calendar-grid {
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+    margin-top: 0.5cm !important;
+  }
+
+  .calendar-weekdays {
+    display: contents !important;
+  }
+
+  .weekday-header {
+    background-color: #f0f0f0 !important;
+    border: 1px solid #ccc !important;
+    font-size: 9pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    padding: 4pt !important;
+    text-align: center !important;
+  }
+
+  .calendar-cell,
+  [class*="calendar-cell"] {
+    min-height: auto !important;
+    border: 1px solid #ccc !important;
+    padding: 4pt !important;
+    background: #fff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .calendar-cell.other-month {
+    background-color: #f5f5f5 !important;
+  }
+
+  .calendar-cell.today {
+    background-color: #e8e8e8 !important;
+  }
+
+  .cell-date {
+    font-size: 10pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+
+  .today-indicator {
+    display: none !important;
+  }
+
+  .cell-items {
+    margin-top: 4pt !important;
+  }
+
+  /* Calendar Items Print */
+  .calendar-item {
+    border: 1px solid #999 !important;
+    border-radius: 2pt !important;
+    padding: 3pt !important;
+    margin-bottom: 3pt !important;
+    background: #fff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    font-size: 8pt !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .calendar-item.personal {
+    border-width: 2px !important;
+    border-color: #000 !important;
+    background: #f5f5f5 !important;
+  }
+
+  .calendar-item.other {
+    opacity: 1 !important;
+    border-style: dashed !important;
+  }
+
+  .item-header {
+    margin-bottom: 2pt !important;
+    gap: 2pt !important;
+  }
+
+  .item-icon {
+    font-size: 9pt !important;
+  }
+
+  .item-title {
+    font-size: 8pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+
+  .item-assignee {
+    font-size: 8pt !important;
+    color: #333 !important;
+  }
+
+  .item-time,
+  .item-staffing {
+    font-size: 7pt !important;
+    color: #666 !important;
+    margin-top: 1pt !important;
+  }
+
+  /* Week View Print */
+  .week-grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 2pt !important;
+    margin-top: 0.5cm !important;
+  }
+
+  .week-column {
+    border: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    padding: 4pt !important;
+    background: #fff !important;
+    min-height: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .week-column.today {
+    border: 2px solid #000 !important;
+    background: #f5f5f5 !important;
+  }
+
+  .column-header {
+    border-bottom: 1px solid #ccc !important;
+    padding-bottom: 3pt !important;
+    margin-bottom: 4pt !important;
+  }
+
+  .day-name {
+    font-size: 9pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+
+  .day-date {
+    font-size: 8pt !important;
+    color: #666 !important;
+  }
+
+  .empty-day {
+    display: none !important;
+  }
+
+  /* Day View Print */
+  .day-items-container {
+    margin-top: 0.5cm !important;
+    gap: 0.3cm !important;
+  }
+
+  .day-item {
+    border: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    padding: 0.3cm !important;
+    background: #fff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .day-item.personal {
+    border: 2px solid #000 !important;
+    background: #f5f5f5 !important;
+  }
+
+  .day-item.other {
+    opacity: 1 !important;
+    border-style: dashed !important;
+  }
+
+  .item-main .item-header {
+    margin-bottom: 4pt !important;
+  }
+
+  .item-main .item-icon {
+    font-size: 12pt !important;
+  }
+
+  .item-main .item-title {
+    font-size: 11pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+
+  .trainee-badge {
+    border: 1px solid #000 !important;
+    background: none !important;
+    color: #000 !important;
+    font-size: 8pt !important;
+  }
+
+  .item-details {
+    font-size: 9pt !important;
+    margin-top: 4pt !important;
+  }
+
+  .detail-label {
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+
+  .detail-value {
+    color: #333 !important;
+  }
+
+  .item-actions {
+    display: none !important;
+  }
+
+  .empty-day-state {
+    display: none !important;
+  }
+
+  .day-quick-add-section {
+    display: none !important;
+  }
+
+  /* Shift Type B&W Indicators */
+  .shift-morning,
+  [class*="shift-morning"],
+  [class*="color-morning"] {
+    border-left: 4px solid #666 !important;
+  }
+
+  .shift-middle,
+  .shift-afternoon,
+  [class*="shift-afternoon"],
+  [class*="color-afternoon"] {
+    border-left: 4px solid #999 !important;
+  }
+
+  .shift-noon,
+  [class*="shift-noon"] {
+    border-left: 4px solid #bbb !important;
+  }
+
+  .shift-night,
+  [class*="shift-night"],
+  [class*="color-night"] {
+    border-left: 4px solid #333 !important;
+  }
+
+  .shift-hakam,
+  [class*="shift-hakam"],
+  [class*="color-hakam"] {
+    border-left: 4px solid #444 !important;
+  }
+
+  .shift-br,
+  [class*="shift-br"],
+  [class*="color-br"] {
+    border-left: 4px solid #777 !important;
+  }
+
+  /* Page Break Utility Classes */
+  .page-break-avoid,
+  .avoid-page-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ensure images print */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Print button should never show */
+  .btn--print {
+    display: none !important;
+  }
+}

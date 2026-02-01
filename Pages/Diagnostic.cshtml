@@ -19,8 +19,8 @@
         <h1 style="margin: 0; color: var(--text);">🔧 <loc key="SystemDiagnostics" /></h1>
     </div>
 
-    <div style="background: var(--warning); color: #000; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #d97706;">
-        <strong>⚠️ Admin Only:</strong> @Localizer["MultiTenantDebugInfo"]
+    <div style="background: var(--warning-soft); color: var(--text); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--warning);">
+        <strong>⚠️ <loc key="AdminOnly" />:</strong> @Localizer["MultiTenantDebugInfo"]
     </div>
 
     <!-- Filter Section -->
@@ -60,7 +60,7 @@
             </div>
 
             <div>
-                <button type="submit" class="btn btn-primary" style="font-weight: 600; font-size: 1rem; padding: 0.65rem 2rem; box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);">
+                <button type="submit" class="btn btn-primary" style="font-weight: 600; font-size: 1rem; padding: 0.65rem 2rem; box-shadow: var(--shadow-primary);">
                     🔎 @Localizer["Apply"]
                 </button>
             </div>
@@ -168,7 +168,7 @@
             else
             {
                 <p style="color: var(--muted); text-align: center; padding: 1rem;">
-                    No shift instances found for the selected date range.
+                    <loc key="NoShiftInstancesFound" />
                 </p>
             }
         </div>
@@ -218,7 +218,7 @@
                 else
                 {
                     <p style="color: var(--muted); text-align: center; padding: 1rem;">
-                        No assignments found for this user in the selected date range.
+                        <loc key="NoAssignmentsFound" />
                     </p>
                 }
             }
@@ -244,7 +244,7 @@
 
     button[type="submit"]:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4) !important;
+        box-shadow: var(--shadow-primary) !important;
     }
 
     button[type="submit"]:active {
@@ -259,7 +259,7 @@
     select:focus, input[type="date"]:focus {
         outline: none;
         border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        box-shadow: var(--focus-ring);
     }
 
     select:hover, input[type="date"]:hover {

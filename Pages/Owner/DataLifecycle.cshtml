@@ -7,13 +7,13 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Data Lifecycle";
+    ViewData["Title"] = Localizer["Owner_DataLifecycle"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
     new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
-    new BreadcrumbItem { Label = "Data Lifecycle", IsActive = true }
+    new BreadcrumbItem { Label = Localizer["Owner_DataLifecycle"], IsActive = true }
 })
 
 @* Owner Company Selector *@
@@ -23,9 +23,9 @@
     <div class="page-header">
         <h1>
             <span class="page-icon">📦</span>
-            Data Lifecycle Management
+            <loc key="Owner_DataLifecycle" />
         </h1>
-        <p class="page-subtitle">Archive, Purge, and Re-Import historical data</p>
+        <p class="page-subtitle"><loc key="Owner_DataLifecycle_Subtitle" /></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Success))
@@ -66,7 +66,7 @@
                     role="tab"
                     aria-controls="archive"
                     aria-selected="@(Model.ActiveTab == "archive" ? "true" : "false")">
-                📥 Create Archive
+                📥 <loc key="Owner_DataLifecycle_CreateArchive" />
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -78,7 +78,7 @@
                     role="tab"
                     aria-controls="purge"
                     aria-selected="@(Model.ActiveTab == "purge" ? "true" : "false")">
-                🗑️ Purge Data
+                🗑️ <loc key="Owner_DataLifecycle_PurgeData" />
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -90,7 +90,7 @@
                     role="tab"
                     aria-controls="import"
                     aria-selected="@(Model.ActiveTab == "import" ? "true" : "false")">
-                📤 Re-Import Archive
+                📤 <loc key="Owner_DataLifecycle_ReImport" />
             </button>
         </li>
     </ul>
@@ -103,39 +103,39 @@
              aria-labelledby="archive-tab">
 
             <div class="tab-panel-content">
-                <h2>📥 Create Archive</h2>
-                <p>Export historical data in two formats: CSV (human-readable) and NDJSON (re-importable).</p>
+                <h2>📥 <loc key="Owner_DataLifecycle_CreateArchive" /></h2>
+                <p><loc key="Owner_DataLifecycle_CreateArchive_Desc" /></p>
 
                 <form method="post" asp-page-handler="Preview">
                     <div class="form-section">
                         <div class="form-group">
-                            <label asp-for="ArchiveCutoffDate">Cutoff Date (export data BEFORE this date)</label>
+                            <label asp-for="ArchiveCutoffDate"><loc key="Owner_DataLifecycle_CutoffDate" /></label>
                             <input type="date" asp-for="ArchiveCutoffDate" class="form-control" />
-                            <small class="form-text">Only records before this date will be archived</small>
+                            <small class="form-text"><loc key="Owner_DataLifecycle_CutoffDate_Help" /></small>
                         </div>
 
                         <div class="form-group">
-                            <label>Data Types to Archive</label>
+                            <label><loc key="Owner_DataLifecycle_DataTypes" /></label>
                             <div class="checkbox-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="IncludeShifts" />
-                                    Shifts (ShiftInstance + ShiftAssignment)
+                                    <loc key="Owner_DataLifecycle_Shifts" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="IncludeSwapRequests" />
-                                    Swap Requests
+                                    <loc key="Owner_DataLifecycle_SwapRequests" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="IncludeTimeOff" />
-                                    Time Off Requests
+                                    <loc key="Owner_DataLifecycle_TimeOff" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="IncludeChores" />
-                                    Chores
+                                    <loc key="Owner_DataLifecycle_Chores" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="IncludeOnDuty" />
-                                    On Duty
+                                    <loc key="Owner_DataLifecycle_OnDuty" />
                                 </label>
                             </div>
                         </div>
@@ -143,7 +143,7 @@
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-secondary">
-                            🔍 Preview Counts
+                            🔍 <loc key="Owner_DataLifecycle_PreviewCounts" />
                         </button>
                     </div>
                 </form>
@@ -151,7 +151,7 @@
                 @if (Model.Preview != null)
                 {
                     <div class="preview-section">
-                        <h3>📊 Preview Results</h3>
+                        <h3>📊 <loc key="Owner_DataLifecycle_PreviewResults" /></h3>
                         <div class="stats-grid">
                             @foreach (var count in Model.Preview.Counts)
                             {
@@ -162,14 +162,14 @@
                             }
                         </div>
                         <div class="preview-summary">
-                            <strong>Total Records:</strong> @Model.Preview.Counts.Values.Sum()<br />
-                            <strong>Estimated Size:</strong> ~@((Model.Preview.EstimatedSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB
+                            <strong><loc key="Owner_DataLifecycle_TotalRecords" />:</strong> @Model.Preview.Counts.Values.Sum()<br />
+                            <strong><loc key="Owner_DataLifecycle_EstimatedSize" />:</strong> ~@((Model.Preview.EstimatedSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB
                         </div>
 
                         @if (Model.Preview.Warnings.Any())
                         {
                             <div class="warnings-section">
-                                <h4>⚠️ Warnings:</h4>
+                                <h4>⚠️ <loc key="Owner_DataLifecycle_Warnings" />:</h4>
                                 <ul>
                                     @foreach (var warning in Model.Preview.Warnings)
                                     {
@@ -187,7 +187,7 @@
                             <input type="hidden" asp-for="IncludeChores" />
                             <input type="hidden" asp-for="IncludeOnDuty" />
                             <button type="submit" class="btn btn-primary">
-                                📦 Create Archive
+                                📦 <loc key="Owner_DataLifecycle_CreateArchive" />
                             </button>
                         </form>
                     </div>
@@ -196,18 +196,18 @@
                 @if (Model.LastArchive != null && Model.LastArchive.Success)
                 {
                     <div class="download-section">
-                        <h3>⬇️ Download Archives</h3>
+                        <h3>⬇️ <loc key="Owner_DataLifecycle_DownloadArchives" /></h3>
                         <div class="download-cards">
                             <div class="download-card">
                                 <div class="download-header">
                                     <span class="download-icon">📄</span>
                                     <div>
-                                        <h4>CSV Export (Human-Readable)</h4>
-                                        <p>Size: @((Model.LastArchive.CsvZipSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB</p>
+                                        <h4><loc key="Owner_DataLifecycle_CsvExport" /></h4>
+                                        <p><loc key="Owner_DataLifecycle_Size" />: @((Model.LastArchive.CsvZipSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB</p>
                                     </div>
                                 </div>
                                 <a href="?handler=DownloadCsv" class="btn btn-primary">
-                                    📥 Download CSV ZIP
+                                    📥 <loc key="Owner_DataLifecycle_DownloadCsvZip" />
                                 </a>
                             </div>
 
@@ -215,18 +215,18 @@
                                 <div class="download-header">
                                     <span class="download-icon">🔄</span>
                                     <div>
-                                        <h4>NDJSON Export (Re-Importable)</h4>
-                                        <p>Size: @((Model.LastArchive.NdjsonZipSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB</p>
+                                        <h4><loc key="Owner_DataLifecycle_NdjsonExport" /></h4>
+                                        <p><loc key="Owner_DataLifecycle_Size" />: @((Model.LastArchive.NdjsonZipSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB</p>
                                     </div>
                                 </div>
                                 <a href="?handler=DownloadNdjson" class="btn btn-primary">
-                                    📥 Download NDJSON ZIP
+                                    📥 <loc key="Owner_DataLifecycle_DownloadNdjsonZip" />
                                 </a>
                             </div>
                         </div>
 
                         <div class="hash-section">
-                            <label>SHA-256 Hash (for integrity verification):</label>
+                            <label><loc key="Owner_DataLifecycle_Sha256Hash" />:</label>
                             <code class="hash-display">@Model.LastArchive.Sha256Hash</code>
                         </div>
                     </div>
@@ -241,81 +241,79 @@
              aria-labelledby="purge-tab">
 
             <div class="tab-panel-content">
-                <h2>🗑️ Purge Historical Data</h2>
+                <h2>🗑️ <loc key="Owner_DataLifecycle_PurgeHistoricalData" /></h2>
 
                 @if (!Model.HasFreshArchive)
                 {
                     <div class="alert alert-warning">
-                        <strong>⚠️ Warning:</strong> You must create a fresh archive with the exact same cutoff date and data type selection before purging.
-                        Go to the "Create Archive" tab first.
+                        <strong>⚠️ <loc key="Warning" />:</strong> <loc key="Owner_DataLifecycle_PurgeWarning" />
                     </div>
                 }
 
                 <div class="danger-notice">
                     <div class="danger-icon">⚠️</div>
                     <div class="danger-content">
-                        <strong>DESTRUCTIVE OPERATION</strong><br />
-                        This will permanently delete historical data from the database.
-                        A pre-purge backup will be created automatically.
+                        <strong><loc key="Owner_DataLifecycle_DestructiveOperation" /></strong><br />
+                        <loc key="Owner_DataLifecycle_DestructiveOperation_Desc" />
                     </div>
                 </div>
 
                 <form method="post" asp-page-handler="Purge">
                     <div class="form-section">
                         <div class="form-group">
-                            <label asp-for="PurgeCutoffDate">Cutoff Date (delete data BEFORE this date)</label>
+                            <label asp-for="PurgeCutoffDate"><loc key="Owner_DataLifecycle_PurgeCutoffDate" /></label>
                             <input type="date" asp-for="PurgeCutoffDate" class="form-control" />
-                            <small class="form-text">Only records before this date will be deleted</small>
+                            <small class="form-text"><loc key="Owner_DataLifecycle_PurgeCutoffDate_Help" /></small>
                         </div>
 
                         <div class="form-group">
-                            <label>Data Types to Purge</label>
+                            <label><loc key="Owner_DataLifecycle_DataTypesToPurge" /></label>
                             <div class="checkbox-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="PurgeShifts" />
-                                    Shifts (ShiftInstance + ShiftAssignment)
+                                    <loc key="Owner_DataLifecycle_Shifts" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="PurgeSwapRequests" />
-                                    Swap Requests
+                                    <loc key="Owner_DataLifecycle_SwapRequests" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="PurgeTimeOff" />
-                                    Time Off Requests (+ OFFLINE shifts)
+                                    <loc key="Owner_DataLifecycle_TimeOffPurge" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="PurgeChores" />
-                                    Chores
+                                    <loc key="Owner_DataLifecycle_Chores" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="PurgeOnDuty" />
-                                    On Duty
+                                    <loc key="Owner_DataLifecycle_OnDuty" />
                                 </label>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label>Safety Confirmations</label>
+                            <label><loc key="Owner_DataLifecycle_SafetyConfirmations" /></label>
                             <div class="checkbox-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="ArchiveConfirmed" required />
-                                    <strong>I have exported/archived this data</strong> (required)
+                                    <strong><loc key="Owner_DataLifecycle_ArchiveConfirmed" /></strong> (<loc key="Required" />)
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="RunVacuum" />
-                                    Run VACUUM after purge (reclaim disk space)
+                                    <loc key="Owner_DataLifecycle_RunVacuum" />
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" asp-for="HardDeleteOnDuty" />
-                                    <strong>Hard delete</strong> OnDuty rows (default: soft delete)
+                                    <strong><loc key="Owner_DataLifecycle_HardDelete" /></strong> <loc key="Owner_DataLifecycle_HardDelete_Desc" />
                                 </label>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label>Typed Confirmation</label>
+                            <label><loc key="Owner_DataLifecycle_TypedConfirmation" /></label>
                             <div class="confirmation-hint">
-                                Type exactly: <code>@Model.ExpectedConfirmation</code>
+                                <loc key="Owner_DataLifecycle_TypeExactly" />: <code>@Model.ExpectedConfirmation</code>
                             </div>
                             <input type="text" asp-for="TypedConfirmation" class="form-control" placeholder="@Model.ExpectedConfirmation" required />
                         </div>
@@ -323,7 +321,7 @@
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-danger" @(!Model.HasFreshArchive ? "disabled" : "")>
-                            🗑️ Purge Data
+                            🗑️ <loc key="Owner_DataLifecycle_PurgeData" />
                         </button>
                     </div>
                 </form>
@@ -331,23 +329,23 @@
                 @if (Model.LastPurgeResult != null && Model.LastPurgeResult.Success)
                 {
                     <div class="purge-results">
-                        <h3>✅ Purge Results</h3>
+                        <h3>✅ <loc key="Owner_DataLifecycle_PurgeResults" /></h3>
                         <div class="stats-grid">
                             @foreach (var count in Model.LastPurgeResult.DeletedCounts)
                             {
                                 <div class="stat-card">
                                     <div class="stat-value">@count.Value</div>
-                                    <div class="stat-label">@count.Key Deleted</div>
+                                    <div class="stat-label">@count.Key <loc key="Deleted" /></div>
                                 </div>
                             }
                         </div>
                         <div class="purge-summary">
-                            <strong>Total Deleted:</strong> @Model.LastPurgeResult.DeletedCounts.Values.Sum()<br />
-                            <strong>DB Size Before:</strong> @((Model.LastPurgeResult.DbSizeBeforeBytes / 1024.0 / 1024.0).ToString("F2")) MB<br />
-                            <strong>DB Size After:</strong> @((Model.LastPurgeResult.DbSizeAfterBytes / 1024.0 / 1024.0).ToString("F2")) MB<br />
-                            <strong>Space Saved:</strong> @(((Model.LastPurgeResult.DbSizeBeforeBytes - Model.LastPurgeResult.DbSizeAfterBytes) / 1024.0 / 1024.0).ToString("F2")) MB<br />
-                            <strong>Duration:</strong> @Model.LastPurgeResult.Duration.TotalSeconds.ToString("F1")s<br />
-                            <strong>Backup:</strong> @System.IO.Path.GetFileName(Model.LastPurgeResult.BackupPath)
+                            <strong><loc key="Owner_DataLifecycle_TotalDeleted" />:</strong> @Model.LastPurgeResult.DeletedCounts.Values.Sum()<br />
+                            <strong><loc key="Owner_DataLifecycle_DbSizeBefore" />:</strong> @((Model.LastPurgeResult.DbSizeBeforeBytes / 1024.0 / 1024.0).ToString("F2")) MB<br />
+                            <strong><loc key="Owner_DataLifecycle_DbSizeAfter" />:</strong> @((Model.LastPurgeResult.DbSizeAfterBytes / 1024.0 / 1024.0).ToString("F2")) MB<br />
+                            <strong><loc key="Owner_DataLifecycle_SpaceSaved" />:</strong> @(((Model.LastPurgeResult.DbSizeBeforeBytes - Model.LastPurgeResult.DbSizeAfterBytes) / 1024.0 / 1024.0).ToString("F2")) MB<br />
+                            <strong><loc key="Duration" />:</strong> @Model.LastPurgeResult.Duration.TotalSeconds.ToString("F1")s<br />
+                            <strong><loc key="Owner_Backup" />:</strong> @System.IO.Path.GetFileName(Model.LastPurgeResult.BackupPath)
                         </div>
                     </div>
                 }
@@ -361,21 +359,21 @@
              aria-labelledby="import-tab">
 
             <div class="tab-panel-content">
-                <h2>📤 Re-Import Archive</h2>
-                <p>Upload and re-import a previously exported NDJSON archive.</p>
+                <h2>📤 <loc key="Owner_DataLifecycle_ReImport" /></h2>
+                <p><loc key="Owner_DataLifecycle_ReImport_Desc" /></p>
 
                 <form method="post" asp-page-handler="ValidateArchive" enctype="multipart/form-data">
                     <div class="form-section">
                         <div class="form-group">
-                            <label asp-for="UploadedArchive">Select Archive ZIP File</label>
+                            <label asp-for="UploadedArchive"><loc key="Owner_DataLifecycle_SelectArchive" /></label>
                             <input type="file" asp-for="UploadedArchive" class="form-control" accept=".zip" required />
-                            <small class="form-text">Upload the NDJSON ZIP file (archive_import_*.zip)</small>
+                            <small class="form-text"><loc key="Owner_DataLifecycle_SelectArchive_Help" /></small>
                         </div>
                     </div>
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-secondary">
-                            🔍 Validate Archive
+                            🔍 <loc key="Owner_DataLifecycle_ValidateArchive" />
                         </button>
                     </div>
                 </form>
@@ -383,12 +381,12 @@
                 @if (Model.ValidationResult != null)
                 {
                     <div class="validation-results">
-                        <h3>📋 Validation Results</h3>
+                        <h3>📋 <loc key="Owner_DataLifecycle_ValidationResults" /></h3>
 
                         @if (!Model.ValidationResult.IsValid)
                         {
                             <div class="alert alert-danger">
-                                <strong>❌ Validation Failed</strong>
+                                <strong>❌ <loc key="Owner_DataLifecycle_ValidationFailed" /></strong>
                                 <ul>
                                     @foreach (var error in Model.ValidationResult.Errors)
                                     {
@@ -400,19 +398,19 @@
                         else
                         {
                             <div class="alert alert-success">
-                                <strong>✅ Validation Passed</strong>
+                                <strong>✅ <loc key="Owner_DataLifecycle_ValidationPassed" /></strong>
                             </div>
 
                             <div class="validation-info">
-                                <p><strong>Company Match:</strong> @(Model.ValidationResult.CompanyMatch ? "✅ Yes" : "❌ No")</p>
-                                <p><strong>Archive Company:</strong> @Model.ValidationResult.ArchiveCompanyName</p>
-                                <p><strong>Current Company:</strong> @Model.ValidationResult.CurrentCompanyName</p>
+                                <p><strong><loc key="Owner_DataLifecycle_CompanyMatch" />:</strong> @(Model.ValidationResult.CompanyMatch ? "✅ " + Localizer["Yes"] : "❌ " + Localizer["No"])</p>
+                                <p><strong><loc key="Owner_DataLifecycle_ArchiveCompany" />:</strong> @Model.ValidationResult.ArchiveCompanyName</p>
+                                <p><strong><loc key="Owner_DataLifecycle_CurrentCompany" />:</strong> @Model.ValidationResult.CurrentCompanyName</p>
                             </div>
 
                             @if (Model.ValidationResult.MissingUsers.Any())
                             {
                                 <div class="alert alert-warning">
-                                    <strong>⚠️ Missing Users (@Model.ValidationResult.MissingUsers.Count):</strong>
+                                    <strong>⚠️ <loc key="Owner_DataLifecycle_MissingUsers" /> (@Model.ValidationResult.MissingUsers.Count):</strong>
                                     <ul>
                                         @foreach (var email in Model.ValidationResult.MissingUsers.Take(10))
                                         {
@@ -420,10 +418,10 @@
                                         }
                                         @if (Model.ValidationResult.MissingUsers.Count > 10)
                                         {
-                                            <li>... and @(Model.ValidationResult.MissingUsers.Count - 10) more</li>
+                                            <li>... <loc key="And" /> @(Model.ValidationResult.MissingUsers.Count - 10) <loc key="More" /></li>
                                         }
                                     </ul>
-                                    <p>You can choose to skip records with missing users or cancel the import.</p>
+                                    <p><loc key="Owner_DataLifecycle_MissingUsers_Help" /></p>
                                 </div>
                             }
 
@@ -443,11 +441,11 @@
                             <form method="post" asp-page-handler="Import">
                                 <div class="form-section">
                                     <div class="form-group">
-                                        <label>Conflict Policy</label>
+                                        <label><loc key="Owner_DataLifecycle_ConflictPolicy" /></label>
                                         <select asp-for="ConflictPolicy" class="form-control">
-                                            <option value="@ImportConflictPolicy.SkipDuplicates">Skip Duplicates (Recommended)</option>
-                                            <option value="@ImportConflictPolicy.OverwriteExisting">Overwrite Existing</option>
-                                            <option value="@ImportConflictPolicy.FailOnConflict">Fail on Conflict</option>
+                                            <option value="@ImportConflictPolicy.SkipDuplicates">@Localizer["Owner_DataLifecycle_SkipDuplicates"]</option>
+                                            <option value="@ImportConflictPolicy.OverwriteExisting">@Localizer["Owner_DataLifecycle_OverwriteExisting"]</option>
+                                            <option value="@ImportConflictPolicy.FailOnConflict">@Localizer["Owner_DataLifecycle_FailOnConflict"]</option>
                                         </select>
                                     </div>
 
@@ -456,7 +454,7 @@
                                         <div class="form-group">
                                             <label class="checkbox-label">
                                                 <input type="checkbox" asp-for="SkipMissingUsers" />
-                                                Skip records with missing users
+                                                <loc key="Owner_DataLifecycle_SkipMissingUsers" />
                                             </label>
                                         </div>
                                     }
@@ -464,7 +462,7 @@
 
                                 <div class="button-group">
                                     <button type="submit" class="btn btn-primary">
-                                        📤 Import Data
+                                        📤 <loc key="Owner_DataLifecycle_ImportData" />
                                     </button>
                                 </div>
                             </form>
@@ -475,12 +473,12 @@
                 @if (Model.LastImportResult != null)
                 {
                     <div class="import-results">
-                        <h3>@(Model.LastImportResult.Success ? "✅" : "❌") Import Results</h3>
+                        <h3>@(Model.LastImportResult.Success ? "✅" : "❌") <loc key="Owner_DataLifecycle_ImportResults" /></h3>
 
                         @if (!Model.LastImportResult.Success)
                         {
                             <div class="alert alert-danger">
-                                <strong>Error:</strong> @Model.LastImportResult.Error
+                                <strong><loc key="Error" />:</strong> @Model.LastImportResult.Error
                             </div>
                         }
                         else
@@ -491,18 +489,18 @@
                                     <div class="stat-card">
                                         <div class="stat-header">@stat.Key</div>
                                         <div class="stat-breakdown">
-                                            <span class="stat-inserted">✅ @stat.Value.Inserted inserted</span>
-                                            <span class="stat-skipped">⏭️ @stat.Value.Skipped skipped</span>
-                                            <span class="stat-failed">❌ @stat.Value.Failed failed</span>
+                                            <span class="stat-inserted">✅ @stat.Value.Inserted <loc key="Inserted" /></span>
+                                            <span class="stat-skipped">⏭️ @stat.Value.Skipped <loc key="Skipped" /></span>
+                                            <span class="stat-failed">❌ @stat.Value.Failed <loc key="Failed" /></span>
                                         </div>
                                     </div>
                                 }
                             </div>
                             <div class="import-summary">
-                                <strong>Total Inserted:</strong> @Model.LastImportResult.Stats.Values.Sum(s => s.Inserted)<br />
-                                <strong>Total Skipped:</strong> @Model.LastImportResult.Stats.Values.Sum(s => s.Skipped)<br />
-                                <strong>Total Failed:</strong> @Model.LastImportResult.Stats.Values.Sum(s => s.Failed)<br />
-                                <strong>Duration:</strong> @Model.LastImportResult.Duration.TotalSeconds.ToString("F1")s
+                                <strong><loc key="Owner_DataLifecycle_TotalInserted" />:</strong> @Model.LastImportResult.Stats.Values.Sum(s => s.Inserted)<br />
+                                <strong><loc key="Owner_DataLifecycle_TotalSkipped" />:</strong> @Model.LastImportResult.Stats.Values.Sum(s => s.Skipped)<br />
+                                <strong><loc key="Owner_DataLifecycle_TotalFailed" />:</strong> @Model.LastImportResult.Stats.Values.Sum(s => s.Failed)<br />
+                                <strong><loc key="Duration" />:</strong> @Model.LastImportResult.Duration.TotalSeconds.ToString("F1")s
                             </div>
                         }
                     </div>
@@ -529,15 +527,15 @@
 }
 
 .page-subtitle {
-    color: #666;
+    color: var(--text-muted);
     margin-top: 5px;
 }
 
 .info-banner {
     display: flex;
     align-items: center;
-    background: #e3f2fd;
-    border-left: 4px solid #2196f3;
+    background: var(--info-soft);
+    border-left: 4px solid var(--info);
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 4px;
@@ -551,8 +549,8 @@
 .danger-notice {
     display: flex;
     align-items: center;
-    background: #fff3cd;
-    border-left: 4px solid #ff9800;
+    background: var(--warning-soft);
+    border-left: 4px solid var(--warning);
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 4px;
@@ -564,26 +562,26 @@
 }
 
 .nav-tabs {
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid var(--border);
     margin-bottom: 0;
 }
 
 .nav-tabs .nav-link {
-    color: #495057;
+    color: var(--text);
     font-weight: 500;
     padding: 12px 24px;
 }
 
 .nav-tabs .nav-link.active {
-    color: #2196f3;
-    border-color: #dee2e6 #dee2e6 #fff;
-    border-bottom: 2px solid #2196f3;
+    color: var(--primary);
+    border-color: var(--border) var(--border) var(--surface);
+    border-bottom: 2px solid var(--primary);
 }
 
 .tab-panel-content {
     padding: 30px;
-    background: #fff;
-    border: 1px solid #dee2e6;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-top: none;
     border-radius: 0 0 4px 4px;
 }
@@ -616,7 +614,7 @@
 }
 
 .stat-card {
-    background: #f8f9fa;
+    background: var(--surface-soft);
     padding: 20px;
     border-radius: 8px;
     text-align: center;
@@ -625,19 +623,19 @@
 .stat-value {
     font-size: 2em;
     font-weight: bold;
-    color: #2196f3;
+    color: var(--primary);
 }
 
 .stat-label {
     font-size: 0.9em;
-    color: #666;
+    color: var(--text-muted);
     margin-top: 5px;
 }
 
 .preview-section, .purge-results, .import-results, .download-section, .validation-results {
     margin-top: 30px;
     padding: 20px;
-    background: #f8f9fa;
+    background: var(--surface-soft);
     border-radius: 8px;
 }
 
@@ -649,9 +647,9 @@
 }
 
 .download-card {
-    background: #fff;
+    background: var(--surface);
     padding: 20px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     border-radius: 8px;
 }
 
@@ -672,9 +670,9 @@
 
 .hash-display {
     display: block;
-    background: #fff;
+    background: var(--surface);
     padding: 10px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     border-radius: 4px;
     font-family: monospace;
     font-size: 0.9em;
@@ -683,7 +681,7 @@
 }
 
 .confirmation-hint {
-    background: #fff3cd;
+    background: var(--warning-soft);
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 10px;
@@ -699,11 +697,11 @@
 
 .stat-header {
     font-weight: bold;
-    color: #333;
+    color: var(--text);
 }
 
 .validation-info {
-    background: #fff;
+    background: var(--surface);
     padding: 15px;
     border-radius: 4px;
     margin: 15px 0;

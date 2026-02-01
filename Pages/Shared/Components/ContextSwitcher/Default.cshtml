@@ -1,0 +1,433 @@
+@model ShiftManager.ViewComponents.ContextSwitcherViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* Edge Case: Error state - show error message with retry option *@
+@if (Model.HasError)
+{
+    <div class="context-switcher context-switcher--error" id="contextSwitcher">
+        <div class="context-switcher__error">
+            <span class="context-switcher__error-icon" aria-hidden="true">!</span>
+            <span class="context-switcher__error-text">@(Model.ErrorMessage ?? Localizer["ContextSwitcher_LoadError"])</span>
+            <button type="button"
+                    class="context-switcher__retry-btn"
+                    onclick="location.reload()"
+                    loc-aria-label="ContextSwitcher_Retry">
+                <span aria-hidden="true">↻</span>
+            </button>
+        </div>
+    </div>
+}
+@* Edge Case: No contexts available - show graceful empty state *@
+else if (Model.HasNoContexts)
+{
+    <div class="context-switcher context-switcher--empty" id="contextSwitcher">
+        <div class="context-switcher__empty">
+            <span class="context-switcher__empty-icon" aria-hidden="true">🏢</span>
+            <span class="context-switcher__empty-text"><loc key="ContextSwitcher_NoContextsAvailable" /></span>
+        </div>
+    </div>
+}
+@* Edge Case: Single context - show non-interactive display *@
+else if (Model.HasSingleContext && Model.CurrentContext != null)
+{
+    <div class="context-switcher context-switcher--single" id="contextSwitcher">
+        <div class="context-switcher__label">
+            <span aria-hidden="true">📍</span>
+            <span><loc key="ContextSwitcher_CurrentlyViewing" /></span>
+        </div>
+        <div class="context-switcher__static"
+             @if (Model.CurrentContext.NeedsTruncation)
+             {
+                 <text>title="@Model.CurrentContext.FullName"</text>
+             }>
+            <span class="context-switcher__icon" aria-hidden="true">🏢</span>
+            <span class="context-switcher__name">@Model.CurrentContext.DisplayName</span>
+        </div>
+    </div>
+}
+@* Normal case: Multiple contexts with full switcher functionality *@
+else if (Model.ShowSwitcher && Model.CurrentContext != null)
+{
+    <div class="context-switcher @(Model.HasManyContexts ? "context-switcher--many" : "")"
+         id="contextSwitcher"
+         data-total-contexts="@Model.TotalContextCount">
+        <div class="context-switcher__label">
+            <span aria-hidden="true">📍</span>
+            <span><loc key="ContextSwitcher_CurrentlyViewing" /></span>
+        </div>
+
+        @* Warning banner when current context became unavailable *@
+        @if (Model.CurrentContextUnavailable)
+        {
+            <div class="context-switcher__warning" role="alert">
+                <span class="context-switcher__warning-icon" aria-hidden="true">⚠</span>
+                <span class="context-switcher__warning-text"><loc key="ContextSwitcher_ContextUnavailable" /></span>
+            </div>
+        }
+
+        <button type="button"
+                class="context-switcher__trigger"
+                id="contextSwitcherTrigger"
+                aria-expanded="false"
+                aria-haspopup="listbox"
+                @if (Model.CurrentContext.NeedsTruncation)
+                {
+                    <text>title="@Model.CurrentContext.FullName"</text>
+                }
+                loc-aria-label="ContextSwitcher_SelectContext">
+            <span class="context-switcher__current">
+                <span class="context-switcher__icon" aria-hidden="true">🏢</span>
+                <span class="context-switcher__name">@Model.CurrentContext.DisplayName</span>
+            </span>
+            <span class="context-switcher__chevron" aria-hidden="true">▼</span>
+        </button>
+
+        <div class="context-switcher__dropdown" id="contextSwitcherDropdown" role="listbox">
+            @* Loading state (shown via JS when needed) *@
+            <div class="context-switcher__loading" id="contextSwitcherLoading" style="display: none;">
+                <span class="context-switcher__spinner" aria-hidden="true"></span>
+                <span class="context-switcher__loading-text"><loc key="ContextSwitcher_Loading" /></span>
+            </div>
+
+            <div class="context-switcher__search">
+                <input type="text"
+                       class="context-switcher__search-input"
+                       id="contextSwitcherSearch"
+                       loc-placeholder="ContextSwitcher_SearchPlaceholder"
+                       loc-aria-label="ContextSwitcher_SearchLabel"
+                       autocomplete="off"
+                       role="combobox"
+                       aria-autocomplete="list"
+                       aria-controls="contextSwitcherList"
+                       aria-activedescendant="" />
+                @if (Model.HasManyContexts)
+                {
+                    <span class="context-switcher__count">@Model.TotalContextCount</span>
+                }
+            </div>
+            <div class="context-switcher__list" id="contextSwitcherList">
+                @foreach (var group in Model.ContextGroups)
+                {
+                    <div class="context-switcher__group" data-group="@group.GroupName.ToLower()">
+                        <div class="context-switcher__group-label">@group.GroupName</div>
+                        @foreach (var option in group.Options)
+                        {
+                            <button type="button"
+                                    class="context-switcher__option @(option.Id == Model.CurrentContext?.Id ? "is-active" : "")"
+                                    data-context-id="@option.Id"
+                                    data-context-name="@option.Name"
+                                    data-context-type="@option.Type"
+                                    data-molecule-id="@option.MoleculeId"
+                                    id="context-option-@option.Id"
+                                    role="option"
+                                    @if (option.NeedsTruncation)
+                                    {
+                                        <text>title="@option.FullName"</text>
+                                    }
+                                    aria-selected="@(option.Id == Model.CurrentContext?.Id ? "true" : "false")">
+                                <span class="context-switcher__option-icon" aria-hidden="true">🏢</span>
+                                <span class="context-switcher__option-name">@option.DisplayName</span>
+                                <span class="context-switcher__option-check" aria-hidden="true">✓</span>
+                            </button>
+                        }
+                    </div>
+                }
+                <div class="context-switcher__no-results" id="contextSwitcherNoResults" style="display: none;" aria-live="polite">
+                    <span class="context-switcher__no-results-icon" aria-hidden="true">🔍</span>
+                    <span class="context-switcher__no-results-text"><loc key="ContextSwitcher_NoResults" /></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const STORAGE_KEY = 'shifty_last_context';
+        const DEBOUNCE_DELAY = 150; // milliseconds
+
+        const switcher = document.getElementById('contextSwitcher');
+        const trigger = document.getElementById('contextSwitcherTrigger');
+        const dropdown = document.getElementById('contextSwitcherDropdown');
+        const searchInput = document.getElementById('contextSwitcherSearch');
+        const listContainer = document.getElementById('contextSwitcherList');
+        const noResultsEl = document.getElementById('contextSwitcherNoResults');
+        const loadingEl = document.getElementById('contextSwitcherLoading');
+        const options = Array.from(dropdown.querySelectorAll('.context-switcher__option'));
+        const groups = dropdown.querySelectorAll('.context-switcher__group');
+
+        let focusedIndex = -1;
+        let visibleOptions = options.slice();
+        let debounceTimer = null;
+        let isLoading = false;
+
+        // Utility: Get currently visible (non-hidden) options
+        function getVisibleOptions() {
+            return options.filter(function(opt) {
+                return opt.style.display !== 'none';
+            });
+        }
+
+        // Utility: Update focus highlight on option
+        function setFocusedOption(index) {
+            // Remove highlight from all
+            visibleOptions.forEach(function(opt) {
+                opt.classList.remove('is-focused');
+            });
+
+            focusedIndex = index;
+
+            if (index >= 0 && index < visibleOptions.length) {
+                const option = visibleOptions[index];
+                option.classList.add('is-focused');
+                option.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                searchInput.setAttribute('aria-activedescendant', option.id);
+            } else {
+                searchInput.setAttribute('aria-activedescendant', '');
+            }
+        }
+
+        // Utility: Clear search and reset state
+        function clearSearch() {
+            searchInput.value = '';
+            filterOptions('');
+            focusedIndex = -1;
+            setFocusedOption(-1);
+        }
+
+        // Utility: Close dropdown
+        function closeDropdown() {
+            switcher.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+            clearSearch();
+        }
+
+        // Utility: Open dropdown
+        function openDropdown() {
+            switcher.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            searchInput.focus();
+            visibleOptions = getVisibleOptions();
+            focusedIndex = -1;
+        }
+
+        // Utility: Show loading state
+        function showLoading() {
+            if (loadingEl) {
+                isLoading = true;
+                loadingEl.style.display = 'flex';
+                listContainer.style.display = 'none';
+            }
+        }
+
+        // Utility: Hide loading state
+        function hideLoading() {
+            if (loadingEl) {
+                isLoading = false;
+                loadingEl.style.display = 'none';
+                listContainer.style.display = '';
+            }
+        }
+
+        // Filter options based on query
+        function filterOptions(query) {
+            const normalizedQuery = query.toLowerCase().trim();
+            let hasVisibleOptions = false;
+
+            options.forEach(function(option) {
+                const name = option.dataset.contextName.toLowerCase();
+                const matches = normalizedQuery === '' || name.includes(normalizedQuery);
+                option.style.display = matches ? '' : 'none';
+                if (matches) hasVisibleOptions = true;
+            });
+
+            // Hide empty groups
+            groups.forEach(function(group) {
+                const visibleInGroup = group.querySelectorAll('.context-switcher__option:not([style*="display: none"])');
+                group.style.display = visibleInGroup.length > 0 ? '' : 'none';
+            });
+
+            // Show/hide "no results" message
+            noResultsEl.style.display = hasVisibleOptions ? 'none' : 'flex';
+
+            // Update visible options array
+            visibleOptions = getVisibleOptions();
+
+            // Reset focus index when filtering
+            focusedIndex = -1;
+            setFocusedOption(-1);
+        }
+
+        // Debounced search handler
+        function handleSearchInput(e) {
+            const query = e.target.value;
+
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+
+            debounceTimer = setTimeout(function() {
+                filterOptions(query);
+            }, DEBOUNCE_DELAY);
+        }
+
+        // Select a context option
+        function selectOption(option) {
+            const contextId = option.dataset.contextId;
+            const contextName = option.dataset.contextName;
+
+            // Show loading state during navigation
+            showLoading();
+
+            // Save to localStorage
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                id: contextId,
+                name: contextName,
+                timestamp: Date.now()
+            }));
+
+            // Clear search before navigating
+            clearSearch();
+
+            // Navigate to switch context
+            window.location.href = '/Owner/SelectCompany?companyId=' + contextId + '&returnUrl=' + encodeURIComponent(window.location.pathname);
+        }
+
+        // Toggle dropdown
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (isLoading) return; // Prevent interaction during loading
+
+            if (switcher.classList.contains('is-open')) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            if (!switcher.contains(e.target) && switcher.classList.contains('is-open')) {
+                closeDropdown();
+            }
+        });
+
+        // Keyboard navigation
+        searchInput.addEventListener('keydown', function(e) {
+            const isOpen = switcher.classList.contains('is-open');
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (!isOpen) {
+                        openDropdown();
+                    } else if (visibleOptions.length > 0) {
+                        const newIndex = focusedIndex < visibleOptions.length - 1 ? focusedIndex + 1 : 0;
+                        setFocusedOption(newIndex);
+                    }
+                    break;
+
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (isOpen && visibleOptions.length > 0) {
+                        const newIndex = focusedIndex > 0 ? focusedIndex - 1 : visibleOptions.length - 1;
+                        setFocusedOption(newIndex);
+                    }
+                    break;
+
+                case 'Enter':
+                    e.preventDefault();
+                    if (isOpen && focusedIndex >= 0 && focusedIndex < visibleOptions.length) {
+                        selectOption(visibleOptions[focusedIndex]);
+                    }
+                    break;
+
+                case 'Escape':
+                    if (isOpen) {
+                        e.preventDefault();
+                        closeDropdown();
+                        trigger.focus();
+                    }
+                    break;
+
+                case 'Tab':
+                    if (isOpen) {
+                        closeDropdown();
+                    }
+                    break;
+
+                case 'Home':
+                    if (isOpen && visibleOptions.length > 0) {
+                        e.preventDefault();
+                        setFocusedOption(0);
+                    }
+                    break;
+
+                case 'End':
+                    if (isOpen && visibleOptions.length > 0) {
+                        e.preventDefault();
+                        setFocusedOption(visibleOptions.length - 1);
+                    }
+                    break;
+            }
+        });
+
+        // Also handle escape on document level
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && switcher.classList.contains('is-open')) {
+                closeDropdown();
+                trigger.focus();
+            }
+        });
+
+        // Search filter with debounce
+        searchInput.addEventListener('input', handleSearchInput);
+
+        // Mouse hover on options
+        options.forEach(function(option, index) {
+            option.addEventListener('mouseenter', function() {
+                const visibleIdx = visibleOptions.indexOf(option);
+                if (visibleIdx >= 0) {
+                    setFocusedOption(visibleIdx);
+                }
+            });
+
+            option.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectOption(this);
+            });
+        });
+
+        // Restore last context on page load if needed
+        function getLastContext() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                return stored ? JSON.parse(stored) : null;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        // Edge Case: Check if current context is still valid
+        // This runs on page load to detect if context was deleted
+        function checkContextValidity() {
+            const warningEl = switcher.querySelector('.context-switcher__warning');
+            if (warningEl) {
+                // Auto-dismiss warning after 10 seconds
+                setTimeout(function() {
+                    warningEl.style.opacity = '0';
+                    setTimeout(function() {
+                        warningEl.style.display = 'none';
+                    }, 300);
+                }, 10000);
+            }
+        }
+
+        // Initialize
+        checkContextValidity();
+    })();
+    </script>
+}

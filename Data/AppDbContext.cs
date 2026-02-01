@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Models;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Support;
+using ShiftManager.Models.Telemetry;
 using ShiftManager.Services;
 
 namespace ShiftManager.Data;
@@ -101,6 +102,14 @@ public class AppDbContext : DbContext
 
     // Feature Flags (UI Overhaul)
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+
+    // ========================================
+    // Client Telemetry (B-019, B-020, B-021)
+    // Local observability for air-gapped environments
+    // ========================================
+    public DbSet<ClientAnalyticsEvent> ClientAnalyticsEvents => Set<ClientAnalyticsEvent>();
+    public DbSet<ClientError> ClientErrors => Set<ClientError>();
+    public DbSet<PerformanceMetric> PerformanceMetrics => Set<PerformanceMetric>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1174,6 +1183,51 @@ public class AppDbContext : DbContext
             .HasForeignKey(ff => ff.UserId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
+
+        // ========================================
+        // Client Telemetry Configurations (B-019, B-020, B-021)
+        // Local observability for air-gapped environments
+        // Note: No tenant scoping - telemetry is system-wide
+        // ========================================
+
+        // ClientAnalyticsEvent indexes
+        modelBuilder.Entity<ClientAnalyticsEvent>()
+            .HasIndex(e => e.Timestamp);
+
+        modelBuilder.Entity<ClientAnalyticsEvent>()
+            .HasIndex(e => new { e.EventType, e.Timestamp });
+
+        modelBuilder.Entity<ClientAnalyticsEvent>()
+            .HasIndex(e => e.UserIdHash);
+
+        modelBuilder.Entity<ClientAnalyticsEvent>()
+            .HasIndex(e => e.SessionId);
+
+        // ClientError indexes
+        modelBuilder.Entity<ClientError>()
+            .HasIndex(e => e.Timestamp);
+
+        modelBuilder.Entity<ClientError>()
+            .HasIndex(e => new { e.ErrorType, e.Timestamp });
+
+        modelBuilder.Entity<ClientError>()
+            .HasIndex(e => e.UserIdHash);
+
+        modelBuilder.Entity<ClientError>()
+            .HasIndex(e => e.PageUrl);
+
+        // PerformanceMetric indexes
+        modelBuilder.Entity<PerformanceMetric>()
+            .HasIndex(m => m.Timestamp);
+
+        modelBuilder.Entity<PerformanceMetric>()
+            .HasIndex(m => new { m.MetricName, m.Timestamp });
+
+        modelBuilder.Entity<PerformanceMetric>()
+            .HasIndex(m => new { m.MetricName, m.PageUrl });
+
+        modelBuilder.Entity<PerformanceMetric>()
+            .HasIndex(m => new { m.MetricName, m.Rating });
 
         base.OnModelCreating(modelBuilder);
     }

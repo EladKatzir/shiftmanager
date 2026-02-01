@@ -14,7 +14,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Language Management - Configure company languages and manage translation overrides
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 [IgnoreAntiforgeryToken]
 public class LanguageManagementModel : PageModel
 {

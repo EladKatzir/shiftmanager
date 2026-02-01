@@ -1,10 +1,10 @@
 # ShiftManager - Complete Database Schema
 ## Comprehensive Data Model Documentation
 
-**Document Version:** 1.1
-**Last Updated:** 2026-01-01
+**Document Version:** 2.0 (V3 Update)
+**Last Updated:** 2026-01-29
 **Database Provider:** SQLite (via EF Core 9.0.9)
-**Total Tables:** 30 core entities
+**Total Tables:** 54 entities (includes V3 hierarchy, authorization, and localization)
 
 [⬅️ Back to Index](00-INDEX.md) | [➡️ Next: Startup & Middleware](04-STARTUP-AND-MIDDLEWARE.md)
 
@@ -26,10 +26,14 @@
 12. [API Infrastructure Tables](#api-infrastructure-tables)
 13. [Multi-Tenancy Cross-Company Tables](#multi-tenancy-cross-company-tables)
 14. [Gamification Tables](#gamification-tables)
-15. [Indexes & Performance](#indexes--performance)
-16. [Foreign Key Relationships](#foreign-key-relationships)
-17. [Value Converters](#value-converters)
-18. [Constraints & Validation](#constraints--validation)
+15. [V3 Organizational Hierarchy Tables](#v3-organizational-hierarchy-tables)
+16. [V3 Authorization Tables](#v3-authorization-tables)
+17. [V3 Scheduling Tables](#v3-scheduling-tables)
+18. [V3 Setup and Workflow Tables](#v3-setup-and-workflow-tables)
+19. [Indexes & Performance](#indexes--performance)
+20. [Foreign Key Relationships](#foreign-key-relationships)
+21. [Value Converters](#value-converters)
+22. [Constraints & Validation](#constraints--validation)
 
 ---
 
@@ -1292,7 +1296,123 @@ public class GriffinConfig : IBelongsToCompany
 
 ---
 
-### 24. GriffinApiLogs (Griffin API Call Logs)
+### 24. EmailTemplateCustomizations (Email Template Overrides)
+
+**Purpose:** Company-specific customizations to email templates.
+
+**File Reference:** `Models/EmailTemplateCustomization.cs`
+
+**Schema:**
+```csharp
+public class EmailTemplateCustomization : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }               // [T] Tenant-scoped
+
+    public EmailTemplateType TemplateType { get; set; }  // Which template
+    public string CustomMessage { get; set; }            // Max 2000 chars
+    public bool IsEnabled { get; set; }                  // Use custom vs default
+
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public int CreatedBy { get; set; }
+    public int? UpdatedBy { get; set; }
+
+    // Navigation Properties
+    public Company Company { get; set; }
+}
+```
+
+**Indexes:**
+- `IX_EmailTemplateCustomizations_CompanyId_TemplateType` (UNIQUE) - One customization per template type per company
+
+**Business Rules:**
+- If IsEnabled=false, system uses default email template
+- CustomMessage supports placeholders like {EmployeeName}, {Date}
+- HTML-encoded for security
+
+---
+
+### 25. CompanyLanguageSettings (Language Configuration)
+
+**Purpose:** Company-specific language configuration (default and alternate languages).
+
+**File Reference:** `Models/CompanyLanguageSettings.cs`
+
+**Schema:**
+```csharp
+public class CompanyLanguageSettings : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }               // [T] Tenant-scoped (UNIQUE)
+
+    public string DefaultCulture { get; set; }       // "en-US" or "he-IL"
+    public string AlternateCulture { get; set; }     // The other culture
+
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public int UpdatedBy { get; set; }
+
+    // Navigation Properties
+    public Company? Company { get; set; }
+    public AppUser? CreatedByUser { get; set; }
+    public AppUser? UpdatedByUser { get; set; }
+}
+```
+
+**Indexes:**
+- `IX_CompanyLanguageSettings_CompanyId` (UNIQUE) - One setting per company
+
+**Business Rules:**
+- DefaultCulture shown to new users/users without preference
+- AlternateCulture available via language toggle
+- Both must be valid cultures ("en-US" or "he-IL")
+
+---
+
+### 26. CompanyLocalizationOverrides (Custom Translations)
+
+**Purpose:** Company-specific custom translations for UI strings.
+
+**File Reference:** `Models/CompanyLocalizationOverride.cs`
+
+**Schema:**
+```csharp
+public class CompanyLocalizationOverride : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }               // [T] Tenant-scoped
+
+    public string Culture { get; set; }              // "en-US" or "he-IL"
+    public string ResourceKey { get; set; }          // e.g., "Button_Save", max 200 chars
+    public string OverrideValue { get; set; }        // Custom translation, max 2000 chars
+
+    public bool IsActive { get; set; }               // Soft delete
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public int UpdatedBy { get; set; }
+
+    // Navigation Properties
+    public Company? Company { get; set; }
+    public AppUser? CreatedByUser { get; set; }
+    public AppUser? UpdatedByUser { get; set; }
+}
+```
+
+**Indexes:**
+- `IX_CompanyLocalizationOverrides_CompanyId_Culture_ResourceKey` (UNIQUE where IsActive=1) - One override per key per culture per company
+
+**Business Rules:**
+- Allows companies to customize any localization string
+- OverrideValue is HTML-encoded for security
+- Soft delete via IsActive flag
+- Used by CompanyLocalizationService to override default translations
+
+---
+
+### 27. GriffinApiLogs (Griffin API Connection Test Logs)
 
 **Purpose:** Log all Griffin ADFS connection test calls for debugging, diagnostics, and compliance tracking.
 
@@ -1350,7 +1470,7 @@ public class GriffinApiLog : IBelongsToCompany
 
 ## API Infrastructure Tables
 
-### 25. ApiKeys (API Key Management)
+### 28. ApiKeys (API Key Management)
 
 **Purpose:** API key authentication for external integrations.
 
@@ -1399,7 +1519,7 @@ public class ApiKey  // Has CompanyId but NO query filter
 
 ---
 
-### 26. ApiKeyRequests (API Key Approval Workflow)
+### 29. ApiKeyRequests (API Key Approval Workflow)
 
 **Purpose:** Request-approval workflow for API key generation.
 
@@ -1448,7 +1568,7 @@ public class ApiKeyRequest  // Has CompanyId but NO query filter
 
 ---
 
-### 27. ApiRequestLogs (API Usage Tracking)
+### 30. ApiRequestLogs (API Usage Tracking)
 
 **Purpose:** Log all API requests for analytics and debugging.
 
@@ -1497,7 +1617,7 @@ public class ApiRequestLog  // Has CompanyId but NO query filter
 
 ## Multi-Tenancy Cross-Company Tables
 
-### 28. DirectorCompanies (Cross-Company Director Access)
+### 31. DirectorCompanies (Cross-Company Director Access)
 
 **Purpose:** Many-to-many mapping allowing directors to access multiple companies.
 
@@ -1541,7 +1661,7 @@ public class DirectorCompany  // NO query filter - intentionally cross-tenant
 
 ## Gamification Tables
 
-### 29. GameScores (Leaderboard)
+### 32. GameScores (Leaderboard)
 
 **Purpose:** Shift swap game leaderboard (Match-3 easter egg).
 
@@ -1580,7 +1700,7 @@ public class GameScore : IBelongsToCompany
 
 ---
 
-### 30. Feedbacks (User Feedback)
+### 33. Feedbacks (User Feedback)
 
 **Purpose:** User feedback submission (bugs, features, general).
 
@@ -1743,6 +1863,443 @@ modelBuilder.Entity<ShiftType>()
 
 ---
 
+## V3 Organizational Hierarchy Tables
+
+> **See Also:** [21-V3-ORGANIZATIONAL-HIERARCHY.md](21-V3-ORGANIZATIONAL-HIERARCHY.md) for complete hierarchy documentation
+
+### 34. Projects (Top-Level Organizational Container)
+
+**Purpose:** Top-level container for the entire organizational hierarchy.
+
+**File Reference:** `Models/Project.cs`
+
+**Schema:**
+```csharp
+public class Project
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public List<Area> Areas { get; set; } = new();
+}
+```
+
+---
+
+### 35. Areas (Regional/Divisional Grouping)
+
+**Purpose:** Regional or divisional grouping within a Project. Contains Molecules and defines shared JobTypes.
+
+**File Reference:** `Models/Area.cs`
+
+**Schema:**
+```csharp
+public class Area
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public Project Project { get; set; } = null!;
+    public List<Molecule> Molecules { get; set; } = new();
+    public List<JobType> JobTypes { get; set; } = new();
+    public AreaSettings? Settings { get; set; }
+}
+```
+
+---
+
+### 36. Molecules (Operational Units)
+
+**Purpose:** Operational unit within an Area. Type determines structure (Workforce/Tech/Helper/System).
+
+**File Reference:** `Models/Molecule.cs`
+
+**Schema:**
+```csharp
+public class Molecule
+{
+    public int Id { get; set; }
+    public int AreaId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public MoleculeType Type { get; set; }  // Workforce/Tech/Helper/System
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public Area Area { get; set; } = null!;
+    public List<Company> Companies { get; set; } = new();       // Workforce molecules
+    public List<Department> Departments { get; set; } = new();  // Tech molecules
+    public List<ShiftGrouping> ShiftGroupings { get; set; } = new();
+    public MoleculeSettings? Settings { get; set; }
+}
+```
+
+**Enum: MoleculeType**
+```csharp
+public enum MoleculeType
+{
+    Workforce = 0,  // Operational staff with Companies
+    Tech = 1,       // Technical staff with Departments
+    Helper = 2,     // Support/chore assignments
+    System = 3      // Administrative/system users
+}
+```
+
+---
+
+### 37. Departments (Tech Unit)
+
+**Purpose:** Technical department within a Tech molecule.
+
+**File Reference:** `Models/Department.cs`
+
+**Schema:**
+```csharp
+public class Department
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public Molecule Molecule { get; set; } = null!;
+    public List<AppUser> Users { get; set; } = new();
+}
+```
+
+---
+
+### 38. JobTypes (Job Role Categories)
+
+**Purpose:** Job role category defined at the Area level. Users have a JobType for shift eligibility.
+
+**File Reference:** `Models/JobType.cs`
+
+**Schema:**
+```csharp
+public class JobType
+{
+    public int Id { get; set; }
+    public int AreaId { get; set; }  // Area-scoped
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Color { get; set; }  // Hex color for UI
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public Area Area { get; set; } = null!;
+    public List<AppUser> Users { get; set; } = new();
+}
+```
+
+---
+
+### 39-41. Settings Tables
+
+**AreaSettings, MoleculeSettings, CompanySettings:** Hierarchy-level configuration.
+
+```csharp
+public class AreaSettings
+{
+    public int Id { get; set; }
+    public int AreaId { get; set; }
+    public int DefaultRestHours { get; set; } = 8;
+    public int DefaultWeeklyCap { get; set; } = 56;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+```
+
+---
+
+## V3 Authorization Tables
+
+> **See Also:** [22-V3-GRANT-AUTHORIZATION.md](22-V3-GRANT-AUTHORIZATION.md) for complete grant documentation
+
+### 42. Grants (Individual Permissions)
+
+**Purpose:** Individual permission granted to a user with hierarchical scope.
+
+**File Reference:** `Models/Grant.cs`
+
+**Schema:**
+```csharp
+public class Grant
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int GrantTypeId { get; set; }
+
+    // Hierarchical Scope
+    public int? ProjectId { get; set; }
+    public int? AreaId { get; set; }
+    public int? MoleculeId { get; set; }
+    public int? DepartmentId { get; set; }
+    public int? CompanyId { get; set; }
+    public int? JobTypeId { get; set; }
+
+    // Capabilities
+    public bool CanOwn { get; set; }   // Can perform the action
+    public bool CanGive { get; set; }  // Can grant to others
+
+    // Audit
+    public int? GrantedByUserId { get; set; }
+    public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
+    public string? Notes { get; set; }
+    public bool IsAutoGrant { get; set; }  // from role template
+}
+```
+
+---
+
+### 43. GrantTypes (Permission Definitions)
+
+**Purpose:** Definition of a permission/capability that can be granted. 90+ system grant types.
+
+**File Reference:** `Models/GrantType.cs`
+
+**Schema:**
+```csharp
+public class GrantType
+{
+    public int Id { get; set; }
+    public string Key { get; set; } = string.Empty;  // "AssignAlhutShifts"
+    public string NameKey { get; set; } = string.Empty;
+    public string DescriptionKey { get; set; } = string.Empty;
+    public GrantCategory Category { get; set; }
+    public GrantScopeLevel DefaultScope { get; set; }
+    public bool IsSystem { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+```
+
+**Enum: GrantCategory**
+```csharp
+public enum GrantCategory
+{
+    Shift = 0, Duty = 1, Chore = 2, Vacation = 3, Swap = 4,
+    UserManagement = 5, GrantManagement = 6, Hierarchy = 7,
+    Settings = 8, Analytics = 9, Email = 10, System = 11, Custom = 99
+}
+```
+
+---
+
+### 44. RoleTemplates (Role Bundles)
+
+**Purpose:** Bundle of grants that can be assigned together. 11 system role templates.
+
+**File Reference:** `Models/RoleTemplate.cs`
+
+**Schema:**
+```csharp
+public class RoleTemplate
+{
+    public int Id { get; set; }
+    public string Key { get; set; } = string.Empty;  // "BRDirector", "AlhutLead"
+    public string NameKey { get; set; } = string.Empty;
+    public string DescriptionKey { get; set; } = string.Empty;
+    public RoleScopeLevel ScopeLevel { get; set; }
+    public bool IsSystem { get; set; }
+    public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+```
+
+---
+
+### 45. RoleTemplateGrants (Role → Grant Mapping)
+
+**Purpose:** Join table defining which grants a RoleTemplate provides.
+
+**File Reference:** `Models/RoleTemplateGrant.cs`
+
+---
+
+### 46. UserRoleAssignments (User → Role Mapping)
+
+**Purpose:** Assigns a RoleTemplate to a user with a specific scope.
+
+**File Reference:** `Models/UserRoleAssignment.cs`
+
+**Schema:**
+```csharp
+public class UserRoleAssignment
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int RoleTemplateId { get; set; }
+
+    // Scope of this role assignment
+    public int? CompanyId { get; set; }
+    public int? DepartmentId { get; set; }
+    public int? MoleculeId { get; set; }
+    public int? AreaId { get; set; }
+    public int? JobTypeId { get; set; }
+
+    // Audit
+    public int AssignedByUserId { get; set; }
+    public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true;
+}
+```
+
+---
+
+## V3 Scheduling Tables
+
+> **See Also:** [23-V3-SCHEDULING-SYSTEM.md](23-V3-SCHEDULING-SYSTEM.md) for complete scheduling documentation
+
+### 47. ShiftGroupings (Shift Organization)
+
+**Purpose:** Groups companies within a Molecule for coordinated shift scheduling.
+
+**File Reference:** `Models/ShiftGrouping.cs`
+
+**Schema:**
+```csharp
+public class ShiftGrouping
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+```
+
+---
+
+### 48-49. ShiftGrouping Join Tables
+
+**ShiftGroupingCompany:** Links companies to shift groupings.
+**ShiftGroupingJobType:** Links job types to shift groupings.
+
+---
+
+### 50. ShiftPrograms (Weekly Templates)
+
+**Purpose:** Weekly template for generating shift instances.
+
+**File Reference:** `Models/ShiftProgram.cs`
+
+**Schema:**
+```csharp
+public class ShiftProgram
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int ShiftTypeId { get; set; }
+
+    // V3 Scope
+    public int? JobTypeId { get; set; }
+    public int? ShiftGroupingId { get; set; }
+    public string? TechShiftType { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+    public int DefaultStaffingRequired { get; set; } = 1;
+    public bool IsActive { get; set; } = true;
+}
+```
+
+---
+
+### 51. ProgramDays (Day-of-Week Config)
+
+**Purpose:** Defines which days of the week a Program runs.
+
+**File Reference:** `Models/ProgramDay.cs`
+
+---
+
+### 52. MasterPrograms (Program Collections)
+
+**Purpose:** Collection of Programs forming a complete weekly schedule.
+
+**File Reference:** `Models/MasterProgram.cs`
+
+---
+
+### 53. MasterProgramItems (Program Membership)
+
+**Purpose:** Join table linking MasterProgram to Programs.
+
+**File Reference:** `Models/MasterProgramItem.cs`
+
+---
+
+## V3 Setup and Workflow Tables
+
+### 54. SetupTasks (Onboarding Tasks)
+
+**Purpose:** Guided onboarding tasks for setting up new organizational units.
+
+**File Reference:** `Models/SetupTask.cs`
+
+**Schema:**
+```csharp
+public class SetupTask
+{
+    public int Id { get; set; }
+    public SetupTaskType Type { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+
+    // Context
+    public int? MoleculeId { get; set; }
+    public int? CompanyId { get; set; }
+    public int? JobTypeId { get; set; }
+
+    // Assignment
+    public int AssignedToUserId { get; set; }
+    public SetupTaskStatus Status { get; set; }
+
+    // Audit
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CompletedAt { get; set; }
+}
+```
+
+---
+
+### 55. UserFriendships (Social Features)
+
+**Purpose:** User-to-user friendship connections for social features.
+
+**File Reference:** `Models/UserFriendship.cs`
+
+---
+
+## V3 Entity Summary
+
+| Category | Tables Added | Purpose |
+|----------|--------------|---------|
+| **Hierarchy** | Projects, Areas, Molecules, Departments, JobTypes, Settings (6) | Organizational structure |
+| **Authorization** | Grants, GrantTypes, RoleTemplates, RoleTemplateGrants, UserRoleAssignments (5) | Grant-based permissions |
+| **Scheduling** | ShiftGroupings, ShiftGroupingCompany, ShiftGroupingJobType, ShiftPrograms, ProgramDays, MasterPrograms, MasterProgramItems (7) | Enhanced scheduling |
+| **Workflow** | SetupTasks, UserFriendships (2) | Onboarding and social |
+
+**Total V3 Tables Added:** 23 new tables (hierarchy, authorization, scheduling, workflow)
+
+---
+
 ## Summary
 
 This comprehensive database schema supports:
@@ -1753,7 +2310,7 @@ This comprehensive database schema supports:
 - **Cross-Company Coordination:** OnDuty global visibility, Director cross-company access
 - **Gamification:** Easter egg game with leaderboards
 
-**Total Storage:** 28 tables, 36 migrations, ~50-200 MB typical size
+**Total Storage:** 54 tables (55 including DbSets with joins), 40+ migrations, ~50-200 MB typical size
 
 **Performance:** Optimized indexes for calendar queries (critical path), audit queries, and foreign key joins
 

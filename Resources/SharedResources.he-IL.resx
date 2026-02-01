@@ -2392,6 +2392,18 @@
     <value>Ctrl+K</value>
     <comment>Phase 18 - Sidebar Ctrl+K label</comment>
   </data>
+  <data name="Sidebar_Toggle" xml:space="preserve">
+    <value>החלף מצב סרגל צד (Ctrl+B)</value>
+    <comment>A-002 - Sidebar toggle button accessibility label</comment>
+  </data>
+  <data name="Sidebar_Collapsed" xml:space="preserve">
+    <value>סרגל הצד כווץ</value>
+    <comment>A-002 - Screen reader announcement when sidebar is collapsed</comment>
+  </data>
+  <data name="Sidebar_Expanded" xml:space="preserve">
+    <value>סרגל הצד מורחב</value>
+    <comment>A-002 - Screen reader announcement when sidebar is expanded</comment>
+  </data>
   <data name="AnalyticsSummary" xml:space="preserve">
     <value>סיכום אנליטיקה</value>
     <comment>Phase 18 - Owner dashboard analytics section</comment>
@@ -4602,6 +4614,24 @@
   <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
     <value>החלף חברה</value>
   </data>
+  <data name="ContextSwitcher_NoResults" xml:space="preserve">
+    <value>לא נמצאו חברות תואמות</value>
+  </data>
+  <data name="ContextSwitcher_LoadError" xml:space="preserve">
+    <value>לא ניתן לטעון חברות</value>
+  </data>
+  <data name="ContextSwitcher_Retry" xml:space="preserve">
+    <value>נסה שוב לטעון חברות</value>
+  </data>
+  <data name="ContextSwitcher_NoContextsAvailable" xml:space="preserve">
+    <value>אין חברות זמינות</value>
+  </data>
+  <data name="ContextSwitcher_ContextUnavailable" xml:space="preserve">
+    <value>הבחירה הקודמת שלך אינה זמינה עוד</value>
+  </data>
+  <data name="ContextSwitcher_Loading" xml:space="preserve">
+    <value>טוען...</value>
+  </data>
 
   <!-- UI Overhaul v3.0 - Scope Switcher -->
   <data name="ScopeSwitcher_ViewLabel" xml:space="preserve">
@@ -4661,6 +4691,42 @@
   </data>
   <data name="Calendar_Empty_SwitchScope" xml:space="preserve">
     <value>נסה להרחיב את התצוגה שלך</value>
+  </data>
+  <data name="Calendar_Empty_NoShiftsWeek" xml:space="preserve">
+    <value>אין משמרות מתוכננות השבוע</value>
+    <comment>Empty state for week calendar view</comment>
+  </data>
+  <data name="Calendar_Empty_NoShiftsMonth" xml:space="preserve">
+    <value>אין משמרות מתוכננות החודש</value>
+    <comment>Empty state for month calendar view</comment>
+  </data>
+  <data name="Calendar_Empty_NoShiftsDay" xml:space="preserve">
+    <value>אין משמרות מתוכננות ליום זה</value>
+    <comment>Empty state for day calendar view</comment>
+  </data>
+  <data name="Calendar_Empty_Subtitle_Mine" xml:space="preserve">
+    <value>אין לך שיבוצים בתקופה זו. בדוק מאוחר יותר או עבור לצפייה בכל הפריטים.</value>
+    <comment>Subtitle for empty state when viewing my items</comment>
+  </data>
+  <data name="Calendar_Empty_Subtitle_All" xml:space="preserve">
+    <value>טרם נקבעו משמרות, מטלות או תורנויות.</value>
+    <comment>Subtitle for empty state when viewing all items</comment>
+  </data>
+  <data name="Calendar_Empty_Action_ViewAll" xml:space="preserve">
+    <value>הצג את כל הפריטים</value>
+    <comment>Action button to switch scope from mine to all</comment>
+  </data>
+  <data name="Calendar_Empty_Action_CreateShift" xml:space="preserve">
+    <value>צור משמרת</value>
+    <comment>Action button for managers to create shift</comment>
+  </data>
+  <data name="Calendar_Empty_Action_GoToToday" xml:space="preserve">
+    <value>עבור להיום</value>
+    <comment>Action to navigate to current date</comment>
+  </data>
+  <data name="Calendar_Empty_Action_ChangeDate" xml:space="preserve">
+    <value>נסה תאריך אחר</value>
+    <comment>Suggestion to navigate to another date</comment>
   </data>
 
   <!-- UI Overhaul v3.0 - Loading States -->
@@ -5242,5 +5308,27 @@
   <data name="Navigation_Toggle" xml:space="preserve">
     <value>פתח/סגור תפריט</value>
     <comment>B-011 - Mobile hamburger menu toggle button aria-label</comment>
+  </data>
+
+  <!-- B-018: Concurrent Edit Conflict Detection -->
+  <data name="ConcurrencyConflict_Title" xml:space="preserve">
+    <value>התנגשות עריכה</value>
+    <comment>B-018 - Title for the concurrency conflict dialog</comment>
+  </data>
+  <data name="ConcurrencyConflict_Message" xml:space="preserve">
+    <value>רשומה זו שונתה על ידי משתמש אחר בזמן שערכת אותה.</value>
+    <comment>B-018 - Message explaining the concurrent edit conflict</comment>
+  </data>
+  <data name="ConcurrencyConflict_Reload" xml:space="preserve">
+    <value>טען מחדש</value>
+    <comment>B-018 - Button to reload and see latest changes</comment>
+  </data>
+  <data name="ConcurrencyConflict_Overwrite" xml:space="preserve">
+    <value>דרוס</value>
+    <comment>B-018 - Button to force save and overwrite other user's changes</comment>
+  </data>
+  <data name="ConcurrencyConflict_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+    <comment>B-018 - Button to cancel the conflicting operation</comment>
   </data>
 </root>

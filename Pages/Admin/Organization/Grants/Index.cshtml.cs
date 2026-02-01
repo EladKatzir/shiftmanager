@@ -8,7 +8,7 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Grants;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:ViewGrants")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

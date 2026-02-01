@@ -21,7 +21,7 @@
             <span class="page-icon">💾</span>
             @Localizer["Owner_DatabaseConsole"]
         </h1>
-        <p class="page-subtitle">Execute SQL queries and view database schema</p>
+        <p class="page-subtitle"><loc key="Owner_DatabaseConsole_Subtitle" /></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Error))
@@ -40,7 +40,7 @@
 
     <div class="console-layout">
         <div class="console-sidebar">
-            <h3>📋 Database Tables</h3>
+            <h3>📋 <loc key="Owner_DatabaseConsole_Tables" /></h3>
             <div class="tables-list">
                 @foreach (var table in Model.Tables)
                 {
@@ -52,33 +52,33 @@
             </div>
 
             <div class="quick-queries">
-                <h3>⚡ Quick Queries</h3>
+                <h3>⚡ <loc key="Owner_DatabaseConsole_QuickQueries" /></h3>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM Users LIMIT 10')">
-                    List Users
+                    <loc key="Owner_DatabaseConsole_ListUsers" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM Companies')">
-                    List Companies
+                    <loc key="Owner_DatabaseConsole_ListCompanies" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM ShiftInstances WHERE WorkDate >= date(\'now\') LIMIT 20')">
-                    Upcoming Shifts
+                    <loc key="Owner_DatabaseConsole_UpcomingShifts" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM AuditLogs ORDER BY Timestamp DESC LIMIT 20')">
-                    Recent Audit Logs
+                    <loc key="Owner_DatabaseConsole_RecentAuditLogs" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT u.DisplayName, u.Email, u.Role FROM Users u WHERE u.IsActive = 1 ORDER BY u.DisplayName LIMIT 50')">
-                    Active Users
+                    <loc key="Owner_DatabaseConsole_ActiveUsers" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT sa.Id, u.DisplayName, COALESCE(st.CustomName, st.Key) as ShiftType, si.WorkDate FROM ShiftAssignments sa JOIN Users u ON sa.UserId = u.Id JOIN ShiftInstances si ON sa.ShiftInstanceId = si.Id JOIN ShiftTypes st ON si.ShiftTypeId = st.Id WHERE si.WorkDate >= date(\'now\') ORDER BY si.WorkDate LIMIT 30')">
-                    Upcoming Assignments
+                    <loc key="Owner_DatabaseConsole_UpcomingAssignments" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT tor.Id, u.DisplayName, tor.StartDate, tor.EndDate, tor.Status FROM TimeOffRequests tor JOIN Users u ON tor.UserId = u.Id WHERE tor.Status = 0 ORDER BY tor.StartDate LIMIT 20')">
-                    Pending Time Off
+                    <loc key="Owner_DatabaseConsole_PendingTimeOff" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT c.Title, u.DisplayName, c.Date, c.CompletedAt FROM Chores c LEFT JOIN Users u ON c.AssignedToUserId = u.Id WHERE c.Date >= date(\'now\') AND c.CompletedAt IS NULL ORDER BY c.Date LIMIT 20')">
-                    Incomplete Chores
+                    <loc key="Owner_DatabaseConsole_IncompleteChores" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT od.Id, u.DisplayName, od.Type, od.Date FROM OnDuties od JOIN Users u ON od.UserId = u.Id WHERE od.Date >= date(\'now\') ORDER BY od.Date LIMIT 20')">
-                    Upcoming OnDuty
+                    <loc key="Owner_DatabaseConsole_UpcomingOnDuty" />
                 </button>
             </div>
         </div>
@@ -86,12 +86,12 @@
         <div class="console-main">
             <form method="post">
                 <div class="query-editor">
-                    <label asp-for="Query">SQL Query</label>
+                    <label asp-for="Query"><loc key="Owner_DatabaseConsole_SqlQuery" /></label>
                     <textarea asp-for="Query" class="query-textarea" rows="8"
-                              placeholder="SELECT * FROM Users WHERE Role = 3 LIMIT 10&#10;&#10;Note: Only SELECT queries are allowed for safety."></textarea>
+                              placeholder="@Localizer["Owner_DatabaseConsole_QueryPlaceholder"]"></textarea>
                     <div class="query-actions">
-                        <button type="submit" class="btn btn-primary">▶️ Execute Query</button>
-                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('Query').value = ''">🗑️ Clear</button>
+                        <button type="submit" class="btn btn-primary">▶️ <loc key="Owner_DatabaseConsole_Execute" /></button>
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('Query').value = ''">🗑️ <loc key="Clear" /></button>
                     </div>
                 </div>
             </form>
@@ -99,7 +99,7 @@
             @if (Model.ResultRows.Any())
             {
                 <div class="results-container">
-                    <h3>📊 Query Results</h3>
+                    <h3>📊 <loc key="Owner_DatabaseConsole_QueryResults" /></h3>
                     <div class="results-table-wrapper">
                         <table class="results-table">
                             <thead>
@@ -298,15 +298,15 @@
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid var(--success, #10b981);
-    color: var(--success, #10b981);
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
 }
 
 .alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid var(--danger, #ef4444);
-    color: var(--danger, #ef4444);
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
 }
 </style>
 

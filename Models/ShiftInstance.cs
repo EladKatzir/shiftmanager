@@ -14,8 +14,20 @@ public class ShiftInstance
 
     public int StaffingRequired { get; set; } = 0;
 
+    /// <summary>
+    /// Legacy concurrency field (manually incremented).
+    /// Kept for backward compatibility with existing code.
+    /// </summary>
     [ConcurrencyCheck]
     public int Concurrency { get; set; } = 0;
+
+    /// <summary>
+    /// Row version for optimistic concurrency control (B-018).
+    /// Automatically managed by SQL Server - do not modify manually.
+    /// Used to detect concurrent edit conflicts.
+    /// </summary>
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

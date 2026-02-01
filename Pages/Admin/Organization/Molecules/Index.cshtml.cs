@@ -9,7 +9,7 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Molecules;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:EditMolecule")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

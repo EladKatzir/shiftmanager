@@ -42,6 +42,13 @@ public class ApiAuthenticationMiddleware
                 return;
             }
 
+            // Localization API allows anonymous access (needed for login page and unauthenticated UI)
+            if (context.Request.Path.StartsWithSegments("/Api/Localization", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
             // Other internal endpoints require authentication
             // If user is already authenticated via cookies, allow request
             if (context.User?.Identity?.IsAuthenticated == true)
@@ -221,6 +228,18 @@ public class ApiAuthenticationMiddleware
 
         // Localization API - used by localization-api.js for client-side string fetching
         if (path.StartsWithSegments("/Api/Localization", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Scope Switcher API - used by scope-switcher component for fetching available scopes
+        if (path.StartsWithSegments("/Api/ScopeSwitcher", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Telemetry API - used by telemetry.js for client-side analytics and error reporting
+        if (path.StartsWithSegments("/Api/Telemetry", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

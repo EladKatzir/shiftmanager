@@ -15,6 +15,7 @@ namespace ShiftManager.Pages.Calendar;
 
 /// <summary>
 /// ✅ PHASE 20: Weekly calendar view - Read-only unified view of shifts, chores, and on-duty
+/// ✅ A-018: Scope switcher integration for filtering by mine/company/molecule/area
 /// </summary>
 [Authorize]
 public class WeekModel : PageModel
@@ -26,6 +27,7 @@ public class WeekModel : PageModel
     private readonly IDirectorService _directorService;
     private readonly IUserPreferenceService _userPreferenceService;
     private readonly IChoreService _choreService;
+    private readonly IScopeFilterService _scopeFilterService;
 
     public WeekModel(
         AppDbContext db,
@@ -34,7 +36,8 @@ public class WeekModel : PageModel
         IStringLocalizer<SharedResources> localizer,
         IDirectorService directorService,
         IUserPreferenceService userPreferenceService,
-        IChoreService choreService)
+        IChoreService choreService,
+        IScopeFilterService scopeFilterService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -43,6 +46,7 @@ public class WeekModel : PageModel
         _directorService = directorService;
         _userPreferenceService = userPreferenceService;
         _choreService = choreService;
+        _scopeFilterService = scopeFilterService;
     }
 
     public DateOnly CurrentWeekStart { get; set; }
@@ -74,9 +78,13 @@ public class WeekModel : PageModel
     public async Task OnGetAsync(int? year, int? month, int? day)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var target = year.HasValue && month.HasValue && day.HasValue
-            ? new DateOnly(year.Value, month.Value, day.Value)
-            : today;
+        var target = today;
+
+        // Validate and parse date parameters with proper boundary handling
+        if (year.HasValue && month.HasValue && day.HasValue)
+        {
+            target = TryCreateValidDate(year.Value, month.Value, day.Value) ?? today;
+        }
 
         // Find Sunday of week
         int daysFromSunday = (int)target.DayOfWeek; // Sunday = 0
@@ -95,20 +103,43 @@ public class WeekModel : PageModel
         }
         CurrentUserId = currentUserId;
 
-        // Get user preference for filtering
-        ShowMyItemsOnly = _userPreferenceService.GetShowMyItemsOnly();
+        // ✅ A-018: Get scope from URL/cookie and resolve company IDs for filtering
+        var (scopeType, scopeId) = _scopeFilterService.GetCurrentScope("shifts");
+        
+        // Validate user has access to the requested scope
+        if (!await _scopeFilterService.ValidateScopeAccessAsync(scopeType, scopeId, "shifts"))
+        {
+            _logger.LogWarning("User {UserId} does not have access to scope {ScopeType}", currentUserId, scopeType);
+            scopeType = "company";
+            scopeId = null;
+        }
 
-        var companyId = _companyContext.GetCompanyIdOrThrow();
-        _logger.LogInformation("✅ PHASE 20: Week calendar for User {UserId}, CompanyId={CompanyId}, ShowMyItemsOnly={ShowMyItemsOnly}",
-            currentUserId, companyId, ShowMyItemsOnly);
+        // Resolve scope to company IDs for data filtering
+        var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync(scopeType, scopeId);
+        
+        // Handle edge case: no companies for scope
+        if (!companyIds.Any())
+        {
+            var fallbackCompanyId = _companyContext.CompanyId;
+            if (fallbackCompanyId.HasValue && fallbackCompanyId.Value > 0)
+            {
+                companyIds = new List<int> { fallbackCompanyId.Value };
+            }
+        }
+
+        // Determine if we should filter to current user only
+        ShowMyItemsOnly = _scopeFilterService.ShouldFilterToCurrentUserOnly(scopeType);
+
+        _logger.LogInformation("✅ A-018: Week calendar for User {UserId}, Scope={Scope}, CompanyIds=[{CompanyIds}], ShowMyItemsOnly={ShowMyItemsOnly}",
+            currentUserId, scopeType, string.Join(",", companyIds), ShowMyItemsOnly);
 
         // Build 7-day list
         var dates = Enumerable.Range(0, 7).Select(i => weekStart.AddDays(i)).ToList();
 
-        // ✅ PHASE 20: Load all three types of calendar items
-        var shifts = await LoadShiftsAsync(companyId, dates, currentUserId);
-        var chores = await LoadChoresAsync(companyId, dates, currentUserId);
-        var onDuties = await LoadOnDutiesAsync(companyId, dates, currentUserId);
+        // ✅ A-018: Load calendar items using scope-filtered company IDs
+        var shifts = await LoadShiftsAsync(companyIds, dates, currentUserId);
+        var chores = await LoadChoresAsync(companyIds, dates, currentUserId);
+        var onDuties = await LoadOnDutiesAsync(companyIds, dates, currentUserId);
 
         // Combine all items
         var allItems = new List<CalendarItemViewModel>();
@@ -153,14 +184,19 @@ public class WeekModel : PageModel
         }
     }
 
-    // ✅ PHASE 20: Reuse helper methods from Month (copied to avoid code duplication)
-    private async Task<List<CalendarItemViewModel>> LoadShiftsAsync(int companyId, List<DateOnly> dates, int currentUserId)
+    /// <summary>
+    /// ✅ A-018: Load shifts for multiple company IDs (scope-aware)
+    /// </summary>
+    private async Task<List<CalendarItemViewModel>> LoadShiftsAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
         var items = new List<CalendarItemViewModel>();
 
+        if (!companyIds.Any())
+            return items;
+
         var instances = await _db.ShiftInstances
             .Include(si => si.ShiftType)
-            .Where(si => si.CompanyId == companyId && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last())
+            .Where(si => companyIds.Contains(si.CompanyId) && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last())
             .ToListAsync();
 
         var instanceIds = instances.Select(i => i.Id).ToList();
@@ -226,11 +262,17 @@ public class WeekModel : PageModel
         return items;
     }
 
-    private async Task<List<CalendarItemViewModel>> LoadChoresAsync(int companyId, List<DateOnly> dates, int currentUserId)
+    /// <summary>
+    /// ✅ A-018: Load chores for multiple company IDs (scope-aware)
+    /// </summary>
+    private async Task<List<CalendarItemViewModel>> LoadChoresAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
+        if (!companyIds.Any())
+            return new List<CalendarItemViewModel>();
+
         var chores = await _db.Chores
             .Include(c => c.User)
-            .Where(c => c.CompanyId == companyId
+            .Where(c => companyIds.Contains(c.CompanyId)
                      && c.Date >= dates.First()
                      && c.Date <= dates.Last()
                      && c.CanceledAt == null)
@@ -253,7 +295,10 @@ public class WeekModel : PageModel
         }).ToList();
     }
 
-    private async Task<List<CalendarItemViewModel>> LoadOnDutiesAsync(int companyId, List<DateOnly> dates, int currentUserId)
+    /// <summary>
+    /// ✅ A-018: Load on-duties - global scope (not filtered by company)
+    /// </summary>
+    private async Task<List<CalendarItemViewModel>> LoadOnDutiesAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
         // OnDuty is global - must use IgnoreQueryFilters
         var onDuties = await _db.OnDuties.IgnoreQueryFilters()
@@ -379,6 +424,47 @@ public class WeekModel : PageModel
             {
                 CoveragePercent = 100.0;
             }
+        }
+    }
+
+    /// <summary>
+    /// ✅ A-019: Safely creates a valid DateOnly from parameters, handling edge cases like:
+    /// - Month boundaries (Jan 31 -> Feb navigation)
+    /// - Year boundaries (Dec -> Jan)
+    /// - Leap years (Feb 29)
+    /// - Invalid date values
+    /// Returns null if the date cannot be created.
+    /// </summary>
+    private static DateOnly? TryCreateValidDate(int year, int month, int day)
+    {
+        // Validate year range (reasonable bounds for a scheduling app)
+        if (year < 1900 || year > 2100)
+            return null;
+
+        // Validate month range
+        if (month < 1 || month > 12)
+            return null;
+
+        // Validate day range (accounting for varying days per month and leap years)
+        if (day < 1)
+            return null;
+
+        // Get the actual number of days in the specified month/year
+        int daysInMonth = DateTime.DaysInMonth(year, month);
+
+        // If day exceeds valid range for this month, clamp to the last valid day
+        // This handles cases like navigating from Jan 31 to Feb (which only has 28/29 days)
+        if (day > daysInMonth)
+            day = daysInMonth;
+
+        try
+        {
+            return new DateOnly(year, month, day);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Final safety catch for any edge cases we missed
+            return null;
         }
     }
 }

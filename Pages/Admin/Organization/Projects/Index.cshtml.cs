@@ -8,7 +8,7 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Projects;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:EditArea")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

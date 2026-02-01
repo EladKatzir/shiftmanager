@@ -1,125 +1,53 @@
 /* ========================================
-   Design System - Color Tokens
+   ShiftManager - Site Styles
+   Version: 3.0 (UI Overhaul)
+   Theme: "Warm Command" - Shifty Design System
    ======================================== */
 
+/* ========================================
+   Import Modular CSS Files
+   ======================================== */
+@import url('tokens.css');
+@import url('components.css');
+@import url('navigation.css');
+@import url('calendar.css');
+@import url('widgets.css');
+@import url('icons.css');
+@import url('print.css');
+
+/* ========================================
+   Legacy Token Compatibility Layer
+   These map old token names to new ones for backwards compatibility
+   ======================================== */
 :root {
-  /* Background & Surfaces */
-  --bg: #f5f7fb;
-  --surface: #ffffff;
-  --surface-soft: #f0f2f8;
-  --surface-elevated: #ffffff;
-  --surface-strong: #0f172a;
-
-  /* Text Colors */
-  --text: #111318;
-  --muted: #6b7280;
-
-  /* Brand & Interactive */
-  --primary: #2563eb;
-  --primary-rgb: 37, 99, 235;
-  --primary-soft: #e0ecff;
-
-  /* Status Colors */
-  --danger: #dc2626;
-  --danger-text: #ffffff;
-  --success: #16a34a;
-  --success-text: #ffffff;
-  --warning: #f59e0b;
-  --warning-text: #ffffff;
-
-  /* UI Elements */
-  --focus: #ff9800;
-  --border: #e2e8f0;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-  /* RGB values for transparency effects */
-  --surface-rgb: 255, 255, 255;
-  --text-rgb: 17, 19, 24;
-
-  /* Spacing Scale (8px base) */
-  --space-xs: 0.5rem;     /* 8px */
-  --space-sm: 0.75rem;    /* 12px */
-  --space-md: 1rem;       /* 16px */
-  --space-lg: 1.5rem;     /* 24px */
-  --space-xl: 2rem;       /* 32px */
-  --space-2xl: 2.5rem;    /* 40px */
-  --space-3xl: 3rem;      /* 48px */
-
-  /* Radius Scale */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-full: 9999px;
-
-  /* Enhanced Shadows for v2 */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* Backwards compatibility aliases */
+  --muted: var(--text-muted);
+  --surface-elevated: var(--surface);
+  --surface-strong: var(--text);
+  
+  /* Legacy spacing aliases */
+  --space-xs: var(--space-2);
+  --space-sm: var(--space-3);
+  --space-md: var(--space-4);
+  --space-lg: var(--space-6);
+  --space-xl: var(--space-8);
+  --space-2xl: var(--space-10);
+  --space-3xl: var(--space-12);
+  
+  /* Legacy shadow aliases */
+  --shadow-soft: var(--shadow-sm);
+  --shadow-elevated: var(--shadow-lg);
   --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.3);
-
-  /* Animation Tokens */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.2s ease;
-  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --transition-elastic: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-  /* Z-Index Scale */
-  --z-dropdown: 1000;
-  --z-sticky: 1020;
-  --z-modal: 1050;
-  --z-tooltip: 1070;
-}
-
-:root[data-theme="dark"] {
-  /* Background & Surfaces */
-  --bg: #020617;
-  --surface: #0b1120;
-  --surface-soft: #0f1629;
-  --surface-elevated: #0f1629;
-  --surface-strong: #1e293b;
-
-  /* Text Colors */
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-
-  /* Brand & Interactive */
-  --primary: #60a5fa;
-  --primary-rgb: 96, 165, 250;
-  --primary-soft: #1d2736;
-
-  /* Status Colors */
-  --danger: #f87171;
-  --danger-text: #1a1a1a;
-  --success: #4ade80;
-  --success-text: #1a1a1a;
-  --warning: #facc15;
-  --warning-text: #1a1a1a;
-
-  /* UI Elements */
-  --focus: #ffd54f;
-  --border: #1f2937;
-
-  /* Shadows (more subtle in dark mode) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-
-  /* RGB values for transparency effects */
-  --surface-rgb: 11, 17, 32;
-  --text-rgb: 229, 231, 235;
-
-  /* Enhanced Shadows for v2 (darker in dark mode) */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.5);
+  
+  /* Legacy transition aliases */
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-base: var(--duration-normal) var(--ease-out);
+  --transition-smooth: var(--duration-slow) var(--ease-in-out);
+  --transition-bounce: var(--duration-slower) var(--ease-bounce);
+  --transition-elastic: 0.6s var(--ease-bounce);
+  
+  /* Legacy focus color */
+  --focus: var(--accent);
 }
 
 /* ========================================

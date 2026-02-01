@@ -1,7 +1,8 @@
 # 07 - Service Layer Architecture
 
 **Document Status:** Genesis Documentation - Complete System Architecture
-**Last Updated:** 2025
+**Last Updated:** 2026-01 (V3 Update)
+**Version:** 2.0
 **Part of:** Phase 2 - Core Systems Documentation
 
 ---
@@ -24,23 +25,30 @@
 14. [Audit and Compliance Services](#audit-and-compliance-services)
 15. [Security and Encryption Services](#security-and-encryption-services)
 16. [Utility Services](#utility-services)
-17. [Service Dependency Graph](#service-dependency-graph)
-18. [Common Patterns and Conventions](#common-patterns-and-conventions)
-19. [Testing Strategies](#testing-strategies)
-20. [Reconstruction Notes](#reconstruction-notes)
+17. [**V3 Organizational Hierarchy Services**](#v3-organizational-hierarchy-services) *(NEW)*
+18. [**V3 Authorization Services**](#v3-authorization-services) *(NEW)*
+19. [**V3 Scheduling Services**](#v3-scheduling-services) *(NEW)*
+20. [**V3 Data Lifecycle Services**](#v3-data-lifecycle-services) *(NEW)*
+21. [**V3 Social Features Services**](#v3-social-features-services) *(NEW)*
+22. [Service Dependency Graph](#service-dependency-graph)
+23. [Common Patterns and Conventions](#common-patterns-and-conventions)
+24. [Testing Strategies](#testing-strategies)
+25. [Reconstruction Notes](#reconstruction-notes)
 
 ---
 
 ## Overview
 
-ShiftManager implements a **rich service layer** containing **63 service classes** organized into **16 functional categories**. The service layer encapsulates all business logic, isolating it from the presentation layer (Razor Pages) and data layer (EF Core).
+ShiftManager implements a **rich service layer** containing **90+ service classes** organized into **21 functional categories**. The service layer encapsulates all business logic, isolating it from the presentation layer (Razor Pages) and data layer (EF Core).
 
 ### Key Statistics
 
-- **63 Total Services**: 55 in `Services/` folder, 8 in `Services/Api/` subfolder
-- **40+ Interfaces**: Following interface-based dependency injection pattern
+- **97 Total Services**: 89 in `Services/` folder (including interfaces), 8 in `Services/Api/` subfolder
+- **55+ Interfaces**: Following interface-based dependency injection pattern
 - **3 Service Lifetimes**: Scoped (majority), Singleton (caching, background jobs), Transient (none in current implementation)
-- **8 Service Categories**: Core, business logic, caching, user management, communication, API, multi-tenancy, security
+- **21 Service Categories**: Core, business logic, caching, user management, communication, API, multi-tenancy, security, **V3 hierarchy, V3 authorization, V3 scheduling, V3 data lifecycle, V3 social**
+
+> **V3 Update**: The service layer expanded significantly in V3 to support the new organizational hierarchy, grant-based authorization, and enhanced scheduling features. See dedicated V3 sections below.
 
 ### Architectural Principles
 
@@ -88,13 +96,14 @@ When rebuilding ShiftManager, you **cannot skip the service layer**. Attempting 
 
 ## Service Categories
 
-ShiftManager's 62 services are organized into 16 functional categories:
+ShiftManager's 90+ services are organized into 21 functional categories:
 
-### 1. Core Multi-Tenancy Services (4 services)
+### 1. Core Multi-Tenancy Services (5 services)
 - `TenantResolver` - Resolves `CompanyId` from user claims
 - `CompanyContext` - Caches `CompanyId` in `HttpContext.Items`
 - `DirectorService` - Cross-company access management for Directors
 - `CompanyFilterService` - Helper for applying company filters to queries
+- `OwnerCompanySelectorService` - Owner cross-company switching via cookie selection
 
 ### 2. Business Logic Services (5 services)
 - `ConflictChecker` - Validates shift assignments (overlap, rest periods, weekly caps)
@@ -108,25 +117,29 @@ ShiftManager's 62 services are organized into 16 functional categories:
 - `AppConfigCacheService` - Caches `AppConfig` key-value pairs (5-minute TTL)
 - `CompanyCacheService` - Caches `Company` entities
 
-### 4. User Management Services (6 services)
+### 4. User Management Services (7 services)
 - `ProfileService` - Profile editing with field-level permissions (400 lines)
 - `AvatarService` - User avatar upload/retrieval
 - `TraineeService` - Trainee-specific operations
 - `ViewAsModeService` - "View as user" impersonation for debugging
 - `UserPreferenceService` - User-specific preferences (theme, language)
 - `AuthenticationService` - Login, password hashing, session management
+- `CurrentUserService` - V3 hierarchy-aware current user info (MoleculeId, AreaId, JobTypeId from claims)
 
 ### 5. Task Assignment Services (3 services)
 - `ChoreService` - Daily chore assignment/cancellation (640 lines)
 - `OnDutyService` - Day shift/on-duty assignment (448 lines, global scope)
 - `OnDutyRoleSubscriptionService` - Subscribe to on-duty role notifications
 
-### 6. Communication Services (5 services)
+### 6. Communication Services (8 services)
 - `MailService` - Email sending via HTTP API (720 lines)
 - `EmailConfigService` - Database-driven email configuration
 - `EmailApiLogService` - Logs all email API calls for diagnostics
 - `EmailTemplateBuilder` - HTML email template generation
 - `LocalizationService` - Culture-specific localization helpers
+- `CompanyLocalizationService` - Company-specific translation overrides with caching (356 lines)
+- `LanguageManagementService` - Company language settings (default/alternate culture) management
+- `EmailTemplateService` - Company-specific email template customizations and variable replacement
 
 ### 7. Team Collaboration Services (2 services)
 - `TeamCalendarService` - Custom calendar creation/member management (350 lines)
@@ -181,6 +194,29 @@ ShiftManager's 62 services are organized into 16 functional categories:
 - `TimeHelpers` - Static utility for shift time calculations
 - `DateRangeService` - Date range helpers
 - `ValidationHelpers` - Common validation logic
+
+### 17. V3 Organizational Hierarchy Services (4 services) *(NEW)*
+- `HierarchyService` - Navigates Project → Area → Molecule → Company/Department tree
+- `HierarchySettingsService` - Manages cascading settings through hierarchy
+- `JobTypeService` - Job type definitions and user assignments
+- `ShiftGroupingService` - Coordinates scheduling across companies/job types
+
+### 18. V3 Authorization Services (2 services) *(NEW)*
+- `GrantService` - Core grant-based permission checking and management
+- `RoleService` - Role template and user role assignment management
+
+### 19. V3 Scheduling Services (3 services) *(NEW)*
+- `ShiftProgramService` - Weekly shift templates and instance generation
+- `MasterProgramService` - Collections of Programs for batch scheduling
+- `SetupTaskService` - Guided onboarding tasks for new molecules/companies
+
+### 20. V3 Data Lifecycle Services (3 services) *(NEW)*
+- `ArchiveService` - Historical data archival (CSV + NDJSON export)
+- `PurgeService` - Safe data purging with confirmation requirements
+- `ImportService` - Re-import archived data with validation
+
+### 21. V3 Social Features Services (1 service) *(NEW)*
+- `FriendshipService` - User friendships for calendar sharing and social features
 
 ---
 
@@ -1938,6 +1974,657 @@ public static class TimeHelpers
 
 ---
 
+---
+
+## V3 Organizational Hierarchy Services
+
+### 1. HierarchyService
+
+**File**: `Services/HierarchyService.cs`
+**Interface**: `Services/IHierarchyService.cs`
+**Lifetime**: Scoped
+**Purpose**: Navigates and queries the organizational hierarchy tree
+
+**Key Methods**:
+
+```csharp
+public interface IHierarchyService
+{
+    // Project operations
+    Task<Project?> GetProjectAsync(int projectId);
+    Task<List<Project>> GetAllProjectsAsync();
+
+    // Area operations
+    Task<Area?> GetAreaAsync(int areaId);
+    Task<List<Area>> GetAreasAsync(int projectId);
+
+    // Molecule operations
+    Task<Molecule?> GetMoleculeAsync(int moleculeId);
+    Task<List<Molecule>> GetMoleculesAsync(int areaId);
+
+    // Company operations (workforce molecules)
+    Task<List<Company>> GetCompaniesAsync(int moleculeId);
+
+    // Department operations (tech molecules)
+    Task<List<Department>> GetDepartmentsAsync(int moleculeId);
+
+    // User hierarchy context
+    Task<UserHierarchyContext?> GetUserHierarchyContextAsync(int userId);
+
+    // Hierarchy path resolution
+    Task<HierarchyPath?> GetHierarchyPathForCompanyAsync(int companyId);
+    Task<HierarchyPath?> GetHierarchyPathForDepartmentAsync(int departmentId);
+}
+```
+
+**Supporting Types**:
+
+```csharp
+/// <summary>
+/// Full hierarchy path from Project down to the leaf entity.
+/// </summary>
+public record HierarchyPath(
+    Project Project,
+    Area Area,
+    Molecule Molecule,
+    Company? Company,
+    Department? Department
+);
+
+/// <summary>
+/// User's complete hierarchy context including their position in the org structure.
+/// </summary>
+public record UserHierarchyContext(
+    int UserId,
+    HierarchyPath Path,
+    JobType? JobType,
+    bool IsWorkforce,
+    bool IsTech
+);
+```
+
+**Use Cases**:
+- Resolving user's position in the organizational tree
+- Building breadcrumb navigation in the UI
+- Determining scope boundaries for permission checks
+- Filtering data by organizational boundaries
+
+**Dependencies**:
+- `AppDbContext`
+- `ITenantResolver`
+
+---
+
+### 2. HierarchySettingsService
+
+**File**: `Services/HierarchySettingsService.cs`
+**Interface**: `Services/IHierarchySettingsService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages cascading configuration settings through the hierarchy
+
+**Key Methods**:
+
+```csharp
+public interface IHierarchySettingsService
+{
+    // Gets the effective settings for a company, resolving Area → Molecule → Company cascade
+    Task<EffectiveSettings> GetEffectiveSettingsAsync(int companyId);
+
+    // Gets settings for a molecule, resolving Area → Molecule cascade
+    Task<EffectiveSettings> GetMoleculeSettingsAsync(int moleculeId);
+
+    // Area settings (base values)
+    Task<AreaSettingsDto?> GetAreaSettingsAsync(int areaId);
+    Task<bool> UpdateAreaSettingsAsync(int areaId, int restHours, int weeklyCap, int updatedByUserId);
+
+    // Molecule settings overrides (null = inherit)
+    Task<MoleculeSettingsDto?> GetMoleculeSettingsOverrideAsync(int moleculeId);
+    Task<bool> UpdateMoleculeSettingsAsync(int moleculeId, int? restHoursOverride, int? weeklyCapOverride, int updatedByUserId);
+
+    // Company settings overrides (null = inherit)
+    Task<CompanySettingsDto?> GetCompanySettingsOverrideAsync(int companyId);
+    Task<bool> UpdateCompanySettingsAsync(int companyId, int? restHoursOverride, int? weeklyCapOverride, int updatedByUserId);
+}
+```
+
+**Cascade Resolution Pattern**:
+
+```csharp
+public record EffectiveSettings(
+    int RestHours,
+    int WeeklyCap,
+    string RestHoursSource,     // "Area", "Molecule", or "Company"
+    string WeeklyCapSource
+);
+```
+
+**Business Rules**:
+- Settings cascade: Area → Molecule → Company
+- Each level can override parent values or inherit (null)
+- Source tracking enables "where did this value come from?" queries
+- Default values come from Area level
+
+---
+
+### 3. JobTypeService
+
+**File**: `Services/JobTypeService.cs`
+**Interface**: `Services/IJobTypeService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages job type definitions and user-job type assignments
+
+**Key Methods**:
+
+```csharp
+public interface IJobTypeService
+{
+    // Query operations
+    Task<JobType?> GetJobTypeAsync(int jobTypeId);
+    Task<List<JobType>> GetJobTypesAsync(int areaId);
+    Task<List<JobType>> GetAllJobTypesAsync();
+    Task<JobType?> GetUserJobTypeAsync(int userId);
+    Task<List<AppUser>> GetUsersWithJobTypeAsync(int jobTypeId);
+
+    // Assignment operations
+    Task<bool> AssignJobTypeAsync(int userId, int jobTypeId, int? assignedByUserId = null);
+    Task<bool> ChangeJobTypeAsync(int userId, int newJobTypeId, int? changedByUserId = null);
+    Task<bool> RemoveJobTypeAsync(int userId, int? removedByUserId = null);
+
+    // Validation
+    Task<bool> CanUserHaveJobTypeAsync(int userId, int jobTypeId);
+}
+```
+
+**Business Rules**:
+- Users can have one JobType (stored in `AppUser.JobTypeId`)
+- JobTypes are scoped to Areas
+- JobType assignment is validated against user's company/area membership
+
+---
+
+### 4. ShiftGroupingService
+
+**File**: `Services/ShiftGroupingService.cs`
+**Interface**: `Services/IShiftGroupingService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages shift groupings for coordinated scheduling across companies/job types
+
+**Key Methods**:
+
+```csharp
+public interface IShiftGroupingService
+{
+    // Query operations
+    Task<ShiftGrouping?> GetGroupingAsync(int groupingId);
+    Task<List<ShiftGrouping>> GetGroupingsAsync(int moleculeId);
+    Task<List<ShiftGrouping>> GetGroupingsForCompanyAsync(int companyId);
+    Task<List<ShiftGrouping>> GetGroupingsForJobTypeAsync(int jobTypeId);
+
+    // Create/Update operations
+    Task<ShiftGrouping?> CreateGroupingAsync(int moleculeId, string name, string displayName,
+        List<int>? companyIds = null, List<int>? jobTypeIds = null);
+    Task<bool> UpdateGroupingAsync(int groupingId, string? name = null, string? displayName = null,
+        List<int>? companyIds = null, List<int>? jobTypeIds = null);
+    Task<bool> DeactivateGroupingAsync(int groupingId);
+
+    // Company membership
+    Task<bool> AddCompanyToGroupingAsync(int groupingId, int companyId);
+    Task<bool> RemoveCompanyFromGroupingAsync(int groupingId, int companyId);
+    Task<List<Company>> GetCompaniesInGroupingAsync(int groupingId);
+
+    // JobType membership
+    Task<bool> AddJobTypeToGroupingAsync(int groupingId, int jobTypeId);
+    Task<bool> RemoveJobTypeFromGroupingAsync(int groupingId, int jobTypeId);
+    Task<List<JobType>> GetJobTypesInGroupingAsync(int groupingId);
+
+    // User queries
+    Task<List<AppUser>> GetUsersInGroupingAsync(int groupingId);
+    Task<List<AppUser>> GetEligibleUsersForGroupingAsync(int groupingId);
+}
+```
+
+**Use Cases**:
+- Creating "Tzafon" and "Darom" groupings for regional scheduling
+- Coordinating shifts across multiple companies
+- Filtering eligible users by company AND job type membership
+
+---
+
+## V3 Authorization Services
+
+### 1. GrantService
+
+**File**: `Services/GrantService.cs`
+**Interface**: `Services/IGrantService.cs`
+**Lifetime**: Scoped
+**Purpose**: Core V3 grant-based authorization - checking, granting, and revoking permissions
+
+**Key Methods**:
+
+```csharp
+public interface IGrantService
+{
+    // Permission checking
+    Task<bool> HasGrantAsync(int userId, string grantTypeKey, GrantScope scope);
+    Task<bool> HasAnyGrantAsync(int userId, IEnumerable<string> grantTypeKeys, GrantScope scope);
+    Task<bool> HasAllGrantsAsync(int userId, IEnumerable<string> grantTypeKeys, GrantScope scope);
+
+    // Grant management
+    Task<Grant?> GrantAsync(int userId, string grantTypeKey, GrantScope scope, int grantedByUserId,
+        bool canOwn = false, bool canGive = false);
+    Task<bool> RevokeAsync(int grantId, int? revokedByUserId = null);
+    Task<bool> RevokeAllUserGrantsAsync(int userId);
+
+    // Query grants
+    Task<List<Grant>> GetUserGrantsAsync(int userId);
+    Task<List<Grant>> GetUserGrantsInScopeAsync(int userId, GrantScope scope);
+    Task<List<Grant>> GetGrantsOfTypeAsync(string grantTypeKey);
+
+    // Delegation
+    Task<bool> CanDelegateGrantAsync(int delegatorId, string grantTypeKey, GrantScope scope);
+    Task<Grant?> DelegateGrantAsync(int delegatorId, int targetUserId, string grantTypeKey, GrantScope scope);
+
+    // Auto-grants (from RoleTemplates)
+    Task ApplyAutoGrantsAsync(int userRoleAssignmentId);
+    Task RemoveAutoGrantsAsync(int userRoleAssignmentId);
+}
+```
+
+**GrantScope Record**:
+
+```csharp
+public record GrantScope(
+    int? ProjectId = null,
+    int? AreaId = null,
+    int? MoleculeId = null,
+    int? CompanyId = null,
+    int? DepartmentId = null,
+    int? JobTypeId = null
+);
+```
+
+**Permission Checking Logic**:
+
+1. Check for direct grant at requested scope
+2. Check for parent scope grants (hierarchy inheritance)
+3. Check for broader scope modes (Area grant covers Molecule/Company/Department)
+4. Return `true` if any matching grant found
+
+**Business Rules**:
+- Grants are hierarchical (Area grant covers all children)
+- `CanOwn` flag allows user to manage the grant
+- `CanGive` flag allows user to delegate the grant to others
+- Auto-grants are tied to `UserRoleAssignment` and managed automatically
+
+**Dependencies**:
+- `AppDbContext`
+- `IHierarchyService` (for scope resolution)
+- `ILogger<GrantService>`
+
+---
+
+### 2. RoleService
+
+**File**: `Services/RoleService.cs`
+**Interface**: `Services/IRoleService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages role templates and user role assignments
+
+**Key Methods**:
+
+```csharp
+public interface IRoleService
+{
+    // Role template queries
+    Task<RoleTemplate?> GetRoleTemplateAsync(int roleTemplateId);
+    Task<RoleTemplate?> GetRoleTemplateByKeyAsync(string key);
+    Task<List<RoleTemplate>> GetRoleTemplatesAsync();
+    Task<List<RoleTemplate>> GetRoleTemplatesByScopeLevelAsync(RoleScopeLevel scopeLevel);
+
+    // User role queries
+    Task<List<UserRoleAssignment>> GetUserRolesAsync(int userId);
+    Task<List<UserRoleAssignment>> GetUserRolesInScopeAsync(int userId, GrantScope scope);
+    Task<UserRoleAssignment?> GetUserRoleAssignmentAsync(int userRoleId);
+    Task<bool> UserHasRoleAsync(int userId, string roleKey);
+    Task<bool> UserHasRoleAsync(int userId, int roleTemplateId);
+
+    // Role assignment management
+    Task<UserRoleAssignment?> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId);
+    Task<bool> RemoveRoleAsync(int userRoleId, int? removedByUserId = null);
+    Task<bool> RemoveAllUserRolesAsync(int userId);
+
+    // Queries for role holders
+    Task<List<AppUser>> GetUsersWithRoleAsync(int roleTemplateId);
+    Task<List<AppUser>> GetUsersWithRoleInScopeAsync(int roleTemplateId, GrantScope scope);
+}
+```
+
+**Role Assignment Flow**:
+
+1. `AssignRoleAsync` creates a `UserRoleAssignment`
+2. System automatically calls `IGrantService.ApplyAutoGrantsAsync()`
+3. All `RoleTemplateGrant` entries for the template are converted to `Grant` records
+4. User immediately has all permissions defined by the role template
+
+**Built-in Role Templates** (11 total):
+- `Owner` - System-wide access
+- `AreaAdmin` - Area-scoped administration
+- `MoleculeAdmin` - Molecule-scoped administration
+- `AlhutDirector`, `MutzDirector`, etc. (see 22-V3-GRANT-AUTHORIZATION.md)
+
+---
+
+## V3 Scheduling Services
+
+### 1. ShiftProgramService
+
+**File**: `Services/ShiftProgramService.cs`
+**Interface**: `Services/IShiftProgramService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages weekly shift templates and generates shift instances
+
+**Key Methods**:
+
+```csharp
+public interface IShiftProgramService
+{
+    // CRUD Operations
+    Task<ShiftProgram> CreateProgramAsync(int companyId, int shiftTypeId, string name,
+        List<DayOfWeek> days, int defaultStaffing, Dictionary<DayOfWeek, int>? perDayStaffing, int userId);
+    Task<ShiftProgram?> GetProgramAsync(int programId);
+    Task<List<ShiftProgram>> GetCompanyProgramsAsync(int companyId, bool includeInactive = false);
+    Task UpdateProgramAsync(int programId, string name, List<DayOfWeek> days,
+        int defaultStaffing, Dictionary<DayOfWeek, int>? perDayStaffing, int userId);
+    Task DeleteProgramAsync(int programId, int userId);
+
+    // Instance Generation
+    Task<List<ShiftInstance>> GenerateInstancesAsync(int programId, DateOnly startDate, DateOnly endDate,
+        bool overwriteExisting = false);
+    Task<int> ApplyProgramToDateRangeAsync(int programId, DateOnly startDate, DateOnly endDate,
+        bool overwriteExisting = false);
+
+    // Detachment & Reset
+    Task DetachInstanceAsync(int instanceId, string overrideType);
+    Task ResetInstanceToProgramAsync(int instanceId);
+    Task<List<ShiftInstance>> GetInstancesFromProgramAsync(int programId, DateOnly? startDate = null, DateOnly? endDate = null);
+}
+```
+
+**Program Concept**:
+- A Program defines WHEN a shift type runs (weekly mask) and DEFAULT staffing
+- Programs generate `ShiftInstance` records for specific dates
+- Instances track their `OriginalProgramId` for "Reset to Program" functionality
+- Detached instances have been manually edited and won't be overwritten
+
+---
+
+### 2. MasterProgramService
+
+**File**: `Services/MasterProgramService.cs`
+**Interface**: `Services/IMasterProgramService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages collections of Programs for batch scheduling
+
+**Key Methods**:
+
+```csharp
+public interface IMasterProgramService
+{
+    // CRUD Operations
+    Task<MasterProgram> CreateMasterProgramAsync(int companyId, string name, string? description,
+        List<int> programIds, int userId);
+    Task<MasterProgram?> GetMasterProgramAsync(int masterProgramId);
+    Task<List<MasterProgram>> GetCompanyMasterProgramsAsync(int companyId, bool includeInactive = false);
+    Task UpdateMasterProgramAsync(int masterProgramId, string name, string? description,
+        List<int> programIds, int userId);
+    Task DeleteMasterProgramAsync(int masterProgramId, int userId);
+
+    // Instance Generation (delegates to ShiftProgramService)
+    Task<Dictionary<int, List<ShiftInstance>>> GenerateFromMasterProgramAsync(int masterProgramId,
+        DateOnly startDate, DateOnly endDate, bool overwriteExisting = false);
+
+    // Summary statistics
+    Task<MasterProgramSummary> GetMasterProgramSummaryAsync(int masterProgramId);
+}
+
+public class MasterProgramSummary
+{
+    public int TotalPrograms { get; set; }
+    public int UniqueShiftTypes { get; set; }
+    public int TotalProgramDays { get; set; }
+    public List<string> ShiftTypeNames { get; set; } = new();
+}
+```
+
+**Use Case**:
+- "Standard Week Schedule" MasterProgram containing 5+ Programs
+- Generate all shifts for a month with a single API call
+- Track which Programs are bundled together
+
+---
+
+### 3. SetupTaskService
+
+**File**: `Services/SetupTaskService.cs`
+**Interface**: `Services/ISetupTaskService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages guided onboarding tasks for new molecules and companies
+
+**Key Methods**:
+
+```csharp
+public interface ISetupTaskService
+{
+    // Task generation
+    Task<List<SetupTaskDto>> GenerateTasksForMoleculeAsync(int moleculeId, int assignToUserId);
+    Task<List<SetupTaskDto>> GenerateTasksForCompanyAsync(int companyId, int assignToUserId);
+
+    // Task queries
+    Task<List<SetupTaskDto>> GetPendingTasksAsync(int userId);
+    Task<List<SetupTaskDto>> GetTasksForMoleculeAsync(int moleculeId);
+    Task<SetupProgressDto> GetProgressAsync(int moleculeId);
+
+    // Task management
+    Task<bool> CompleteTaskAsync(int taskId, int completedByUserId);
+    Task<bool> SkipTaskAsync(int taskId, int skippedByUserId);
+    Task<bool> UpdateTaskStatusAsync(int taskId, SetupTaskStatus status, int updatedByUserId);
+}
+
+public record SetupProgressDto(
+    int MoleculeId,
+    string MoleculeName,
+    int TotalTasks,
+    int CompletedTasks,
+    int PendingTasks,
+    int SkippedTasks,
+    int InProgressTasks,
+    double CompletionPercent
+);
+```
+
+**Generated Task Types**:
+- `ConfigureShiftTypes` - Create shift types for the company
+- `SetupJobTypes` - Define job types for the area
+- `ImportUsers` - Import user accounts
+- `ConfigurePrograms` - Set up shift programs
+- `InviteManagers` - Invite managers to the system
+
+---
+
+## V3 Data Lifecycle Services
+
+### 1. ArchiveService
+
+**File**: `Services/ArchiveService.cs`
+**Interface**: `Services/IArchiveService.cs`
+**Lifetime**: Scoped
+**Purpose**: Creates archives of historical data for compliance and storage management
+
+**Key Methods**:
+
+```csharp
+public interface IArchiveService
+{
+    // Preview what would be archived
+    Task<ArchivePreview> PreviewArchiveAsync(DateOnly cutoffDate, ArchiveDataTypes types);
+
+    // Create archive bundles (CSV + NDJSON)
+    Task<ArchiveResult> CreateArchiveAsync(ArchiveRequest request);
+
+    // Get most recent archive
+    Task<ArchiveMetadata?> GetLatestArchiveAsync();
+
+    // Validate archive freshness
+    Task<bool> ValidateFreshArchiveAsync(DateOnly cutoffDate, ArchiveDataTypes types);
+}
+
+[Flags]
+public enum ArchiveDataTypes
+{
+    None = 0,
+    Shifts = 1,           // ShiftInstance + ShiftAssignment
+    SwapRequests = 2,
+    TimeOff = 4,
+    Chores = 8,
+    OnDuty = 16,
+    All = Shifts | SwapRequests | TimeOff | Chores | OnDuty
+}
+```
+
+**Archive Outputs**:
+- **CSV ZIP**: Human-readable export for reporting
+- **NDJSON ZIP**: Re-importable format for data restoration
+- **SHA256 Hash**: Integrity verification
+
+---
+
+### 2. PurgeService
+
+**File**: `Services/PurgeService.cs`
+**Interface**: `Services/IPurgeService.cs`
+**Lifetime**: Scoped
+**Purpose**: Safely purges historical data with confirmation and backup requirements
+
+**Key Methods**:
+
+```csharp
+public interface IPurgeService
+{
+    // Purge with safety checks
+    Task<PurgeResult> PurgeDataAsync(PurgeRequest request);
+
+    // Validate confirmation string
+    bool ValidateConfirmation(string confirmation, string companyName, DateOnly cutoffDate);
+}
+
+public class PurgeRequest
+{
+    public DateOnly CutoffDate { get; set; }
+    public ArchiveDataTypes Types { get; set; }
+    public string TypedConfirmation { get; set; } = string.Empty;
+    public bool ArchiveConfirmed { get; set; }
+    public bool RunVacuum { get; set; }
+    public bool HardDeleteOnDuty { get; set; } // Owner-only
+}
+```
+
+**Safety Mechanisms**:
+- Typed confirmation required (e.g., "DELETE ACME 2024-01-01")
+- Archive must exist before purge is allowed
+- Automatic backup before purge
+- Owner-only hard delete for OnDuty records
+
+---
+
+### 3. ImportService
+
+**File**: `Services/ImportService.cs`
+**Interface**: `Services/IImportService.cs`
+**Lifetime**: Scoped
+**Purpose**: Imports archived data back into the system
+
+**Key Methods**:
+
+```csharp
+public interface IImportService
+{
+    // Validate archive before import
+    Task<ImportValidationResult> ValidateArchiveAsync(string zipPath);
+
+    // Import data
+    Task<ImportResult> ImportArchiveAsync(ImportRequest request);
+}
+
+public enum ImportConflictPolicy
+{
+    SkipDuplicates,
+    OverwriteExisting,
+    FailOnConflict
+}
+```
+
+**Validation Checks**:
+- Company name match
+- Missing user detection (by email)
+- Missing shift type key detection
+- Schema version compatibility
+
+---
+
+## V3 Social Features Services
+
+### 1. FriendshipService
+
+**File**: `Services/FriendshipService.cs`
+**Interface**: `Services/IFriendshipService.cs`
+**Lifetime**: Scoped
+**Purpose**: Manages user friendships for calendar sharing and social features
+
+**Key Methods**:
+
+```csharp
+public interface IFriendshipService
+{
+    // Friend queries
+    Task<List<FriendDto>> GetFriendsAsync(int userId);
+    Task<List<FriendRequestDto>> GetPendingRequestsAsync(int userId);
+    Task<List<FriendRequestDto>> GetOutgoingRequestsAsync(int userId);
+
+    // Friend management
+    Task<FriendshipResult> SendRequestAsync(int userId, int friendId);
+    Task<FriendshipResult> AcceptRequestAsync(int friendshipId, int acceptingUserId);
+    Task<FriendshipResult> RejectRequestAsync(int friendshipId, int rejectingUserId);
+    Task<FriendshipResult> RemoveFriendAsync(int friendshipId, int removingUserId);
+
+    // Utility queries
+    Task<bool> AreFriendsAsync(int userId1, int userId2);
+    Task<HashSet<int>> GetFriendIdsAsync(int userId);
+    Task<List<PotentialFriendDto>> SearchUsersAsync(int userId, string query, int limit = 20);
+}
+
+public record FriendDto(
+    int FriendshipId,
+    int FriendId,
+    string DisplayName,
+    string? Email,
+    string? CompanyName,
+    string? JobTypeName,
+    DateTime FriendsSince
+);
+```
+
+**Friendship States**:
+- `Pending` - Request sent, awaiting acceptance
+- `Accepted` - Both users are friends
+- `Rejected` - Request was declined (record may be kept for cooldown)
+
+**Use Cases**:
+- Filter calendar to show only friends' schedules
+- Enable cross-company visibility for friends
+- Social features in the employee portal
+
+---
+
 ## Service Dependency Graph
 
 ### High-Level Dependencies
@@ -1959,6 +2646,19 @@ graph TD
     B --> L[Audit Services]
     L --> G
 
+    %% V3 Services
+    B --> M[V3 Authorization Services]
+    M --> N[GrantService]
+    M --> O[RoleService]
+    N --> P[HierarchyService]
+    O --> N
+
+    B --> Q[V3 Hierarchy Services]
+    Q --> P
+    Q --> R[HierarchySettingsService]
+    Q --> S[JobTypeService]
+    Q --> T[ShiftGroupingService]
+
     style A fill:#e1f5ff
     style B fill:#fff4e1
     style C fill:#f0f0f0
@@ -1966,6 +2666,8 @@ graph TD
     style E fill:#fce4ec
     style F fill:#fff9c4
     style L fill:#e0e0e0
+    style M fill:#ffe0cc
+    style Q fill:#d4edda
 ```
 
 ### Service-to-Service Dependencies
@@ -1973,16 +2675,29 @@ graph TD
 | Service | Dependencies |
 |---------|-------------|
 | **NotificationService** | `AppDbContext`, `ITenantResolver`, `IMailService`, `IStringLocalizer`, `IConfiguration`, `ILogger` |
-| **ConflictChecker** | `AppDbContext`, `IAppConfigCacheService` |
+| **ConflictChecker** | `AppDbContext`, `IAppConfigCacheService`, `IHierarchySettingsService` |
 | **ProfileService** | `AppDbContext`, `ITenantResolver`, `IStringLocalizer`, `ILogger` |
-| **ChoreService** | `AppDbContext`, `ITenantResolver`, `IHttpContextAccessor`, `IDirectorService`, `ILogger` |
-| **OnDutyService** | `AppDbContext`, `IHttpContextAccessor`, `IDirectorService`, `ILogger` |
+| **ChoreService** | `AppDbContext`, `ITenantResolver`, `IHttpContextAccessor`, `IDirectorService`, `IGrantService`, `ILogger` |
+| **OnDutyService** | `AppDbContext`, `IHttpContextAccessor`, `IDirectorService`, `IGrantService`, `ILogger` |
 | **MailService** | `IHttpClientFactory`, `ILogger`, `IConfiguration`, `IEmailConfigService`, `IEmailApiLogService`, `IStringLocalizer` |
 | **ApiKeyService** | `AppDbContext`, `IAuditLogService`, `ILogger` |
 | **DirectorService** | `AppDbContext`, `IHttpContextAccessor` |
 | **AuditLogService** | `AppDbContext`, `ITenantResolver`, `IHttpContextAccessor`, `ILogger` |
 | **ShiftTypeCacheService** | `AppDbContext`, `IMemoryCache`, `ILogger` |
 | **EncryptionService** | `IDataProtectionProvider`, `ILogger` |
+| **GrantService** *(V3)* | `AppDbContext`, `IHierarchyService`, `ILogger` |
+| **RoleService** *(V3)* | `AppDbContext`, `IGrantService`, `ILogger` |
+| **HierarchyService** *(V3)* | `AppDbContext`, `ITenantResolver`, `ILogger` |
+| **HierarchySettingsService** *(V3)* | `AppDbContext`, `IHierarchyService`, `ILogger` |
+| **JobTypeService** *(V3)* | `AppDbContext`, `IHierarchyService`, `ILogger` |
+| **ShiftGroupingService** *(V3)* | `AppDbContext`, `IHierarchyService`, `ILogger` |
+| **ShiftProgramService** *(V3)* | `AppDbContext`, `ILogger` |
+| **MasterProgramService** *(V3)* | `AppDbContext`, `IShiftProgramService`, `ILogger` |
+| **SetupTaskService** *(V3)* | `AppDbContext`, `IHierarchyService`, `ILogger` |
+| **ArchiveService** *(V3)* | `AppDbContext`, `ITenantResolver`, `IAuditLogService`, `ILogger` |
+| **PurgeService** *(V3)* | `AppDbContext`, `ITenantResolver`, `IArchiveService`, `IAuditLogService`, `ILogger` |
+| **ImportService** *(V3)* | `AppDbContext`, `ITenantResolver`, `IAuditLogService`, `ILogger` |
+| **FriendshipService** *(V3)* | `AppDbContext`, `ITenantResolver`, `ILogger` |
 
 ### Circular Dependency Prevention
 
@@ -2229,6 +2944,8 @@ When rebuilding ShiftManager, these service layer decisions are **non-negotiable
 4. **Fire-and-Forget for Non-Critical Ops**: Audit logs, notifications, emails never throw
 5. **Caching for Hot Data**: Use `IMemoryCache` for frequently-accessed data
 6. **Structured Logging**: Use `ILogger<T>` with placeholders, not string interpolation
+7. **V3 Hierarchy-Aware**: Services must respect organizational hierarchy for scope checks
+8. **V3 Grant-Based Auth**: Use `IGrantService` for permission checks, not legacy `UserRole` enum
 
 ### Service Registration Order
 
@@ -2239,10 +2956,15 @@ Services must be registered in `Program.cs` in this order:
 3. **DbContext**: `AppDbContext` (with interceptor)
 4. **Core Services**: `IDirectorService`, `IEncryptionService`
 5. **Caching Services**: `IShiftTypeCacheService`, `IAppConfigCacheService`
-6. **Business Logic Services**: `IConflictChecker`, `INotificationService`, etc.
-7. **Communication Services**: `IMailService`, `IEmailConfigService`
-8. **API Services**: `IApiKeyService`, `UserApiService`, etc.
-9. **Background Jobs**: `DailyNotificationJob`, `CleanupJob`
+6. **V3 Hierarchy Services**: `IHierarchyService`, `IHierarchySettingsService`, `IJobTypeService`, `IShiftGroupingService`
+7. **V3 Authorization Services**: `IGrantService`, `IRoleService`
+8. **Business Logic Services**: `IConflictChecker`, `INotificationService`, etc.
+9. **V3 Scheduling Services**: `IShiftProgramService`, `IMasterProgramService`, `ISetupTaskService`
+10. **V3 Data Lifecycle Services**: `IArchiveService`, `IPurgeService`, `IImportService`
+11. **V3 Social Services**: `IFriendshipService`
+12. **Communication Services**: `IMailService`, `IEmailConfigService`
+13. **API Services**: `IApiKeyService`, `UserApiService`, etc.
+14. **Background Jobs**: `DailyNotificationJob`, `CleanupJob`
 
 ### Service Lifetime Guidelines
 
@@ -2265,7 +2987,7 @@ Every service must have:
 
 ## Summary
 
-ShiftManager's service layer is the **heart of the application**, containing 62 services across 16 categories. The service layer encapsulates all business logic, isolates the presentation layer from the data layer, and enables testability through interface-based dependency injection.
+ShiftManager's service layer is the **heart of the application**, containing **90+ services** across **21 categories**. The service layer encapsulates all business logic, isolates the presentation layer from the data layer, and enables testability through interface-based dependency injection.
 
 **Key Takeaways**:
 
@@ -2275,6 +2997,8 @@ ShiftManager's service layer is the **heart of the application**, containing 62 
 4. **Caching First**: Hot data (shift types, config) is cached with 5-10 minute TTL
 5. **Interface-Based**: Every service has an interface for DI and testing
 6. **Structured Logging**: All services use `ILogger<T>` with structured placeholders
+7. **V3 Hierarchy-Aware**: Services use `IHierarchyService` for organizational scope navigation
+8. **V3 Grant-Based Authorization**: Permission checks use `IGrantService` with hierarchical scope inheritance
 
 **Next Document**: [08-UI-UX-ARCHITECTURE.md](08-UI-UX-ARCHITECTURE.md) - Frontend architecture (66 Razor Pages, 5,375 lines CSS, 2,700+ lines vanilla JS)
 

@@ -215,6 +215,8 @@
                             <div class="feedback-image">
                                 <img src="@Model.GetImageUrl(feedback.ImageFileName)"
                                      alt="Feedback image"
+                                     width="200" height="150"
+                                     loading="lazy" decoding="async"
                                      onclick="openImageModal(this.src)" />
                             </div>
                         }
@@ -282,7 +284,7 @@
 
 <!-- Image Modal for fullscreen view -->
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
-    <img id="modalImage" src="" alt="Feedback image" />
+    <img id="modalImage" src="" alt="Feedback image" style="max-width: 90vw; max-height: 90vh; width: auto; height: auto;" />
 </div>
 
 <script>

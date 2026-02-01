@@ -15,6 +15,7 @@ namespace ShiftManager.Pages.Calendar;
 
 /// <summary>
 /// ✅ PHASE 20: Monthly calendar view - Read-only unified view of shifts, chores, and on-duty
+/// ✅ A-018: Scope switcher integration for filtering by mine/company/molecule/area
 /// </summary>
 [Authorize]
 public class MonthModel : PageModel
@@ -26,6 +27,7 @@ public class MonthModel : PageModel
     private readonly IDirectorService _directorService;
     private readonly IUserPreferenceService _userPreferenceService;
     private readonly IChoreService _choreService;
+    private readonly IScopeFilterService _scopeFilterService;
 
     public MonthModel(
         AppDbContext db,
@@ -34,7 +36,8 @@ public class MonthModel : PageModel
         IStringLocalizer<SharedResources> localizer,
         IDirectorService directorService,
         IUserPreferenceService userPreferenceService,
-        IChoreService choreService)
+        IChoreService choreService,
+        IScopeFilterService scopeFilterService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -43,6 +46,7 @@ public class MonthModel : PageModel
         _directorService = directorService;
         _userPreferenceService = userPreferenceService;
         _choreService = choreService;
+        _scopeFilterService = scopeFilterService;
     }
 
     public DateOnly CurrentMonth { get; set; }
@@ -79,7 +83,17 @@ public class MonthModel : PageModel
     public async Task OnGetAsync(int? year, int? month, int? jobTypeId = null, int? shiftGroupingId = null)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var target = year.HasValue && month.HasValue ? new DateOnly(year.Value, month.Value, 1) : new DateOnly(today.Year, today.Month, 1);
+        DateOnly target;
+
+        // Validate and parse date parameters with proper boundary handling
+        if (year.HasValue && month.HasValue)
+        {
+            target = TryCreateValidMonth(year.Value, month.Value) ?? new DateOnly(today.Year, today.Month, 1);
+        }
+        else
+        {
+            target = new DateOnly(today.Year, today.Month, 1);
+        }
         CurrentMonth = target;
 
         Previous = (target.AddMonths(-1), target.AddMonths(-1).ToString("MMM yyyy"));
@@ -94,41 +108,67 @@ public class MonthModel : PageModel
         }
         CurrentUserId = currentUserId;
 
-        // Get user preference for filtering
-        ShowMyItemsOnly = _userPreferenceService.GetShowMyItemsOnly();
+        // ✅ A-018: Get scope from URL/cookie and resolve company IDs for filtering
+        var (scopeType, scopeId) = _scopeFilterService.GetCurrentScope("shifts");
+        
+        // Validate user has access to the requested scope
+        if (!await _scopeFilterService.ValidateScopeAccessAsync(scopeType, scopeId, "shifts"))
+        {
+            _logger.LogWarning("User {UserId} does not have access to scope {ScopeType}", currentUserId, scopeType);
+            scopeType = "company";
+            scopeId = null;
+        }
 
-        var companyId = _companyContext.GetCompanyIdOrThrow();
+        // Resolve scope to company IDs for data filtering
+        var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync(scopeType, scopeId);
+        
+        // Handle edge case: no companies for scope
+        if (!companyIds.Any())
+        {
+            var fallbackCompanyId = _companyContext.CompanyId;
+            if (fallbackCompanyId.HasValue && fallbackCompanyId.Value > 0)
+            {
+                companyIds = new List<int> { fallbackCompanyId.Value };
+            }
+        }
+
+        // Determine if we should filter to current user only
+        ShowMyItemsOnly = _scopeFilterService.ShouldFilterToCurrentUserOnly(scopeType);
 
         // v3.0: Apply hierarchy filters
         FilterJobTypeId = jobTypeId;
         FilterShiftGroupingId = shiftGroupingId;
 
-        // v3.0: Load filter options from current user's area
-        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == companyId);
-        if (company?.MoleculeId != null)
+        // v3.0: Load filter options from current user's area (use first company for context)
+        var primaryCompanyId = companyIds.FirstOrDefault();
+        if (primaryCompanyId > 0)
         {
-            var molecule = await _db.Molecules.IgnoreQueryFilters()
-                .Include(m => m.Area)
-                .FirstOrDefaultAsync(m => m.Id == company.MoleculeId);
-
-            if (molecule?.AreaId != null)
+            var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == primaryCompanyId);
+            if (company?.MoleculeId != null)
             {
-                AvailableJobTypes = await _db.JobTypes.IgnoreQueryFilters()
-                    .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
-                    .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
-                    .Select(jt => ValueTuple.Create(jt.Id, jt.DisplayName))
+                var molecule = await _db.Molecules.IgnoreQueryFilters()
+                    .Include(m => m.Area)
+                    .FirstOrDefaultAsync(m => m.Id == company.MoleculeId);
+
+                if (molecule?.AreaId != null)
+                {
+                    AvailableJobTypes = await _db.JobTypes.IgnoreQueryFilters()
+                        .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
+                        .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
+                        .Select(jt => ValueTuple.Create(jt.Id, jt.DisplayName))
+                        .ToListAsync();
+                }
+
+                AvailableShiftGroupings = await _db.ShiftGroupings.IgnoreQueryFilters()
+                    .Where(sg => sg.MoleculeId == company.MoleculeId && sg.IsActive)
+                    .OrderBy(sg => sg.Name)
+                    .Select(sg => ValueTuple.Create(sg.Id, sg.DisplayName))
                     .ToListAsync();
             }
-
-            AvailableShiftGroupings = await _db.ShiftGroupings.IgnoreQueryFilters()
-                .Where(sg => sg.MoleculeId == company.MoleculeId && sg.IsActive)
-                .OrderBy(sg => sg.Name)
-                .Select(sg => ValueTuple.Create(sg.Id, sg.DisplayName))
-                .ToListAsync();
         }
 
-        _logger.LogInformation("✅ PHASE 20: Month calendar for User {UserId}, CompanyId={CompanyId}, ShowMyItemsOnly={ShowMyItemsOnly}",
-            currentUserId, companyId, ShowMyItemsOnly);
+        _logger.LogInformation("✅ A-018: Month calendar for User {UserId}, Scope={Scope}, CompanyIds=[{CompanyIds}], ShowMyItemsOnly={ShowMyItemsOnly}",
+            currentUserId, scopeType, string.Join(",", companyIds), ShowMyItemsOnly);
 
         var currentUser = await _db.Users.FindAsync(currentUserId);
         if (currentUser == null)
@@ -143,10 +183,10 @@ public class MonthModel : PageModel
         var gridStart = start.AddDays(-delta);
         var dates = Enumerable.Range(0, 42).Select(i => gridStart.AddDays(i)).ToList();
 
-        // ✅ PHASE 20: Load all three types of calendar items
-        var shifts = await LoadShiftsAsync(companyId, dates, currentUserId);
-        var chores = await LoadChoresAsync(companyId, dates, currentUserId);
-        var onDuties = await LoadOnDutiesAsync(companyId, dates, currentUserId);
+        // ✅ A-018: Load calendar items using scope-filtered company IDs
+        var shifts = await LoadShiftsAsync(companyIds, dates, currentUserId);
+        var chores = await LoadChoresAsync(companyIds, dates, currentUserId);
+        var onDuties = await LoadOnDutiesAsync(companyIds, dates, currentUserId);
 
         // Combine all items
         var allItems = new List<CalendarItemViewModel>();
@@ -198,16 +238,19 @@ public class MonthModel : PageModel
     }
 
     /// <summary>
-    /// ✅ PHASE 20: Load shifts and convert to CalendarItemViewModel
+    /// ✅ A-018: Load shifts for multiple company IDs (scope-aware)
     /// </summary>
-    private async Task<List<CalendarItemViewModel>> LoadShiftsAsync(int companyId, List<DateOnly> dates, int currentUserId)
+    private async Task<List<CalendarItemViewModel>> LoadShiftsAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
         var items = new List<CalendarItemViewModel>();
+
+        if (!companyIds.Any())
+            return items;
 
         // Load shift instances
         var instancesQuery = _db.ShiftInstances
             .Include(si => si.ShiftType)
-            .Where(si => si.CompanyId == companyId && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last());
+            .Where(si => companyIds.Contains(si.CompanyId) && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last());
 
         // v3.0: Apply JobType filter
         if (FilterJobTypeId.HasValue)
@@ -292,13 +335,16 @@ public class MonthModel : PageModel
     }
 
     /// <summary>
-    /// ✅ PHASE 20: Load chores and convert to CalendarItemViewModel
+    /// ✅ A-018: Load chores for multiple company IDs (scope-aware)
     /// </summary>
-    private async Task<List<CalendarItemViewModel>> LoadChoresAsync(int companyId, List<DateOnly> dates, int currentUserId)
+    private async Task<List<CalendarItemViewModel>> LoadChoresAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
+        if (!companyIds.Any())
+            return new List<CalendarItemViewModel>();
+
         var chores = await _db.Chores
             .Include(c => c.User)
-            .Where(c => c.CompanyId == companyId
+            .Where(c => companyIds.Contains(c.CompanyId)
                      && c.Date >= dates.First()
                      && c.Date <= dates.Last()
                      && c.CanceledAt == null)
@@ -322,9 +368,9 @@ public class MonthModel : PageModel
     }
 
     /// <summary>
-    /// ✅ PHASE 20: Load on-duty assignments and convert to CalendarItemViewModel
+    /// ✅ A-018: Load on-duties - global scope (not filtered by company)
     /// </summary>
-    private async Task<List<CalendarItemViewModel>> LoadOnDutiesAsync(int companyId, List<DateOnly> dates, int currentUserId)
+    private async Task<List<CalendarItemViewModel>> LoadOnDutiesAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
         // OnDuty is global - must use IgnoreQueryFilters
         var onDuties = await _db.OnDuties.IgnoreQueryFilters()
@@ -451,6 +497,33 @@ public class MonthModel : PageModel
             {
                 CoveragePercent = 100.0;
             }
+        }
+    }
+
+    /// <summary>
+    /// ✅ A-019: Safely creates a valid DateOnly for the first day of a month, handling edge cases like:
+    /// - Year boundaries (Dec -> Jan)
+    /// - Invalid month/year values
+    /// Returns null if the date cannot be created.
+    /// </summary>
+    private static DateOnly? TryCreateValidMonth(int year, int month)
+    {
+        // Validate year range (reasonable bounds for a scheduling app)
+        if (year < 1900 || year > 2100)
+            return null;
+
+        // Validate month range
+        if (month < 1 || month > 12)
+            return null;
+
+        try
+        {
+            return new DateOnly(year, month, 1);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Final safety catch for any edge cases we missed
+            return null;
         }
     }
 }

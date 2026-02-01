@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner;
 /// Data Lifecycle - Archive, Purge, and Re-Import historical data
 /// Owner-only access (NOT Director)
 /// </summary>
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:SystemConfiguration")]
 public class DataLifecycleModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

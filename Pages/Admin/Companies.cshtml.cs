@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:EditCompany")]
 public class CompaniesModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

@@ -8,7 +8,7 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class GriffinDiagnosticModel : PageModel
 {
     private readonly IGriffinConfigService _griffinConfigService;

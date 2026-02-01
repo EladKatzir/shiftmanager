@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AssignRoles")]
 public class DirectorsModel : PageModel
 {
     private readonly AppDbContext _db;

@@ -1,7 +1,9 @@
 # 06-DOMAIN-MODELS.md
 
 **ShiftManager - Genesis Documentation**
-**Document 6 of 19: Domain Models and Entities**
+**Document 6 of 23: Domain Models and Entities**
+**Version:** 2.0 (V3 Update)
+**Last Updated:** 2026-01-29
 
 ---
 
@@ -20,18 +22,23 @@
 11. [API Infrastructure Entities](#api-infrastructure-entities)
 12. [Multi-Tenancy Entities](#multi-tenancy-entities)
 13. [Gamification Entities](#gamification-entities)
-14. [Enums Reference](#enums-reference)
-15. [Entity Relationships](#entity-relationships)
-16. [Business Rules](#business-rules)
+14. [V3 Organizational Hierarchy Entities](#v3-organizational-hierarchy-entities)
+15. [V3 Authorization Entities](#v3-authorization-entities)
+16. [V3 Scheduling Entities](#v3-scheduling-entities)
+17. [Enums Reference](#enums-reference)
+18. [Entity Relationships](#entity-relationships)
+19. [Business Rules](#business-rules)
 
 ---
 
 ## Overview
 
-ShiftManager's domain model consists of **30 entities** (tables) organized into logical categories. Each entity represents a core business concept with specific properties, relationships, and business rules.
+ShiftManager's domain model consists of **54 entities** (tables) organized into logical categories. V3 adds 23 new entities for organizational hierarchy, grant-based authorization, enhanced scheduling, and localization.
 
 **Design Principles:**
-- **Multi-tenancy:** 26 entities implement `IBelongsToCompany` for tenant isolation
+- **Multi-tenancy:** Entities implement `IBelongsToCompany` for tenant isolation
+- **Hierarchical organization:** Project → Area → Molecule → Company/Department (V3)
+- **Grant-based authorization:** Fine-grained permissions with scope inheritance (V3)
 - **Soft deletes:** CanceledAt/IsDeleted pattern for audit trails
 - **Optimistic concurrency:** Concurrency tokens on frequently-updated entities
 - **Type safety:** DateOnly/TimeOnly for dates and times (no DateTime confusion)
@@ -40,12 +47,15 @@ ShiftManager's domain model consists of **30 entities** (tables) organized into 
 **See Also:**
 - [03-DATABASE-SCHEMA.md](03-DATABASE-SCHEMA.md) - Database schema with indexes and constraints
 - [05-MULTI-TENANCY-DEEP-DIVE.md](05-MULTI-TENANCY-DEEP-DIVE.md) - Multi-tenancy architecture
+- [21-V3-ORGANIZATIONAL-HIERARCHY.md](21-V3-ORGANIZATIONAL-HIERARCHY.md) - V3 hierarchy details
+- [22-V3-GRANT-AUTHORIZATION.md](22-V3-GRANT-AUTHORIZATION.md) - V3 grant system
+- [23-V3-SCHEDULING-SYSTEM.md](23-V3-SCHEDULING-SYSTEM.md) - V3 scheduling enhancements
 
 ---
 
 ## Entity Categories
 
-ShiftManager's 30 entities are organized into 10 functional categories:
+ShiftManager's 50+ entities are organized into 13 functional categories:
 
 | Category | Entities | Purpose |
 |----------|----------|---------|
@@ -56,7 +66,7 @@ ShiftManager's 30 entities are organized into 10 functional categories:
 | **Team Collaboration** | TeamCalendar, TeamCalendarMember (2) | Team calendar views |
 | **Notifications** | UserNotification, DailyNotificationPreference (2) | In-app notifications and digests |
 | **Audit & Compliance** | AuditLog, RoleAssignmentAudit, ProfileChangeAudit (3) | Audit trails and compliance |
-| **Configuration** | AppConfig, EmailConfig, EmailApiLog, GriffinConfig, GriffinApiLog (5) | System configuration and diagnostics |
+| **Configuration** | AppConfig, EmailConfig, EmailApiLog, EmailTemplateCustomization, GriffinConfig, GriffinApiLog, CompanyLanguageSettings, CompanyLocalizationOverride (8) | System configuration, email, and localization |
 | **API Infrastructure** | ApiKey, ApiKeyRequest, ApiRequestLog (3) | External API access |
 | **Multi-Tenancy** | DirectorCompany (1) | Cross-company access for Directors |
 | **Gamification** | GameScore, Feedback (2) | User engagement features |
@@ -1405,6 +1415,106 @@ await _logService.CreateLogAsync(log);
 
 ---
 
+### EmailTemplateCustomization
+
+**Purpose:** Company-specific customizations to email templates.
+
+**File:** `Models/EmailTemplateCustomization.cs`
+
+**Schema:**
+```csharp
+public class EmailTemplateCustomization : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public EmailTemplateType TemplateType { get; set; }  // Which template
+    public string CustomMessage { get; set; } = string.Empty;  // Max 2000 chars
+    public bool IsEnabled { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+    public int? UpdatedBy { get; set; }
+
+    public Company Company { get; set; } = null!;
+}
+```
+
+**Business Rules:**
+- Unique index on (CompanyId, TemplateType) - one customization per template type per company
+- If IsEnabled=false, system uses default email template
+- CustomMessage supports placeholders like {EmployeeName}, {Date}
+
+---
+
+### CompanyLanguageSettings
+
+**Purpose:** Company-specific language configuration (default and alternate languages).
+
+**File:** `Models/CompanyLanguageSettings.cs`
+
+**Schema:**
+```csharp
+public class CompanyLanguageSettings : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }  // Unique - one per company
+    public string DefaultCulture { get; set; } = "en-US";  // "en-US" or "he-IL"
+    public string AlternateCulture { get; set; } = "he-IL";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public int UpdatedBy { get; set; }
+
+    public Company? Company { get; set; }
+    public AppUser? CreatedByUser { get; set; }
+    public AppUser? UpdatedByUser { get; set; }
+}
+```
+
+**Business Rules:**
+- Unique index on CompanyId (one-to-one with Company)
+- DefaultCulture shown to new users/users without preference
+- AlternateCulture available via language toggle
+- Both must be valid cultures ("en-US" or "he-IL")
+
+---
+
+### CompanyLocalizationOverride
+
+**Purpose:** Company-specific custom translations for UI strings.
+
+**File:** `Models/CompanyLocalizationOverride.cs`
+
+**Schema:**
+```csharp
+public class CompanyLocalizationOverride : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public string Culture { get; set; } = string.Empty;  // "en-US" or "he-IL"
+    public string ResourceKey { get; set; } = string.Empty;  // e.g., "Button_Save", max 200 chars
+    public string OverrideValue { get; set; } = string.Empty;  // Custom translation, max 2000 chars
+    public bool IsActive { get; set; } = true;  // Soft delete
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public int UpdatedBy { get; set; }
+
+    public Company? Company { get; set; }
+    public AppUser? CreatedByUser { get; set; }
+    public AppUser? UpdatedByUser { get; set; }
+}
+```
+
+**Business Rules:**
+- Unique index on (CompanyId, Culture, ResourceKey) where IsActive=1
+- Allows companies to customize any localization string
+- OverrideValue is HTML-encoded for security
+- Soft delete via IsActive flag
+- Used by CompanyLocalizationService to override default translations
+
+---
+
 ## API Infrastructure Entities
 
 ### ApiKey
@@ -1681,6 +1791,328 @@ public class Feedback : IBelongsToCompany
 - SubmittedBy nullable (anonymous feedback allowed)
 - ImageFileName: Screenshot stored in wwwroot/feedback/{CompanyId}/
 - Composite index on (CompanyId, Status, CreatedAt)
+
+---
+
+## V3 Organizational Hierarchy Entities
+
+> **Full Documentation:** [21-V3-ORGANIZATIONAL-HIERARCHY.md](21-V3-ORGANIZATIONAL-HIERARCHY.md)
+
+V3 introduces a hierarchical organizational structure that replaces the flat Company-centric model.
+
+### Project
+
+**Purpose:** Top-level organizational container.
+
+**File:** `Models/Project.cs`
+
+```csharp
+public class Project
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public List<Area> Areas { get; set; } = new();
+}
+```
+
+---
+
+### Area
+
+**Purpose:** Regional/divisional grouping containing Molecules and defining JobTypes.
+
+**File:** `Models/Area.cs`
+
+```csharp
+public class Area
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public Project Project { get; set; } = null!;
+    public List<Molecule> Molecules { get; set; } = new();
+    public List<JobType> JobTypes { get; set; } = new();
+    public AreaSettings? Settings { get; set; }
+}
+```
+
+---
+
+### Molecule
+
+**Purpose:** Operational unit with type-specific structure (Workforce/Tech/Helper/System).
+
+**File:** `Models/Molecule.cs`
+
+```csharp
+public class Molecule
+{
+    public int Id { get; set; }
+    public int AreaId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public MoleculeType Type { get; set; }  // Workforce/Tech/Helper/System
+    public bool IsActive { get; set; } = true;
+    public List<Company> Companies { get; set; } = new();      // Workforce
+    public List<Department> Departments { get; set; } = new(); // Tech
+    public List<ShiftGrouping> ShiftGroupings { get; set; } = new();
+}
+```
+
+---
+
+### Department
+
+**Purpose:** Technical department within Tech molecules.
+
+**File:** `Models/Department.cs`
+
+```csharp
+public class Department
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public Molecule Molecule { get; set; } = null!;
+    public List<AppUser> Users { get; set; } = new();
+}
+```
+
+---
+
+### JobType
+
+**Purpose:** Job role category at Area level for shift eligibility.
+
+**File:** `Models/JobType.cs`
+
+```csharp
+public class JobType
+{
+    public int Id { get; set; }
+    public int AreaId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Color { get; set; }  // Hex color
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+    public Area Area { get; set; } = null!;
+    public List<AppUser> Users { get; set; } = new();
+}
+```
+
+---
+
+## V3 Authorization Entities
+
+> **Full Documentation:** [22-V3-GRANT-AUTHORIZATION.md](22-V3-GRANT-AUTHORIZATION.md)
+
+V3 replaces the enum-based UserRole with a grant-based authorization system.
+
+### Grant
+
+**Purpose:** Individual permission with hierarchical scope.
+
+**File:** `Models/Grant.cs`
+
+```csharp
+public class Grant
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int GrantTypeId { get; set; }
+
+    // Hierarchical Scope
+    public int? ProjectId { get; set; }
+    public int? AreaId { get; set; }
+    public int? MoleculeId { get; set; }
+    public int? DepartmentId { get; set; }
+    public int? CompanyId { get; set; }
+    public int? JobTypeId { get; set; }
+
+    // Capabilities
+    public bool CanOwn { get; set; }   // Can perform action
+    public bool CanGive { get; set; }  // Can delegate
+
+    // Audit
+    public int? GrantedByUserId { get; set; }
+    public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
+    public bool IsAutoGrant { get; set; }  // From role template
+}
+```
+
+---
+
+### GrantType
+
+**Purpose:** Permission definition. 90+ system types across 12 categories.
+
+**File:** `Models/GrantType.cs`
+
+```csharp
+public class GrantType
+{
+    public int Id { get; set; }
+    public string Key { get; set; } = string.Empty;
+    public string NameKey { get; set; } = string.Empty;
+    public GrantCategory Category { get; set; }
+    public GrantScopeLevel DefaultScope { get; set; }
+    public bool IsSystem { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+```
+
+**Categories:** Shift, Duty, Chore, Vacation, Swap, UserManagement, GrantManagement, Hierarchy, Settings, Analytics, Email, System
+
+---
+
+### RoleTemplate
+
+**Purpose:** Bundle of grants for assignment. 11 system role templates.
+
+**File:** `Models/RoleTemplate.cs`
+
+```csharp
+public class RoleTemplate
+{
+    public int Id { get; set; }
+    public string Key { get; set; } = string.Empty;  // "Owner", "BRDirector", "AlhutLead"
+    public string NameKey { get; set; } = string.Empty;
+    public RoleScopeLevel ScopeLevel { get; set; }
+    public bool IsSystem { get; set; }
+    public int SortOrder { get; set; }
+    public List<RoleTemplateGrant> AutoGrants { get; set; } = new();
+}
+```
+
+**System Roles:** Owner, AreaAdmin, MoleculeAdmin, AlhutDirector, TextDirector, BRDirector, AlhutLead, TextLead, DepartmentLead, Assigner, Employee
+
+---
+
+### UserRoleAssignment
+
+**Purpose:** Assigns RoleTemplate to user with scope.
+
+**File:** `Models/UserRoleAssignment.cs`
+
+```csharp
+public class UserRoleAssignment
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int RoleTemplateId { get; set; }
+
+    // Scope
+    public int? CompanyId { get; set; }
+    public int? DepartmentId { get; set; }
+    public int? MoleculeId { get; set; }
+    public int? AreaId { get; set; }
+    public int? JobTypeId { get; set; }
+
+    // Audit
+    public int AssignedByUserId { get; set; }
+    public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true;
+}
+```
+
+---
+
+## V3 Scheduling Entities
+
+> **Full Documentation:** [23-V3-SCHEDULING-SYSTEM.md](23-V3-SCHEDULING-SYSTEM.md)
+
+### ShiftGrouping
+
+**Purpose:** Groups companies for coordinated shift scheduling.
+
+**File:** `Models/ShiftGrouping.cs`
+
+```csharp
+public class ShiftGrouping
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public List<ShiftGroupingCompany> Companies { get; set; } = new();
+    public List<ShiftGroupingJobType> JobTypes { get; set; } = new();
+}
+```
+
+---
+
+### ShiftProgram
+
+**Purpose:** Weekly template for shift generation.
+
+**File:** `Models/ShiftProgram.cs`
+
+```csharp
+public class ShiftProgram
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int ShiftTypeId { get; set; }
+    public int? JobTypeId { get; set; }
+    public int? ShiftGroupingId { get; set; }
+    public string? TechShiftType { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int DefaultStaffingRequired { get; set; } = 1;
+    public List<ProgramDay> ProgramDays { get; set; } = new();
+}
+```
+
+---
+
+### MasterProgram
+
+**Purpose:** Collection of Programs for complete weekly schedules.
+
+**File:** `Models/MasterProgram.cs`
+
+```csharp
+public class MasterProgram
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+    public List<MasterProgramItem> Items { get; set; } = new();
+}
+```
+
+---
+
+### SetupTask
+
+**Purpose:** Guided onboarding for new organizational units.
+
+**File:** `Models/SetupTask.cs`
+
+```csharp
+public class SetupTask
+{
+    public int Id { get; set; }
+    public SetupTaskType Type { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public int? MoleculeId { get; set; }
+    public int? CompanyId { get; set; }
+    public int AssignedToUserId { get; set; }
+    public SetupTaskStatus Status { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CompletedAt { get; set; }
+}
+```
 
 ---
 
