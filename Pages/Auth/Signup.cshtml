@@ -8,11 +8,11 @@
     Layout = "_Layout";
 }
 <div class="card" style="max-width:480px; margin:auto">
-    <h2>@Localizer["RequestAccess"]</h2>
+    <h2><loc key="RequestAccess" /></h2>
 
     @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
     {
-        <div class="card" style="background:var(--success-bg, #d4edda); color:var(--success-text, #155724); border-color:var(--success, #c3e6cb); padding:1rem; margin-bottom:1rem">
+        <div class="card" style="background:var(--success-soft); color:var(--success); border-color:var(--success); padding:1rem; margin-bottom:1rem">
             <strong>✓ @Localizer["RequestSubmitted"]</strong>
             <p style="margin:.5rem 0 0 0">@Model.PendingRequestMessage</p>
         </div>
@@ -29,6 +29,15 @@
             <label>
                 @Localizer["Email"]<br />
                 <input class="input" asp-for="Email" type="email" required />
+                <div id="emailSuggestion" style="display: none;
+                     margin-top: 0.25rem;
+                     padding: 0.5rem;
+                     background: var(--primary-bg);
+                     border: 1px solid var(--primary);
+                     border-radius: 6px;
+                     cursor: pointer;
+                     font-size: 0.875rem;
+                     color: var(--primary);"></div>
             </label>
 
             <label>
@@ -44,7 +53,7 @@
             <label>
                 @Localizer["Company"]<br />
                 <select class="input" asp-for="CompanyId" required>
-                    <option value="">@Localizer["SelectCompany"]</option>
+                    <option value=""><loc key="SelectCompany" /></option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
                         <option value="@company.Id">@company.Name</option>
@@ -55,18 +64,52 @@
             <label>
                 @Localizer["RequestedRole"]<br />
                 <select class="input" asp-for="RequestedRole" required>
-                    <option value="@((int)UserRole.Employee)">@Localizer["Employee"]</option>
-                    <option value="@((int)UserRole.Manager)">@Localizer["Manager"]</option>
-                    <option value="@((int)UserRole.Director)">@Localizer["Director"]</option>
+                    <option value="@((int)UserRole.Employee)"><loc key="Employee" /></option>
+                    <option value="@((int)UserRole.Manager)"><loc key="Manager" /></option>
+                    <option value="@((int)UserRole.Director)"><loc key="Director" /></option>
+                    <option value="@((int)UserRole.Trainee)"><loc key="Trainee" /></option>
+                    <option value="@((int)UserRole.Assigner)"><loc key="Assigner" /></option>
                 </select>
-                <small style="color:var(--muted, #6c757d)">@Localizer["RequestNeedsApproval"]</small>
+                <small style="color:var(--text-muted)"><loc key="RequestNeedsApproval" /></small>
             </label>
 
-            <button class="btn btn-primary" type="submit">@Localizer["SubmitRequest"]</button>
+            <button class="btn btn-primary" type="submit"><loc key="SubmitRequest" /></button>
         </div>
     </form>
 
     <div class="small" style="margin-top:1rem; text-align:center">
-        @Localizer["AlreadyHaveAccount"] <a href="/Auth/Login">@Localizer["LoginHere"]</a>
+        @Localizer["AlreadyHaveAccount"] <a href="/Auth/Login"><loc key="LoginHere" /></a>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Email domain suggestion
+        (function() {
+            const emailInput = document.querySelector('input[name="Email"]');
+            const suggestionDiv = document.getElementById('emailSuggestion');
+            const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
+
+            if (emailInput && suggestionDiv) {
+                emailInput.addEventListener('input', function(e) {
+                    const value = e.target.value.trim();
+
+                    // Show suggestion when typing without @@
+                    if (value.length > 0 && value.indexOf('@@') === -1) {
+                        suggestionDiv.textContent = suggestionText.replace('{0}', value);
+                        suggestionDiv.style.display = 'block';
+                    } else {
+                        suggestionDiv.style.display = 'none';
+                    }
+                });
+
+                suggestionDiv.addEventListener('click', function() {
+                    const currentValue = emailInput.value.trim();
+                    emailInput.value = currentValue + '@@d360.dom';
+                    suggestionDiv.style.display = 'none';
+                    emailInput.focus();
+                });
+            }
+        })();
+    </script>
+}

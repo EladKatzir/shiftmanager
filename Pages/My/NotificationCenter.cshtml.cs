@@ -31,7 +31,14 @@ public class NotificationCenterModel : PageModel
     {
         try
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = "Authentication error. Please log in again.";
+                return;
+            }
             _logger.LogInformation("Loading notifications for user {UserId}", userId);
 
             var notifications = await _db.UserNotifications
@@ -67,7 +74,13 @@ public class NotificationCenterModel : PageModel
     {
         try
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                return BadRequest("Invalid user claim");
+            }
             var notification = await _db.UserNotifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
 
@@ -94,7 +107,13 @@ public class NotificationCenterModel : PageModel
     {
         try
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                return BadRequest("Invalid user claim");
+            }
             var unreadNotifications = await _db.UserNotifications
                 .Where(n => n.UserId == userId && !n.IsRead)
                 .ToListAsync();
@@ -126,7 +145,13 @@ public class NotificationCenterModel : PageModel
     {
         try
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                return BadRequest("Invalid user claim");
+            }
             var notification = await _db.UserNotifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
 

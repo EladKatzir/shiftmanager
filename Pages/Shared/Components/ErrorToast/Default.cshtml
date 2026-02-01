@@ -1,0 +1,85 @@
+@model ShiftManager.ViewComponents.ErrorToastModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    var levelClass = Model.Level switch
+    {
+        "warning" => "toast--warning",
+        "info" => "toast--info",
+        "success" => "toast--success",
+        _ => "toast--danger"
+    };
+
+    var iconContent = Model.Level switch
+    {
+        "warning" => "warning",
+        "info" => "info",
+        "success" => "check_circle",
+        _ => "error"
+    };
+
+    var toastId = $"error-toast-{Guid.NewGuid():N}";
+}
+
+<div class="toast @levelClass"
+     id="@toastId"
+     role="alert"
+     aria-live="assertive"
+     data-auto-dismiss="@Model.AutoDismissMs">
+    <div class="toast__icon" aria-hidden="true">
+        <icon name="@iconContent" />
+    </div>
+    <div class="toast__content">
+        @if (!string.IsNullOrEmpty(Model.TitleKey) || !string.IsNullOrEmpty(Model.FallbackTitle))
+        {
+            <div class="toast__title">
+                @if (!string.IsNullOrEmpty(Model.TitleKey))
+                {
+                    <loc key="@Model.TitleKey" />
+                }
+                else
+                {
+                    @Model.FallbackTitle
+                }
+            </div>
+        }
+        <div class="toast__message">
+            @if (!string.IsNullOrEmpty(Model.MessageKey))
+            {
+                <loc key="@Model.MessageKey" />
+            }
+            else
+            {
+                @Model.FallbackMessage
+            }
+        </div>
+    </div>
+    @if (Model.ShowCloseButton)
+    {
+        <button type="button"
+                class="toast__close"
+                onclick="document.getElementById('@toastId').remove()"
+                loc-aria-label="Error_Dismiss">
+            <icon name="close" />
+        </button>
+    }
+</div>
+
+@if (Model.AutoDismissMs > 0)
+{
+    <script>
+    (function() {
+        const toast = document.getElementById('@toastId');
+        if (toast) {
+            setTimeout(function() {
+                toast.classList.add('toast--dismissing');
+                setTimeout(function() {
+                    toast.remove();
+                }, 300);
+            }, @Model.AutoDismissMs);
+        }
+    })();
+    </script>
+}

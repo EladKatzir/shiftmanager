@@ -2,21 +2,26 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.My;
 
 [Authorize]
-public class RequestsModel : PageModel
+public class RequestsModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<RequestsModel> _logger;
-    public RequestsModel(AppDbContext db, ILogger<RequestsModel> logger)
+    public RequestsModel(
+        IStringLocalizer<SharedResources> localizer,
+        AppDbContext db,
+        ILogger<RequestsModel> logger) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -31,16 +36,24 @@ public class RequestsModel : PageModel
     public List<MyTimeOffRequest> MyTimeOffRequests { get; set; } = new();
     public List<MySwapRequest> MySwapRequests { get; set; } = new();
     public List<AvailableShift> AvailableShifts { get; set; } = new();
+    public List<ManagerUser> AvailableApprovers { get; set; } = new();
 
+    [TempData]
     public string? Message { get; set; }
-    public string? Error { get; set; }
 
     public async Task OnGetAsync()
     {
         try
         {
             _logger.LogInformation("Starting OnGetAsync for requests page");
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = _localizer["Error_AuthenticationError"];
+                return;
+            }
             _logger.LogInformation("User ID: {UserId}", userId);
 
             // Load user's time off requests
@@ -107,12 +120,33 @@ public class RequestsModel : PageModel
                 .OrderBy(s => s.Date)
                 .ToListAsync();
             _logger.LogInformation("Loaded {Count} available shifts for user {UserId}", AvailableShifts.Count, userId);
+
+            // Load available approvers (managers, directors, owners in the same company)
+            _logger.LogInformation("Loading available approvers for user {UserId}", userId);
+            var currentUser = await _db.Users.FindAsync(userId);
+            if (currentUser != null)
+            {
+                AvailableApprovers = await _db.Users
+                    .Where(u => u.CompanyId == currentUser.CompanyId &&
+                               u.IsActive &&
+                               (u.Role == UserRole.Manager || u.Role == UserRole.Director || u.Role == UserRole.Owner))
+                    .OrderBy(u => u.DisplayName)
+                    .Select(u => new ManagerUser
+                    {
+                        Id = u.Id,
+                        Name = u.DisplayName,
+                        Role = u.Role.ToString()
+                    })
+                    .ToListAsync();
+                _logger.LogInformation("Loaded {Count} available approvers for user {UserId}", AvailableApprovers.Count, userId);
+            }
+
             _logger.LogInformation("OnGetAsync completed successfully for user {UserId}", userId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in OnGetAsync for requests page");
-            Error = "An error occurred while loading your requests. Please try again.";
+            Error = _localizer["Error_LoadingRequestsFailed"];
         }
     }
 
@@ -125,10 +159,16 @@ public class RequestsModel : PageModel
             // Clear validation errors for other forms (since both models are on the same page)
             ModelState.ClearValidationState(nameof(SwapRequest));
 
-            // Custom validation for date range
-            if (TimeOffRequest.EndDate < TimeOffRequest.StartDate)
+            // For After-duty vacation, EndDate should equal StartDate
+            if (TimeOffRequest.Type == TimeOffType.After)
             {
-                ModelState.AddModelError("TimeOffRequest.EndDate", "End date cannot be before start date.");
+                TimeOffRequest.EndDate = TimeOffRequest.StartDate;
+            }
+
+            // Custom validation for date range (only for regular vacation)
+            if (TimeOffRequest.Type == TimeOffType.Vacation && TimeOffRequest.EndDate < TimeOffRequest.StartDate)
+            {
+                ModelState.AddModelError("TimeOffRequest.EndDate", _localizer["Error_EndDateBeforeStartDate"]);
                 _logger.LogWarning("Time off request validation failed: End date {EndDate} is before start date {StartDate}", TimeOffRequest.EndDate, TimeOffRequest.StartDate);
             }
 
@@ -139,15 +179,38 @@ public class RequestsModel : PageModel
                 return Page();
             }
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = _localizer["Error_AuthenticationError"];
+                await OnGetAsync();
+                return Page();
+            }
             _logger.LogInformation("Time off request for user {UserId}, dates {StartDate} to {EndDate}", userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
+
+            // Validate approver if specified
+            if (TimeOffRequest.ApproverId.HasValue && TimeOffRequest.ApproverId.Value > 0)
+            {
+                var approver = await _db.Users.FindAsync(TimeOffRequest.ApproverId.Value);
+                if (approver == null || !approver.IsActive ||
+                    (approver.Role != UserRole.Manager && approver.Role != UserRole.Director && approver.Role != UserRole.Owner))
+                {
+                    Error = _localizer["Error_InvalidApproverSelected"];
+                    await OnGetAsync();
+                    return Page();
+                }
+            }
 
             var request = new TimeOffRequest
             {
                 UserId = userId,
                 StartDate = TimeOffRequest.StartDate,
                 EndDate = TimeOffRequest.EndDate,
+                Type = TimeOffRequest.Type,
                 Reason = TimeOffRequest.Reason,
+                ApproverId = TimeOffRequest.ApproverId > 0 ? TimeOffRequest.ApproverId : null,
                 Status = RequestStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
@@ -155,14 +218,15 @@ public class RequestsModel : PageModel
             _db.TimeOffRequests.Add(request);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}", request.Id, userId);
-            Message = "Time off request submitted successfully!";
+            _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}, Type: {Type}, Approver: {ApproverId}",
+                request.Id, userId, request.Type, request.ApproverId);
+            Message = _localizer["Success_TimeOffRequestSubmitted"];
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting time off request");
-            Error = "An error occurred while submitting your request. Please try again.";
+            Error = _localizer["Error_SubmittingRequestFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -180,7 +244,7 @@ public class RequestsModel : PageModel
             // Manual validation for swap request since attributes were removed to prevent cross-validation
             if (SwapRequest.ShiftId <= 0)
             {
-                ModelState.AddModelError("SwapRequest.ShiftId", "Please select a shift to swap.");
+                ModelState.AddModelError("SwapRequest.ShiftId", _localizer["Error_PleaseSelectShiftToSwap"]);
             }
 
             if (!ModelState.IsValid)
@@ -190,7 +254,15 @@ public class RequestsModel : PageModel
                 return Page();
             }
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = _localizer["Error_AuthenticationError"];
+                await OnGetAsync();
+                return Page();
+            }
             _logger.LogInformation("Swap request for user {UserId}, ShiftId {ShiftId}", userId, SwapRequest.ShiftId);
 
             // Verify the assignment belongs to the user
@@ -200,17 +272,29 @@ public class RequestsModel : PageModel
             if (assignment == null)
             {
                 _logger.LogWarning("Assignment {ShiftId} not found for user {UserId}", SwapRequest.ShiftId, userId);
-                Error = "You are not assigned to this shift.";
+                Error = _localizer["Error_NotAssignedToShift"];
                 await OnGetAsync();
                 return Page();
             }
 
             _logger.LogInformation("Found assignment {AssignmentId} for user {UserId}", assignment.Id, userId);
 
+            // Load current user to get CompanyId
+            var currentUser = await _db.Users.FindAsync(userId);
+            if (currentUser == null)
+            {
+                _logger.LogError("User {UserId} not found", userId);
+                Error = _localizer["Error_UserNotFound"];
+                await OnGetAsync();
+                return Page();
+            }
+
             var swapRequest = new SwapRequest
             {
                 FromAssignmentId = assignment.Id,
-                ToUserId = SwapRequest.ToUserId == 0 ? 1 : SwapRequest.ToUserId, // Default to admin if no specific user
+                FromUserId = userId,
+                CompanyId = currentUser.CompanyId,
+                ToUserId = SwapRequest.ToUserId > 0 ? SwapRequest.ToUserId : null,
                 Status = RequestStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
@@ -219,13 +303,13 @@ public class RequestsModel : PageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Swap request {RequestId} submitted successfully for assignment {AssignmentId}", swapRequest.Id, assignment.Id);
-            Message = "Shift swap request submitted successfully!";
+            Message = _localizer["Success_SwapRequestSubmitted"];
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting swap request");
-            Error = "An error occurred while submitting your swap request. Please try again.";
+            Error = _localizer["Error_SubmittingSwapRequestFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -241,8 +325,13 @@ public class RequestsModel : PageModel
         [DataType(DataType.Date)]
         public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
 
+        [Required]
+        public TimeOffType Type { get; set; } = TimeOffType.Vacation;
+
         [StringLength(500)]
         public string Reason { get; set; } = "";
+
+        public int? ApproverId { get; set; }
     }
 
     public class SwapRequestForm
@@ -279,5 +368,12 @@ public class RequestsModel : PageModel
         public string ShiftTypeName { get; set; } = "";
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+    }
+
+    public class ManagerUser
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Role { get; set; } = "";
     }
 }

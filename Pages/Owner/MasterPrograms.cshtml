@@ -1,0 +1,432 @@
+@page
+@model ShiftManager.Pages.Owner.MasterProgramsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Master Programs";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = "Master Programs", IsActive = true }
+})
+
+@* Owner Company Selector *@
+@await Component.InvokeAsync("OwnerCompanySelector")
+
+<div class="feature-flags-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">📦</span>
+            Master Programs
+        </h1>
+        <p class="page-subtitle">Compose complete weekly schedules from multiple programs</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>✅ Success:</strong> @Model.Success
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger">
+            <strong>❌ Error:</strong> @Model.Error
+        </div>
+    }
+
+    @* Create New MasterProgram Section *@
+    <div class="feature-category">
+        <h2>➕ Create New Master Program</h2>
+        <form method="post" asp-page-handler="CreateMasterProgram">
+            <div class="form-group">
+                <label asp-for="MasterProgramName">Master Program Name</label>
+                <input type="text" asp-for="MasterProgramName" class="form-control"
+                       placeholder="e.g., Standard Week Schedule" required />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="MasterProgramDescription">Description (Optional)</label>
+                <textarea asp-for="MasterProgramDescription" class="form-control"
+                          rows="2" placeholder="Description of this complete weekly schedule"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Select Programs to Include</label>
+                @if (Model.AvailablePrograms.Count == 0)
+                {
+                    <div class="alert alert-warning">
+                        No programs available. <a href="/Owner/Programs">Create programs</a> first.
+                    </div>
+                }
+                else
+                {
+                    <div class="program-selector-grid">
+                        @foreach (var program in Model.AvailablePrograms)
+                        {
+                            <label class="program-selector-card">
+                                <input type="checkbox" name="SelectedProgramIds" value="@program.Id" />
+                                <div class="program-selector-content">
+                                    <h4>@program.Name</h4>
+                                    <div class="program-selector-meta">
+                                        <span class="badge badge-primary">
+                                            @if (!string.IsNullOrWhiteSpace(program.ShiftType.NameKey))
+                                            {
+                                                <loc key="@program.ShiftType.NameKey" />
+                                            }
+                                            else
+                                            {
+                                                @program.ShiftType.Name
+                                            }
+                                        </span>
+                                        <span class="text-muted">
+                                            @program.ProgramDays.Count days/week
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (Model.AvailablePrograms.Count > 0)
+            {
+                <button type="submit" class="btn btn-primary">
+                    ➕ Create Master Program
+                </button>
+            }
+        </form>
+    </div>
+
+    @* Existing MasterPrograms List *@
+    <div class="feature-category">
+        <h2>📦 Existing Master Programs</h2>
+
+        @if (Model.MasterPrograms.Count == 0)
+        {
+            <div class="alert alert-info">
+                No master programs defined yet. Create one above to get started.
+            </div>
+        }
+        else
+        {
+            <div class="master-programs-grid">
+                @foreach (var masterProgram in Model.MasterPrograms)
+                {
+                    <div class="master-program-card">
+                        <div class="master-program-header">
+                            <h3>@masterProgram.Name</h3>
+                            <span class="badge badge-info">
+                                @masterProgram.Items.Count programs
+                            </span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(masterProgram.Description))
+                        {
+                            <p class="master-program-description">@masterProgram.Description</p>
+                        }
+
+                        <div class="master-program-programs">
+                            <h4>Included Programs:</h4>
+                            <ul class="program-list">
+                                @foreach (var item in masterProgram.Items.OrderBy(i => i.SortOrder))
+                                {
+                                    <li>
+                                        <strong>@item.Program.Name</strong>
+                                        <span class="text-muted">
+                                            (@if (!string.IsNullOrWhiteSpace(item.Program.ShiftType.NameKey))
+                                            {
+                                                <loc key="@item.Program.ShiftType.NameKey" />
+                                            }
+                                            else
+                                            {
+                                                @item.Program.ShiftType.Name
+                                            })
+                                        </span>
+                                        <span class="badge badge-secondary">
+                                            @item.Program.ProgramDays.Count days
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+
+                        <div class="master-program-actions">
+                            <button type="button"
+                                    class="btn btn-sm btn-success generate-master-btn"
+                                    data-master-id="@masterProgram.Id"
+                                    data-master-name="@masterProgram.Name"
+                                    data-program-count="@masterProgram.Items.Count">
+                                📅 Generate Full Week
+                            </button>
+
+                            <form method="post" asp-page-handler="DeleteMasterProgram"
+                                  style="display: inline;"
+                                  onsubmit="return confirm('Are you sure you want to delete this master program? The individual programs will NOT be deleted.');">
+                                <input type="hidden" name="masterProgramId" value="@masterProgram.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    🗑️ Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@* Generate From Master Modal *@
+<div id="generateMasterModal" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="GenerateFromMaster">
+                <div class="modal-header">
+                    <h3>Generate Full Weekly Schedule</h3>
+                    <button type="button" class="close-modal" onclick="closeGenerateMasterModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="GenerateMasterProgramId" id="generateMasterProgramId" />
+
+                    <p id="generateMasterProgramName" class="text-muted"></p>
+                    <p id="generateMasterProgramCount" class="text-info"></p>
+
+                    <div class="form-group">
+                        <label asp-for="GenerateStartDate">Start Date</label>
+                        <input type="date" asp-for="GenerateStartDate" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="GenerateEndDate">End Date</label>
+                        <input type="date" asp-for="GenerateEndDate" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" asp-for="OverwriteExisting" />
+                            Overwrite existing shift instances?
+                        </label>
+                        <small class="form-text text-muted">
+                            If checked, will update existing instances. Otherwise, skips dates that already have shifts.
+                        </small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Note:</strong> This will apply ALL programs in this master program
+                        to the date range, creating a complete weekly schedule.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeGenerateMasterModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                    <button type="submit" class="btn btn-primary">📅 Generate Full Week</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Generate Master Modal
+        document.querySelectorAll('.generate-master-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const masterId = this.dataset.masterId;
+                const masterName = this.dataset.masterName;
+                const programCount = this.dataset.programCount;
+
+                document.getElementById('generateMasterProgramId').value = masterId;
+                document.getElementById('generateMasterProgramName').textContent = 'Master Program: ' + masterName;
+                document.getElementById('generateMasterProgramCount').textContent = '✨ Will apply ' + programCount + ' programs to the date range';
+
+                document.getElementById('generateMasterModal').style.display = 'block';
+            });
+        });
+
+        function closeGenerateMasterModal() {
+            document.getElementById('generateMasterModal').style.display = 'none';
+        }
+
+        // Modal backdrop click
+        document.getElementById('generateMasterModal').addEventListener('click', function(e) {
+            if (e.target === this) closeGenerateMasterModal();
+        });
+    </script>
+}
+
+<style>
+    .program-selector-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .program-selector-card {
+        display: flex;
+        gap: 10px;
+        padding: 15px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .program-selector-card:hover {
+        background: var(--surface-hover);
+    }
+
+    .program-selector-card input[type="checkbox"] {
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .program-selector-card input[type="checkbox"]:checked + .program-selector-content {
+        font-weight: 600;
+    }
+
+    .program-selector-content h4 {
+        margin: 0 0 5px 0;
+        font-size: 16px;
+    }
+
+    .program-selector-meta {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 14px;
+    }
+
+    .master-programs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 20px;
+    }
+
+    .master-program-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        transition: box-shadow 0.2s;
+    }
+
+    .master-program-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .master-program-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .master-program-header h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .master-program-description {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin-bottom: 15px;
+        font-style: italic;
+    }
+
+    .master-program-programs {
+        margin-bottom: 15px;
+    }
+
+    .master-program-programs h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--text-secondary);
+    }
+
+    .program-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .program-list li {
+        padding: 8px;
+        margin-bottom: 5px;
+        background: var(--surface-hover);
+        border-radius: 4px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .master-program-actions {
+        display: flex;
+        gap: 10px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border);
+    }
+
+    /* Modal styles (reused) */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+    }
+
+    .modal-dialog {
+        position: relative;
+        max-width: 600px;
+        margin: 100px auto;
+    }
+
+    .modal-content {
+        background: var(--surface);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        text-align: right;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--text-secondary);
+    }
+
+    .close-modal:hover {
+        color: var(--text-primary);
+    }
+</style>

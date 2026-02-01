@@ -1,0 +1,334 @@
+graph TB
+    %% ShiftManager - C4 Component Architecture Diagram
+    %% Shows layered architecture with all major components
+
+    subgraph "External Systems"
+        Browser["Web Browser<br/>(Chrome, Edge, Firefox)<br/>Desktop & Mobile"]
+        ExtAPI["External API Clients<br/>(Python, C#, cURL)<br/>REST API Integration"]
+        ADFS["Griffin ADFS<br/>(Air-Gapped SSO)<br/>Military/Government Auth"]
+        EmailSvc["Email Service Provider<br/>(Optional)<br/>External HTTP API"]
+    end
+
+    subgraph "ShiftManager Application (ASP.NET Core 8.0)"
+
+        subgraph "Presentation Layer - Razor Pages"
+            AuthPages["Auth Pages (5)<br/>Login, Signup, ADFS Callback<br/>ForgotPassword, Logout"]
+            CalendarPages["Calendar Pages (4)<br/>Month, Week, Day, Table<br/>Shift Management UI"]
+            AdminPages["Admin Pages (9)<br/>Users, Companies, ShiftTypes<br/>Config, Analytics, AuditLog"]
+            OwnerPages["Owner Pages (6)<br/>FeatureFlags, EmailConfig<br/>GameConfig, DatabaseConsole<br/>Backup"]
+            DirectorPages["Director Pages (3)<br/>CompanyFilter, ViewAsMode<br/>NotificationHub"]
+            MyPages["My Pages (6)<br/>Profile, Requests, Notifications<br/>Settings, ApiKeys"]
+            PublicPages["Public Pages (3)<br/>Chores, OnDuty, Feedback"]
+            RequestPages["Request Pages (3)<br/>Index, TimeOff/Create<br/>Swaps/Create"]
+            SharedLayout["_Layout.cshtml<br/>(App Shell)<br/>Sidebar, Header, Footer"]
+        end
+
+        subgraph "Static Assets (wwwroot/)"
+            CSS["CSS (3 files, 5,375 lines)<br/>site.css - Design System<br/>rtl.css - Hebrew RTL<br/>shift-swap-game.css"]
+            JS["JavaScript (6 files, 2,700+ lines)<br/>site.js - Core features<br/>shift-swap-game.js - Game<br/>calendar-inline-edit.js<br/>session-check.js<br/>hebrew-audit.js<br/>myteam.js"]
+            Assets["Images, Localization Resources<br/>Avatars, wwwroot/feedback/"]
+        end
+
+        subgraph "API Layer - REST Controllers"
+            UserAPI["UsersApiController<br/>GET, POST, PUT Users"]
+            ShiftAPI["ShiftsApiController<br/>GET Shifts"]
+            TimeOffAPI["TimeOffApiController<br/>GET, POST, APPROVE, DECLINE"]
+            NotifAPI["NotificationsApiController<br/>GET, POST MarkRead"]
+            SwapAPI["SwapRequestsApiController<br/>GET, POST, APPROVE, DECLINE, DELETE"]
+            ChoreAPI["ChoresApiController<br/>CRUD Operations"]
+            OnDutyAPI["OnDutyApiController<br/>CRUD Operations"]
+            FeedbackAPI["FeedbackApiController<br/>CRUD Operations"]
+            AnalyticsAPI["AnalyticsApiController<br/>GET Summary"]
+            AuditAPI["AuditLogsApiController<br/>GET Audit Logs"]
+        end
+
+        subgraph "Middleware Pipeline (Ordered)"
+            ErrorMW["Error Handling Middleware<br/>(Dev vs Prod)"]
+            StaticFilesMW["Static Files Middleware<br/>(MIME types, cache control)"]
+            RoutingMW["Routing Middleware"]
+            ReqLogMW["RequestLoggingMiddleware<br/>(HTTP request logging)"]
+            SecHeadersMW["Security Headers Middleware<br/>(CSP, X-Frame-Options, etc.)"]
+            LocalizationMW["Localization Middleware<br/>(en-US, he-IL)"]
+            GriffinAuthMW["GriffinAuthenticationMiddleware<br/>(ADFS token validation)"]
+            CompanyCtxMW["CompanyContextMiddleware<br/>(Multi-tenant context)"]
+            AuthMW["Authentication Middleware<br/>(Cookie auth)"]
+            AuthorizationMW["Authorization Middleware<br/>(RBAC policies)"]
+            ApiReqLogMW["ApiRequestLoggingMiddleware<br/>(API call logging)"]
+            ApiAuthMW["ApiAuthenticationMiddleware<br/>(X-API-Key validation)"]
+            ApiRateLimitMW["ApiRateLimitingMiddleware<br/>(Rate limiting)"]
+        end
+
+        subgraph "Service Layer - Business Logic (40+ Services)"
+
+            subgraph "Core Business Services"
+                ConflictChecker["ConflictChecker<br/>Shift conflict detection<br/>Rest hours enforcement"]
+                NotificationSvc["NotificationService<br/>Create & send notifications"]
+                AnalyticsSvc["AnalyticsService<br/>Workforce analytics"]
+                ChoreSvc["ChoreService<br/>Chore management"]
+                OnDutySvc["OnDutyService<br/>On-duty assignments"]
+                TimeOffSvc["TimeOffRequestService<br/>Time-off workflows"]
+                SwapSvc["SwapRequestService<br/>Shift swap logic"]
+                ShiftSvc["ShiftAssignmentService<br/>Shift assignment CRUD"]
+            end
+
+            subgraph "Multi-Tenancy Services"
+                TenantResolver["TenantResolver<br/>Resolve current tenant"]
+                CompanyCtx["CompanyContext<br/>Current company storage"]
+                CompanyFilter["CompanyFilterService<br/>Tenant validation"]
+                ViewAsMode["ViewAsModeService<br/>Director view-as"]
+            end
+
+            subgraph "User Management Services"
+                ProfileSvc["ProfileService<br/>User profile CRUD"]
+                AvatarSvc["AvatarService<br/>Avatar upload/processing"]
+                AuditLogSvc["AuditLogService<br/>Audit trail recording"]
+                DirectorSvc["DirectorService<br/>Cross-company director mgmt"]
+                TraineeSvc["TraineeService<br/>Trainee shadowing"]
+            end
+
+            subgraph "Caching Services (Performance)"
+                ShiftTypeCache["ShiftTypeCacheService<br/>5-min TTL cache"]
+                CompanyCache["CompanyCacheService<br/>5-min TTL cache"]
+                AppConfigCache["AppConfigCacheService<br/>5-min TTL cache"]
+            end
+
+            subgraph "Infrastructure Services"
+                MailSvc["MailService<br/>Email sending via HTTP API"]
+                EmailConfigSvc["EmailConfigService<br/>Email config CRUD"]
+                EncryptionSvc["EncryptionService<br/>API key encryption"]
+                GriffinSvc["GriffinService<br/>Griffin ADFS integration"]
+                ApiKeySvc["ApiKeyService<br/>API key management"]
+                RateLimitSvc["RateLimitingService<br/>Rate limit enforcement"]
+                SecurityLog["SecurityLogger<br/>Security event logging"]
+            end
+
+            subgraph "API Layer Services"
+                UserApiSvc["UserApiService<br/>User CRUD for API"]
+                ShiftApiSvc["ShiftApiService<br/>Shift queries for API"]
+                TimeOffApiSvc["TimeOffApiService<br/>Time-off mgmt for API"]
+                NotifApiSvc["NotificationApiService<br/>Notification ops for API"]
+                SwapApiSvc["SwapRequestApiService<br/>Swap ops for API"]
+                ChoreApiSvc["ChoreApiService<br/>Chore CRUD for API"]
+                OnDutyApiSvc["OnDutyApiService<br/>On-duty CRUD for API"]
+                FeedbackApiSvc["FeedbackApiService<br/>Feedback mgmt for API"]
+            end
+
+            subgraph "Background Services"
+                DailyNotifJob["DailyNotificationJob<br/>Hosted Service<br/>Scheduled digest delivery"]
+            end
+
+            subgraph "Team Collaboration"
+                TeamCalSvc["TeamCalendarService<br/>Calendar CRUD"]
+                TeamCalAgg["TeamCalendarEventAggregator<br/>Event aggregation"]
+            end
+
+            subgraph "Utility Services"
+                UserPrefSvc["UserPreferenceService<br/>User preferences"]
+                BusyUserSvc["BusyUserService<br/>User availability"]
+                ValidationSvc["ValidationService<br/>Input validation"]
+                LocalizationSvc["LocalizationService<br/>i18n utilities"]
+            end
+        end
+
+        subgraph "Data Access Layer - EF Core"
+            DbContext["AppDbContext<br/>(592 lines)<br/>28 DbSets<br/>Global Query Filters"]
+            CompanyIdInterceptor["CompanyIdInterceptor<br/>Auto-set CompanyId on SaveChanges"]
+            Migrations["EF Core Migrations (36)<br/>Code-First Schema Evolution"]
+        end
+
+        subgraph "Data Model - Domain Entities (28 Tables)"
+            CoreEntities["Core Domain<br/>Company, AppUser<br/>ShiftType, ShiftInstance<br/>ShiftAssignment"]
+            RequestEntities["Request Workflows<br/>TimeOffRequest<br/>SwapRequest<br/>UserJoinRequest"]
+            TaskEntities["Task Assignments<br/>Chore, OnDuty<br/>OnDutyRoleSubscription<br/>OnDutyTypeConfig"]
+            TeamEntities["Team Collaboration<br/>TeamCalendar<br/>TeamCalendarMember"]
+            NotifEntities["Notifications<br/>UserNotification<br/>DailyNotificationPreference"]
+            AuditEntities["Audit & Compliance<br/>AuditLog<br/>RoleAssignmentAudit<br/>ProfileChangeAudit"]
+            ConfigEntities["Configuration<br/>AppConfig, EmailConfig<br/>EmailApiLog, GriffinConfig"]
+            ApiEntities["API Infrastructure<br/>ApiKey, ApiKeyRequest<br/>ApiRequestLog"]
+            CrossTenantEntities["Cross-Tenant<br/>DirectorCompany"]
+            GameEntities["Gamification<br/>GameScore, Feedback"]
+        end
+    end
+
+    subgraph "Data Storage"
+        SQLite["SQLite Database<br/>(app.db)<br/>Single-file, air-gapped<br/>~50-200 MB"]
+    end
+
+    subgraph "View Components (4)"
+        BreadcrumbVC["BreadcrumbViewComponent<br/>Navigation breadcrumbs"]
+        LangToggleVC["LanguageToggleViewComponent<br/>en-US / he-IL toggle"]
+        ShowMyItemsVC["ShowMyItemsToggleViewComponent<br/>Filter my items"]
+        UnreadCountVC["UnreadNotificationCountViewComponent<br/>Notification badge"]
+    end
+
+    %% ========================================
+    %% RELATIONSHIPS
+    %% ========================================
+
+    %% External → Presentation
+    Browser -->|HTTP Requests| ErrorMW
+    ExtAPI -->|REST API Calls| ErrorMW
+    ADFS -->|ADFS Token| GriffinAuthMW
+    EmailSvc -.->|Email Delivery (outbound)| MailSvc
+
+    %% Middleware Pipeline (Sequential)
+    ErrorMW --> StaticFilesMW
+    StaticFilesMW --> RoutingMW
+    RoutingMW --> ReqLogMW
+    ReqLogMW --> SecHeadersMW
+    SecHeadersMW --> LocalizationMW
+    LocalizationMW --> GriffinAuthMW
+    GriffinAuthMW --> CompanyCtxMW
+    CompanyCtxMW --> AuthMW
+    AuthMW --> AuthorizationMW
+    AuthorizationMW --> ApiReqLogMW
+    ApiReqLogMW --> ApiAuthMW
+    ApiAuthMW --> ApiRateLimitMW
+
+    %% Middleware → Endpoints
+    ApiRateLimitMW -->|Route to Pages| AuthPages
+    ApiRateLimitMW -->|Route to Pages| CalendarPages
+    ApiRateLimitMW -->|Route to Pages| AdminPages
+    ApiRateLimitMW -->|Route to Pages| OwnerPages
+    ApiRateLimitMW -->|Route to Pages| DirectorPages
+    ApiRateLimitMW -->|Route to Pages| MyPages
+    ApiRateLimitMW -->|Route to Pages| PublicPages
+    ApiRateLimitMW -->|Route to Pages| RequestPages
+    ApiRateLimitMW -->|Route to API Controllers| UserAPI
+    ApiRateLimitMW -->|Route to API Controllers| ShiftAPI
+    ApiRateLimitMW -->|Route to API Controllers| TimeOffAPI
+    ApiRateLimitMW -->|Route to API Controllers| NotifAPI
+    ApiRateLimitMW -->|Route to API Controllers| SwapAPI
+    ApiRateLimitMW -->|Route to API Controllers| ChoreAPI
+    ApiRateLimitMW -->|Route to API Controllers| OnDutyAPI
+    ApiRateLimitMW -->|Route to API Controllers| FeedbackAPI
+    ApiRateLimitMW -->|Route to API Controllers| AnalyticsAPI
+    ApiRateLimitMW -->|Route to API Controllers| AuditAPI
+
+    %% Pages → Static Assets
+    SharedLayout --> CSS
+    SharedLayout --> JS
+    SharedLayout --> Assets
+    SharedLayout --> BreadcrumbVC
+    SharedLayout --> LangToggleVC
+    SharedLayout --> ShowMyItemsVC
+    SharedLayout --> UnreadCountVC
+
+    %% Pages/API → Services
+    CalendarPages --> ConflictChecker
+    CalendarPages --> ShiftSvc
+    CalendarPages --> ChoreSvc
+    CalendarPages --> OnDutySvc
+    CalendarPages --> ShiftTypeCache
+    RequestPages --> TimeOffSvc
+    RequestPages --> SwapSvc
+    RequestPages --> NotificationSvc
+    AdminPages --> AnalyticsSvc
+    AdminPages --> AuditLogSvc
+    AdminPages --> ProfileSvc
+    OwnerPages --> EmailConfigSvc
+    OwnerPages --> ApiKeySvc
+    DirectorPages --> CompanyFilter
+    DirectorPages --> DirectorSvc
+    MyPages --> ProfileSvc
+    MyPages --> NotifApiSvc
+    UserAPI --> UserApiSvc
+    ShiftAPI --> ShiftApiSvc
+    TimeOffAPI --> TimeOffApiSvc
+    NotifAPI --> NotifApiSvc
+    SwapAPI --> SwapApiSvc
+    ChoreAPI --> ChoreApiSvc
+    OnDutyAPI --> OnDutyApiSvc
+    FeedbackAPI --> FeedbackApiSvc
+    AnalyticsAPI --> AnalyticsSvc
+    AuditAPI --> AuditLogSvc
+
+    %% Services → Data Access
+    ConflictChecker --> DbContext
+    NotificationSvc --> DbContext
+    AnalyticsSvc --> DbContext
+    ChoreSvc --> DbContext
+    OnDutySvc --> DbContext
+    TimeOffSvc --> DbContext
+    SwapSvc --> DbContext
+    ShiftSvc --> DbContext
+    ProfileSvc --> DbContext
+    AuditLogSvc --> DbContext
+    DirectorSvc --> DbContext
+    TraineeSvc --> DbContext
+    UserApiSvc --> DbContext
+    ShiftApiSvc --> DbContext
+    TimeOffApiSvc --> DbContext
+    NotifApiSvc --> DbContext
+    SwapApiSvc --> DbContext
+    ChoreApiSvc --> DbContext
+    OnDutyApiSvc --> DbContext
+    FeedbackApiSvc --> DbContext
+    TeamCalSvc --> DbContext
+    DailyNotifJob --> DbContext
+    ShiftTypeCache --> DbContext
+    CompanyCache --> DbContext
+    AppConfigCache --> DbContext
+
+    %% Multi-Tenancy Flow
+    CompanyCtxMW --> TenantResolver
+    TenantResolver --> CompanyCtx
+    CompanyCtx --> DbContext
+    CompanyIdInterceptor --> DbContext
+
+    %% Data Access → Storage
+    DbContext --> CompanyIdInterceptor
+    DbContext --> Migrations
+    DbContext --> CoreEntities
+    DbContext --> RequestEntities
+    DbContext --> TaskEntities
+    DbContext --> TeamEntities
+    DbContext --> NotifEntities
+    DbContext --> AuditEntities
+    DbContext --> ConfigEntities
+    DbContext --> ApiEntities
+    DbContext --> CrossTenantEntities
+    DbContext --> GameEntities
+    CoreEntities --> SQLite
+    RequestEntities --> SQLite
+    TaskEntities --> SQLite
+    TeamEntities --> SQLite
+    NotifEntities --> SQLite
+    AuditEntities --> SQLite
+    ConfigEntities --> SQLite
+    ApiEntities --> SQLite
+    CrossTenantEntities --> SQLite
+    GameEntities --> SQLite
+
+    %% Infrastructure Services
+    MailSvc --> EmailConfigSvc
+    EmailConfigSvc --> DbContext
+    EncryptionSvc -.->|Encrypt/Decrypt| EmailConfigSvc
+    EncryptionSvc -.->|Encrypt/Decrypt| ApiKeySvc
+    GriffinSvc -.->|HTTP Call| ADFS
+    ApiKeySvc --> DbContext
+    RateLimitSvc -.->|In-Memory Check| ApiRateLimitMW
+    SecurityLog --> DbContext
+
+    %% Background Job
+    DailyNotifJob --> NotificationSvc
+    DailyNotifJob --> MailSvc
+
+    %% Styling
+    classDef externalStyle fill:#e1f5ff,stroke:#0277bd,stroke-width:2px
+    classDef presentationStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef apiStyle fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef middlewareStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef serviceStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef dataStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef storageStyle fill:#ede7f6,stroke:#4527a0,stroke-width:2px
+    classDef componentStyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+
+    class Browser,ExtAPI,ADFS,EmailSvc externalStyle
+    class AuthPages,CalendarPages,AdminPages,OwnerPages,DirectorPages,MyPages,PublicPages,RequestPages,SharedLayout presentationStyle
+    class UserAPI,ShiftAPI,TimeOffAPI,NotifAPI,SwapAPI,ChoreAPI,OnDutyAPI,FeedbackAPI,AnalyticsAPI,AuditAPI apiStyle
+    class ErrorMW,StaticFilesMW,RoutingMW,ReqLogMW,SecHeadersMW,LocalizationMW,GriffinAuthMW,CompanyCtxMW,AuthMW,AuthorizationMW,ApiReqLogMW,ApiAuthMW,ApiRateLimitMW middlewareStyle
+    class ConflictChecker,NotificationSvc,AnalyticsSvc,ChoreSvc,OnDutySvc,TimeOffSvc,SwapSvc,ShiftSvc,TenantResolver,CompanyCtx,CompanyFilter,ViewAsMode,ProfileSvc,AvatarSvc,AuditLogSvc,DirectorSvc,TraineeSvc,ShiftTypeCache,CompanyCache,AppConfigCache,MailSvc,EmailConfigSvc,EncryptionSvc,GriffinSvc,ApiKeySvc,RateLimitSvc,SecurityLog,UserApiSvc,ShiftApiSvc,TimeOffApiSvc,NotifApiSvc,SwapApiSvc,ChoreApiSvc,OnDutyApiSvc,FeedbackApiSvc,DailyNotifJob,TeamCalSvc,TeamCalAgg,UserPrefSvc,BusyUserSvc,ValidationSvc,LocalizationSvc serviceStyle
+    class DbContext,CompanyIdInterceptor,Migrations,CoreEntities,RequestEntities,TaskEntities,TeamEntities,NotifEntities,AuditEntities,ConfigEntities,ApiEntities,CrossTenantEntities,GameEntities dataStyle
+    class SQLite storageStyle
+    class BreadcrumbVC,LangToggleVC,ShowMyItemsVC,UnreadCountVC componentStyle

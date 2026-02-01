@@ -2,17 +2,649 @@
 @model ShiftManager.Pages.Admin.ConfigModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
-<h2>@Localizer["Config"]</h2>
-<div class="card" style="max-width:580px">
-    <form method="post">
-        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:.5rem; align-items:end">
-            <label>@Localizer["RestHours"]<br /><input class="input" asp-for="RestHours" type="number" min="0" /></label>
-            <label>@Localizer["WeeklyCap"]<br /><input class="input" asp-for="WeeklyCap" type="number" min="0" /></label>
-            <button class="btn btn-primary" type="submit">@Localizer["Save"]</button>
-        </div>
-    </form>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Config"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alerts */
+        .alert-success {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3);
+        }
+
+        .alert-error {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        /* Section */
+        .config-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .form-input:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+        }
+
+        .form-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: background-color 0.15s ease;
+        }
+
+        .form-checkbox:hover {
+            background: var(--surface-soft);
+        }
+
+        .form-checkbox input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--success-text);
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover);
+            border-color: var(--success-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--danger-text);
+            border-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            border-color: var(--danger-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: transparent;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-soft);
+            border-color: var(--border);
+        }
+
+        /* Type Items */
+        .type-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .type-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .type-item:hover {
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .type-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .type-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .type-details {
+            flex: 1;
+        }
+
+        .type-name {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .type-value {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .type-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .type-badge-default {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .type-badge-custom {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+        }
+
+        .info-box summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-primary);
+            user-select: none;
+        }
+
+        .info-box summary:hover {
+            color: var(--primary);
+        }
+
+        .info-box-content {
+            margin-top: 0.75rem;
+            padding-left: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .info-box-content p {
+            margin: 0.5rem 0;
+        }
+
+        /* Subsection Headers */
+        .subsection-header {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .subsection-header:first-child {
+            margin-top: 0;
+        }
+
+        /* Animations */
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @@keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .section-card {
+                padding: 1.25rem;
+            }
+
+            .type-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .type-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title"><loc key="Config" /></h1>
+    <p class="page-subtitle"><loc key="ConfigureSystemSettings" /></p>
 </div>
+
+<!-- Success Message -->
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert-success">
+        <span style="font-size: 1.25rem;">✓</span>
+        <span>@Model.Success</span>
+    </div>
+}
+
+<!-- Error Message -->
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error">
+        <span style="font-size: 1.25rem;">✗</span>
+        <span>@Model.Error</span>
+    </div>
+}
+
+<!-- Company Settings Section -->
+<div class="config-section">
+    <div class="section-card" style="max-width: 800px;">
+        <h3 class="section-header">
+            <span>⚙️</span>
+            <span><loc key="CompanySettings" /></span>
+        </h3>
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="RestHours"><loc key="RestHours" /></label>
+                    <input class="form-input" asp-for="RestHours" type="number" min="0" id="RestHours" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="WeeklyCap"><loc key="WeeklyCap" /></label>
+                    <input class="form-input" asp-for="WeeklyCap" type="number" min="0" id="WeeklyCap" />
+                </div>
+                <button class="btn btn-primary" type="submit">
+                    <span>💾</span>
+                    <span><loc key="Save" /></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Phase 8.6: Removed redundant Email Configuration section - users can access /Owner/EmailConfig directly -->
+
+<!-- OnDuty Types Section -->
+<div class="config-section">
+    <div class="section-card">
+        <h3 class="section-header">
+            <span>📋</span>
+            <span><loc key="OnDutyTypes" /></span>
+        </h3>
+        <p class="section-description">
+            @Localizer["OnDutyTypesDescription"]
+        </p>
+
+        <!-- Default Types (Read-only) -->
+        <h4 class="subsection-header"><loc key="DefaultTypes" /></h4>
+        <div class="type-list">
+            <div class="type-item">
+                <div class="type-info">
+                    <span class="type-icon">🛡️</span>
+                    <div class="type-details">
+                        <div class="type-name"><loc key="OnDutyHakam" /></div>
+                        <div class="type-value"><loc key="ValueLabel" />: 0</div>
+                    </div>
+                </div>
+                <div class="type-actions">
+                    <span class="type-badge type-badge-default"><loc key="Default" /></span>
+                </div>
+            </div>
+            <div class="type-item">
+                <div class="type-info">
+                    <span class="type-icon">⭐</span>
+                    <div class="type-details">
+                        <div class="type-name"><loc key="OnDutyLead" /></div>
+                        <div class="type-value"><loc key="ValueLabel" />: 1</div>
+                    </div>
+                </div>
+                <div class="type-actions">
+                    <span class="type-badge type-badge-default"><loc key="Default" /></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Types -->
+        @if (Model.OnDutyTypes.Any())
+        {
+            <h4 class="subsection-header"><loc key="CustomTypes" /></h4>
+            <div class="type-list">
+                @foreach (var type in Model.OnDutyTypes)
+                {
+                    <div class="type-item">
+                        <div class="type-info">
+                            <span class="type-icon">@type.Icon</span>
+                            <div class="type-details">
+                                <div class="type-name">@type.NameEn / @type.NameHe</div>
+                                <div class="type-value"><loc key="ValueLabel" />: @type.TypeValue</div>
+                            </div>
+                        </div>
+                        <div class="type-actions">
+                            <span class="type-badge type-badge-custom" style="background: @type.Color; color: var(--primary-contrast);">
+                                @Localizer["Custom"]
+                            </span>
+                            <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;"
+                                  onsubmit="return confirm('@Localizer["ConfirmDeleteOnDutyType", type.NameEn]');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="typeId" value="@type.Id" />
+                                <button type="submit" class="btn btn-danger">
+                                    <span>🗑️</span>
+                                    <span><loc key="Delete" /></span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Add New Type Button -->
+        <button class="btn btn-success" style="margin-top: 1.5rem;" onclick="openAddTypeModal()">
+            <span>➕</span>
+            <span><loc key="AddNewOnDutyType" /></span>
+        </button>
+    </div>
+</div>
+
+<!-- Add OnDuty Type Modal -->
+<div id="addTypeModal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-header"><loc key="AddNewOnDutyType" /></h3>
+        <form method="post" asp-page-handler="AddOnDutyType">
+            @Html.AntiForgeryToken()
+
+            @* ✅ PHASE 18: TypeValue is now auto-generated, no manual input needed *@
+
+            <div class="form-group">
+                <label class="form-label" for="onDutyTypeNameEn"><loc key="NameEnglish" /></label>
+                <input type="text" name="NameEn" id="onDutyTypeNameEn" class="form-input" maxlength="100" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="onDutyTypeNameHe"><loc key="NameHebrew" /></label>
+                <input type="text" name="NameHe" id="onDutyTypeNameHe" class="form-input" maxlength="100" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="onDutyTypeIcon"><loc key="Icon" /> (@Localizer["Emoji"])</label>
+                <input type="text" name="Icon" id="onDutyTypeIcon" class="form-input" value="📌" maxlength="10" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="onDutyTypeColor"><loc key="Color" /> (@Localizer["HexColor"])</label>
+                <input type="color" name="Color" id="onDutyTypeColor" class="form-input" value="#6366f1" />
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeAddTypeModal()">@Localizer["Cancel"]</button>
+                <button type="submit" class="btn btn-primary">
+                    <span>➕</span>
+                    <span><loc key="Add" /></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAddTypeModal() {
+    document.getElementById('addTypeModal').classList.add('active');
+}
+
+function closeAddTypeModal() {
+    document.getElementById('addTypeModal').classList.remove('active');
+}
+
+// Close modal on backdrop click
+document.getElementById('addTypeModal').addEventListener('click', (e) => {
+    if (e.target.id === 'addTypeModal') {
+        closeAddTypeModal();
+    }
+});
+</script>

@@ -1,0 +1,34 @@
+@model ShiftManager.ViewComponents.CalendarSkeletonModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* B-007: Calendar Skeleton Loading Component *@
+<div class="calendar-skeleton"
+     data-calendar-skeleton
+     role="status"
+     aria-busy="true"
+     aria-live="polite"
+     aria-label="@Localizer["Loading"]">
+
+    @switch (Model.ViewType.ToLower())
+    {
+        case "month":
+            @await Html.PartialAsync("_MonthSkeleton", Model)
+            break;
+        case "week":
+            @await Html.PartialAsync("_WeekSkeleton", Model)
+            break;
+        case "day":
+            @await Html.PartialAsync("_DaySkeleton", Model)
+            break;
+        case "table":
+            @await Html.PartialAsync("_TableSkeleton", Model)
+            break;
+        default:
+            @await Html.PartialAsync("_MonthSkeleton", Model)
+            break;
+    }
+
+    <span class="visually-hidden">@Localizer["Loading"]</span>
+</div>

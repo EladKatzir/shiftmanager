@@ -1,0 +1,1182 @@
+@page
+@model ShiftManager.Pages.Owner.GriffinConfigModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_GriffinConfig"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_GriffinConfig"], IsActive = true }
+})
+
+<div class="griffin-config-container">
+    @* System-Wide Feature Banner *@
+    <div class="system-wide-banner">
+        <div class="banner-icon">🌐</div>
+        <div class="banner-content">
+            <h3>System-Wide Authentication</h3>
+            <p>Griffin ADFS is configured once at the <strong>owner level</strong> and applies to <strong>all companies</strong> in your system. Users from any company can authenticate using their domain credentials.</p>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">🛡️</span>
+            <loc key="Owner_GriffinConfig" />
+        </h1>
+        <p class="page-subtitle">Configure centralized domain authentication for all companies</p>
+    </div>
+
+    @* Status Widget - At-a-glance health monitoring *@
+    <div class="status-widget">
+        <div class="status-indicator-wrapper">
+            @if (Model.LastTestSuccess == true)
+            {
+                <div class="status-indicator status-success" loc-title="Status_Healthy"></div>
+                <div class="status-info">
+                    <div class="status-title"><loc key="Status_ConnectionHealthy" /></div>
+                    @if (Model.LastTestTimestamp.HasValue)
+                    {
+                        <div class="status-subtitle">
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                        </div>
+                    }
+                </div>
+            }
+            else if (Model.LastTestSuccess == false)
+            {
+                <div class="status-indicator status-error" loc-title="Status_Unhealthy"></div>
+                <div class="status-info">
+                    <div class="status-title"><loc key="Status_ConnectionFailed" /></div>
+                    @if (Model.LastTestTimestamp.HasValue)
+                    {
+                        <div class="status-subtitle">
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.LastTestError))
+                    {
+                        <div class="status-error-message">@Model.LastTestError</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="status-indicator status-unknown" loc-title="Status_NotTested"></div>
+                <div class="status-info">
+                    <div class="status-title"><loc key="Status_NotTestedYet" /></div>
+                    <div class="status-subtitle"><loc key="Status_NotTested_Desc" /></div>
+                </div>
+            }
+        </div>
+        <form method="post" asp-page-handler="TestConnection" style="display: inline;">
+            <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
+                🔌 <loc key="Status_RetestConnection" />
+            </button>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success">
+            <strong>✅ <loc key="Success" />:</strong> @Model.SuccessMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">
+            <strong>❌ <loc key="Error" />:</strong> @Model.ErrorMessage
+        </div>
+    }
+
+    @if (Model.TestConnectionResult != null)
+    {
+        @if (Model.TestConnectionResult.Value)
+        {
+            <div class="alert alert-success">
+                <strong>✅ <loc key="Success" />:</strong> <loc key="Owner_Griffin_ConnectionSuccess" />
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-error">
+                <strong>❌ <loc key="Error" />:</strong> <loc key="Owner_Griffin_ConnectionFailed" />
+            </div>
+        }
+    }
+
+    <form method="post">
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🛡️ Griffin Service Configuration</h2>
+                <div class="form-group-inline">
+                    <label class="toggle-switch">
+                        <input type="checkbox" asp-for="Enabled" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-status-text">@(Model.Enabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <div class="label-with-help">
+                        <label asp-for="BaseUrl">Griffin Server URL</label>
+                        <div class="help-buttons-group">
+                            <button type="button" class="help-button" onclick="toggleFieldHelp('baseurl-help')" loc-title="Help_ShowDetails">
+                                ❓
+                            </button>
+                            <button type="button" class="find-this-button" onclick="openModal('find-baseurl-modal')" loc-title="FindThis_HowToFind">
+                                🔍 Find This
+                            </button>
+                        </div>
+                    </div>
+                    <input asp-for="BaseUrl" class="form-control" placeholder="http://griffin-auth.example.mil" id="baseurl-input" onblur="validateUrl(this)" />
+                    <small class="form-text">Griffin service endpoint for the entire system (e.g., http://griffin-auth.example.mil). Must include http:// or https://</small>
+
+                    <div class="context-panel" id="baseurl-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Griffin_BaseUrl_Purpose" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Griffin_BaseUrl_WhereToFind" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Example" /></strong>
+                            <code class="example-code">http://7108dev-auth.d8200.mil</code>
+                            <code class="example-code">https://griffin.example.mil</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-help">
+                        <label asp-for="TokenConsumerUrl">Application Callback URL</label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('callback-help')" loc-title="Help_ShowDetails">
+                            ❓
+                        </button>
+                    </div>
+                    <input asp-for="TokenConsumerUrl" class="form-control"
+                           placeholder="https://your-app.local/Auth/GriffinCallback" id="callback-input" onblur="validateUrl(this)" />
+                    <small class="form-text">Your application's callback URL where Griffin redirects after authentication. Must include http:// or https:// and end with /Auth/GriffinCallback</small>
+
+                    <div class="context-panel" id="callback-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Griffin_CallbackUrl_Purpose" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Griffin_CallbackUrl_WhereToFind" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Example" /></strong>
+                            <code class="example-code">https://your-domain.local/Auth/GriffinCallback</code>
+                            <code class="example-code">http://localhost:5000/Auth/GriffinCallback</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-help">
+                        <label asp-for="TimeoutSeconds">API Timeout (seconds)</label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('timeout-help')" loc-title="Help_ShowDetails">
+                            ❓
+                        </button>
+                    </div>
+                    <input asp-for="TimeoutSeconds" type="number" min="1" max="60" class="form-control" placeholder="10" />
+
+                    <div class="context-panel" id="timeout-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong>Purpose</strong>
+                            <p>Maximum time to wait for Griffin API responses (validation, claims retrieval)</p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong>Recommendation</strong>
+                            <p>10 seconds is recommended for most environments. Increase to 20-30 seconds if experiencing network latency in air-gapped environments.</p>
+                        </div>
+                    </div>
+                    <small class="form-text">Timeout for Griffin API calls (1-60 seconds). Recommended: 10 seconds</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <div class="card-header">
+                <h2>👥 User Provisioning (System-Wide)</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" asp-for="AutoProvisionUsers" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-status-text">
+                            Auto-Provision New Users — @(Model.AutoProvisionUsers ? Localizer["Enabled"] : Localizer["Disabled"])
+                        </span>
+                    </div>
+                    <small class="form-text">Automatically create user accounts on first Griffin login. If disabled, users must be manually approved by administrators.</small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DefaultProvisionedRole">Default Role for Auto-Provisioned Users</label>
+                    <select asp-for="DefaultProvisionedRole" class="form-control" asp-items="Model.RoleOptions"></select>
+                    <small class="form-text">Default role assigned to auto-provisioned users across all companies</small>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-soft); border-left: 4px solid var(--warning); border-radius: 6px;">
+                    <p style="margin: 0; color: var(--text); line-height: 1.6;">
+                        <strong>⚠️ Security Note:</strong> Auto-provisioning applies to <strong>all companies</strong>. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
+                    🔌 Test Connection
+                </button>
+                <a href="/GriffinDiagnostic" class="btn btn-secondary" target="_blank" style="background: var(--accent); border-color: var(--accent);">
+                    🔍 Run Full Diagnostic
+                </a>
+                <a href="/Owner/Index" class="btn btn-outline"><loc key="Button_Cancel">Cancel</loc></a>
+            </div>
+        </div>
+    </form>
+
+    @* Info Card *@
+    <div class="config-card">
+        <div class="card-header">
+            <h2>ℹ️ About Griffin ADFS</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Griffin ADFS provides centralized domain authentication for air-gapped military/government environments.</strong></p>
+
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">Key Features:</h3>
+            <ul style="margin-bottom: 1.5rem;">
+                <li>Users authenticate with their domain credentials (CAC/username and password)</li>
+                <li>Local username/password authentication always available as fallback</li>
+                <li>No client secret needed - Griffin service handles ADFS communication</li>
+            </ul>
+
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">System-Wide Configuration:</h3>
+            <ul style="margin-bottom: 0;">
+                <li><strong>Configured once</strong> by the system owner</li>
+                <li><strong>Applies to all companies</strong> in the system</li>
+                <li><strong>Single Griffin server</strong> serves the entire deployment</li>
+                <li><strong>Consistent authentication</strong> across all companies and users</li>
+            </ul>
+
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--info-soft); border-left: 4px solid var(--info); border-radius: 6px;">
+                <p style="margin: 0; color: var(--text); line-height: 1.6;">
+                    <strong>💡 Note:</strong> Individual companies cannot override or disable ADFS authentication. If enabled here, all users across all companies will see the "Login with Griffin ADFS" option on the login page.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @* Diagnostic Console - Show when test diagnostics are available *@
+    @if (!string.IsNullOrEmpty(Model.TestDiagnostics))
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🔍 <loc key="Owner_Griffin_DiagnosticsTitle" /></h2>
+                <button type="button" onclick="exportDiagnostics()" class="btn btn-sm btn-secondary">
+                    📥 <loc key="Owner_Griffin_ExportDiagnostics" />
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="diagnostics-output">
+                    <pre id="diagnostics-content">@Model.TestDiagnostics</pre>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Recent Connection Tests *@
+    @if (Model.RecentLogs.Any())
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>📊 <loc key="Owner_Griffin_RecentTests" /></h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th><loc key="Owner_Griffin_Table_Timestamp" /></th>
+                                <th><loc key="Owner_Griffin_Table_Status" /></th>
+                                <th><loc key="Owner_Griffin_Table_HttpCode" /></th>
+                                <th><loc key="Owner_Griffin_Table_Duration" /></th>
+                                <th><loc key="Owner_Griffin_Table_RedirectUrl" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.RecentLogs)
+                            {
+                                <tr class="@(log.Success ? "log-success" : "log-failure")">
+                                    <td>@log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>
+                                        @if (log.Success)
+                                        {
+                                            <span class="badge badge-success">✓ <loc key="Owner_Griffin_Status_Success" /></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-error">✗ <loc key="Owner_Griffin_Status_Failed" /></span>
+                                        }
+                                    </td>
+                                    <td>@(log.ResponseStatusCode?.ToString() ?? "N/A")</td>
+                                    <td>@log.DurationMs ms</td>
+                                    <td class="truncate">@(log.RedirectUrl ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Recent Failures *@
+    @if (Model.RecentFailures.Any())
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>⚠️ <loc key="Owner_Griffin_RecentFailures" /></h2>
+            </div>
+            <div class="card-body">
+                @foreach (var failure in Model.RecentFailures)
+                {
+                    <div class="failure-item">
+                        <div class="failure-header">
+                            <strong>@failure.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</strong>
+                            @if (failure.ResponseStatusCode.HasValue)
+                            {
+                                <span class="badge badge-error">HTTP @failure.ResponseStatusCode</span>
+                            }
+                        </div>
+                        <div class="failure-message">
+                            @failure.ErrorMessage
+                        </div>
+                        @if (!string.IsNullOrEmpty(failure.ValidationErrors))
+                        {
+                            <div class="failure-validation">
+                                <strong><loc key="Owner_Griffin_ValidationErrors" /></strong> @failure.ValidationErrors
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@* Find This Modal - Griffin BaseUrl *@
+<div id="find-baseurl-modal" class="modal-overlay" onclick="closeModal('find-baseurl-modal')" style="display: none;">
+    <div class="modal-container" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>🔍 <loc key="FindThis_Griffin_BaseUrl_Title" /></h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('find-baseurl-modal')" loc-title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4><loc key="FindThis_Griffin_BaseUrl_Step1_Title" /></h4>
+                    <p><loc key="FindThis_Griffin_BaseUrl_Step1_Desc" /></p>
+                </div>
+            </div>
+            <div class="modal-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4><loc key="FindThis_Griffin_BaseUrl_Step2_Title" /></h4>
+                    <p><loc key="FindThis_Griffin_BaseUrl_Step2_Desc" /></p>
+                </div>
+            </div>
+            <div class="modal-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4><loc key="FindThis_Griffin_BaseUrl_Step3_Title" /></h4>
+                    <p><loc key="FindThis_Griffin_BaseUrl_Step3_Desc" /></p>
+                    <code class="example-code">http://your-server.domain.mil</code>
+                </div>
+            </div>
+            <div class="modal-note">
+                <strong>💡 <loc key="Note" />:</strong> <loc key="FindThis_Griffin_BaseUrl_Note" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="closeModal('find-baseurl-modal')">
+                <loc key="GotIt" />
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* System-Wide Banner */
+.system-wide-banner {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: var(--shadow-primary);
+    color: var(--primary-contrast);
+}
+
+.banner-icon {
+    font-size: 3rem;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.banner-content {
+    flex: 1;
+}
+
+.banner-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-contrast);
+}
+
+.banner-content p {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.banner-content strong {
+    font-weight: 700;
+    color: var(--primary-contrast);
+}
+
+/* Status Widget */
+.status-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator.status-success {
+    background: var(--success);
+    box-shadow: 0 0 0 4px var(--success-soft);
+}
+
+.status-indicator.status-error {
+    background: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-soft);
+}
+
+.status-indicator.status-unknown {
+    background: var(--text-muted);
+    box-shadow: 0 0 0 4px var(--surface-soft);
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.status-subtitle {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.status-error-message {
+    font-size: 0.875rem;
+    color: var(--danger);
+    margin-top: 0.25rem;
+}
+
+.status-retest-btn {
+    white-space: nowrap;
+}
+
+/* Context Panel & Help Button */
+.label-with-help {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.help-button {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.6;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+}
+
+.help-button:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.help-button:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.context-panel {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    animation: slideDown 0.2s ease-out;
+}
+
+@@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.context-panel-section {
+    margin-bottom: 1rem;
+}
+
+.context-panel-section:last-child {
+    margin-bottom: 0;
+}
+
+.context-panel-section strong {
+    display: block;
+    color: var(--text);
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+}
+
+.context-panel-section p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.example-code {
+    display: block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem;
+    color: var(--text);
+    margin-top: 0.5rem;
+}
+
+.example-code + .example-code {
+    margin-top: 0.375rem;
+}
+
+.griffin-config-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.config-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-soft);
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--background);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+/* Toggle Switch (from FeatureFlags) */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    transition: .4s;
+    border-radius: 30px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--surface);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+.toggle-status-text {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text);
+}
+
+.form-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.alert-error {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-outline:hover {
+    background: var(--background);
+}
+
+/* Diagnostic Console */
+.diagnostics-output {
+    background: var(--background);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.diagnostics-output pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--text);
+}
+
+/* Logs Table */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.logs-table th,
+.logs-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.logs-table th {
+    background: var(--background);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.log-success {
+    background: var(--success-soft);
+}
+
+.log-failure {
+    background: var(--danger-soft);
+}
+
+.truncate {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.badge-error {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+/* Failure Items */
+.failure-item {
+    padding: 1rem;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--danger);
+}
+
+.failure-item:last-child {
+    margin-bottom: 0;
+}
+
+.failure-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.failure-message {
+    color: var(--danger);
+    margin-bottom: 0.5rem;
+}
+
+.failure-validation {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+/* Button sizes */
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   Find This Modal (Phase 4)
+   ======================================== */
+
+/* Help buttons group */
+.help-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.find-this-button {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.find-this-button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+/* Modal container */
+.modal-container {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Modal header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.modal-close-btn:hover {
+    color: var(--text);
+}
+
+/* Modal body */
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Modal step */
+.modal-step {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.step-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.step-content p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.step-content .example-code {
+    display: block;
+    margin-top: 0.75rem;
+}
+
+/* Modal note */
+.modal-note {
+    background: var(--warning-soft);
+    border-left: 4px solid var(--warning);
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+</style>
+
+<script>
+// Export diagnostics to text file
+function exportDiagnostics() {
+    const content = document.getElementById('diagnostics-content')?.innerText || '';
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `griffin-diagnostics-${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Toggle context panel visibility
+function toggleFieldHelp(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? 'block' : 'none';
+    }
+}
+
+// Real-time URL validation
+function validateUrl(input) {
+    const value = input.value.trim();
+
+    // Remove previous validation classes
+    input.classList.remove('valid', 'invalid', 'warning');
+
+    if (!value) {
+        // Empty is neutral (no validation)
+        return;
+    }
+
+    try {
+        const url = new URL(value);
+        // Valid URL format
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+            input.classList.add('valid');
+        } else {
+            input.classList.add('warning');
+        }
+    } catch {
+        // Invalid URL format
+        input.classList.add('invalid');
+    }
+}
+
+// Real-time email validation
+function validateEmail(input) {
+    const value = input.value.trim();
+
+    // Remove previous validation classes
+    input.classList.remove('valid', 'invalid');
+
+    if (!value) {
+        // Empty is neutral (no validation)
+        return;
+    }
+
+    // Basic email regex pattern
+    const emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+
+    if (emailPattern.test(value)) {
+        input.classList.add('valid');
+    } else {
+        input.classList.add('invalid');
+    }
+}
+
+// Open modal
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Close modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+        openModals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+        document.body.style.overflow = '';
+    }
+});
+</script>

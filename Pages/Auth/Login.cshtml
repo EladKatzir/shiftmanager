@@ -6,8 +6,71 @@
 @{
     Layout = "_Layout";
 }
+
+@* ✅ PHASE 18: Show JavaScript alert if user was redirected due to auth requirement *@
+@if (Model.ShowAuthPrompt)
+{
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            alert(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseSignInToContinue"].Value)));
+        });
+    </script>
+}
+
+@* Griffin ADFS login option (always visible) *@
+<div style="max-width:420px; margin:auto">
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <h5 class="card-title"><loc key="LoginWithADFS" /></h5>
+            <p class="text-muted"><loc key="LoginWithADFS_Description" /></p>
+            <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shield-alt"></i> @Localizer["LoginWithADFS"]
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center mb-3">
+        <span class="text-muted">— OR —</span>
+    </div>
+
+    @if (Model.ShowGriffinUnavailableMessage)
+    {
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            @Localizer["LoginWithADFS_Unavailable"]
+        </div>
+    }
+</div>
+
 <div class="card" style="max-width:420px; margin:auto">
-    <h2>@Localizer["Login"]</h2>
+    <h2><loc key="Login" /></h2>
+
+    @* Account lockout countdown timer (when account is locked) *@
+    @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
+    {
+        <div class="alert alert-danger" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🔒</span>
+                <strong>@Localizer["Login_AccountLocked_Title"]</strong>
+            </div>
+            <div id="lockoutMessage">
+                @Localizer["Login_AccountLocked_Message", Model.LockoutMinutesRemaining.Value]
+            </div>
+        </div>
+    }
+    @* Warning after 3+ failed attempts (but not locked yet) *@
+    else if (Model.ShowLockoutWarning && !Model.IsAccountLocked)
+    {
+        <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: var(--warning-soft); border: 1px solid var(--warning); color: var(--warning);">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">⚠️</span>
+                <div>@Localizer["Login_FailedAttempts_Warning"]</div>
+            </div>
+        </div>
+    }
+
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="small" style="color:var(--danger)">@Model.Error</div>
@@ -15,15 +78,101 @@
    <form method="post" asp-page="./Login">
     @Html.AntiForgeryToken()
     <div style="display:grid; gap:.75rem; margin-top:.75rem">
-        <label>@Localizer["Email"]<br /><input class="input" asp-for="Email" /></label>
-        <label>@Localizer["Password"]<br /><input class="input" asp-for="Password" type="password" /></label>
-        <button class="btn btn-primary" type="submit">@Localizer["Login"]</button>
+        <label><loc key="Email" /><br /><input class="input" asp-for="Email" />
+        <div id="emailSuggestion" style="display: none;
+             margin-top: 0.25rem;
+             padding: 0.5rem;
+             background: var(--primary-bg);
+             border: 1px solid var(--primary);
+             border-radius: 6px;
+             cursor: pointer;
+             font-size: 0.875rem;
+             color: var(--primary);"></div>
+        </label>
+        <label><loc key="Password" /><br /><input class="input" asp-for="Password" type="password" /></label>
+
+        <div style="text-align: right; margin-top: -0.5rem;">
+            <a href="/Auth/ForgotPassword" style="font-size: 0.875rem; color: var(--primary);">
+                @Localizer["ForgotPassword"]?
+            </a>
+        </div>
+
+        <button class="btn btn-primary" type="submit"><loc key="Login" /></button>
+
+        @* ✅ SUB-PHASE 18.14 REVISED: Request access button below login *@
+        <a href="/Auth/Signup" class="btn btn-secondary" style="margin-top: 0.5rem; text-align: center; width: 100%; display: block;">
+            @Localizer["RequestAccess"]
+        </a>
     </div>
 </form>
-
-    <div class="small" style="margin-top:.5rem">Demo: <b>admin@local</b> / <b>admin123</b></div>
-
-    <div class="small" style="margin-top:1rem; text-align:center">
-        Don't have an account? <a href="/Auth/Signup">Request access here</a>
-    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Email domain suggestion
+        (function() {
+            const emailInput = document.querySelector('input[name="Email"]');
+            const suggestionDiv = document.getElementById('emailSuggestion');
+            const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
+
+            if (emailInput && suggestionDiv) {
+                emailInput.addEventListener('input', function(e) {
+                    const value = e.target.value.trim();
+
+                    // Show suggestion when typing without @@
+                    if (value.length > 0 && value.indexOf('@@') === -1) {
+                        suggestionDiv.textContent = suggestionText.replace('{0}', value);
+                        suggestionDiv.style.display = 'block';
+                    } else {
+                        suggestionDiv.style.display = 'none';
+                    }
+                });
+
+                suggestionDiv.addEventListener('click', function() {
+                    const currentValue = emailInput.value.trim();
+                    emailInput.value = currentValue + '@@d360.dom';
+                    suggestionDiv.style.display = 'none';
+                    emailInput.focus();
+                });
+            }
+        })();
+
+        // Lockout countdown timer
+        @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
+        {
+            @:
+            @:(function() {
+            @:    const lockoutMessageEl = document.getElementById('lockoutMessage');
+            @:    if (!lockoutMessageEl) return;
+            @:
+            @:    let minutesRemaining = @Model.LockoutMinutesRemaining.Value;
+            @:    const initialText = lockoutMessageEl.textContent;
+            @:    const isHebrew = document.documentElement.lang.startsWith('he');
+            @:
+            @:    const updateCountdown = () => {
+            @:        if (minutesRemaining <= 0) {
+            @:            const retryMessage = isHebrew ? 'ניתן לנסות להתחבר שוב כעת.' : 'You may try logging in again now.';
+            @:            lockoutMessageEl.textContent = retryMessage;
+            @:            lockoutMessageEl.parentElement.style.background = 'var(--success-soft)';
+            @:            lockoutMessageEl.parentElement.style.borderColor = 'var(--success)';
+            @:            lockoutMessageEl.parentElement.style.color = 'var(--success)';
+            @:            return;
+            @:        }
+            @:        const messageTemplate = isHebrew ? 'החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.' : 'Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.';
+            @:        lockoutMessageEl.textContent = messageTemplate.replace('{0}', Math.ceil(minutesRemaining));
+            @:    };
+            @:
+            @:    const timer = setInterval(() => {
+            @:        minutesRemaining = Math.max(0, minutesRemaining - 0.17);
+            @:        if (minutesRemaining < 0.5) {
+            @:            minutesRemaining = 0;
+            @:            clearInterval(timer);
+            @:        }
+            @:        updateCountdown();
+            @:    }, 10000);
+            @:
+            @:    updateCountdown();
+            @:})();
+        }
+    </script>
+}

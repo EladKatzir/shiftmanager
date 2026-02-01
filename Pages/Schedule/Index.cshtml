@@ -1,0 +1,401 @@
+@page
+@model ShiftManager.Pages.Schedule.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Schedule"];
+}
+
+<div class="schedule-workspace">
+    @* Calendar Rail (Left Sidebar) *@
+    <aside class="schedule-rail">
+        <div class="schedule-rail-header">
+            <h3 class="text-title" style="margin: 0;"><loc key="Calendars" /></h3>
+        </div>
+
+        <div class="schedule-rail-content">
+            @* Calendar Toggles *@
+            <div class="calendar-toggle-list">
+                <label class="calendar-toggle-item">
+                    <input type="checkbox" id="toggle-company" checked>
+                    <span class="calendar-toggle-icon" style="background: var(--primary);"></span>
+                    <span class="calendar-toggle-label"><loc key="CompanyShifts" /></span>
+                </label>
+
+                <label class="calendar-toggle-item">
+                    <input type="checkbox" id="toggle-myshifts" checked>
+                    <span class="calendar-toggle-icon" style="background: var(--success);"></span>
+                    <span class="calendar-toggle-label"><loc key="MyShifts" /></span>
+                </label>
+
+                <label class="calendar-toggle-item">
+                    <input type="checkbox" id="toggle-chores">
+                    <span class="calendar-toggle-icon" style="background: var(--warning);"></span>
+                    <span class="calendar-toggle-label"><loc key="ChoresCalendar" /></span>
+                </label>
+
+                <label class="calendar-toggle-item">
+                    <input type="checkbox" id="toggle-onduty">
+                    <span class="calendar-toggle-icon" style="background: var(--accent);"></span>
+                    <span class="calendar-toggle-label"><loc key="OnDutyCalendar" /></span>
+                </label>
+            </div>
+        </div>
+    </aside>
+
+    @* Main Content Area *@
+    <div class="schedule-main">
+        @* View Controls Header *@
+        <div class="schedule-controls">
+            <div class="schedule-controls-left">
+                @* View Mode Toggle (Calendar/Table) *@
+                <div class="view-mode-toggle">
+                    <button class="view-mode-btn active" data-mode="calendar" id="btn-calendar">
+                        <span>📅</span>
+                        <span><loc key="Calendar" /></span>
+                    </button>
+                    <button class="view-mode-btn" data-mode="table" id="btn-table">
+                        <span>📊</span>
+                        <span><loc key="Table" /></span>
+                    </button>
+                </div>
+
+                @* Time Range Toggle (Month/Week/Day) *@
+                <div class="time-range-toggle">
+                    <button class="time-range-btn @(Model.DefaultView == "month" ? "active" : "")" data-view="month" id="btn-month">
+                        @Localizer["Month"]
+                    </button>
+                    <button class="time-range-btn @(Model.DefaultView == "week" ? "active" : "")" data-view="week" id="btn-week">
+                        @Localizer["Week"]
+                    </button>
+                    <button class="time-range-btn @(Model.DefaultView == "day" ? "active" : "")" data-view="day" id="btn-day">
+                        @Localizer["Day"]
+                    </button>
+                </div>
+            </div>
+
+            <div class="schedule-controls-right">
+                @* Action Buttons *@
+                @if (!Model.IsAdmin)
+                {
+                    <a href="/My/Requests" class="btn btn-primary">
+                        <span>📝</span>
+                        <span><loc key="RequestTimeOff" /></span>
+                    </a>
+                }
+                else
+                {
+                    <button class="btn btn-primary" id="btn-assign-shifts">
+                        <span>➕</span>
+                        <span><loc key="AssignShifts" /></span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* Calendar Content *@
+        <div class="schedule-content">
+            <iframe id="calendar-frame" src="/Calendar/@(Model.DefaultView.Substring(0, 1).ToUpper() + Model.DefaultView.Substring(1))" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Schedule Workspace Layout */
+        .schedule-workspace {
+            display: flex;
+            gap: 1.5rem;
+            height: calc(100vh - 200px);
+            min-height: 600px;
+        }
+
+        /* Calendar Rail (Left Sidebar) */
+        .schedule-rail {
+            width: 260px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .schedule-rail-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-soft);
+        }
+
+        .schedule-rail-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        /* Calendar Toggle List */
+        .calendar-toggle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .calendar-toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .calendar-toggle-item:hover {
+            background: var(--surface-elevated);
+        }
+
+        .calendar-toggle-item input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .calendar-toggle-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .calendar-toggle-label {
+            flex: 1;
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        /* Main Content Area */
+        .schedule-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        /* View Controls */
+        .schedule-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+
+        .schedule-controls-left {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .schedule-controls-right {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* View Mode Toggle (Calendar/Table) */
+        .view-mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface-soft);
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+
+        .view-mode-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .view-mode-btn:hover {
+            background: var(--surface-elevated);
+            color: var(--text-primary);
+        }
+
+        .view-mode-btn.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Time Range Toggle (Month/Week/Day) */
+        .time-range-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface-soft);
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+
+        .time-range-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .time-range-btn:hover {
+            background: var(--surface-elevated);
+            color: var(--text-primary);
+        }
+
+        .time-range-btn.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Calendar Content */
+        .schedule-content {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Action Button Styling */
+        .btn-primary {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 1024px) {
+            .schedule-workspace {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .schedule-rail {
+                width: 100%;
+                max-height: 300px;
+            }
+
+            .schedule-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .schedule-controls-left,
+            .schedule-controls-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .view-mode-btn span:last-child,
+            .btn-primary span:last-child {
+                display: none;
+            }
+
+            .time-range-toggle {
+                width: 100%;
+            }
+
+            .time-range-btn {
+                flex: 1;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarFrame = document.getElementById('calendar-frame');
+            const viewModeBtns = document.querySelectorAll('.view-mode-btn');
+            const timeRangeBtns = document.querySelectorAll('.time-range-btn');
+            const assignShiftsBtn = document.getElementById('btn-assign-shifts');
+
+            let currentView = '@Model.DefaultView';
+            let currentMode = '@Model.DefaultMode';
+
+            // View mode toggle (Calendar/Table)
+            viewModeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewModeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentMode = this.dataset.mode;
+                    updateCalendarFrame();
+                });
+            });
+
+            // Time range toggle (Month/Week/Day)
+            timeRangeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    timeRangeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentView = this.dataset.view;
+                    updateCalendarFrame();
+                });
+            });
+
+            // Assign shifts button (for managers)
+            if (assignShiftsBtn) {
+                assignShiftsBtn.addEventListener('click', function() {
+                    // Navigate to calendar month view for shift assignment
+                    window.location.href = '/Calendar/Month';
+                });
+            }
+
+            // Update iframe source based on current view/mode
+            function updateCalendarFrame() {
+                const viewPath = currentView.charAt(0).toUpperCase() + currentView.slice(1);
+                calendarFrame.src = `/Calendar/${viewPath}`;
+            }
+
+            // Calendar toggles (for future implementation)
+            // For now, these are just visual toggles
+            // In a future phase, we can implement filtering logic
+        });
+    </script>
+}

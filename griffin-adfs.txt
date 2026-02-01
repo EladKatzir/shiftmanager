@@ -1,0 +1,980 @@
+Griffin – Developer Overview (for the ASP.NET C# Team)
+0. Big Picture
+0.1 What Griffin is
+
+From the material you captured, “Griffin” is:
+
+A central authentication service called griffin-auth
+
+Deployed in your organization’s Kubernetes/OpenShift cluster (Helm chart)
+
+Fronted by ADFS (Active Directory Federation Services)
+
+Backed by Redis for state / caching
+
+Exposed to applications via simple HTTP endpoints such as:
+
+/authentication?tokenConsumerURL=...
+
+/authorization/validate?token=...
+
+/authorization/getClaims?token=...
+
+Developers do not run Griffin locally.
+In your setup:
+
+Griffin exists only in the air-gapped environment.
+
+Your ASP.NET application is built with dotnet publish on a non-air-gapped machine.
+
+You copy the published output to the air-gapped machine (e.g. USB).
+
+In that environment, your app will talk over the internal network to the already-deployed Griffin service.
+
+0.2 What we want from Griffin
+
+We want to:
+
+Accept users authenticated via Griffin / ADFS, using the token and claims Griffin provides.
+
+Keep our existing sign-in / sign-up working as a fallback.
+
+Implement the same conceptual pattern as the official examples:
+
+Node/NestJS example backend (GitLab griffin-example-project/Backend)
+
+React frontend example using @hasamba/griffin-auth
+
+Python/FastAPI example with ADFSClient, ADFSAuthMiddleware, LoadUserInfoMiddleware
+
+We are not changing Griffin itself (no Helm changes, no Helm deployment by us).
+We are only consumers of the Griffin/ADFS APIs.
+
+1. Griffin deployment (from the Helm chart)
+
+The helm-cret.zip you downloaded contains a Helm chart named griffin-auth.
+
+1.1 Chart metadata (Chart.yaml)
+
+From the screenshot:
+
+apiVersion: v2 – Helm chart API version.
+
+name: griffin-auth – chart (and conceptual service) name.
+
+description: A Helm chart for Kubernetes – standard description.
+
+type: application – this is a deployable application, not a reusable library chart.
+
+version: 0.1.0 – chart version (Helm packaging version).
+
+appVersion: "1.16.0" – application version default (Helm boilerplate; actual image tag is overridden in values.yaml).
+
+Why this matters to us: mostly context. It tells the dev team:
+
+Griffin is deployed via Helm.
+
+When ops speak about “the griffin-auth chart”, they mean this component.
+
+1.2 Configuration (values.yaml)
+
+The values.yaml file describes the runtime configuration of Griffin as deployed in Kubernetes.
+
+Key fields from the screenshots:
+
+1.2.1 Top-level
+replicaCount: 1
+
+
+Griffin runs as a single replica (one pod).
+(This is operational detail; our main concern is that the service is reachable.)
+
+1.2.2 image – main griffin-auth container
+image:
+  repository: 8200artifactory.d8200.mil/hasamba-docker-public/griffin-auth
+  pullPolicy: IfNotPresent
+  tag: "2.0.3"
+
+
+Repository: internal Docker registry and path for griffin-auth.
+
+Tag: "2.0.3" – the version of Griffin actually deployed.
+
+PullPolicy: standard Kubernetes setting; not important for our app code.
+
+Interpretation: griffin-auth is a Node/TypeScript/JS service listening on port 3000 (we see containerPort: 3000 later).
+
+1.2.3 app.env – environment variables passed into griffin-auth
+
+From your values.yaml screenshot:
+
+app:
+  env:
+    - name: NODE_TLS_REJECT_UNAUTHORIZED
+      value: 0
+    - name: REDIRECT_URI
+      value: http://7108dev-auth.d8200.mil/authentication/login
+    - name: BASE_ADFS_URL
+      value: https://8200adfs.sso.aman.idf
+    - name: CLIENT_ID
+      value: 7108dev-auth.d8200.mil-Server
+    - name: CLIENT_SECRET
+      value: STQAvx9vqYG8-F2ugW9XpVK6I88AiSKNo2wzCog_   # truncated by the screenshot
+    - name: GRIFFIN_VERSION
+      value: v2
+
+
+What they mean:
+
+NODE_TLS_REJECT_UNAUTHORIZED = 0
+Node.js flag allowing self-signed TLS certs (relevant when Griffin talks to ADFS over HTTPS in internal network).
+
+REDIRECT_URI
+URL inside the griffin-auth service where ADFS should redirect back after login.
+From the value, http://7108dev-auth.d8200.mil/authentication/login:
+
+7108dev-auth.d8200.mil – hostname for the Griffin service route.
+
+/authentication/login – Griffin’s own endpoint that handles the final leg of the login flow.
+
+BASE_ADFS_URL
+Base URL of the ADFS installation: https://8200adfs.sso.aman.idf.
+
+CLIENT_ID and CLIENT_SECRET
+Credentials with which Griffin authenticates itself to ADFS (Griffin is an OAuth/OIDC client of ADFS).
+(The protocol details are not in the screenshots, but ADFS + client id/secret strongly suggest this.)
+
+GRIFFIN_VERSION = v2
+Version of the Griffin protocol / library being used by examples (we see “version 2” mentioned in GitLab).
+
+For our ASP.NET team, this tells us:
+
+Griffin already knows how to speak to ADFS.
+
+We do not speak to ADFS directly; we speak to Griffin’s HTTP endpoints.
+
+1.2.4 Redis
+redis:
+  image: 8200artifactory.d8200.mil/hasamba-docker-public/redis-alpine-griffin
+  tag: "0.0.1"
+
+
+Griffin includes a small Redis deployment:
+
+Used as a backing store (exact use is not visible, but likely for sessions, cache, or login state).
+
+We also have config for Redis service and PVC:
+
+redisService:
+  type: ClusterIP
+  port: 6379        # Redis port
+  protocol: TCP
+  hostname: griffin-redis
+  volumeClaim: griffin-nfs-volume
+
+
+hostname: griffin-redis – DNS name used by the Griffin pod to talk to its Redis instance.
+
+port: 6379 – standard Redis port.
+
+1.2.5 HTTP service + route
+service:
+  type: ClusterIP
+  port: 80
+
+route:
+  enabled: true
+  name: griffin-auth-route
+  host: 7108dev-auth.d8200.mil
+  termination: edge
+  insecure: Allow
+
+
+Service – exposes Griffin inside the cluster.
+
+ClusterIP on port 80.
+
+Route (OpenShift) – exposes Griffin to the internal network under:
+
+Hostname: 7108dev-auth.d8200.mil
+
+Edge TLS termination, insecure: Allow (HTTP as well as HTTPS).
+
+For us, these values define where our ASP.NET app will call:
+
+http(s)://7108dev-auth.d8200.mil/...
+
+We see this hostname again in values/env and in the example projects.
+
+2. Griffin Helm templates – what actually runs
+2.1 griffin-auth deployment (templates/deployment.yaml)
+
+Key elements from your screenshots:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "griffin-auth.deploymentname" . }}
+  labels:
+    {{- include "griffin-auth.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "griffin-auth.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "griffin-auth.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          env:
+            - name: "REDIS_SERVICE_DNS"
+              value: "{{ include "griffin-auth.redisservicedns" . }}"
+            - name: "REDIS_SERVICE_PORT"
+              value: "6379"
+            - name: "PORT"
+              value: "3000"
+            {{- range $env := .Values.app.env }}
+            - name: "{{ $env.name }}"
+              value: "{{ $env.value | quote }}"
+            {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /beep
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /beep
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+
+Important concepts for the dev team:
+
+Griffin’s container listens on port 3000.
+
+Health checks (/beep) are used for readiness/liveness.
+
+Environment variables set Redis location and the ADFS/redirect settings from values.yaml.
+
+We never directly touch this YAML in our ASP.NET project, but it explains:
+
+Why external examples refer to port 3000 for Griffin.
+
+Why the host 7108dev-auth.d8200.mil exists.
+
+2.2 Redis deployment, service, PVC, route, service
+
+The rest of templates you photographed:
+
+redis-deployment.yaml – deploys the Redis container, sets hostname and volume mount /data.
+
+redis-service.yaml – exposes Redis in the cluster (griffin-redis).
+
+redis-pvc.yaml – defines the griffin-auth.pvcname persistent volume claim.
+
+route.yaml – OpenShift route mapping:
+
+kind: Route
+metadata:
+  name: {{ .Values.route.name }}
+spec:
+  host: {{ .Values.route.host }}
+  to:
+    kind: Service
+    name: griffin-auth-service
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: {{ .Values.route.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.route.insecure }}
+
+
+service.yaml – Kubernetes service for the main app:
+
+kind: Service
+metadata:
+  name: {{ include "griffin-auth.authservicename" . }}
+  labels:
+    {{- include "griffin-auth.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "griffin-auth.selectorLabels" . | nindent 4 }}
+
+
+Again, we will not change these. They show that:
+
+Griffin is a classic “API behind a route”.
+
+We only need to know the base URL and endpoints, which show up clearly in the code examples.
+
+3. Example integrations from the docs
+
+The docs include two concrete consumer examples:
+
+A NestJS/Express backend (Node)
+
+A Python/FastAPI backend
+
+Plus a React frontend dependency on @hasamba/griffin-auth.
+
+These are our reference implementations for what our ASP.NET code should conceptually replicate.
+
+3.1 GitLab griffin-example-project – Node backend
+
+Path from screenshot:
+
+griffin-example-project/Backend/src
+
+Files:
+
+main.ts
+
+app.module.ts
+
+app.controller.ts
+
+app.service.ts
+
+middlewares/auth.middleware.ts
+
+3.1.1 main.ts
+
+From the screenshot:
+
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { AuthMiddleware } from './middlewares/auth.middleware';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.use(new AuthMiddleware().use());
+  await app.listen(3000);
+}
+
+bootstrap();
+
+
+Key points:
+
+Backend listens on port 3000.
+
+A custom AuthMiddleware is attached globally.
+
+3.1.2 app.service.ts and controller
+
+They’re essentially “Hello World”:
+
+@Injectable()
+export class AppService {
+  getHello(): string {
+    return 'Hello World!';
+  }
+}
+
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  getHello(): string {
+    return this.appService.getHello();
+  }
+}
+
+
+They’re there just to prove that once middleware passes, the app responds.
+
+3.1.3 auth.middleware.ts
+
+This is the critical piece. From your screenshot:
+
+import { HttpException, Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+import axios from 'axios';
+
+@Injectable()
+export class AuthMiddleware implements NestMiddleware {
+  async use(req: Request, res: Response, next: NextFunction) {
+    const userToken = this.getTokenFromRequest(req);
+    try {
+      await axios.get(`http://hasambaot.d8200.mil/auth/authorization/validate?token=${userToken}`);
+      next();
+    } catch (exception) {
+      throw new HttpException('The token provided is not valid', 403);
+    }
+  }
+
+  getTokenFromRequest(request: Request): string {
+    try {
+      return request.headers['token'] as string;
+    } catch (exception) {
+      throw new HttpException('Token header is missing from the request', 403);
+    }
+  }
+}
+
+
+(URL may be slightly truncated by screenshot, but the important part is /authorization/validate?token=....)
+
+This teaches us:
+
+The backend expects the client (e.g. frontend) to send a Token HTTP header.
+
+It calls the Griffin API endpoint:
+
+GET <griffin-base-url>/authorization/validate?token=<userToken>
+
+
+If Griffin returns success, the middleware calls next() (request is allowed).
+
+If Griffin fails, it throws an HTTP 403.
+
+This is the minimal integration:
+
+“Send token to Griffin’s /authorization/validate before accepting the request.”
+
+3.2 GitLab griffin-example-project – React frontend
+
+We only see package.json in the screenshots:
+
+{
+  "name": "griffin-example-project",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hasamba/griffin-auth": "https://8200artifactory.d8200.mil/hasamba-npm/%40hasamba/griffin-auth/-/%40hasamba/griffin-auth-1.0.15.tgz",
+    "jose": "^4.15.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  ...
+}
+
+
+What we know:
+
+There is an NPM library @hasamba/griffin-auth.
+
+It lives in the same internal artifactory as the Docker images.
+
+This library likely helps:
+
+Redirect users to Griffin,
+
+Store / retrieve tokens,
+
+Handle client-side parts of SSO.
+
+The specific API of this NPM package is not visible in the screenshots, so we will not describe it in detail.
+But its existence is important – it’s the frontend half of the Griffin integration.
+
+3.3 Confluence Python/FastAPI example
+
+This is the most detailed explanation of the Griffin <-> backend integration.
+
+3.3.1 ADFSClaims type (adfs_claims.py)
+from typing import TypedDict
+
+class ADFSClaims(TypedDict):
+    sAMAccountName: str  # username (without @example.com)
+    DisplayName: str     # classic display name
+    GivenName: str       # first name
+    Surname: str         # last name
+    UPN: str             # email
+    auth_time: str
+
+
+This is the shape of the user profile coming from Griffin / ADFS:
+
+sAMAccountName – Windows/AD username (short form).
+
+DisplayName – canonical display name.
+
+GivenName / Surname – first and last name.
+
+UPN – email-like identifier.
+
+auth_time – time of authentication.
+
+Our ASP.NET code will use similar fields when building a ClaimsPrincipal.
+
+3.3.2 ADFSClient (adfs_client.py)
+
+Key parts from your screenshots:
+
+import os
+import urllib.parse
+
+import requests
+from fastapi import Request, Response, status
+
+from data_types import ADFSClaims
+from server.errors import AuthException
+
+ADFS_API = os.environ["ADFS_API"]
+APP_AUTHENTICATION_ROUTE = os.environ["APP_AUTHENTICATION_ROUTE"]
+
+ADFS_REDIRECTED_URL = f"{ADFS_API}/authentication?tokenConsumerURL={{url}}"
+ADFS_VALIDATE_TOKEN_ENDPOINT = f"{ADFS_API}/authorization/validate"
+ADFS_GET_CLAIMS_ENDPOINT = f"{ADFS_API}/authorization/getClaims"
+
+class ADFSClient:
+    @staticmethod
+    def redirect_request_to_adfs_auth(request: Request) -> Response:
+        full_endpoint = request.url.path
+        if request.url.query:
+            full_endpoint += f"?{request.url.query}"
+
+        # three url encodes: for ADFS, for FastAPI, for this python code
+        escaped_endpoint = urllib.parse.quote_plus(
+            urllib.parse.quote_plus(full_endpoint)
+        )
+
+        token_consumer_url = f"{APP_AUTHENTICATION_ROUTE}{escaped_endpoint}"
+        headers = {"Location": ADFS_REDIRECTED_URL.format(url=token_consumer_url)}
+        return Response(status_code=status.HTTP_302_FOUND, headers=headers)
+
+    @staticmethod
+    def validate_token(token: str) -> bool:
+        response = requests.get(ADFS_VALIDATE_TOKEN_ENDPOINT, params={"token": token})
+        return response.text == "true"
+
+    @staticmethod
+    def get_claims(token: str) -> ADFSClaims:
+        response = requests.get(ADFS_GET_CLAIMS_ENDPOINT, params={"token": token})
+        if response.status_code != status.HTTP_200_OK:
+            raise AuthException("Received unauthorized from adfs")
+
+        return response.json()
+
+
+Concepts:
+
+ADFS_API – base URL of the Griffin/ADFS HTTP API (e.g. http://7108dev-auth.d8200.mil).
+
+APP_AUTHENTICATION_ROUTE – URL in our backend that Griffin should redirect to after ADFS login.
+
+Note: this is analogous to the REDIRECT_URI env var we saw in the Helm values.
+
+ADFS_REDIRECTED_URL – pattern for redirecting the browser into Griffin/ADFS login:
+
+{ADFS_API}/authentication?tokenConsumerURL={token-consumer-url}
+
+
+redirect_request_to_adfs_auth(request):
+
+Builds the original request path + query.
+
+URL-encodes it twice.
+
+Appends it to APP_AUTHENTICATION_ROUTE.
+
+Redirects user (302) to:
+
+{ADFS_API}/authentication?tokenConsumerURL=<encoded APP_AUTHENTICATION_ROUTE+endpoint>
+
+
+This is the start of the login flow.
+
+validate_token(token) – calls:
+
+GET {ADFS_API}/authorization/validate?token=<token>
+
+
+and expects literal "true" in the body if valid.
+
+get_claims(token) – calls:
+
+GET {ADFS_API}/authorization/getClaims?token=<token>
+
+
+and returns JSON as ADFSClaims.
+
+Together these operations are the core contract we must reproduce in C#.
+
+3.3.3 ADFSAuthMiddleware (auth_auth.py)
+
+From screenshots:
+
+from fastapi import Request, status
+from fastapi.responses import Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+
+from consts import TOKEN_COOKIE_NAME, TOKEN_QUERY_PARAM
+from server.clients import ADFSClient
+from server.middlewares.adfs.request_whitelist import is_request_in_whitelist
+
+class ADFSAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if is_request_in_whitelist(request):
+            return await call_next(request)
+
+        token = self.__get_token(request)
+        if not token:
+            return self.__handle_unauthenticated_request(request)
+
+        request.scope["state"]["token"] = token
+        response = await call_next(request)
+        return response
+
+    def __get_token(self, request: Request) -> str | None:
+        cookie_token = request.cookies.get(TOKEN_COOKIE_NAME)
+        query_token = request.query_params.get(TOKEN_QUERY_PARAM, cookie_token)
+        return query_token
+
+    def __handle_unauthenticated_request(self, request: Request) -> Response:
+        if request.url.path.startswith("/api"):
+            return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+
+        return ADFSClient.redirect_request_to_adfs_auth(request)
+
+
+Concepts:
+
+Whitelist:
+
+is_request_in_whitelist(request) – certain paths bypass Griffin (e.g. health checks, public assets).
+
+Not shown in code, but described in Hebrew text as a “whitelist middleware”.
+
+Token extraction:
+
+Looks for token first in cookie (TOKEN_COOKIE_NAME),
+
+Then in query parameter (TOKEN_QUERY_PARAM),
+
+Optionally it could be in headers (not shown here).
+
+Behavior when no token:
+
+If the path starts with /api → respond with 401 Unauthorized (API clients must handle auth elsewhere).
+
+Otherwise (browser facing pages) → call ADFSClient.redirect_request_to_adfs_auth(request) → browser is sent to Griffin/ADFS login.
+
+If token exists:
+
+Save it in request.state["token"].
+
+Call call_next to pass to the next middleware/handler.
+
+This middleware is responsible only for:
+
+Ensure requests either have a token or are redirected to login.
+
+Put the token into request state for downstream use.
+
+3.3.4 LoadUserInfoMiddleware (load_user_info.py)
+
+From screenshots:
+
+from cachetools import TTLCache
+from fastapi import Request, Response, status
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+
+from data_types.adfs_claims import ADFSClaims
+from data_types.user_info import UserInfo
+from server.clients import ADFSClient
+from server.errors import AuthException
+from consts import TOKEN_COOKIE_NAME
+from server.middlewares.adfs.request_whitelist import is_request_in_whitelist
+
+users_info_cache: TTLCache[str, UserInfo] = TTLCache(maxsize=2000, ttl=3600 * 8)
+
+class LoadUserInfoMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if is_request_in_whitelist(request):
+            return await call_next(request)
+
+        token: str = request.scope["state"]["token"]
+
+        user_info = users_info_cache.get(token)
+        if not user_info:
+            try:
+                user_info = self.__get_user_claims(token)
+                users_info_cache[token] = user_info
+            except AuthException:
+                response = Response(status_code=status.HTTP_401_UNAUTHORIZED)
+                response.delete_cookie(TOKEN_COOKIE_NAME)
+                return response
+
+        request.scope["state"]["username"] = user_info.username
+        request.scope["state"]["full_name"] = user_info.full_name
+
+        return await call_next(request)
+
+    def __get_user_claims(self, token: str) -> UserInfo:
+        claims = ADFSClient.get_claims(token)
+        return self.__format_claims(claims)
+
+    def __format_claims(self, claims: ADFSClaims) -> UserInfo:
+        given_name = claims["GivenName"]
+        surname = claims["Surname"]
+        username = claims["UPN"]
+        full_name = f"{given_name} {surname}"
+        return UserInfo(username=username, full_name=full_name)
+
+
+Concepts:
+
+Token → claims → user_info:
+
+Uses ADFSClient.get_claims(token) to get ADFSClaims.
+
+Converts claims into a UserInfo object with username and full_name.
+
+Caching:
+
+TTLCache keyed by token, with TTL 3600 * 8 seconds (8 hours).
+
+Avoids calling Griffin on every request.
+
+Error handling:
+
+If AuthException is raised (e.g. Griffin/ADFS returns unauthorized):
+
+Return 401 Unauthorized,
+
+Delete the TOKEN_COOKIE_NAME cookie (force re-login).
+
+Propagating user info:
+
+Writes to request.state["username"] and ["full_name"].
+
+Downstream handlers can read those values.
+
+4. End-to-end Griffin / ADFS flow (from the docs)
+
+Combining the Python middleware and the diagram you photographed:
+
+User first hits backend (no token yet)
+
+ADFSAuthMiddleware runs.
+
+Request is not in whitelist and has no token.
+
+If the path is web page (not /api):
+
+Backend returns a 302 redirect to Griffin:
+
+Location: {ADFS_API}/authentication?tokenConsumerURL={APP_AUTHENTICATION_ROUTE + encodedOriginalPath}
+
+
+User is redirected to Griffin, then ADFS
+
+Griffin page calls ADFS (BASE_ADFS_URL) to do domain login.
+
+ADFS authenticates against Domain auth (as in diagram).
+
+On success, Griffin generates a token and sends the browser back to APP_AUTHENTICATION_ROUTE with the token encoded in the URL.
+
+Backend receives token & sets cookie
+
+The docs mention an endpoint that receives the token from Griffin and saves it in a cookie named TOKEN_COOKIE_NAME.
+(The code for that endpoint isn’t in the screenshots, but the middleware assumes this cookie exists.)
+
+Subsequent requests
+
+ADFSAuthMiddleware finds the token in the cookie (or query param).
+
+It stores token in request.state["token"].
+
+LoadUserInfoMiddleware then:
+
+Checks cache; if not present, calls Griffin authorization/getClaims?token=....
+
+Fills request.state["username"] and ["full_name"].
+
+Application code
+
+Controllers can trust those request.state values as the logged-in user identity and display name.
+
+5. How our ASP.NET C# app should integrate (conceptually)
+
+Now, using only what appears in the pictures and your notes, here’s what our C# team should understand and implement.
+
+5.1 Constraints & goals
+
+Our project is ASP.NET (Core) C#.
+
+We build with dotnet publish on a connected machine.
+
+We manually copy publish output to the air-gapped environment.
+
+In that environment:
+
+Griffin is deployed, reachable at a base URL similar to http://7108dev-auth.d8200.mil.
+
+ADFS behind Griffin is already configured.
+
+We keep our existing sign-in/sign-up as a fallback.
+
+Griffin is not available in dev machines; devs can’t call real Griffin from their laptops.
+
+5.2 Conceptual building blocks we mirror from Python
+
+We want C# equivalents of:
+
+ADFSClient
+
+Methods:
+
+RedirectRequestToAdfsAuth(request)
+Generate the 302 redirect location to Griffin /authentication?tokenConsumerURL=....
+
+ValidateToken(token)
+Call GET {ADFS_API}/authorization/validate?token=... and check if body is "true".
+
+GetClaims(token)
+Call GET {ADFS_API}/authorization/getClaims?token=... and parse into AdfsClaims.
+
+ADFSAuthMiddleware
+
+Inspect HttpContext.Request:
+
+Skip whitelist endpoints (health, static, etc.).
+
+Try to extract token from cookie (analog of TOKEN_COOKIE_NAME), maybe query param.
+
+If token missing:
+
+For pure API endpoints: return 401 Unauthorized.
+
+For browser endpoints: redirect to Griffin using ADFSClient.RedirectRequestToAdfsAuth.
+
+If token present: store it in something like HttpContext.Items["Token"].
+
+LoadUserInfoMiddleware
+
+Read token from HttpContext.Items.
+
+Use ADFSClient.GetClaims(token) to fetch user claims if not cached.
+
+Transform into a user object (username, full_name, etc.).
+
+Cache in memory (like TTLCache) keyed by token, with a reasonable TTL (docs show 8 hours).
+
+Populate the ASP.NET ClaimsPrincipal:
+
+Name identifier, name, email, etc.
+
+On AuthException or unauthorized from Griffin:
+
+Return 401 and delete the auth cookie (force a fresh login next request).
+
+As requested, this is a conceptual mapping, not new features: it directly parallels the examples you photographed.
+
+5.3 Fallback to existing login
+
+The requirements you gave:
+
+Griffin exists only in the air-gapped environment.
+
+Our app must still work with our existing sign-in/sign-up.
+
+Conceptually, we’ll treat Griffin as optional:
+
+If a valid Griffin token exists (cookie / query), we:
+
+Trust Griffin for that request.
+
+Build a ClaimsPrincipal with Griffin/ADFS identity.
+
+If no Griffin token or Griffin is unreachable:
+
+Our existing authentication (cookies, ASP.NET Identity, database, etc.) still applies.
+
+Controllers/routes protected by [Authorize] will continue to behave as they do today.
+
+The exact mechanics (e.g. flags to enable/disable Griffin) are an implementation detail we can refine separately, but the core idea is:
+
+“Griffin is an extra authentication source, not a replacement of our current one.”
+
+6. What every (AI) developer on the team should know
+
+Griffin is not a library in our C# solution.
+It’s a remote service (griffin-auth) deployed with Helm on Kubernetes / OpenShift.
+
+Griffin talks to ADFS for us.
+We do not deal with ADFS directly. We only call Griffin’s endpoints:
+
+/authentication?tokenConsumerURL=... – start login.
+
+/authorization/validate?token=... – validate token.
+
+/authorization/getClaims?token=... – get user claims.
+
+Tokens are how we identify Griffin-authenticated users.
+
+A “token” is a string we get from Griffin (format not specified in screenshots).
+
+The browser typically carries it in a cookie (TOKEN_COOKIE_NAME) or query parameter (TOKEN_QUERY_PARAM) as shown in the Python example.
+
+Our backend must extract, validate, and translate this token into a standard ASP.NET user identity.
+
+Two main middleware responsibilities (from the docs):
+
+Auth middleware:
+
+Ensure requests either have a token or are redirected / denied.
+
+Save the token into request state (request.scope["state"]["token"] in Python; an equivalent in ASP.NET).
+
+User-loading middleware:
+
+Use the token to get claims and turn them into a user object.
+
+Cache users for some time (8 hours in docs).
+
+Populate request state with username and full_name.
+
+Griffin configuration is held in environment variables & Helm values:
+
+ADFS_API – base URL to Griffin/ADFS APIs (/authentication, /authorization/...).
+
+APP_AUTHENTICATION_ROUTE – our backend “token consumer” route, used only for the redirect-back stage.
+
+The Helm chart sets ADFS URLs (BASE_ADFS_URL), client id/secret, redirect URI, Redis locations, and exposes Griffin at 7108dev-auth.d8200.mil.
+
+Our job is to mirror the examples, not re-design the protocol.
+
+We must be faithful to the endpoints and behavior shown in:
+
+auth.middleware.ts
+
+adfs_client.py
+
+auth_auth.py
+
+load_user_info.py
+
+If something is not clear, we should refer back to those files and the Confluence diagrams, not invent new flows.

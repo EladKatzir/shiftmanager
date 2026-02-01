@@ -1,0 +1,98 @@
+@model ShiftManager.ViewComponents.OnCallWidgetViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@addTagHelper *, ShiftManager
+
+<div class="widget oncall-widget @(Model.IsCollapsed ? "is-collapsed" : "") @(Model.ShowInSidebar ? "sidebar-widget" : "")"
+     id="onCallWidget"
+     data-widget-id="oncall">
+    <div class="widget__header" role="button" tabindex="0" aria-expanded="@(!Model.IsCollapsed ? "true" : "false")">
+        <div class="widget__header-left">
+            <span class="widget__icon"><icon name="phone" size="sm" /></span>
+            <span class="widget__title"><loc key="Widget_OnCallNow" /></span>
+            @if (Model.HasContacts)
+            {
+                <span class="widget__badge">@Model.Contacts.Count</span>
+            }
+        </div>
+        <span class="widget__toggle"><icon name="chevron-down" size="sm" /></span>
+    </div>
+
+    <div class="widget__body">
+        @if (Model.HasContacts)
+        {
+            @foreach (var contact in Model.Contacts)
+            {
+                <div class="oncall-contact" data-user-id="@contact.UserId" data-contact-type="@contact.ContactType">
+                    <div class="oncall-contact__avatar">
+                        @contact.AvatarInitial
+                    </div>
+                    <div class="oncall-contact__info">
+                        <div class="oncall-contact__role">@contact.Role</div>
+                        <div class="oncall-contact__name">@contact.Name</div>
+                        @if (!string.IsNullOrEmpty(contact.PhoneNumber))
+                        {
+                            <div class="oncall-contact__phone">
+                                <icon name="phone" size="xs" class="icon--muted" />
+                                <span dir="ltr">@contact.PhoneNumber</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="oncall-contact__actions">
+                        @if (!string.IsNullOrEmpty(contact.PhoneNumber))
+                        {
+                            <a href="tel:@contact.PhoneNumber"
+                               class="oncall-contact__call-btn"
+                               loc-aria-label="Widget_OnCallCall"
+                               title="@Localizer["Widget_OnCallCall"]">
+                                <icon name="phone" size="sm" />
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="widget-empty widget-empty--oncall">
+                <div class="widget-empty__icon-container">
+                    <div class="icon-circle icon-circle--lg">
+                        <icon name="user-x" size="xl" class="icon--muted" aria-label="@Localizer["Widget_OnCallEmpty"]" />
+                    </div>
+                </div>
+                <p class="widget-empty__text"><loc key="Widget_OnCallEmpty" /></p>
+                <p class="widget-empty__hint"><loc key="Widget_OnCallEmptyHint" /></p>
+            </div>
+        }
+
+        @if (Model.ShowOfficeNumbers && Model.HasOfficeNumbers)
+        {
+            <div class="widget office-numbers is-collapsed"
+                 id="officeNumbersWidget"
+                 data-widget-id="office-numbers">
+                <div class="widget__header" role="button" tabindex="0" aria-expanded="false">
+                    <div class="widget__header-left">
+                        <span class="widget__icon"><icon name="phone" size="sm" /></span>
+                        <span class="widget__title"><loc key="Widget_OfficeNumbers" /></span>
+                        <span class="widget__badge">@Model.OfficeNumbers.Count</span>
+                    </div>
+                    <span class="widget__toggle"><icon name="chevron-down" size="sm" /></span>
+                </div>
+                <div class="widget__body">
+                    @foreach (var number in Model.OfficeNumbers)
+                    {
+                        <div class="office-number">
+                            <span class="office-number__label">@number.Label</span>
+                            <span class="office-number__value">
+                                <a href="tel:@number.Number" dir="ltr">@number.Number</a>
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* Widget persistence is handled by widget-persistence.js loaded in _Layout.cshtml *@

@@ -1,0 +1,179 @@
+@model ShiftManager.ViewComponents.LanguageEditModeBannerViewModel
+
+<div id="language-edit-mode-banner" class="language-edit-banner">
+    <div class="banner-content">
+        <div class="banner-info">
+            <span class="banner-title">✏️ <loc key="EditMode_Title" /></span>
+            <span class="banner-detail"><loc key="EditMode_Company" /> <strong>@Model.CompanyId</strong></span>
+            <span class="banner-detail"><loc key="EditMode_Culture" /> <strong>@Model.Culture</strong></span>
+            <span class="banner-detail"><loc key="EditMode_Drafts" /> <strong id="draft-count">0</strong></span>
+            <label class="banner-toggle">
+                <input type="checkbox" id="freeze-interactions-toggle" checked>
+                <span class="toggle-label">🔒 <loc key="EditMode_FreezeInteractions" /></span>
+            </label>
+        </div>
+        <div class="banner-actions">
+            <button id="view-drafts-btn" class="banner-btn banner-btn-secondary" loc-title="EditMode_ViewDraftsTooltip">
+                📋 <loc key="EditMode_ViewDrafts" />
+            </button>
+            <button id="save-exit-btn" class="banner-btn banner-btn-primary" loc-title="EditMode_SaveExitTooltip">
+                💾 <loc key="EditMode_SaveAndExit" />
+            </button>
+            <button id="discard-btn" class="banner-btn banner-btn-danger" loc-title="EditMode_DiscardTooltip">
+                🗑️ <loc key="EditMode_Discard" />
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.language-edit-banner {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.banner-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.banner-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.banner-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.banner-detail {
+    font-size: 0.875rem;
+    opacity: 0.95;
+}
+
+.banner-detail strong {
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+}
+
+.banner-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.banner-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+}
+
+.banner-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.banner-btn-primary {
+    background: #10b981;
+    color: white;
+}
+
+.banner-btn-primary:hover {
+    background: #059669;
+}
+
+.banner-btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.banner-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.banner-btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.banner-btn-danger:hover {
+    background: #dc2626;
+}
+
+.banner-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    user-select: none;
+}
+
+.banner-toggle input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.toggle-label {
+    font-weight: 500;
+    opacity: 0.95;
+}
+
+@@media (max-width: 768px) {
+    .language-edit-banner {
+        padding: 0.75rem 1rem;
+    }
+
+    .banner-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .banner-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .banner-actions {
+        justify-content: stretch;
+    }
+
+    .banner-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>

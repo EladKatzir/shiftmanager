@@ -1,38 +1,42 @@
 @page
 @model ShiftManager.Pages.Calendar.MonthModel
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.ViewModels
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    var weeks = Model.Weeks;
+    ViewData["Title"] = Localizer["Calendar_MyCalendar"] + " - " + Localizer["Month"];
 }
+
+@* ✅ PHASE 20: Include calendar inline editing JavaScript *@
+<script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
+
+@* ✅ PHASE 20: Breadcrumb with "My Calendar" branding *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar_MyCalendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["Month"], IsActive = true }
+})
+
+@* B-007: Calendar Skeleton Loading Container *@
+<div class="calendar-skeleton-container" data-calendar-skeleton-container>
+    @await Component.InvokeAsync("CalendarSkeleton", new { viewType = "month", cellCount = 35 })
+    <div data-ui-version="v2" data-calendar-content class="calendar-content">
 <div class="calendar-header">
     <div class="header-main">
-        <h2>@Model.CurrentMonth.ToString("MMMM yyyy")</h2>
-        @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-        {
-            <div class="calendar-help">
-                <div class="help-item">
-                    <span class="help-icon">🎯</span>
-                    <span>@Localizer["ClickShiftBadges"]</span>
-                </div>
-                <div class="help-item">
-                    <span class="help-icon">⚡</span>
-                    <span>@Localizer["UseButtonsToAdjust"]</span>
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="calendar-help">
-                <div class="help-item">
-                    <span class="help-icon">👀</span>
-                    <span>@Localizer["ViewAssignedShifts"]</span>
-                </div>
-            </div>
-        }
+        <h2>
+            <span class="calendar-icon">📅</span>
+            @Model.CurrentMonth.ToString("MMMM yyyy")
+        </h2>
+        @* ✅ PHASE 20: Show My Items toggle *@
+        <div class="calendar-controls">
+            @await Component.InvokeAsync("ShowMyItemsToggle")
+        </div>
     </div>
+
+    @* ✅ PHASE 20: Navigation *@
     <div class="calendar-nav">
         <a class="btn btn-ghost" href="/Calendar/Month?year=@Model.Previous.MonthYear.Year&month=@Model.Previous.MonthYear.Month">
             <span class="nav-icon">←</span>
@@ -40,165 +44,941 @@
         </a>
         <a class="btn btn-primary" href="/Calendar/Month">
             <span class="nav-icon">📅</span>
-            <span class="nav-text">@Localizer["Today"]</span>
+            <span class="nav-text"><loc key="Today" /></span>
         </a>
         <a class="btn btn-ghost" href="/Calendar/Month?year=@Model.Next.MonthYear.Year&month=@Model.Next.MonthYear.Month">
             <span class="nav-text">@Model.Next.Label</span>
             <span class="nav-icon">→</span>
         </a>
     </div>
+
+    @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
+    @if (Model.TotalItemCount > 0)
+    {
+        <div class="calendar-metrics">
+            <div class="metric-item metric-shifts">
+                <span class="metric-icon">📅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.VisibleShiftCount</span>
+                    <span class="metric-label"><loc key="Calendar_Shifts" /></span>
+                </div>
+            </div>
+
+            @if (Model.VisibleChoreCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🧹</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.VisibleChoreCount</span>
+                        <span class="metric-label"><loc key="Calendar_Chores" /></span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.VisibleOnDutyCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🎯</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.VisibleOnDutyCount</span>
+                        <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.PendingItemsCount > 0)
+            {
+                <div class="metric-item metric-pending">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.PendingItemsCount</span>
+                        <span class="metric-label"><loc key="Calendar_Pending" /></span>
+                    </div>
+                </div>
+            }
+
+            <require-grant key="ViewAnalytics">
+            <div class="metric-item metric-coverage">
+                <span class="metric-icon">✅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.CoveragePercent%</span>
+                    <span class="metric-label"><loc key="Calendar_Coverage" /></span>
+                </div>
+            </div>
+            </require-grant>
+        </div>
+    }
 </div>
 
+@* ✅ PHASE 20: View switcher (removed Table link) *@
 <div class="calendar-view-switcher">
-    <a class="btn btn-primary" href="/Calendar/Month">@Localizer["Month"]</a>
-    <a class="btn btn-ghost" href="/Calendar/Week">@Localizer["Week"]</a>
-    <a class="btn btn-ghost" href="/Calendar/Day">@Localizer["Day"]</a>
+    <a class="btn btn-primary" href="/Calendar/Month"><loc key="Month" /></a>
+    <a class="btn btn-ghost" href="/Calendar/Week"><loc key="Week" /></a>
+    <a class="btn btn-ghost" href="/Calendar/Day"><loc key="Day" /></a>
 </div>
 
-<div class="calendar-grid">
-    <!-- Weekday headers -->
-    <div class="calendar-weekdays">
-        <div class="weekday-header">@Localizer["Mon"]</div>
-        <div class="weekday-header">@Localizer["Tue"]</div>
-        <div class="weekday-header">@Localizer["Wed"]</div>
-        <div class="weekday-header">@Localizer["Thu"]</div>
-        <div class="weekday-header">@Localizer["Fri"]</div>
-        <div class="weekday-header">@Localizer["Sat"]</div>
-        <div class="weekday-header">@Localizer["Sun"]</div>
+@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) - reads from URL/cookie *@
+@await Component.InvokeAsync("ScopeSwitcher", new { calendarType = "shifts" })
+
+@* ✅ PHASE 20: Quick actions - Grant protected *@
+<require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
+<div class="calendar-quick-actions">
+    <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
+    <require-grant key="ViewShifts">
+    <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
+        <span>📊</span>
+        <loc key="Calendar_ManageShifts" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewChores">
+    <a class="btn btn-secondary btn-sm" href="/Public/Chores">
+        <span>🧹</span>
+        <loc key="Calendar_ManageChores" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewDuties">
+    <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
+        <span>🛡️</span>
+        <loc key="Calendar_ManageOnDuty" />
+    </a>
+    </require-grant>
+</div>
+</require-grant>
+
+@* Hidden template for assignee select (rendered once, cloned via JS) *@
+<select id="assignee-options-template" class="calendar-template-hidden">
+    <option value=""><loc key="Calendar_SelectAssignee" /></option>
+    @foreach (var user in Model.EligibleAssignees)
+    {
+        <option value="@user.Id">@user.DisplayName</option>
+    }
+</select>
+
+@* ✅ UI Overhaul: Overall empty state for month view *@
+@if (Model.TotalItemCount == 0)
+{
+    <div class="calendar-empty">
+        <div class="calendar-empty__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+                <line x1="9" y1="18" x2="15" y2="18"></line>
+            </svg>
+        </div>
+        <h3 class="calendar-empty__title"><loc key="Calendar_Empty_NoShiftsMonth" /></h3>
+        <p class="calendar-empty__message">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <loc key="Calendar_Empty_Subtitle_Mine" />
+            }
+            else
+            {
+                <loc key="Calendar_Empty_Subtitle_All" />
+            }
+        </p>
+        <div class="calendar-empty__actions">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <a href="/Calendar/Month?year=@Model.CurrentMonth.Year&month=@Model.CurrentMonth.Month&showMyItems=false" class="btn btn-secondary">
+                    <loc key="Calendar_Empty_Action_ViewAll" />
+                </a>
+            }
+            <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+            <a href="/Calendar/Table" class="btn btn-primary">
+                <loc key="Calendar_Empty_Action_CreateShift" />
+            </a>
+            </require-grant>
+            @{
+                var todayMonth = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
+            }
+            @if (Model.CurrentMonth != todayMonth)
+            {
+                <a href="/Calendar/Month" class="btn btn-ghost">
+                    <loc key="Calendar_Empty_Action_GoToToday" />
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@* A-013: Screen reader announcer for keyboard navigation *@
+<div id="calendar-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+@* ✅ PHASE 20: Unified calendar grid *@
+@* A-004: Responsive calendar grid with abbreviated day names for mobile *@
+<div class="calendar-grid @(Model.TotalItemCount == 0 ? "calendar-grid--empty" : "")" role="grid" aria-label="@Localizer["Calendar_MonthView"]">
+    <!-- Weekday headers with responsive abbreviations -->
+    <!-- data-day-full: Full name, data-day-abbr: 3-letter, data-day-letter: single letter for mobile -->
+    <div class="calendar-weekdays" role="row">
+        <div class="weekday-header" role="columnheader" data-day-full="Sunday" data-day-abbr="Sun" data-day-letter="S">
+            <span class="day-full"><loc key="Sun" /></span>
+            <span class="day-abbr" aria-hidden="true">S</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Monday" data-day-abbr="Mon" data-day-letter="M">
+            <span class="day-full"><loc key="Mon" /></span>
+            <span class="day-abbr" aria-hidden="true">M</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Tuesday" data-day-abbr="Tue" data-day-letter="T">
+            <span class="day-full"><loc key="Tue" /></span>
+            <span class="day-abbr" aria-hidden="true">T</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Wednesday" data-day-abbr="Wed" data-day-letter="W">
+            <span class="day-full"><loc key="Wed" /></span>
+            <span class="day-abbr" aria-hidden="true">W</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Thursday" data-day-abbr="Thu" data-day-letter="T">
+            <span class="day-full"><loc key="Thu" /></span>
+            <span class="day-abbr" aria-hidden="true">T</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Friday" data-day-abbr="Fri" data-day-letter="F">
+            <span class="day-full"><loc key="Fri" /></span>
+            <span class="day-abbr" aria-hidden="true">F</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Saturday" data-day-abbr="Sat" data-day-letter="S">
+            <span class="day-full"><loc key="Sat" /></span>
+            <span class="day-abbr" aria-hidden="true">S</span>
+        </div>
     </div>
 
-    @foreach (var w in weeks)
+    @* ✅ PHASE 20: Render calendar cells with unified items *@
+    @foreach (var week in Model.Weeks)
     {
-        foreach (var day in w)
+        @foreach (var day in week)
         {
             var isCurrentMonth = day.Date.Month == Model.CurrentMonth.Month;
-            var cellClass = isCurrentMonth ? "calendar-cell" : "calendar-cell other-month";
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var isToday = day.Date == today;
+            var isPastDate = day.Date < today;
+            var cellClass = "calendar-cell";
+            if (!isCurrentMonth) { cellClass += " other-month"; }
+            if (isToday) { cellClass += " today"; }
+            if (isPastDate) { cellClass += " past-date"; }
 
-            <div class="@cellClass">
-                <div class="cell-date">@day.Date.Day</div>
-                @foreach (var l in day.Lines)
-                {
-                    if (l.Required > 0 || l.Assigned > 0) // Only show shifts that have activity
+            <div class="@cellClass" role="gridcell" tabindex="@(isToday ? "0" : "-1")" data-date="@day.Date.ToString("yyyy-MM-dd")" data-day-name="@day.Date.ToString("ddd")" aria-label="@day.Date.ToString("MMMM d, yyyy")">
+                <div class="cell-date">
+                    @day.Date.Day
+                    @if (isToday)
                     {
-                        var badgeClass = l.Assigned >= l.Required ? "ok" : "warn";
-                        <div class="shift-line">
-                            <div class="assignment-tooltip">
-                                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                        <span class="today-indicator">•</span>
+                    }
+                </div>
+
+                @* ✅ PHASE 20: Render items with density control *@
+                <div class="cell-items">
+                    @{
+                        var visibleItems = day.Items.Take(3).ToList();
+                        var hiddenCount = Math.Max(0, day.Items.Count - 3);
+                    }
+
+                    @foreach (var item in visibleItems)
+                    {
+                        <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
+                             title="@item.Details"
+                             data-item-type="@item.Type.ToString().ToLower()"
+                             data-item-id="@item.EntityId">
+                            <div class="item-header">
+                                <span class="item-icon">@item.Icon</span>
+                                <span class="item-title">@item.Title</span>
+                                @* ✅ PHASE 20: Delete button for chores and on-duty - Grant protected *@
+                                @if (item.Type == CalendarItemType.Chore)
                                 {
-                                    <a href="/Assignments/Manage?date=@day.Date.ToString("yyyy-MM-dd")&shiftTypeId=@l.ShiftTypeId&returnUrl=@Uri.EscapeDataString("/Calendar/Month?year=" + Model.CurrentMonth.Year + "&month=" + Model.CurrentMonth.Month)">
-                                        <span class="shift-badge @l.ShiftTypeKey">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length))</span>
+                                    <require-grant key="AssignChores">
+                                    <button class="btn-delete-item"
+                                            onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                            loc-title="Delete">
+                                        ×
+                                    </button>
+                                    </require-grant>
+                                }
+                                else if (item.Type == CalendarItemType.OnDuty)
+                                {
+                                    <require-grant key="AssignHakamDuties,AssignKatzinDuties" mode="any">
+                                    <button class="btn-delete-item"
+                                            onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                            loc-title="Delete">
+                                        ×
+                                    </button>
+                                    </require-grant>
+                                }
+                                else if (item.Type == CalendarItemType.Shift)
+                                {
+                                    <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+                                    <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
+                                        <span class="manage-icon">⚙️</span>
                                     </a>
+                                    </require-grant>
                                 }
-                                else
-                                {
-                                    <span class="shift-badge @l.ShiftTypeKey employee-badge">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length))</span>
-                                }
-                                <div class="tooltip-content">
-                                    <div class="tooltip-header">
-                                        <div class="tooltip-title">
-                                            @if (!string.IsNullOrEmpty(l.ShiftName))
-                                            {
-                                                @l.ShiftName
-                                                <span class="tooltip-custom-name">(@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"])</span>
-                                            }
-                                            else
-                                            {
-                                                @Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"]
-                                            }
-                                        </div>
-                                        <div class="tooltip-hours">@l.StartTime - @l.EndTime</div>
-                                    </div>
-
-                                    <div class="tooltip-section">
-                                        <div class="tooltip-section-title">@Localizer["Staffing"]</div>
-                                        <div class="tooltip-names">
-                                            @if (l.AssignedNames.Any())
-                                            {
-                                                @foreach (var name in l.AssignedNames)
-                                                {
-                                                    <span class="tooltip-name @l.ShiftTypeKey">@name</span>
-                                                }
-                                            }
-                                            @if (l.EmptySlots.Any())
-                                            {
-                                                @foreach (var empty in l.EmptySlots)
-                                                {
-                                                    <span class="tooltip-empty">@empty</span>
-                                                }
-                                            }
-                                            @if (!l.AssignedNames.Any() && !l.EmptySlots.Any())
-                                            {
-                                                <span class="tooltip-empty">@Localizer["NoStaffingRequired"]</span>
-                                            }
-                                        </div>
-                                    </div>
-
-                                    @if (l.TraineeNames.Any())
-                                    {
-                                        <div class="tooltip-section">
-                                            <div class="tooltip-section-title">Trainees</div>
-                                            <div class="tooltip-names">
-                                                @foreach (var traineeName in l.TraineeNames)
-                                                {
-                                                    <span class="tooltip-name" style="background-color: #3b82f6; color: white;">👤 @traineeName</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
-
-                                    <div class="tooltip-stats">
-                                        <span class="tooltip-stat">
-                                            @l.Assigned/@l.Required @Localizer["Staffed"]
-                                            @if (l.TraineeCount > 0)
-                                            {
-                                                <span style="margin-left: 0.5rem; padding: 0.125rem 0.375rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem; font-size: 0.75rem;">
-                                                    +@l.TraineeCount 👤
-                                                </span>
-                                            }
-                                        </span>
-                                        @if (l.Assigned >= l.Required)
-                                        {
-                                            <span class="tooltip-status-ok">@Localizer["FullyStaffed"]</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="tooltip-status-warn">@string.Format(Localizer["NeedsMore"], l.Required - l.Assigned)</span>
-                                        }
-                                    </div>
-                                </div>
                             </div>
-                            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                            <div class="item-assignee">@item.AssigneeName</div>
+                            @if (!string.IsNullOrEmpty(item.TimeRange))
                             {
-                                <div class="shift-counter" data-si="@l.InstanceId" data-conc="@l.Concurrency">
-                                    <button class="counter-btn" aria-label="@Localizer["DecreaseStaffing"]"
-                                        onclick="window.adjustStaffing('@Url.Page("Month", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:-1, concurrency:@l.Concurrency }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">−</button>
-                                    <button class="counter-btn" aria-label="@Localizer["IncreaseStaffing"]"
-                                        onclick="window.adjustStaffing('@Url.Page("Month", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:1, concurrency:@l.Concurrency }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">+</button>
+                                <div class="item-time">@item.TimeRange</div>
+                            }
+                            @if (!string.IsNullOrEmpty(item.StaffingInfo))
+                            {
+                                <div class="item-staffing">@item.StaffingInfo</div>
+                            }
+                        </div>
+                    }
+
+                    @* ✅ PHASE 20: Show more button if > 3 items *@
+                    @if (hiddenCount > 0)
+                    {
+                        <button class="show-more-btn"
+                                onclick="toggleShowAll(this, '@day.Date.ToString("yyyy-MM-dd")')">
+                            <span class="show-more-text">+@hiddenCount <loc key="Calendar_MoreItems" /></span>
+                        </button>
+
+                        @* Hidden items (shown when expanded) *@
+                        <div class="hidden-items calendar-hidden-items">
+                            @foreach (var item in day.Items.Skip(3))
+                            {
+                                <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
+                                     title="@item.Details"
+                                     data-item-type="@item.Type.ToString().ToLower()"
+                                     data-item-id="@item.EntityId">
+                                    <div class="item-header">
+                                        <span class="item-icon">@item.Icon</span>
+                                        <span class="item-title">@item.Title</span>
+                                        @* ✅ PHASE 20: Delete button for chores and on-duty - Grant protected *@
+                                        @if (item.Type == CalendarItemType.Chore)
+                                        {
+                                            <require-grant key="AssignChores">
+                                            <button class="btn-delete-item"
+                                                    onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                                    loc-title="Delete">
+                                                ×
+                                            </button>
+                                            </require-grant>
+                                        }
+                                        else if (item.Type == CalendarItemType.OnDuty)
+                                        {
+                                            <require-grant key="AssignHakamDuties,AssignKatzinDuties" mode="any">
+                                            <button class="btn-delete-item"
+                                                    onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                                    loc-title="Delete">
+                                                ×
+                                            </button>
+                                            </require-grant>
+                                        }
+                                        else if (item.Type == CalendarItemType.Shift)
+                                        {
+                                            <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+                                            <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
+                                                <span class="manage-icon">⚙️</span>
+                                            </a>
+                                            </require-grant>
+                                        }
+                                    </div>
+                                    <div class="item-assignee">@item.AssigneeName</div>
+                                    @if (!string.IsNullOrEmpty(item.TimeRange))
+                                    {
+                                        <div class="item-time">@item.TimeRange</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.StaffingInfo))
+                                    {
+                                        <div class="item-staffing">@item.StaffingInfo</div>
+                                    }
                                 </div>
                             }
-                            <span class="staffing-badge @badgeClass">@l.Assigned/@l.Required</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(l.ShiftName))
-                        {
-                            <div class="shift-display-name">
-                                @l.ShortName.ToLower()-'@l.ShiftName'
-                            </div>
-                        }
                     }
-                }
-                @if (isCurrentMonth && (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director")))
-                {
-                    <button class="add-shift-btn" onclick="openShiftModal('@day.Date.ToString("yyyy-MM-dd")')">
-                        <span>+</span>
-                        <span>@Localizer["AddShift"]</span>
-                    </button>
-                }
+
+                    @* ✅ PHASE 20: Quick-add form - Grant protected *@
+                    <require-grant key="AssignChores,AssignHakamDuties,AssignKatzinDuties" mode="any">
+                    <div class="quick-add-container">
+                        <require-grant key="AssignChores">
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + <loc key="Calendar_AddChore" />
+                        </button>
+                        </require-grant>
+                        <require-grant key="AssignHakamDuties,AssignKatzinDuties" mode="any">
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('onduty', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + <loc key="Calendar_AddOnDuty" />
+                        </button>
+                        </require-grant>
+                    </div>
+                    </require-grant>
+
+                        <div id="quickAddForm-@day.Date.ToString("yyyy-MM-dd")" class="quick-add-form hidden" data-type="">
+                            <select id="assigneeSelect-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm assignee-select-clone">
+                                @* Options will be cloned from template via JavaScript *@
+                            </select>
+
+                            <div id="choreFields-@day.Date.ToString("yyyy-MM-dd")" class="hidden">
+                                <input type="text"
+                                       id="choreTitle-@day.Date.ToString("yyyy-MM-dd")"
+                                       loc-placeholder="Calendar_ChoreTitle"
+                                       class="form-control form-control-sm"
+                                       maxlength="200" />
+                            </div>
+
+                            <div id="ondutyFields-@day.Date.ToString("yyyy-MM-dd")" class="hidden">
+                                <select id="ondutyType-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
+                                    <option value="0"><loc key="OnDuty_Hakam" /></option>
+                                    <option value="1"><loc key="OnDuty_Lead" /></option>
+                                    @foreach (var customType in Model.CustomOnDutyTypes)
+                                    {
+                                        var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                                        var displayName = cultureName.StartsWith("he") ? customType.NameHe : customType.NameEn;
+                                        <option value="@customType.TypeValue">@displayName</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="quick-add-actions">
+                                <button class="btn btn-sm btn-primary" onclick="submitQuickAdd('@day.Date.ToString("yyyy-MM-dd")')">
+                                    <loc key="Add" />
+                                </button>
+                                <button class="btn btn-sm btn-ghost" onclick="toggleQuickAdd('', '@day.Date.ToString("yyyy-MM-dd")')">
+                                    <loc key="Cancel" />
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         }
     }
 </div>
+</div>
+    </div>@* End calendar-content *@
+</div>@* End calendar-skeleton-container *@
 
-<script>
-window.shiftTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["ShiftTypes"]));
-window.companies = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["Companies"]));
-</script>
+@* ✅ PHASE 20: JavaScript for show more/less functionality *@
+@section Scripts {
+    <script>
+        // Clone assignee options from template to all dropdowns (performance optimization)
+        document.addEventListener('DOMContentLoaded', function() {
+            const template = document.getElementById('assignee-options-template');
+            if (template) {
+                const selects = document.querySelectorAll('.assignee-select-clone');
+                selects.forEach(select => {
+                    // Clone all options from template
+                    const options = template.querySelectorAll('option');
+                    options.forEach(option => {
+                        select.appendChild(option.cloneNode(true));
+                    });
+                });
+            }
+
+            // B-007: Signal calendar content is ready
+            const calendarContent = document.querySelector('[data-calendar-content]');
+            if (calendarContent && window.CalendarSkeleton) {
+                window.CalendarSkeleton.signalReady(calendarContent);
+            }
+        });
+
+        // ✅ PHASE 20: Toggle showing all items in a day cell
+        function toggleShowAll(button, dateStr) {
+            const cell = document.querySelector(`[data-date="${dateStr}"]`);
+            if (!cell) return;
+
+            const hiddenItems = cell.querySelector('.hidden-items');
+            const btnText = button.querySelector('.show-more-text');
+
+            if (!hiddenItems.classList.contains('is-visible')) {
+                // Show all
+                hiddenItems.classList.add('is-visible');
+                button.classList.add('expanded');
+                btnText.textContent = '<loc key="Calendar_ShowLess" />';
+            } else {
+                // Hide extra items
+                hiddenItems.classList.remove('is-visible');
+                button.classList.remove('expanded');
+                const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
+                btnText.textContent = `+${hiddenCount} <loc key="Calendar_MoreItems" />`;
+            }
+        }
+
+        // B-037: Initialize calendar keyboard navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarGrid = document.querySelector('.calendar-grid');
+            if (calendarGrid && window.KeyboardNav) {
+                window.KeyboardNav.initCalendar({
+                    grid: calendarGrid,
+                    cellSelector: '.calendar-cell:not(.other-month)',
+                    onNavigate: function(cell) {
+                        // Announce date to screen readers
+                        const date = cell.getAttribute('data-date');
+                        if (date) {
+                            const dateObj = new Date(date);
+                            const announcement = dateObj.toLocaleDateString(undefined, {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                            // Update ARIA live region if present
+                            const liveRegion = document.getElementById('calendar-announcer');
+                            if (liveRegion) {
+                                liveRegion.textContent = announcement;
+                            }
+                        }
+                    },
+                    onSelect: function(cell) {
+                        // Click the first clickable element in the cell
+                        const dateLink = cell.querySelector('.calendar-item, button, a');
+                        if (dateLink) {
+                            dateLink.click();
+                        } else {
+                            // If no items, trigger quick add if available
+                            const quickAddBtn = cell.querySelector('[onclick*="toggleQuickAdd"]');
+                            if (quickAddBtn) {
+                                quickAddBtn.click();
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+@* ✅ PHASE 20: Page-specific styles *@
+@section Styles {
+    <style>
+        /* ✅ PHASE 20: Calendar item cards */
+        .calendar-item {
+            position: relative;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ✅ PHASE 20: Personal items highlighted */
+        .calendar-item.personal {
+            border-width: 3px;
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--bg), rgba(var(--primary-rgb), 0.05));
+            font-weight: 600;
+        }
+
+        /* ✅ PHASE 20: Other items muted */
+        .calendar-item.other {
+            opacity: 0.7;
+        }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .item-icon {
+            font-size: 1rem;
+        }
+
+        .item-title {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .item-assignee {
+            color: var(--text);
+            font-size: 0.8rem;
+        }
+
+        .item-time, .item-staffing {
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .item-manage-link {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .calendar-item:hover .item-manage-link {
+            opacity: 1;
+        }
+
+        .manage-icon {
+            font-size: 0.9rem;
+        }
+
+        /* ✅ PHASE 20: Show more button */
+        .show-more-btn {
+            width: 100%;
+            padding: 6px;
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .show-more-btn:hover {
+            background: var(--surface-soft);
+            border-color: var(--primary);
+        }
+
+        .show-more-btn.expanded {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-style: solid;
+        }
+
+        .hidden-items {
+            margin-top: 6px;
+        }
+
+        /* ✅ PHASE 20: Quick actions bar */
+        .calendar-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .quick-actions-label {
+            font-weight: 600;
+            color: var(--muted);
+            margin-right: 0.5rem;
+        }
+
+        /* ✅ PHASE 20: Calendar controls */
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .today-indicator {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-left: 4px;
+        }
+
+        /* ✅ UI Overhaul: Empty state styles */
+        .calendar-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-empty__icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-empty__icon svg {
+            width: 64px;
+            height: 64px;
+        }
+
+        .calendar-empty__title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .calendar-empty__message {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0 0 1.5rem 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .calendar-empty__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .calendar-empty__actions .btn {
+            min-width: 120px;
+        }
+
+        /* Dim grid when empty */
+        .calendar-grid--empty {
+            opacity: 0.6;
+        }
+
+        /* ========================================
+           A-004: RESPONSIVE CALENDAR GRID
+           ======================================== */
+
+        /* Weekday header base styles */
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .weekday-header {
+            background: var(--surface-soft);
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Day name display control */
+        .weekday-header .day-abbr {
+            display: none;
+        }
+
+        .weekday-header .day-full {
+            display: inline;
+        }
+
+        /* Calendar grid responsive */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .calendar-cell {
+            background: var(--surface);
+            min-height: 120px;
+            padding: 0.5rem;
+        }
+
+        /* Touch-friendly tap targets */
+        .btn-quick-add,
+        .show-more-btn,
+        .btn-delete-item,
+        .item-manage-link {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Tablet breakpoint (768px) - Abbreviated day names */
+        @@media (max-width: 768px) {
+            .weekday-header .day-full {
+                display: none;
+            }
+
+            .weekday-header .day-abbr {
+                display: inline;
+                font-size: 0.8rem;
+            }
+
+            .calendar-cell {
+                min-height: 80px;
+                padding: 0.375rem;
+            }
+
+            .calendar-item {
+                padding: 6px;
+                font-size: 0.8rem;
+            }
+
+            .item-icon {
+                font-size: 0.9rem;
+            }
+
+            .item-title {
+                font-size: 0.8rem;
+            }
+
+            .item-assignee,
+            .item-time,
+            .item-staffing {
+                font-size: 0.7rem;
+            }
+
+            /* Quick actions compact */
+            .calendar-quick-actions {
+                flex-wrap: wrap;
+                padding: 0.75rem;
+            }
+
+            .quick-actions-label {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Calendar header responsive */
+            .calendar-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .header-main {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .calendar-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .calendar-metrics {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            /* View switcher full width */
+            .calendar-view-switcher {
+                width: 100%;
+                display: flex;
+            }
+
+            .calendar-view-switcher .btn {
+                flex: 1;
+                justify-content: center;
+                min-height: 44px;
+            }
+        }
+
+        /* Mobile breakpoint (480px) - Single letter day names */
+        @@media (max-width: 480px) {
+            .weekday-header {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.75rem;
+            }
+
+            .calendar-cell {
+                min-height: 70px;
+                padding: 0.25rem;
+            }
+
+            .cell-date {
+                font-size: 0.8rem;
+            }
+
+            .calendar-item {
+                padding: 4px;
+                margin-bottom: 4px;
+                font-size: 0.75rem;
+            }
+
+            .item-header {
+                gap: 2px;
+            }
+
+            .item-icon {
+                font-size: 0.8rem;
+            }
+
+            /* Hide some details on very small screens */
+            .item-staffing {
+                display: none;
+            }
+
+            /* Navigation compact */
+            .calendar-nav .nav-text {
+                display: none;
+            }
+
+            .calendar-nav .btn {
+                padding: 0.5rem;
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            /* Metrics scrollable */
+            .calendar-metrics {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 0.5rem;
+            }
+
+            .metric-item {
+                flex-shrink: 0;
+            }
+        }
+
+        /* Very small mobile (360px) - List view */
+        @@media (max-width: 360px) {
+            .calendar-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-weekdays {
+                display: none;
+            }
+
+            .calendar-cell {
+                min-height: auto;
+                padding: 0.75rem;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .calendar-cell::before {
+                content: attr(data-day-name);
+                display: block;
+                font-weight: 600;
+                color: var(--text-muted);
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .cell-date {
+                font-size: 1rem;
+                font-weight: 700;
+            }
+        }
+
+        /* Prevent horizontal scroll on all mobile */
+        @@media (max-width: 768px) {
+            [data-ui-version="v2"] {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
+            .calendar-grid {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+        }
+
+        /* Touch device enhancements */
+        @@media (pointer: coarse) {
+            .calendar-item {
+                min-height: 44px;
+            }
+
+            .btn-quick-add {
+                padding: 0.75rem;
+            }
+
+            .show-more-btn {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+}

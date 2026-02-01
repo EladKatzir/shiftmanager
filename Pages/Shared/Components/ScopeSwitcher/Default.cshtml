@@ -1,0 +1,218 @@
+@model ShiftManager.ViewComponents.ScopeSwitcherViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* Scope Switcher Component - Integrated with /Api/ScopeSwitcher endpoint *@
+<div class="scope-switcher"
+     data-calendar-type="@Model.CalendarType"
+     data-current-scope="@Model.CurrentScope"
+     data-api-url="/Api/ScopeSwitcher"
+     role="region"
+     aria-label="@Localizer["ScopeSwitcher_AriaLabel"]">
+
+    <span class="scope-switcher__label" id="scope-switcher-label-@Model.CalendarType">
+        <loc key="ScopeSwitcher_ViewLabel" />:
+    </span>
+
+    <div class="scope-switcher__buttons"
+         role="tablist"
+         aria-labelledby="scope-switcher-label-@Model.CalendarType">
+        @foreach (var scope in Model.Scopes.Where(s => s.IsAvailable))
+        {
+            <button type="button"
+                    class="scope-switcher__btn @(scope.IsActive ? "scope-switcher__btn--active" : "")"
+                    data-scope="@scope.Key"
+                    role="tab"
+                    aria-selected="@(scope.IsActive ? "true" : "false")"
+                    aria-controls="calendar-panel"
+                    tabindex="@(scope.IsActive ? "0" : "-1")">
+                <span class="scope-switcher__btn-icon" aria-hidden="true">@scope.Icon</span>
+                <span class="scope-switcher__btn-label">@scope.Label</span>
+            </button>
+        }
+    </div>
+
+    @* Current scope indicator for screen readers *@
+    <span class="visually-hidden" aria-live="polite" id="scope-announce-@Model.CalendarType"></span>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const STORAGE_KEY = 'shifty_scope_@Model.CalendarType';
+    const COOKIE_KEY = 'ShiftyScope_@Model.CalendarType';
+    const container = document.querySelector('.scope-switcher[data-calendar-type="@Model.CalendarType"]');
+
+    if (!container) return;
+
+    const buttons = container.querySelectorAll('.scope-switcher__btn');
+    const buttonList = container.querySelector('.scope-switcher__buttons');
+    const announcer = document.getElementById('scope-announce-@Model.CalendarType');
+
+    // Initialize - restore scope preference
+    function init() {
+        const savedScope = getSavedScope();
+        const currentScope = container.dataset.currentScope;
+
+        // If saved scope differs from current and URL doesn't have scope param, redirect
+        if (savedScope && savedScope !== currentScope) {
+            const url = new URL(window.location.href);
+            if (!url.searchParams.has('scope')) {
+                // Auto-restore saved scope preference
+                changeScope(savedScope, false);
+            }
+        }
+
+        // Setup keyboard navigation
+        setupKeyboardNavigation();
+
+        // Setup button click handlers
+        setupClickHandlers();
+    }
+
+    // Get saved scope from localStorage and cookie
+    function getSavedScope() {
+        try {
+            // Try localStorage first
+            const localScope = localStorage.getItem(STORAGE_KEY);
+            if (localScope) return localScope;
+
+            // Fall back to cookie
+            const cookieValue = getCookie(COOKIE_KEY);
+            if (cookieValue) return cookieValue;
+        } catch (e) {
+            console.warn('Could not read scope preference', e);
+        }
+        return null;
+    }
+
+    // Save scope to localStorage and cookie
+    function saveScope(scope) {
+        try {
+            // Save to localStorage
+            localStorage.setItem(STORAGE_KEY, scope);
+
+            // Save to cookie (30 days expiry)
+            setCookie(COOKIE_KEY, scope, 30);
+        } catch (e) {
+            console.warn('Could not save scope preference', e);
+        }
+    }
+
+    // Change the scope
+    function changeScope(scope, shouldAnnounce = true) {
+        // Save preference
+        saveScope(scope);
+
+        // Announce to screen readers if enabled
+        if (shouldAnnounce && announcer) {
+            const selectedButton = container.querySelector(`[data-scope="${scope}"]`);
+            if (selectedButton) {
+                const label = selectedButton.querySelector('.scope-switcher__btn-label')?.textContent || scope;
+                announcer.textContent = '@Localizer["ScopeSwitcher_ViewLabel"]'.replace(':', '') + ': ' + label;
+            }
+        }
+
+        // Update URL and navigate
+        const url = new URL(window.location.href);
+        url.searchParams.set('scope', scope);
+        window.location.href = url.toString();
+    }
+
+    // Setup click handlers for scope buttons
+    function setupClickHandlers() {
+        buttons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const scope = this.dataset.scope;
+                if (!this.classList.contains('scope-switcher__btn--active')) {
+                    // Add loading state
+                    this.classList.add('scope-switcher__btn--loading');
+                    changeScope(scope);
+                }
+            });
+        });
+    }
+
+    // Setup keyboard navigation (arrow keys for tab navigation)
+    function setupKeyboardNavigation() {
+        buttonList.addEventListener('keydown', function(e) {
+            const currentButton = document.activeElement;
+            if (!currentButton.classList.contains('scope-switcher__btn')) return;
+
+            const buttonArray = Array.from(buttons);
+            const currentIndex = buttonArray.indexOf(currentButton);
+            let nextIndex;
+
+            switch (e.key) {
+                case 'ArrowRight':
+                case 'ArrowDown':
+                    e.preventDefault();
+                    nextIndex = (currentIndex + 1) % buttonArray.length;
+                    focusButton(buttonArray[nextIndex]);
+                    break;
+
+                case 'ArrowLeft':
+                case 'ArrowUp':
+                    e.preventDefault();
+                    nextIndex = (currentIndex - 1 + buttonArray.length) % buttonArray.length;
+                    focusButton(buttonArray[nextIndex]);
+                    break;
+
+                case 'Home':
+                    e.preventDefault();
+                    focusButton(buttonArray[0]);
+                    break;
+
+                case 'End':
+                    e.preventDefault();
+                    focusButton(buttonArray[buttonArray.length - 1]);
+                    break;
+
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    currentButton.click();
+                    break;
+            }
+        });
+    }
+
+    // Focus a button and update tabindex for roving tabindex pattern
+    function focusButton(button) {
+        // Update tabindex
+        buttons.forEach(btn => btn.setAttribute('tabindex', '-1'));
+        button.setAttribute('tabindex', '0');
+        button.focus();
+    }
+
+    // Cookie helpers
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + '=' + encodeURIComponent(value) +
+            ';expires=' + expires.toUTCString() +
+            ';path=/;SameSite=Lax';
+    }
+
+    function getCookie(name) {
+        const nameEQ = name + '=';
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i].trim();
+            if (c.indexOf(nameEQ) === 0) {
+                return decodeURIComponent(c.substring(nameEQ.length));
+            }
+        }
+        return null;
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>

@@ -6,7 +6,7 @@ using ShiftManager.Data;
 
 namespace ShiftManager.Pages;
 
-[Authorize(Policy = "IsAdmin")]
+[Authorize(Policy = "Grant:AdminAccess")]
 public class DiagnosticModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -16,7 +16,7 @@ public class DiagnosticModel : PageModel
     public record CompanyInfo(int Id, string Name, string? Slug);
     public record UserData(int Id, string Email, int CompanyId, string Role);
     public record ShiftInstanceInfo(int Id, int CompanyId, string WorkDate, string ShiftKey, int Staffing);
-    public record AssignmentInfo(int Id, int UserId, int CompanyId, int InstanceId, string WorkDate);
+    public record AssignmentInfo(int Id, int? UserId, int CompanyId, int InstanceId, string WorkDate);
     public record UserOption(int Id, string Email, string DisplayName);
 
     public List<CompanyInfo> Companies { get; set; } = new();

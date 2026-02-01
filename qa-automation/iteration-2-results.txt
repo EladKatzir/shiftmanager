@@ -1,0 +1,496 @@
+
+> shiftmanager-qa-automation@1.0.0 test
+> npx playwright test
+
+
+🚀 Global Setup Starting...
+
+📡 Checking application availability...
+✓ Application is ready
+
+🔐 Logging in as Owner for cleanup...
+✓ Authenticated as Owner
+
+🔄 Resetting test database...
+🧹 Cleaning up test data...
+✓ Test data cleanup complete
+✓ Database reset complete (test users available via seeder)
+
+💾 Saving authentication state for test reuse...
+✓ Authentication state saved
+
+✅ Global Setup Complete
+
+
+Running 92 tests using 16 workers
+
+  ✓   4 [chromium] › tests\auth.spec.js:152:3 › Session Management › should handle session timeout gracefully (20.0s)
+  ✓   6 [chromium] › tests\auth.spec.js:131:5 › Authorization › Access Control › should show access denied for unauthorized role (23.7s)
+  ✓   1 [chromium] › tests\auth.spec.js:91:5 › Authentication › Logout › P1-02: should logout successfully (27.4s)
+  ✓   5 [chromium] › tests\auth.spec.js:13:5 › Authentication › Login Page › P1-01a: should display login page (25.0s)
+  ✓   3 [chromium] › tests\companies-crud.spec.js:152:9 › Companies CRUD - Owner Role › Create Company › P2-03: Validation - empty company name rejected (29.5s)
+  ✓   2 [chromium] › tests\auth.spec.js:105:5 › Authentication › Logout › P1-02: should clear session on logout (33.0s)
+  ✓   9 [chromium] › tests\auth.spec.js:40:5 › Authentication › Login Page › P1-01c: should login successfully as Owner (31.5s)
+  ✓  11 [chromium] › tests\auth.spec.js:123:5 › Authorization › Access Control › should redirect unauthenticated user to login (28.5s)
+✓ Page renders with fallback fonts
+  ✓   7 [chromium] › tests\companies-crud.spec.js:103:9 › Companies CRUD - Owner Role › Create Company › P2-01: Create company with valid data (35.1s)
+  ✓  12 [chromium] › tests\auth.spec.js:57:5 › Authentication › Login Page › P1-01d: should enforce rate limiting (27.6s)
+  ✓  14 [chromium] › tests\air-gapped-simulation.spec.js:92:3 › Air-Gapped Environment Simulation › P8-04: Font loading fails gracefully (24.4s)
+✓ All CSS loaded locally
+  ✘  10 [chromium] › tests\air-gapped-simulation.spec.js:7:3 › Air-Gapped Environment Simulation › P8-01: Block external requests and verify functionality (32.2s)
+  ✓  13 [chromium] › tests\auth.spec.js:22:5 › Authentication › Login Page › P1-01b: should show error for invalid credentials (24.8s)
+  ✓  15 [chromium] › tests\air-gapped-simulation.spec.js:50:3 › Air-Gapped Environment Simulation › P8-02: CSS loads from local paths only (16.5s)
+  ✘   8 [chromium] › tests\companies-crud.spec.js:128:9 › Companies CRUD - Owner Role › Create Company › P2-02: Create company with minimum required fields (33.8s)
+✓ All JavaScript loaded locally
+  ✓  19 [chromium] › tests\companies-crud.spec.js:237:9 › Companies CRUD - Owner Role › Read/List Companies › P2-06: Companies list is displayed (8.1s)
+  ✓  21 [chromium] › tests\companies-crud.spec.js:267:9 › Companies CRUD - Owner Role › Read/List Companies › P2-08: Empty state displayed when no companies (7.5s)
+  ✓  20 [chromium] › tests\companies-crud.spec.js:250:9 › Companies CRUD - Owner Role › Read/List Companies › P2-07: Company details are displayed correctly (8.4s)
+  ✓  16 [chromium] › tests\air-gapped-simulation.spec.js:71:3 › Air-Gapped Environment Simulation › P8-03: JavaScript loads from local paths only (16.4s)
+  ✓  22 [chromium] › tests\companies-crud.spec.js:282:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-09: Rename company modal opens (4.0s)
+  ✓  33 [chromium] › tests\companies-crud.spec.js:629:5 › Companies Access Control › P2-22: Unauthenticated user redirected to login (708ms)
+  ✓  17 [chromium] › tests\companies-crud.spec.js:173:9 › Companies CRUD - Owner Role › Create Company › P2-04: Validation - duplicate slug rejected (14.7s)
+  ✓  34 [chromium] › tests\companies-crud.spec.js:637:5 › Companies Access Control › P2-23: Page requires admin policy (728ms)
+  ✓  24 [chromium] › tests\companies-crud.spec.js:339:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-11: Rename modal cancel works (3.6s)
+  ✘  26 [chromium] › tests\companies-crud.spec.js:401:9 › Companies CRUD - Owner Role › Delete Company › P2-13: Delete confirmation can be cancelled (3.0s)
+  ✓  18 [chromium] › tests\companies-crud.spec.js:206:9 › Companies CRUD - Owner Role › Create Company › P2-05: Validation - invalid slug format rejected (12.5s)
+  ✓  29 [chromium] › tests\companies-crud.spec.js:510:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-17: Path traversal attempts in company slug are rejected (2.9s)
+  ✓  30 [chromium] › tests\companies-crud.spec.js:542:9 › Companies CRUD - Owner Role › Director Assignment › P2-19: Manager fields become optional when director selected (2.5s)
+  ✓  36 [chromium] › tests\multi-tenancy-isolation-network.spec.js:53:3 › Multi-Tenancy Isolation - Network Level › P6-02: SQL injection attempts do not bypass tenant filters (1.1s)
+  ✓  35 [chromium] › tests\multi-tenancy-isolation-network.spec.js:7:3 › Multi-Tenancy Isolation - Network Level › P6-01: API responses contain only tenant-scoped data (2.0s)
+  ✓  23 [chromium] › tests\companies-crud.spec.js:302:9 › Companies CRUD - Owner Role › Update/Rename Company › P2-10: Rename company successfully (6.2s)
+  ✓  25 [chromium] › tests\companies-crud.spec.js:365:9 › Companies CRUD - Owner Role › Delete Company › P2-12: Delete company with confirmation (5.4s)
+  ✓  28 [chromium] › tests\companies-crud.spec.js:487:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-16: Very long company name handled (4.4s)
+  ✓  38 [chromium] › tests\multi-tenancy-isolation-network.spec.js:112:3 › Multi-Tenancy Isolation - Network Level › P6-04: Network request headers contain proper authentication (2.0s)
+Admin/Index: 6 API requests, 741ms load time
+Calendar/Table: 7 API requests, 921ms load time
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✓  41 [chromium] › tests\network-performance.spec.js:30:3 › Network Performance & Efficiency › P9-01: Measure request count - Admin/Index (2.2s)
+  ✓  32 [chromium] › tests\companies-crud.spec.js:586:9 › Companies CRUD - Owner Role › Form State › P2-21: Form preserves values on validation error (5.1s)
+Duplicate requests: 0
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✓  42 [chromium] › tests\network-performance.spec.js:73:3 › Network Performance & Efficiency › P9-02: Measure request count - Calendar/Table (2.7s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✓  43 [chromium] › tests\network-performance.spec.js:114:3 › Network Performance & Efficiency › P9-03: Detect duplicate requests (2.3s)
+  ✓  31 [chromium] › tests\companies-crud.spec.js:570:9 › Companies CRUD - Owner Role › Form State › P2-20: Form clears after successful submission (5.6s)
+Slow endpoints (>1s): 0
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✓  45 [chromium] › tests\network-performance.spec.js:203:3 › Network Performance & Efficiency › P9-05: Identify slow endpoints (2.4s)
+  ✓  48 [chromium] › tests\session-resilience.spec.js:7:3 › Session Management & Resilience › P7-01: Session timeout redirects to login (1.4s)
+  ✓  49 [chromium] › tests\session-resilience.spec.js:22:3 › Session Management & Resilience › P7-02: Page refresh preserves authentication (2.5s)
+HTTP errors detected: 0
+  ✓  52 [chromium] › tests\session-resilience.spec.js:101:3 › Session Management & Resilience › P7-05: Network interruption shows graceful error (2.6s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✓  46 [chromium] › tests\network-performance.spec.js:251:3 › Network Performance & Efficiency › P9-06: Detect 4xx/5xx errors (4.6s)
+  ✓  51 [chromium] › tests\session-resilience.spec.js:76:3 › Session Management & Resilience › P7-04: Concurrent sessions from same user work independently (3.0s)
+✓ Blueprint created for deletion test: DEL_1768945546150
+✓ PRG pattern prevents double-submit via back button
+  ✓  27 [chromium] › tests\companies-crud.spec.js:431:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-14: XSS attempts in company name are handled (9.9s)
+  ✓  50 [chromium] › tests\session-resilience.spec.js:35:3 › Session Management & Resilience › P7-03: Browser back button after form submit shows correct state (3.9s)
+  ✘  53 [chromium] › tests\shift-assignment-workflow.spec.js:40:5 › Shift Assignment Workflow - End-to-End › Complete workflow: Blueprint → Program → Shift → Assignment (2.9s)
+Polling URLs detected: 0
+✓ Time validation working (end time before start time rejected or allowed for overnight shifts)
+  ✓  55 [chromium] › tests\shift-assignment-workflow.spec.js:443:5 › Shift Assignment Workflow - Edge Cases › Blueprint without start/end time validation (2.9s)
+  ✓  39 [chromium] › tests\multi-tenancy-isolation-ui.spec.js:93:3 › Multi-Tenancy Isolation - UI Level › P5-02: Company selection isolates data view (1.4s)
+✓ Validation working: Program requires at least one day selected
+  ✓  59 [chromium] › tests\users-crud-rbac.spec.js:90:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-02: Owner can see all companies in company filter (2.4s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✓  44 [chromium] › tests\network-performance.spec.js:160:3 › Network Performance & Efficiency › P9-04: Detect unexpected polling (7.5s)
+  ✓  56 [chromium] › tests\shift-assignment-workflow.spec.js:477:5 › Shift Assignment Workflow - Edge Cases › Program creation without selected days (3.0s)
+  ✓  60 [chromium] › tests\users-crud-rbac.spec.js:103:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-03: Owner can see company selection for new user creation (2.5s)
+  ✓  40 [chromium] › tests\multi-tenancy-isolation-ui.spec.js:126:3 › Multi-Tenancy Isolation - UI Level › P5-03: Direct URL manipulation cannot access other tenant data (2.3s)
+  -  64 [chromium] › tests\users-crud-rbac.spec.js:185:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-06: Owner can assign any role to a user
+  ✓  62 [chromium] › tests\users-crud-rbac.spec.js:115:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-04: Owner can create user with valid data (4.2s)
+  ✓  66 [chromium] › tests\users-crud-rbac.spec.js:218:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-08: Director sees only users from assigned companies (2.8s)
+  ✓  67 [chromium] › tests\users-crud-rbac.spec.js:246:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-10: Director cannot assign Owner role (2.9s)
+  ✓  61 [chromium] › tests\companies-crud.spec.js:534:9 › Companies CRUD - Owner Role › Director Assignment › P2-18: Director dropdown is available (5.1s)
+  ✓  68 [chromium] › tests\users-crud-rbac.spec.js:235:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-09: Director cannot see company selection for new users (3.5s)
+  ✘  54 [chromium] › tests\shift-assignment-workflow.spec.js:313:5 › Shift Assignment Workflow - End-to-End › Data integrity: Deleting blueprint prevents new program creation (5.1s)
+  ✓  57 [chromium] › tests\companies-crud.spec.js:463:9 › Companies CRUD - Owner Role › Security - Input Validation › P2-15: SQL injection attempts in company name are handled (6.7s)
+  ✓  76 [chromium] › tests\users-crud-rbac.spec.js:399:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-18: Unauthenticated request to Users page is rejected (6.0s)
+  ✓  71 [chromium] › tests\users-crud-rbac.spec.js:289:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-13: Manager cannot assign Director or Owner roles (15.6s)
+  ✓  73 [chromium] › tests\users-crud-rbac.spec.js:344:9 › Users Module - RBAC Authorization Matrix › Employee Role - No Access › P3-15: Employee cannot access Users management page (17.3s)
+  ✓  72 [chromium] › tests\users-crud-rbac.spec.js:306:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-14: Manager can create Employee users (19.8s)
+  ✓  75 [chromium] › tests\users-crud-rbac.spec.js:384:9 › Users Module - RBAC Authorization Matrix › Assigner Role - No Access › P3-17: Assigner cannot access Users management page (18.6s)
+  ✓  74 [chromium] › tests\users-crud-rbac.spec.js:364:9 › Users Module - RBAC Authorization Matrix › Trainee Role - No Access › P3-16: Trainee cannot access Users management page (20.8s)
+  ✘  69 [chromium] › tests\users-crud-rbac.spec.js:267:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-11: Manager can access Users management page (18.7s)
+  ✓  70 [chromium] › tests\users-crud-rbac.spec.js:274:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-12: Manager sees only users from their company (30.8s)
+  ✘  65 [chromium] › tests\users-crud-rbac.spec.js:211:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-07: Director can access Users management page (20.4s)
+  ✓  77 [chromium] › tests\users-crud-rbac.spec.js:436:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-20: Backend rejects unauthorized user deletion via direct POST (30.9s)
+  ✘  58 [chromium] › tests\users-crud-rbac.spec.js:80:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-01: Owner can access Users management page (18.6s)
+  ✓  79 [chromium] › tests\users-crud-rbac.spec.js:509:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-22: Manager cannot modify users from other companies (19.6s)
+  ✓  78 [chromium] › tests\users-crud-rbac.spec.js:455:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-21: Backend rejects role escalation attempt (28.1s)
+
+📊 Performance report saved to qa-automation/reports/efficiency-report.json
+  ✘  80 [chromium] › tests\users-crud-rbac.spec.js:526:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-23: Owner can filter users by company (17.9s)
+  ✘  47 [chromium] › tests\network-performance.spec.js:289:3 › Network Performance & Efficiency › P9-07: Measure full workflow - Create Company (46.0s)
+  ✘  37 [chromium] › tests\multi-tenancy-isolation-network.spec.js:84:3 › Multi-Tenancy Isolation - Network Level › P6-03: XSS attempts are sanitized in responses (48.6s)
+  ✓  84 [chromium] › tests\users-crud-rbac.spec.js:675:9 › Users Module - RBAC Authorization Matrix › Join Requests - RBAC › P3-28: Join requests table displays expected columns (5.6s)
+  ✓  82 [chromium] › tests\users-crud-rbac.spec.js:593:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-25: SQL injection attempts in email are handled (16.6s)
+  ✓  81 [chromium] › tests\users-crud-rbac.spec.js:561:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-24: XSS attempts in user display name are handled (16.2s)
+  -  85 [chromium] › tests\users-crud-rbac.spec.js:717:5 › Users CRUD Operations › P3-30: User role can be changed via dropdown
+  -  86 [chromium] › tests\users-crud-rbac.spec.js:775:5 › Users CRUD Operations › P3-32: Password reset form exists and works
+  ✓  83 [chromium] › tests\users-crud-rbac.spec.js:630:9 › Users Module - RBAC Authorization Matrix › Input Validation Security › P3-26: Very long display name is handled (13.7s)
+  ✓  87 [chromium] › tests\users-crud-rbac.spec.js:803:5 › Users CRUD Operations › P3-33: Export CSV functionality exists (1.8s)
+  ✓  63 [chromium] › tests\multi-tenancy-isolation-ui.spec.js:82:3 › Multi-Tenancy Isolation - UI Level › P5-01: Owner can see all companies (21.7s)
+  -  88 [chromium] › tests\users-crud-rbac.spec.js:152:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-05: Owner can delete user from any company
+  ✓  89 [chromium] › tests\users-crud-rbac.spec.js:407:9 › Users Module - RBAC Authorization Matrix › Backend Authorization - API Security › P3-19: Backend rejects unauthorized user creation via direct POST (2.2s)
+  ✓  90 [chromium] › tests\users-crud-rbac.spec.js:667:9 › Users Module - RBAC Authorization Matrix › Join Requests - RBAC › P3-27: Owner can see join requests section (2.2s)
+  ✓  92 [chromium] › tests\users-crud-rbac.spec.js:699:5 › Users CRUD Operations › P3-29: Users table displays expected columns (2.1s)
+  -  91 [chromium] › tests\users-crud-rbac.spec.js:749:5 › Users CRUD Operations › P3-31: User status can be toggled
+
+🧹 Global Teardown Starting...
+
+🔐 Using saved authentication for cleanup...
+🧹 Cleaning up test data...
+  Found 3 test companies with prefix "Company_"
+  ✓ Deleted 3 test companies with prefix "Company_"
+✓ Test data cleanup complete
+
+🗑️  Removing saved authentication states...
+✓ Authentication states removed
+
+✅ Global Teardown Complete
+
+
+
+  1) [chromium] › tests\air-gapped-simulation.spec.js:7:3 › Air-Gapped Environment Simulation › P8-01: Block external requests and verify functionality 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForTimeout: Test timeout of 30000ms exceeded.
+
+      40 |
+      41 |       // Check for stuck loading states
+    > 42 |       await page.waitForTimeout(2000);
+         |                  ^
+      43 |       const hasSpinner = await page.locator('.spinner:visible, .loading:visible').count();
+      44 |       expect(hasSpinner).toBeLessThan(5); // Allow some spinners but not stuck
+      45 |
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\air-gapped-simulation.spec.js:42:18
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\air-gapped-simulation-Air--f6c61-ts-and-verify-functionality-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\air-gapped-simulation-Air--f6c61-ts-and-verify-functionality-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\air-gapped-simulation-Air--f6c61-ts-and-verify-functionality-chromium\error-context.md
+
+  2) [chromium] › tests\companies-crud.spec.js:128:9 › Companies CRUD - Owner Role › Create Company › P2-02: Create company with minimum required fields 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-5a903-ith-minimum-required-fields-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-5a903-ith-minimum-required-fields-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-5a903-ith-minimum-required-fields-chromium\error-context.md
+
+  3) [chromium] › tests\companies-crud.spec.js:401:9 › Companies CRUD - Owner Role › Delete Company › P2-13: Delete confirmation can be cancelled 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('table tr:has-text("\'; DROP TABLE Companies;--")')
+    Expected: visible
+    Error: strict mode violation: locator('table tr:has-text("\'; DROP TABLE Companies;--")') resolved to 13 elements:
+        1) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768616077301-0gk3cy Test Company' })
+        2) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768616358722-zlhmgi Test Company' })
+        3) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768617590532-ppypyg Test Company' })
+        4) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768617889014-ebgiex Test Company' })
+        5) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768621618339-k3bpcu Test Company' })
+        6) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768640051037-jkqde8 Test Company' })
+        7) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768782726686-vp4p0c Test Company' })
+        8) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768783312730-p907iw Test Company' })
+        9) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768796935310-xtnjyp Test Company' })
+        10) <tr>…</tr> aka getByRole('row', { name: '\'; DROP TABLE Companies;-- testcompany-1768803613989-u2pj2q Test Company' })
+        ...
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('table tr:has-text("\'; DROP TABLE Companies;--")')[22m
+
+
+      424 |             // Company should still exist (deterministic wait instead of timeout)
+      425 |             const companyElement = page.locator(`table tr:has-text("${companyName}")`);
+    > 426 |             await expect(companyElement).toBeVisible({ timeout: 5000 });
+          |                                          ^
+      427 |         });
+      428 |     });
+      429 |
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\companies-crud.spec.js:426:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-b1de3-nfirmation-can-be-cancelled-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\companies-crud-Companies-C-b1de3-nfirmation-can-be-cancelled-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\companies-crud-Companies-C-b1de3-nfirmation-can-be-cancelled-chromium\error-context.md
+
+  4) [chromium] › tests\multi-tenancy-isolation-network.spec.js:84:3 › Multi-Tenancy Isolation - Network Level › P6-03: XSS attempts are sanitized in responses 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('a:has-text("Create")')[22m
+
+
+      87 |
+      88 |     // Create company with XSS payload in name
+    > 89 |     await page.click('a:has-text("Create")');
+         |                ^
+      90 |
+      91 |     const xssPayload = '<script>alert("XSS")</script>';
+      92 |     await page.fill('input[name="Name"]', xssPayload);
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\multi-tenancy-isolation-network.spec.js:89:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-b451e--are-sanitized-in-responses-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\multi-tenancy-isolation-ne-b451e--are-sanitized-in-responses-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\multi-tenancy-isolation-ne-b451e--are-sanitized-in-responses-chromium\error-context.md
+
+  5) [chromium] › tests\network-performance.spec.js:289:3 › Network Performance & Efficiency › P9-07: Measure full workflow - Create Company 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('a:has-text("Create"), button:has-text("Add")')[22m
+
+
+      309 |
+      310 |     // Step 2: Open create form
+    > 311 |     await page.click('a:has-text("Create"), button:has-text("Add")');
+          |                ^
+      312 |     await page.waitForLoadState('networkidle');
+      313 |
+      314 |     // Step 3: Fill and submit
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\network-performance.spec.js:311:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-b1fbf-l-workflow---Create-Company-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\network-performance-Networ-b1fbf-l-workflow---Create-Company-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\network-performance-Networ-b1fbf-l-workflow---Create-Company-chromium\error-context.md
+
+  6) [chromium] › tests\shift-assignment-workflow.spec.js:40:5 › Shift Assignment Workflow - End-to-End › Complete workflow: Blueprint → Program → Shift → Assignment › Phase 1: Create Blueprint 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+      80 |             const blueprintInTable = await page.locator(`tr:has-text("${blueprintData.key}")`).isVisible().catch(() => false);
+      81 |
+    > 82 |             expect(successVisible || blueprintInTable).toBeTruthy();
+         |                                                        ^
+      83 |
+      84 |             // Store blueprint ID if available
+      85 |             const blueprintRow = page.locator(`tr:has-text("${blueprintData.key}")`).first();
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:82:56
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:44:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--5e3ef-rogram-→-Shift-→-Assignment-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--5e3ef-rogram-→-Shift-→-Assignment-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\shift-assignment-workflow--5e3ef-rogram-→-Shift-→-Assignment-chromium\error-context.md
+
+  7) [chromium] › tests\shift-assignment-workflow.spec.js:313:5 › Shift Assignment Workflow - End-to-End › Data integrity: Deleting blueprint prevents new program creation › Delete Blueprint 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeFalsy[2m()[22m
+
+    Received: [31mtrue[39m
+
+      394 |             const blueprintGone = await page.locator(`tr:has-text("${testContext.blueprintKey}")`).first().isVisible({ timeout: 2000 }).catch(() => false);
+      395 |
+    > 396 |             expect(blueprintGone).toBeFalsy();
+          |                                   ^
+      397 |
+      398 |             console.log(`✓ Blueprint deleted: ${testContext.blueprintKey}`);
+      399 |         });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:396:35
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\shift-assignment-workflow.spec.js:357:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--849fe-events-new-program-creation-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\shift-assignment-workflow--849fe-events-new-program-creation-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\shift-assignment-workflow--849fe-events-new-program-creation-chromium\error-context.md
+
+  8) [chromium] › tests\users-crud-rbac.spec.js:80:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-01: Owner can access Users management page 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('h1.page-title').filter({ hasNotText: /^$/ })
+    Expected pattern: [32m/User Management|Users/i[39m
+    Received string:  [31m"UserManagement"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('h1.page-title').filter({ hasNotText: /^$/ })[22m
+    [2m    8 × locator resolved to <h1 class="page-title">UserManagement</h1>[22m
+    [2m      - unexpected value "UserManagement"[22m
+
+
+      82 |
+      83 |             // Verify we're on the Users page
+    > 84 |             await expect(page.locator('h1.page-title').filter({ hasNotText: /^$/ })).toContainText(/User Management|Users/i);
+         |                                                                                      ^
+      85 |
+      86 |             // Verify the Add User form is visible
+      87 |             await expect(page.locator('input[name="NewEmail"], input#NewEmail')).toBeVisible();
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:84:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-9d257-ccess-Users-management-page-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-9d257-ccess-Users-management-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-9d257-ccess-Users-management-page-chromium\error-context.md
+
+  9) [chromium] › tests\users-crud-rbac.spec.js:211:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-07: Director can access Users management page 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('h1.page-title').filter({ hasNotText: /^$/ })
+    Expected pattern: [32m/User Management|Users/i[39m
+    Received string:  [31m"UserManagement"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('h1.page-title').filter({ hasNotText: /^$/ })[22m
+    [2m    8 × locator resolved to <h1 class="page-title">UserManagement</h1>[22m
+    [2m      - unexpected value "UserManagement"[22m
+
+
+      213 |
+      214 |             // Director should have access to Users page (IsManagerOrAdmin policy)
+    > 215 |             await expect(page.locator('h1.page-title').filter({ hasNotText: /^$/ })).toContainText(/User Management|Users/i);
+          |                                                                                      ^
+      216 |         });
+      217 |
+      218 |         test('P3-08: Director sees only users from assigned companies', async ({ page }) => {
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:215:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-65065-ccess-Users-management-page-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-65065-ccess-Users-management-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-65065-ccess-Users-management-page-chromium\error-context.md
+
+  10) [chromium] › tests\users-crud-rbac.spec.js:267:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-11: Manager can access Users management page 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('h1.page-title').filter({ hasNotText: /^$/ })
+    Expected pattern: [32m/User Management|Users/i[39m
+    Received string:  [31m"UserManagement"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('h1.page-title').filter({ hasNotText: /^$/ })[22m
+    [2m    8 × locator resolved to <h1 class="page-title">UserManagement</h1>[22m
+    [2m      - unexpected value "UserManagement"[22m
+
+
+      269 |
+      270 |             // Manager should have access to Users page (IsManagerOrAdmin policy)
+    > 271 |             await expect(page.locator('h1.page-title').filter({ hasNotText: /^$/ })).toContainText(/User Management|Users/i);
+          |                                                                                      ^
+      272 |         });
+      273 |
+      274 |         test('P3-12: Manager sees only users from their company', async ({ page }) => {
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:271:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-1c8fd-ccess-Users-management-page-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-1c8fd-ccess-Users-management-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-1c8fd-ccess-Users-management-page-chromium\error-context.md
+
+  11) [chromium] › tests\users-crud-rbac.spec.js:526:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-23: Owner can filter users by company 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"UserFilterCompanyId"[39m
+    Received string:    [31m"http://localhost:5000/Admin/Users"[39m
+
+      547 |
+      548 |                     // URL should contain the filter parameter
+    > 549 |                     expect(page.url()).toContain('UserFilterCompanyId');
+          |                                        ^
+      550 |                 }
+      551 |             }
+      552 |         });
+        at C:\Users\katzi\Downloads\ShiftManager\qa-automation\tests\users-crud-rbac.spec.js:549:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-ce8ff-can-filter-users-by-company-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports\test-artifacts\users-crud-rbac-Users-Modu-ce8ff-can-filter-users-by-company-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports\test-artifacts\users-crud-rbac-Users-Modu-ce8ff-can-filter-users-by-company-chromium\error-context.md
+
+  11 failed
+    [chromium] › tests\air-gapped-simulation.spec.js:7:3 › Air-Gapped Environment Simulation › P8-01: Block external requests and verify functionality 
+    [chromium] › tests\companies-crud.spec.js:128:9 › Companies CRUD - Owner Role › Create Company › P2-02: Create company with minimum required fields 
+    [chromium] › tests\companies-crud.spec.js:401:9 › Companies CRUD - Owner Role › Delete Company › P2-13: Delete confirmation can be cancelled 
+    [chromium] › tests\multi-tenancy-isolation-network.spec.js:84:3 › Multi-Tenancy Isolation - Network Level › P6-03: XSS attempts are sanitized in responses 
+    [chromium] › tests\network-performance.spec.js:289:3 › Network Performance & Efficiency › P9-07: Measure full workflow - Create Company 
+    [chromium] › tests\shift-assignment-workflow.spec.js:40:5 › Shift Assignment Workflow - End-to-End › Complete workflow: Blueprint → Program → Shift → Assignment 
+    [chromium] › tests\shift-assignment-workflow.spec.js:313:5 › Shift Assignment Workflow - End-to-End › Data integrity: Deleting blueprint prevents new program creation 
+    [chromium] › tests\users-crud-rbac.spec.js:80:9 › Users Module - RBAC Authorization Matrix › Owner Role - Full Access › P3-01: Owner can access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:211:9 › Users Module - RBAC Authorization Matrix › Director Role - Limited Multi-Company Access › P3-07: Director can access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:267:9 › Users Module - RBAC Authorization Matrix › Manager Role - Single Company Access › P3-11: Manager can access Users management page 
+    [chromium] › tests\users-crud-rbac.spec.js:526:9 › Users Module - RBAC Authorization Matrix › Cross-Company Access Control › P3-23: Owner can filter users by company 
+  5 skipped
+  76 passed (2.3m)

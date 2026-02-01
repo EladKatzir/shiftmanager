@@ -20,8 +20,9 @@ public class ManageModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly IDirectorService _directorService;
     private readonly ITraineeService _traineeService;
+    private readonly IBusyUserService _busyUserService;
 
-    public ManageModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService)
+    public ManageModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService)
     {
         _db = db;
         _checker = checker;
@@ -30,6 +31,7 @@ public class ManageModel : PageModel
         _companyContext = companyContext;
         _directorService = directorService;
         _traineeService = traineeService;
+        _busyUserService = busyUserService;
     }
 
 
@@ -46,6 +48,7 @@ public class ManageModel : PageModel
     public List<AppUser> ActiveUsers { get; set; } = new();
     public List<AppUser> Trainees { get; set; } = new();
     public HashSet<int> UsersOnTimeOff { get; set; } = new();
+    public Dictionary<int, BusyStatus> BusyUsers { get; set; } = new();
     public string? Error { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
@@ -65,8 +68,20 @@ public class ManageModel : PageModel
         var companyId = Type.CompanyId;
 
         // Validate user has access to this company
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return RedirectToPage("/Error");
+        }
+
         var currentUser = await _db.Users.FindAsync(currentUserId);
+        if (currentUser == null)
+        {
+            _logger.LogError("User {UserId} not found in database", currentUserId);
+            return RedirectToPage("/Error");
+        }
 
         bool hasAccess = false;
         if (currentUser!.Role == UserRole.Owner)
@@ -105,7 +120,7 @@ public class ManageModel : PageModel
             .ToListAsync();
 
         // Load users and trainees separately to avoid query filter issues
-        var userIds = assignments.Select(a => a.UserId).ToList();
+        var userIds = assignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).ToList();
         var traineeIds = assignments.Where(a => a.TraineeUserId.HasValue).Select(a => a.TraineeUserId!.Value).ToList();
         var allUserIds = userIds.Concat(traineeIds).Distinct().ToList();
 
@@ -114,9 +129,9 @@ public class ManageModel : PageModel
             .Where(u => allUserIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id);
 
-        Assigned = assignments.Select(a => (
+        Assigned = assignments.Where(a => a.UserId.HasValue).Select(a => (
             a.Id,
-            $"{users[a.UserId].DisplayName} ({users[a.UserId].Email})",
+            $"{users[a.UserId!.Value].DisplayName} ({users[a.UserId.Value].Email})",
             a.TraineeUserId,
             a.TraineeUserId.HasValue && users.ContainsKey(a.TraineeUserId.Value)
                 ? users[a.TraineeUserId.Value].DisplayName
@@ -145,6 +160,14 @@ public class ManageModel : PageModel
             .Select(r => r.UserId)
             .ToListAsync())
             .ToHashSet();
+
+        // Load busy user status (vacation, shift, chore) for this date
+        BusyUsers = await _busyUserService.GetBusyUsersAsync(
+            Date,
+            Type.Start,
+            Type.End,
+            excludeShiftTypeId: ShiftTypeId // Exclude current shift type from busy check
+        );
 
         return Page();
     }
@@ -233,14 +256,17 @@ public class ManageModel : PageModel
         {
             _logger.LogInformation("Removing assignment {AssignmentId} from shiftInstance {InstanceId}", assignmentId, a.ShiftInstanceId);
 
-            // Send notification before removing
-            await _notificationService.CreateShiftRemovedNotificationAsync(
-                a.UserId,
-                a.ShiftInstance.ShiftType.Name,
-                a.ShiftInstance.WorkDate,
-                a.ShiftInstance.ShiftType.Start,
-                a.ShiftInstance.ShiftType.End
-            );
+            // Send notification before removing (only if user is assigned)
+            if (a.UserId.HasValue)
+            {
+                await _notificationService.CreateShiftRemovedNotificationAsync(
+                    a.UserId.Value,
+                    a.ShiftInstance.ShiftType.Name,
+                    a.ShiftInstance.WorkDate,
+                    a.ShiftInstance.ShiftType.Start,
+                    a.ShiftInstance.ShiftType.End
+                );
+            }
 
             _db.ShiftAssignments.Remove(a);
             await _db.SaveChangesAsync();
@@ -256,7 +282,13 @@ public class ManageModel : PageModel
 
     public async Task<IActionResult> OnPostAssignTraineeAsync(int assignmentId, int traineeUserId)
     {
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
+        }
 
         var success = await _traineeService.AssignTraineeToShiftAsync(assignmentId, traineeUserId, currentUserId);
 
@@ -274,7 +306,13 @@ public class ManageModel : PageModel
 
     public async Task<IActionResult> OnPostRemoveTraineeAsync(int assignmentId)
     {
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
+        }
 
         var success = await _traineeService.RemoveTraineeFromShiftAsync(assignmentId, "Manual", currentUserId);
 

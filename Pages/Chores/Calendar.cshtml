@@ -1,0 +1,540 @@
+@page
+@model ShiftManager.Pages.Chores.CalendarModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    var firstDay = new DateOnly(Model.Year, Model.Month, 1);
+    var lastDay = firstDay.AddMonths(1).AddDays(-1);
+    var startOfWeek = firstDay.AddDays(-(int)firstDay.DayOfWeek + (firstDay.DayOfWeek == DayOfWeek.Sunday ? -6 : 1));
+    var currentDate = startOfWeek;
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Chores"], IsActive = true }
+})
+
+<div data-ui-version="v2">
+<style>
+.chores-calendar {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+.weekday-header {
+    background: var(--surface);
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+}
+.calendar-cell {
+    background: var(--background);
+    min-height: 100px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.calendar-cell:hover {
+    background: var(--surface);
+}
+.calendar-cell.other-month {
+    background: var(--muted-bg);
+    opacity: 0.5;
+}
+.calendar-cell.today {
+    background: var(--info-bg);
+}
+.cell-date {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+.chore-item {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success) 100%);
+    color: var(--success-text);
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-left: 4px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    position: relative;
+}
+.chore-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.chore-item::before {
+    content: '🧹';
+    margin-right: 0.5rem;
+    font-size: 1.1em;
+}
+.chore-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    flex: 1;
+}
+.chore-assignee {
+    font-weight: 600;
+    font-size: 0.75rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+.chore-title {
+    font-size: 0.875rem;
+}
+.chore-count {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    display: inline-block;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal.active {
+    display: flex;
+}
+.modal-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.5rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.modal-header h3 {
+    margin: 0;
+    color: var(--text);
+}
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--muted);
+}
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    background: var(--surface);
+    color: var(--text);
+}
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+.chore-table {
+    margin-top: 2rem;
+}
+.table-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.delete-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.25rem;
+}
+.delete-btn:hover {
+    opacity: 0.7;
+}
+</style>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="chores-calendar">
+    <div class="calendar-header">
+        <h2><loc key="ChoresCalendar" /> - @firstDay.ToString("MMMM yyyy")</h2>
+        <div class="calendar-nav">
+            <a class="btn btn-ghost" href="/Chores/Calendar?year=@firstDay.AddMonths(-1).Year&month=@firstDay.AddMonths(-1).Month">
+                ← @firstDay.AddMonths(-1).ToString("MMM")
+            </a>
+            <a class="btn btn-primary" href="/Chores/Calendar">
+                @Localizer["Today"]
+            </a>
+            <a class="btn btn-ghost" href="/Chores/Calendar?year=@firstDay.AddMonths(1).Year&month=@firstDay.AddMonths(1).Month">
+                @firstDay.AddMonths(1).ToString("MMM") →
+            </a>
+        </div>
+
+        @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
+        <div class="calendar-metrics">
+            <div class="metric-item metric-shifts">
+                <span class="metric-icon">🧹</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.TotalChoresCount</span>
+                    <span class="metric-label"><loc key="Calendar_Chores" /></span>
+                </div>
+            </div>
+
+            @if (Model.UnassignedChoresCount > 0)
+            {
+                <div class="metric-item metric-pending">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.UnassignedChoresCount</span>
+                        <span class="metric-label"><loc key="Calendar_Unassigned" /></span>
+                    </div>
+                </div>
+            }
+
+            @if (!User.IsInRole("Owner") && !User.IsInRole("Manager") && !User.IsInRole("Director") && Model.MyChoresCount > 0)
+            {
+                <div class="metric-item metric-coverage">
+                    <span class="metric-icon">👤</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.MyChoresCount</span>
+                        <span class="metric-label"><loc key="Calendar_MyItems" /></span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid">
+        <!-- Weekday Headers -->
+        <div class="weekday-header"><loc key="Mon" /></div>
+        <div class="weekday-header"><loc key="Tue" /></div>
+        <div class="weekday-header"><loc key="Wed" /></div>
+        <div class="weekday-header"><loc key="Thu" /></div>
+        <div class="weekday-header"><loc key="Fri" /></div>
+        <div class="weekday-header"><loc key="Sat" /></div>
+        <div class="weekday-header"><loc key="Sun" /></div>
+
+        <!-- Calendar Days -->
+        @for (int week = 0; week < 6; week++)
+        {
+            @for (int day = 0; day < 7; day++)
+            {
+                var date = currentDate;
+                var isCurrentMonth = date.Month == Model.Month;
+                var isToday = date == today;
+                var cellClass = "calendar-cell";
+                if (!isCurrentMonth) cellClass += " other-month";
+                if (isToday) cellClass += " today";
+
+                var choresForDay = Model.ChoresByDate.ContainsKey(date) ? Model.ChoresByDate[date] : new List<ShiftManager.Models.Chore>();
+
+                <div class="@cellClass" onclick="openCreateModal('@date.ToString("yyyy-MM-dd")')">
+                    <div class="cell-date">@date.Day</div>
+                    @if (choresForDay.Any())
+                    {
+                        @foreach (var chore in choresForDay.Take(2))
+                        {
+                            <div class="chore-item" onclick="event.stopPropagation(); showChoreDetails(@chore.Id, '@chore.Title.Replace("'", "\\'").Trim()', '@chore.User?.DisplayName', '@date.ToString("yyyy-MM-dd")', '@(chore.Notes?.Replace("'", "\\'").Trim() ?? "")')">
+                                <div class="chore-item-text">
+                                    <span class="chore-assignee">@chore.User?.DisplayName</span>
+                                    <span class="chore-title">@chore.Title</span>
+                                </div>
+                            </div>
+                        }
+                        @if (choresForDay.Count > 2)
+                        {
+                            <div class="chore-count">+@(choresForDay.Count - 2) <loc key="More" /></div>
+                        }
+                    }
+                </div>
+
+                currentDate = currentDate.AddDays(1);
+            }
+
+            if (currentDate.Month != Model.Month && week >= 4)
+            {
+                break;
+            }
+        }
+    </div>
+
+    <!-- Chore Table -->
+    <div class="chore-table card">
+        <h3><loc key="ChoresList" /></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th><loc key="Date" /></th>
+                    <th><loc key="Assignee" /></th>
+                    <th><loc key="Title" /></th>
+                    <th><loc key="Notes" /></th>
+                    <th><loc key="CreatedBy" /></th>
+                    <th><loc key="Actions" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Chores.Any())
+                {
+                    @foreach (var chore in Model.Chores.OrderBy(c => c.Date))
+                    {
+                        <tr>
+                            <td>@chore.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@chore.User?.DisplayName</td>
+                            <td>@chore.Title</td>
+                            <td>@(chore.Notes ?? "-")</td>
+                            <td>@chore.Creator?.DisplayName</td>
+                            <td>
+                                <button class="delete-btn" onclick="confirmDelete(@chore.Id, '@chore.Title.Replace("'", "\\'").Trim()')">
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--muted);">
+                            @Localizer["NoChoresThisMonth"]
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Chore Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><loc key="CreateChore" /></h3>
+            <button class="modal-close" onclick="closeCreateModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+        </div>
+        <form method="post" asp-page-handler="CreateChore">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label" for="choreDate"><loc key="Date" /></label>
+                <input type="date" name="ChoreDate" id="choreDate" class="form-input" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="choreAssigneeId"><loc key="Assignee" /></label>
+                <select name="AssigneeId" id="choreAssigneeId" class="form-select" required>
+                    <option value=""><loc key="SelectAssignee" /></option>
+                    @foreach (var user in Model.EligibleAssignees)
+                    {
+                        <option value="@user.Id">@user.DisplayName (@user.Email)</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="choreTitle"><loc key="Title" /></label>
+                <input type="text" name="ChoreTitle" id="choreTitle" class="form-input" maxlength="200" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="choreNotes"><loc key="Notes" /> (@Localizer["Optional"])</label>
+                <textarea name="ChoreNotes" id="choreNotes" class="form-textarea"></textarea>
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button type="button" class="btn btn-ghost" onclick="closeCreateModal()">@Localizer["Cancel"]</button>
+                <button type="submit" class="btn btn-primary"><loc key="Create" /></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><loc key="ConfirmDelete" /></h3>
+            <button class="modal-close" onclick="closeDeleteModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+        </div>
+        <p><loc key="AreYouSureDeleteChore" /> "<span id="deleteChoreTitle"></span>"?</p>
+        <form method="post" asp-page-handler="CancelChore" id="deleteChoreForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ChoreId" id="deleteChoreId" value="0" />
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">@Localizer["Cancel"]</button>
+                <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Chore Details Modal -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><loc key="ChoreDetails" /></h3>
+            <button class="modal-close" onclick="closeDetailsModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+        </div>
+        <div>
+            <p><strong>@Localizer["Title"]:</strong> <span id="detailTitle"></span></p>
+            <p><strong>@Localizer["Assignee"]:</strong> <span id="detailAssignee"></span></p>
+            <p><strong>@Localizer["Date"]:</strong> <span id="detailDate"></span></p>
+            <p><strong>@Localizer["Notes"]:</strong> <span id="detailNotes"></span></p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+            <button type="button" class="btn btn-ghost" onclick="closeDetailsModal()">@Localizer["Close"]</button>
+            <button type="button" class="btn btn-danger" onclick="deleteFromDetails()">@Localizer["Delete"]</button>
+        </div>
+    </div>
+</div>
+
+<!-- Conflict Resolution Modal (if TempData has conflict info) -->
+@if (TempData["ShowConflictDialog"] is bool showConflict && showConflict)
+{
+    <div id="conflictModal" class="modal active">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><loc key="ShiftConflictDetected" /></h3>
+            </div>
+            <p><loc key="UserHasShiftOnThisDate" /></p>
+            <p><loc key="DoYouWantToReplaceShift" /></p>
+            <form method="post" asp-page-handler="ReplaceShiftWithChore">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ShiftAssignmentId" value="@TempData["ConflictShiftId"]" />
+                <input type="hidden" name="ChoreTitle" value="@TempData["ConflictTitle"]" />
+                <input type="hidden" name="ChoreNotes" value="@TempData["ConflictNotes"]" />
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                    <a href="/Chores/Calendar?year=@Model.Year&month=@Model.Month" class="btn btn-ghost"><loc key="Cancel" /></a>
+                    <button type="submit" class="btn btn-primary"><loc key="ReplaceShift" /></button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+</div>
+
+<script>
+let currentDetailsChoreId = null;
+
+function openCreateModal(date) {
+    document.getElementById('choreDate').value = date;
+    document.getElementById('createModal').classList.add('active');
+}
+
+function closeCreateModal() {
+    document.getElementById('createModal').classList.remove('active');
+}
+
+function confirmDelete(choreId, choreTitle) {
+    // Ensure choreId is a valid number
+    const choreIdNum = parseInt(choreId);
+    if (isNaN(choreIdNum) || choreIdNum <= 0) {
+        console.error('Invalid choreId:', choreId);
+        alert('Invalid chore ID: ' + choreId);
+        return;
+    }
+
+    const hiddenInput = document.getElementById('deleteChoreId');
+    hiddenInput.value = choreIdNum;
+
+    document.getElementById('deleteChoreTitle').textContent = choreTitle;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+}
+
+function showChoreDetails(choreId, title, assignee, date, notes) {
+    currentDetailsChoreId = choreId;
+    document.getElementById('detailTitle').textContent = title;
+    document.getElementById('detailAssignee').textContent = assignee;
+    document.getElementById('detailDate').textContent = date;
+    document.getElementById('detailNotes').textContent = notes || '-';
+    document.getElementById('detailsModal').classList.add('active');
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').classList.remove('active');
+    currentDetailsChoreId = null;
+}
+
+function deleteFromDetails() {
+    if (currentDetailsChoreId) {
+        // Save the choreId BEFORE closing the modal (which resets it to null)
+        const choreIdToDelete = currentDetailsChoreId;
+        const title = document.getElementById('detailTitle').textContent;
+
+        closeDetailsModal();
+
+        // Use the saved choreId, not the now-null currentDetailsChoreId
+        confirmDelete(choreIdToDelete, title);
+    }
+}
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+});
+</script>

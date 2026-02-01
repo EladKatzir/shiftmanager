@@ -1,0 +1,1101 @@
+@page
+@model ShiftManager.Pages.Owner.EmailConfigModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_EmailConfig"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_EmailConfig"], IsActive = true }
+})
+
+@* Owner Company Selector *@
+@await Component.InvokeAsync("OwnerCompanySelector")
+
+<div class="email-config-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">📧</span>
+            <loc key="Owner_EmailConfig" />
+        </h1>
+        <p class="page-subtitle"><loc key="Owner_EmailConfig_Subtitle" /></p>
+    </div>
+
+    @* Status Widget - At-a-glance health monitoring *@
+    <div class="status-widget">
+        <div class="status-indicator-wrapper">
+            @if (Model.LastTestSuccess == true)
+            {
+                <div class="status-indicator status-success" loc-title="Status_Healthy"></div>
+                <div class="status-info">
+                    <div class="status-title"><loc key="Status_EmailHealthy" /></div>
+                    @if (Model.LastTestTimestamp.HasValue)
+                    {
+                        <div class="status-subtitle">
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                        </div>
+                    }
+                </div>
+            }
+            else if (Model.LastTestSuccess == false)
+            {
+                <div class="status-indicator status-error" loc-title="Status_Unhealthy"></div>
+                <div class="status-info">
+                    <div class="status-title"><loc key="Status_EmailFailed" /></div>
+                    @if (Model.LastTestTimestamp.HasValue)
+                    {
+                        <div class="status-subtitle">
+                            <loc key="Status_LastTested" />: @Model.LastTestTimestamp.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.LastTestError))
+                    {
+                        <div class="status-error-message">@Model.LastTestError</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="status-indicator status-unknown" loc-title="Status_NotTested"></div>
+                <div class="status-info">
+                    <div class="status-title"><loc key="Status_NotTestedYet" /></div>
+                    <div class="status-subtitle"><loc key="Status_NotTested_Desc" /></div>
+                </div>
+            }
+        </div>
+        <form method="post" asp-page-handler="TestConnection" style="display: inline;">
+            <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
+                📧 <loc key="Status_RetestEmail" />
+            </button>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>✅ Success:</strong> @Model.Success
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-error">
+            <strong>❌ Error:</strong> @Model.Error
+        </div>
+    }
+
+    <form method="post">
+        <div class="config-card">
+            <div class="card-header">
+                <h2>📧 <loc key="Owner_EmailConfig_ServiceConfig" /></h2>
+                <div class="form-group-inline">
+                    <label class="toggle-switch">
+                        <input type="checkbox" asp-for="EmailEnabled" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-status-text">@(Model.EmailEnabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <div class="label-with-help">
+                        <label asp-for="EmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" loc-title="Help_ShowDetails">
+                            ❓
+                        </button>
+                    </div>
+                    <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
+                    <small class="form-text"><loc key="Owner_EmailConfig_ApiUrl_Help" /></small>
+
+                    <div class="context-panel" id="email-url-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiUrl_Purpose" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiUrl_WhereToFind" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Example" /></strong>
+                            <code class="example-code">https://api.sendgrid.com/v3/mail/send</code>
+                            <code class="example-code">https://api.mailgun.net/v3/yourdomain.com/messages</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-help">
+                        <label asp-for="EmailApiKey">
+                            <loc key="Owner_EmailConfig_ApiKey" />
+                            @if (Model.HasExistingKey)
+                            {
+                                <span class="badge badge-success">✅ <loc key="Configured" /></span>
+                            }
+                        </label>
+                        <div class="help-buttons-group">
+                            <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" loc-title="Help_ShowDetails">
+                                ❓
+                            </button>
+                            <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" loc-title="FindThis_HowToFind">
+                                🔍 <loc key="FindThis_Button" />
+                            </button>
+                        </div>
+                    </div>
+                    <input asp-for="EmailApiKey" type="password" class="form-control"
+                           placeholder="@(Model.HasExistingKey ? "••••••••••••" : Localizer["Owner_EmailConfig_EnterApiKey"])" />
+                    <small class="form-text">
+                        @if (Model.HasExistingKey)
+                        {
+                            <span><loc key="Owner_EmailConfig_ApiKey_ExistingHelp" /></span>
+                        }
+                        else
+                        {
+                            <span><loc key="Owner_EmailConfig_ApiKey_Help" /></span>
+                        }
+                    </small>
+
+                    <div class="context-panel" id="email-key-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiKey_Purpose" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiKey_WhereToFind" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Security" /></strong>
+                            <p><loc key="ContextPanel_Email_ApiKey_Security" /></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-help">
+                        <label asp-for="EmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
+                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" loc-title="Help_ShowDetails">
+                            ❓
+                        </button>
+                    </div>
+                    <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
+                    <small class="form-text"><loc key="Owner_EmailConfig_FromAddress_Help" /></small>
+
+                    <div class="context-panel" id="email-from-help" style="display: none;">
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="ContextPanel_Email_FromAddress_Purpose" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_BestPractices" /></strong>
+                            <p><loc key="ContextPanel_Email_FromAddress_BestPractices" /></p>
+                        </div>
+                        <div class="context-panel-section">
+                            <strong><loc key="ContextPanel_Example" /></strong>
+                            <code class="example-code">noreply@yourcompany.com</code>
+                            <code class="example-code">notifications@yourdomain.mil</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">💾 <loc key="SaveConfiguration" /></button>
+                <button type="button" class="btn btn-secondary" onclick="location.href='/Owner/EmailConfig?handler=Test'">
+                    📨 <loc key="Owner_EmailConfig_SendTestEmail" />
+                </button>
+            </div>
+        </div>
+    </form>
+
+    @* Test Email Section *@
+    @if (Model.EmailEnabled && Model.HasExistingKey)
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🧪 <loc key="Owner_EmailConfig_TestEmail" /></h2>
+            </div>
+            <div class="card-body">
+                <p><loc key="Owner_EmailConfig_TestEmail_Desc" /></p>
+                <form method="post" asp-page-handler="SendTest">
+                    <div class="form-group">
+                        <label for="testEmail"><loc key="Owner_EmailConfig_RecipientEmail" /></label>
+                        <input type="email" name="testEmail" class="form-control" placeholder="test@example.com" required />
+                    </div>
+                    <button type="submit" class="btn btn-secondary">📨 <loc key="Owner_EmailConfig_SendTestEmail" /></button>
+                </form>
+            </div>
+        </div>
+    }
+
+    @* Test Diagnostics *@
+    @if (!string.IsNullOrEmpty(Model.TestDiagnostics))
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🔍 <loc key="Owner_EmailConfig_TestDiagnostics" /></h2>
+            </div>
+            <div class="card-body">
+                <div class="diagnostics-output">
+                    <pre>@Model.TestDiagnostics</pre>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Recent Email Logs *@
+    <div class="config-card">
+        <div class="card-header">
+            <h2>📋 <loc key="Owner_EmailConfig_RecentLogs" /></h2>
+            <div class="header-actions">
+                <a href="/Owner/EmailConfig?handler=ExportLogsJson&count=100" class="btn btn-secondary btn-sm">
+                    📥 <loc key="Export" /> JSON (100)
+                </a>
+                <a href="/Owner/EmailConfig?handler=ExportLogsCsv&count=100" class="btn btn-secondary btn-sm">
+                    📥 <loc key="Export" /> CSV (100)
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.RecentLogs.Any())
+            {
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Time" /></th>
+                            <th><loc key="Recipient" /></th>
+                            <th><loc key="Subject" /></th>
+                            <th><loc key="Status" /></th>
+                            <th><loc key="Duration" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model.RecentLogs)
+                        {
+                            <tr class="@(log.Success ? "log-success" : "log-failure")">
+                                <td>@log.Timestamp.ToString("MM/dd HH:mm")</td>
+                                <td>@log.RecipientEmail</td>
+                                <td>@(log.EmailSubject.Length > 30 ? log.EmailSubject.Substring(0, 30) + "..." : log.EmailSubject)</td>
+                                <td>
+                                    @if (log.Success)
+                                    {
+                                        <span class="status-badge status-success">✅ @log.ResponseStatusCode</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-failure">❌ @(log.ResponseStatusCode?.ToString() ?? "N/A")</span>
+                                    }
+                                </td>
+                                <td>@log.DurationMs ms</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="empty-state"><loc key="Owner_EmailConfig_NoLogs" /></p>
+            }
+        </div>
+    </div>
+
+    @* Recent Failures *@
+    @if (Model.RecentFailures.Any())
+    {
+        <div class="config-card">
+            <div class="card-header">
+                <h2>⚠️ <loc key="Owner_EmailConfig_RecentFailures" /></h2>
+            </div>
+            <div class="card-body">
+                @foreach (var log in Model.RecentFailures)
+                {
+                    <div class="failure-item">
+                        <div class="failure-header">
+                            <strong>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</strong>
+                            <span>@log.RecipientEmail</span>
+                        </div>
+                        <div class="failure-error">@log.ErrorMessage</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* Email Status *@
+    <div class="config-card">
+        <div class="card-header">
+            <h2>📊 <loc key="Owner_EmailConfig_Statistics" /></h2>
+        </div>
+        <div class="card-body">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">@Model.TotalEmailsSent</div>
+                    <div class="stat-label"><loc key="Owner_EmailConfig_TotalSent" /></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">@Model.EmailsToday</div>
+                    <div class="stat-label"><loc key="Owner_EmailConfig_SentToday" /></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">@Model.FailedEmails</div>
+                    <div class="stat-label"><loc key="Failed" /></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">@(Model.LastEmailSent?.ToString("g") ?? Localizer["Never"])</div>
+                    <div class="stat-label"><loc key="Owner_EmailConfig_LastSent" /></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Email Templates Navigation *@
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">📝 <loc key="Owner_EmailConfig_Templates" /></h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted"><loc key="Owner_EmailConfig_Templates_Desc" /></p>
+            <a href="/Owner/EmailTemplates" class="btn btn-primary">
+                <span>📝</span> <loc key="Owner_EmailConfig_ManageTemplates" />
+            </a>
+        </div>
+    </div>
+</div>
+
+@* Find This Modal - Email API Key *@
+<div id="find-apikey-modal" class="modal-overlay" onclick="closeModal('find-apikey-modal')" style="display: none;">
+    <div class="modal-container" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>🔍 <loc key="FindThis_Email_ApiKey_Title" /></h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('find-apikey-modal')" loc-title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4><loc key="FindThis_Email_ApiKey_Step1_Title" /></h4>
+                    <p><loc key="FindThis_Email_ApiKey_Step1_Desc" /></p>
+                </div>
+            </div>
+            <div class="modal-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4><loc key="FindThis_Email_ApiKey_Step2_Title" /></h4>
+                    <p><loc key="FindThis_Email_ApiKey_Step2_Desc" /></p>
+                </div>
+            </div>
+            <div class="modal-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4><loc key="FindThis_Email_ApiKey_Step3_Title" /></h4>
+                    <p><loc key="FindThis_Email_ApiKey_Step3_Desc" /></p>
+                </div>
+            </div>
+            <div class="modal-note">
+                <strong>🔒 <loc key="Security" />:</strong> <loc key="FindThis_Email_ApiKey_SecurityNote" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="closeModal('find-apikey-modal')">
+                <loc key="GotIt" />
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Status Widget */
+.status-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator.status-success {
+    background: var(--success);
+    box-shadow: 0 0 0 4px var(--success-soft);
+}
+
+.status-indicator.status-error {
+    background: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-soft);
+}
+
+.status-indicator.status-unknown {
+    background: var(--text-muted);
+    box-shadow: 0 0 0 4px var(--surface-soft);
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.status-subtitle {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.status-error-message {
+    font-size: 0.875rem;
+    color: var(--danger);
+    margin-top: 0.25rem;
+}
+
+.status-retest-btn {
+    white-space: nowrap;
+}
+
+/* Context Panel & Help Button */
+.label-with-help {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.help-button {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.6;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+}
+
+.help-button:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.help-button:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.context-panel {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    animation: slideDown 0.2s ease-out;
+}
+
+@@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.context-panel-section {
+    margin-bottom: 1rem;
+}
+
+.context-panel-section:last-child {
+    margin-bottom: 0;
+}
+
+.context-panel-section strong {
+    display: block;
+    color: var(--text);
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+}
+
+.context-panel-section p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.example-code {
+    display: block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem;
+    color: var(--text);
+    margin-top: 0.5rem;
+}
+
+.example-code + .example-code {
+    margin-top: 0.375rem;
+}
+
+.email-config-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.config-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-soft);
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--background);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+/* Toggle Switch (from FeatureFlags) */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    transition: .4s;
+    border-radius: 30px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--surface);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+.toggle-status-text {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.alert-error {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+/* Diagnostics */
+.diagnostics-output {
+    background: var(--surface-soft);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.diagnostics-output pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Logs Table */
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.logs-table th,
+.logs-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.logs-table th {
+    background: var(--background);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.log-success {
+    background: var(--success-soft);
+}
+
+.log-failure {
+    background: var(--danger-soft);
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.status-failure {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+/* Failures */
+.failure-item {
+    padding: 1rem;
+    background: var(--danger-soft);
+    border-left: 4px solid var(--danger);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.failure-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.failure-error {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* Header Actions */
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   Find This Modal (Phase 4)
+   ======================================== */
+
+/* Help buttons group */
+.help-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.find-this-button {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.find-this-button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+/* Modal container */
+.modal-container {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Modal header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.modal-close-btn:hover {
+    color: var(--text);
+}
+
+/* Modal body */
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Modal step */
+.modal-step {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.step-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.step-content p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.step-content .example-code {
+    display: block;
+    margin-top: 0.75rem;
+}
+
+/* Modal note */
+.modal-note {
+    background: var(--warning-soft);
+    border-left: 4px solid var(--warning);
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+</style>
+
+<script>
+// Toggle context panel visibility
+function toggleFieldHelp(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? 'block' : 'none';
+    }
+}
+
+// Real-time URL validation
+function validateUrl(input) {
+    const value = input.value.trim();
+
+    // Remove previous validation classes
+    input.classList.remove('valid', 'invalid', 'warning');
+
+    if (!value) {
+        // Empty is neutral (no validation)
+        return;
+    }
+
+    try {
+        const url = new URL(value);
+        // Valid URL format
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+            input.classList.add('valid');
+        } else {
+            input.classList.add('warning');
+        }
+    } catch {
+        // Invalid URL format
+        input.classList.add('invalid');
+    }
+}
+
+// Real-time email validation
+function validateEmail(input) {
+    const value = input.value.trim();
+
+    // Remove previous validation classes
+    input.classList.remove('valid', 'invalid');
+
+    if (!value) {
+        // Empty is neutral (no validation)
+        return;
+    }
+
+    // Basic email regex pattern
+    const emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+
+    if (emailPattern.test(value)) {
+        input.classList.add('valid');
+    } else {
+        input.classList.add('invalid');
+    }
+}
+
+// Open modal
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Close modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+        openModals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+        document.body.style.overflow = '';
+    }
+});
+</script>

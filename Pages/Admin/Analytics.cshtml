@@ -1,0 +1,766 @@
+@page
+@model ShiftManager.Pages.Admin.AnalyticsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.Models.Support
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["AnalyticsDashboard"];
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Analytics"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .page-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .page-header-content {
+            flex: 1;
+        }
+
+        /* Alerts */
+        .alert-success {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3);
+        }
+
+        .alert-error {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        /* Date Range Filter Card */
+        .filter-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            margin: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .form-select:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-elevated);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--stat-color, var(--primary));
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.stat-blue {
+            --stat-color: var(--primary);
+        }
+
+        .stat-card.stat-green {
+            --stat-color: var(--success);
+        }
+
+        .stat-card.stat-purple {
+            --stat-color: var(--accent);
+        }
+
+        .stat-card.stat-orange {
+            --stat-color: var(--warning);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            line-height: 1;
+        }
+
+        .stat-description {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.25rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead tr {
+            border-bottom: 2px solid var(--border);
+        }
+
+        .data-table th {
+            padding: 0.875rem;
+            text-align: left;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.15s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--surface-soft);
+        }
+
+        .data-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .data-table td {
+            padding: 1rem 0.875rem;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        .data-table td.employee-name {
+            font-weight: 500;
+        }
+
+        .data-table td.deficit-high {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .data-table td.deficit-medium {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .data-table td.text-success {
+            color: var(--success);
+        }
+
+        .data-table td.text-danger {
+            color: var(--danger);
+        }
+
+        /* Mini Stats Grid */
+        .mini-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .mini-stat {
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mini-stat-label {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .mini-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .mini-stat-value.text-success {
+            color: var(--success);
+        }
+
+        .mini-stat-value.text-danger {
+            color: var(--danger);
+        }
+
+        .mini-stat-value.text-warning {
+            color: var(--warning);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+
+        .success-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--success);
+        }
+
+        .success-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-state-text {
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .page-header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-form {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mini-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .section-card {
+                padding: 1.25rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .mini-stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.875rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        /* Table Responsive Wrapper */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 0 -1.5rem;
+            padding: 0 1.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .table-wrapper {
+                margin: 0 -1.25rem;
+                padding: 0 1.25rem;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header-actions">
+    <div class="page-header-content">
+        <h1 class="page-title"><loc key="AnalyticsDashboard" /></h1>
+        <p class="page-subtitle"><loc key="ViewInsightsMetricsAndReports" /></p>
+    </div>
+</div>
+
+<!-- Success Message -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success">
+        <span style="font-size: 1.25rem;">✓</span>
+        <span>@TempData["SuccessMessage"]</span>
+    </div>
+}
+
+<!-- Error Message -->
+@if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+{
+    <div class="alert-error">
+        <span style="font-size: 1.25rem;">✗</span>
+        <span>@(TempData["ErrorMessage"] ?? TempData["Error"])</span>
+    </div>
+}
+
+<!-- Date Range Filter -->
+<div class="filter-card">
+    <h3 class="filter-header"><loc key="DateRange" /></h3>
+    <form method="get" class="filter-form">
+        <div class="form-group">
+            <label class="form-label"><loc key="SelectPeriod" /></label>
+            <select class="form-select" name="dateRange" onchange="this.form.submit()">
+                <option value="7" selected="@(Model.DateRange == 7)"><loc key="Last7Days" /></option>
+                <option value="30" selected="@(Model.DateRange == 30)"><loc key="Last30Days" /></option>
+                <option value="90" selected="@(Model.DateRange == 90)"><loc key="Last90Days" /></option>
+                <option value="365" selected="@(Model.DateRange == 365)"><loc key="LastYear" /></option>
+            </select>
+        </div>
+        <a asp-page-handler="ExportCsv" asp-route-dateRange="@Model.DateRange" class="btn btn-primary">
+            <span>📥</span>
+            <span><loc key="ExportReport" /></span>
+        </a>
+    </form>
+</div>
+
+<!-- Summary Stats -->
+<div class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-label"><loc key="CoverageRate" /></div>
+        <div class="stat-value">@Model.CoverageRate.ToString("F1")%</div>
+        <div class="stat-description"><loc key="ShiftCoverage" /></div>
+    </div>
+
+    <div class="stat-card stat-green">
+        <div class="stat-label"><loc key="TimeOffRate" /></div>
+        <div class="stat-value">@Model.TimeOffStats.ApprovalRate.ToString("F1")%</div>
+        <div class="stat-description"><loc key="TimeOffApproval" /></div>
+    </div>
+
+    <div class="stat-card stat-purple">
+        <div class="stat-label"><loc key="SwapRate" /></div>
+        <div class="stat-value">@Model.SwapStats.ApprovalRate.ToString("F1")%</div>
+        <div class="stat-description"><loc key="ShiftSwaps" /></div>
+    </div>
+
+    <div class="stat-card stat-orange">
+        <div class="stat-label"><loc key="AverageDaysOff" /></div>
+        <div class="stat-value">@Model.AverageDaysOffPerEmployee.ToString("F1")</div>
+        <div class="stat-description"><loc key="PerEmployee" /></div>
+    </div>
+</div>
+
+<!-- Employee Hours -->
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="EmployeeHours" /></h3>
+        @if (Model.EmployeeHours.Any())
+        {
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Employee" /></th>
+                            <th><loc key="TotalHours" /></th>
+                            <th><loc key="AvgHoursPerWeek" /></th>
+                            <th><loc key="ShiftCount" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.EmployeeHours)
+                        {
+                            <tr>
+                                <td class="employee-name">@item.EmployeeName</td>
+                                <td>@item.TotalHours.ToString("F1")</td>
+                                <td>@item.AverageHoursPerWeek.ToString("F1")</td>
+                                <td>@item.ShiftCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <div class="empty-state-text"><loc key="NoDataAvailable" /></div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Understaffing Report -->
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="UnderstaffingReport" /></h3>
+        @if (Model.UnderstaffingReport.Any())
+        {
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Date" /></th>
+                            <th><loc key="ShiftType" /></th>
+                            <th><loc key="Assigned" /></th>
+                            <th><loc key="Required" /></th>
+                            <th><loc key="Deficit" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var issue in Model.UnderstaffingReport)
+                        {
+                            var deficitClass = Math.Abs(issue.Difference) > 2 ? "deficit-high" : "deficit-medium";
+                            <tr>
+                                <td class="employee-name">@issue.WorkDate.ToString("dddd, MMM dd, yyyy")</td>
+                                <td>@Localizer[issue.ShiftType]</td>
+                                <td>@issue.AssignedCount</td>
+                                <td>@issue.RequiredCount</td>
+                                <td class="@deficitClass">@Math.Abs(issue.Difference)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="success-state">
+                <div class="success-state-icon">✓</div>
+                <div class="success-state-text"><loc key="NoUnderstaffingIssues" /></div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Top Swappers -->
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="MostActiveSwappers" /></h3>
+        @if (Model.TopSwappers.Any())
+        {
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Employee" /></th>
+                            <th><loc key="TotalRequests" /></th>
+                            <th><loc key="Approved" /></th>
+                            <th><loc key="Declined" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var swapper in Model.TopSwappers)
+                        {
+                            <tr>
+                                <td class="employee-name">@swapper.EmployeeName</td>
+                                <td>@swapper.SwapRequestCount</td>
+                                <td class="text-success">@swapper.ApprovedCount</td>
+                                <td class="text-danger">@swapper.DeclinedCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">🔄</div>
+                <div class="empty-state-text"><loc key="NoDataAvailable" /></div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Swap Statistics -->
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="SwapStatistics" /></h3>
+        <div class="mini-stats-grid">
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="TotalRequests" /></div>
+                <div class="mini-stat-value">@Model.SwapStats.TotalRequests</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="Approved" /></div>
+                <div class="mini-stat-value text-success">@Model.SwapStats.ApprovedCount</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="Declined" /></div>
+                <div class="mini-stat-value text-danger">@Model.SwapStats.DeclinedCount</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="Pending" /></div>
+                <div class="mini-stat-value text-warning">@Model.SwapStats.PendingCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Time-Off Statistics -->
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="TimeOffStatistics" /></h3>
+        <div class="mini-stats-grid">
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="TotalRequests" /></div>
+                <div class="mini-stat-value">@Model.TimeOffStats.TotalRequests</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="Approved" /></div>
+                <div class="mini-stat-value text-success">@Model.TimeOffStats.ApprovedCount</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="Declined" /></div>
+                <div class="mini-stat-value text-danger">@Model.TimeOffStats.DeclinedCount</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="Pending" /></div>
+                <div class="mini-stat-value text-warning">@Model.TimeOffStats.PendingCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ✅ PHASE 18: Chores Metrics *@
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="ChoresMetrics" /></h3>
+        <div class="mini-stats-grid">
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="CompletedThisWeek" /></div>
+                <div class="mini-stat-value text-success">@Model.ChoresCompletedThisWeek</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="PendingThisWeek" /></div>
+                <div class="mini-stat-value text-warning">@Model.ChoresPendingThisWeek</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="OverdueChores" /></div>
+                <div class="mini-stat-value text-danger">@Model.ChoresOverdue</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ✅ PHASE 18: On-Duty Metrics *@
+<div class="section">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="OnDutyMetrics" /></h3>
+        <div class="mini-stats-grid">
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="OnDutyAssignmentsThisWeek" /></div>
+                <div class="mini-stat-value text-success">@Model.OnDutyAssignmentsThisWeek</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="DaysWithoutOnDuty" /></div>
+                <div class="mini-stat-value @(Model.DaysWithoutOnDuty > 0 ? "text-warning" : "text-success")">@Model.DaysWithoutOnDuty</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-label"><loc key="OnDutyCoverageRate" /></div>
+                <div class="mini-stat-value @(Model.OnDutyCoverageRate >= 80 ? "text-success" : "text-warning")">@Model.OnDutyCoverageRate.ToString("F1")%</div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,214 @@
+@page
+@model ShiftManager.Pages.Admin.EditProfileModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = "Edit Profile", IsActive = true }
+})
+
+<h2><loc key="EditProfile_Title">Edit Employee Profile</loc></h2>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="card" style="background-color: var(--success); color: var(--success-text); margin-bottom: 1rem;">
+        ✓ @Model.SuccessMessage
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="card" style="background-color: var(--danger); color: var(--danger-text); margin-bottom: 1rem;">
+        ✗ @Model.ErrorMessage
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="card">
+        <h3 style="margin-top:0"><loc key="EditProfile_Avatar">Avatar</loc></h3>
+
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+            {
+                <img src="@Model.AvatarUrl" alt="Avatar" width="100" height="100" style="border-radius: 50%; object-fit: cover;" loading="lazy" decoding="async" />
+            }
+            else
+            {
+                <div style="width: 100px; height: 100px; border-radius: 50%; background-color: var(--primary); color: var(--primary-text); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold;">
+                    @Model.InitialsForAvatar
+                </div>
+            }
+
+            <div style="flex: 1;">
+                <label><loc key="EditProfile_UploadAvatar">Upload New Avatar (max 5MB, JPEG/PNG)</loc></label>
+                <input type="file" name="AvatarFile" accept=".jpg,.jpeg,.png" />
+
+                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                {
+                    <button type="submit" asp-page-handler="DeleteAvatar" class="btn-secondary" style="margin-top: 0.5rem;">
+                        <loc key="EditProfile_DeleteAvatar">Delete Avatar</loc>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0"><loc key="EditProfile_AccountSettings">Account Settings</loc></h3>
+
+        <label><loc key="Label_Email">Email</loc> *</label>
+        <input type="email" asp-for="Email" required />
+
+        <label><loc key="Label_Role">Role</loc> *</label>
+        <select asp-for="Role" required>
+            <option value="@UserRole.Employee"><loc key="Role_Employee">Employee</loc></option>
+            <option value="@UserRole.Manager"><loc key="Role_Manager">Manager</loc></option>
+            <option value="@UserRole.Owner"><loc key="Role_Owner">Owner</loc></option>
+            <option value="@UserRole.Director"><loc key="Role_Director">Director</loc></option>
+            <option value="@UserRole.Trainee"><loc key="Role_Trainee">Trainee</loc></option>
+        </select>
+
+        <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" asp-for="IsActive" style="width: auto; margin: 0;" />
+            <loc key="EditProfile_ActiveAccount">Active Account</loc>
+        </label>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0"><loc key="EditProfile_PersonalInfo">Personal Information</loc></h3>
+
+        <label><loc key="Label_DisplayName">Display Name</loc> *</label>
+        <input type="text" asp-for="DisplayName" required />
+
+        <label><loc key="Label_PreferredName">Preferred Name</loc></label>
+        <input type="text" asp-for="PreferredName" loc-placeholder="Placeholder_PreferredName" />
+
+        <label><loc key="Label_Phone">Phone</loc></label>
+        <input type="tel" asp-for="Phone" loc-placeholder="Placeholder_Phone" />
+
+        <label><loc key="Label_City">City</loc></label>
+        <input type="text" asp-for="City" loc-placeholder="Placeholder_City" />
+
+        <label><loc key="Label_DateOfBirth">Date of Birth</loc></label>
+        <input type="date" asp-for="DateOfBirth" />
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0"><loc key="EditProfile_OrgAssignment">Organizational Assignment</loc></h3>
+
+        @if (Model.IsWorkforceMolecule && Model.AvailableJobTypes.Any())
+        {
+            <label>@Localizer["JobType"]</label>
+            <select asp-for="JobTypeId">
+                <option value="">-- @Localizer["NoJobType"] --</option>
+                @foreach (var jt in Model.AvailableJobTypes)
+                {
+                    <option value="@jt.Id">@jt.Name</option>
+                }
+            </select>
+            <small style="color: var(--text-muted); display: block; margin-bottom: 1rem;">@Localizer["JobTypeDescription"]</small>
+        }
+
+        @if (Model.IsTechMolecule && Model.AvailableDepartments.Any())
+        {
+            <label>@Localizer["Department"]</label>
+            <select asp-for="DepartmentId">
+                <option value="">-- @Localizer["NoDepartment"] --</option>
+                @foreach (var dept in Model.AvailableDepartments)
+                {
+                    <option value="@dept.Id">@dept.Name</option>
+                }
+            </select>
+            <small style="color: var(--text-muted); display: block; margin-bottom: 1rem;">@Localizer["DepartmentDescription"]</small>
+        }
+
+        <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--surface-soft); border-radius: 8px; margin-bottom: 1rem;">
+            <span style="font-weight: 600;">@Localizer["Grants"]:</span>
+            <span style="background: var(--primary-bg); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">@Model.GrantsCount</span>
+            @if (Model.GrantsCount > 0)
+            {
+                <a href="/Admin/Organization/Grants?userId=@Model.UserId" style="color: var(--primary); font-size: 0.875rem;">@Localizer["ManageGrants"] →</a>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0"><loc key="EditProfile_ProfessionalInfo">Professional Information</loc></h3>
+
+        <label><loc key="Label_DepartmentLegacy">Department (Legacy)</loc></label>
+        <input type="text" asp-for="Department" loc-placeholder="Placeholder_Department" />
+        <small style="color: var(--text-muted); display: block; margin-bottom: 1rem;">@Localizer["LegacyDepartmentNote"]</small>
+
+        <label><loc key="Label_JobTitle">Job Title</loc></label>
+        <input type="text" asp-for="JobTitle" loc-placeholder="Placeholder_JobTitle" />
+
+        <label><loc key="Label_HireDate">Hire Date</loc></label>
+        <input type="date" asp-for="HireDate" />
+
+        <label><loc key="Label_Skills">Skills (comma-separated)</loc></label>
+        <input type="text" asp-for="Skills" loc-placeholder="Placeholder_Skills" />
+        <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Enter skills separated by commas</small>
+
+        <label><loc key="Label_Certifications">Certifications (comma-separated)</loc></label>
+        <input type="text" asp-for="Certifications" loc-placeholder="Placeholder_Certifications" />
+        <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Enter certifications separated by commas</small>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0"><loc key="EditProfile_EmergencyContact">Emergency Contact</loc></h3>
+
+        <label><loc key="Label_EmergencyContactName">Emergency Contact Name</loc></label>
+        <input type="text" asp-for="EmergencyContactName" loc-placeholder="Placeholder_EmergencyContactName" />
+
+        <label><loc key="Label_EmergencyContactPhone">Emergency Contact Phone</loc></label>
+        <input type="tel" asp-for="EmergencyContactPhone" loc-placeholder="Placeholder_Phone" />
+
+        <label><loc key="Label_Relationship">Relationship</loc></label>
+        <input type="text" asp-for="EmergencyContactRelation" loc-placeholder="Placeholder_EmergencyContactRelation" />
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn-primary"><loc key="Button_SaveChanges">Save Changes</loc></button>
+        <a href="/Admin/Users" class="btn-secondary"><loc key="Button_Cancel">Cancel</loc></a>
+    </div>
+</form>
+
+@if (Model.RecentChanges.Any())
+{
+    <div class="card" style="margin-top: 1rem;">
+        <h3 style="margin-top:0"><loc key="EditProfile_RecentChanges">Recent Profile Changes (Last 30 Days)</loc></h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th><loc key="Table_Date">Date</loc></th>
+                    <th><loc key="Table_Field">Field</loc></th>
+                    <th><loc key="Table_OldValue">Old Value</loc></th>
+                    <th><loc key="Table_NewValue">New Value</loc></th>
+                    <th><loc key="Table_ChangedBy">Changed By</loc></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var change in Model.RecentChanges)
+                {
+                    <tr>
+                        <td>@change.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@change.FieldName</td>
+                        <td><small style="color: var(--text-muted);">@(change.OldValue ?? "(empty)")</small></td>
+                        <td><small style="font-weight: bold;">@(change.NewValue ?? "(empty)")</small></td>
+                        <td>@(change.ChangedByUser?.DisplayName ?? "Unknown")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

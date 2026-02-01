@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
@@ -21,17 +22,34 @@ public class TenantResolver : ITenantResolver
 
     public int GetCurrentTenantId()
     {
-        // If explicitly set, use that
+        // Priority 1: Explicit override (existing)
         if (_tenantIdOverride.HasValue)
         {
             _logger?.LogInformation("TenantResolver: Using override CompanyId={CompanyId}", _tenantIdOverride.Value);
             return _tenantIdOverride.Value;
         }
 
-        // Get from user's CompanyId claim
         var user = _httpContextAccessor.HttpContext?.User;
         if (user?.Identity?.IsAuthenticated == true)
         {
+            // Priority 2: Owner's selected company (NEW)
+            if (user.IsInRole(nameof(UserRole.Owner)))
+            {
+                var ownerService = _httpContextAccessor.HttpContext?.RequestServices
+                    .GetService<IOwnerCompanySelectorService>();
+
+                var selectedCompanyId = ownerService?.GetSelectedCompanyId();
+                if (selectedCompanyId.HasValue)
+                {
+                    _logger?.LogInformation("TenantResolver: Owner using selected CompanyId={CompanyId}",
+                        selectedCompanyId.Value);
+                    return selectedCompanyId.Value;
+                }
+
+                _logger?.LogInformation("TenantResolver: Owner has no selection, using home CompanyId");
+            }
+
+            // Priority 3: User's CompanyId claim (default for all users)
             var email = user.FindFirst(ClaimTypes.Name)?.Value;
             var companyIdClaim = user.FindFirst("CompanyId");
             if (companyIdClaim != null && int.TryParse(companyIdClaim.Value, out var companyId))
@@ -47,12 +65,13 @@ public class TenantResolver : ITenantResolver
         }
         else
         {
-            _logger?.LogInformation("TenantResolver: User not authenticated, using fallback CompanyId=1");
+            _logger?.LogWarning("TenantResolver: User not authenticated, no tenant access (CompanyId=0)");
         }
 
-        // Fallback to first company (for migration compatibility)
-        // TODO Phase 3: Remove this fallback when all requests are authenticated
-        return 1;
+        // SECURITY FIX: Removed dangerous fallback to CompanyId=1
+        // Unauthenticated requests should not have access to tenant data
+        // Return 0 to indicate no tenant context (query filters will exclude all records)
+        return 0;
     }
 
     public void SetCurrentTenantId(int companyId)

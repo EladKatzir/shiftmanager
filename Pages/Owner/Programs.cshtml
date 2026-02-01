@@ -1,0 +1,499 @@
+@page
+@model ShiftManager.Pages.Owner.ProgramsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Programs";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = "Programs", IsActive = true }
+})
+
+@* Owner Company Selector *@
+@await Component.InvokeAsync("OwnerCompanySelector")
+
+<div class="feature-flags-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">⏰</span>
+            Programs (Weekly Templates)
+        </h1>
+        <p class="page-subtitle">Define when shift types run each week and generate shift instances</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>✅ Success:</strong> @Model.Success
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger">
+            <strong>❌ Error:</strong> @Model.Error
+        </div>
+    }
+
+    @* Create New Program Section *@
+    <div class="feature-category">
+        <h2>➕ Create New Program</h2>
+        <form method="post" asp-page-handler="CreateProgram">
+            <div class="form-group-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group">
+                    <label asp-for="ShiftTypeId">Shift Type</label>
+                    <select asp-for="ShiftTypeId" class="form-control" required>
+                        <option value="">-- Select Shift Type --</option>
+                        @foreach (var st in Model.ShiftTypes)
+                        {
+                            <option value="@st.Id">
+                                @if (!string.IsNullOrWhiteSpace(st.NameKey))
+                                {
+                                    <loc key="@st.NameKey" />
+                                }
+                                else
+                                {
+                                    @st.Name
+                                }
+                                (@st.Start.ToString("HH:mm") - @st.End.ToString("HH:mm"))
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ProgramName">Program Name</label>
+                    <input type="text" asp-for="ProgramName" class="form-control"
+                           placeholder="e.g., Morning Shifts Mon-Fri" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Weekly Mask (Select Days)</label>
+                <div class="weekly-mask-selector">
+                    @foreach (var day in Enum.GetValues<DayOfWeek>())
+                    {
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="SelectedDays" value="@day" />
+                            <span class="day-label">@day.ToString().Substring(0, 3)</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DefaultStaffing">Default Staffing Required</label>
+                <input type="number" asp-for="DefaultStaffing" class="form-control"
+                       min="1" max="50" value="1" required />
+                <small class="form-text text-muted">
+                    Number of people required per shift (can override per-day below)
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label>Per-Day Staffing Overrides (Optional)</label>
+                <div id="perDayStaffing" class="per-day-staffing-grid">
+                    @foreach (var day in Enum.GetValues<DayOfWeek>())
+                    {
+                        <div class="per-day-staffing-item">
+                            <label>@day</label>
+                            <input type="number"
+                                   data-day="@day"
+                                   class="form-control per-day-input"
+                                   min="1"
+                                   max="50"
+                                   placeholder="Use default" />
+                        </div>
+                    }
+                </div>
+                <input type="hidden" asp-for="PerDayStaffingJson" id="perDayStaffingJson" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" onclick="collectPerDayStaffing()">
+                ➕ Create Program
+            </button>
+        </form>
+    </div>
+
+    @* Existing Programs List *@
+    <div class="feature-category">
+        <h2>⏰ Existing Programs</h2>
+
+        @if (Model.Programs.Count == 0)
+        {
+            <div class="alert alert-info">
+                No programs defined yet. Create one above to get started.
+            </div>
+        }
+        else
+        {
+            <div class="programs-grid">
+                @foreach (var program in Model.Programs)
+                {
+                    <div class="program-card">
+                        <div class="program-header">
+                            <h3>@program.Name</h3>
+                            <span class="badge badge-primary">
+                                @if (!string.IsNullOrWhiteSpace(program.ShiftType.NameKey))
+                                {
+                                    <loc key="@program.ShiftType.NameKey" />
+                                }
+                                else
+                                {
+                                    @program.ShiftType.Name
+                                }
+                            </span>
+                        </div>
+
+                        <div class="program-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Time:</span>
+                                <span>@program.ShiftType.Start.ToString("HH:mm") - @program.ShiftType.End.ToString("HH:mm")</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Default Staffing:</span>
+                                <span>@program.DefaultStaffingRequired people</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Runs On:</span>
+                                <div class="weekly-mask-display">
+                                    @foreach (var day in Enum.GetValues<DayOfWeek>())
+                                    {
+                                        var isActive = program.ProgramDays.Any(pd => pd.DayOfWeek == day);
+                                        var dayClass = isActive ? "day-active" : "day-inactive";
+                                        <span class="day-badge @dayClass">@day.ToString().Substring(0, 3)</span>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (program.ProgramDays.Any(pd => pd.StaffingRequired.HasValue))
+                            {
+                                <div class="detail-row">
+                                    <span class="detail-label">Per-Day Overrides:</span>
+                                    <div class="per-day-overrides">
+                                        @foreach (var pd in program.ProgramDays.Where(pd => pd.StaffingRequired.HasValue))
+                                        {
+                                            <span class="override-badge">
+                                                @pd.DayOfWeek: @pd.StaffingRequired
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="program-actions">
+                            <button type="button"
+                                    class="btn btn-sm btn-success generate-btn"
+                                    data-program-id="@program.Id"
+                                    data-program-name="@program.Name">
+                                📅 Generate Instances
+                            </button>
+
+                            <form method="post" asp-page-handler="DeleteProgram"
+                                  style="display: inline;"
+                                  onsubmit="return confirm('Are you sure you want to delete this program? Existing shift instances will NOT be deleted.');">
+                                <input type="hidden" name="programId" value="@program.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    🗑️ Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@* Generate Instances Modal *@
+<div id="generateModal" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="GenerateInstances">
+                <div class="modal-header">
+                    <h3>Generate Shift Instances</h3>
+                    <button type="button" class="close-modal" onclick="closeGenerateModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="GenerateProgramId" id="generateProgramId" />
+
+                    <p id="generateProgramName" class="text-muted"></p>
+
+                    <div class="form-group">
+                        <label asp-for="GenerateStartDate">Start Date</label>
+                        <input type="date" asp-for="GenerateStartDate" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="GenerateEndDate">End Date</label>
+                        <input type="date" asp-for="GenerateEndDate" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" asp-for="OverwriteExisting" />
+                            Overwrite existing shift instances?
+                        </label>
+                        <small class="form-text text-muted">
+                            If checked, will update existing instances. Otherwise, skips dates that already have shifts.
+                        </small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Note:</strong> This will create shift instances for all days in the range
+                        that match the Program's weekly mask.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                    <button type="submit" class="btn btn-primary">📅 Generate Instances</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Collect per-day staffing before form submit
+        function collectPerDayStaffing() {
+            const perDayData = {};
+            document.querySelectorAll('.per-day-input').forEach(input => {
+                const day = input.dataset.day;
+                const value = input.value;
+                if (value && value.trim() !== '') {
+                    perDayData[day] = parseInt(value);
+                }
+            });
+            document.getElementById('perDayStaffingJson').value = JSON.stringify(perDayData);
+        }
+
+        // Generate Modal
+        document.querySelectorAll('.generate-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const programId = this.dataset.programId;
+                const programName = this.dataset.programName;
+
+                document.getElementById('generateProgramId').value = programId;
+                document.getElementById('generateProgramName').textContent = 'Program: ' + programName;
+
+                document.getElementById('generateModal').style.display = 'block';
+            });
+        });
+
+        function closeGenerateModal() {
+            document.getElementById('generateModal').style.display = 'none';
+        }
+
+        // Modal backdrop click
+        document.getElementById('generateModal').addEventListener('click', function(e) {
+            if (e.target === this) closeGenerateModal();
+        });
+    </script>
+}
+
+<style>
+    .weekly-mask-selector {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .day-checkbox {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        padding: 10px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        transition: all 0.2s;
+    }
+
+    .day-checkbox:hover {
+        background: var(--surface-hover);
+    }
+
+    .day-checkbox input[type="checkbox"] {
+        margin-bottom: 5px;
+    }
+
+    .day-label {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .per-day-staffing-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .per-day-staffing-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .per-day-staffing-item label {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .programs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .program-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        transition: box-shadow 0.2s;
+    }
+
+    .program-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .program-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .program-header h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .program-details {
+        margin-bottom: 15px;
+    }
+
+    .detail-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        min-width: 120px;
+    }
+
+    .weekly-mask-display {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .day-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .day-active {
+        background: var(--primary);
+        color: var(--primary-contrast);
+    }
+
+    .day-inactive {
+        background: var(--surface-hover);
+        color: var(--text-secondary);
+    }
+
+    .per-day-overrides {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .override-badge {
+        padding: 4px 8px;
+        background: var(--info);
+        color: var(--info-text);
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .program-actions {
+        display: flex;
+        gap: 10px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border);
+    }
+
+    /* Modal styles (same as Blueprints) */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+    }
+
+    .modal-dialog {
+        position: relative;
+        max-width: 600px;
+        margin: 100px auto;
+    }
+
+    .modal-content {
+        background: var(--surface);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        text-align: right;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--text-secondary);
+    }
+
+    .close-modal:hover {
+        color: var(--text-primary);
+    }
+</style>

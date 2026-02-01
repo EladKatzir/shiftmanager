@@ -1,0 +1,645 @@
+/* ========================================
+   ShiftManager Calendar Skeleton Loading
+   B-007: Skeleton Loading for Calendars
+   ======================================== */
+
+/* ========================================
+   1. BASE SKELETON STYLES
+   ======================================== */
+
+.calendar-skeleton-container {
+    position: relative;
+}
+
+/* Skeleton shimmer animation */
+.calendar-skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--surface-soft) 25%,
+        var(--surface) 50%,
+        var(--surface-soft) 75%
+    );
+    background-size: 200% 100%;
+    animation: calendar-skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes calendar-skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .calendar-skeleton-shimmer {
+        animation: none;
+        background: var(--surface-soft);
+    }
+}
+
+/* ========================================
+   2. CALENDAR HEADER SKELETON
+   ======================================== */
+
+.skeleton-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.skeleton-header-title {
+    height: 2rem;
+    width: 200px;
+}
+
+.skeleton-header-nav {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.skeleton-nav-btn {
+    width: 100px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-nav-btn--icon {
+    width: 40px;
+}
+
+/* ========================================
+   3. CALENDAR METRICS SKELETON
+   ======================================== */
+
+.skeleton-calendar-metrics {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin: var(--space-3) 0;
+}
+
+.skeleton-metric-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background-color: var(--surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.skeleton-metric-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+}
+
+.skeleton-metric-value {
+    width: 30px;
+    height: 1.25rem;
+}
+
+.skeleton-metric-label {
+    width: 50px;
+    height: 0.875rem;
+}
+
+/* ========================================
+   4. VIEW SWITCHER SKELETON
+   ======================================== */
+
+.skeleton-view-switcher {
+    display: flex;
+    gap: var(--space-2);
+    margin: var(--space-3) 0;
+}
+
+.skeleton-view-btn {
+    width: 80px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+}
+
+/* ========================================
+   5. MONTH VIEW SKELETON
+   ======================================== */
+
+.skeleton-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background-color: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-top: var(--space-4);
+}
+
+.skeleton-weekday-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background-color: var(--border);
+}
+
+.skeleton-weekday {
+    background: var(--surface-soft);
+    padding: var(--space-3) var(--space-2);
+    text-align: center;
+}
+
+.skeleton-weekday-text {
+    height: 1rem;
+    width: 40px;
+    margin: 0 auto;
+}
+
+.skeleton-calendar-cell {
+    min-height: 120px;
+    padding: var(--space-2);
+    background-color: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.skeleton-cell-date {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+}
+
+.skeleton-cell-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1;
+}
+
+.skeleton-calendar-item {
+    height: 48px;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-calendar-item--short {
+    height: 32px;
+    width: 80%;
+}
+
+/* ========================================
+   6. WEEK VIEW SKELETON
+   ======================================== */
+
+.skeleton-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.skeleton-week-column {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    min-height: 400px;
+}
+
+.skeleton-column-header {
+    text-align: center;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--border);
+}
+
+.skeleton-day-name {
+    height: 0.9rem;
+    width: 60px;
+    margin: 0 auto var(--space-2) auto;
+}
+
+.skeleton-day-date {
+    height: 1.25rem;
+    width: 80px;
+    margin: 0 auto;
+}
+
+.skeleton-column-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.skeleton-week-item {
+    height: 72px;
+    border-radius: var(--radius-md);
+}
+
+/* ========================================
+   7. DAY VIEW SKELETON
+   ======================================== */
+
+.skeleton-day-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.skeleton-day-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+}
+
+.skeleton-day-item-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.skeleton-day-item-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.skeleton-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-item-title {
+    height: 1.5rem;
+    width: 150px;
+}
+
+.skeleton-day-item-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.skeleton-detail-row {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.skeleton-detail-label {
+    width: 60px;
+    height: 0.875rem;
+}
+
+.skeleton-detail-value {
+    width: 100px;
+    height: 0.875rem;
+}
+
+.skeleton-day-item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.skeleton-action-btn {
+    width: 80px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+}
+
+/* ========================================
+   8. TABLE VIEW SKELETON
+   ======================================== */
+
+.skeleton-table-container {
+    margin-top: var(--space-4);
+    overflow-x: auto;
+}
+
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.skeleton-table-header {
+    background: var(--primary);
+}
+
+.skeleton-table-header-cell {
+    padding: var(--space-3);
+    text-align: center;
+}
+
+.skeleton-header-text {
+    height: 1rem;
+    width: 60px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-table-row {
+    border-bottom: 1px solid var(--border);
+}
+
+.skeleton-table-cell {
+    padding: var(--space-3);
+    min-width: 120px;
+}
+
+.skeleton-shift-name {
+    height: 1rem;
+    width: 80%;
+}
+
+.skeleton-assignment-slots {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.skeleton-assignment-slot {
+    height: 48px;
+    border-radius: var(--radius-sm);
+}
+
+/* Table-specific header classes (used by _TableSkeleton.cshtml) */
+.skeleton-header-day {
+    height: 0.875rem;
+    width: 40px;
+    margin: 0 auto var(--space-1) auto;
+}
+
+.skeleton-header-date {
+    height: 1rem;
+    width: 60px;
+    margin: 0 auto;
+}
+
+.skeleton-table-cell--header {
+    background: var(--surface-soft);
+    font-weight: 600;
+}
+
+.skeleton-table-cell--shift {
+    background: var(--surface);
+    text-align: left;
+}
+
+.skeleton-shift-time {
+    height: 0.75rem;
+    width: 60px;
+    margin-top: var(--space-1);
+}
+
+/* ========================================
+   9. QUICK ACTIONS SKELETON
+   ======================================== */
+
+.skeleton-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--surface-soft);
+    border-radius: var(--radius-md);
+    margin: var(--space-3) 0;
+}
+
+.skeleton-quick-action-label {
+    width: 100px;
+    height: 1rem;
+}
+
+.skeleton-quick-action-btn {
+    width: 120px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+}
+
+/* ========================================
+   10. TRANSITION STATES
+   ======================================== */
+
+/* Skeleton visibility control */
+.calendar-skeleton {
+    opacity: 1;
+    transition: opacity var(--duration-normal, 200ms) var(--ease-out, ease-out);
+}
+
+.calendar-skeleton.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    visibility: hidden;
+}
+
+/* Content visibility control */
+.calendar-content {
+    opacity: 0;
+    transition: opacity var(--duration-normal, 200ms) var(--ease-out, ease-out);
+}
+
+.calendar-content.is-loaded {
+    opacity: 1;
+}
+
+/* Staggered fade-in for calendar cells */
+.skeleton-calendar-cell {
+    animation-delay: calc(var(--cell-index, 0) * 20ms);
+}
+
+/* ========================================
+   11. RESPONSIVE SKELETON
+   ======================================== */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .skeleton-calendar-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: var(--space-3);
+    }
+
+    .skeleton-header-title {
+        width: 150px;
+    }
+
+    .skeleton-calendar-grid,
+    .skeleton-weekday-header {
+        grid-template-columns: repeat(7, 1fr);
+    }
+
+    .skeleton-calendar-cell {
+        min-height: 80px;
+    }
+
+    .skeleton-week-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+    }
+
+    .skeleton-week-column {
+        min-height: auto;
+        padding: var(--space-3);
+    }
+
+    .skeleton-column-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+    }
+
+    .skeleton-day-name,
+    .skeleton-day-date {
+        margin: 0;
+    }
+
+    .skeleton-view-switcher {
+        width: 100%;
+    }
+
+    .skeleton-view-btn {
+        flex: 1;
+    }
+
+    .skeleton-day-item {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .skeleton-day-item-details {
+        grid-template-columns: 1fr;
+    }
+
+    .skeleton-day-item-actions {
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .skeleton-action-btn {
+        flex: 1;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .skeleton-calendar-metrics {
+        flex-direction: column;
+    }
+
+    .skeleton-metric-item {
+        width: 100%;
+    }
+
+    .skeleton-calendar-cell {
+        min-height: 70px;
+        padding: var(--space-1);
+    }
+
+    .skeleton-cell-date {
+        width: 20px;
+        height: 20px;
+    }
+
+    .skeleton-calendar-item {
+        height: 32px;
+    }
+
+    .skeleton-quick-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .skeleton-quick-action-btn {
+        width: 100%;
+    }
+}
+
+/* Very small mobile */
+@media (max-width: 360px) {
+    .skeleton-calendar-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .skeleton-weekday-header {
+        display: none;
+    }
+
+    .skeleton-calendar-cell {
+        min-height: auto;
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--border);
+    }
+}
+
+/* ========================================
+   12. DARK MODE SUPPORT
+   ======================================== */
+
+:root[data-theme="dark"] .calendar-skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--surface-soft) 25%,
+        var(--surface-elevated) 50%,
+        var(--surface-soft) 75%
+    );
+    background-size: 200% 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .calendar-skeleton-shimmer {
+        background: linear-gradient(
+            90deg,
+            var(--surface-soft) 25%,
+            var(--surface-elevated) 50%,
+            var(--surface-soft) 75%
+        );
+        background-size: 200% 100%;
+    }
+}
+
+/* ========================================
+   13. ACCESSIBILITY
+   ======================================== */
+
+/* Screen reader text for loading state */
+.calendar-skeleton[aria-busy="true"]::before {
+    content: '';
+    /* Actual text handled via aria-label */
+}
+
+/* Focus visible styles during skeleton state */
+.calendar-skeleton:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (forced-colors: active) {
+    .calendar-skeleton-shimmer {
+        background: Canvas;
+        border: 1px solid CanvasText;
+    }
+}

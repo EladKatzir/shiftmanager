@@ -2,20 +2,26 @@
 @model ShiftManager.Pages.My.NotificationCenterModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
 
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["NotificationCenter"], IsActive = true }
+})
+
 <div style="max-width: 1200px; margin: 0 auto;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-        <h2 style="color: var(--text); margin: 0;">@Localizer["NotificationCenter"]</h2>
+        <h2 style="color: var(--text); margin: 0;"><loc key="NotificationCenter" /></h2>
 
         @if (Model.Notifications.Any(n => !n.IsRead))
         {
             <form method="post" asp-page-handler="MarkAllAsRead" style="display: inline;">
                 @Html.AntiForgeryToken()
-                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                <button type="submit" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; cursor: pointer;">
                     @Localizer["MarkAllAsRead", Model.UnreadCount]
                 </button>
             </form>
@@ -24,14 +30,14 @@
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
+        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: var(--success-text); border-radius: 0.5rem;">
             @Model.Message
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
-        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
+        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: var(--danger-text); border-radius: 0.5rem;">
             @Model.Error
         </div>
     }
@@ -83,7 +89,7 @@
                                     <form method="post" asp-page-handler="MarkAsRead" style="display: inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@notification.Id" />
-                                        <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.8rem; cursor: pointer;">
+                                        <button type="submit" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.8rem; cursor: pointer;">
                                             @Localizer["MarkAsRead"]
                                         </button>
                                     </form>
@@ -93,7 +99,7 @@
                                       onsubmit="return confirm('@Localizer["DeleteConfirm"]');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@notification.Id" />
-                                    <button type="submit" style="background: var(--danger); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.8rem; cursor: pointer;">
+                                    <button type="submit" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.8rem; cursor: pointer;">
                                         @Localizer["Delete"]
                                     </button>
                                 </form>
@@ -108,8 +114,8 @@
     {
         <div class="empty-state" style="text-align: center; padding: 4rem 2rem; color: var(--muted);">
             <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-            <h3 style="margin: 0 0 0.5rem 0; color: var(--text);">@Localizer["NoNotifications"]</h3>
-            <p style="margin: 0;">@Localizer["AllCaughtUp"]</p>
+            <h3 style="margin: 0 0 0.5rem 0; color: var(--text);"><loc key="NoNotifications" /></h3>
+            <p style="margin: 0;"><loc key="AllCaughtUp" /></p>
         </div>
     }
 </div>

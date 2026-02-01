@@ -1,0 +1,345 @@
+@page
+@model ShiftManager.Pages.Owner.SystemHealthModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_SystemHealth"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_SystemHealth"], IsActive = true }
+})
+
+<div class="system-health-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">🏥</span>
+            @Localizer["Owner_SystemHealth"]
+        </h1>
+    </div>
+
+    @* Overall Status *@
+    <div class="health-status-card @(Model.OverallStatus == "Healthy" ? "status-healthy" : "status-warning")">
+        <div class="status-icon">@(Model.OverallStatus == "Healthy" ? "✅" : "⚠️")</div>
+        <div class="status-content">
+            <h2>@Model.OverallStatus</h2>
+            <p>Last checked: @DateTime.Now.ToString("g")</p>
+        </div>
+        <button onclick="location.reload()" class="btn btn-ghost">🔄 Refresh</button>
+    </div>
+
+    @* Health Checks Grid *@
+    <div class="health-checks-grid">
+        @* Database Health *@
+        <div class="health-check-card">
+            <div class="check-header">
+                <h3>💾 Database</h3>
+                <span class="status-badge @(Model.DatabaseHealthy ? "badge-success" : "badge-error")">
+                    @(Model.DatabaseHealthy ? "Healthy" : "Error")
+                </span>
+            </div>
+            <div class="check-details">
+                <div class="detail-item">
+                    <span class="label">Size:</span>
+                    <span class="value">@Model.DatabaseSize</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Tables:</span>
+                    <span class="value">@Model.TableCount</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Records:</span>
+                    <span class="value">@Model.TotalRecords.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+
+        @* Memory Usage *@
+        <div class="health-check-card">
+            <div class="check-header">
+                <h3>💻 Memory</h3>
+                <span class="status-badge @(Model.MemoryHealthy ? "badge-success" : "badge-warning")">
+                    @(Model.MemoryHealthy ? "Healthy" : "High")
+                </span>
+            </div>
+            <div class="check-details">
+                <div class="detail-item">
+                    <span class="label">Used:</span>
+                    <span class="value">@Model.MemoryUsedMB MB</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">GC Gen 0:</span>
+                    <span class="value">@Model.GCGen0Collections</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">GC Gen 2:</span>
+                    <span class="value">@Model.GCGen2Collections</span>
+                </div>
+            </div>
+        </div>
+
+        @* Application Uptime *@
+        <div class="health-check-card">
+            <div class="check-header">
+                <h3>⏱️ Uptime</h3>
+                <span class="status-badge badge-info">Running</span>
+            </div>
+            <div class="check-details">
+                <div class="detail-item">
+                    <span class="label">Started:</span>
+                    <span class="value">@Model.StartTime.ToString("g")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Duration:</span>
+                    <span class="value">@Model.Uptime</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Environment:</span>
+                    <span class="value">@Model.Environment</span>
+                </div>
+            </div>
+        </div>
+
+        @* Configuration Status *@
+        <div class="health-check-card">
+            <div class="check-header">
+                <h3>⚙️ Configuration</h3>
+                <span class="status-badge badge-success">OK</span>
+            </div>
+            <div class="check-details">
+                <div class="detail-item">
+                    <span class="label">Email:</span>
+                    <span class="value">@(Model.EmailConfigured ? "✅ Configured" : "❌ Not configured")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">ADFS:</span>
+                    <span class="value">@(Model.AdfsConfigured ? "✅ Configured" : "❌ Not configured")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Daily Notifications:</span>
+                    <span class="value">@(Model.DailyNotificationsEnabled ? "✅ Enabled" : "⏸️ Disabled")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Companies:</span>
+                    <span class="value">@Model.CompanyCount</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Users:</span>
+                    <span class="value">@Model.UserCount</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Detailed Logs *@
+    <div class="health-logs">
+        <h2>📋 Recent Logs (Last 24 hours)</h2>
+        <div class="logs-stats">
+            <div class="log-stat">
+                <span class="log-count error">@Model.ErrorCount</span>
+                <span class="log-label">Errors</span>
+            </div>
+            <div class="log-stat">
+                <span class="log-count warning">@Model.WarningCount</span>
+                <span class="log-label">Warnings</span>
+            </div>
+            <div class="log-stat">
+                <span class="log-count info">@Model.InfoCount</span>
+                <span class="log-label">Info</span>
+            </div>
+        </div>
+        @if (Model.ErrorCount > 0)
+        {
+            <div class="alert alert-warning">
+                <strong>⚠️ Attention:</strong> @Model.ErrorCount error(s) detected in the last 24 hours.
+                Check application logs for details.
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+.system-health-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.health-status-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.health-status-card.status-healthy {
+    border-color: var(--success);
+    background: var(--success-soft);
+}
+
+.health-status-card.status-warning {
+    border-color: var(--warning);
+    background: var(--warning-soft);
+}
+
+.status-icon {
+    font-size: 3rem;
+}
+
+.status-content h2 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.5rem;
+}
+
+.status-content p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.health-checks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.health-check-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.check-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.check-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.badge-error {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.badge-warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.badge-info {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.check-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-item .label {
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+.detail-item .value {
+    font-weight: 600;
+}
+
+.health-logs {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.health-logs h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+}
+
+.logs-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.log-stat {
+    text-align: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.log-count {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.log-count.error {
+    color: var(--danger);
+}
+
+.log-count.warning {
+    color: var(--warning);
+}
+
+.log-count.info {
+    color: var(--primary);
+}
+
+.log-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.alert-warning {
+    background: var(--warning-soft);
+    border: 1px solid var(--warning);
+    color: var(--warning);
+}
+</style>

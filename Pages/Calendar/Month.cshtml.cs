@@ -1,19 +1,23 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;               // ensure this using is present
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
+using ShiftManager.Models.ViewModels;
 using ShiftManager.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Resources;
+using System.Security.Claims;
 
 namespace ShiftManager.Pages.Calendar;
 
+/// <summary>
+/// ✅ PHASE 20: Monthly calendar view - Read-only unified view of shifts, chores, and on-duty
+/// ✅ A-018: Scope switcher integration for filtering by mine/company/molecule/area
+/// </summary>
 [Authorize]
-[IgnoreAntiforgeryToken] // ⬅ apply here (class level)
-
 public class MonthModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -21,346 +25,505 @@ public class MonthModel : PageModel
     private readonly ILogger<MonthModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IDirectorService _directorService;
+    private readonly IUserPreferenceService _userPreferenceService;
+    private readonly IChoreService _choreService;
+    private readonly IScopeFilterService _scopeFilterService;
 
-    public MonthModel(AppDbContext db, ICompanyContext companyContext, ILogger<MonthModel> logger, IStringLocalizer<SharedResources> localizer, IDirectorService directorService)
+    public MonthModel(
+        AppDbContext db,
+        ICompanyContext companyContext,
+        ILogger<MonthModel> logger,
+        IStringLocalizer<SharedResources> localizer,
+        IDirectorService directorService,
+        IUserPreferenceService userPreferenceService,
+        IChoreService choreService,
+        IScopeFilterService scopeFilterService)
     {
         _db = db;
         _companyContext = companyContext;
         _logger = logger;
         _localizer = localizer;
         _directorService = directorService;
+        _userPreferenceService = userPreferenceService;
+        _choreService = choreService;
+        _scopeFilterService = scopeFilterService;
     }
-
 
     public DateOnly CurrentMonth { get; set; }
     public (DateOnly MonthYear, string Label) Previous { get; set; }
     public (DateOnly MonthYear, string Label) Next { get; set; }
-
     public List<List<DayVM>> Weeks { get; set; } = new();
+    public bool ShowMyItemsOnly { get; set; }
+    public int CurrentUserId { get; set; }
+
+    // v3.0: Hierarchy filters
+    public int? FilterJobTypeId { get; set; }
+    public int? FilterShiftGroupingId { get; set; }
+    public List<(int Id, string Name)> AvailableJobTypes { get; set; } = new();
+    public List<(int Id, string Name)> AvailableShiftGroupings { get; set; } = new();
+
+    // ✅ PHASE 20: Dropdown data for quick-add functionality
+    public List<AppUser> EligibleAssignees { get; set; } = new();
+    public List<OnDutyTypeConfig> CustomOnDutyTypes { get; set; } = new();
+
+    // ✅ PHASE 7: Calendar header contextual metrics
+    public int VisibleShiftCount { get; set; }
+    public int VisibleChoreCount { get; set; }
+    public int VisibleOnDutyCount { get; set; }
+    public int TotalItemCount { get; set; }
+    public int PendingItemsCount { get; set; }
+    public double CoveragePercent { get; set; }
 
     public class DayVM
     {
         public DateOnly Date { get; set; }
-        public List<LineVM> Lines { get; set; } = new();
-    }
-    public class LineVM
-    {
-        public int ShiftTypeId { get; set; }
-        public int InstanceId { get; set; } // 0 if none yet
-        public int Concurrency { get; set; }
-        public string ShortName { get; set; } = "";
-        public string ShiftTypeKey { get; set; } = "";
-        public string ShiftTypeName { get; set; } = "";
-        public string ShiftName { get; set; } = ""; // Custom shift instance name
-        public int Assigned { get; set; }
-        public int Required { get; set; }
-        public int TraineeCount { get; set; }
-        public List<string> AssignedNames { get; set; } = new();
-        public List<string> TraineeNames { get; set; } = new();
-        public List<string> EmptySlots { get; set; } = new();
-        public string StartTime { get; set; } = "";
-        public string EndTime { get; set; } = "";
+        public List<CalendarItemViewModel> Items { get; set; } = new();
     }
 
-    public async Task OnGetAsync(int? year, int? month)
+    public async Task OnGetAsync(int? year, int? month, int? jobTypeId = null, int? shiftGroupingId = null)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var target = year.HasValue && month.HasValue ? new DateOnly(year.Value, month.Value, 1) : new DateOnly(today.Year, today.Month, 1);
+        DateOnly target;
+
+        // Validate and parse date parameters with proper boundary handling
+        if (year.HasValue && month.HasValue)
+        {
+            target = TryCreateValidMonth(year.Value, month.Value) ?? new DateOnly(today.Year, today.Month, 1);
+        }
+        else
+        {
+            target = new DateOnly(today.Year, today.Month, 1);
+        }
         CurrentMonth = target;
 
         Previous = (target.AddMonths(-1), target.AddMonths(-1).ToString("MMM yyyy"));
         Next = (target.AddMonths(1), target.AddMonths(1).ToString("MMM yyyy"));
 
-        // Load accessible companies and shift types based on role
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-        var companyId = _companyContext.GetCompanyIdOrThrow();
-        _logger.LogInformation("Month calendar: User {UserId} loading calendar with CompanyId={CompanyId}", currentUserId, companyId);
+        // Get current user
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return;
+        }
+        CurrentUserId = currentUserId;
+
+        // ✅ A-018: Get scope from URL/cookie and resolve company IDs for filtering
+        var (scopeType, scopeId) = _scopeFilterService.GetCurrentScope("shifts");
+        
+        // Validate user has access to the requested scope
+        if (!await _scopeFilterService.ValidateScopeAccessAsync(scopeType, scopeId, "shifts"))
+        {
+            _logger.LogWarning("User {UserId} does not have access to scope {ScopeType}", currentUserId, scopeType);
+            scopeType = "company";
+            scopeId = null;
+        }
+
+        // Resolve scope to company IDs for data filtering
+        var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync(scopeType, scopeId);
+        
+        // Handle edge case: no companies for scope
+        if (!companyIds.Any())
+        {
+            var fallbackCompanyId = _companyContext.CompanyId;
+            if (fallbackCompanyId.HasValue && fallbackCompanyId.Value > 0)
+            {
+                companyIds = new List<int> { fallbackCompanyId.Value };
+            }
+        }
+
+        // Determine if we should filter to current user only
+        ShowMyItemsOnly = _scopeFilterService.ShouldFilterToCurrentUserOnly(scopeType);
+
+        // v3.0: Apply hierarchy filters
+        FilterJobTypeId = jobTypeId;
+        FilterShiftGroupingId = shiftGroupingId;
+
+        // v3.0: Load filter options from current user's area (use first company for context)
+        var primaryCompanyId = companyIds.FirstOrDefault();
+        if (primaryCompanyId > 0)
+        {
+            var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == primaryCompanyId);
+            if (company?.MoleculeId != null)
+            {
+                var molecule = await _db.Molecules.IgnoreQueryFilters()
+                    .Include(m => m.Area)
+                    .FirstOrDefaultAsync(m => m.Id == company.MoleculeId);
+
+                if (molecule?.AreaId != null)
+                {
+                    AvailableJobTypes = await _db.JobTypes.IgnoreQueryFilters()
+                        .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
+                        .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
+                        .Select(jt => ValueTuple.Create(jt.Id, jt.DisplayName))
+                        .ToListAsync();
+                }
+
+                AvailableShiftGroupings = await _db.ShiftGroupings.IgnoreQueryFilters()
+                    .Where(sg => sg.MoleculeId == company.MoleculeId && sg.IsActive)
+                    .OrderBy(sg => sg.Name)
+                    .Select(sg => ValueTuple.Create(sg.Id, sg.DisplayName))
+                    .ToListAsync();
+            }
+        }
+
+        _logger.LogInformation("✅ A-018: Month calendar for User {UserId}, Scope={Scope}, CompanyIds=[{CompanyIds}], ShowMyItemsOnly={ShowMyItemsOnly}",
+            currentUserId, scopeType, string.Join(",", companyIds), ShowMyItemsOnly);
+
         var currentUser = await _db.Users.FindAsync(currentUserId);
-
-        List<int> accessibleCompanyIds;
-        List<Company> accessibleCompanies;
-        List<ShiftType> types;
-
-        if (currentUser!.Role == Models.Support.UserRole.Owner)
+        if (currentUser == null)
         {
-            // Owner: all companies
-            accessibleCompanies = await _db.Companies.OrderBy(c => c.Name).ToListAsync();
-            accessibleCompanyIds = accessibleCompanies.Select(c => c.Id).ToList();
-            types = await _db.ShiftTypes.IgnoreQueryFilters()
-                .Where(st => accessibleCompanyIds.Contains(st.CompanyId))
-                .OrderBy(s => s.Key)
-                .ToListAsync();
-        }
-        else if (currentUser.Role == Models.Support.UserRole.Director)
-        {
-            // Director: companies they manage
-            accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
-            accessibleCompanies = await _db.Companies
-                .Where(c => accessibleCompanyIds.Contains(c.Id))
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-            types = await _db.ShiftTypes.IgnoreQueryFilters()
-                .Where(st => accessibleCompanyIds.Contains(st.CompanyId))
-                .OrderBy(s => s.Key)
-                .ToListAsync();
-        }
-        else
-        {
-            // Manager/Employee/Trainee: only their company
-            accessibleCompanyIds = new List<int> { currentUser.CompanyId };
-            accessibleCompanies = await _db.Companies
-                .Where(c => c.Id == currentUser.CompanyId)
-                .ToListAsync();
-            types = await _db.ShiftTypes.OrderBy(s => s.Key).ToListAsync();
+            _logger.LogError("User {UserId} not found in database", currentUserId);
+            return;
         }
 
-        // ✅ SECURITY FIX (DEFECT-002): Post-query validation for defense-in-depth
-        // Validate every shift type after IgnoreQueryFilters to prevent data leaks
-        var validatedTypes = new List<ShiftType>();
-        foreach (var type in types)
-        {
-            bool hasAccess = false;
-            if (currentUser.Role == Models.Support.UserRole.Owner)
-            {
-                hasAccess = true;
-            }
-            else if (currentUser.Role == Models.Support.UserRole.Director)
-            {
-                hasAccess = await _directorService.IsDirectorOfAsync(type.CompanyId);
-            }
-            else if (currentUser.Role == Models.Support.UserRole.Manager || currentUser.Role == Models.Support.UserRole.Employee || currentUser.Role == Models.Support.UserRole.Trainee)
-            {
-                hasAccess = currentUser.CompanyId == type.CompanyId;
-            }
-
-            if (hasAccess)
-            {
-                validatedTypes.Add(type);
-            }
-            else
-            {
-                _logger.LogWarning("SECURITY: Filtered unauthorized shift type {ShiftTypeId} from company {CompanyId} for user {UserId}",
-                    type.Id, type.CompanyId, currentUserId);
-            }
-        }
-        types = validatedTypes;
-
-        // Prepare companies for JavaScript
-        ViewData["Companies"] = accessibleCompanies.Select(c => new
-        {
-            id = c.Id,
-            name = c.Name
-        }).ToList();
-
-        // Prepare shift types with company info for JavaScript
-        var companyDict = accessibleCompanies.ToDictionary(c => c.Id, c => c.Name);
-        ViewData["ShiftTypes"] = types.Select(t => new
-        {
-            id = t.Id,
-            key = t.Key,
-            name = t.Name,
-            start = t.Start.ToString("HH:mm"),
-            end = t.End.ToString("HH:mm"),
-            companyId = t.CompanyId,
-            companyName = companyDict.ContainsKey(t.CompanyId) ? companyDict[t.CompanyId] : "Unknown"
-        }).ToList();
-
-        // Build 6-week grid starting Monday
+        // Build 6-week grid starting Sunday
         var start = new DateOnly(target.Year, target.Month, 1);
-        int delta = ((int)start.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        int delta = (int)start.DayOfWeek; // Days from Sunday (Sunday = 0)
         var gridStart = start.AddDays(-delta);
         var dates = Enumerable.Range(0, 42).Select(i => gridStart.AddDays(i)).ToList();
 
-        // Load instances and assignments for the window
-        _logger.LogInformation("Month calendar: Querying ShiftInstances for CompanyId={CompanyId}, dates {Start} to {End}",
-            companyId, dates.First(), dates.Last());
-        var instances = await _db.ShiftInstances
-            .Where(si => si.CompanyId == companyId && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last())
-            .ToListAsync();
-        _logger.LogInformation("Month calendar: Found {Count} shift instances", instances.Count);
+        // ✅ A-018: Load calendar items using scope-filtered company IDs
+        var shifts = await LoadShiftsAsync(companyIds, dates, currentUserId);
+        var chores = await LoadChoresAsync(companyIds, dates, currentUserId);
+        var onDuties = await LoadOnDutiesAsync(companyIds, dates, currentUserId);
 
-        var instanceIds = instances.Select(i => i.Id).ToList();
-        var assignmentCounts = await _db.ShiftAssignments
-            .Where(a => instanceIds.Contains(a.ShiftInstanceId))
-            .GroupBy(a => a.ShiftInstanceId)
-            .Select(g => new { ShiftInstanceId = g.Key, Count = g.Count() })
-            .ToListAsync();
+        // Combine all items
+        var allItems = new List<CalendarItemViewModel>();
+        allItems.AddRange(shifts);
+        allItems.AddRange(chores);
+        allItems.AddRange(onDuties);
 
-        // Fetch assignments with user names
-        var assignmentsWithNames = await (from a in _db.ShiftAssignments
-                                         join u in _db.Users on a.UserId equals u.Id
-                                         where instanceIds.Contains(a.ShiftInstanceId)
-                                         select new { a.ShiftInstanceId, UserName = u.DisplayName })
-                                         .ToListAsync();
+        // Apply "My Items Only" filter if enabled
+        if (ShowMyItemsOnly)
+        {
+            allItems = allItems.Where(item => item.IsCurrentUser).ToList();
+        }
 
-        // Fetch trainee assignments with names
-        var traineeAssignments = await (from a in _db.ShiftAssignments
-                                       join t in _db.Users on a.TraineeUserId equals t.Id
-                                       where instanceIds.Contains(a.ShiftInstanceId) && a.TraineeUserId != null
-                                       select new { a.ShiftInstanceId, TraineeName = t.DisplayName })
-                                       .ToListAsync();
+        // Group items by date
+        var itemsByDate = allItems.GroupBy(item => item.Date)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        var dictAssigned = assignmentCounts.ToDictionary(x => x.ShiftInstanceId, x => x.Count);
-        var dictAssignedNames = assignmentsWithNames
-            .GroupBy(x => x.ShiftInstanceId)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.UserName).ToList());
-        var dictTraineeCount = traineeAssignments
-            .GroupBy(x => x.ShiftInstanceId)
-            .ToDictionary(g => g.Key, g => g.Count());
-        var dictTraineeNames = traineeAssignments
-            .GroupBy(x => x.ShiftInstanceId)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.TraineeName).ToList());
-
+        // Build week grid
         for (int w = 0; w < 6; w++)
         {
             var week = new List<DayVM>();
             for (int d = 0; d < 7; d++)
             {
                 var date = dates[w * 7 + d];
-                var vm = new DayVM { Date = date };
-                foreach (var t in types)
+                var vm = new DayVM
                 {
-                    var inst = instances.FirstOrDefault(i => i.WorkDate == date && i.ShiftTypeId == t.Id && i.CompanyId == companyId);
-                    var assignedCount = inst != null && dictAssigned.ContainsKey(inst.Id) ? dictAssigned[inst.Id] : 0;
-                    var requiredCount = inst?.StaffingRequired ?? 0;
-                    var traineeCount = inst != null && dictTraineeCount.ContainsKey(inst.Id) ? dictTraineeCount[inst.Id] : 0;
-                    var assignedNames = inst != null && dictAssignedNames.ContainsKey(inst.Id) ? dictAssignedNames[inst.Id] : new List<string>();
-                    var traineeNames = inst != null && dictTraineeNames.ContainsKey(inst.Id) ? dictTraineeNames[inst.Id] : new List<string>();
-                    var emptySlots = Enumerable.Repeat(_localizer["Empty"].Value, Math.Max(0, requiredCount - assignedCount)).ToList();
-
-                    vm.Lines.Add(new LineVM
-                    {
-                        ShiftTypeId = t.Id,
-                        InstanceId = inst?.Id ?? 0,
-                        Concurrency = inst?.Concurrency ?? 0,
-                        ShortName = t.Name[..Math.Min(3, t.Name.Length)],
-                        ShiftTypeKey = t.Key.ToLower(),
-                        ShiftTypeName = t.Name,
-                        ShiftName = inst?.Name ?? "",
-                        Assigned = assignedCount,
-                        Required = requiredCount,
-                        TraineeCount = traineeCount,
-                        AssignedNames = assignedNames,
-                        TraineeNames = traineeNames,
-                        EmptySlots = emptySlots,
-                        StartTime = t.Start.ToString("HH:mm"),
-                        EndTime = t.End.ToString("HH:mm")
-                    });
-                }
+                    Date = date,
+                    Items = itemsByDate.ContainsKey(date) ? itemsByDate[date] : new List<CalendarItemViewModel>()
+                };
                 week.Add(vm);
             }
             Weeks.Add(week);
         }
+
+        // ✅ PHASE 7: Calculate header metrics after Weeks population
+        CalculateHeaderMetrics();
+
+        // ✅ PHASE 20: Load dropdown data for quick-add (managers only)
+        if (User.IsInRole("Manager") || User.IsInRole("Director") || User.IsInRole("Owner"))
+        {
+            EligibleAssignees = await _choreService.GetEligibleAssigneesAsync();
+
+            // OnDutyTypeConfig is global - no company filter needed
+            CustomOnDutyTypes = await _db.OnDutyTypeConfigs
+                .Where(t => t.IsActive)
+                .OrderBy(t => t.TypeValue)
+                .ToListAsync();
+        }
     }
 
-    public class AdjustPayload
+    /// <summary>
+    /// ✅ A-018: Load shifts for multiple company IDs (scope-aware)
+    /// </summary>
+    private async Task<List<CalendarItemViewModel>> LoadShiftsAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
     {
-        public string date { get; set; } = "";
-        public int shiftTypeId { get; set; }
-        public int delta { get; set; }
-        public int concurrency { get; set; }
-        public int? companyId { get; set; }
-    }
+        var items = new List<CalendarItemViewModel>();
 
+        if (!companyIds.Any())
+            return items;
 
-    public async Task<IActionResult> OnPostAdjustAsync([FromBody] AdjustPayload payload)
-    {
-        _logger.LogInformation("Adjust staffing: date={Date} shiftTypeId={ShiftTypeId} delta={Delta} companyId={CompanyId}", payload.date, payload.shiftTypeId, payload.delta, payload.companyId);
+        // Load shift instances
+        var instancesQuery = _db.ShiftInstances
+            .Include(si => si.ShiftType)
+            .Where(si => companyIds.Contains(si.CompanyId) && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last());
 
-        // Get current user for authorization
-        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-        var currentUser = await _db.Users.FindAsync(currentUserId);
-
-        // ✅ SECURITY FIX (DEFECT-003): Always validate company access
-        // Determine target company ID
-        int targetCompanyId = payload.companyId ?? _companyContext.GetCompanyIdOrThrow();
-
-        // ALWAYS validate user has access to target company (even for fallback case)
-        bool hasAccess = false;
-        if (currentUser!.Role == Models.Support.UserRole.Owner)
+        // v3.0: Apply JobType filter
+        if (FilterJobTypeId.HasValue)
         {
-            hasAccess = true;
-        }
-        else if (currentUser.Role == Models.Support.UserRole.Director)
-        {
-            hasAccess = await _directorService.IsDirectorOfAsync(targetCompanyId);
-        }
-        else if (currentUser.Role == Models.Support.UserRole.Manager)
-        {
-            hasAccess = currentUser.CompanyId == targetCompanyId;
+            instancesQuery = instancesQuery.Where(si => si.ShiftType.JobTypeId == FilterJobTypeId.Value);
         }
 
-        if (!hasAccess)
+        // v3.0: Apply ShiftGrouping filter
+        if (FilterShiftGroupingId.HasValue)
         {
-            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted unauthorized access to company {CompanyId}",
-                currentUserId, currentUser.Role, targetCompanyId);
-            return StatusCode(403, new { message = $"Access denied to company {targetCompanyId}" });
+            instancesQuery = instancesQuery.Where(si => si.ShiftType.ShiftGroupingId == FilterShiftGroupingId.Value);
         }
 
-        // Additional validation: Verify shift type belongs to target company
-        var shiftType = await _db.ShiftTypes
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(st => st.Id == payload.shiftTypeId);
+        var instances = await instancesQuery.ToListAsync();
 
-        if (shiftType == null)
+        var instanceIds = instances.Select(i => i.Id).ToList();
+
+        // Load assignments with user names
+        var assignments = await (from a in _db.ShiftAssignments
+                                join u in _db.Users on a.UserId equals u.Id
+                                where instanceIds.Contains(a.ShiftInstanceId)
+                                select new { a.ShiftInstanceId, a.UserId, UserName = u.DisplayName, a.TraineeUserId })
+                                .ToListAsync();
+
+        // Group assignments by shift instance
+        var assignmentsByInstance = assignments.GroupBy(a => a.ShiftInstanceId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Convert to CalendarItemViewModel
+        foreach (var instance in instances)
         {
-            return NotFound(new { message = "Shift type not found" });
-        }
-
-        if (shiftType.CompanyId != targetCompanyId)
-        {
-            _logger.LogWarning("SECURITY: User {UserId} attempted to use shift type {ShiftTypeId} from company {ShiftTypeCompanyId} in company {TargetCompanyId}",
-                currentUserId, payload.shiftTypeId, shiftType.CompanyId, targetCompanyId);
-            return BadRequest(new { message = "Shift type does not belong to the target company" });
-        }
-
-        var date = DateOnly.Parse(payload.date);
-
-        var inst = await _db.ShiftInstances.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(i => i.CompanyId == targetCompanyId && i.WorkDate == date && i.ShiftTypeId == payload.shiftTypeId);
-
-        bool isNewInstance = inst == null;
-
-        if (inst == null)
-        {
-            if (payload.delta < 0)
-                return BadRequest(new { message = "Cannot go below zero." });
-            inst = new ShiftInstance
+            // Create one item per assignment
+            if (assignmentsByInstance.TryGetValue(instance.Id, out var shiftAssignments))
             {
-                CompanyId = targetCompanyId,
-                ShiftTypeId = payload.shiftTypeId,
-                WorkDate = date,
-                StaffingRequired = 0,
-                Concurrency = 0,
-                UpdatedAt = DateTime.UtcNow
-            };
-            _db.ShiftInstances.Add(inst);
-        }
-        else
-        {
-            // ✅ SECURITY FIX (DEFECT-001): Always validate concurrency for existing instances
-            // Removed "payload.concurrency != 0 &&" to prevent bypass attacks
-            if (inst.Concurrency != payload.concurrency)
+                foreach (var assignment in shiftAssignments)
+                {
+                    var isCurrentUser = assignment.UserId == currentUserId;
+                    var isTrainee = assignment.TraineeUserId.HasValue && assignment.TraineeUserId.Value == currentUserId;
+
+                    items.Add(new CalendarItemViewModel
+                    {
+                        Type = CalendarItemType.Shift,
+                        Id = instance.Id,
+                        EntityId = instance.Id,
+                        Date = instance.WorkDate,
+                        Title = instance.ShiftType.Name,
+                        AssigneeName = assignment.UserName,
+                        TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
+                        ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
+                        Icon = GetShiftIcon(instance.ShiftType.Key),
+                        IsCurrentUser = isCurrentUser || isTrainee,
+                        ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
+                        Details = string.IsNullOrEmpty(instance.Name) ? instance.ShiftType.Name : instance.Name,
+                        StaffingInfo = $"{shiftAssignments.Count}/{instance.StaffingRequired}",
+                        IsTrainee = isTrainee
+                    });
+                }
+            }
+            else if (instance.StaffingRequired > 0)
             {
-                _logger.LogWarning("Concurrency mismatch for ShiftInstanceId={Id}: sent={Sent}, current={Current}", inst.Id, payload.concurrency, inst.Concurrency);
-                return BadRequest(new { message = "Concurrent update detected. Reload the page." });
+                // Show unstaffed shifts to managers
+                items.Add(new CalendarItemViewModel
+                {
+                    Type = CalendarItemType.Shift,
+                    Id = instance.Id,
+                    EntityId = instance.Id,
+                    Date = instance.WorkDate,
+                    Title = instance.ShiftType.Name,
+                    AssigneeName = _localizer["Unassigned"].Value,
+                    TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
+                    ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
+                    Icon = GetShiftIcon(instance.ShiftType.Key),
+                    IsCurrentUser = false,
+                    ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
+                    Details = instance.ShiftType.Name,
+                    StaffingInfo = $"0/{instance.StaffingRequired}"
+                });
             }
         }
 
-        int newRequired = inst.StaffingRequired + payload.delta;
-        if (newRequired < 0) return BadRequest(new { message = "Cannot go below zero." });
-
-        // prevent dropping below assigned count
-        int assigned = await _db.ShiftAssignments.CountAsync(a => a.ShiftInstanceId == inst.Id);
-        if (newRequired < assigned)
-            return BadRequest(new { message = $"Cannot set required below assigned ({assigned})." });
-
-        inst.StaffingRequired = newRequired;
-        inst.Concurrency++;
-        inst.UpdatedAt = DateTime.UtcNow;
-
-        await _db.SaveChangesAsync();
-        return new JsonResult(new { required = inst.StaffingRequired, assigned, concurrency = inst.Concurrency });
+        return items;
     }
 
+    /// <summary>
+    /// ✅ A-018: Load chores for multiple company IDs (scope-aware)
+    /// </summary>
+    private async Task<List<CalendarItemViewModel>> LoadChoresAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
+    {
+        if (!companyIds.Any())
+            return new List<CalendarItemViewModel>();
+
+        var chores = await _db.Chores
+            .Include(c => c.User)
+            .Where(c => companyIds.Contains(c.CompanyId)
+                     && c.Date >= dates.First()
+                     && c.Date <= dates.Last()
+                     && c.CanceledAt == null)
+            .ToListAsync();
+
+        return chores.Select(chore => new CalendarItemViewModel
+        {
+            Type = CalendarItemType.Chore,
+            Id = chore.Id,
+            EntityId = chore.Id,
+            Date = chore.Date,
+            Title = chore.Title,
+            AssigneeName = chore.User?.DisplayName ?? "Unknown",
+            TimeRange = "", // Chores don't have time ranges
+            ColorClass = "chore-green",
+            Icon = "🧹",
+            IsCurrentUser = chore.UserId == currentUserId,
+            ManagementUrl = $"/Public/Chores?year={chore.Date.Year}&month={chore.Date.Month}",
+            Details = string.IsNullOrEmpty(chore.Notes) ? chore.Title : $"{chore.Title} - {chore.Notes}"
+        }).ToList();
+    }
+
+    /// <summary>
+    /// ✅ A-018: Load on-duties - global scope (not filtered by company)
+    /// </summary>
+    private async Task<List<CalendarItemViewModel>> LoadOnDutiesAsync(List<int> companyIds, List<DateOnly> dates, int currentUserId)
+    {
+        // OnDuty is global - must use IgnoreQueryFilters
+        var onDuties = await _db.OnDuties.IgnoreQueryFilters()
+            .Include(od => od.User)
+            .Where(od => od.Date >= dates.First()
+                      && od.Date <= dates.Last()
+                      && od.CanceledAt == null)
+            .ToListAsync();
+
+        // Load custom types for icon/name mapping - OnDutyTypeConfig is also global
+        var customTypes = await _db.OnDutyTypeConfigs
+            .Where(t => t.IsActive)
+            .ToListAsync();
+
+        var customTypeDict = customTypes.ToDictionary(t => t.TypeValue, t => t);
+
+        return onDuties.Select(onDuty =>
+        {
+            var (typeName, icon, colorClass) = GetOnDutyTypeInfo(onDuty.Type, customTypeDict);
+
+            return new CalendarItemViewModel
+            {
+                Type = CalendarItemType.OnDuty,
+                Id = onDuty.Id,
+                EntityId = onDuty.Id,
+                Date = onDuty.Date,
+                Title = typeName,
+                AssigneeName = onDuty.User?.DisplayName ?? "Unknown",
+                TimeRange = "", // On-duty doesn't have time ranges
+                ColorClass = colorClass,
+                Icon = icon,
+                IsCurrentUser = onDuty.UserId == currentUserId,
+                ManagementUrl = $"/Public/OnDuty?year={onDuty.Date.Year}&month={onDuty.Date.Month}",
+                Details = string.IsNullOrEmpty(onDuty.Notes) ? typeName : $"{typeName} - {onDuty.Notes}"
+            };
+        }).ToList();
+    }
+
+    private string GetShiftIcon(string shiftKey)
+    {
+        return shiftKey.ToLower() switch
+        {
+            "morning" => "🌅",
+            "middle" => "☀️",
+            "noon" => "🌤️",
+            "night" => "🌙",
+            _ => "📋"
+        };
+    }
+
+    private (string Name, string Icon, string ColorClass) GetOnDutyTypeInfo(
+        OnDutyType type,
+        Dictionary<int, OnDutyTypeConfig> customTypes)
+    {
+        // Phase 8.3: Fixed localization keys (removed underscores to match resource files)
+        if (type == OnDutyType.Hakam)
+        {
+            return (_localizer["OnDutyHakam"].Value, "🛡️", "onduty-hakam");
+        }
+        else if (type == OnDutyType.Lead)
+        {
+            return (_localizer["OnDutyLead"].Value, "⭐", "onduty-lead");
+        }
+        else if (customTypes.ContainsKey((int)type))
+        {
+            var customType = customTypes[(int)type];
+            var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            var name = cultureName.StartsWith("he") ? customType.NameHe : customType.NameEn;
+            return (name, customType.Icon, $"onduty-custom-{(int)type}");
+        }
+        else
+        {
+            return ("On-Duty", "📋", "onduty-default");
+        }
+    }
+
+    /// <summary>
+    /// ✅ PHASE 7: Calculate contextual metrics for calendar header
+    /// </summary>
+    private void CalculateHeaderMetrics()
+    {
+        var allItems = Weeks.SelectMany(w => w).SelectMany(d => d.Items).ToList();
+
+        VisibleShiftCount = allItems.Count(i => i.Type == CalendarItemType.Shift);
+        VisibleChoreCount = allItems.Count(i => i.Type == CalendarItemType.Chore);
+        VisibleOnDutyCount = allItems.Count(i => i.Type == CalendarItemType.OnDuty);
+        TotalItemCount = allItems.Count;
+
+        // Pending = unfilled shift slots
+        PendingItemsCount = allItems
+            .Where(i => i.Type == CalendarItemType.Shift && !string.IsNullOrEmpty(i.StaffingInfo))
+            .Count(i => {
+                var parts = i.StaffingInfo!.Split('/');
+                return parts.Length == 2 &&
+                       int.TryParse(parts[0], out var filled) &&
+                       int.TryParse(parts[1], out var total) &&
+                       filled < total;
+            });
+
+        // Coverage % (admin only)
+        if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+        {
+            var shiftsWithStaffing = allItems
+                .Where(i => i.Type == CalendarItemType.Shift && !string.IsNullOrEmpty(i.StaffingInfo))
+                .ToList();
+
+            if (shiftsWithStaffing.Any())
+            {
+                int totalSlots = 0, filledSlots = 0;
+                foreach (var shift in shiftsWithStaffing)
+                {
+                    var parts = shift.StaffingInfo!.Split('/');
+                    if (parts.Length == 2 &&
+                        int.TryParse(parts[0], out var filled) &&
+                        int.TryParse(parts[1], out var total))
+                    {
+                        totalSlots += total;
+                        filledSlots += filled;
+                    }
+                }
+                CoveragePercent = totalSlots > 0 ? Math.Round((double)filledSlots / totalSlots * 100, 1) : 100.0;
+            }
+            else
+            {
+                CoveragePercent = 100.0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// ✅ A-019: Safely creates a valid DateOnly for the first day of a month, handling edge cases like:
+    /// - Year boundaries (Dec -> Jan)
+    /// - Invalid month/year values
+    /// Returns null if the date cannot be created.
+    /// </summary>
+    private static DateOnly? TryCreateValidMonth(int year, int month)
+    {
+        // Validate year range (reasonable bounds for a scheduling app)
+        if (year < 1900 || year > 2100)
+            return null;
+
+        // Validate month range
+        if (month < 1 || month > 12)
+            return null;
+
+        try
+        {
+            return new DateOnly(year, month, 1);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Final safety catch for any edge cases we missed
+            return null;
+        }
+    }
 }

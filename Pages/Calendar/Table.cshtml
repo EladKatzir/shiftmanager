@@ -1,0 +1,2784 @@
+@page
+@model ShiftManager.Pages.Calendar.TableModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["TableView"], IsActive = true }
+})
+
+<style>
+.table-view-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.shift-table {
+    border-collapse: collapse;
+    min-width: 100%;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.875rem;
+}
+
+/* Dense mode for multi-week/month views */
+.shift-table.dense {
+    font-size: 0.75rem;
+}
+
+.shift-table.dense th,
+.shift-table.dense td {
+    padding: 0.375rem;
+    min-width: 80px;
+}
+
+.shift-table.dense .assignment-slot {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+}
+
+.shift-table.dense .shift-actions-row {
+    gap: 0.25rem;
+}
+
+.shift-table th,
+.shift-table td {
+    border: 1px solid var(--border);
+    padding: 0.75rem;
+    text-align: center;
+    min-width: 140px;
+}
+
+.shift-table th {
+    background-color: var(--primary);
+    color: var(--primary-text);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.shift-table .shift-name-col {
+    background-color: var(--surface);
+    font-weight: 600;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+.shift-table .day-row {
+    background-color: var(--bg);
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.assignment-cell {
+    cursor: pointer;
+    position: relative;
+    min-height: 50px;
+    transition: background-color 0.2s;
+    vertical-align: top;
+    padding: 0.5rem;
+}
+
+.assignment-cell:hover {
+    background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.assignment-cell.empty {
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.assignment-content {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.assignment-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.assignment-slot {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: var(--primary-contrast);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.assignment-slot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.assignment-slot.unassigned {
+    background: var(--surface);
+    color: var(--muted);
+    border: 2px dashed var(--border);
+}
+
+.assignment-slot-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.primary-user {
+    font-weight: 600;
+}
+
+.trainee-user {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.slot-actions {
+    margin-left: 0.5rem;
+    font-size: 1rem;
+}
+
+.add-assignment-btn {
+    background: transparent;
+    border: 2px dashed var(--primary);
+    color: var(--primary);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.add-assignment-btn:hover {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-style: solid;
+}
+
+.shift-actions-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.adjust-headcount-btn {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    padding: 0.375rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 1.125rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+}
+
+.adjust-headcount-btn:hover {
+    background: var(--primary);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.action-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: none;
+    min-width: 200px;
+    margin-top: 0.25rem;
+}
+
+.action-menu.show {
+    display: block;
+}
+
+.action-menu-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.action-menu-item:last-child {
+    border-bottom: none;
+}
+
+.action-menu-item:hover {
+    background-color: var(--bg);
+}
+
+.action-menu-item.danger:hover {
+    background-color: var(--danger-soft);
+    color: var(--danger);
+}
+
+.employee-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1001;
+    display: none;
+    min-width: 200px;
+    margin-top: 0.25rem;
+}
+
+.employee-dropdown.show {
+    display: block;
+}
+
+.employee-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.employee-option:last-child {
+    border-bottom: none;
+}
+
+.employee-option:hover {
+    background-color: var(--bg);
+}
+
+/* Busy user indicators with color coding */
+.employee-option.busy-vacation {
+    background-color: var(--info-soft);
+    color: var(--info);
+    border-left: 4px solid var(--info);
+}
+
+.employee-option.busy-shift {
+    background-color: var(--danger-soft);
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
+}
+
+.employee-option.busy-chore {
+    background-color: var(--warning-soft);
+    color: var(--warning);
+    border-left: 4px solid var(--warning);
+}
+
+/* Hover states for busy indicators (slightly darker) */
+.employee-option.busy-vacation:hover {
+    background-color: color-mix(in srgb, var(--info-soft) 80%, var(--info));
+}
+
+.employee-option.busy-shift:hover {
+    background-color: color-mix(in srgb, var(--danger-soft) 80%, var(--danger));
+}
+
+.employee-option.busy-chore:hover {
+    background-color: color-mix(in srgb, var(--warning-soft) 80%, var(--warning));
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+.nav-buttons .btn-secondary,
+.nav-buttons .btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 0.375rem;
+}
+
+.nav-buttons .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.nav-buttons .btn-secondary:hover {
+    background: var(--surface-soft);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-buttons .btn-primary {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+}
+
+.nav-buttons .btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+}
+
+.nav-buttons span {
+    color: var(--text);
+    padding: 0.5rem 1rem;
+}
+
+/* View Mode Toggle */
+.view-mode-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    padding: 0.25rem;
+}
+
+.view-mode-btn {
+    padding: 0.375rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.view-mode-btn:hover {
+    background: var(--surface-soft);
+}
+
+.view-mode-btn.active {
+    background: var(--primary);
+    color: var(--primary-contrast);
+}
+
+/* Shift Row Controls */
+.shift-row-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shift-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.shift-metadata input,
+.shift-metadata select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.shift-metadata input:focus,
+.shift-metadata select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+}
+
+.add-shift-row-btn {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.add-shift-row-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+.shift-edit-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.shift-edit-btn:hover {
+    background: var(--bg);
+    border-color: var(--muted);
+    color: var(--text);
+}
+
+.shift-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    opacity: 0.6;
+}
+
+.shift-delete-btn:hover {
+    background: var(--danger);
+    color: var(--danger-text);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* OVR Badge (Override) */
+.ovr-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--warning);
+    color: var(--warning-text);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+    cursor: help;
+}
+
+.ovr-badge:hover {
+    background: var(--warning-hover);
+}
+
+.assignment-cell.detached {
+    background-color: rgba(var(--warning-rgb), 0.05);
+    border-left: 3px solid var(--warning);
+}
+
+.assignment-cell.detached:hover {
+    background-color: rgba(var(--warning-rgb), 0.1);
+}
+
+.reset-program-btn {
+    background: var(--success);
+    color: var(--success-text);
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.75rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.reset-program-btn:hover {
+    background: var(--success-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+/* Amount Picker Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+}
+
+.amount-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.amount-btn {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--primary);
+    background: var(--surface);
+    color: var(--primary);
+    font-size: 1.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.amount-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    transform: scale(1.1);
+}
+
+.amount-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.amount-display {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 60px;
+    text-align: center;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn-primary {
+    background: var(--primary);
+    color: var(--primary-contrast);
+}
+
+.modal-btn-primary:hover {
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+.modal-btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.modal-btn-secondary:hover {
+    background: var(--surface);
+}
+
+/* ============= Roster Dock ============= */
+.roster-dock {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    width: 320px;
+    height: calc(100vh - 60px);
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1010;
+    overflow-y: auto;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+}
+
+.roster-dock.open {
+    transform: translateX(0);
+}
+
+.roster-dock-header {
+    padding: 1rem;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    font-weight: 600;
+    font-size: 1.125rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.roster-dock-close {
+    background: transparent;
+    border: none;
+    color: var(--primary-contrast);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+.roster-dock-close:hover {
+    opacity: 0.8;
+}
+
+.roster-search {
+    padding: 1rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 60px;
+    z-index: 9;
+}
+
+.roster-search input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.roster-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+}
+
+.roster-employee-list {
+    padding: 0.5rem;
+}
+
+.roster-employee-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.roster-employee-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.2);
+    transform: translateY(-1px);
+}
+
+.roster-employee-item:active {
+    cursor: grabbing;
+}
+
+.roster-employee-item.dragging {
+    opacity: 0.5;
+}
+
+.roster-employee-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.roster-employee-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.roster-employee-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.roster-employee-status {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.roster-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.roster-status-chip.vacation {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
+.roster-status-chip.shift {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.roster-status-chip.chore {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.roster-toggle-btn {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.roster-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.roster-toggle-btn.active {
+    background: var(--danger);
+}
+
+/* Drop target highlight */
+.assignment-slot.drop-target {
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 2px dashed var(--primary);
+}
+
+/* ============= Radar Mode ============= */
+.radar-toggle-btn {
+    position: fixed;
+    top: 140px;
+    right: 20px;
+    background: var(--surface);
+    color: var(--text);
+    border: 2px solid var(--border);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.radar-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.radar-toggle-btn.active {
+    background: var(--success);
+    color: var(--success-text);
+    border-color: var(--success);
+}
+
+/* Radar Mode conflict highlights */
+.assignment-cell.underfilled {
+    background: var(--warning-soft);
+}
+
+.assignment-cell.overfilled {
+    background: var(--danger-soft);
+    border: 2px solid var(--danger);
+}
+
+.radar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--warning);
+    color: var(--warning-text);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-left: 0.25rem;
+}
+
+.radar-badge.error {
+    background: var(--danger);
+    color: var(--danger-text);
+}
+
+/* ============= Fill Handle ============= */
+.assignment-cell {
+    position: relative;
+}
+
+.fill-handle {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    cursor: crosshair;
+    border-radius: 2px;
+    border: 1px solid white;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.assignment-cell:hover .fill-handle,
+.assignment-cell.selected .fill-handle {
+    opacity: 1;
+}
+
+.assignment-cell.fill-preview {
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 2px dashed var(--primary);
+    animation: fillPulse 1s infinite;
+}
+
+@@keyframes fillPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* Fill Options Modal */
+.fill-options-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.fill-options-modal.show {
+    display: flex;
+}
+
+.fill-options-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 90%;
+}
+
+.fill-options-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.fill-options-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.fill-option-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fill-option-item:hover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.fill-option-item.selected {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.fill-option-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.fill-option-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.fill-preview-info {
+    background: var(--bg);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--primary);
+}
+
+.fill-preview-info p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+/* ============= Drag and Drop Enhancements ============= */
+.roster-employee-item {
+    cursor: grab;
+    user-select: none;
+}
+
+.roster-employee-item:active {
+    cursor: grabbing;
+}
+
+.roster-employee-item.dragging {
+    opacity: 0.5;
+}
+
+.drop-zone-active {
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 2px dashed var(--primary);
+    transition: all 0.2s;
+}
+
+.drag-over {
+    background: rgba(var(--primary-rgb), 0.2);
+    border-color: var(--primary-hover);
+}
+
+.fill-source {
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.5);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.fill-target {
+    box-shadow: 0 0 0 2px rgba(var(--success-rgb), 0.5);
+    background: rgba(var(--success-rgb), 0.1);
+}
+
+.fill-available {
+    border: 2px dashed rgba(var(--text-rgb), 0.3);
+}
+
+/* ============= Fill Options Modal ============= */
+.fill-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s;
+}
+
+.fill-modal {
+    background: var(--surface);
+    border-radius: 0.5rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.fill-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fill-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.fill-modal-header .close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    line-height: 1;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+}
+
+.fill-modal-header .close-modal:hover {
+    color: var(--text);
+}
+
+.fill-modal-body {
+    padding: 1.5rem;
+}
+
+.fill-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.fill-option {
+    display: flex;
+    align-items: start;
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fill-option:hover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.fill-option input[type="radio"] {
+    margin-top: 0.125rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+}
+
+.fill-option .option-content {
+    flex: 1;
+}
+
+.fill-option .option-content strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.fill-option .option-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.fill-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* ============= Radar Mode Conflict Visualization ============= */
+.radar-conflict {
+    position: relative;
+}
+
+.radar-underfilled {
+    background: rgba(var(--warning-rgb), 0.15);
+    border-left: 4px solid var(--warning);
+}
+
+.radar-overfilled {
+    background: rgba(var(--danger-rgb), 0.15);
+    border-left: 4px solid var(--danger);
+}
+
+.conflict-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-contrast);
+    z-index: 5;
+}
+
+.conflict-badge.badge-warning {
+    background: var(--warning);
+    color: var(--warning-text);
+}
+
+.conflict-badge.badge-danger {
+    background: var(--danger);
+    color: var(--danger-text);
+}
+
+.conflict-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0.5rem);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    pointer-events: none;
+}
+
+.conflict-tooltip.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0.25rem);
+}
+
+.conflict-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--border);
+}
+
+.conflict-tooltip .tooltip-header {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.conflict-tooltip .tooltip-body p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+/* ============= Animations ============= */
+@@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@@keyframes fillPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ========================================
+   A-004: RESPONSIVE TABLE VIEW
+   ======================================== */
+
+/* Tablet breakpoint */
+@@media (max-width: 768px) {
+    .nav-buttons {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .nav-buttons span {
+        width: 100%;
+        text-align: center;
+        order: -1;
+    }
+
+    .nav-buttons .btn-secondary,
+    .nav-buttons .btn {
+        flex: 1;
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .view-mode-toggle {
+        width: 100%;
+    }
+
+    .view-mode-btn {
+        flex: 1;
+        text-align: center;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-shift-row-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Table horizontal scroll container */
+    .table-view-container {
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+
+    /* Roster dock adjustments */
+    .roster-dock {
+        width: 280px;
+    }
+
+    .roster-toggle-btn,
+    .radar-toggle-btn {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .roster-toggle-btn {
+        top: 70px;
+        right: 10px;
+    }
+
+    .radar-toggle-btn {
+        top: 120px;
+        right: 10px;
+    }
+}
+
+/* Mobile breakpoint */
+@@media (max-width: 480px) {
+    .nav-buttons {
+        padding: 0.75rem;
+    }
+
+    .nav-buttons .btn-secondary,
+    .nav-buttons .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .view-mode-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .add-shift-row-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    /* Table cells compact */
+    .shift-table th,
+    .shift-table td {
+        padding: 0.5rem;
+        min-width: 100px;
+        font-size: 0.75rem;
+    }
+
+    .assignment-slot {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+        min-height: 44px;
+    }
+
+    .adjust-headcount-btn,
+    .shift-delete-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+
+    .amount-picker {
+        margin: 1.5rem 0;
+    }
+
+    .amount-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Roster dock full width on very small screens */
+    .roster-dock {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* Very small mobile (360px) */
+@@media (max-width: 360px) {
+    .shift-table th,
+    .shift-table td {
+        min-width: 80px;
+        padding: 0.375rem;
+    }
+
+    .shift-table.dense th,
+    .shift-table.dense td {
+        min-width: 60px;
+        padding: 0.25rem;
+    }
+
+    .assignment-slot {
+        padding: 0.25rem 0.375rem;
+    }
+
+    .roster-dock {
+        width: 100%;
+    }
+}
+
+/* Touch device enhancements */
+@@media (pointer: coarse) {
+    .assignment-slot,
+    .add-assignment-btn,
+    .adjust-headcount-btn,
+    .shift-delete-btn,
+    .shift-edit-btn,
+    .view-mode-btn,
+    .nav-buttons .btn,
+    .nav-buttons .btn-secondary {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .employee-option {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .action-menu-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+}
+</style>
+
+@* B-007: Calendar Skeleton Loading Container *@
+<div class="calendar-skeleton-container" data-calendar-skeleton-container>
+    @await Component.InvokeAsync("CalendarSkeleton", new { viewType = "table" })
+    <div data-calendar-content class="calendar-content">
+
+<h2><loc key="ShiftAssignmentTable" /></h2>
+
+<!-- View Mode Toggle -->
+<div class="view-mode-toggle" style="margin-bottom: 1rem;">
+    <a href="/Calendar/Table?view=week&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+       class="view-mode-btn @(Model.ViewMode == "week" ? "active" : "")">
+        Week
+    </a>
+    <a href="/Calendar/Table?view=2weeks&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+       class="view-mode-btn @(Model.ViewMode == "2weeks" ? "active" : "")">
+        2 Weeks
+    </a>
+    <a href="/Calendar/Table?view=month&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+       class="view-mode-btn @(Model.ViewMode == "month" ? "active" : "")">
+        Month
+    </a>
+</div>
+
+<div class="nav-buttons">
+    <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
+        ← Previous
+    </a>
+    <span style="font-weight: 600;">
+        @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
+    </span>
+    <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
+        Next →
+    </a>
+    <a href="/Calendar/Table?view=@Model.ViewMode" class="btn btn-primary">
+        @Localizer["CurrentWeek"]
+    </a>
+</div>
+
+<button class="add-shift-row-btn" onclick="showAddShiftRowModal()">
+    <span>➕</span>
+    <span><loc key="AddCustomShiftRow" /></span>
+</button>
+
+@if (!Model.ShiftTypes.Any())
+{
+    <div class="alert alert--warning" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem;">
+        <strong>⚠️ No shift types configured.</strong>
+        <p style="margin: 0.5rem 0 0 0;">
+            <a href="/Admin/ShiftTypes">Configure shift types</a> to start scheduling.
+        </p>
+    </div>
+}
+
+<div class="table-view-container">
+    <table class="shift-table @(Model.ViewMode != "week" ? "dense" : "")"
+           data-start-date="@Model.StartDate.ToString("yyyy-MM-dd")"
+           data-end-date="@Model.EndDate.ToString("yyyy-MM-dd")">
+        <thead>
+            <tr>
+                <th class="shift-name-col">Shift</th>
+                @foreach (var date in Model.Dates)
+                {
+                    <th>
+                        @date.ToString("MMM dd")<br/>
+                        <small>@date.ToString("yyyy")</small>
+                    </th>
+                }
+            </tr>
+            <tr class="day-row">
+                <td class="shift-name-col"><loc key="Day" /></td>
+                @foreach (var date in Model.Dates)
+                {
+                    <td>@date.DayOfWeek</td>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var shiftType in Model.ShiftTypes)
+            {
+                <tr data-shift-type-id="@shiftType.Id">
+                    <td class="shift-name-col">
+                        <div class="shift-row-header">
+                            <div class="shift-metadata" id="metadata-@shiftType.Id">
+                                <strong>@(shiftType.Key.StartsWith("CUSTOM_") ? shiftType.Name : Localizer[$"ShiftType_{shiftType.Key}"].Value)</strong>
+                                <small style="color: var(--text-muted);">@shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")</small>
+                            </div>
+                            <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
+                                <input type="text"
+                                       id="name-@shiftType.Id"
+                                       value="@shiftType.Name"
+                                       placeholder="Shift Name"
+                                       style="font-weight: 600;" />
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <input type="time"
+                                           id="start-@shiftType.Id"
+                                           value="@shiftType.Start.ToString("HH:mm")"
+                                           style="width: 80px;" />
+                                    <span style="align-self: center;">-</span>
+                                    <input type="time"
+                                           id="end-@shiftType.Id"
+                                           value="@shiftType.End.ToString("HH:mm")"
+                                           style="width: 80px;" />
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.25rem; margin-top: 0.5rem;">
+                            <button class="shift-edit-btn" id="edit-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, true)">✏️ Edit</button>
+                            <button class="shift-edit-btn" id="save-btn-@shiftType.Id" onclick="saveShiftMetadata(@shiftType.Id)" style="display: none;">💾 Save</button>
+                            <button class="shift-edit-btn" id="cancel-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, false)" style="display: none;">❌ Cancel</button>
+                        </div>
+                    </td>
+                    @foreach (var date in Model.Dates)
+                    {
+                        var assignments = Model.AssignmentGrid[shiftType.Id][date];
+                        var hasAssignments = assignments.Any();
+                        var instanceId = assignments.FirstOrDefault()?.ShiftInstanceId ?? 0;
+                        var isDetached = assignments.FirstOrDefault()?.IsDetached ?? false;
+                        var originalProgramId = assignments.FirstOrDefault()?.OriginalProgramId;
+
+                        <td class="assignment-cell @(!hasAssignments ? "empty" : "") @(isDetached ? "detached" : "")"
+                            data-shift-type="@shiftType.Id"
+                            data-date="@date.ToString("yyyy-MM-dd")"
+                            data-instance-id="@instanceId"
+                            data-is-detached="@isDetached.ToString().ToLower()"
+                            data-original-program-id="@(originalProgramId?.ToString() ?? "")">
+
+                            @if (hasAssignments)
+                            {
+                                <div class="assignment-slots" data-instance-id="@instanceId">
+                                    @foreach (var assignment in assignments)
+                                    {
+                                        @if (assignment.UserId.HasValue)
+                                        {
+                                            <div class="assignment-slot"
+                                                 role="button"
+                                                 tabindex="0"
+                                                 aria-haspopup="menu"
+                                                 id="slot-@assignment.AssignmentId"
+                                                 data-assignment-id="@assignment.AssignmentId"
+                                                 data-user-id="@assignment.UserId"
+                                                 data-has-trainee="@(assignment.TraineeUserId.HasValue ? "true" : "false")"
+                                                 data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
+                                                 onclick="handleSlotClick(this, event)">
+                                                <div class="assignment-slot-content">
+                                                    <div>
+                                                        <div class="primary-user">@assignment.EmployeeName</div>
+                                                        @if (!string.IsNullOrEmpty(assignment.TraineeName))
+                                                        {
+                                                            <div class="trainee-user">Trainee: @assignment.TraineeName</div>
+                                                        }
+                                                    </div>
+                                                    <div class="slot-actions">⋮</div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="assignment-slot unassigned"
+                                                 role="button"
+                                                 tabindex="0"
+                                                 aria-label="@Localizer["AssignEmployeeToSlot"]"
+                                                 data-assignment-id="@assignment.AssignmentId"
+                                                 data-instance-id="@assignment.ShiftInstanceId"
+                                                 onclick="handleUnassignedSlotClick(this, event)">
+                                                <div class="assignment-slot-content">
+                                                    <div><loc key="SelectEmployee" /></div>
+                                                    <div class="slot-actions">👤</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    <div class="shift-actions-row">
+                                        @if (isDetached)
+                                        {
+                                            <span class="ovr-badge" loc-title="Title_ShiftModified">
+                                                <loc key="Status_OVR">OVR</loc>
+                                            </span>
+                                            @if (originalProgramId.HasValue)
+                                            {
+                                                <button class="reset-program-btn" onclick="resetToProgram(@instanceId, event)" loc-title="Title_ResetToProgram">
+                                                    🔄 Reset
+                                                </button>
+                                            }
+                                        }
+                                        <div class="adjust-headcount-btn" onclick="showAdjustHeadcount(@instanceId, event)" title="@Localizer["AdjustRequiredHeadcount"]">
+                                            ⚙️
+                                        </div>
+                                        <button class="shift-delete-btn" onclick="confirmDeleteShift(@instanceId, event)" aria-label="@Localizer["DeleteShift"]" title="@Localizer["DeleteShift"]">
+                                            <span>🗑️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="add-assignment-btn" onclick="showAmountPicker(this, event)">
+                                    <span>➕ <loc key="AddAssignment" /></span>
+                                </div>
+                            }
+
+                            @* Fill Handle (Excel-style drag to copy) *@
+                            @if (hasAssignments)
+                            {
+                                <div class="fill-handle"
+                                     data-source-instance="@instanceId"
+                                     data-source-date="@date.ToString("yyyy-MM-dd")"
+                                     data-shift-type="@shiftType.Id"
+                                     onmousedown="startFillDrag(event, this)"
+                                     loc-title="Title_DragToCopy">
+                                </div>
+                            }
+
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Amount Picker Modal -->
+<div class="modal-overlay" id="amountPickerModal">
+    <div class="modal-content">
+        <div class="modal-header"><loc key="NumberOfPeopleNeeded" /></div>
+        <div class="amount-picker">
+            <button class="amount-btn" id="decreaseBtn" onclick="adjustAmount(-1)">−</button>
+            <div class="amount-display" id="amountDisplay">1</div>
+            <button class="amount-btn" id="increaseBtn" onclick="adjustAmount(1)">+</button>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeAmountPicker()">@Localizer["Cancel"]</button>
+            <button class="modal-btn modal-btn-primary" onclick="createAssignmentSlots()">@Localizer["CreateSlots"]</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Shift Row Modal -->
+<div class="modal-overlay" id="addShiftRowModal">
+    <div class="modal-content">
+        <div class="modal-header"><loc key="Modal_AddCustomShiftRow">Add Custom Shift Row</loc></div>
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin: 1rem 0;">
+            <div>
+                <label for="newShiftName" style="display: block; margin-bottom: 0.5rem; font-weight: 600;"><loc key="Label_ShiftName">Shift Name</loc></label>
+                <input type="text" id="newShiftName" loc-placeholder="Placeholder_EveningShift" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem;" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label for="newShiftStart" style="display: block; margin-bottom: 0.5rem; font-weight: 600;"><loc key="Label_StartTime">Start Time</loc></label>
+                    <input type="time" id="newShiftStart" value="09:00" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem;" />
+                </div>
+                <div>
+                    <label for="newShiftEnd" style="display: block; margin-bottom: 0.5rem; font-weight: 600;"><loc key="Label_EndTime">End Time</loc></label>
+                    <input type="time" id="newShiftEnd" value="17:00" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem;" />
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeAddShiftRowModal()"><loc key="Button_Cancel">Cancel</loc></button>
+            <button class="modal-btn modal-btn-primary" onclick="createCustomShiftRow()"><loc key="Button_CreateShiftRow">Create Shift Row</loc></button>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu for Slots -->
+<div class="action-menu" id="slotContextMenu" role="menu">
+    <div class="action-menu-item" role="menuitem" onclick="showAddTraineeMenu(event)">
+        <span>👤</span>
+        <span id="traineeMenuLabel"><loc key="AddTrainee" /></span>
+    </div>
+    <div class="action-menu-item" role="menuitem" id="removeTraineeItem" onclick="removeTrainee(event)" style="display: none;">
+        <span>🚫</span>
+        <span><loc key="RemoveTrainee" /></span>
+    </div>
+    <div class="action-menu-item" role="menuitem" onclick="showChangeUserMenu(event)">
+        <span>🔄</span>
+        <span><loc key="ChangePrimaryUser" /></span>
+    </div>
+    <div class="action-menu-item danger" role="menuitem" onclick="removeUser(event)">
+        <span>❌</span>
+        <span><loc key="RemoveUser" /></span>
+    </div>
+</div>
+
+<!-- Employee Dropdown -->
+<div class="employee-dropdown" id="employeeDropdown">
+    @foreach (var employee in Model.Employees)
+    {
+        <div class="employee-option" data-employee-id="@employee.Id" data-employee-name="@employee.DisplayName">
+            @employee.DisplayName
+        </div>
+    }
+</div>
+
+<!-- Fill Options Modal -->
+<div class="fill-options-modal" id="fillOptionsModal">
+    <div class="fill-options-content">
+        <div class="fill-options-header">
+            <h3>📋 Copy Shift Across Days</h3>
+            <button onclick="closeFillOptions()" loc-aria-label="Aria_CloseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
+        </div>
+
+        <div class="fill-preview-info">
+            <p><strong>Source:</strong> <span id="fillSourceInfo"></span></p>
+            <p><strong>Target Days:</strong> <span id="fillTargetInfo"></span></p>
+        </div>
+
+        <div id="fillOptionsContainer">
+            <div class="fill-option-item" data-mode="exact" onclick="selectFillOption('exact')">
+                <div class="fill-option-title">📄 Copy Exact</div>
+                <div class="fill-option-desc">Copy all assignments, trainees, and manual overrides to target days</div>
+            </div>
+
+            <div class="fill-option-item" data-mode="staffing" onclick="selectFillOption('staffing')">
+                <div class="fill-option-title">👥 Copy Staffing Only</div>
+                <div class="fill-option-desc">Copy the number of required staff, but leave assignments empty</div>
+            </div>
+
+            <div class="fill-option-item" data-mode="program" onclick="selectFillOption('program')" style="display: none;">
+                <div class="fill-option-title">🔄 Apply Program Defaults</div>
+                <div class="fill-option-desc">Create shifts from Program template (if linked to a Program)</div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeFillOptions()"><loc key="Button_Cancel">Cancel</loc></button>
+            <button class="modal-btn modal-btn-primary" id="applyFillBtn" onclick="applyFill()" disabled><loc key="Button_Apply">Apply</loc></button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentSlot = null;
+let currentAmount = 1;
+let currentCell = null;
+const MAX_AMOUNT = 10;
+const MIN_AMOUNT = 1;
+
+// Busy users data per date (serialized from server)
+const busyUsersByDate = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BusyUsersByDate));
+
+// Localized strings (using Html.Raw to prevent HTML encoding of Hebrew/special characters)
+const i18n = {
+    numberOfPeopleNeeded: '@Html.Raw(Localizer["NumberOfPeopleNeeded"])',
+    adjustRequiredHeadcount: '@Html.Raw(Localizer["AdjustRequiredHeadcount"])',
+    addTrainee: '@Html.Raw(Localizer["AddTrainee"])',
+    changeTrainee: '@Html.Raw(Localizer["ChangeTrainee"])',
+    selectEmployee: '@Html.Raw(Localizer["SelectEmployee"])',
+    assignEmployeeToSlot: '@Html.Raw(Localizer["AssignEmployeeToSlot"])',
+    failedToAddTrainee: '@Html.Raw(Localizer["FailedToAddTrainee"])',
+    removeTraineeConfirm: '@Html.Raw(Localizer["RemoveTraineeConfirm"])',
+    failedToRemoveTrainee: '@Html.Raw(Localizer["FailedToRemoveTrainee"])',
+    failedToChangeUser: '@Html.Raw(Localizer["FailedToChangeUser"])',
+    removeUserConfirm: '@Html.Raw(Localizer["RemoveUserConfirm"])',
+    failedToRemoveUser: '@Html.Raw(Localizer["FailedToRemoveUser"])',
+    deleteShift: '@Html.Raw(Localizer["DeleteShift"])',
+    deleteShiftConfirm: '@Html.Raw(Localizer["DeleteShiftConfirm"])',
+    failedToDeleteShift: '@Html.Raw(Localizer["FailedToDeleteShift"])'
+};
+
+// Shift Row Editing Functions
+function toggleEditMode(shiftTypeId, isEdit) {
+    const displayElem = document.getElementById(`metadata-${shiftTypeId}`);
+    const editElem = document.getElementById(`metadata-edit-${shiftTypeId}`);
+    const editBtn = document.getElementById(`edit-btn-${shiftTypeId}`);
+    const saveBtn = document.getElementById(`save-btn-${shiftTypeId}`);
+    const cancelBtn = document.getElementById(`cancel-btn-${shiftTypeId}`);
+
+    if (isEdit) {
+        displayElem.style.display = 'none';
+        editElem.style.display = 'flex';
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+    } else {
+        displayElem.style.display = 'flex';
+        editElem.style.display = 'none';
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    }
+}
+
+async function saveShiftMetadata(shiftTypeId) {
+    const name = document.getElementById(`name-${shiftTypeId}`).value;
+    const start = document.getElementById(`start-${shiftTypeId}`).value;
+    const end = document.getElementById(`end-${shiftTypeId}`).value;
+
+    if (!name || !start || !end) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=UpdateShiftMetadata', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftTypeId: shiftTypeId,
+                name: name,
+                startTime: start,
+                endTime: end
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error updating shift metadata:', error);
+        alert('Failed to update shift metadata. Please try again.');
+    }
+}
+
+// Add Shift Row Modal Functions
+function showAddShiftRowModal() {
+    document.getElementById('addShiftRowModal').classList.add('show');
+}
+
+function closeAddShiftRowModal() {
+    document.getElementById('addShiftRowModal').classList.remove('show');
+    document.getElementById('newShiftName').value = '';
+    document.getElementById('newShiftStart').value = '09:00';
+    document.getElementById('newShiftEnd').value = '17:00';
+}
+
+async function createCustomShiftRow() {
+    const name = document.getElementById('newShiftName').value;
+    const start = document.getElementById('newShiftStart').value;
+    const end = document.getElementById('newShiftEnd').value;
+
+    if (!name || !start || !end) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=CreateCustomShiftType', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                name: name,
+                startTime: start,
+                endTime: end
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            closeAddShiftRowModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error creating custom shift row:', error);
+        alert('Failed to create shift row. Please try again.');
+    }
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', function(event) {
+    const contextMenu = document.getElementById('slotContextMenu');
+    const dropdown = document.getElementById('employeeDropdown');
+    const modal = document.getElementById('amountPickerModal');
+
+    if (contextMenu && !event.target.closest('#slotContextMenu') && !event.target.closest('.assignment-slot')) {
+        contextMenu.classList.remove('show');
+    }
+    if (dropdown && !event.target.closest('#employeeDropdown') && !event.target.closest('#slotContextMenu')) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// Amount Picker Functions
+let currentInstanceId = null;
+
+function showAmountPicker(btn, event) {
+    event.stopPropagation();
+    currentCell = btn.closest('.assignment-cell');
+    currentInstanceId = null; // New shift instance
+    currentAmount = 1;
+    document.getElementById('amountDisplay').textContent = currentAmount;
+    document.getElementById('amountPickerModal').querySelector('.modal-header').textContent = i18n.numberOfPeopleNeeded;
+    updateAmountButtons();
+    document.getElementById('amountPickerModal').classList.add('show');
+}
+
+function showAdjustHeadcount(instanceId, event) {
+    event.stopPropagation();
+
+    // Find the cell containing this instance
+    const slotsDiv = event.target.closest('.assignment-slots');
+    currentCell = slotsDiv.closest('.assignment-cell');
+    currentInstanceId = instanceId;
+
+    // Count current slots
+    const currentSlots = slotsDiv.querySelectorAll('.assignment-slot').length;
+    currentAmount = currentSlots;
+
+    document.getElementById('amountDisplay').textContent = currentAmount;
+    document.getElementById('amountPickerModal').querySelector('.modal-header').textContent = i18n.adjustRequiredHeadcount;
+    updateAmountButtons();
+    document.getElementById('amountPickerModal').classList.add('show');
+}
+
+function closeAmountPicker() {
+    document.getElementById('amountPickerModal').classList.remove('show');
+    currentCell = null;
+    currentInstanceId = null;
+}
+
+function adjustAmount(delta) {
+    currentAmount = Math.max(MIN_AMOUNT, Math.min(MAX_AMOUNT, currentAmount + delta));
+    document.getElementById('amountDisplay').textContent = currentAmount;
+    updateAmountButtons();
+}
+
+function updateAmountButtons() {
+    document.getElementById('decreaseBtn').disabled = currentAmount <= MIN_AMOUNT;
+    document.getElementById('increaseBtn').disabled = currentAmount >= MAX_AMOUNT;
+}
+
+async function createAssignmentSlots(forceRemoval = false) {
+    if (!currentCell) return;
+
+    const shiftTypeId = currentCell.getAttribute('data-shift-type');
+    const date = currentCell.getAttribute('data-date');
+
+    try {
+        let response;
+
+        if (currentInstanceId) {
+            // Update existing shift instance
+            response = await fetch('/Calendar/Table?handler=UpdateShiftStaffing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({
+                    shiftInstanceId: currentInstanceId,
+                    staffingRequired: currentAmount,
+                    forceRemoval: forceRemoval
+                })
+            });
+        } else {
+            // Get-or-create shift instance (idempotent - no "already exists" error)
+            response = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({
+                    shiftTypeId: parseInt(shiftTypeId),
+                    date: date,
+                    staffingRequired: currentAmount
+                })
+            });
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            closeAmountPicker();
+            location.reload();
+        } else if (result.requiresConfirmation) {
+            // Show confirmation dialog for removing assigned employees
+            if (confirm(result.message)) {
+                // User confirmed - retry with force removal
+                await createAssignmentSlots(true);
+            }
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error updating shift slots:', error);
+        alert('Failed to update shift slots. Please try again.');
+    }
+}
+
+// Slot Click Handlers
+function handleSlotClick(slot, event) {
+    event.stopPropagation();
+    currentSlot = slot;
+
+    const contextMenu = document.getElementById('slotContextMenu');
+    const hasTrainee = slot.getAttribute('data-has-trainee') === 'true';
+
+    // Update menu items based on slot state
+    document.getElementById('traineeMenuLabel').textContent = hasTrainee ? i18n.changeTrainee : i18n.addTrainee;
+    document.getElementById('removeTraineeItem').style.display = hasTrainee ? 'block' : 'none';
+
+    // Close dropdown if open
+    document.getElementById('employeeDropdown').classList.remove('show');
+
+    // Position and show menu
+    positionMenuNearSlot(contextMenu, slot);
+    contextMenu.classList.add('show');
+}
+
+function handleUnassignedSlotClick(slot, event) {
+    event.stopPropagation();
+    currentSlot = slot;
+
+    const assignmentId = slot.getAttribute('data-assignment-id');
+    showEmployeeDropdown((employeeId, employeeName) => {
+        assignUserToSlot(assignmentId, employeeId);
+    });
+}
+
+function positionMenuNearSlot(menu, slot) {
+    const rect = slot.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (rect.bottom + 5) + 'px';
+    menu.style.left = rect.left + 'px';
+}
+
+// Employee Dropdown Functions
+function showAddTraineeMenu(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+    showEmployeeDropdown((employeeId, employeeName) => {
+        addTrainee(assignmentId, employeeId, employeeName);
+    });
+}
+
+function showChangeUserMenu(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+    showEmployeeDropdown((employeeId, employeeName) => {
+        changeUser(assignmentId, employeeId, employeeName);
+    });
+}
+
+function showEmployeeDropdown(callback) {
+    const contextMenu = document.getElementById('slotContextMenu');
+    const dropdown = document.getElementById('employeeDropdown');
+
+    // Close context menu
+    contextMenu.classList.remove('show');
+
+    // Position dropdown near current slot
+    if (currentSlot) {
+        positionMenuNearSlot(dropdown, currentSlot);
+    }
+
+    // Get already assigned users in this cell to filter them out
+    const cell = currentSlot ? currentSlot.closest('.assignment-cell') : null;
+    const assignedUserIds = new Set();
+
+    if (cell) {
+        const slots = cell.querySelectorAll('.assignment-slot[data-user-id]');
+        slots.forEach(slot => {
+            const userId = slot.getAttribute('data-user-id');
+            if (userId && userId !== 'null' && userId !== '') {
+                assignedUserIds.add(userId);
+            }
+        });
+    }
+
+    // Set up click handlers for employee options
+    const options = dropdown.querySelectorAll('.employee-option');
+    options.forEach(option => {
+        const newOption = option.cloneNode(true);
+        option.parentNode.replaceChild(newOption, option);
+
+        const employeeId = newOption.getAttribute('data-employee-id');
+
+        // Hide options for users already assigned in this cell
+        if (assignedUserIds.has(employeeId)) {
+            newOption.style.display = 'none';
+        } else {
+            newOption.style.display = 'block';
+
+            // Apply busy status if we have date information
+            const cellDate = cell ? cell.getAttribute('data-date') : null;
+            if (cellDate && busyUsersByDate[cellDate]) {
+                const busyStatus = busyUsersByDate[cellDate][employeeId];
+                if (busyStatus) {
+                    // Apply CSS class based on busy reason
+                    if (busyStatus.CssClass) {
+                        newOption.classList.add(busyStatus.CssClass);
+                    }
+                    // Update display text to show busy status
+                    const employeeName = newOption.getAttribute('data-employee-name');
+                    if (busyStatus.DisplayText) {
+                        newOption.textContent = `${employeeName} (${busyStatus.DisplayText})`;
+                    }
+                }
+            }
+
+            newOption.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const employeeName = this.getAttribute('data-employee-name');
+                dropdown.classList.remove('show');
+                callback(parseInt(employeeId), employeeName);
+            });
+        }
+    });
+
+    dropdown.classList.add('show');
+}
+
+async function addTrainee(assignmentId, traineeId, traineeName) {
+    const contextMenu = document.getElementById('slotContextMenu');
+    contextMenu.classList.remove('show');
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=AddTrainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId),
+                traineeUserId: traineeId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update DOM immediately
+            if (currentSlot) {
+                currentSlot.setAttribute('data-has-trainee', 'true');
+                currentSlot.setAttribute('data-trainee-id', traineeId);
+
+                const contentDiv = currentSlot.querySelector('.assignment-slot-content > div:first-child');
+                if (contentDiv) {
+                    // Find existing trainee div or create new one
+                    let traineeDiv = contentDiv.querySelector('.trainee-user');
+                    if (!traineeDiv) {
+                        // Add comma and trainee
+                        const primaryUserDiv = contentDiv.querySelector('.primary-user');
+                        if (primaryUserDiv) {
+                            const comma = document.createTextNode(', ');
+                            traineeDiv = document.createElement('div');
+                            traineeDiv.className = 'trainee-user';
+                            traineeDiv.textContent = traineeName;
+
+                            contentDiv.appendChild(comma);
+                            contentDiv.appendChild(traineeDiv);
+                        }
+                    } else {
+                        // Update existing trainee
+                        traineeDiv.textContent = traineeName;
+                    }
+                }
+
+                // Update context menu label
+                document.getElementById('traineeMenuLabel').textContent = i18n.changeTrainee;
+                document.getElementById('removeTraineeItem').style.display = 'block';
+            }
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error adding trainee:', error);
+        alert(i18n.failedToAddTrainee);
+    }
+}
+
+async function removeTrainee(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    if (!confirm(i18n.removeTraineeConfirm)) {
+        return;
+    }
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=RemoveTrainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error removing trainee:', error);
+        alert(i18n.failedToRemoveTrainee);
+    }
+}
+
+async function assignUserToSlot(assignmentId, userId) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=AssignUserToSlot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId),
+                userId: userId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error assigning user to slot:', error);
+        alert('Failed to assign user. Please try again.');
+    }
+}
+
+async function changeUser(assignmentId, newUserId, newUserName) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=ChangeUser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId),
+                newUserId: newUserId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error changing user:', error);
+        alert(i18n.failedToChangeUser);
+    }
+}
+
+async function removeUser(event) {
+    event.stopPropagation();
+    if (!currentSlot) return;
+
+    if (!confirm(i18n.removeUserConfirm)) {
+        return;
+    }
+
+    const assignmentId = currentSlot.getAttribute('data-assignment-id');
+    const contextMenu = document.getElementById('slotContextMenu');
+    contextMenu.classList.remove('show');
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=ClearAssignment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                assignmentId: parseInt(assignmentId)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update DOM immediately - convert to unassigned slot
+            currentSlot.classList.add('unassigned');
+            currentSlot.removeAttribute('data-user-id');
+            currentSlot.removeAttribute('data-has-trainee');
+            currentSlot.removeAttribute('data-trainee-id');
+            currentSlot.setAttribute('aria-label', i18n.assignEmployeeToSlot);
+            currentSlot.setAttribute('onclick', 'handleUnassignedSlotClick(this, event)');
+
+            const content = currentSlot.querySelector('.assignment-slot-content');
+            content.innerHTML = `<div>${i18n.selectEmployee}</div><div class="slot-actions">👤</div>`;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error removing user:', error);
+        alert(i18n.failedToRemoveUser);
+    }
+}
+
+async function confirmDeleteShift(instanceId, event) {
+    event.stopPropagation();
+
+    if (!confirm(i18n.deleteShiftConfirm)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=DeleteShiftInstance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Reload page to show updated state
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error deleting shift instance:', error);
+        alert(i18n.failedToDeleteShift);
+    }
+}
+
+// ============= KEYBOARD NAVIGATION =============
+
+// Track currently focused cell for keyboard navigation
+let focusedCell = null;
+
+// Initialize keyboard navigation
+document.addEventListener('DOMContentLoaded', function() {
+    initializeKeyboardNavigation();
+    initializeMenuKeyboardNav();
+});
+
+// B-037: Initialize keyboard navigation for action menus
+function initializeMenuKeyboardNav() {
+    // Context menu keyboard navigation
+    const contextMenu = document.getElementById('slotContextMenu');
+    if (contextMenu && window.KeyboardNav) {
+        window.KeyboardNav.initMenu({
+            menu: contextMenu,
+            itemSelector: '.action-menu-item:not([style*="display: none"])',
+            onClose: function() {
+                contextMenu.classList.remove('show');
+                // Return focus to the slot that opened the menu
+                if (currentSlot) {
+                    currentSlot.focus();
+                }
+            }
+        });
+    }
+
+    // Employee dropdown keyboard navigation
+    const employeeDropdown = document.getElementById('employeeDropdown');
+    if (employeeDropdown && window.KeyboardNav) {
+        window.KeyboardNav.initMenu({
+            menu: employeeDropdown,
+            itemSelector: '.employee-option',
+            onClose: function() {
+                employeeDropdown.classList.remove('show');
+                if (currentSlot) {
+                    currentSlot.focus();
+                }
+            }
+        });
+    }
+}
+
+function initializeKeyboardNavigation() {
+    const cells = document.querySelectorAll('.assignment-cell');
+
+    cells.forEach(cell => {
+        // Make cells focusable
+        cell.setAttribute('tabindex', '0');
+
+        // Add focus styling
+        cell.addEventListener('focus', function() {
+            focusedCell = this;
+            this.style.outline = '2px solid var(--primary)';
+            this.style.outlineOffset = '-2px';
+        });
+
+        cell.addEventListener('blur', function() {
+            this.style.outline = '';
+            this.style.outlineOffset = '';
+        });
+
+        // Handle keyboard events on cells
+        cell.addEventListener('keydown', handleCellKeydown);
+    });
+
+    // Also handle keyboard on slots
+    const slots = document.querySelectorAll('.assignment-slot');
+    slots.forEach(slot => {
+        slot.addEventListener('keydown', handleSlotKeydown);
+    });
+}
+
+function handleCellKeydown(event) {
+    const cell = event.currentTarget;
+
+    // Handle arrow keys
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        navigateCell(cell, event.key);
+        return;
+    }
+
+    // Handle Enter key on cells
+    if (event.key === 'Enter') {
+        event.preventDefault();
+
+        // Check if cell is empty (has add-assignment-btn)
+        const addBtn = cell.querySelector('.add-assignment-btn');
+        if (addBtn) {
+            showAmountPicker(addBtn, event);
+        } else {
+            // Cell has slots - focus first slot
+            const firstSlot = cell.querySelector('.assignment-slot');
+            if (firstSlot) {
+                firstSlot.focus();
+            }
+        }
+    }
+}
+
+function handleSlotKeydown(event) {
+    const slot = event.currentTarget;
+
+    // Handle Enter key on slots
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+
+        if (slot.classList.contains('unassigned')) {
+            handleUnassignedSlotClick(slot, event);
+        } else {
+            handleSlotClick(slot, event);
+        }
+        return;
+    }
+
+    // Handle Escape key to go back to cell
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        const cell = slot.closest('.assignment-cell');
+        if (cell) {
+            cell.focus();
+        }
+
+        // Close any open menus
+        document.getElementById('slotContextMenu')?.classList.remove('show');
+        document.getElementById('employeeDropdown')?.classList.remove('show');
+        return;
+    }
+
+    // Handle arrow keys within slots
+    if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        navigateSlots(slot, event.key);
+        return;
+    }
+
+    // Arrow left/right go back to cell navigation
+    if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        const cell = slot.closest('.assignment-cell');
+        if (cell) {
+            cell.focus();
+            navigateCell(cell, event.key);
+        }
+    }
+}
+
+function navigateCell(currentCell, direction) {
+    const allCells = Array.from(document.querySelectorAll('.assignment-cell'));
+    const currentIndex = allCells.indexOf(currentCell);
+
+    if (currentIndex === -1) return;
+
+    let targetCell = null;
+
+    if (direction === 'ArrowLeft') {
+        // Move to previous cell in row
+        targetCell = allCells[currentIndex - 1];
+    } else if (direction === 'ArrowRight') {
+        // Move to next cell in row
+        targetCell = allCells[currentIndex + 1];
+    } else if (direction === 'ArrowUp' || direction === 'ArrowDown') {
+        // Calculate grid dimensions
+        const currentRow = currentCell.closest('tr');
+        const currentCellIndex = Array.from(currentRow.cells).indexOf(currentCell);
+
+        // Find target row
+        const allRows = Array.from(document.querySelectorAll('.shift-table tbody tr'));
+        const currentRowIndex = allRows.indexOf(currentRow);
+
+        const targetRowIndex = direction === 'ArrowUp'
+            ? currentRowIndex - 1
+            : currentRowIndex + 1;
+
+        if (targetRowIndex >= 0 && targetRowIndex < allRows.length) {
+            const targetRow = allRows[targetRowIndex];
+            targetCell = targetRow.cells[currentCellIndex];
+        }
+    }
+
+    if (targetCell && targetCell.classList.contains('assignment-cell')) {
+        targetCell.focus();
+    }
+}
+
+function navigateSlots(currentSlot, direction) {
+    const slotsContainer = currentSlot.closest('.assignment-slots');
+    if (!slotsContainer) return;
+
+    const allSlots = Array.from(slotsContainer.querySelectorAll('.assignment-slot'));
+    const currentIndex = allSlots.indexOf(currentSlot);
+
+    if (currentIndex === -1) return;
+
+    let targetSlot = null;
+
+    if (direction === 'ArrowUp' && currentIndex > 0) {
+        targetSlot = allSlots[currentIndex - 1];
+    } else if (direction === 'ArrowDown' && currentIndex < allSlots.length - 1) {
+        targetSlot = allSlots[currentIndex + 1];
+    }
+
+    if (targetSlot) {
+        targetSlot.focus();
+    }
+}
+
+// Add Escape key handler for modals
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        // Close amount picker modal
+        const amountModal = document.getElementById('amountPickerModal');
+        if (amountModal && amountModal.classList.contains('show')) {
+            closeAmountPicker();
+        }
+
+        // Close add shift row modal
+        const addShiftModal = document.getElementById('addShiftRowModal');
+        if (addShiftModal && addShiftModal.classList.contains('show')) {
+            closeAddShiftRowModal();
+        }
+
+        // Close context menu
+        const contextMenu = document.getElementById('slotContextMenu');
+        if (contextMenu && contextMenu.classList.contains('show')) {
+            contextMenu.classList.remove('show');
+        }
+
+        // Close employee dropdown
+        const dropdown = document.getElementById('employeeDropdown');
+        if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+        }
+    }
+});
+
+// ============= DETACHMENT & RESET =============
+
+/**
+ * Reset a detached ShiftInstance back to its Program defaults.
+ */
+async function resetToProgram(instanceId, event) {
+    event.stopPropagation();
+
+    if (!confirm('Reset this shift to Program defaults? This will restore staffing requirements and clear manual overrides.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/Calendar/Table?handler=ResetInstanceToProgram', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Reload page to show updated state
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error resetting shift to Program:', error);
+        alert('Failed to reset shift. Please try again.');
+    }
+}
+
+/**
+ * Detach a ShiftInstance from its Program (mark as manually modified).
+ * This is automatically called when staffing is adjusted on a Program-generated shift.
+ */
+async function detachFromProgram(instanceId, reason) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=DetachInstance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId,
+                reason: reason
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            return true;
+        } else {
+            console.error('Failed to detach instance:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error detaching shift from Program:', error);
+        return false;
+    }
+}
+
+</script>
+
+<!-- Roster Dock Sidebar -->
+<div id="rosterDock" class="roster-dock">
+    <div class="roster-dock-header">
+        <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">
+            👥 Roster
+        </h3>
+        <button class="close-roster-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">
+            ×
+        </button>
+    </div>
+
+    <div class="roster-dock-search">
+        <input type="text" id="rosterSearch" loc-placeholder="Placeholder_SearchEmployees" loc-aria-label="Aria_SearchEmployees" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.375rem; font-size: 0.875rem;" />
+    </div>
+
+    <div class="roster-dock-content">
+        <div id="rosterEmployeeList">
+            <!-- Employee items will be dynamically populated -->
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                <p>Loading employees...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Roster Dock Toggle Button (Fixed Position) -->
+<button id="rosterDockToggle" class="roster-toggle-btn" loc-title="Title_OpenRosterDock">
+    ☰ Roster
+</button>
+
+<!-- Radar Mode Toggle Button (Fixed Position) -->
+<button id="radarToggle" class="radar-toggle-btn" onclick="toggleRadarMode()" loc-title="Title_ToggleRadarMode">
+    📡 Radar
+</button>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    @* Ops Console Scheduler JavaScript *@
+    <script src="~/js/roster-dock.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-radar.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-fill-handle.js" asp-append-version="true"></script>
+    <script>
+        // B-007: Signal calendar content is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarContent = document.querySelector('[data-calendar-content]');
+            if (calendarContent && window.CalendarSkeleton) {
+                window.CalendarSkeleton.signalReady(calendarContent);
+            }
+        });
+    </script>
+}

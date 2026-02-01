@@ -1,0 +1,663 @@
+@page
+@model ShiftManager.Pages.My.ProfileModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    var isOwner = User.IsInRole("Owner");
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyProfile"], IsActive = true }
+})
+
+<div data-ui-version="v2">
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 76, 175, 80), 0.3);
+        }
+
+        .alert-error {
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        .alert-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Avatar Section */
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .avatar-display {
+            position: relative;
+        }
+
+        .avatar-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .avatar-initials {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--primary-contrast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .avatar-controls {
+            flex: 1;
+        }
+
+        .avatar-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .avatar-hint {
+            display: block;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input {
+            display: block;
+            width: 100%;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .file-input:hover {
+            border-color: var(--primary);
+        }
+
+        .file-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .form-label .required {
+            color: var(--danger);
+        }
+
+        .form-label .locked-icon {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .form-input:disabled,
+        .form-input:read-only {
+            background: var(--surface-soft);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .form-hint {
+            display: block;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-top: 0.375rem;
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            border-left: 3px solid var(--primary);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .info-banner-icon {
+            font-size: 1.125rem;
+            line-height: 1;
+            margin-top: 0.125rem;
+        }
+
+        /* Action Buttons */
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-elevated);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--danger-text);
+            border-color: var(--danger);
+            margin-top: 0.75rem;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            border-color: var(--danger-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .avatar-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .avatar-display {
+                align-self: center;
+            }
+
+            .avatar-controls {
+                width: 100%;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .card {
+                padding: 1.25rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title"><loc key="MyProfile" /></h1>
+    <p class="page-subtitle"><loc key="ManageYourPersonalAndProfessionalInformation" /></p>
+</div>
+
+<!-- Success/Error Messages -->
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">
+        <span class="alert-icon">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-error">
+        <span class="alert-icon">✗</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <!-- Avatar Section -->
+    <div class="card">
+        <h2 class="card-title"><loc key="Avatar" /></h2>
+
+        <div class="avatar-section">
+            <div class="avatar-display">
+                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                {
+                    <img src="@Model.AvatarUrl" alt="@Localizer["Avatar"]" width="100" height="100" class="avatar-img" loading="lazy" decoding="async" />
+                }
+                else
+                {
+                    <div class="avatar-initials">
+                        @Model.InitialsForAvatar
+                    </div>
+                }
+            </div>
+
+            <div class="avatar-controls">
+                <label class="avatar-label">
+                    @Localizer["UploadNewAvatar"]
+                    <span class="avatar-hint"><loc key="MaxFileSizeAnd" /> JPEG/PNG</span>
+                </label>
+                <input type="file" name="AvatarFile" accept=".jpg,.jpeg,.png" class="file-input" />
+
+                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                {
+                    <button type="submit" asp-page-handler="DeleteAvatar" class="btn btn-danger">
+                        <span>🗑️</span>
+                        <span><loc key="DeleteAvatar" /></span>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="card">
+        <h2 class="card-title"><loc key="PersonalInformation" /></h2>
+
+        <div class="form-group">
+            <label class="form-label">
+                @Localizer["DisplayName"]
+                <span class="required">*</span>
+            </label>
+            <input type="text" asp-for="DisplayName" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="PreferredName" /></label>
+            <input type="text" asp-for="PreferredName" class="form-input" placeholder="@Localizer["PreferredName"]" />
+            <span class="form-hint"><loc key="HowYouPreferToBeAddressed" /></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="Phone" /></label>
+            <input type="tel" asp-for="Phone" class="form-input" placeholder="050-1234567" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="City" /></label>
+            <input type="text" asp-for="City" class="form-input" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="DateOfBirth" /></label>
+            <input type="date" asp-for="DateOfBirth" class="form-input" />
+        </div>
+    </div>
+
+    <!-- Professional Information -->
+    <div class="card">
+        <h2 class="card-title"><loc key="ProfessionalInformation" /></h2>
+
+        @if (!isOwner)
+        {
+            <div class="info-banner">
+                <span class="info-banner-icon">ℹ️</span>
+                <span><loc key="ManagerOnlyFields" /></span>
+            </div>
+        }
+
+        <div class="form-group">
+            <label class="form-label">
+                @Localizer["Department"]
+                @if (!isOwner)
+                {
+                    <span class="locked-icon">🔒</span>
+                }
+            </label>
+            @if (isOwner)
+            {
+                <input type="text" asp-for="Department" class="form-input" placeholder="@Localizer["Department"]" />
+            }
+            else
+            {
+                <input type="text" value="@Model.Department" class="form-input" readonly />
+            }
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                @Localizer["JobTitle"]
+                @if (!isOwner)
+                {
+                    <span class="locked-icon">🔒</span>
+                }
+            </label>
+            @if (isOwner)
+            {
+                <input type="text" asp-for="JobTitle" class="form-input" placeholder="@Localizer["JobTitle"]" />
+            }
+            else
+            {
+                <input type="text" value="@Model.JobTitle" class="form-input" readonly />
+            }
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                @Localizer["HireDate"]
+                @if (!isOwner)
+                {
+                    <span class="locked-icon">🔒</span>
+                }
+            </label>
+            @if (isOwner)
+            {
+                <input type="date" asp-for="HireDate" class="form-input" />
+            }
+            else
+            {
+                <input type="text" value="@Model.HireDate?.ToString("yyyy-MM-dd")" class="form-input" readonly />
+            }
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="Skills" /></label>
+            <input type="text" asp-for="Skills" class="form-input" placeholder="@Localizer["SkillsPlaceholder"]" />
+            <span class="form-hint"><loc key="CommaSeparated" /></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="Certifications" /></label>
+            <input type="text" asp-for="Certifications" class="form-input" placeholder="@Localizer["CertificationsPlaceholder"]" />
+            <span class="form-hint"><loc key="CommaSeparated" /></span>
+        </div>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div class="card">
+        <h2 class="card-title"><loc key="EmergencyContact" /></h2>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="EmergencyContactName" /></label>
+            <input type="text" asp-for="EmergencyContactName" class="form-input" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="EmergencyContactPhone" /></label>
+            <input type="tel" asp-for="EmergencyContactPhone" class="form-input" placeholder="050-1234567" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><loc key="EmergencyContactRelation" /></label>
+            <input type="text" asp-for="EmergencyContactRelation" class="form-input" />
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            <span>💾</span>
+            <span><loc key="SaveChanges" /></span>
+        </button>
+        <a href="/My" class="btn btn-secondary">
+            <span><loc key="Cancel" /></span>
+        </a>
+    </div>
+</form>
+</div>
+
+@section Scripts {
+    <script>
+        // Drag-and-drop avatar upload enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.querySelector('input[type="file"][name="AvatarFile"]');
+
+            if (!fileInput) return;
+
+            // Prevent default drag behaviors on the entire document
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Highlight file input when dragging over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileInput.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileInput.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                fileInput.classList.add('drag-over');
+            }
+
+            function unhighlight() {
+                fileInput.classList.remove('drag-over');
+            }
+
+            // Handle dropped files
+            fileInput.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0) {
+                    // Check if file is an image
+                    const file = files[0];
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+
+                    if (validTypes.includes(file.type)) {
+                        fileInput.files = dt.files;
+
+                        // Visual feedback
+                        const label = fileInput.closest('.avatar-controls').querySelector('.avatar-label');
+                        if (label) {
+                            const originalText = label.textContent;
+                            label.textContent = '✓ ' + file.name + ' selected';
+                            label.style.color = 'var(--success)';
+
+                            setTimeout(() => {
+                                label.textContent = originalText;
+                                label.style.color = '';
+                            }, 3000);
+                        }
+                    } else {
+                        alert('Please upload a valid image file (JPEG or PNG)');
+                    }
+                }
+            }
+
+            // Also show file name when selected via click
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    const label = this.closest('.avatar-controls').querySelector('.avatar-label');
+                    if (label) {
+                        const originalText = label.textContent;
+                        label.textContent = '✓ ' + file.name + ' selected';
+                        label.style.color = 'var(--success)';
+
+                        setTimeout(() => {
+                            label.textContent = originalText;
+                            label.style.color = '';
+                        }, 3000);
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -1,161 +1,637 @@
 @page
 @model ShiftManager.Pages.My.RequestsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
 
-<div style="max-width: 1000px; margin: 0 auto;">
-    <h2 style="color: var(--text); margin-bottom: 2rem;">My Requests</h2>
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyRequests"], IsActive = true }
+})
 
+<div data-ui-version="v2">
+<div class="requests-page">
+    @* Page Header *@
+    <div class="page-header">
+        <h1 class="page-title">📋 <loc key="MyRequests" /></h1>
+        <p class="page-subtitle"><loc key="ManageYourTimeOffAndShiftSwaps" /></p>
+    </div>
+
+    @* Success/Error Messages *@
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
-            @Model.Message
+        <div class="alert alert-success">
+            <span class="alert-icon">✓</span>
+            <span>@Model.Message</span>
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
-        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
-            @Model.Error
+        <div class="alert alert-error">
+            <span class="alert-icon">✕</span>
+            <span>@Model.Error</span>
         </div>
     }
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-        <!-- Time Off Request Form -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">Request Time Off</h3>
-            <form method="post" asp-page-handler="TimeOff">
-                @Html.AntiForgeryToken()
-                <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
-                <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.StartDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Start Date</label>
-                    <input asp-for="TimeOffRequest.StartDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
-                    <span asp-validation-for="TimeOffRequest.StartDate" style="color: var(--danger); font-size: 0.8rem;"></span>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label asp-for="TimeOffRequest.EndDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">End Date</label>
-                    <input asp-for="TimeOffRequest.EndDate" type="date" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);" />
-                    <span asp-validation-for="TimeOffRequest.EndDate" style="color: var(--danger); font-size: 0.8rem;"></span>
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label asp-for="TimeOffRequest.Reason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Reason</label>
-                    <textarea asp-for="TimeOffRequest.Reason" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); resize: vertical;" placeholder="Please provide a reason for your time off request..."></textarea>
-                    <span asp-validation-for="TimeOffRequest.Reason" style="color: var(--danger); font-size: 0.8rem;"></span>
-                </div>
-                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">Submit Time Off Request</button>
-            </form>
-        </div>
+    @* Request Forms Section *@
+    <div class="forms-section" style="margin-bottom: 3rem;">
+        <h2 class="text-title"><loc key="NewRequest" /></h2>
 
-        <!-- Shift Swap Request Form -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 1.5rem;">Request Shift Swap</h3>
-            @if (Model.AvailableShifts.Any())
-            {
-                <form method="post" asp-page-handler="Swap">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="All" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <label asp-for="SwapRequest.ShiftId" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Select Your Shift to Swap</label>
-                        <select asp-for="SwapRequest.ShiftId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface);">
-                            <option value="0">Choose a shift...</option>
-                            @foreach (var shift in Model.AvailableShifts)
-                            {
-                                <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>
-                            }
-                        </select>
-                        <span asp-validation-for="SwapRequest.ShiftId" style="color: var(--danger); font-size: 0.8rem;"></span>
-                    </div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <p style="color: var(--muted); font-size: 0.9rem; margin: 0;">This will create an open swap request that other employees can accept, or a manager can assign to someone.</p>
-                    </div>
-                    <button type="submit" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">Request Shift Swap</button>
-                </form>
-            }
-            else
-            {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">You have no upcoming shifts available for swapping.</p>
-            }
+        <div class="forms-grid">
+            @* Time Off Request Form *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📅 <loc key="RequestTimeOff" /></h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="TimeOff">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="All" class="validation-summary"></div>
+
+                        <div class="form-group">
+                            <label asp-for="TimeOffRequest.Type" class="form-label"><loc key="VacationType" /></label>
+                            <select asp-for="TimeOffRequest.Type" id="vacationType" class="form-select">
+                                <option value="0"><loc key="RegularVacation" /></option>
+                                <option value="1"><loc key="AfterDutyVacation" /></option>
+                            </select>
+                            <span asp-validation-for="TimeOffRequest.Type" class="validation-error"></span>
+                            <p class="form-hint"><loc key="VacationTypeDescription" /></p>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label asp-for="TimeOffRequest.StartDate" class="form-label"><loc key="StartDate" /></label>
+                                <input asp-for="TimeOffRequest.StartDate" id="startDate" type="date" class="form-input" />
+                                <span asp-validation-for="TimeOffRequest.StartDate" class="validation-error"></span>
+                            </div>
+
+                            <div class="form-group" id="endDateContainer">
+                                <label asp-for="TimeOffRequest.EndDate" class="form-label"><loc key="EndDate" /></label>
+                                <input asp-for="TimeOffRequest.EndDate" id="endDate" type="date" class="form-input" />
+                                <span asp-validation-for="TimeOffRequest.EndDate" class="validation-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TimeOffRequest.ApproverId" class="form-label"><loc key="SpecificApprover" /> (@Localizer["Optional"])</label>
+                            <select asp-for="TimeOffRequest.ApproverId" class="form-select">
+                                <option value=""><loc key="AnyManager" /></option>
+                                @foreach (var approver in Model.AvailableApprovers)
+                                {
+                                    <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
+                                }
+                            </select>
+                            <span asp-validation-for="TimeOffRequest.ApproverId" class="validation-error"></span>
+                            <p class="form-hint"><loc key="ApproverDescription" /></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TimeOffRequest.Reason" class="form-label"><loc key="Reason" /></label>
+                            <textarea asp-for="TimeOffRequest.Reason" rows="3" class="form-textarea" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>
+                            <span asp-validation-for="TimeOffRequest.Reason" class="validation-error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <span>📝</span>
+                            <span><loc key="SubmitTimeOffRequest" /></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @* Shift Swap Request Form *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔄 <loc key="RequestShiftSwap" /></h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableShifts.Any())
+                    {
+                        <form method="post" asp-page-handler="Swap">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="All" class="validation-summary"></div>
+
+                            <div class="form-group">
+                                <label asp-for="SwapRequest.ShiftId" class="form-label"><loc key="SelectYourShiftToSwap" /></label>
+                                <select asp-for="SwapRequest.ShiftId" class="form-select">
+                                    <option value="0"><loc key="ChooseAShift" /></option>
+                                    @foreach (var shift in Model.AvailableShifts)
+                                    {
+                                        <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="SwapRequest.ShiftId" class="validation-error"></span>
+                            </div>
+
+                            <div class="form-hint-box">
+                                <p><loc key="SwapRequestDescription" /></p>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <span>🔄</span>
+                                <span><loc key="RequestShiftSwap" /></span>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon-large">📅</div>
+                            <p class="text-subtle"><loc key="NoUpcomingShiftsForSwapping" /></p>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- My Requests Status -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-        <!-- Time Off Requests -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">My Time Off Requests</h3>
-            @if (Model.MyTimeOffRequests.Any())
-            {
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Dates</th>
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+    @* Request History Section *@
+    <div class="history-section">
+        <h2 class="text-title"><loc key="RequestHistory" /></h2>
+
+        <div class="history-grid">
+            @* Time Off Requests History *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><loc key="MyTimeOffRequests" /></h3>
+                    @if (Model.MyTimeOffRequests.Any())
+                    {
+                        <span class="badge badge-primary">@Model.MyTimeOffRequests.Count</span>
+                    }
+                </div>
+                <div class="card-body card-body-no-padding">
+                    @if (Model.MyTimeOffRequests.Any())
+                    {
+                        <div class="request-list">
                             @foreach (var request in Model.MyTimeOffRequests)
                             {
-                                <tr style="border-bottom: 1px solid var(--border);">
-                                    <td style="padding: 0.75rem 0; color: var(--text);">
-                                        @request.StartDate.ToString("MMM dd") - @request.EndDate.ToString("MMM dd, yyyy")
-                                        <br><small style="color: var(--muted);">@request.Reason</small>
-                                    </td>
-                                    <td style="padding: 0.75rem 0;">
-                                        <span style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;
-                                            background: @(request.Status == "Pending" ? "var(--focus)" : request.Status == "Approved" ? "var(--success)" : "var(--danger)");
-                                            color: white;">@request.Status</span>
-                                    </td>
-                                </tr>
+                                <div class="request-item">
+                                    <div class="request-item-content">
+                                        <div class="request-item-header">
+                                            <span class="text-body text-bold">
+                                                @request.StartDate.ToString("MMM dd") - @request.EndDate.ToString("MMM dd, yyyy")
+                                            </span>
+                                            <span class="status-badge status-@request.Status.ToLower()">
+                                                @request.Status
+                                            </span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(request.Reason))
+                                        {
+                                            <div class="request-item-details">
+                                                <span class="text-caption">@request.Reason</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p class="text-subtle"><loc key="NoTimeOffRequestsYet" /></p>
+                        </div>
+                    }
                 </div>
-            }
-            else
-            {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">No time off requests yet.</p>
-            }
-        </div>
+            </div>
 
-        <!-- Swap Requests -->
-        <div class="card" style="padding: 2rem;">
-            <h3 style="color: var(--text); margin-top: 0; margin-bottom: 1.5rem;">My Swap Requests</h3>
-            @if (Model.MySwapRequests.Any())
-            {
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Shift</th>
-                                <th style="text-align: left; padding: 0.75rem 0; color: var(--text); font-weight: 600;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            @* Swap Requests History *@
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><loc key="MySwapRequests" /></h3>
+                    @if (Model.MySwapRequests.Any())
+                    {
+                        <span class="badge badge-primary">@Model.MySwapRequests.Count</span>
+                    }
+                </div>
+                <div class="card-body card-body-no-padding">
+                    @if (Model.MySwapRequests.Any())
+                    {
+                        <div class="request-list">
                             @foreach (var request in Model.MySwapRequests)
                             {
-                                <tr style="border-bottom: 1px solid var(--border);">
-                                    <td style="padding: 0.75rem 0; color: var(--text);">
-                                        @request.ShiftDate.ToString("MMM dd, yyyy")
-                                        <br><small style="color: var(--muted);">@request.ShiftTypeName</small>
-                                    </td>
-                                    <td style="padding: 0.75rem 0;">
-                                        <span style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;
-                                            background: @(request.Status == "Pending" ? "var(--focus)" : request.Status == "Approved" ? "var(--success)" : "var(--danger)");
-                                            color: white;">@request.Status</span>
-                                    </td>
-                                </tr>
+                                <div class="request-item">
+                                    <div class="request-item-content">
+                                        <div class="request-item-header">
+                                            <span class="text-body text-bold">
+                                                @request.ShiftDate.ToString("MMM dd, yyyy")
+                                            </span>
+                                            <span class="status-badge status-@request.Status.ToLower()">
+                                                @request.Status
+                                            </span>
+                                        </div>
+                                        <div class="request-item-details">
+                                            <span class="text-caption">@request.ShiftTypeName</span>
+                                        </div>
+                                    </div>
+                                </div>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔄</div>
+                            <p class="text-subtle"><loc key="NoSwapRequestsYet" /></p>
+                        </div>
+                    }
                 </div>
-            }
-            else
-            {
-                <p style="color: var(--muted); text-align: center; margin: 2rem 0;">No swap requests yet.</p>
-            }
+            </div>
         </div>
     </div>
 </div>
+</div>
 
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 76, 175, 80), 0.3);
+        }
+
+        .alert-error {
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        .alert-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-soft);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-body-no-padding {
+            padding: 0;
+        }
+
+        /* Section Title */
+        .text-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+        }
+
+        /* Text Utilities */
+        .text-body {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        .text-bold {
+            font-weight: 500;
+        }
+
+        .text-subtle {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .text-caption {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Forms Section */
+        .forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* History Section */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.15s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-hint {
+            margin-top: 0.25rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .form-hint-box {
+            padding: 0.75rem 1rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-hint-box p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .validation-summary {
+            padding: 0.75rem 1rem;
+            background: var(--danger);
+            color: var(--danger-text);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .validation-error {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.8125rem;
+            color: var(--danger);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-contrast);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Request List */
+        .request-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .request-item {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+
+        .request-item:last-child {
+            border-bottom: none;
+        }
+
+        .request-item:hover {
+            background: var(--surface-soft);
+        }
+
+        .request-item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .request-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .request-item-details {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-pending {
+            background: var(--warning);
+            color: var(--warning-text);
+        }
+
+        .status-approved {
+            background: var(--success);
+            color: var(--success-text);
+        }
+
+        .status-declined {
+            background: var(--danger);
+            color: var(--danger-text);
+        }
+
+        /* Badge */
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-icon-large {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .forms-grid,
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const vacationType = document.getElementById('vacationType');
+            const endDateContainer = document.getElementById('endDateContainer');
+
+            if (vacationType && endDateContainer) {
+                // Toggle end date visibility based on vacation type
+                function toggleEndDate() {
+                    if (vacationType.value === '1') { // AfterDutyVacation (single day)
+                        endDateContainer.style.display = 'none';
+                    } else {
+                        endDateContainer.style.display = 'block';
+                    }
+                }
+
+                vacationType.addEventListener('change', toggleEndDate);
+                toggleEndDate(); // Initialize on page load
+            }
+        });
+    </script>
+}

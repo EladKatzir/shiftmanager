@@ -1,0 +1,275 @@
+@page
+@model ShiftManager.Pages.Director.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["DirectorHub_Title"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["DirectorHub_Title"], IsActive = true }
+})
+
+<div class="owner-panel-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">👔</span>
+            <loc key="DirectorHub_Title">Director Hub</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="DirectorHub_Subtitle">Cross-Company Management Center</loc></p>
+    </div>
+
+    @* Company Selection *@
+    <div class="card">
+        <div class="card-header">
+            <h2>Assigned Companies (@Model.AssignedCompanies.Count)</h2>
+            @if (Model.HasFilter)
+            {
+                <span class="badge badge-info">Filter Active (@Model.SelectedCompanyIds.Count selected)</span>
+            }
+        </div>
+        <div class="card-body">
+            @if (Model.AssignedCompanies.Any())
+            {
+                <div class="company-list">
+                    @foreach (var company in Model.AssignedCompanies)
+                    {
+                        var isSelected = Model.SelectedCompanyIds.Contains(company.Id);
+                        <div class="company-item @(isSelected ? "selected" : "")">
+                            <div class="company-icon">🏢</div>
+                            <div class="company-info">
+                                <h3>@company.Name</h3>
+                                @if (isSelected)
+                                {
+                                    <span class="badge badge-success">Active</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="mt-3">
+                    <a href="/Director/CompanyFilter" class="btn btn-primary">
+                        <span>🔧</span> Manage Company Filter
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <p>You are not assigned to any companies yet.</p>
+                    <p class="text-muted">Contact an Owner to assign you to companies.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Quick Stats *@
+    @if (Model.AssignedCompanies.Any())
+    {
+        <div class="stats-grid mt-4">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.TotalUsers</div>
+                    <div class="stat-label"><loc key="Stat_ActiveUsers">Active Users</loc></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.TotalShifts</div>
+                    <div class="stat-label"><loc key="Stat_TotalShifts">Total Shifts</loc></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <div class="stat-value">@Model.TotalRequests</div>
+                    <div class="stat-label"><loc key="Stat_PendingRequests">Pending Requests</loc></div>
+                </div>
+            </div>
+        </div>
+
+        @* Quick Actions *@
+        <h2 class="section-title mt-4">
+            <span class="section-icon">⚡</span>
+            <loc key="Section_QuickActions">Quick Actions</loc>
+        </h2>
+        <div class="admin-tools-grid">
+            <a href="/Calendar/Month" class="admin-tool-card">
+                <div class="tool-icon">📅</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_Calendar">Calendar</loc></h3>
+                    <p><loc key="Section_CalendarDesc">View and manage schedules</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Admin/Users" class="admin-tool-card">
+                <div class="tool-icon">👥</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_ManageUsers">Manage Users</loc></h3>
+                    <p><loc key="Section_ManageUsersDesc">User management and roles</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Requests/Index" class="admin-tool-card">
+                <div class="tool-icon">📝</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_Requests">Requests</loc></h3>
+                    <p><loc key="Section_RequestsDesc">Review time-off and swap requests</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Calendar/Table" class="admin-tool-card">
+                <div class="tool-icon">📊</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_ShiftManagement">Shift Management</loc></h3>
+                    <p><loc key="Section_ShiftManagementDesc">Edit shifts with Roster Dock</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Admin/Analytics" class="admin-tool-card">
+                <div class="tool-icon">📈</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_Analytics">Analytics</loc></h3>
+                    <p><loc key="Section_AnalyticsDesc">View metrics and reports</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Admin/Index" class="admin-tool-card">
+                <div class="tool-icon">🎛️</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_AdminHub">Admin Hub</loc></h3>
+                    <p><loc key="Section_AdminHubDesc">Full management center</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+        </div>
+
+        @* Utilities *@
+        <h2 class="section-title mt-4">
+            <span class="section-icon">🔧</span>
+            <loc key="Section_DirectorUtilities">Director Utilities</loc>
+        </h2>
+        <div class="admin-tools-grid">
+            <a href="/Director/ViewAsMode" class="admin-tool-card">
+                <div class="tool-icon">👀</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_ViewAsManager">View As Manager</loc></h3>
+                    <p><loc key="Section_ViewAsManagerDesc">Impersonate Manager perspective</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Director/NotificationHub" class="admin-tool-card">
+                <div class="tool-icon">🔔</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_NotificationHub">Notification Hub</loc></h3>
+                    <p><loc key="Section_NotificationHubDesc">Cross-company notifications</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+        </div>
+    }
+</div>
+
+<style>
+.company-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.company-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    transition: all 0.2s;
+}
+
+.company-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.company-item.selected {
+    border-color: var(--success);
+    background: var(--success-soft);
+}
+
+.company-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+}
+
+.company-info h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    margin-top: 0.25rem;
+}
+
+.badge-info {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
+.badge-success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin: 0.5rem 0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.section-icon {
+    font-size: 1.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.mt-4 {
+    margin-top: 2rem;
+}
+</style>

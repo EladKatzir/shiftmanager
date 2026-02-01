@@ -8,8 +8,13 @@ namespace ShiftManager.Services;
 public class ConflictChecker : IConflictChecker
 {
     private readonly AppDbContext _db;
+    private readonly IAppConfigCacheService _configCache;
 
-    public ConflictChecker(AppDbContext db) => _db = db;
+    public ConflictChecker(AppDbContext db, IAppConfigCacheService configCache)
+    {
+        _db = db;
+        _configCache = configCache;
+    }
 
     public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
     {
@@ -19,6 +24,9 @@ public class ConflictChecker : IConflictChecker
 
         var t = await _db.ShiftTypes.FindAsync(new object?[] { instance.ShiftTypeId }, ct);
         if (t is null) return ConflictResult.Fail("Shift type missing.");
+
+        // OFFLINE shifts can coexist with other shifts - show warning but allow
+        bool isOfflineShift = t.IsOffline;
 
         // Approved Time off blocks
         bool hasTimeOff = await _db.TimeOffRequests
@@ -48,12 +56,20 @@ public class ConflictChecker : IConflictChecker
                                          }).ToListAsync(ct);
 
         double totalHoursThisWeek = 0;
+
         foreach (var ra in relevantAssignments)
         {
             var (rs, re) = TimeHelpers.GetShiftWindow(new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate);
-            // Overlap
+            // Overlap detection
             bool overlaps = rs < end && start < re;
-            if (overlaps) return ConflictResult.Fail("Overlap with existing assignment.");
+            if (overlaps)
+            {
+                // For Offline shifts, we allow overlaps but track them for warning
+                if (!isOfflineShift)
+                {
+                    return ConflictResult.Fail("Overlap with existing assignment.");
+                }
+            }
         }
 
         // Rest period: find nearest before/after shifts
@@ -69,7 +85,7 @@ public class ConflictChecker : IConflictChecker
             .OrderBy(w => w.start)
             .FirstOrDefault();
 
-        int restHours = GetConfigInt(instance.CompanyId, "RestHours", 8);
+        int restHours = await GetConfigIntAsync(instance.CompanyId, "RestHours", 8, ct);
         if (before.end != default && (start - before.end).TotalHours < restHours)
             return ConflictResult.Fail($"Rest period too short (< {restHours}h) from previous shift.");
         if (after.start != default && (after.start - end).TotalHours < restHours)
@@ -94,16 +110,17 @@ public class ConflictChecker : IConflictChecker
 
         totalHoursThisWeek += TimeHelpers.Hours(t);
 
-        int weeklyCap = GetConfigInt(instance.CompanyId, "WeeklyHoursCap", 40);
+        int weeklyCap = await GetConfigIntAsync(instance.CompanyId, "WeeklyHoursCap", 40, ct);
         if (totalHoursThisWeek > weeklyCap)
             return ConflictResult.Fail($"Weekly hours cap exceeded (> {weeklyCap}h).");
 
         return ConflictResult.Ok();
     }
 
-    private int GetConfigInt(int companyId, string key, int defaultValue)
+    // PERFORMANCE FIX: Use config cache to reduce database queries
+    private async Task<int> GetConfigIntAsync(int companyId, string key, int defaultValue, CancellationToken ct = default)
     {
-        var v = _db.Configs.FirstOrDefault(c => c.CompanyId == companyId && c.Key == key)?.Value;
-        return int.TryParse(v, out var i) ? i : defaultValue;
+        var config = await _configCache.GetConfigAsync(companyId, key);
+        return int.TryParse(config?.Value, out var i) ? i : defaultValue;
     }
 }

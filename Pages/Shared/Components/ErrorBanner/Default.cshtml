@@ -1,0 +1,77 @@
+@model ShiftManager.ViewComponents.ErrorBannerModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    var levelClass = Model.Level switch
+    {
+        "warning" => "error-banner--warning",
+        "info" => "error-banner--info",
+        _ => "error-banner--error"
+    };
+
+    var iconContent = Model.Level switch
+    {
+        "warning" => "warning",
+        "info" => "info",
+        _ => "error"
+    };
+
+    var bannerId = $"error-banner-{Guid.NewGuid():N}";
+}
+
+<div class="error-banner @levelClass"
+     id="@bannerId"
+     role="alert"
+     aria-live="polite"
+     data-dismissible="@Model.Dismissible.ToString().ToLower()">
+    <div class="error-banner__icon" aria-hidden="true">
+        <icon name="@iconContent" />
+    </div>
+    <div class="error-banner__content">
+        @if (!string.IsNullOrEmpty(Model.TitleKey) || !string.IsNullOrEmpty(Model.FallbackTitle))
+        {
+            <div class="error-banner__title">
+                @if (!string.IsNullOrEmpty(Model.TitleKey))
+                {
+                    <loc key="@Model.TitleKey" />
+                }
+                else
+                {
+                    @Model.FallbackTitle
+                }
+            </div>
+        }
+        <div class="error-banner__message">
+            @if (!string.IsNullOrEmpty(Model.MessageKey))
+            {
+                <loc key="@Model.MessageKey" />
+            }
+            else
+            {
+                @Model.FallbackMessage
+            }
+        </div>
+    </div>
+    <div class="error-banner__actions">
+        @if (Model.ShowRetry)
+        {
+            <button type="button"
+                    class="btn btn--sm btn--secondary error-banner__retry"
+                    onclick="@(Model.RetryAction ?? "location.reload()")"
+                    loc-aria-label="Error_Retry">
+                <loc key="Error_Retry" />
+            </button>
+        }
+        @if (Model.Dismissible)
+        {
+            <button type="button"
+                    class="error-banner__close"
+                    onclick="document.getElementById('@bannerId').remove()"
+                    loc-aria-label="Error_Dismiss">
+                <icon name="close" />
+            </button>
+        }
+    </div>
+</div>

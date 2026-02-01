@@ -1,0 +1,36 @@
+@page
+@model ShiftManager.Pages.Auth.GriffinCallbackModel
+@{
+    ViewData["Title"] = "Griffin ADFS Authentication";
+}
+
+<div class="container mt-5">
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading"><loc key="Auth_AuthenticationFailed">Authentication Failed</loc></h4>
+            <p>@Model.Error</p>
+            <hr>
+            <a href="/Auth/Login" class="btn btn-primary"><loc key="Button_ReturnToLogin">Return to Login</loc></a>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.PendingMessage))
+    {
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading"><loc key="Auth_AccountPendingApproval">Account Pending Approval</loc></h4>
+            <p>@Model.PendingMessage</p>
+            <p><loc key="ContactAdminToActivate">Please contact your administrator to activate your account.</loc></p>
+            <hr>
+            <a href="/Auth/Login" class="btn btn-primary"><loc key="Button_ReturnToLogin">Return to Login</loc></a>
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Authenticating...</span>
+            </div>
+            <p class="mt-3">Completing authentication...</p>
+        </div>
+    }
+</div>

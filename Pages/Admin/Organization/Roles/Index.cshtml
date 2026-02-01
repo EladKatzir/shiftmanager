@@ -1,0 +1,212 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.Roles.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Roles"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .filters-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .form-select { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; min-width: 150px; }
+        .view-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .view-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-primary); }
+        .view-tab.active { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 0.875rem; text-align: left; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border-color: transparent; }
+        .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; }
+        .badge-system { background: var(--accent-soft); color: var(--accent); }
+        .badge-custom { background: var(--success-soft); color: var(--success); }
+        .badge-active { background: var(--success-soft); color: var(--success); }
+        .badge-inactive { background: var(--danger-soft); color: var(--danger); }
+        .badge-count { background: var(--primary-bg); color: var(--primary); font-size: 0.75rem; padding: 0.25rem 0.625rem; }
+        .scope-text { font-size: 0.75rem; color: var(--text-muted); }
+        .scope-badge { font-size: 0.6875rem; background: var(--surface-soft); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .table-actions { display: flex; gap: 0.5rem; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageRoles" /></h1>
+    <p class="page-subtitle"><loc key="ViewAndManageRoleAssignments" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<div class="section-card">
+    <div class="view-tabs">
+        <a href="?ViewMode=roles" class="view-tab @(Model.ViewMode == "roles" ? "active" : "")"><loc key="RoleTemplates" /></a>
+        <a href="?ViewMode=assignments" class="view-tab @(Model.ViewMode == "assignments" ? "active" : "")"><loc key="UserAssignments" /></a>
+    </div>
+
+    @if (Model.ViewMode == "assignments")
+    {
+        <form method="get" class="filters-bar">
+            <input type="hidden" name="ViewMode" value="assignments" />
+            <div class="filter-group">
+                <label><loc key="Role" /></label>
+                <select name="FilterRoleId" class="form-select" onchange="this.form.submit()">
+                    <option value="">@Localizer["AllRoles"]</option>
+                    @foreach (var r in Model.AvailableRoles)
+                    {
+                        <option value="@r.Id" selected="@(Model.FilterRoleId == r.Id)">@Localizer[r.NameKey]</option>
+                    }
+                </select>
+            </div>
+            @if (Model.FilterRoleId.HasValue || Model.FilterUserId.HasValue)
+            {
+                <a href="?ViewMode=assignments" class="btn btn-ghost"><loc key="ClearFilters" /></a>
+            }
+        </form>
+
+        @if (Model.UserRoles.Any())
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><loc key="User" /></th>
+                        <th><loc key="Role" /></th>
+                        <th><loc key="Scope" /></th>
+                        <th><loc key="Status" /></th>
+                        <th><loc key="AssignedAt" /></th>
+                        <th><loc key="AssignedBy" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var ur in Model.UserRoles)
+                {
+                    <tr>
+                        <td><a href="/Admin/EditProfile?UserId=@ur.UserId">@Html.Encode(ur.UserName)</a></td>
+                        <td><strong>@Localizer[ur.RoleNameKey]</strong></td>
+                        <td><span class="scope-text">@Html.Encode(ur.ScopeDescription)</span></td>
+                        <td>
+                            @if (ur.IsActive)
+                            {
+                                <span class="badge badge-active"><loc key="Active" /></span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive"><loc key="Inactive" /></span>
+                            }
+                        </td>
+                        <td>@ur.AssignedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@(ur.AssignedByName ?? "-")</td>
+                        <td>
+                            <div class="table-actions">
+                                @if (ur.IsActive)
+                                {
+                                    <form method="post" asp-page-handler="Revoke" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmRevokeRole"]');">
+                                        <input type="hidden" name="id" value="@ur.Id" />
+                                        <button type="submit" class="btn btn-danger"><loc key="Revoke" /></button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoRoleAssignmentsFound" /></p>
+        }
+    }
+    else
+    {
+        @if (Model.RoleTemplates.Any())
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><loc key="Role" /></th>
+                        <th><loc key="ScopeLevel" /></th>
+                        <th><loc key="Type" /></th>
+                        <th><loc key="Assignments" /></th>
+                        <th><loc key="AutoGrants" /></th>
+                        <th><loc key="Status" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var rt in Model.RoleTemplates)
+                {
+                    <tr>
+                        <td>
+                            <strong>@Localizer[rt.NameKey]</strong>
+                            <br /><span class="scope-text">@rt.Key</span>
+                        </td>
+                        <td><span class="scope-badge">@rt.ScopeLevel</span></td>
+                        <td>
+                            @if (rt.IsSystem)
+                            {
+                                <span class="badge badge-system"><loc key="System" /></span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-custom"><loc key="Custom" /></span>
+                            }
+                        </td>
+                        <td><span class="badge badge-count">@rt.AssignmentCount</span></td>
+                        <td><span class="badge badge-count">@rt.GrantCount</span></td>
+                        <td>
+                            @if (rt.IsActive)
+                            {
+                                <span class="badge badge-active"><loc key="Active" /></span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive"><loc key="Inactive" /></span>
+                            }
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="?ViewMode=assignments&FilterRoleId=@rt.Id" class="btn"><loc key="ViewAssignments" /></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoRoleTemplatesFound" /></p>
+        }
+    }
+</div>
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="AssignNewRole" /></h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1rem;"><loc key="SelectUserToAssignRole" /></p>
+    <a href="/Admin/Organization/Roles/Assign" class="btn btn-primary"><loc key="AssignRole" /></a>
+</div>

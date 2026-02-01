@@ -1,25 +1,33 @@
 @page
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @model ShiftManager.Pages.Director.CompanyFilterModel
 @{
     Layout = "_Layout";
 }
-<h2>@Localizer["CompanyFilter"]</h2>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Director"], Url = "/Director/NotificationHub" },
+    new BreadcrumbItem { Label = Localizer["CompanyFilter"], IsActive = true }
+})
+
+<h2><loc key="CompanyFilter" /></h2>
 <p style="color: var(--muted); margin-bottom: 2rem;">
     @Localizer["CompanyFilterDescription"]
 </p>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
+    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: var(--success-text); border-radius: 0.5rem;">
         @TempData["SuccessMessage"]
     </div>
 }
 
 <div class="card">
-    <h3 style="margin-top:0">@Localizer["YourAssignedCompanies"]</h3>
+    <h3 style="margin-top:0"><loc key="YourAssignedCompanies" /></h3>
 
     <form method="post" asp-page-handler="SetFilter">
         @Html.AntiForgeryToken()
@@ -48,19 +56,19 @@
         </div>
 
         <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" class="btn btn-primary">@Localizer["ApplyFilter"]</button>
-            <button type="submit" formaction="?handler=ClearFilter" class="btn btn-ghost">@Localizer["ShowAllCompanies"]</button>
+            <button type="submit" class="btn btn-primary"><loc key="ApplyFilter" /></button>
+            <button type="submit" formaction="?handler=ClearFilter" class="btn btn-ghost"><loc key="ShowAllCompanies" /></button>
         </div>
     </form>
 </div>
 
 <div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-left: 4px solid var(--primary); border-radius: 0.5rem;">
     <small style="color: var(--muted);">
-        <strong>@Localizer["Note"]</strong> @Localizer["CompanyFilterAppliesTo"]
+        <strong><loc key="Note" /></strong> @Localizer["CompanyFilterAppliesTo"]
         <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-            <li>@Localizer["CalendarViewsOnlySelected"]</li>
-            <li>@Localizer["RequestListsOnlySelected"]</li>
-            <li>@Localizer["DashboardsAndReports"]</li>
+            <li><loc key="CalendarViewsOnlySelected" /></li>
+            <li><loc key="RequestListsOnlySelected" /></li>
+            <li><loc key="DashboardsAndReports" /></li>
         </ul>
         @Localizer["FilterPersistsInBrowser"]
     </small>

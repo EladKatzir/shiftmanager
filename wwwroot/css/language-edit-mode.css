@@ -1,0 +1,391 @@
+/**
+ * Language Edit Mode Styles
+ * Styles for in-app translation editing modal and indicators
+ */
+
+/* Editable elements indicators */
+[data-loc-key].loc-editable {
+    position: relative;
+}
+
+[data-loc-key].loc-editable:hover {
+    background: rgba(251, 191, 36, 0.15);
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+    border-radius: 3px;
+    cursor: pointer !important;
+}
+
+[data-loc-key].has-draft {
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    border-bottom: 2px dotted #10b981;
+}
+
+/* Modal Overlay */
+.edit-mode-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+}
+
+/* Modal Container */
+.edit-mode-modal {
+    background: var(--surface, white);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.edit-mode-modal-wide {
+    max-width: 800px;
+}
+
+/* Modal Header */
+.edit-mode-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--background, #f9fafb);
+}
+
+.edit-mode-modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text, #111827);
+}
+
+.edit-mode-modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--muted, #6b7280);
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.edit-mode-modal-close:hover {
+    background: var(--border, #e5e7eb);
+    color: var(--text, #111827);
+}
+
+/* Modal Body */
+.edit-mode-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Form Groups */
+.edit-mode-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.edit-mode-form-group:last-child {
+    margin-bottom: 0;
+}
+
+.edit-mode-form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text, #111827);
+    font-size: 0.875rem;
+}
+
+.edit-mode-form-group small {
+    display: block;
+    margin-top: 0.375rem;
+    color: var(--muted, #6b7280);
+    font-size: 0.75rem;
+}
+
+/* Inputs */
+.edit-mode-input-readonly,
+.edit-mode-textarea-readonly,
+.edit-mode-textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.edit-mode-input-readonly,
+.edit-mode-textarea-readonly {
+    background: var(--background, #f9fafb);
+    color: var(--muted, #6b7280);
+    cursor: not-allowed;
+}
+
+.edit-mode-textarea {
+    resize: vertical;
+    min-height: 80px;
+    background: var(--surface, white);
+    color: var(--text, #111827);
+}
+
+.edit-mode-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Modal Footer */
+.edit-mode-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border, #e5e7eb);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background: var(--background, #f9fafb);
+}
+
+/* Buttons */
+.edit-mode-btn {
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.edit-mode-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.edit-mode-btn:active {
+    transform: translateY(0);
+}
+
+.edit-mode-btn-cancel {
+    background: var(--surface, white);
+    color: var(--text, #111827);
+    border: 1px solid var(--border, #e5e7eb);
+}
+
+.edit-mode-btn-cancel:hover {
+    background: var(--background, #f9fafb);
+    border-color: var(--muted, #6b7280);
+}
+
+.edit-mode-btn-save {
+    background: #3b82f6;
+    color: white;
+}
+
+.edit-mode-btn-save:hover {
+    background: #2563eb;
+}
+
+/* Draft List */
+.draft-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.draft-item {
+    padding: 1rem;
+    background: var(--background, #f9fafb);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+}
+
+.draft-item strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary, #3b82f6);
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
+}
+
+.draft-item div {
+    color: var(--text, #111827);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* Dark mode support - use design tokens from tokens.css */
+[data-theme="dark"] .edit-mode-modal {
+    --surface: var(--surface, #1A2332);
+    --background: var(--bg, #0F1419);
+    --border: var(--border, #2D3B4E);
+    --text: var(--text, #E8EDF5);
+    --muted: var(--text-muted, #94A3B8);
+}
+
+/* Dark mode for editable element indicators */
+[data-theme="dark"] [data-loc-key].loc-editable:hover {
+    background: rgba(244, 211, 94, 0.15);
+    outline-color: var(--warning, #F4D35E);
+}
+
+[data-theme="dark"] [data-loc-key].has-draft {
+    background: rgba(82, 183, 136, 0.1);
+    border-bottom-color: var(--success, #52B788);
+}
+
+[data-theme="dark"] .edit-mode-textarea:focus {
+    border-color: var(--primary, #5B9BD5);
+    box-shadow: 0 0 0 3px rgba(91, 155, 213, 0.2);
+}
+
+[data-theme="dark"] .edit-mode-btn-save {
+    background: var(--primary, #5B9BD5);
+    color: var(--primary-contrast, #FFFFFF);
+}
+
+[data-theme="dark"] .edit-mode-btn-save:hover {
+    background: var(--primary-hover, #7AB3E3);
+}
+
+[data-theme="dark"] .draft-item strong {
+    color: var(--primary, #5B9BD5);
+}
+
+[data-theme="dark"] body.interactions-frozen button::after {
+    background: var(--danger, #FC8181);
+}
+
+/* prefers-color-scheme support for system dark mode */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .edit-mode-modal {
+        --surface: var(--surface, #1A2332);
+        --background: var(--bg, #0F1419);
+        --border: var(--border, #2D3B4E);
+        --text: var(--text, #E8EDF5);
+        --muted: var(--text-muted, #94A3B8);
+    }
+
+    :root:not([data-theme="light"]) [data-loc-key].loc-editable:hover {
+        background: rgba(244, 211, 94, 0.15);
+        outline-color: var(--warning, #F4D35E);
+    }
+
+    :root:not([data-theme="light"]) [data-loc-key].has-draft {
+        background: rgba(82, 183, 136, 0.1);
+        border-bottom-color: var(--success, #52B788);
+    }
+
+    :root:not([data-theme="light"]) .edit-mode-textarea:focus {
+        border-color: var(--primary, #5B9BD5);
+        box-shadow: 0 0 0 3px rgba(91, 155, 213, 0.2);
+    }
+
+    :root:not([data-theme="light"]) .edit-mode-btn-save {
+        background: var(--primary, #5B9BD5);
+        color: var(--primary-contrast, #FFFFFF);
+    }
+
+    :root:not([data-theme="light"]) .edit-mode-btn-save:hover {
+        background: var(--primary-hover, #7AB3E3);
+    }
+
+    :root:not([data-theme="light"]) .draft-item strong {
+        color: var(--primary, #5B9BD5);
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .edit-mode-modal-header {
+    text-align: right;
+}
+
+[dir="rtl"] .edit-mode-modal-footer {
+    justify-content: flex-start;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .edit-mode-modal {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .edit-mode-modal-header,
+    .edit-mode-modal-body,
+    .edit-mode-modal-footer {
+        padding: 1rem;
+    }
+
+    .edit-mode-modal-footer {
+        flex-direction: column;
+    }
+
+    .edit-mode-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Frozen Interactions Mode */
+/* When enabled, disables all button/link clicks except edit mode functionality */
+body.interactions-frozen button:not(#view-drafts-btn):not(#save-exit-btn):not(#discard-btn):not(.edit-mode-btn):not(.edit-mode-modal-close):not(#freeze-interactions-toggle),
+body.interactions-frozen a:not([href^="/Owner/LanguageManagement"]):not([href^="/Owner/LanguageEditMode"]),
+body.interactions-frozen input[type="submit"]:not(.edit-mode-btn),
+body.interactions-frozen input[type="button"]:not(.edit-mode-btn) {
+    pointer-events: none !important;
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    position: relative;
+}
+
+body.interactions-frozen button:not(#view-drafts-btn):not(#save-exit-btn):not(#discard-btn):not(.edit-mode-btn):not(.edit-mode-modal-close):not(#freeze-interactions-toggle)::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+/* Keep [data-loc-key] elements clickable */
+body.interactions-frozen [data-loc-key] {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Keep banner elements clickable */
+body.interactions-frozen #language-edit-mode-banner * {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+}

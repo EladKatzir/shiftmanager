@@ -1,0 +1,181 @@
+sequenceDiagram
+    %% ShiftManager Dual Authentication Flow
+    %% Shows both Standard Login and Griffin ADFS (SAML SSO)
+
+    participant User as 👤 User Browser
+    participant LoginPage as 📄 /Auth/Login
+    participant RateLimiter as ⏱️ RateLimitingService
+    participant PasswordHasher as 🔐 PasswordHasher (PBKDF2)
+    participant Griffin as 🏢 Griffin ADFS
+    participant GriffinService as 🔧 GriffinService
+    participant DB as 💿 SQLite Database
+    participant AuthMiddleware as ⚙️ ASP.NET Auth
+    participant HomePage as 🏠 /Home/Index
+
+    %% ========================================
+    %% STANDARD LOGIN FLOW (Email/Password)
+    %% ========================================
+
+    Note over User,HomePage: Standard Login Flow (Email/Password)
+
+    User->>LoginPage: Navigate to /Auth/Login
+    LoginPage-->>User: Show login form
+
+    User->>LoginPage: Submit (Email, Password)
+
+    LoginPage->>RateLimiter: Check rate limit (login:{IP})
+    alt Rate limit exceeded (10 attempts / 15 min)
+        RateLimiter-->>LoginPage: Rejected
+        LoginPage-->>User: Error: "Rate limit exceeded"
+    end
+
+    LoginPage->>LoginPage: Validate input:<br/>• Required fields<br/>• Email format (regex)<br/>• Max length (Email: 255, Password: 500)
+
+    LoginPage->>DB: Query user by Email<br/>WHERE Email = @Email AND IsActive = true<br/>(IgnoreQueryFilters for multi-tenancy)
+    DB-->>LoginPage: AppUser or null
+
+    alt User not found or inactive
+        LoginPage->>LoginPage: Log: "User not found"
+        LoginPage-->>User: Error: "Invalid credentials"<br/>(Generic message)
+    end
+
+    alt Account locked out
+        LoginPage->>LoginPage: Check: LockoutEnd > NOW
+        LoginPage-->>User: Error: "Account locked for {X} minutes"
+    end
+
+    LoginPage->>PasswordHasher: Verify(password, user.PasswordHash, user.PasswordSalt)
+
+    Note over PasswordHasher: PBKDF2 Hash Verification:<br/>• 100,000 iterations<br/>• SHA-256<br/>• Fixed-time comparison
+
+    PasswordHasher-->>LoginPage: bool (true/false)
+
+    alt Password incorrect
+        LoginPage->>DB: UPDATE Users SET<br/>FailedLoginAttempts++,<br/>LastLoginAttempt = NOW
+        alt FailedLoginAttempts >= 10
+            LoginPage->>DB: UPDATE Users SET<br/>LockoutEnd = NOW + 30 minutes
+            LoginPage-->>User: Error: "Account locked after 10 attempts"
+        else
+            LoginPage-->>User: Error: "Invalid credentials"<br/>(Attempt {X}/10)
+        end
+    end
+
+    LoginPage->>DB: Reset failed attempts:<br/>FailedLoginAttempts = 0,<br/>LockoutEnd = NULL
+    LoginPage->>RateLimiter: Reset rate limit (login:{IP})
+
+    LoginPage->>LoginPage: Create Claims:<br/>• NameIdentifier (UserId)<br/>• Name (DisplayName)<br/>• Role (Manager, Owner, etc.)<br/>• CompanyId (for multi-tenancy)
+
+    LoginPage->>AuthMiddleware: SignInAsync(ClaimsPrincipal)
+
+    Note over AuthMiddleware: Create Cookie:<br/>.AspNetCore.Cookies<br/>• 7-day sliding expiration<br/>• HttpOnly<br/>• SameSite=Strict<br/>• Secure (in production)
+
+    AuthMiddleware-->>LoginPage: Cookie set
+    LoginPage-->>User: Redirect to /Home/Index
+
+    User->>HomePage: Navigate to /Home/Index (with cookie)
+    HomePage->>AuthMiddleware: Validate cookie
+    AuthMiddleware-->>HomePage: User authenticated (CompanyId=2, Role=Manager)
+    HomePage-->>User: Show dashboard
+
+    %% ========================================
+    %% GRIFFIN ADFS FLOW (SAML SSO)
+    %% ========================================
+
+    Note over User,HomePage: Griffin ADFS Flow (SAML SSO)
+
+    User->>LoginPage: Click "Login with Griffin ADFS"
+    LoginPage->>DB: Load GriffinConfig<br/>(BaseUrl, AutoProvisionUsers, etc.)
+    alt Griffin not configured or disabled
+        LoginPage-->>User: Error: "ADFS not configured"
+    end
+
+    LoginPage->>LoginPage: Build authentication URL:<br/>https://griffin.example.com/authentication<br/>?tokenConsumerURL=<double-encoded-callback>
+
+    LoginPage-->>User: Redirect to Griffin ADFS
+
+    User->>Griffin: Navigate to Griffin ADFS
+    Griffin-->>User: Show Active Directory login
+
+    User->>Griffin: Enter AD credentials
+    Griffin->>Griffin: Validate against Active Directory
+    Griffin-->>User: Redirect to callback:<br/>https://app.example.com/Auth/GriffinCallback<br/>?token=abc123xyz
+
+    User->>GriffinService: /Auth/GriffinCallback?token=abc123xyz
+
+    GriffinService->>GriffinService: Check claims cache:<br/>SHA256(token) → 8-hour TTL
+
+    alt Claims cached
+        GriffinService->>GriffinService: Use cached claims
+    else Cache miss
+        GriffinService->>Griffin: GET /authorization/validate?token=abc123xyz
+        Griffin-->>GriffinService: "true" or "false"
+
+        alt Token invalid
+            GriffinService-->>User: Error: "Invalid token"
+        end
+
+        GriffinService->>Griffin: GET /authorization/getClaims?token=abc123xyz
+        Griffin-->>GriffinService: GriffinClaimsDto:<br/>{<br/>  UPN: "john.doe@company.com",<br/>  sAMAccountName: "jdoe",<br/>  DisplayName: "John Doe",<br/>  GivenName: "John",<br/>  Surname: "Doe",<br/>  auth_time: "2025-06-15T10:30:00Z"<br/>}
+
+        GriffinService->>GriffinService: Cache claims (8-hour TTL)
+    end
+
+    GriffinService->>DB: Query user by UPN (email):<br/>WHERE Email = @UPN AND IsActive = true<br/>(IgnoreQueryFilters for multi-tenancy)
+    DB-->>GriffinService: AppUser or null
+
+    alt User not found
+        alt AutoProvisionUsers = true
+            GriffinService->>DB: INSERT INTO Users:<br/>Email = UPN,<br/>DisplayName = Griffin.DisplayName,<br/>Role = DefaultProvisionedRole,<br/>PasswordHash = empty,<br/>PasswordSalt = empty
+            DB-->>GriffinService: New user created (UserId=42)
+            GriffinService->>DB: INSERT INTO AuditLogs:<br/>Action = "GriffinAutoProvision"
+        else AutoProvisionUsers = false
+            GriffinService-->>User: Error: "User not found.<br/>Contact admin for approval."
+        end
+    end
+
+    GriffinService->>GriffinService: Create Claims:<br/>• NameIdentifier (UserId)<br/>• Name (DisplayName)<br/>• Email (UPN)<br/>• Role (Manager, Employee, etc.)<br/>• CompanyId<br/>• AuthMethod = "Griffin"<br/>• Griffin:sAMAccountName<br/>• Griffin:Token<br/>• Griffin:AuthTime<br/>• AuthTimestamp
+
+    GriffinService->>AuthMiddleware: Set context.User (ClaimsPrincipal)
+    GriffinService->>GriffinService: Set cookies:<br/>1. .AspNetCore.Cookies (session)<br/>2. griffin.token (for middleware)
+
+    GriffinService-->>User: Redirect to /Home/Index
+
+    User->>HomePage: Navigate to /Home/Index (with cookies)
+    HomePage->>AuthMiddleware: Validate cookies
+    AuthMiddleware-->>HomePage: User authenticated (CompanyId=2, AuthMethod=Griffin)
+    HomePage-->>User: Show dashboard
+
+    %% ========================================
+    %% GRIFFIN MIDDLEWARE RE-VALIDATION
+    %% ========================================
+
+    Note over User,HomePage: Subsequent Request (Griffin user)
+
+    User->>HomePage: Navigate to /Schedule
+    HomePage->>AuthMiddleware: GriffinAuthenticationMiddleware runs BEFORE UseAuthentication
+    AuthMiddleware->>AuthMiddleware: Extract griffin.token cookie
+    alt Token present
+        AuthMiddleware->>GriffinService: AuthenticateUserAsync(token)
+        GriffinService->>GriffinService: Check cache (SHA256 hash)
+        alt Claims cached
+            GriffinService-->>AuthMiddleware: ClaimsPrincipal (from cache)
+        else Cache miss or expired
+            GriffinService->>Griffin: Validate token + fetch claims
+            Griffin-->>GriffinService: Claims or invalid
+            alt Token invalid
+                AuthMiddleware->>AuthMiddleware: Delete griffin.token cookie
+                AuthMiddleware-->>User: Redirect to /Auth/Login
+            else Token valid
+                GriffinService-->>AuthMiddleware: ClaimsPrincipal
+            end
+        end
+        AuthMiddleware->>AuthMiddleware: Set context.User = principal
+    end
+    AuthMiddleware->>HomePage: Continue pipeline
+    HomePage-->>User: Show schedule
+
+    %% ========================================
+    %% SECURITY SUMMARY
+    %% ========================================
+
+    Note over User,HomePage: 🛡️ SECURITY FEATURES:<br/>✓ PBKDF2 password hashing (100K iterations, SHA-256)<br/>✓ Account lockout (10 failed attempts = 30 min)<br/>✓ Rate limiting (10 attempts / 15 min per IP)<br/>✓ Fixed-time password comparison (timing attack prevention)<br/>✓ Cookie security (HttpOnly, Secure, SameSite=Strict)<br/>✓ Griffin token validation + 8-hour cache<br/>✓ Auto-provisioning (optional)<br/>✓ Audit logging (all auth events)

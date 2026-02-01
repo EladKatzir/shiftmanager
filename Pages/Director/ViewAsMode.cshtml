@@ -1,26 +1,34 @@
 @page
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @model ShiftManager.Pages.Director.ViewAsModeModel
 @{
     Layout = "_Layout";
 }
-<h2>@Localizer["ViewAsManagerMode"]</h2>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Director"], Url = "/Director/NotificationHub" },
+    new BreadcrumbItem { Label = Localizer["ViewAsManager"], IsActive = true }
+})
+
+<h2><loc key="ViewAsManagerMode" /></h2>
 <p style="color: var(--muted); margin-bottom: 2rem;">
     @Localizer["ViewAsModeDescription"]
 </p>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
+    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: var(--success-text); border-radius: 0.5rem;">
         @TempData["SuccessMessage"]
     </div>
 }
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-error" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
+    <div class="alert alert-error" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: var(--danger-text); border-radius: 0.5rem;">
         @TempData["ErrorMessage"]
     </div>
 }
@@ -28,29 +36,29 @@
 @if (Model.IsCurrentlyViewing)
 {
     <div class="card" style="border: 2px solid var(--warning); background: var(--surface);">
-        <h3 style="margin-top:0; color: var(--warning);">@Localizer["CurrentlyInViewAsManagerMode"]</h3>
-        <p>@Localizer["YouAreViewingAsManagerOf"] <strong>@Model.CurrentCompanyName</strong></p>
+        <h3 style="margin-top:0; color: var(--warning);"><loc key="CurrentlyInViewAsManagerMode" /></h3>
+        <p><loc key="YouAreViewingAsManagerOf" /><strong>@Model.CurrentCompanyName</strong></p>
         <p style="color: var(--muted); margin-bottom: 1rem;">
             @Localizer["ViewScopedToCompany"]
         </p>
         <form method="post" asp-page-handler="Exit">
             @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-primary">@Localizer["ExitViewAsManagerMode"]</button>
+            <button type="submit" class="btn btn-primary"><loc key="ExitViewAsManagerMode" /></button>
         </form>
     </div>
 }
 else
 {
     <div class="card">
-        <h3 style="margin-top:0">@Localizer["SelectCompanyToView"]</h3>
+        <h3 style="margin-top:0"><loc key="SelectCompanyToView" /></h3>
         <p style="color: var(--muted); margin-bottom: 1rem;">
             @Localizer["ChooseCompanyViewAsManager"]
         </p>
         <ul style="color: var(--muted); margin-bottom: 1.5rem;">
-            <li>@Localizer["OnlyThisCompanyDataVisible"]</li>
-            <li>@Localizer["PermissionsMatchManagerLevel"]</li>
-            <li>@Localizer["SeeWhatManagerSees"]</li>
-            <li>@Localizer["AllOtherCompaniesHidden"]</li>
+            <li><loc key="OnlyThisCompanyDataVisible" /></li>
+            <li><loc key="PermissionsMatchManagerLevel" /></li>
+            <li><loc key="SeeWhatManagerSees" /></li>
+            <li><loc key="AllOtherCompaniesHidden" /></li>
         </ul>
 
         @if (Model.AssignedCompanies.Any())
@@ -90,6 +98,6 @@ else
 
 <div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-left: 4px solid var(--warning); border-radius: 0.5rem;">
     <small style="color: var(--muted);">
-        <strong>@Localizer["Important"]</strong> @Localizer["ViewAsModeInfo"]
+        <strong><loc key="Important" /></strong> @Localizer["ViewAsModeInfo"]
     </small>
 </div>

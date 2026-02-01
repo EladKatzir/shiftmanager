@@ -1,0 +1,221 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.Roles.AssignModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Roles"], Url = "/Admin/Organization/Roles" },
+    new BreadcrumbItem { Label = Localizer["AssignRole"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
+        .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-secondary { background: var(--surface-soft); color: var(--text-primary); }
+        .scope-section { background: var(--surface-soft); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+        .scope-section h4 { margin: 0 0 1rem 0; font-size: 0.9375rem; color: var(--text-primary); }
+        .user-selected { background: var(--primary-bg); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .scope-badge { display: inline-block; font-size: 0.6875rem; background: var(--surface-soft); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: 0.5rem; }
+        .scope-info { background: var(--info-soft); color: var(--info); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="AssignRole" /></h1>
+    <p class="page-subtitle"><loc key="AssignRoleToUser" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<form method="post">
+    <div class="section-card">
+        <h3 class="section-header"><loc key="SelectUserAndRole" /></h3>
+
+        @if (!string.IsNullOrEmpty(Model.SelectedUserName))
+        {
+            <div class="user-selected">
+                <strong>@Localizer["User"]:</strong> @Model.SelectedUserName
+                <input type="hidden" asp-for="SelectedUserId" />
+            </div>
+        }
+        else
+        {
+            <div class="form-group">
+                <label class="form-label">@Localizer["User"] <span class="form-label-required">*</span></label>
+                <select class="form-select" asp-for="SelectedUserId" required>
+                    <option value="">@Localizer["SelectUser"]</option>
+                    @foreach (var u in Model.AvailableUsers)
+                    {
+                        <option value="@u.Id">@u.DisplayName (@u.Email)</option>
+                    }
+                </select>
+            </div>
+        }
+
+        <div class="form-group">
+            <label class="form-label">@Localizer["Role"] <span class="form-label-required">*</span></label>
+            <select class="form-select" asp-for="SelectedRoleId" id="roleSelect" required>
+                <option value="">@Localizer["SelectRole"]</option>
+                @foreach (var r in Model.AvailableRoles)
+                {
+                    <option value="@r.Id"
+                            data-scope-level="@r.ScopeLevel"
+                            title="@(r.DescriptionKey != null ? Localizer[r.DescriptionKey] : "")">
+                        @Localizer[r.NameKey] <span class="scope-badge">@r.ScopeLevel</span>
+                    </option>
+                }
+            </select>
+            <span class="form-hint"><loc key="RoleDescriptionHint" /></span>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <h3 class="section-header"><loc key="RoleScope" /></h3>
+        <div class="scope-info">
+            <loc key="RoleScopeExplanation" />
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group" id="scopeAreaGroup">
+                <label class="form-label">@Localizer["Area"]</label>
+                <select class="form-select" asp-for="ScopeAreaId">
+                    <option value="">@Localizer["SelectArea"]</option>
+                    @foreach (var a in Model.AvailableAreas)
+                    {
+                        <option value="@a.Id">@a.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="AreaScopeHint" /></span>
+            </div>
+
+            <div class="form-group" id="scopeMoleculeGroup">
+                <label class="form-label">@Localizer["Molecule"]</label>
+                <select class="form-select" asp-for="ScopeMoleculeId">
+                    <option value="">@Localizer["SelectMolecule"]</option>
+                    @foreach (var m in Model.AvailableMolecules)
+                    {
+                        <option value="@m.Id">@m.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="MoleculeScopeHint" /></span>
+            </div>
+
+            <div class="form-group" id="scopeCompanyGroup">
+                <label class="form-label">@Localizer["Company"]</label>
+                <select class="form-select" asp-for="ScopeCompanyId">
+                    <option value="">@Localizer["SelectCompany"]</option>
+                    @foreach (var c in Model.AvailableCompanies)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="CompanyScopeHint" /></span>
+            </div>
+
+            <div class="form-group" id="scopeDepartmentGroup">
+                <label class="form-label">@Localizer["Department"]</label>
+                <select class="form-select" asp-for="ScopeDepartmentId">
+                    <option value="">@Localizer["SelectDepartment"]</option>
+                    @foreach (var d in Model.AvailableDepartments)
+                    {
+                        <option value="@d.Id">@d.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="DepartmentScopeHint" /></span>
+            </div>
+
+            <div class="form-group" id="scopeJobTypeGroup">
+                <label class="form-label">@Localizer["JobType"]</label>
+                <select class="form-select" asp-for="ScopeJobTypeId">
+                    <option value="">@Localizer["SelectJobType"]</option>
+                    @foreach (var jt in Model.AvailableJobTypes)
+                    {
+                        <option value="@jt.Id">@jt.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="JobTypeScopeHint" /></span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary"><loc key="AssignRole" /></button>
+        <a href="/Admin/Organization/Roles" class="btn btn-secondary"><loc key="Cancel" /></a>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('roleSelect');
+
+            // Scope level requirements mapping
+            const scopeRequirements = {
+                'Implicit': [],
+                'Company': ['scopeCompanyGroup'],
+                'CompanyJobType': ['scopeCompanyGroup', 'scopeJobTypeGroup'],
+                'Department': ['scopeDepartmentGroup'],
+                'Molecule': ['scopeMoleculeGroup'],
+                'MoleculeJobType': ['scopeMoleculeGroup', 'scopeJobTypeGroup'],
+                'Area': ['scopeAreaGroup'],
+                'Project': []
+            };
+
+            function updateScopeVisibility() {
+                const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+                const scopeLevel = selectedOption?.dataset?.scopeLevel || '';
+
+                // Get required scopes for this level
+                const required = scopeRequirements[scopeLevel] || [];
+
+                // Show all scope groups but highlight required ones
+                document.querySelectorAll('[id^="scope"][id$="Group"]').forEach(group => {
+                    const isRequired = required.includes(group.id);
+                    const label = group.querySelector('.form-label');
+
+                    // Add/remove required indicator
+                    let requiredSpan = label.querySelector('.form-label-required');
+                    if (isRequired && !requiredSpan) {
+                        requiredSpan = document.createElement('span');
+                        requiredSpan.className = 'form-label-required';
+                        requiredSpan.textContent = ' *';
+                        label.appendChild(requiredSpan);
+                    } else if (!isRequired && requiredSpan) {
+                        requiredSpan.remove();
+                    }
+
+                    // Update select required attribute
+                    const select = group.querySelector('select');
+                    if (select) {
+                        select.required = isRequired;
+                    }
+                });
+            }
+
+            roleSelect.addEventListener('change', updateScopeVisibility);
+            updateScopeVisibility();
+        });
+    </script>
+}

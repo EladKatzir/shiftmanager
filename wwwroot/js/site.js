@@ -1,11 +1,30 @@
-// Dark mode toggle
+// Dark mode toggle with system preference support
 document.addEventListener('DOMContentLoaded', function() {
   const root = document.documentElement;
   const saved = localStorage.getItem('theme');
 
-  // Apply saved theme
+  // Apply saved theme or detect system preference
   if (saved) {
     root.setAttribute('data-theme', saved);
+    console.log('Using saved theme:', saved);
+  } else {
+    // Detect system preference
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const systemTheme = prefersDark ? 'dark' : 'light';
+    root.setAttribute('data-theme', systemTheme);
+    console.log('No saved theme, using system preference:', systemTheme);
+  }
+
+  // Listen for system theme changes
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      // Only auto-switch if user hasn't manually set a preference
+      if (!localStorage.getItem('theme')) {
+        const newTheme = e.matches ? 'dark' : 'light';
+        root.setAttribute('data-theme', newTheme);
+        console.log('System theme changed to:', newTheme);
+      }
+    });
   }
 
   // Set up toggle button
@@ -17,12 +36,73 @@ document.addEventListener('DOMContentLoaded', function() {
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
-      console.log('Theme switched to:', newTheme);
+      console.log('Theme manually switched to:', newTheme);
     });
     console.log('Dark mode toggle initialized');
   } else {
     console.warn('Theme toggle button not found');
   }
+
+  // Easter egg: Shift Swap game (Ctrl+Click on .brand)
+  // Using event delegation to catch clicks anywhere within .brand
+  document.addEventListener('click', async function(e) {
+    // Check if the click (or any parent of the clicked element) is within .brand
+    const brandElement = e.target.closest('.brand');
+
+    // If not clicking within .brand area, ignore
+    if (!brandElement) return;
+
+    console.log('Brand area clicked! Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Clicked element:', e.target.tagName, e.target.className);
+
+    // Only trigger game if Ctrl/Cmd key is pressed
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log('Ctrl+click detected on .brand! ShiftSwapGame available:', !!window.ShiftSwapGame);
+
+      // Dynamically load game assets if not already loaded
+      if (!window.ShiftSwapGame) {
+        console.log('Loading Shift Swap game assets...');
+
+        // Load CSS
+        if (!document.querySelector('link[href*="shift-swap-game.css"]')) {
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = '/css/shift-swap-game.css?v=' + Date.now();
+          document.head.appendChild(cssLink);
+        }
+
+        // Load JavaScript (only if not already loaded)
+        if (!document.querySelector('script[src*="shift-swap-game.js"]')) {
+          const script = document.createElement('script');
+          script.src = '/js/shift-swap-game.js?v=' + Date.now();
+          document.head.appendChild(script);
+
+          // Wait for script to load
+          await new Promise((resolve) => {
+            script.onload = resolve;
+            script.onerror = () => {
+              console.error('Failed to load Shift Swap game script');
+              resolve();
+            };
+          });
+        }
+      }
+
+      // Open the Shift Swap game
+      if (window.ShiftSwapGame) {
+        console.log('Opening Shift Swap game...');
+        window.ShiftSwapGame.open();
+      } else {
+        console.error('ShiftSwapGame not loaded!');
+      }
+    }
+    // Normal clicks work as usual (no special handling needed)
+  });
+
+  console.log('Easter egg Ctrl+click handler initialized for .brand');
+
 });
 
 // Enhanced staffing adjustments with better UX
@@ -41,7 +121,18 @@ async function adjustStaffing(url, payload, onOk, onError) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
+
+    // Try to parse as JSON, fallback to text if it fails
+    let data;
+    const contentType = res.headers.get('content-type');
+    try {
+      data = contentType && contentType.includes('application/json')
+        ? await res.json()
+        : { message: await res.text() };
+    } catch (parseError) {
+      console.warn('Failed to parse response, using text:', parseError);
+      data = { message: await res.text() };
+    }
 
     if (res.ok) {
       // Success animation
@@ -83,11 +174,37 @@ async function adjustStaffing(url, payload, onOk, onError) {
   }
 }
 
-// Toast notification system
+// Toast notification system (B-052: Delegate to standardized Toast API)
+// This function is kept for backward compatibility with existing code
+// The actual implementation is in toast-notifications.js which provides:
+// - Queue management (max 1 visible at a time)
+// - 5 second auto-dismiss
+// - Consistent styling via CSS components
+// - RTL support
+// - Screen reader announcements
 function showToast(message, type = 'info') {
+  // Delegate to the new Toast API if available
+  if (window.Toast) {
+    const typeMap = {
+      'success': 'success',
+      'info': 'info',
+      'warning': 'warning',
+      'error': 'error',
+      'danger': 'error'
+    };
+    const mappedType = typeMap[type] || 'success';
+    window.Toast.show(message, mappedType);
+    return;
+  }
+
+  // Fallback for edge cases where Toast API isn't loaded yet
+  console.warn('[showToast] Toast API not available, using fallback');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
+
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+
   toast.style.cssText = `
     position: fixed;
     top: 20px;
@@ -97,8 +214,8 @@ function showToast(message, type = 'info') {
     color: white;
     font-weight: 500;
     z-index: 1000;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
+    transform: translateX(${reducedMotion ? '0' : '400px'});
+    transition: ${reducedMotion ? 'none' : 'transform 0.3s ease'};
     max-width: 300px;
     word-wrap: break-word;
     ${type === 'error' ? 'background: #dc3545;' : 'background: #2e7d32;'}
@@ -106,18 +223,25 @@ function showToast(message, type = 'info') {
 
   document.body.appendChild(toast);
 
-  // Slide in
-  setTimeout(() => {
-    toast.style.transform = 'translateX(0)';
-  }, 10);
-
-  // Slide out and remove
-  setTimeout(() => {
-    toast.style.transform = 'translateX(400px)';
+  if (!reducedMotion) {
     setTimeout(() => {
-      document.body.removeChild(toast);
-    }, 300);
-  }, 3000);
+      toast.style.transform = 'translateX(0)';
+    }, 10);
+  }
+
+  const displayTime = 5000; // B-052: 5 seconds
+  const animationTime = reducedMotion ? 0 : 300;
+
+  setTimeout(() => {
+    if (!reducedMotion) {
+      toast.style.transform = 'translateX(400px)';
+    }
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, animationTime);
+  }, displayTime);
 }
 
 // Add keyboard shortcuts for calendar navigation
@@ -155,6 +279,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(tooltipPortal);
 
   document.addEventListener('mouseenter', (e) => {
+    // Ensure e.target is an Element before calling closest()
+    if (!(e.target instanceof Element)) return;
+
     const tooltip = e.target.closest('.assignment-tooltip');
     if (!tooltip) return;
 
@@ -272,7 +399,7 @@ function createShiftModal() {
 
   const companySelectorHTML = showCompanySelector ? `
     <div class="form-group">
-      <label class="form-label">Company</label>
+      <label class="form-label">${window.AppLocalizer.Company}</label>
       <select id="companySelect" class="form-input" onchange="filterShiftTypesByCompany()">
         ${companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
       </select>
@@ -283,31 +410,31 @@ function createShiftModal() {
     <div id="shiftModal" class="shift-creation-modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title">Create New Shift</h2>
+          <h2 class="modal-title">${window.AppLocalizer.CreateNewShift}</h2>
           <button class="modal-close" onclick="closeShiftModal()">×</button>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Date</label>
+          <label class="form-label">${window.AppLocalizer.Date}</label>
           <div id="modalDate" style="padding: .75rem 1rem; background: var(--surface); border-radius: .75rem; color: var(--text); font-weight: 500;"></div>
         </div>
 
         ${companySelectorHTML}
 
         <div class="form-group">
-          <label class="form-label">Shift Name (Optional)</label>
-          <input type="text" id="shiftName" class="form-input" placeholder="e.g., Store Opening, Security Round, etc.">
+          <label class="form-label">${window.AppLocalizer.ShiftNameOptional}</label>
+          <input type="text" id="shiftName" class="form-input" placeholder="${window.AppLocalizer.ShiftNamePlaceholder}">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Shift Type</label>
+          <label class="form-label">${window.AppLocalizer.ShiftType}</label>
           <div id="shiftTypeGrid" class="shift-type-grid"></div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Required Staff</label>
+          <label class="form-label">${window.AppLocalizer.RequiredStaff}</label>
           <div class="staffing-controls">
-            <span class="staffing-label">Number of people needed</span>
+            <span class="staffing-label">${window.AppLocalizer.NumberOfPeopleNeeded}</span>
             <div class="staffing-buttons">
               <button type="button" class="staffing-btn" onclick="adjustStaffingCount(-1)">−</button>
               <div id="staffingCount" class="staffing-count">1</div>
@@ -317,8 +444,8 @@ function createShiftModal() {
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn-modal secondary" onclick="closeShiftModal()">Cancel</button>
-          <button type="button" class="btn-modal primary" onclick="createShift()">Create Shift</button>
+          <button type="button" class="btn-modal secondary" onclick="closeShiftModal()">${window.AppLocalizer.Cancel}</button>
+          <button type="button" class="btn-modal primary" onclick="createShift()">${window.AppLocalizer.CreateShift}</button>
         </div>
       </div>
     </div>
@@ -363,16 +490,40 @@ function populateShiftTypes(types) {
     : types;
 
   if (filteredTypes.length === 0) {
-    grid.innerHTML = '<div style="color: var(--muted); text-align: center; padding: 2rem;">No shift types available for this company.</div>';
+    grid.innerHTML = `<div style="color: var(--muted); text-align: center; padding: 2rem;">${window.AppLocalizer.NoShiftTypesAvailable}</div>`;
     return;
   }
 
-  filteredTypes.forEach(type => {
+  filteredTypes.forEach((type, index) => {
     const option = document.createElement('div');
     option.className = 'shift-type-option';
     option.dataset.typeId = type.id;
     option.dataset.typeKey = type.key;
     option.onclick = () => selectShiftType(option);
+    // B-037: Make shift type options keyboard navigable
+    option.setAttribute('tabindex', '0');
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', 'false');
+
+    // B-037: Handle keyboard selection
+    option.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectShiftType(option);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = option.nextElementSibling;
+        if (next && next.classList.contains('shift-type-option')) {
+          next.focus();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = option.previousElementSibling;
+        if (prev && prev.classList.contains('shift-type-option')) {
+          prev.focus();
+        }
+      }
+    };
 
     const companyLabel = type.companyName && selectedCompanyId === null
       ? `<div class="shift-type-company">${type.companyName}</div>`
@@ -386,6 +537,10 @@ function populateShiftTypes(types) {
 
     grid.appendChild(option);
   });
+
+  // B-037: Set up listbox role on grid
+  grid.setAttribute('role', 'listbox');
+  grid.setAttribute('aria-label', window.AppLocalizer?.ShiftType || 'Shift Type');
 }
 
 function filterShiftTypesByCompany() {
@@ -397,10 +552,12 @@ function selectShiftType(option) {
   // Remove selection from all options
   document.querySelectorAll('.shift-type-option').forEach(opt => {
     opt.classList.remove('selected');
+    opt.setAttribute('aria-selected', 'false'); // B-037
   });
 
   // Select clicked option
   option.classList.add('selected');
+  option.setAttribute('aria-selected', 'true'); // B-037
 }
 
 function adjustStaffingCount(delta) {
@@ -421,12 +578,12 @@ async function createShift() {
   const selectedType = document.querySelector('.shift-type-option.selected');
 
   if (!selectedType) {
-    showToast('Please select a shift type', 'error');
+    showToast(window.AppLocalizer.PleaseSelectShiftType, 'error');
     return;
   }
 
   if (!currentModalData) {
-    showToast('Invalid date data', 'error');
+    showToast(window.AppLocalizer.InvalidDateData, 'error');
     return;
   }
 
@@ -454,12 +611,21 @@ async function createShift() {
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || 'Failed to create shift');
+    // Try to parse as JSON, fallback to text if it fails
+    let data;
+    const contentType = res.headers.get('content-type');
+    try {
+      data = contentType && contentType.includes('application/json')
+        ? await res.json()
+        : { message: await res.text() };
+    } catch (parseError) {
+      console.warn('Failed to parse response, using text:', parseError);
+      data = { message: await res.text() };
     }
 
-    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || window.AppLocalizer.FailedToCreateShift);
+    }
 
     // If shift name is provided, update it through assignment
     if (shiftName) {
@@ -467,7 +633,8 @@ async function createShift() {
       localStorage.setItem(`pendingShiftName_${currentModalData.date}_${selectedType.dataset.typeId}`, shiftName);
     }
 
-    showToast(`Shift created successfully! ${staffingCount} ${staffingCount === 1 ? 'person' : 'people'} required.`, 'success');
+    const personText = staffingCount === 1 ? window.AppLocalizer.Person : window.AppLocalizer.People;
+    showToast(`${window.AppLocalizer.ShiftCreatedSuccessfully} ${staffingCount} ${personText} ${window.AppLocalizer.Required}.`, 'success');
     closeShiftModal();
 
     // Reload the page to show the new shift
@@ -475,48 +642,11 @@ async function createShift() {
 
   } catch (error) {
     console.error('Error creating shift:', error);
-    showToast(error.message || 'Failed to create shift', 'error');
+    showToast(error.message || window.AppLocalizer.FailedToCreateShift, 'error');
   }
 }
 
-// Enhanced toast with success styling
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 500;
-    z-index: 10001;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-    max-width: 300px;
-    word-wrap: break-word;
-    ${type === 'error' ? 'background: #dc3545;' : type === 'success' ? 'background: #28a745;' : 'background: #2e7d32;'}
-  `;
-
-  document.body.appendChild(toast);
-
-  // Slide in
-  setTimeout(() => {
-    toast.style.transform = 'translateX(0)';
-  }, 10);
-
-  // Slide out and remove
-  setTimeout(() => {
-    toast.style.transform = 'translateX(400px)';
-    setTimeout(() => {
-      if (document.body.contains(toast)) {
-        document.body.removeChild(toast);
-      }
-    }, 300);
-  }, 4000);
-}
+// B-052: Removed duplicate showToast function - using standardized Toast API from toast-notifications.js
 
 window.adjustStaffing = adjustStaffing;
 window.openShiftModal = openShiftModal;
@@ -536,6 +666,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showAccessDeniedPopup() {
+  // Check for reduced motion preference (B-001-EXT)
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+
   // Create popup overlay
   const overlay = document.createElement('div');
   overlay.style.cssText = `
@@ -549,7 +682,7 @@ function showAccessDeniedPopup() {
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease;
+    ${reducedMotion ? '' : 'animation: fadeIn 0.3s ease;'}
   `;
 
   // Create popup content
@@ -562,14 +695,14 @@ function showAccessDeniedPopup() {
     max-width: 400px;
     text-align: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.3s ease;
+    ${reducedMotion ? '' : 'animation: slideIn 0.3s ease;'}
   `;
 
   popup.innerHTML = `
     <div style="color: var(--danger); font-size: 3rem; margin-bottom: 1rem;">🚫</div>
-    <h3 style="color: var(--text); margin: 0 0 1rem 0; font-size: 1.5rem;">Access Denied</h3>
+    <h3 style="color: var(--text); margin: 0 0 1rem 0; font-size: 1.5rem;">${window.AppLocalizer.AccessDenied}</h3>
     <p style="color: var(--muted); margin: 0 0 2rem 0; line-height: 1.5;">
-      You don't have permission to access this page. This area is restricted to managers and administrators.
+      ${window.AppLocalizer.AccessDeniedMessage}
     </p>
     <button id="closeAccessDenied" style="
       background: var(--primary);
@@ -580,7 +713,7 @@ function showAccessDeniedPopup() {
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-    ">Understood</button>
+    ">${window.AppLocalizer.Understood}</button>
   `;
 
   overlay.appendChild(popup);
@@ -600,10 +733,15 @@ function showAccessDeniedPopup() {
   `;
   document.head.appendChild(style);
 
-  // Close popup handlers
+  // Close popup handlers (B-001-EXT: Respects prefers-reduced-motion)
   function closePopup() {
-    overlay.style.animation = 'fadeIn 0.3s ease reverse';
-    popup.style.animation = 'slideIn 0.3s ease reverse';
+    const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+    const animationTime = reducedMotion ? 0 : 300;
+
+    if (!reducedMotion) {
+      overlay.style.animation = 'fadeIn 0.3s ease reverse';
+      popup.style.animation = 'slideIn 0.3s ease reverse';
+    }
     setTimeout(() => {
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -611,7 +749,7 @@ function showAccessDeniedPopup() {
       if (document.head.contains(style)) {
         document.head.removeChild(style);
       }
-    }, 300);
+    }, animationTime);
   }
 
   document.getElementById('closeAccessDenied').addEventListener('click', closePopup);
@@ -633,3 +771,389 @@ function showAccessDeniedPopup() {
   // Auto-close after 5 seconds
   setTimeout(closePopup, 5000);
 }
+
+// ============= SHIFT INSTANCE DELETION =============
+
+/**
+ * Delete a shift instance and all its assignments
+ * @param {string} pageUrl - The page URL (e.g., '/Calendar/Month', '/Calendar/Week', '/Calendar/Day')
+ * @param {number} instanceId - The shift instance ID to delete
+ * @param {Event} event - The click event
+ */
+async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
+    event.stopPropagation();
+
+    if (!confirm(window.AppLocalizer.ConfirmDeleteShift)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${pageUrl}?handler=DeleteShiftInstance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                shiftInstanceId: instanceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Reload page to show updated state
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error deleting shift instance:', error);
+        alert('Failed to delete shift. Please try again.');
+    }
+}
+
+// ============= COMMAND PALETTE =============
+
+// Note: Command palette pages will use localized strings from window.AppLocalizer
+function getCommandPalettePages() {
+  return [
+    // Manager/Admin Pages
+    { title: window.AppLocalizer.Home, subtitle: window.AppLocalizer.DashboardOverview, url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
+    { title: `${window.AppLocalizer.Calendar} - Month View`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - Week View`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - Day View`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
+    { title: 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
+    { title: 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
+    { title: 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
+    { title: 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
+    { title: 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
+
+    // Ops Console Scheduler (NEW)
+    { title: 'Schedule Table', subtitle: 'Excel-density operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: 'Blueprints', subtitle: 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
+    { title: 'Programs', subtitle: 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
+    { title: 'Master Programs', subtitle: 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
+
+    // Employee Pages
+    { title: 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
+    { title: 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+    { title: 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
+    { title: 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
+  ];
+}
+
+let commandPaletteState = {
+  isOpen: false,
+  selectedIndex: -1,
+  filteredPages: [],
+  recentPages: []
+};
+
+// Initialize command palette
+document.addEventListener('DOMContentLoaded', function() {
+  // Load recent pages from localStorage
+  const stored = localStorage.getItem('commandPaletteRecent');
+  if (stored) {
+    try {
+      commandPaletteState.recentPages = JSON.parse(stored);
+    } catch (e) {
+      console.warn('Failed to parse recent pages:', e);
+      commandPaletteState.recentPages = [];
+    }
+  }
+
+  // Keyboard shortcut: Ctrl/Cmd + K
+  document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      toggleCommandPalette();
+    }
+
+    // Escape to close
+    if (e.key === 'Escape' && commandPaletteState.isOpen) {
+      closeCommandPalette();
+    }
+
+    // Arrow navigation when palette is open
+    if (commandPaletteState.isOpen) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateCommandPalette(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateCommandPalette(-1);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectCommandPaletteItem();
+      }
+    }
+  });
+
+  // Search input handler
+  const searchInput = document.getElementById('commandPaletteInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      filterCommandPalette(e.target.value);
+    });
+  }
+});
+
+function toggleCommandPalette() {
+  if (commandPaletteState.isOpen) {
+    closeCommandPalette();
+  } else {
+    openCommandPalette();
+  }
+}
+
+function openCommandPalette() {
+  const palette = document.getElementById('commandPalette');
+  if (!palette) return;
+
+  commandPaletteState.isOpen = true;
+  palette.style.display = 'flex';
+
+  // Focus search input
+  const searchInput = document.getElementById('commandPaletteInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+
+  // Show recent pages initially
+  filterCommandPalette('');
+
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCommandPalette() {
+  const palette = document.getElementById('commandPalette');
+  if (!palette) return;
+
+  commandPaletteState.isOpen = false;
+  commandPaletteState.selectedIndex = -1;
+  palette.style.display = 'none';
+
+  // Restore body scroll
+  document.body.style.overflow = '';
+}
+
+function filterCommandPalette(query) {
+  const resultsContainer = document.getElementById('commandPaletteResults');
+  if (!resultsContainer) return;
+
+  // Get user role from page (if available)
+  const userRole = getUserRole();
+
+  // Get localized command palette pages
+  const commandPalettePages = getCommandPalettePages();
+
+  // Filter pages based on query and role
+  const lowerQuery = query.toLowerCase().trim();
+
+  if (lowerQuery === '') {
+    // Show recent pages
+    commandPaletteState.filteredPages = commandPaletteState.recentPages
+      .map(url => commandPalettePages.find(p => p.url === url))
+      .filter(p => p && canAccessPage(p, userRole))
+      .slice(0, 5);
+  } else {
+    // Search all pages
+    commandPaletteState.filteredPages = commandPalettePages
+      .filter(page => {
+        if (!canAccessPage(page, userRole)) return false;
+        const titleMatch = page.title.toLowerCase().includes(lowerQuery);
+        const subtitleMatch = page.subtitle.toLowerCase().includes(lowerQuery);
+        return titleMatch || subtitleMatch;
+      });
+  }
+
+  // Reset selection
+  commandPaletteState.selectedIndex = commandPaletteState.filteredPages.length > 0 ? 0 : -1;
+
+  // Render results
+  renderCommandPaletteResults(lowerQuery === '');
+}
+
+function renderCommandPaletteResults(showingRecent) {
+  const resultsContainer = document.getElementById('commandPaletteResults');
+  if (!resultsContainer) return;
+
+  resultsContainer.innerHTML = '';
+
+  if (commandPaletteState.filteredPages.length === 0) {
+    // Show empty state
+    resultsContainer.innerHTML = `
+      <div class="command-palette-empty">
+        <div class="command-palette-empty-icon">🔍</div>
+        <div class="command-palette-empty-text">${window.AppLocalizer.NoResultsFound}</div>
+      </div>
+    `;
+    return;
+  }
+
+  // Show section title if showing recent
+  if (showingRecent && commandPaletteState.filteredPages.length > 0) {
+    const sectionTitle = document.createElement('div');
+    sectionTitle.className = 'command-palette-section-title';
+    sectionTitle.textContent = window.AppLocalizer.Recent;
+    resultsContainer.appendChild(sectionTitle);
+  }
+
+  // Render items
+  commandPaletteState.filteredPages.forEach((page, index) => {
+    const item = document.createElement('a');
+    item.className = 'command-palette-item';
+    item.href = page.url;
+    if (index === commandPaletteState.selectedIndex) {
+      item.classList.add('selected');
+    }
+
+    item.innerHTML = `
+      <div class="command-palette-item-icon">${page.icon}</div>
+      <div class="command-palette-item-content">
+        <div class="command-palette-item-title">${page.title}</div>
+        <div class="command-palette-item-subtitle">${page.subtitle}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      navigateToPage(page.url);
+    });
+
+    item.addEventListener('mouseenter', function() {
+      commandPaletteState.selectedIndex = index;
+      updateSelectedItem();
+    });
+
+    resultsContainer.appendChild(item);
+  });
+}
+
+function navigateCommandPalette(direction) {
+  if (commandPaletteState.filteredPages.length === 0) return;
+
+  commandPaletteState.selectedIndex += direction;
+
+  // Wrap around
+  if (commandPaletteState.selectedIndex < 0) {
+    commandPaletteState.selectedIndex = commandPaletteState.filteredPages.length - 1;
+  } else if (commandPaletteState.selectedIndex >= commandPaletteState.filteredPages.length) {
+    commandPaletteState.selectedIndex = 0;
+  }
+
+  updateSelectedItem();
+}
+
+function updateSelectedItem() {
+  const items = document.querySelectorAll('.command-palette-item');
+  // B-001-EXT: Respect reduced motion preference for scroll behavior
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+  const scrollBehavior = reducedMotion ? 'auto' : 'smooth';
+
+  items.forEach((item, index) => {
+    if (index === commandPaletteState.selectedIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest', behavior: scrollBehavior });
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+}
+
+function selectCommandPaletteItem() {
+  if (commandPaletteState.selectedIndex < 0 ||
+      commandPaletteState.selectedIndex >= commandPaletteState.filteredPages.length) {
+    return;
+  }
+
+  const selectedPage = commandPaletteState.filteredPages[commandPaletteState.selectedIndex];
+  navigateToPage(selectedPage.url);
+}
+
+function navigateToPage(url) {
+  // Add to recent pages
+  addToRecentPages(url);
+
+  // Close palette
+  closeCommandPalette();
+
+  // Navigate
+  window.location.href = url;
+}
+
+function addToRecentPages(url) {
+  // Remove if already exists
+  commandPaletteState.recentPages = commandPaletteState.recentPages.filter(u => u !== url);
+
+  // Add to front
+  commandPaletteState.recentPages.unshift(url);
+
+  // Keep only last 10
+  commandPaletteState.recentPages = commandPaletteState.recentPages.slice(0, 10);
+
+  // Save to localStorage
+  try {
+    localStorage.setItem('commandPaletteRecent', JSON.stringify(commandPaletteState.recentPages));
+  } catch (e) {
+    console.warn('Failed to save recent pages:', e);
+  }
+}
+
+function canAccessPage(page, userRole) {
+  if (!page.roles || page.roles.includes('all')) return true;
+  if (!userRole) return true; // Show all if role is unknown
+  return page.roles.includes(userRole);
+}
+
+function getUserRole() {
+  // Try to determine user role from page context
+  // This is a simplified implementation - adjust based on your needs
+  const body = document.body;
+  const sidebar = document.querySelector('.app-sidebar-nav');
+
+  if (!sidebar) return null;
+
+  // Check for Owner-specific links
+  if (sidebar.querySelector('a[href*="/Admin/Companies"]')) {
+    return 'Owner';
+  }
+
+  // Check for Manager/Director links
+  if (sidebar.querySelector('a[href*="/Admin/Users"]')) {
+    return 'Manager';
+  }
+
+  // Check for Employee links
+  if (sidebar.querySelector('a[href*="/My/Profile"]')) {
+    return 'Employee';
+  }
+
+  return null;
+}
+
+// Make function globally accessible
+window.closeCommandPalette = closeCommandPalette;
+
+// ============= USER MENU NAVIGATION =============
+
+// Navigate to profile when clicking user menu
+document.addEventListener('DOMContentLoaded', function() {
+  const userMenu = document.querySelector('.user-menu');
+  if (userMenu) {
+    userMenu.style.cursor = 'pointer';
+    userMenu.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = '/My/Profile';
+    });
+  }
+});

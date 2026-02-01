@@ -1,0 +1,41 @@
+@model ShiftManager.Pages.My.IndexModel.TimelineItem
+@{
+    var typeClass = Model.Type.ToString().ToLower();
+    var icon = Model.Type switch
+    {
+        ShiftManager.Pages.My.IndexModel.ItemType.Vacation => "🏖️",
+        ShiftManager.Pages.My.IndexModel.ItemType.OnDuty => "🚨",
+        ShiftManager.Pages.My.IndexModel.ItemType.Shift => "🌙",
+        ShiftManager.Pages.My.IndexModel.ItemType.Chore => "🧹",
+        _ => "📋"
+    };
+}
+
+<div class="timeline-item" data-type="@typeClass"
+     onclick='openDrawer({
+         title: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.Title))",
+         date: "@Model.Date.ToString("yyyy-MM-dd")",
+         endDate: "@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")",
+         timeRange: "@(Model.TimeRange ?? "")",
+         metadata: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.Metadata ?? ""))",
+         conflict: @(Model.HasConflict ? "true" : "false")
+     })'>
+    <div class="item-colorbar @typeClass"></div>
+    <div class="item-icon">@icon</div>
+    <div class="item-content">
+        <div class="item-title">@Model.Title</div>
+        @if (!string.IsNullOrEmpty(Model.TimeRange))
+        {
+            <div class="item-time">@Model.TimeRange</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.Metadata))
+        {
+            <div class="item-meta">@Model.Metadata</div>
+        }
+    </div>
+    <div class="item-date">@Model.Date.ToString("MMM dd")</div>
+    @if (Model.HasConflict)
+    {
+        <span class="conflict-badge">⚠ <loc key="Conflict" /></span>
+    }
+</div>

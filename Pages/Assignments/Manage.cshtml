@@ -2,24 +2,32 @@
 @model ShiftManager.Pages.Assignments.ManageModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
-<h2>Assignments — @Model.Date.ToString("ddd, MMM d") — @(Model.Type != null ? Localizer[$"ShiftType_{Model.Type.Key}"] : "")</h2>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["ManageAssignments"], IsActive = true }
+})
+
+<h2>Assignments — @Model.Date.ToString("ddd, MMM d") — @(Model.Type != null ? (Model.Type.Key.StartsWith("CUSTOM_") ? Model.Type.Name : Localizer[$"ShiftType_{Model.Type.Key}"].Value) : "")</h2>
 
 <div class="card">
     <div style="display:flex; gap:1rem; align-items:center; justify-content:space-between">
         <div>
-            Required: <b>@Model.Instance.StaffingRequired</b> &nbsp;|&nbsp;
-            Assigned: <b>@Model.Assigned.Count</b>
+            @Localizer["Required"]: <b>@Model.Instance.StaffingRequired</b> &nbsp;|&nbsp;
+            @Localizer["Assigned"]: <b>@Model.Assigned.Count</b>
         </div>
-        <a class="btn btn-ghost" href="@(!string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : "/Calendar/Month")">Back to Calendar</a>
+        <a class="btn btn-ghost" href="@(!string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : "/Calendar/Month")"><loc key="BackToCalendar" /></a>
     </div>
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">Assigned</h3>
+    <h3 style="margin-top:0"><loc key="Assigned" /></h3>
     <ul class="list">
         @foreach (var a in Model.Assigned)
         {
@@ -30,14 +38,14 @@
                         @if (a.TraineeUserId != null)
                         {
                             <span style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem; font-size: 0.875rem;">
-                                👤 Trainee: @a.TraineeName
+                                👤 @Localizer["TraineeLabel"]: @a.TraineeName
                             </span>
                         }
                     </div>
                     <form method="post" asp-page-handler="Remove" style="margin: 0;">
                         <input type="hidden" name="assignmentId" value="@a.AssignmentId" />
                         <input type="hidden" asp-for="ReturnUrl" />
-                        <button class="btn btn-danger">Remove</button>
+                        <button class="btn btn-danger"><loc key="Remove" /></button>
                     </form>
                 </div>
 
@@ -50,13 +58,13 @@
                             <input type="hidden" asp-for="ShiftTypeId" />
                             <input type="hidden" asp-for="ReturnUrl" />
                             <select name="traineeUserId" class="input" style="max-width: 300px;" required>
-                                <option value="">-- Attach Trainee --</option>
+                                <option value=""><loc key="AttachTrainee" /></option>
                                 @foreach (var trainee in Model.Trainees)
                                 {
                                     <option value="@trainee.Id">@trainee.DisplayName (@trainee.Email)</option>
                                 }
                             </select>
-                            <button type="submit" class="btn btn-secondary">Assign Trainee</button>
+                            <button type="submit" class="btn btn-secondary"><loc key="AssignTrainee" /></button>
                         </form>
                     </div>
                 }
@@ -68,7 +76,7 @@
                             <input type="hidden" asp-for="Date" />
                             <input type="hidden" asp-for="ShiftTypeId" />
                             <input type="hidden" asp-for="ReturnUrl" />
-                            <button type="submit" class="btn btn-ghost">Remove Trainee</button>
+                            <button type="submit" class="btn btn-ghost"><loc key="RemoveTrainee" /></button>
                         </form>
                     </div>
                 }
@@ -78,7 +86,7 @@
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">Add person</h3>
+    <h3 style="margin-top:0"><loc key="AddPerson" /></h3>
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="small" style="color:var(--danger)">@Model.Error</div>
@@ -91,7 +99,7 @@
         @if (Model.Assigned.Count == 0)
         {
             <div style="margin-bottom: 1rem;">
-                <label for="ShiftName" class="form-label">Shift Name (optional)</label>
+                <label for="ShiftName" class="form-label"><loc key="ShiftNameOptional" /></label>
                 <input type="text" id="shiftNameInput" class="input" asp-for="ShiftName" placeholder="e.g., Store Opening, Security Round, etc." />
                 <div class="small" style="color:var(--muted); margin-top:0.25rem;">
                     This name will be displayed as "@Model.Type?.Key.ToLower()-'your name'" in the calendar
@@ -101,17 +109,31 @@
         else if (!string.IsNullOrEmpty(Model.ShiftName))
         {
             <div style="margin-bottom: 1rem;">
-                <strong>Shift Name:</strong> @Model.Type?.Key.ToLower()-'@Model.ShiftName'
+                <strong>@Localizer["ShiftName"]:</strong> @Model.Type?.Key.ToLower()-'@Model.ShiftName'
             </div>
         }
 
-        <select class="input" asp-for="SelectedUserId">
-            <option value="">-- choose an active user --</option>
+        <select class="input" asp-for="SelectedUserId" style="font-family: var(--font-sans);">
+            <option value=""><loc key="ChooseActiveUser" /></option>
             @foreach (var u in Model.ActiveUsers)
             {
-                @if (Model.UsersOnTimeOff.Contains(u.Id))
+                var busyStatus = Model.BusyUsers.ContainsKey(u.Id) ? Model.BusyUsers[u.Id] : null;
+
+                @if (busyStatus != null && busyStatus.HasVacation)
                 {
-                    <option value="@u.Id" style="background-color: var(--warning); color: var(--warning-text);">🏖️ @u.DisplayName (@u.Email) - ON TIME OFF</option>
+                    <option value="@u.Id" style="background-color: var(--info-soft); color: var(--info);">🏖️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                }
+                else if (busyStatus != null && busyStatus.HasShift)
+                {
+                    <option value="@u.Id" style="background-color: var(--danger-soft); color: var(--danger);">⚠️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                }
+                else if (busyStatus != null && busyStatus.HasChore)
+                {
+                    <option value="@u.Id" style="background-color: var(--warning-soft); color: var(--warning);">📋 @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                }
+                else if (Model.UsersOnTimeOff.Contains(u.Id))
+                {
+                    <option value="@u.Id" style="background-color: var(--info-soft); color: var(--info);">🏖️ @u.DisplayName (@u.Email) - @Localizer["OnTimeOff"]</option>
                 }
                 else
                 {
@@ -119,7 +141,7 @@
                 }
             }
         </select>
-        <button class="btn btn-primary" type="submit">Add</button>
+        <button class="btn btn-primary" type="submit"><loc key="Add" /></button>
     </form>
 </div>
 

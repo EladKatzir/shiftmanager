@@ -1,161 +1,612 @@
+@* MODIFIED FOR MODAL FIX *@
 @page
 @model ShiftManager.Pages.Admin.CompaniesModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
-<h2>@Localizer["Companies"]</h2>
 
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Companies"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Alerts */
+        .alert-success {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3);
+        }
+
+        .alert-error {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            background: var(--danger);
+            color: var(--danger-text);
+            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
+        }
+
+        /* Section Card */
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.25rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Fieldset */
+        .form-fieldset {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .fieldset-legend {
+            padding: 0 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+        }
+
+        .fieldset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label-required {
+            color: var(--danger);
+        }
+
+        .form-label-hint {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .form-input:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+        }
+
+        .form-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--danger-text);
+            border-color: var(--danger);
+            font-size: 0.8125rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            border-color: var(--danger-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: transparent;
+            font-size: 0.8125rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-soft);
+            border-color: var(--border);
+        }
+
+        /* Data Table */
+        .companies-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .companies-table thead tr {
+            border-bottom: 2px solid var(--border);
+        }
+
+        .companies-table th {
+            padding: 0.875rem;
+            text-align: left;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .companies-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.15s ease;
+        }
+
+        .companies-table tbody tr:hover {
+            background: var(--surface-soft);
+        }
+
+        .companies-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .companies-table td {
+            padding: 1rem 0.875rem;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        .companies-table td code {
+            background: var(--surface-soft);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        /* Info Box */
+        .info-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+        }
+
+        .info-box-content {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-box-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-box-list {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .info-box-list li {
+            margin: 0.25rem 0;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Animations */
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @@keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Fieldset Dimming */
+        .fieldset-dimmed {
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Table Responsive Wrapper */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 0 -1.5rem;
+            padding: 0 1.5rem;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .section-card {
+                padding: 1.25rem;
+            }
+
+            .fieldset-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-wrapper {
+                margin: 0 -1.25rem;
+                padding: 0 1.25rem;
+            }
+
+            .companies-table {
+                font-size: 0.875rem;
+            }
+
+            .companies-table th,
+            .companies-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .table-actions {
+                flex-direction: column;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title"><loc key="Companies" /></h1>
+    <p class="page-subtitle"><loc key="ManageCompaniesAndOrganizations" /></p>
+</div>
+
+<!-- Success Message -->
 @if (!string.IsNullOrEmpty(Model.Success))
 {
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
-        @Model.Success
+    <div class="alert-success">
+        <span style="font-size: 1.25rem;">✓</span>
+        <span>@Html.Encode(Model.Success)</span>
     </div>
 }
 
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["AddNewCompany"]</h3>
-    @if (!string.IsNullOrEmpty(Model.Error)) { <div class="small" style="color:var(--danger); margin-bottom: 1rem;">@Model.Error</div> }
+<!-- Add New Company Form -->
+<div class="section-card">
+    <h3 class="section-header"><loc key="AddNewCompany" /></h3>
+
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert-error">
+            <span style="font-size: 1.25rem;">✗</span>
+            <span>@Html.Encode(Model.Error)</span>
+        </div>
+    }
 
     <form method="post" asp-page-handler="AddCompany">
-        <fieldset style="border: 1px solid var(--border); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-            <legend style="padding: 0 0.5rem; font-weight: 600;">@Localizer["CompanyDetails"]</legend>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:.5rem; align-items:end">
-                <label>
-                    @Localizer["CompanyName"] *<br />
-                    <input class="input" asp-for="CompanyName" placeholder="My Company Inc." required />
-                </label>
-                <label>
-                    @Localizer["Slug"] * <small style="color: var(--muted)">(lowercase, letters, numbers, hyphens)</small><br />
-                    <input class="input" asp-for="CompanySlug" placeholder="my-company" pattern="[a-z0-9-]+" required />
-                </label>
-                <label>
-                    @Localizer["DisplayName"]<br />
-                    <input class="input" asp-for="CompanyDisplayName" placeholder="My Company" />
-                </label>
+        <!-- Company Details Fieldset -->
+        <fieldset class="form-fieldset">
+            <legend class="fieldset-legend"><loc key="CompanyDetails" /></legend>
+            <div class="fieldset-grid">
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["CompanyName"] <span class="form-label-required">*</span>
+                    </label>
+                    <input class="form-input" asp-for="CompanyName" placeholder="My Company Inc." required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["Slug"] <span class="form-label-required">*</span>
+                        <span class="form-label-hint">(lowercase, letters, numbers, hyphens)</span>
+                    </label>
+                    <input class="form-input" asp-for="CompanySlug" placeholder="my-company" pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens allowed" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="DisplayName" /></label>
+                    <input class="form-input" asp-for="CompanyDisplayName" placeholder="My Company" />
+                </div>
             </div>
         </fieldset>
 
-        <fieldset style="border: 1px solid var(--border); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-            <legend style="padding: 0 0.5rem; font-weight: 600; color: var(--text);">@Localizer["OrAssignExistingDirector"]</legend>
-            <div style="display:grid; grid-template-columns: 1fr; gap:.5rem;">
-                <label>
-                    @Localizer["ExistingDirector"]<br />
-                    <select class="input" asp-for="SelectedDirectorId" id="directorSelect">
-                        <option value="">@Localizer["SelectExistingDirector"]</option>
-                        @foreach (var director in Model.AvailableDirectors)
-                        {
-                            <option value="@director.Id">@director.DisplayName (@director.Email)</option>
-                        }
-                    </select>
-                </label>
-                <small style="color: var(--muted);">
-                    @Localizer["IfDirectorSelected"]
-                </small>
+        <!-- Existing Director Fieldset -->
+        <fieldset class="form-fieldset">
+            <legend class="fieldset-legend"><loc key="OrAssignExistingDirector" /></legend>
+            <div class="form-group">
+                <label class="form-label"><loc key="ExistingDirector" /></label>
+                <select class="form-input" asp-for="SelectedDirectorId" id="directorSelect">
+                    <option value=""><loc key="SelectExistingDirector" /></option>
+                    @foreach (var director in Model.AvailableDirectors)
+                    {
+                        <option value="@director.Id">@director.DisplayName (@director.Email)</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="IfDirectorSelected" /></span>
             </div>
         </fieldset>
 
-        <fieldset style="border: 1px solid var(--border); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;" id="managerFieldset">
-            <legend style="padding: 0 0.5rem; font-weight: 600;">@Localizer["ManagerAccount"]</legend>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:.5rem; align-items:end">
-                <label>
-                    @Localizer["ManagerEmail"] <span id="managerEmailRequired">*</span><br />
-                    <input class="input" asp-for="ManagerEmail" type="email" placeholder="manager@company.com" id="managerEmail" />
-                </label>
-                <label>
-                    @Localizer["ManagerDisplayName"] <span id="managerDisplayRequired">*</span><br />
-                    <input class="input" asp-for="ManagerDisplayName" placeholder="John Doe" id="managerDisplayName" />
-                </label>
-                <label>
-                    @Localizer["ManagerPassword"] <span id="managerPasswordRequired">*</span><br />
-                    <input class="input" asp-for="ManagerPassword" type="password" placeholder="••••••••" id="managerPassword" />
-                </label>
+        <!-- Manager Account Fieldset -->
+        <fieldset class="form-fieldset" id="managerFieldset">
+            <legend class="fieldset-legend"><loc key="ManagerAccount" /></legend>
+            <div class="fieldset-grid">
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["ManagerEmail"] <span class="form-label-required" id="managerEmailRequired">*</span>
+                    </label>
+                    <input class="form-input" asp-for="ManagerEmail" type="email" placeholder="manager@company.com" id="managerEmail" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["ManagerDisplayName"] <span class="form-label-required" id="managerDisplayRequired">*</span>
+                    </label>
+                    <input class="form-input" asp-for="ManagerDisplayName" placeholder="John Doe" id="managerDisplayName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        @Localizer["ManagerPassword"] <span class="form-label-required" id="managerPasswordRequired">*</span>
+                    </label>
+                    <input class="form-input" asp-for="ManagerPassword" type="password" placeholder="••••••••" id="managerPassword" />
+                </div>
             </div>
         </fieldset>
 
-        <button class="btn btn-primary" type="submit">@Localizer["CreateCompanyManager"]</button>
+        <button class="btn btn-primary" type="submit">
+            <span>➕</span>
+            <span><loc key="CreateCompanyManager" /></span>
+        </button>
     </form>
 
-    <div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-left: 4px solid var(--primary); border-radius: 0.5rem;">
-        <small style="color: var(--muted);">
+    <div class="info-box">
+        <div class="info-box-content">
             <strong>@Localizer["Note"]:</strong> @Localizer["CreatingCompanyWill"]
-            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                <li>@Localizer["CreateCompanyWithDetails"]</li>
-                <li>@Localizer["CreateManagerAccount"]</li>
-                <li>@Localizer["GenerateDefaultShiftTypes"]</li>
-                <li>@Localizer["SetupDefaultConfig"]</li>
+            <ul class="info-box-list">
+                <li><loc key="CreateCompanyWithDetails" /></li>
+                <li><loc key="CreateManagerAccount" /></li>
+                <li><loc key="GenerateDefaultShiftTypes" /></li>
+                <li><loc key="SetupDefaultConfig" /></li>
             </ul>
-        </small>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <h3 style="margin-top:0">@Localizer["AllCompanies"]</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>@Localizer["Name"]</th>
-                <th>@Localizer["Slug"]</th>
-                <th>@Localizer["DisplayName"]</th>
-                <th>@Localizer["Users"]</th>
-                <th style="width:1%">@Localizer["Actions"]</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var c in Model.Companies)
-        {
-            <tr>
-                <td>@c.Name</td>
-                <td><code>@c.Slug</code></td>
-                <td>@(c.DisplayName ?? "-")</td>
-                <td>@c.UserCount</td>
-                <td>
-                    <div style="display: flex; gap: 0.5rem; white-space: nowrap;">
-                        <!-- Rename Button -->
-                        <button type="button" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;"
-                                onclick="renameCompany(@c.Id, '@c.Name')">
-                            @Localizer["Rename"]
-                        </button>
+<!-- All Companies List -->
+<div class="section-card">
+    <h3 class="section-header"><loc key="AllCompanies" /></h3>
 
-                        <!-- Delete Form -->
-                        <form method="post" asp-page-handler="DeleteCompany" style="display:inline"
-                              onsubmit="return confirm('@Localizer["ConfirmDeleteCompany"]');">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@c.Id" />
-                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                                @Localizer["Delete"]
-                            </button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-
-    @if (!Model.Companies.Any())
+    @if (Model.Companies.Any())
     {
-        <p style="text-align: center; color: var(--muted); padding: 2rem;">
-            @Localizer["NoCompaniesYet"]
-        </p>
+        <div class="table-wrapper">
+            <table class="companies-table">
+                <thead>
+                    <tr>
+                        <th><loc key="Name" /></th>
+                        <th><loc key="Slug" /></th>
+                        <th><loc key="DisplayName" /></th>
+                        <th><loc key="Users" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var c in Model.Companies)
+                {
+                    <tr>
+                        <td><strong>@Html.Encode(c.Name)</strong></td>
+                        <td><code>@Html.Encode(c.Slug)</code></td>
+                        <td>@Html.Encode(c.DisplayName ?? "-")</td>
+                        <td>@c.UserCount</td>
+                        <td>
+                            <div class="table-actions">
+                                <button type="button" class="btn btn-ghost"
+                                        data-company-id="@c.Id"
+                                        data-company-name="@System.Web.HttpUtility.HtmlAttributeEncode(c.Name)"
+                                        onclick="renameCompanyClick(this)">
+                                    @Localizer["Rename"]
+                                </button>
+                                <form method="post" asp-page-handler="DeleteCompany" style="display:inline"
+                                      onsubmit="return confirm('@Localizer["ConfirmDeleteCompany"]');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@c.Id" />
+                                    <button type="submit" class="btn btn-danger">
+                                        <span>🗑️</span>
+                                        <span><loc key="Delete" /></span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="empty-state"><loc key="NoCompaniesYet" /></p>
     }
 </div>
 
-<!-- Rename Company Modal/Form (Hidden by default) -->
-<div id="renameModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div class="card" style="max-width: 500px; margin: auto; margin-top: 10rem;">
-        <h3 style="margin-top:0">@Localizer["RenameCompany"]</h3>
+<!-- Rename Company Modal -->
+<div id="renameModal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-header"><loc key="RenameCompany" /></h3>
         <form method="post" asp-page-handler="RenameCompany">
             @Html.AntiForgeryToken()
             <input type="hidden" id="renameCompanyId" name="RenameCompanyId" />
-            <label>
-                @Localizer["NewCompanyName"]<br />
-                <input type="text" class="input" id="newCompanyName" name="NewCompanyName" required />
-            </label>
-            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                <button type="submit" class="btn btn-primary">@Localizer["Rename"]</button>
+            <div class="form-group">
+                <label class="form-label"><loc key="NewCompanyName" /></label>
+                <input type="text" class="form-input" id="newCompanyName" name="NewCompanyName" required />
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span>
+                    <span><loc key="Rename" /></span>
+                </button>
                 <button type="button" class="btn btn-ghost" onclick="closeRenameModal()">@Localizer["Cancel"]</button>
             </div>
         </form>
@@ -163,14 +614,21 @@
 </div>
 
 <script>
+// Rename company using data attributes to avoid XSS and quote issues
+function renameCompanyClick(button) {
+    const id = button.getAttribute('data-company-id');
+    const currentName = button.getAttribute('data-company-name');
+    renameCompany(id, currentName);
+}
+
 function renameCompany(id, currentName) {
     document.getElementById('renameCompanyId').value = id;
     document.getElementById('newCompanyName').value = currentName;
-    document.getElementById('renameModal').style.display = 'flex';
+    document.getElementById('renameModal').classList.add('active');
 }
 
 function closeRenameModal() {
-    document.getElementById('renameModal').style.display = 'none';
+    document.getElementById('renameModal').classList.remove('active');
 }
 
 // Close modal when clicking outside
@@ -196,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
             managerEmail.removeAttribute('required');
             managerDisplayName.removeAttribute('required');
             managerPassword.removeAttribute('required');
-            managerFieldset.style.opacity = '0.5';
+            managerFieldset.classList.add('fieldset-dimmed');
             document.getElementById('managerEmailRequired').style.display = 'none';
             document.getElementById('managerDisplayRequired').style.display = 'none';
             document.getElementById('managerPasswordRequired').style.display = 'none';
@@ -205,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
             managerEmail.setAttribute('required', 'required');
             managerDisplayName.setAttribute('required', 'required');
             managerPassword.setAttribute('required', 'required');
-            managerFieldset.style.opacity = '1';
+            managerFieldset.classList.remove('fieldset-dimmed');
             document.getElementById('managerEmailRequired').style.display = 'inline';
             document.getElementById('managerDisplayRequired').style.display = 'inline';
             document.getElementById('managerPasswordRequired').style.display = 'inline';

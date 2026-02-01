@@ -1,0 +1,34 @@
+@model ShiftManager.ViewComponents.ShowMyItemsToggleViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* ✅ PHASE 20 + 3B: Enhanced "Show My Items Only" toggle button with descriptive labels *@
+<div class="show-my-items-toggle">
+    <button class="action-btn show-items-btn @(Model.ShowMyItemsOnly ? "active" : "")"
+            onclick="toggleShowMyItems(@Model.ShowMyItemsOnly.ToString().ToLower())"
+            aria-label="@(Model.ShowMyItemsOnly ? Localizer["Calendar_ToggleShowAll_Tooltip"] : Localizer["Calendar_ToggleMyItems_Tooltip"])"
+            title="@(Model.ShowMyItemsOnly ? Localizer["Calendar_ToggleShowAll_Tooltip"] : Localizer["Calendar_ToggleMyItems_Tooltip"])">
+        <span class="toggle-icon">@(Model.ShowMyItemsOnly ? "👤" : "👥")</span>
+        <span class="toggle-labels">
+            <span class="toggle-label-primary">@(Model.ShowMyItemsOnly ? Localizer["Calendar_MyItemsOnly"] : Localizer["Calendar_ShowingAll"])</span>
+            <span class="toggle-label-secondary">@(Model.ShowMyItemsOnly ? Localizer["Calendar_ClickToShowAll"] : Localizer["Calendar_ClickToFilterMine"])</span>
+        </span>
+    </button>
+</div>
+
+<script>
+function toggleShowMyItems(currentValue) {
+    // Toggle the value
+    const newValue = !currentValue;
+
+    // Set cookie with 30-day expiration
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 30);
+
+    document.cookie = `user_show_my_items_only=${newValue}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
+
+    // Reload the page to apply the new filter
+    window.location.reload();
+}
+</script>

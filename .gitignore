@@ -1,10 +1,11 @@
 # EXCEPTION: ProjectPublish directory - commit everything inside it
-# This ensures ALL files and subdirectories within ProjectPublish are tracked
-!ProjectPublish/
-!ProjectPublish/**
-!ProjectPublish/**/*.json
-!ProjectPublish/**/*wwwroot/
-!ProjectPublish/**/*wwwroot/**
+# This ensures ALL files and subdirectories within finalproduct are tracked - actually the one down should do it, this one just for saftey
+
+!FinalProductPublish/
+!FinalProductPublish/**
+!FinalProductPublish/**/*.json
+!FinalProductPublish/**/*wwwroot/
+!FinalProductPublish/**/*wwwroot/**
 
 # Build results
 bin/
@@ -28,6 +29,9 @@ obj/
 
 # Claude Code settings (local config only, shared config is tracked)
 .claude/settings.local.json
+
+# Git worktrees (isolated development workspaces)
+.worktrees/
 
 # .NET Core
 *.dll
@@ -115,3 +119,17 @@ _ReSharper*/
 .DS_Store
 Thumbs.db
 
+#ProjectPublish isnt needed anymore
+ProjectPublish/
+ProjectPublish/**
+
+# --------------------------------
+# ALWAYS COMMIT THESE DIRECTORIES (override all rules above)
+# --------------------------------
+
+
+!FinalProductPublish/
+!FinalProductPublish/**
+
+# Git worktrees (isolated workspaces)
+.worktrees/

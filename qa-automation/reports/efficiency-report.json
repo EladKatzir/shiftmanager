@@ -1,0 +1,16 @@
+{
+  "screens": {
+    "Admin/Users": {
+      "totalRequests": 19,
+      "duplicateRequests": 0,
+      "duplicates": []
+    }
+  },
+  "workflows": {},
+  "slowEndpoints": [],
+  "errors": [],
+  "polling": {
+    "detected": false,
+    "urls": []
+  }
+}

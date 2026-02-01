@@ -1,0 +1,560 @@
+@page
+@model ShiftManager.Pages.Owner.LanguageManagementModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Language Management";
+}
+
+@* Breadcrumb Navigation *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = "Admin Panel", Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = "Language Management", IsActive = true }
+})
+
+@* Owner Company Selector *@
+@await Component.InvokeAsync("OwnerCompanySelector")
+
+<div class="language-management-container">
+    <div class="page-header">
+        <h1><span class="page-icon">🌐</span> Language Management</h1>
+        <p class="page-subtitle">Configure languages and customize translations for your company</p>
+    </div>
+
+    @* Success Alert *@
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>✓ Success!</strong> @Model.Success
+        </div>
+    }
+
+    @* Error Alert *@
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-error">
+            <strong>✗ Error!</strong> @Model.Error
+        </div>
+    }
+
+    @if (Model.SelectedCompanyId != null)
+    {
+        @* Language Settings Card *@
+        <div class="config-card">
+            <div class="card-header">
+                <h2>🎌 Company Language Settings</h2>
+            </div>
+            <div class="card-body">
+                <p class="help-text">Configure which two languages are available for users to toggle between.</p>
+                <form method="post" asp-page-handler="SaveLanguageSettings">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="DefaultCulture">Default Language</label>
+                            <select asp-for="DefaultCulture" id="DefaultCulture" class="form-control">
+                                @foreach (var culture in Model.SupportedCultures)
+                                {
+                                    <option value="@culture">@GetCultureDisplayName(culture)</option>
+                                }
+                            </select>
+                            <small class="form-text">Language shown to new users and as fallback</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="AlternateCulture">Alternate Language</label>
+                            <select asp-for="AlternateCulture" id="AlternateCulture" class="form-control">
+                                @foreach (var culture in Model.SupportedCultures)
+                                {
+                                    <option value="@culture">@GetCultureDisplayName(culture)</option>
+                                }
+                            </select>
+                            <small class="form-text">Language available in toggle switch</small>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">💾 Save Language Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @* Edit Mode Entry Point *@
+        <div class="config-card edit-mode-card">
+            <div class="card-header">
+                <h2>✏️ In-App Translation Editor</h2>
+            </div>
+            <div class="card-body">
+                <p style="color: var(--primary-contrast);">Edit translations directly by clicking on text throughout the application.</p>
+                <p style="color: var(--primary-contrast); opacity: 0.9; font-size: 0.875rem;">Navigate anywhere in the app and click on any localized text to edit it. Changes are saved as drafts until you click "Save & Exit".</p>
+
+                <form method="get" action="/Owner/LanguageEditMode">
+                    <input type="hidden" name="companyId" value="@Model.SelectedCompanyId" />
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label style="color: var(--primary-contrast);">Select Culture to Edit</label>
+                        <select name="culture" class="form-control">
+                            @foreach (var culture in Model.SupportedCultures)
+                            {
+                                <option value="@culture">@GetCultureDisplayName(culture)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="card-footer" style="background: transparent; border: none; padding-left: 0;">
+                        <button type="submit" class="btn btn-warning">🚀 Enter Edit Mode</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @* Overrides Table *@
+        <div class="config-card">
+            <div class="card-header">
+                <h2>📝 Translation Overrides</h2>
+            </div>
+            <div class="card-body">
+                @* Search/Filter Form *@
+                <form method="get" class="search-form">
+                    <div class="search-row">
+                        <label for="langSearchTerm" class="sr-only">Search by key or value</label>
+                        <input type="text" name="searchTerm" id="langSearchTerm" placeholder="Search by key or value..." value="@Model.SearchTerm" class="search-input" />
+                        <label for="langFilterCulture" class="sr-only">Filter by language</label>
+                        <select name="filterCulture" id="langFilterCulture" class="filter-select">
+                            <option value="">All Languages</option>
+                            <option value="en-US" selected="@(Model.FilterCulture == "en-US")">English</option>
+                            <option value="he-IL" selected="@(Model.FilterCulture == "he-IL")">Hebrew</option>
+                        </select>
+                        <button type="submit" class="btn btn-secondary">🔍 Search</button>
+                    </div>
+                </form>
+
+                @* Overrides Table *@
+                @if (Model.Overrides.Any())
+                {
+                    <div class="table-wrapper">
+                        <table class="overrides-table">
+                            <thead>
+                                <tr>
+                                    <th>Resource Key</th>
+                                    <th>Culture</th>
+                                    <th>Base Value</th>
+                                    <th>Override Value</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var o in Model.Overrides)
+                                {
+                                    <tr>
+                                        <td><code>@o.ResourceKey</code></td>
+                                        <td><span class="culture-badge">@o.Culture</span></td>
+                                        <td>@Localizer[o.ResourceKey]</td>
+                                        <td><strong>@o.OverrideValue</strong></td>
+                                        <td>@o.UpdatedAt.ToString("g")</td>
+                                        <td>
+                                            <form method="post" asp-page-handler="DeleteOverride" asp-route-id="@o.Id" style="display:inline;">
+                                                <button type="submit" class="btn-delete" onclick="return confirm('Delete this override?');" title="Delete">🗑️</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <p>No translation overrides found.</p>
+                        @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.FilterCulture))
+                        {
+                            <p><a href="/Owner/LanguageManagement">Clear filters</a></p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Add Override Form *@
+        <div class="config-card">
+            <div class="card-header">
+                <h2>➕ Add Translation Override</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddOverride">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="OverrideKey">Resource Key</label>
+                            <input type="text" asp-for="OverrideKey" id="OverrideKey" class="form-control" placeholder="Button_Save" />
+                            <small class="form-text">Key from SharedResources (e.g., Button_Save, Dashboard_Title)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="OverrideCulture">Culture</label>
+                            <select asp-for="OverrideCulture" id="OverrideCulture" class="form-control">
+                                <option value="">-- Select Culture --</option>
+                                <option value="en-US">English (en-US)</option>
+                                <option value="he-IL">Hebrew (he-IL)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex: 2;">
+                            <label for="OverrideValue">Override Value</label>
+                            <input type="text" asp-for="OverrideValue" id="OverrideValue" class="form-control" placeholder="Custom translation text" />
+                            <small class="form-text">Custom translation (preserve {0}, {1} placeholders if present)</small>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">💾 Add Override</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="config-card">
+            <div class="card-body">
+                <div class="empty-state">
+                    <p>Please select a company using the dropdown above to manage language settings.</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .language-management-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-icon {
+        font-size: 2rem;
+    }
+
+    .page-subtitle {
+        color: var(--muted);
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .config-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .edit-mode-card {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        color: var(--primary-contrast);
+        border: none;
+    }
+
+    .edit-mode-card label,
+    .edit-mode-card .form-text {
+        color: var(--primary-contrast);
+    }
+
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--background);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .edit-mode-card .card-header {
+        background: rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .edit-mode-card .card-header h2 {
+        color: var(--primary-contrast);
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .card-footer {
+        padding: 1rem 1.5rem;
+        background: var(--background);
+        border-top: 1px solid var(--border);
+    }
+
+    .help-text {
+        color: var(--muted);
+        margin-bottom: 1rem;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0;
+    }
+
+    .form-group {
+        flex: 1;
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--background);
+        color: var(--text);
+        font-size: 0.875rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-text {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 0.25rem;
+    }
+
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: var(--primary-contrast);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-primary);
+    }
+
+    .btn-secondary {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+        background: var(--background);
+        border-color: var(--primary);
+    }
+
+    .btn-warning {
+        background: var(--warning);
+        color: var(--warning-text);
+        font-size: 1rem;
+        padding: 0.75rem 1.5rem;
+    }
+
+    .btn-warning:hover {
+        background: var(--warning-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-warning);
+    }
+
+    .btn-delete {
+        background: transparent;
+        border: none;
+        color: var(--danger);
+        cursor: pointer;
+        font-size: 1.25rem;
+        padding: 0.25rem 0.5rem;
+        transition: transform 0.2s;
+    }
+
+    .btn-delete:hover {
+        transform: scale(1.2);
+    }
+
+    .alert {
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .alert-success {
+        background: var(--success-soft);
+        border: 1px solid var(--success);
+        color: var(--success);
+    }
+
+    .alert-error {
+        background: var(--danger-soft);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+    }
+
+    .search-form {
+        margin-bottom: 1.5rem;
+    }
+
+    .search-row {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .search-input {
+        flex: 2;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--background);
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    .filter-select {
+        flex: 1;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--background);
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .overrides-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .overrides-table thead {
+        background: var(--background);
+        border-bottom: 2px solid var(--border);
+    }
+
+    .overrides-table th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+    }
+
+    .overrides-table td {
+        padding: 0.875rem 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .overrides-table tbody tr:hover {
+        background: var(--background);
+    }
+
+    .overrides-table code {
+        background: var(--background);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.8125rem;
+        color: var(--primary);
+    }
+
+    .culture-badge {
+        display: inline-block;
+        padding: 0.25rem 0.625rem;
+        background: var(--primary);
+        color: var(--primary-contrast);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--muted);
+    }
+
+    .empty-state p {
+        margin: 0.5rem 0;
+    }
+
+    .empty-state a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .empty-state a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+@functions {
+    private string GetCultureDisplayName(string cultureCode)
+    {
+        return cultureCode switch
+        {
+            "en-US" => "English (en-US)",
+            "he-IL" => "Hebrew (he-IL)",
+            "es-ES" => "Spanish (es-ES)",
+            "fr-FR" => "French (fr-FR)",
+            "de-DE" => "German (de-DE)",
+            "ar-SA" => "Arabic (ar-SA)",
+            "ru-RU" => "Russian (ru-RU)",
+            "zh-CN" => "Chinese Simplified (zh-CN)",
+            "ja-JP" => "Japanese (ja-JP)",
+            _ => cultureCode // Fallback to code if unknown
+        };
+    }
+}

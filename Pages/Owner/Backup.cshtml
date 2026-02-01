@@ -1,0 +1,290 @@
+@page
+@model ShiftManager.Pages.Owner.BackupModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_Backup"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_Backup"], IsActive = true }
+})
+
+@* Owner Company Selector *@
+@await Component.InvokeAsync("OwnerCompanySelector")
+
+<div class="backup-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">💾</span>
+            @Localizer["Owner_Backup"]
+        </h1>
+        <p class="page-subtitle"><loc key="Owner_Backup_Subtitle" /></p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>✅ Success:</strong> @Model.Success
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-error">
+            <strong>❌ Error:</strong> @Model.Error
+        </div>
+    }
+
+    <div class="backup-actions-card">
+        <h2>🔧 <loc key="Owner_Backup_Actions" /></h2>
+        <form method="post" asp-page-handler="CreateBackup">
+            <button type="submit" class="btn btn-primary">💾 <loc key="Owner_Backup_CreateNew" /></button>
+        </form>
+        <p class="help-text">
+            <loc key="Owner_Backup_HelpText" />
+        </p>
+    </div>
+
+    <div class="backups-list-card">
+        <h2>📦 <loc key="Owner_Backup_AvailableBackups" /></h2>
+
+        @if (!Model.Backups.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-icon">📦</div>
+                <p><loc key="Owner_Backup_NoBackupsFound" /></p>
+                <small><loc key="Owner_Backup_CreateFirstBackup" /></small>
+            </div>
+        }
+        else
+        {
+            <div class="backups-table-wrapper">
+                <table class="backups-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Owner_Backup_FileName" /></th>
+                            <th><loc key="Owner_Backup_Size" /></th>
+                            <th><loc key="Owner_Backup_CreatedDate" /></th>
+                            <th><loc key="Owner_Backup_Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var backup in Model.Backups)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="file-icon">💾</span>
+                                    <span class="file-name">@backup.FileName</span>
+                                </td>
+                                <td>@backup.SizeFormatted</td>
+                                <td>@backup.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/Owner/Backup?handler=DownloadBackup&backupFileName=@backup.FileName"
+                                           class="btn-action btn-download"
+                                           loc-title="Owner_Backup_Download">
+                                            ⬇️
+                                        </a>
+                                        <form method="post" asp-page-handler="RestoreBackup" class="inline-form">
+                                            <input type="hidden" name="backupFileName" value="@backup.FileName" />
+                                            <button type="submit"
+                                                    class="btn-action btn-restore"
+                                                    loc-title="Owner_Backup_Restore"
+                                                    onclick="return confirm('@Localizer["Owner_Backup_RestoreConfirm"]')">
+                                                ♻️
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="DeleteBackup" class="inline-form">
+                                            <input type="hidden" name="backupFileName" value="@backup.FileName" />
+                                            <button type="submit"
+                                                    class="btn-action btn-delete"
+                                                    loc-title="Owner_Backup_Delete"
+                                                    onclick="return confirm('@Localizer["Owner_Backup_DeleteConfirm"]')">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="info-card">
+        <h3>ℹ️ <loc key="Owner_Backup_ImportantInfo" /></h3>
+        <ul>
+            <li><strong><loc key="Owner_Backup_AutoBackups" />:</strong> <loc key="Owner_Backup_AutoBackups_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_BeforeRestore" />:</strong> <loc key="Owner_Backup_BeforeRestore_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_AppRestart" />:</strong> <loc key="Owner_Backup_AppRestart_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_StorageLocation" />:</strong> <loc key="Owner_Backup_StorageLocation_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_DownloadInfo" />:</strong> <loc key="Owner_Backup_DownloadInfo_Desc" /></li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.backup-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.backup-actions-card,
+.backups-list-card,
+.info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.backup-actions-card h2,
+.backups-list-card h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+}
+
+.help-text {
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.backups-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.backups-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.backups-table thead {
+    background: var(--background);
+}
+
+.backups-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+}
+
+.backups-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.backups-table tbody tr:hover {
+    background: var(--background);
+}
+
+.file-name {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--background);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-action:hover {
+    transform: scale(1.1);
+}
+
+.btn-download:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-restore:hover {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.inline-form {
+    display: inline;
+}
+
+.info-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+}
+
+.info-card ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.info-card li {
+    margin-bottom: 0.5rem;
+    color: var(--muted);
+}
+
+.info-card code {
+    background: var(--background);
+    padding: 0.125rem 0.25rem;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.alert-error {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+</style>

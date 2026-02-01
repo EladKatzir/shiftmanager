@@ -1,28 +1,36 @@
 @page
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @model ShiftManager.Pages.Director.NotificationHubModel
 @{
     Layout = "_Layout";
 }
-<h2>@Localizer["NotificationHub"]</h2>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Director"], Url = "/Director/NotificationHub" },
+    new BreadcrumbItem { Label = Localizer["NotificationHub"], IsActive = true }
+})
+
+<h2><loc key="NotificationHub" /></h2>
 <p style="color: var(--muted); margin-bottom: 2rem;">
     @Localizer["NotificationHubDescription"]
 </p>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
     <div class="card">
-        <h3 style="margin-top:0">@Localizer["PendingTimeOffRequests"]</h3>
+        <h3 style="margin-top:0"><loc key="PendingTimeOffRequests" /></h3>
         @if (Model.PendingTimeOffRequests.Any())
         {
             <table>
                 <thead>
                     <tr>
-                        <th>@Localizer["Company"]</th>
-                        <th>@Localizer["User"]</th>
-                        <th>@Localizer["Details"]</th>
-                        <th>@Localizer["Requested"]</th>
+                        <th><loc key="Company" /></th>
+                        <th><loc key="User" /></th>
+                        <th><loc key="Details" /></th>
+                        <th><loc key="Requested" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,21 +52,21 @@
         }
         else
         {
-            <p style="color: var(--muted); text-align: center; padding: 1rem;">@Localizer["NoPendingTimeOffRequests"]</p>
+            <p style="color: var(--muted); text-align: center; padding: 1rem;"><loc key="NoPendingTimeOffRequests" /></p>
         }
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">@Localizer["PendingSwapRequests"]</h3>
+        <h3 style="margin-top:0"><loc key="PendingSwapRequests" /></h3>
         @if (Model.PendingSwapRequests.Any())
         {
             <table>
                 <thead>
                     <tr>
-                        <th>@Localizer["Company"]</th>
-                        <th>@Localizer["User"]</th>
-                        <th>@Localizer["Details"]</th>
-                        <th>@Localizer["Requested"]</th>
+                        <th><loc key="Company" /></th>
+                        <th><loc key="User" /></th>
+                        <th><loc key="Details" /></th>
+                        <th><loc key="Requested" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,23 +88,23 @@
         }
         else
         {
-            <p style="color: var(--muted); text-align: center; padding: 1rem;">@Localizer["NoPendingSwapRequests"]</p>
+            <p style="color: var(--muted); text-align: center; padding: 1rem;"><loc key="NoPendingSwapRequests" /></p>
         }
     </div>
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">@Localizer["RecentNotificationsLast50"]</h3>
+    <h3 style="margin-top:0"><loc key="RecentNotificationsLast50" /></h3>
     @if (Model.RecentNotifications.Any())
     {
         <table>
             <thead>
                 <tr>
-                    <th>@Localizer["Company"]</th>
-                    <th>@Localizer["Type"]</th>
-                    <th>@Localizer["Message"]</th>
-                    <th>@Localizer["Date"]</th>
-                    <th>@Localizer["Status"]</th>
+                    <th><loc key="Company" /></th>
+                    <th><loc key="Type" /></th>
+                    <th><loc key="Message" /></th>
+                    <th><loc key="Date" /></th>
+                    <th><loc key="Status" /></th>
                 </tr>
             </thead>
             <tbody>
@@ -119,12 +127,12 @@
     }
     else
     {
-        <p style="color: var(--muted); text-align: center; padding: 2rem;">@Localizer["NoNotificationsYet"]</p>
+        <p style="color: var(--muted); text-align: center; padding: 2rem;"><loc key="NoNotificationsYet" /></p>
     }
 </div>
 
 <div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-left: 4px solid var(--primary); border-radius: 0.5rem;">
     <small style="color: var(--muted);">
-        <strong>@Localizer["Note"]</strong> @Localizer["NotificationHubInfo"]
+        <strong><loc key="Note" /></strong> @Localizer["NotificationHubInfo"]
     </small>
 </div>

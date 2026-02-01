@@ -11,8 +11,11 @@
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
     var role = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    // Note: Roles are still used for backward compatibility in the layout
+    // but actual authorization is enforced via grant-based policies on pages
     var isAdmin = User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director");
     var isDirector = User.IsInRole("Owner") || User.IsInRole("Director");
+    var isOwner = User.IsInRole("Owner");
     var firstName = name.Split(' ').FirstOrDefault() ?? name;
     var currentCulture = CultureInfo.CurrentUICulture.Name;
     var isHebrew = currentCulture.StartsWith("he");
@@ -21,181 +24,768 @@
     var enableCompanySwitcher = Configuration.GetValue<bool>("Features:EnableCompanySwitcher", false);
     var isViewingAsManager = ViewAsModeService.IsViewingAsManager();
     var viewAsCompanyName = isViewingAsManager ? ViewAsModeService.GetViewAsCompanyNameAsync().Result : null;
+    var currentPath = HttpContextAccessor?.HttpContext?.Request.Path.Value ?? "";
 }
 <!DOCTYPE html>
 <html lang="@lang" dir="@direction" data-theme="light" class="@(isHebrew ? "hebrew" : "english")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@(isAdmin ? Localizer["ShiftManager"] : $"{Localizer["MySchedule"]} - {firstName}")</title>
-    <link rel="stylesheet" href="~/css/site.css" />
+    <title>@(string.IsNullOrEmpty(firstName) ? (isHebrew ? "השיפטי שלך" : "your shifty") : (isHebrew ? $"השיפטי של {firstName}" : $"{firstName}'s shifty"))</title>
+
+    <!-- Favicon and App Icons (B-014) -->
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="~/icons/apple-touch-icon.png">
+    <link rel="manifest" href="~/site.webmanifest">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Shifty">
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @if (isHebrew)
     {
-        <link rel="stylesheet" href="~/css/rtl.css" />
+        <link rel="stylesheet" href="~/css/rtl.css" asp-append-version="true" />
     }
+    <link rel="stylesheet" href="~/css/shift-swap-game.css" asp-append-version="true" />
+    @if (Context.Request.Cookies["language_edit_mode"] == "true")
+    {
+        <link rel="stylesheet" href="~/css/language-edit-mode.css" asp-append-version="true" />
+    }
+    @* Lucide Icons - MIT licensed SVG icon library (local copy for air-gapped environments) *@
+    <script src="~/lib/lucide/lucide.min.js" asp-append-version="true"></script>
+    @* B-007: Calendar skeleton loading handler *@
+    <script src="~/js/calendar-skeleton.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Styles", required: false)
+    @* B-034: Anti-forgery token for AJAX requests - must load before other scripts *@
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        @Html.AntiForgeryToken()
+        <script>
+        // Anti-forgery token for AJAX (B-034)
+        (function() {
+            'use strict';
+            document.addEventListener('DOMContentLoaded', function() {
+                var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                var token = tokenInput ? tokenInput.value : null;
+                if (token) {
+                    // Store token globally for explicit use
+                    window.__RequestVerificationToken = token;
+
+                    // Intercept all fetch requests to add token
+                    var originalFetch = window.fetch;
+                    window.fetch = function(url, options) {
+                        options = options || {};
+                        if (options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(options.method.toUpperCase()) !== -1) {
+                            options.headers = options.headers || {};
+                            // Only add if not already present
+                            if (!options.headers['RequestVerificationToken'] && !options.headers['X-XSRF-TOKEN']) {
+                                options.headers['RequestVerificationToken'] = token;
+                            }
+                        }
+                        return originalFetch.call(this, url, options);
+                    };
+                    console.log('[CSRF] Anti-forgery token interceptor initialized');
+                }
+            });
+        })();
+        </script>
+    }
+    @await Html.PartialAsync("_LocalizationScript")
+    @* B-001-EXT: Reduced Motion Utility - Must load before animation scripts *@
+    <script defer src="~/js/reduced-motion.js" asp-append-version="true"></script>
+    @* B-052: Toast Notification System - Must load before site.js for showToast compatibility *@
+    <script defer src="~/js/toast-notifications.js" asp-append-version="true"></script>
+    <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
+    @* Localization API - Load on all pages for attribute localization and JavaScript string access *@
+    <script defer src="~/js/localization-api.js" asp-append-version="true"></script>
+    <script defer src="~/js/localization-attributes.js" asp-append-version="true"></script>
+    @* B-010: Date/Time Format Localization - Client-side date formatting *@
+    <script defer src="~/js/date-format.js" asp-append-version="true"></script>
+    @* B-016: Stale Cache Handling - Ensures fresh data after mutations *@
+    <script defer src="~/js/cache-management.js" asp-append-version="true"></script>
+    @* Only load session check on authenticated pages (prevents infinite redirect loop on login page) *@
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        <script defer src="~/js/session-check.js" asp-append-version="true"></script>
+    }
     @if (isHebrew)
     {
         <script defer src="~/js/hebrew-audit.js"></script>
     }
+    @if (Context.Request.Cookies["language_edit_mode"] == "true")
+    {
+        <script defer src="~/js/language-edit-mode.js" asp-append-version="true"></script>
+    }
+    @* Modal Focus Management (B-013) - Accessibility focus trap and keyboard handling *@
+    <script defer src="~/js/modal-focus.js" asp-append-version="true"></script>
+    @* Keyboard Navigation (B-037) - Comprehensive keyboard accessibility *@
+    <script defer src="~/js/keyboard-nav.js" asp-append-version="true"></script>
+    @* Accessibility Enhancements (Task 17) - aria-describedby, landmarks, aria-busy utilities *@
+    <script defer src="~/js/a11y-enhancements.js" asp-append-version="true"></script>
+    @* Mobile Navigation (B-011) - Hamburger menu with focus trap *@
+    <script defer src="~/js/mobile-nav.js" asp-append-version="true"></script>
+    @* Form Validation Enhancement (B-008) - Accessible error states and field highlighting *@
+    <script defer src="~/js/form-validation.js" asp-append-version="true"></script>
+    @* API Client with Rate Limit Handling (B-027) - Automatic retry with backoff *@
+    <script defer src="~/js/api-client.js" asp-append-version="true"></script>
+    @* B-004: Error States - Toast notifications, network banner, API error handling *@
+    <script defer src="~/js/error-states.js" asp-append-version="true"></script>
+    @* B-017: Partial Data Handler - Section-level loading/error states and retry *@
+    <script defer src="~/js/partial-data.js" asp-append-version="true"></script>
+    @* B-050: Offline/Flaky Network Handling - Form queue and offline banner *@
+    <script defer src="~/js/offline-handler.js" asp-append-version="true"></script>
+    @* Client Telemetry (B-019, B-020, B-021) - Local observability for air-gapped environments *@
+    <script defer src="~/js/telemetry.js" asp-append-version="true"></script>
+    @* Error Boundary (B-051) - Graceful error handling with fallback UI *@
+    <script defer src="~/js/error-boundary.js" asp-append-version="true"></script>
+    @* Code Splitting Utilities (B-030) - Lazy loading for reduced initial payload *@
+    <script defer src="~/js/lazy-loader.js" asp-append-version="true"></script>
+    <script defer src="~/js/modal-loader.js" asp-append-version="true"></script>
+    @* A-008: Widget Collapse Persistence - Remember widget expanded/collapsed state *@
+    <script defer src="~/js/widget-persistence.js" asp-append-version="true"></script>
+    @* B-006: Calendar Print Button - Adds print functionality to calendar pages *@
+    <script defer src="~/js/calendar-print.js" asp-append-version="true"></script>
+    @* A-002: Sidebar Collapse State Persistence - Apply BEFORE first paint to prevent flash *@
+    <script>
+    (function() {
+        'use strict';
+        var SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
+        var isCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+        
+        // Write CSS class directly to <html> element before DOM is ready
+        // This prevents flash of wrong state (FOUC)
+        if (isCollapsed) {
+            document.documentElement.classList.add('sidebar-initially-collapsed');
+        }
+        
+        // Also add a class to disable transitions during initial render
+        document.documentElement.classList.add('sidebar-no-transition');
+        
+        // Remove no-transition class after first paint
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Use requestAnimationFrame to ensure we're after first paint
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        document.documentElement.classList.remove('sidebar-no-transition');
+                    });
+                });
+            });
+        } else {
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    document.documentElement.classList.remove('sidebar-no-transition');
+                });
+            });
+        }
+    })();
+    </script>
+    @* A-008: Widget Collapse State - Apply BEFORE first paint to prevent flash *@
+    <script>
+    (function() {
+        'use strict';
+        var STORAGE_PREFIX = 'shifty_widget_';
+
+        // Early application of widget collapsed states to prevent FOUC
+        // This runs synchronously before DOM is fully ready
+        function applyWidgetStates() {
+            var widgets = document.querySelectorAll('.widget[data-widget-id]');
+            widgets.forEach(function(widget) {
+                var widgetId = widget.dataset.widgetId;
+                var key = STORAGE_PREFIX + widgetId + '_collapsed';
+                var isCollapsed = localStorage.getItem(key);
+
+                if (isCollapsed === 'true') {
+                    widget.classList.add('is-collapsed');
+                    var header = widget.querySelector(':scope > .widget__header');
+                    if (header) {
+                        header.setAttribute('aria-expanded', 'false');
+                    }
+                } else if (isCollapsed === 'false') {
+                    widget.classList.remove('is-collapsed');
+                    var header = widget.querySelector(':scope > .widget__header');
+                    if (header) {
+                        header.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            });
+        }
+
+        // Apply states as soon as possible and again on DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyWidgetStates);
+        } else {
+            applyWidgetStates();
+        }
+    })();
+    </script>
+    @* Offline deployment diagnostic: Verify sidebar CSS loads correctly *@
+    <script>
+    (function() {
+        window.addEventListener('DOMContentLoaded', function() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (sidebar) {
+                var computed = window.getComputedStyle(sidebar);
+                if (computed.display !== 'flex') {
+                    console.error('[OFFLINE ERROR] Sidebar CSS not loaded!');
+                    console.error('Expected display: flex, Got:', computed.display);
+                    console.error('Check: 1) UNBLOCK_FILES.bat run? 2) Hard refresh browser (Ctrl+F5)');
+
+                    // Show visual warning banner
+                    var warning = document.createElement('div');
+                    warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:var(--danger);color:var(--danger-text);padding:12px;text-align:center;z-index:9999;font-family:system-ui;font-size:14px';
+                    warning.textContent = '⚠️ CSS Loading Issue - Press Ctrl+F5 to refresh. If issue persists, run UNBLOCK_FILES.bat';
+                    document.body.insertBefore(warning, document.body.firstChild);
+                } else {
+                    console.log('[OK] Sidebar CSS loaded correctly (display: flex)');
+                }
+            }
+        });
+    })();
+    </script>
 </head>
 <body>
-<header class="@(isAdmin ? "topbar" : "topbar employee-topbar")">
-    <div class="brand">
-        @if (isAdmin)
-        {
-            <span>@Localizer["ShiftManager"]</span>
-        }
-        else
-        {
-            <div class="employee-brand">
-                <span class="brand-icon">📅</span>
-                <div class="brand-text">
-                    <div class="brand-title">@Localizer["MySchedule"]</div>
-                    <div class="brand-subtitle">@Localizer["WelcomeBack", firstName]</div>
-                </div>
+    @* A-013: Skip link for keyboard navigation (WCAG 2.4.1) *@
+    <a href="#main-content" class="skip-link">@(isHebrew ? "דלג לתוכן הראשי" : "Skip to main content")</a>
+
+    @* B-015: Brand Loading Animation - Shows during initial page load *@
+    <div class="page-loader" id="pageLoader" role="status" loc-aria-label="Aria_LoadingPage">
+        <div class="page-loader__brand">
+            <div class="page-loader__logo">
+                <img src="~/images/shifty-logo.svg" alt="" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <span class="page-loader__logo-fallback" style="display:none; color: var(--primary-contrast);">S</span>
             </div>
-        }
+            <span class="page-loader__name">SHIFTY</span>
+        </div>
+        <div class="page-loader__spinner" aria-hidden="true"></div>
+        <span class="page-loader__text">@(isHebrew ? "טוען..." : "Loading...")</span>
     </div>
+    <script>
+    // B-015: Hide loader when DOM is ready or after 5s timeout
+    (function() {
+        'use strict';
+        var loader = document.getElementById('pageLoader');
+        if (!loader) return;
 
-    <nav class="nav @(isAdmin ? "" : "employee-nav")">
-        @if (isAdmin)
-        {
-            <div class="dropdown">
-                <button class="linklike">@Localizer["Calendar"] ▾</button>
-                <div class="menu">
-                    <a href="/Calendar/Month">@Localizer["MonthView"]</a>
-                    <a href="/Calendar/Week">@Localizer["WeekView"]</a>
-                    <a href="/Calendar/Day">@Localizer["DayView"]</a>
-                </div>
-            </div>
-            <a href="/Requests/Index">@Localizer["Requests"]</a>
-            <a href="/My/Index">@Localizer["MyShifts"]</a>
-            @if (isDirector)
-            {
-                <div class="dropdown">
-                    <button class="linklike">@Localizer["Director"] ▾</button>
-                    <div class="menu">
-                        <a href="/Director/NotificationHub">@Localizer["NotificationHub"]</a>
-                        <a href="/Director/CompanyFilter">@Localizer["CompanyFilter"]</a>
-                        <a href="/Director/ViewAsMode">@Localizer["ViewAsManager"]</a>
-                    </div>
-                </div>
-            }
-            <div class="dropdown">
-                <button class="linklike">@Localizer["Admin"] ▾</button>
-                <div class="menu">
-                    @if (User.IsInRole("Owner"))
-                    {
-                        <a href="/Admin/Companies">@Localizer["Companies"]</a>
-                        <a href="/Admin/Directors">@Localizer["Directors"]</a>
-                        <a href="/Diagnostic">🔧 @Localizer["Diagnostic"]</a>
+        var hideLoader = function() {
+            if (!loader.classList.contains('is-hidden')) {
+                loader.classList.add('is-hidden');
+                // Remove from DOM after transition completes
+                setTimeout(function() {
+                    if (loader.parentNode) {
+                        loader.parentNode.removeChild(loader);
                     }
-                    <a href="/Admin/Users">@Localizer["Users"]</a>
-                    <a href="/Admin/ShiftTypes">@Localizer["ShiftTypes"]</a>
-                    <a href="/Admin/TimeOff">@Localizer["TimeOffManagement"]</a>
-                    <a href="/Admin/Config">@Localizer["Config"]</a>
+                }, 350);
+            }
+        };
+
+        // Hide when DOM is interactive/complete
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideLoader);
+        } else {
+            // DOM already loaded (e.g., script deferred or async)
+            hideLoader();
+        }
+
+        // Fallback timeout: 5 seconds max to prevent blocking
+        setTimeout(hideLoader, 5000);
+    })();
+    </script>
+
+    @* Language Edit Mode Banner (only shown when edit mode cookies are set) *@
+    @await Component.InvokeAsync("LanguageEditModeBanner")
+
+    <div class="app-shell">
+        @if (User?.Identity?.IsAuthenticated ?? false)
+        {
+        @* Sidebar Navigation - UI Overhaul v3.0 *@
+        <aside class="app-sidebar" id="appSidebar">
+            @* Brand Section *@
+            <div class="sidebar-brand">
+                <div class="sidebar-brand__logo">
+                    <img src="~/images/shifty-logo.svg" alt="Shifty" width="32" height="32" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <span class="sidebar-brand__logo-fallback" style="display:none; font-size:24px;">📊</span>
+                </div>
+                <div class="sidebar-brand__text">
+                    <span class="sidebar-brand__name">SHIFTY</span>
+                    <span class="sidebar-brand__tagline"><loc key="ShiftManager" /></span>
                 </div>
             </div>
-        }
-        else
-        {
-            <a href="/My/Index" class="nav-item primary">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-text">@Localizer["MyShifts"]</span>
-            </a>
-            <a href="/Calendar/Month" class="nav-item">
-                <span class="nav-icon">📅</span>
-                <span class="nav-text">@Localizer["Schedule"]</span>
-            </a>
-            <a href="/My/Requests" class="nav-item">
-                <span class="nav-icon">📝</span>
-                <span class="nav-text">@Localizer["Requests"]</span>
-            </a>
-            <a href="/My/NotificationCenter" class="nav-item notification-nav" style="position: relative;">
-                <span class="nav-icon">🔔</span>
-                <span class="nav-text">@Localizer["Notifications"]</span>
-                @await Component.InvokeAsync("UnreadNotificationCount")
-            </a>
-        }
-    </nav>
 
-    <div class="spacer"></div>
+            @* Context Switcher - Only shown if user has multiple contexts *@
+            @await Component.InvokeAsync("ContextSwitcher")
 
-    <div class="topbar-actions">
-        @* Multitenancy Phase 3: Company switcher (behind feature flag) *@
-        @if (enableCompanySwitcher && isAdmin)
-        {
-            <div class="company-switcher" style="display: none;">
-                @* TODO Phase 3: Implement company switcher dropdown *@
-                <button class="action-btn" aria-label="Switch Company">
-                    <span>🏢</span>
-                </button>
-            </div>
-        }
-
-        @await Component.InvokeAsync("LanguageToggle")
-
-        <button class="action-btn" id="themeToggle" aria-label="@Localizer["ToggleDarkMode"]">
-            <span class="theme-icon">🌓</span>
-        </button>
-
-        @if (User?.Identity?.IsAuthenticated == true)
-        {
-            <div class="user-menu">
-                @if (!isAdmin)
+            @* Navigation *@
+            <nav class="app-sidebar-nav">
+                @if (isAdmin)
                 {
-                    <div class="user-info">
-                        <div class="user-avatar">@firstName.Substring(0, 1).ToUpper()</div>
-                        <div class="user-details">
-                            <div class="user-name">@name</div>
-                            <div class="user-role">@role</div>
-                        </div>
-                    </div>
+                    @* ✅ PHASE 20: My Calendar Section *@
+                    <div class="nav-section-header"><loc key="Calendar_MyCalendar" /></div>
+
+                    @if (isOwner)
+                    {
+                        @* Owner uses old home page *@
+                        <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">🏠</span>
+                            <span><loc key="Home" /></span>
+                        </a>
+                    }
+                    else if (User.IsInRole("Director"))
+                    {
+                        @* Directors use Director Hub as home *@
+                        <a href="/Director/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director") || currentPath == "/" ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👔</span>
+                            <span>Director Hub</span>
+                        </a>
+                    }
+                    else
+                    {
+                        @* Managers use new redesigned home *@
+                        <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">🏠</span>
+                            <span><loc key="Home" /></span>
+                        </a>
+                    }
+                    <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📅</span>
+                        <span><loc key="Schedule" /></span>
+                    </a>
+                    <a href="/Requests/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Requests") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📝</span>
+                        <span><loc key="Requests" /></span>
+                    </a>
+                    <require-grant key="ViewAnalytics">
+                    <a href="/Admin/Analytics" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Analytics") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📊</span>
+                        <span><loc key="Analytics" /></span>
+                    </a>
+                    </require-grant>
+                    <require-grant key="ViewAuditLog">
+                    <a href="/Admin/AuditLog" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/AuditLog") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🔍</span>
+                        <span><loc key="AuditLog" /></span>
+                    </a>
+                    </require-grant>
+
+                    @* Phase 8.2.2: Show different People links based on role *@
+                    @if (User.IsInRole("Manager"))
+                    {
+                        @* Managers see "My Team" (their own team) *@
+                        <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👥</span>
+                            <span><loc key="MyTeam" /></span>
+                        </a>
+                    }
+                    else
+                    {
+                        @* Owners and Directors see "People" (all users) *@
+                        <a href="/Admin/Users" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Users") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👥</span>
+                            <span><loc key="People" /></span>
+                        </a>
+                    }
+
+                    <require-grant key="EditCompany">
+                    <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🏢</span>
+                        <span><loc key="Companies" /></span>
+                    </a>
+                    </require-grant>
+
+                    <require-grant key="AdminAccess" mode="any">
+                    <a href="/Admin/Index" class="app-sidebar-nav-item @(currentPath == "/Admin/Index" || currentPath == "/Admin" ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🎛️</span>
+                        <span>Admin Hub</span>
+                    </a>
+                    </require-grant>
+
+                    <require-grant key="ViewSettings">
+                    <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/ShiftTypes") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">⚙️</span>
+                        <span><loc key="Settings" /></span>
+                    </a>
+                    </require-grant>
+
+                    @* Owner Administration Panel - Grant protected *@
+                    <require-grant key="AdminAccess">
+                    <div class="nav-section-header">🔧 <loc key="Owner_AdminPanel" /></div>
+                    <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🔧</span>
+                        <span><loc key="Owner_AdminPanel" /></span>
+                    </a>
+                    </require-grant>
+
+                    @* ✅ PHASE 20: Management Section - Grant protected *@
+                    <require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
+                    <div class="nav-section-header">⚙️ <loc key="Calendar_Management" /></div>
+                    </require-grant>
+
+                    <require-grant key="ViewShifts">
+                    <a href="/Calendar/Table" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Table") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📊</span>
+                        <span><loc key="Calendar_ShiftsManagement" /></span>
+                    </a>
+                    </require-grant>
+                    <require-grant key="ViewChores">
+                    <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🗂️</span>
+                        <span><loc key="Calendar_ChoresManagement" /></span>
+                    </a>
+                    </require-grant>
+                    <require-grant key="ViewDuties">
+                    <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🎯</span>
+                        <span><loc key="Calendar_OnDutyManagement" /></span>
+                    </a>
+                    </require-grant>
                 }
                 else
                 {
-                    <span class="admin-badge">@name (@role)</span>
+                    @* Employee/Trainee Navigation *@
+                    <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") || currentPath.StartsWith("/My/Index") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🏠</span>
+                        <span><loc key="Home" /></span>
+                    </a>
+                    <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📅</span>
+                        <span><loc key="Schedule" /></span>
+                    </a>
+                    <a href="/My/Requests" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Requests") || currentPath.StartsWith("/Requests") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📝</span>
+                        <span><loc key="Requests" /></span>
+                    </a>
+                    <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">👥</span>
+                        <span><loc key="MyTeam" /></span>
+                    </a>
+
+                    @* Divider *@
+                    <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+
+                    <a href="/Public/Chores" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Chores") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🗂️</span>
+                        <span><loc key="Chores" /></span>
+                    </a>
+                    <a href="/Public/OnDuty" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🎯</span>
+                        <span><loc key="OnDuty" /></span>
+                    </a>
+                    <a href="/My/Profile" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Profile") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">👤</span>
+                        <span><loc key="MyProfile" /></span>
+                    </a>
+                    <a href="/My/Settings" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Settings") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">⚙️</span>
+                        <span><loc key="My_Settings" /></span>
+                    </a>
                 }
-                <form method="post" asp-page="/Auth/Logout" style="display:inline">
-                    @Html.AntiForgeryToken()
-                    <button class="logout-btn" type="submit">
-                        <span class="logout-icon">🚪</span>
-                        <span class="logout-text">@Localizer["Logout"]</span>
-                    </button>
-                </form>
+            </nav>
+
+            @* On-Call Widget (in sidebar for quick access) *@
+            @if (User?.Identity?.IsAuthenticated == true)
+            {
+                <div class="sidebar-widget-container">
+                    @await Component.InvokeAsync("OnCallWidget", new { showInSidebar = true })
+                </div>
+            }
+
+            @* Sidebar Footer *@
+            <div class="sidebar-footer">
+                @if (User?.Identity?.IsAuthenticated == true)
+                {
+                    <div class="sidebar-user" tabindex="0" role="button" aria-haspopup="menu">
+                        <div class="sidebar-user__avatar">@firstName.Substring(0, 1).ToUpper()</div>
+                        <div class="sidebar-user__info">
+                            <div class="sidebar-user__name">@firstName</div>
+                            <div class="sidebar-user__role">@role</div>
+                        </div>
+                        <span class="sidebar-user__menu-icon">▼</span>
+                    </div>
+
+                    @* Ctrl+K shortcut hint *@
+                    <div class="sidebar-shortcut" loc-title="Sidebar_CtrlKTooltip">
+                        <span class="sidebar-shortcut__icon">⌨️</span>
+                        <span class="sidebar-shortcut__key">Ctrl</span>
+                        <span>+</span>
+                        <span class="sidebar-shortcut__key">K</span>
+                    </div>
+                }
             </div>
+
+            @* Sidebar Toggle Button (A-002: Accessible keyboard toggle) *@
+            <button class="sidebar-toggle" 
+                    id="sidebarToggle" 
+                    type="button"
+                    loc-aria-label="Sidebar_Toggle"
+                    aria-expanded="true"
+                    aria-controls="appSidebar"
+                    title="@Localizer["Sidebar_Toggle"]">
+                <span class="sidebar-toggle__icon" aria-hidden="true">◀</span>
+            </button>
+        </aside>
+
+        @* Mobile Navigation Overlay *@
+        <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+        @* Mobile Navigation Toggle (B-011) *@
+        <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="@Localizer["Navigation_Toggle"]" aria-expanded="false" aria-controls="appSidebar">
+            <span class="mobile-nav-toggle__icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+        </button>
         }
-    </div>
-</header>
 
-@if (isViewingAsManager && viewAsCompanyName != null)
-{
-    <div style="background: var(--warning); color: #000; padding: 0.75rem 1rem; text-align: center; font-weight: 600; border-bottom: 2px solid #d97706;">
-        ⚠️ Viewing as Manager of <strong>@viewAsCompanyName</strong> —
-        <a href="/Director/ViewAsMode" style="color: #000; text-decoration: underline; margin-left: 1rem;">Exit View Mode</a>
-    </div>
-}
+        @* Main Content Area *@
+        <div class="app-main">
+            @* Header *@
+            <header class="app-header">
+                <div class="app-header-main">
+                    <div class="app-header-left">
+                        <h1 class="page-title">@ViewData["Title"]</h1>
+                        @* Breadcrumbs will be rendered by individual pages here *@
+                    </div>
 
-@if (!isAdmin)
-{
-    <div class="employee-welcome">
-        <div class="container">
-            <div class="welcome-content">
-                <h1 class="welcome-title">@Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]</h1>
-                <p class="welcome-subtitle">@Localizer["ScheduleSubtitle"]</p>
+                    <div class="app-header-right">
+                        @* Decision Ribbon - EXCLUDE from Owner routes (Phase 1 Enhancement) *@
+                        @if (!currentPath.StartsWith("/Owner"))
+                        {
+                            @await Component.InvokeAsync("DecisionRibbon")
+                        }
+
+                        @* Notifications *@
+                        <a href="/My/NotificationCenter" class="action-btn" style="position: relative;">
+                            <span>🔔</span>
+                            @await Component.InvokeAsync("UnreadNotificationCount")
+                        </a>
+
+                        @* Language Toggle *@
+                        @await Component.InvokeAsync("LanguageToggle")
+
+                        @* Theme Toggle *@
+                        <button class="action-btn" id="themeToggle" loc-aria-label="ToggleDarkMode">
+                            <span>🌓</span>
+                        </button>
+
+                        @* Logout *@
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <form method="post" asp-page="/Auth/Logout" style="display:inline; margin: 0;">
+                                @Html.AntiForgeryToken()
+                                <button class="action-btn" type="submit" style="background: var(--danger); color: var(--danger-text);">
+                                    <span>🚪</span>
+                                    <span><loc key="Logout" /></span>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </header>
+
+            @* View As Manager Warning *@
+            @if (isViewingAsManager && viewAsCompanyName != null)
+            {
+                <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid var(--warning-hover);">
+                    ⚠️ Viewing as Manager of <strong>@viewAsCompanyName</strong> —
+                    <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-left: 1rem;">Exit View Mode</a>
+                </div>
+            }
+
+            @* Employee Welcome (Optional - can be moved to Home page) *@
+            @if (!isAdmin && currentPath.StartsWith("/Home"))
+            {
+                <div class="employee-welcome" style="background: var(--surface-soft); padding: 2rem 1.5rem; border-bottom: 1px solid var(--border);">
+                    <div class="welcome-content">
+                        <h2 class="text-display" style="margin: 0 0 0.5rem 0;">
+                            @Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]
+                        </h2>
+                        <p class="text-subtle" style="margin: 0;"><loc key="ScheduleSubtitle" /></p>
+                    </div>
+                </div>
+            }
+
+            @* Main Content *@
+            <main class="app-content" id="main-content" tabindex="-1">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    @* Command Palette *@
+    <div id="commandPalette" class="command-palette" style="display: none;">
+        <div class="command-palette-backdrop" onclick="closeCommandPalette()"></div>
+        <div class="command-palette-content">
+            <div class="command-palette-search">
+                <span class="command-palette-icon">🔍</span>
+                <input type="text" id="commandPaletteInput" loc-placeholder="CommandPaletteSearch" autocomplete="off" loc-aria-label="Aria_SearchCommands" />
+                <span class="command-palette-hint">Ctrl+K</span>
             </div>
-            <div class="quick-stats">
-                <!-- Quick stats will be populated by individual pages -->
+            <div id="commandPaletteResults" class="command-palette-results">
+                @* Results will be populated by JavaScript *@
             </div>
         </div>
     </div>
-}
 
-<main class="@(isAdmin ? "container" : "container employee-container")">
-    @RenderBody()
-</main>
+    @await RenderSectionAsync("Scripts", required: false)
+    @* Page-specific deferred scripts (B-030) - Loads after main scripts for code splitting *@
+    @await RenderSectionAsync("PageScripts", required: false)
 
-@await RenderSectionAsync("Scripts", required: false)
+    @* Initialize Lucide icons *@
+    <script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+        // Re-initialize icons after any dynamic content updates
+        document.addEventListener('htmx:afterSwap', function() {
+            lucide.createIcons();
+        });
+    }
+    </script>
+
+    @* Sidebar & Mobile Navigation Scripts (A-002: Enhanced with state persistence) *@
+    <script>
+    (function() {
+        'use strict';
+        var SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
+        var sidebar = document.getElementById('appSidebar');
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        var mobileToggle = document.getElementById('mobileNavToggle');
+        var mobileOverlay = document.getElementById('mobileNavOverlay');
+
+        if (!sidebar) return;
+
+        // A-002: Apply collapsed state from pre-render (set on <html> element in <head>)
+        // This prevents flash of wrong state since CSS applies immediately
+        var isCollapsed = document.documentElement.classList.contains('sidebar-initially-collapsed');
+        if (isCollapsed) {
+            sidebar.classList.add('is-collapsed');
+        }
+
+        // Update toggle button ARIA state to match current collapsed state
+        function updateToggleAriaState() {
+            if (sidebarToggle) {
+                var expanded = !sidebar.classList.contains('is-collapsed');
+                sidebarToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            }
+        }
+
+        // Initialize ARIA state
+        updateToggleAriaState();
+
+        // Desktop sidebar toggle with localStorage persistence
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('is-collapsed');
+                var collapsed = sidebar.classList.contains('is-collapsed');
+                localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed);
+                updateToggleAriaState();
+                
+                // Announce state change to screen readers
+                var announcement = collapsed ? 'Sidebar collapsed' : 'Sidebar expanded';
+                announceToScreenReader(announcement);
+            });
+
+            // Keyboard support - Enter and Space already work for buttons,
+            // but let's also support Ctrl+B as a common sidebar toggle shortcut
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+B (or Cmd+B on Mac) to toggle sidebar
+                if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                    e.preventDefault();
+                    sidebarToggle.click();
+                }
+            });
+        }
+
+        // Helper function for screen reader announcements
+        function announceToScreenReader(message) {
+            var announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.style.cssText = 'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            
+            // Remove after announcement is read
+            setTimeout(function() {
+                if (announcement.parentNode) {
+                    announcement.parentNode.removeChild(announcement);
+                }
+            }, 1000);
+        }
+
+        // Mobile navigation toggle
+        if (mobileToggle && mobileOverlay) {
+            mobileToggle.addEventListener('click', function() {
+                sidebar.classList.add('is-mobile-open');
+                mobileOverlay.classList.add('is-visible');
+                document.body.style.overflow = 'hidden';
+                mobileToggle.classList.add('is-open');
+                mobileToggle.setAttribute('aria-expanded', 'true');
+            });
+
+            function closeMobileNav() {
+                sidebar.classList.remove('is-mobile-open');
+                mobileOverlay.classList.remove('is-visible');
+                document.body.style.overflow = '';
+                mobileToggle.classList.remove('is-open');
+                mobileToggle.setAttribute('aria-expanded', 'false');
+            }
+
+            mobileOverlay.addEventListener('click', closeMobileNav);
+
+            // Close on escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('is-mobile-open')) {
+                    closeMobileNav();
+                    mobileToggle.focus(); // Return focus to toggle button
+                }
+            });
+        }
+
+        // Collapsible nav categories
+        var categoryHeaders = document.querySelectorAll('.nav-category__header');
+        categoryHeaders.forEach(function(header) {
+            header.addEventListener('click', function() {
+                var category = this.closest('.nav-category');
+                if (category) {
+                    category.classList.toggle('is-collapsed');
+                    var isExpanded = !category.classList.contains('is-collapsed');
+                    this.setAttribute('aria-expanded', isExpanded);
+                    
+                    // Save preference
+                    var categoryId = category.dataset.categoryId;
+                    if (categoryId) {
+                        var prefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
+                        prefs[categoryId] = !isExpanded;
+                        localStorage.setItem('shifty_nav_prefs', JSON.stringify(prefs));
+                    }
+                }
+            });
+
+            // Keyboard support
+            header.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Restore category collapsed states
+        var navPrefs = JSON.parse(localStorage.getItem('shifty_nav_prefs') || '{}');
+        document.querySelectorAll('.nav-category[data-category-id]').forEach(function(category) {
+            var categoryId = category.dataset.categoryId;
+            if (navPrefs[categoryId]) {
+                category.classList.add('is-collapsed');
+                var header = category.querySelector('.nav-category__header');
+                if (header) header.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

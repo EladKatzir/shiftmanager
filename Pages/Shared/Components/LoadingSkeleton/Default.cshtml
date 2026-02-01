@@ -1,0 +1,40 @@
+@model ShiftManager.ViewComponents.LoadingSkeletonModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    var variantClass = Model.Variant switch
+    {
+        "text-sm" => "skeleton--text-sm",
+        "heading" => "skeleton--heading",
+        "avatar" => "skeleton--avatar",
+        "btn" => "skeleton--btn",
+        "card" => "skeleton--card",
+        "row" => "skeleton--row",
+        _ => "skeleton--text"
+    };
+
+    var customStyle = "";
+    if (!string.IsNullOrEmpty(Model.Width) || !string.IsNullOrEmpty(Model.Height))
+    {
+        var widthStyle = !string.IsNullOrEmpty(Model.Width) ? $"width: {Model.Width};" : "";
+        var heightStyle = !string.IsNullOrEmpty(Model.Height) ? $"height: {Model.Height};" : "";
+        customStyle = $"style=\"{widthStyle}{heightStyle}\"";
+    }
+}
+
+<div class="skeleton-container" role="status" aria-busy="true" aria-label="@Localizer["Loading"]">
+    @for (var i = 0; i < Model.Count; i++)
+    {
+        if (!string.IsNullOrEmpty(customStyle))
+        {
+            <div class="skeleton @variantClass" @Html.Raw(customStyle) aria-hidden="true"></div>
+        }
+        else
+        {
+            <div class="skeleton @variantClass" aria-hidden="true"></div>
+        }
+    }
+    <span class="visually-hidden">@Localizer["Loading"]</span>
+</div>

@@ -3,6 +3,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- B-026: Enable XML documentation for Swagger API docs -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,11 +17,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="Backups/**" />
+    <Content Remove="FinalProductPublish/**" />
+    <Content Remove="ProjectPublish/**" />
+    <Content Remove="packages/**" />
+    <Content Remove=".claude/**" />
+    <None Remove="Backups/**" />
+    <None Remove="FinalProductPublish/**" />
+    <None Remove="ProjectPublish/**" />
+    <None Remove="packages/**" />
+    <None Remove=".claude/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- B-026: Swagger/OpenAPI support -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
   </ItemGroup>
 </Project>

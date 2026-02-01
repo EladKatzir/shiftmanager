@@ -1,0 +1,172 @@
+sequenceDiagram
+    %% ShiftManager Multi-Tenant Request Flow
+    %% Shows how CompanyId is resolved, cached, and enforced throughout a request
+
+    participant User as 👤 User Browser
+    participant Auth as 🔐 Authentication
+    participant Middleware as ⚙️ Middleware Pipeline
+    participant Resolver as 🎯 TenantResolver
+    participant Context as 💾 CompanyContext
+    participant Page as 📄 Razor Page
+    participant Service as 🔧 Service Layer
+    participant Interceptor as 🛡️ CompanyIdInterceptor
+    participant EF as 🗄️ EF Core + Filters
+    participant DB as 💿 SQLite Database
+
+    %% ========================================
+    %% PHASE 1: Authentication & Claim Setting
+    %% ========================================
+
+    User->>Auth: POST /Login (email, password)
+    Auth->>DB: Validate credentials
+    DB-->>Auth: AppUser { Id=5, CompanyId=2, Role=Manager }
+
+    Note over Auth: Create authentication cookie<br/>with claims
+
+    Auth->>Auth: Add Claims:<br/>- NameIdentifier: "5"<br/>- CompanyId: "2"<br/>- Role: "Manager"<br/>- Email: "manager@company.com"
+    Auth-->>User: Set-Cookie: .AspNetCore.Cookies=...
+
+    Note over User,Auth: User is now authenticated<br/>CompanyId=2 stored in cookie
+
+    %% ========================================
+    %% PHASE 2: Subsequent Request with CompanyId Resolution
+    %% ========================================
+
+    User->>Middleware: GET /Schedule (with cookie)
+
+    Note over Middleware: UseAuthentication()<br/>reads cookie, validates signature
+
+    Middleware->>Middleware: Deserialize cookie claims<br/>User.Identity.IsAuthenticated = true
+
+    Note over Middleware: CompanyContextMiddleware<br/>runs BEFORE page handler
+
+    Middleware->>Resolver: GetCurrentTenantId()
+
+    Note over Resolver: Extract CompanyId from claims
+
+    Resolver->>Resolver: user.FindFirst("CompanyId")?<br/>Parse to int
+    Resolver-->>Middleware: CompanyId = 2
+
+    Middleware->>Context: Cache in HttpContext.Items["CurrentCompanyId"]
+
+    Note over Context: Single lookup per request<br/>Subsequent calls use cache
+
+    %% ========================================
+    %% PHASE 3: Query Execution with Global Filters
+    %% ========================================
+
+    Middleware->>Page: Execute OnGetAsync()
+    Page->>Service: GetShiftInstancesAsync(startDate, endDate)
+
+    Service->>Resolver: GetCurrentTenantId()
+    Resolver->>Context: Try get cached CompanyId
+    Context-->>Resolver: CompanyId = 2 (from cache)
+    Resolver-->>Service: CompanyId = 2
+
+    Note over Service: Build query without<br/>explicit CompanyId filter
+
+    Service->>EF: db.ShiftInstances<br/>.Where(si => si.WorkDate >= start)
+
+    Note over EF: Global Query Filter<br/>AUTOMATICALLY injects:<br/>WHERE CompanyId = 2
+
+    EF->>EF: Apply filter:<br/>modelBuilder.Entity&lt;ShiftInstance&gt;()<br/>.HasQueryFilter(e => e.CompanyId == resolver.GetCurrentTenantId())
+
+    EF->>DB: SELECT * FROM ShiftInstances<br/>WHERE WorkDate >= @p0<br/>AND CompanyId = 2
+
+    DB-->>EF: Results (only CompanyId=2 rows)
+    EF-->>Service: List&lt;ShiftInstance&gt;
+    Service-->>Page: Data for display
+    Page-->>User: HTML response with schedule
+
+    %% ========================================
+    %% PHASE 4: Insert with CompanyIdInterceptor
+    %% ========================================
+
+    User->>Page: POST /CreateShift (form data)
+    Page->>Service: CreateShiftInstanceAsync(dto)
+
+    Service->>Resolver: GetCurrentTenantId()
+    Resolver-->>Service: CompanyId = 2
+
+    Service->>Service: Create entity:<br/>var shift = new ShiftInstance {<br/>  ShiftTypeId = 1,<br/>  WorkDate = date,<br/>  // CompanyId NOT set<br/>}
+
+    Service->>EF: db.ShiftInstances.Add(shift)
+    Service->>EF: await db.SaveChangesAsync()
+
+    Note over EF,Interceptor: SaveChangesInterceptor<br/>runs BEFORE database write
+
+    EF->>Interceptor: SavingChanges(context)
+
+    Note over Interceptor: Find all Added entities<br/>implementing IBelongsToCompany
+
+    Interceptor->>Resolver: GetCurrentTenantId()
+    Resolver-->>Interceptor: CompanyId = 2
+
+    Interceptor->>Interceptor: foreach (Added entity)<br/>if (entity.CompanyId == 0)<br/>  entity.CompanyId = 2
+
+    Note over Interceptor: CompanyId AUTOMATICALLY<br/>set on all new entities
+
+    Interceptor-->>EF: Continue SaveChanges
+
+    EF->>DB: INSERT INTO ShiftInstances<br/>(ShiftTypeId, WorkDate, CompanyId)<br/>VALUES (1, '2025-06-15', 2)
+
+    DB-->>EF: Success
+    EF-->>Service: Entity saved
+    Service-->>Page: Success
+    Page-->>User: Redirect to /Schedule
+
+    %% ========================================
+    %% PHASE 5: Cross-Company Access (Directors)
+    %% ========================================
+
+    Note over User,DB: Special Case: Director Switching Companies
+
+    User->>Page: POST /SwitchCompany (targetCompanyId=3)
+    Page->>Service: DirectorService.IsDirectorOfAsync(3)
+
+    Service->>DB: SELECT * FROM DirectorCompanies<br/>WHERE UserId=5 AND CompanyId=3<br/>AND IsDeleted=0
+
+    DB-->>Service: Found (Director has access)
+    Service-->>Page: true
+
+    Page->>Resolver: SetTenantIdOverride(3)
+
+    Note over Resolver: Override active for this request<br/>GetCurrentTenantId() returns 3
+
+    Resolver-->>Page: Override set
+
+    Note over Page,DB: All subsequent queries/inserts<br/>use CompanyId=3 instead of 2
+
+    Page->>Service: GetShiftInstancesAsync(...)
+    Service->>Resolver: GetCurrentTenantId()
+    Resolver-->>Service: CompanyId = 3 (OVERRIDE)
+    Service->>EF: db.ShiftInstances.Where(...)
+    EF->>DB: WHERE CompanyId = 3
+    DB-->>User: Show Company 3's schedule
+
+    %% ========================================
+    %% PHASE 6: Global Entities (OnDuty)
+    %% ========================================
+
+    Note over User,DB: Special Case: Global Entities (No CompanyId)
+
+    User->>Page: GET /OnDuty
+    Page->>Service: OnDutyService.GetOnDutiesAsync(date)
+
+    Note over Service: OnDuty table has NO CompanyId<br/>Must use IgnoreQueryFilters()
+
+    Service->>EF: db.OnDuties<br/>.IgnoreQueryFilters()<br/>.Where(od => od.Date == date)
+
+    Note over EF: IgnoreQueryFilters() bypasses<br/>global query filter
+
+    EF->>DB: SELECT * FROM OnDuties<br/>WHERE Date = @p0<br/>(NO CompanyId filter)
+
+    DB-->>Service: All on-duty records (cross-company)
+    Service-->>Page: Filtered by DirectorService permissions
+    Page-->>User: Display authorized on-duty assignments
+
+    %% ========================================
+    %% SECURITY SUMMARY
+    %% ========================================
+
+    Note over User,DB: 🛡️ SECURITY GUARANTEES:<br/>✓ CompanyId stored in signed cookie (tamper-proof)<br/>✓ All queries auto-filtered by CompanyId<br/>✓ All inserts auto-set CompanyId<br/>✓ Unauthenticated users get CompanyId=0 (no data)<br/>✓ Directors explicitly authorized via DirectorCompanies table<br/>✓ Global entities require IgnoreQueryFilters() (explicit bypass)

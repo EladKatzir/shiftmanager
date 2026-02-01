@@ -1,0 +1,695 @@
+@page
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@model ShiftManager.Pages.GriffinDiagnosticModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Localizer["GriffinDiagnosticTitle"]</title>
+    <link rel="stylesheet" href="~/css/tokens.css" />
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: var(--primary-contrast);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+        .header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: var(--text-display);
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            padding: 0;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .section h2 {
+            margin: 0;
+            background: var(--surface-soft);
+            color: var(--text);
+            padding: 1rem 1.5rem;
+            font-size: var(--text-heading);
+            border-bottom: 2px solid var(--border-strong);
+        }
+        .section-body {
+            padding: 1.5rem;
+        }
+        .status-ok { color: var(--success); font-weight: 600; }
+        .status-error { color: var(--danger); font-weight: 600; }
+        .status-warning { color: var(--warning); font-weight: 600; }
+        .status-info { color: var(--info); font-weight: 600; }
+
+        .check-list {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            background: var(--surface-soft);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+        .check-list div {
+            margin-bottom: 0.25rem;
+        }
+
+        pre {
+            background: var(--surface-soft);
+            color: var(--text);
+            padding: 1.5rem;
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .field {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--primary);
+        }
+        .field-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: var(--text-small);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .field-value {
+            font-family: var(--font-mono);
+            color: var(--text);
+            font-size: 1rem;
+            word-break: break-all;
+        }
+        .url-preview {
+            background: var(--warning-soft);
+            border: 2px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            word-break: break-all;
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            color: var(--warning);
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: var(--text-tiny);
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .badge-success { background: var(--success); color: var(--success-text); }
+        .badge-error { background: var(--danger); color: var(--danger-text); }
+        .badge-warning { background: var(--warning); color: var(--warning-text); }
+
+        .warning-box {
+            background: var(--warning-soft);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: var(--radius-sm);
+        }
+        .warning-box ul {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .grid-item {
+            background: var(--surface-soft);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+        .grid-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-muted);
+            font-size: var(--text-small);
+            text-transform: uppercase;
+        }
+        .grid-item p {
+            margin: 0;
+            font-size: var(--text-heading);
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: var(--primary-contrast);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-colors);
+        }
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--text-muted);
+        }
+        .btn-secondary:hover {
+            background: var(--text-subtle);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+        .summary-card.success { border-color: var(--success); }
+        .summary-card.error { border-color: var(--danger); }
+        .summary-card.warning { border-color: var(--warning); }
+        .summary-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: var(--text-small);
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .summary-card .value {
+            font-size: var(--text-display);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .summary-card .label {
+            font-size: var(--text-small);
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 @Localizer["GriffinDiagnosticTitle"]</h1>
+        <p><strong>@Localizer["Generated"]:</strong> @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") | <strong>@Localizer["Purpose"]:</strong> @Localizer["GriffinDiagnosticPurpose"]</p>
+    </div>
+
+    @if (Model.HasError)
+    {
+        <div class="section">
+            <h2>❌ @Localizer["CriticalError"]</h2>
+            <div class="section-body">
+                <p class="status-error">@Model.ErrorMessage</p>
+            </div>
+        </div>
+    }
+
+    @* Summary Cards *@
+    @if (Model.ValidationResults.Any())
+    {
+        var passedChecks = Model.ValidationResults.Count(v => v.Value);
+        var failedChecks = Model.ValidationResults.Count(v => !v.Value);
+        var totalChecks = Model.ValidationResults.Count;
+        var passPercentage = totalChecks > 0 ? (int)((passedChecks / (double)totalChecks) * 100) : 0;
+
+        <div class="summary-grid">
+            <div class="summary-card @(failedChecks == 0 ? "success" : failedChecks > 3 ? "error" : "warning")">
+                <h3>@Localizer["OverallStatus"]</h3>
+                <div class="value" style="color: var(@(failedChecks == 0 ? "--success" : failedChecks > 3 ? "--danger" : "--warning"))">
+                    @(failedChecks == 0 ? "✓" : failedChecks > 3 ? "✗" : "⚠")
+                </div>
+                <div class="label">@(failedChecks == 0 ? Localizer["AllChecksPassed"] : failedChecks > 3 ? Localizer["CriticalIssues"] : Localizer["WarningsFound"])</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>@Localizer["ValidationScore"]</h3>
+                <div class="value">@passPercentage%</div>
+                <div class="label">@passedChecks / @totalChecks @Localizer["ChecksPassed"]</div>
+            </div>
+
+            <div class="summary-card @(Model.GriffinServerReachable ? "success" : "error")">
+                <h3>@Localizer["ServerStatus"]</h3>
+                <div class="value" style="color: var(@(Model.GriffinServerReachable ? "--success" : "--danger"))">
+                    @(Model.GriffinServerReachable ? "✓" : "✗")
+                </div>
+                <div class="label">@(Model.GriffinServerReachable ? $"{Localizer["Online"]} ({Model.GriffinResponseTime}ms)" : Localizer["Unreachable"])</div>
+            </div>
+
+            <div class="summary-card">
+                <h3>@Localizer["ConfigSource"]</h3>
+                <div class="value" style="font-size: var(--text-heading);">📊</div>
+                <div class="label">@Model.ConfigSource</div>
+            </div>
+        </div>
+    }
+
+    @* Warnings Section *@
+    @if (Model.Warnings.Any())
+    {
+        <div class="warning-box">
+            <h3 style="margin: 0 0 0.5rem 0; color: var(--warning);">⚠️ @Localizer["Warnings"] (@Model.Warnings.Count)</h3>
+            <ul>
+                @foreach (var warning in Model.Warnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @* Diagnostic Checks *@
+    <div class="section">
+        <h2>📋 @Localizer["DiagnosticChecks"] (@Model.Checks.Count @Localizer["Steps"])</h2>
+        <div class="section-body">
+            <div class="check-list">
+                @foreach (var check in Model.Checks)
+                {
+                    var line = check;
+                    if (line.Contains("✓"))
+                    {
+                        <div class="status-ok">@line</div>
+                    }
+                    else if (line.Contains("✗"))
+                    {
+                        <div class="status-error">@line</div>
+                    }
+                    else if (line.Contains("⚠"))
+                    {
+                        <div class="status-warning">@line</div>
+                    }
+                    else
+                    {
+                        <div style="color: var(--text-muted);">@line</div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.GriffinConfig != null)
+    {
+        @* Configuration Details *@
+        <div class="section">
+            <h2>📊 @Localizer["CurrentConfiguration"] (@Model.ConfigSource)</h2>
+            <div class="section-body">
+                <div class="grid">
+                    <div class="grid-item">
+                        <h4>@Localizer["DatabaseId"]</h4>
+                        <p>@Model.GriffinConfig.Id</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>@Localizer["CompanyId"]</h4>
+                        <p>@Model.GriffinConfig.CompanyId</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>@Localizer["Enabled"]</h4>
+                        <p style="color: var(@(Model.GriffinConfig.Enabled ? "--success" : "--danger"))">
+                            @Model.GriffinConfig.Enabled
+                            @if (Model.GriffinConfig.Enabled)
+                            {
+                                <span class="badge badge-success">@Localizer["Active"]</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-error">@Localizer["Disabled"]</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>@Localizer["Timeout"]</h4>
+                        <p>@Model.GriffinConfig.TimeoutSeconds @Localizer["Seconds"]</p>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">@Localizer["BaseUrlGriffinServer"]</span>
+                    <div class="field-value">@(Model.GriffinConfig.BaseUrl ?? "(NULL)")
+                        @if (Model.BaseUrlHasScheme == true)
+                        {
+                            <span class="badge badge-success">✓ @Localizer["ValidScheme"]</span>
+                        }
+                        else if (Model.BaseUrlHasScheme == false)
+                        {
+                            <span class="badge badge-error">✗ @Localizer["MissingScheme"]</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">@Localizer["TokenConsumerUrlCallback"]</span>
+                    <div class="field-value">@(Model.GriffinConfig.TokenConsumerUrl ?? "(NULL)")
+                        @if (Model.CallbackUrlHasScheme == true)
+                        {
+                            <span class="badge badge-success">✓ @Localizer["ValidScheme"]</span>
+                        }
+                        else if (Model.CallbackUrlHasScheme == false)
+                        {
+                            <span class="badge badge-error">✗ @Localizer["MissingScheme"]</span>
+                        }
+                        @if (Model.CallbackUrlUsesLocalhost)
+                        {
+                            <span class="badge badge-warning">@Localizer["UsesLocalhost"]</span>
+                        }
+                    </div>
+                    @if (Model.CallbackUrlPath != null)
+                    {
+                        <div style="margin-top: 0.5rem; font-size: var(--text-small); color: var(--text-muted);">
+                            @Localizer["Host"]: <code style="color: var(--text);">@Model.CallbackUrlHost</code> |
+                            @Localizer["Path"]: <code style="color: var(--text);">@Model.CallbackUrlPath</code>
+                        </div>
+                    }
+                </div>
+
+                <div class="field">
+                    <span class="field-label">@Localizer["AutoProvisionUsers"]</span>
+                    <div class="field-value">@Model.GriffinConfig.AutoProvisionUsers</div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">@Localizer["DefaultProvisionedRole"]</span>
+                    <div class="field-value">@Model.GriffinConfig.DefaultProvisionedRole</div>
+                </div>
+            </div>
+        </div>
+
+        @* Generated URL *@
+        @if (!string.IsNullOrEmpty(Model.GeneratedAuthUrl))
+        {
+            <div class="section">
+                <h2>🔗 @Localizer["GeneratedAuthenticationUrl"]</h2>
+                <div class="section-body">
+                    <p><strong>@Localizer["AuthUrlRedirectDescription"]</strong></p>
+                    <div class="url-preview">
+                        @Model.GeneratedAuthUrl
+                    </div>
+
+                    <h3 style="margin-top: 1.5rem; color: var(--text);">@Localizer["Analysis"]:</h3>
+                    @if (Model.AuthUrlIsAbsolute == true)
+                    {
+                        <p class="status-ok">✓ @Localizer["UrlIsAbsolute"]</p>
+                        <div class="grid" style="margin-top: 1rem;">
+                            <div class="grid-item">
+                                <h4>@Localizer["Scheme"]</h4>
+                                <p>@Model.UrlScheme://</p>
+                            </div>
+                            <div class="grid-item">
+                                <h4>@Localizer["Host"]</h4>
+                                <p>@Model.UrlHost</p>
+                            </div>
+                            <div class="grid-item">
+                                <h4>@Localizer["Path"]</h4>
+                                <p>@Model.UrlPath</p>
+                            </div>
+                            <div class="grid-item">
+                                <h4>@Localizer["QueryLength"]</h4>
+                                <p>@Model.UrlQuery?.Length @Localizer["Chars"]</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="status-error">✗ @Localizer["UrlIsRelative"]</p>
+                        <p style="color: var(--text-muted); margin-top: 1rem;">
+                            @Localizer["UrlRelativeExplanation"]
+                        </p>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Root Cause *@
+        @if (Model.RootCause != null)
+        {
+            <div class="section">
+                <h2>🐛 @Localizer["RootCauseAnalysis"]</h2>
+                <div class="section-body">
+                    <h3 style="color: var(--danger); margin-top: 0;">@Model.RootCause</h3>
+                    @if (Model.RootCauseExplanation != null)
+                    {
+                        @Html.Raw(Model.RootCauseExplanation)
+                    }
+                </div>
+            </div>
+        }
+
+        @* Fix Instructions *@
+        <div class="section">
+            <h2>✅ @(Model.RootCause != null ? Localizer["FixInstructions"] : Localizer["NextSteps"])</h2>
+            <div class="section-body">
+                @if (!string.IsNullOrEmpty(Model.FixInstructions))
+                {
+                    @Html.Raw(Model.FixInstructions)
+                }
+                else
+                {
+                    <p>@Localizer["NoFixNeeded"]</p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="section">
+            <h2>⚠️ @Localizer["NoGriffinConfigFound"]</h2>
+            <div class="section-body">
+                <p>@Localizer["NoGriffinConfigDescription"]</p>
+                <p><strong>@Localizer["NextSteps"]:</strong></p>
+                <ol>
+                    <li>@Localizer["GoToGriffinConfig"] <a href="/Owner/GriffinConfig" style="color: var(--primary);">http://localhost:5000/Owner/GriffinConfig</a></li>
+                    <li>@Localizer["ConfigureGriffinSettings"]</li>
+                    <li>@Localizer["ClickTestConnection"]</li>
+                    <li>@Localizer["ReturnToDiagnostic"]</li>
+                </ol>
+            </div>
+        </div>
+    }
+
+    @* URL ENCODING COMPARISON - CRITICAL FOR AIR-GAPPED DEBUGGING *@
+    @if (Model.GriffinConfig != null)
+    {
+        <div class="section" style="border: 3px solid var(--warning);">
+            <h2 style="background: linear-gradient(135deg, var(--warning) 0%, var(--danger) 100%); color: var(--warning-text);">
+                🔬 @Localizer["UrlEncodingComparison"]
+            </h2>
+            <div class="section-body">
+                <p style="color: var(--warning); font-weight: 600; margin-bottom: 1.5rem;">
+                    ⚠️ @Localizer["AirGappedWarning"]
+                </p>
+
+                @* Encoding Progression *@
+                <h3 style="color: var(--text); margin-top: 0;">@Localizer["Step1ReturnUrlEncoding"]</h3>
+                <div class="field" style="border-left-color: var(--text-muted);">
+                    <span class="field-label">@Localizer["TestReturnUrl0x"]</span>
+                    <div class="field-value" style="font-size: 1rem;">@Model.TestReturnUrl</div>
+                </div>
+                <div class="field" style="border-left-color: var(--info);">
+                    <span class="field-label">@Localizer["After1stEncoding"]</span>
+                    <div class="field-value" style="font-size: 0.9rem; color: var(--accent);">@Model.ReturnUrlEncoded1x</div>
+                </div>
+                <div class="field" style="border-left-color: var(--accent);">
+                    <span class="field-label">@Localizer["After2ndEncoding"]</span>
+                    <div class="field-value" style="font-size: 0.85rem; color: var(--accent);">@Model.ReturnUrlEncoded2x</div>
+                </div>
+                <div class="field" style="border-left-color: var(--success);">
+                    <span class="field-label">@Localizer["After3rdEncoding"]</span>
+                    <div class="field-value" style="font-size: 0.8rem; color: var(--success);">@Model.ReturnUrlEncoded3x</div>
+                </div>
+
+                <hr style="border-color: var(--border-strong); margin: 2rem 0;">
+
+                @* OLD APPROACH (Current - FAILS) *@
+                <h3 style="color: var(--danger); margin-top: 0;">❌ @Localizer["OldApproachTitle"]</h3>
+                <div class="warning-box" style="border-left-color: var(--danger); background: var(--danger-soft);">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--danger);">@Localizer["WhatWeEncoding"]:</h4>
+                    <p style="color: var(--text);">@Localizer["EntireCallbackUrl2x"]</p>
+
+                    <h4 style="margin: 1.5rem 0 0.5rem 0; color: var(--danger);">@Localizer["FinalUrlSentToGriffin"]:</h4>
+                    <div style="font-family: var(--font-mono); font-size: 0.65rem; word-break: break-all; color: var(--text); background: var(--surface-soft); padding: 1rem; border-radius: var(--radius-sm); max-height: 200px; overflow-y: auto; border: 1px solid var(--danger);">
+                        @Model.OldFinalGriffinUrl
+                    </div>
+
+                    <h4 style="margin: 1.5rem 0 0.5rem 0; color: var(--danger);">@Localizer["WhatGriffinSeesTokenConsumer"]:</h4>
+                    <div style="font-family: var(--font-mono); font-size: 0.7rem; word-break: break-all; color: var(--text); background: var(--surface-soft); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--danger);">
+                        @Model.OldCallbackUrl
+                    </div>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--surface-soft); border-radius: var(--radius-sm); border: 1px solid var(--danger);">
+                        <p style="color: var(--danger); font-weight: 600; margin: 0;">❌ @Localizer["LooksLikeUrl"]? @(Model.OldUrlLooksLikeUrl ? Localizer["Yes"] : Localizer["No"])</p>
+                        <p style="color: var(--text-muted); font-size: var(--text-small); margin: 0.5rem 0 0 0;">
+                            @if (!Model.OldUrlLooksLikeUrl)
+                            {
+                                <span>@Localizer["OldUrlEncodedGibberishExplanation"]</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border-strong); margin: 2rem 0;">
+
+                @* NEW APPROACH (Proposed Fix - SHOULD WORK) *@
+                <h3 style="color: var(--success); margin-top: 0;">✅ @Localizer["NewApproachTitle"]</h3>
+                <div class="warning-box" style="border-left-color: var(--success); background: var(--success-soft);">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--success);">@Localizer["WhatWeEncoding"]:</h4>
+                    <p style="color: var(--text);">@Localizer["OnlyReturnUrl3x"]</p>
+
+                    <h4 style="margin: 1.5rem 0 0.5rem 0; color: var(--success);">@Localizer["FinalUrlSentToGriffin"]:</h4>
+                    <div style="font-family: var(--font-mono); font-size: 0.7rem; word-break: break-all; color: var(--text); background: var(--surface-soft); padding: 1rem; border-radius: var(--radius-sm); max-height: 200px; overflow-y: auto; border: 1px solid var(--success);">
+                        @Model.NewFinalGriffinUrl
+                    </div>
+
+                    <h4 style="margin: 1.5rem 0 0.5rem 0; color: var(--success);">@Localizer["WhatGriffinSeesTokenConsumer"]:</h4>
+                    <div style="font-family: var(--font-mono); font-size: 0.75rem; word-break: break-all; color: var(--text); background: var(--surface-soft); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--success);">
+                        @Model.NewCallbackUrl
+                    </div>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--surface-soft); border-radius: var(--radius-sm); border: 1px solid var(--success);">
+                        <p style="color: var(--success); font-weight: 600; margin: 0;">✅ @Localizer["LooksLikeUrl"]? @(Model.NewUrlLooksLikeUrl ? Localizer["Yes"] : Localizer["No"])</p>
+                        <p style="color: var(--text-muted); font-size: var(--text-small); margin: 0.5rem 0 0 0;">
+                            @if (Model.NewUrlLooksLikeUrl)
+                            {
+                                <span>@Localizer["NewUrlRecognizableExplanation"]</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border-strong); margin: 2rem 0;">
+
+                @* DOOF APPROACH (Reference - WORKS) *@
+                <h3 style="color: var(--info); margin-top: 0;">🔵 @Localizer["DoofApproachTitle"]</h3>
+                <div class="warning-box" style="border-left-color: var(--info); background: var(--info-soft);">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--info);">@Localizer["WhatDoofEncodes"]:</h4>
+                    <p style="color: var(--text);">@Localizer["OnlyDestinationPath3x"]</p>
+
+                    <h4 style="margin: 1.5rem 0 0.5rem 0; color: var(--info);">@Localizer["DoofUrlStructure"]:</h4>
+                    <div style="font-family: var(--font-mono); font-size: 0.7rem; word-break: break-all; color: var(--text); background: var(--surface-soft); padding: 1rem; border-radius: var(--radius-sm); max-height: 200px; overflow-y: auto; border: 1px solid var(--info);">
+                        @Model.DoofFinalGriffinUrl
+                    </div>
+
+                    <h4 style="margin: 1.5rem 0 0.5rem 0; color: var(--info);">@Localizer["WhatGriffinSees"]:</h4>
+                    <div style="font-family: var(--font-mono); font-size: 0.75rem; word-break: break-all; color: var(--text); background: var(--surface-soft); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--info);">
+                        @Model.DoofCallbackUrl
+                    </div>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--surface-soft); border-radius: var(--radius-sm); border: 1px solid var(--info);">
+                        <p style="color: var(--info); font-weight: 600; margin: 0;">✅ @Localizer["LooksLikeUrl"]? @(Model.DoofUrlLooksLikeUrl ? Localizer["Yes"] : Localizer["No"])</p>
+                        <p style="color: var(--text-muted); font-size: var(--text-small); margin: 0.5rem 0 0 0;">
+                            @Localizer["DoofProvenApproachExplanation"]
+                        </p>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border-strong); margin: 2rem 0;">
+
+                @* Key Differences Summary *@
+                <h3 style="color: var(--text);">📋 @Localizer["KeyDifferencesSummary"]</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                    <thead>
+                        <tr style="background: var(--surface-soft); color: var(--text);">
+                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["Approach"]</th>
+                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["WhatGetsEncoded"]</th>
+                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["UrlReadable"]</th>
+                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["Result"]</th>
+                        </tr>
+                    </thead>
+                    <tbody style="background: var(--surface); color: var(--text-muted);">
+                        <tr style="border: 1px solid var(--border-strong);">
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong); font-weight: 600; color: var(--danger);">@Localizer["OldCurrent"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">@Localizer["EntireCallbackUrl2x"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">❌ @Localizer["No"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">@Localizer["GriffinRejects"]</td>
+                        </tr>
+                        <tr style="border: 1px solid var(--border-strong);">
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong); font-weight: 600; color: var(--success);">@Localizer["NewProposed"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">@Localizer["OnlyReturnUrl3x"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">✅ @Localizer["Yes"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">@Localizer["ShouldWork"]</td>
+                        </tr>
+                        <tr style="border: 1px solid var(--border-strong);">
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong); font-weight: 600; color: var(--info);">@Localizer["DoofReference"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">@Localizer["OnlyDestinationPath3x"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">✅ @Localizer["Yes"]</td>
+                            <td style="padding: 0.75rem; border: 1px solid var(--border-strong);">@Localizer["ProvenToWork"]</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--warning-soft); border: 2px solid var(--warning); border-radius: var(--radius-md);">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--warning);">💡 @Localizer["CriticalInsight"]:</h4>
+                    <p style="color: var(--text); line-height: 1.8; margin: 0;">
+                        @Localizer["CriticalInsightExplanation"]
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Actions *@
+    <div class="section">
+        <h2>🔄 @Localizer["Actions"]</h2>
+        <div class="section-body">
+            <div class="actions">
+                <a href="/Owner/GriffinConfig" class="btn">→ @Localizer["GriffinConfiguration"]</a>
+                <a href="/GriffinDiagnostic" class="btn btn-secondary">🔄 @Localizer["RefreshDiagnostic"]</a>
+                <a href="/Auth/Login" class="btn btn-secondary">→ @Localizer["LoginPage"]</a>
+                <button onclick="window.print()" class="btn btn-secondary">🖨️ @Localizer["PrintReport"]</button>
+            </div>
+        </div>
+    </div>
+
+    @* Diagnostic Data Export *@
+    <div class="section">
+        <h2>📋 @Localizer["DiagnosticDataJsonExport"]</h2>
+        <div class="section-body">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                @Localizer["CopyDataForSupport"]
+            </p>
+            <pre>@Model.DiagnosticJson</pre>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; padding: 2rem; color: var(--text-subtle); font-size: var(--text-small);">
+        <p>@Localizer["GriffinDiagnosticToolVersion"] | @Localizer["GeneratedByShiftManager"]</p>
+        <p>🤖 @Localizer["EnhancedDiagnosticEngine"]</p>
+    </div>
+</body>
+</html>

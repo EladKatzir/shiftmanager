@@ -2,23 +2,39 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
+using ShiftManager.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace ShiftManager.Pages.Auth;
 
 [AllowAnonymous]
-public class SignupModel : PageModel
+public class SignupModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<SignupModel> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly IValidationService _validation;
+    private readonly INotificationService _notificationService;
 
-    public SignupModel(AppDbContext db, ILogger<SignupModel> logger)
+    public SignupModel(
+        AppDbContext db,
+        ILogger<SignupModel> logger,
+        IStringLocalizer<SharedResources> localizer,
+        IConfiguration configuration,
+        IValidationService validation,
+        INotificationService notificationService)
+        : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _configuration = configuration;
+        _validation = validation;
+        _notificationService = notificationService;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -37,33 +53,90 @@ public class SignupModel : PageModel
     public UserRole RequestedRole { get; set; } = UserRole.Employee;
 
     public List<Company> AvailableCompanies { get; set; } = new();
-    public string? Error { get; set; }
     public string? PendingRequestMessage { get; set; }
 
     public async Task OnGetAsync()
     {
-        AvailableCompanies = await _db.Companies
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        // SECURITY FIX: Only load companies if public signup is explicitly enabled
+        var allowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        if (allowPublicSignup)
+        {
+            _logger.LogWarning("Public signup with company list is enabled - this exposes all company names");
+            AvailableCompanies = await _db.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+        else
+        {
+            // Production: signup disabled or requires invite code
+            AvailableCompanies = new List<Company>();
+        }
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Load companies for form redisplay if needed
-        AvailableCompanies = await _db.Companies
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        // SECURITY FIX: Only load companies if public signup is explicitly enabled
+        var allowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        if (allowPublicSignup)
+        {
+            AvailableCompanies = await _db.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+        else
+        {
+            Error = _localizer["Error_Signup_PublicDisabled"];
+            return Page();
+        }
 
         if (!ModelState.IsValid)
         {
-            Error = "Please fill in all required fields.";
+            Error = _localizer["Error_Signup_RequiredFields"];
+            return Page();
+        }
+
+        // ✅ SECURITY FIX: Additional input validation beyond data annotations
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Password))
+        {
+            Error = _localizer["Error_Signup_AllFieldsRequired"];
+            return Page();
+        }
+
+        if (Email.Length > 255)
+        {
+            Error = _localizer["Error_Signup_EmailTooLong"];
+            return Page();
+        }
+
+        if (DisplayName.Length > 200)
+        {
+            Error = _localizer["Error_Signup_DisplayNameTooLong"];
+            return Page();
+        }
+
+        if (Password.Length > 128)
+        {
+            Error = _localizer["Error_Signup_PasswordTooLong"];
+            return Page();
+        }
+
+        if (CompanyId <= 0)
+        {
+            Error = _localizer["Error_Signup_SelectValidCompany"];
+            return Page();
+        }
+
+        // ✅ SECURITY FIX: Proper email format validation with regex
+        if (!_validation.IsValidEmail(Email))
+        {
+            Error = _localizer["Error_InvalidEmailFormat"];
             return Page();
         }
 
         // Check if user already exists
         if (await _db.Users.AnyAsync(u => u.Email == Email))
         {
-            Error = "An account with this email already exists. Please login instead.";
+            Error = _localizer["Error_Signup_EmailExists"];
             return Page();
         }
 
@@ -79,7 +152,7 @@ public class SignupModel : PageModel
         if (existingPendingRequest != null)
         {
             var company = await _db.Companies.FindAsync(CompanyId);
-            PendingRequestMessage = $"Your request to join {company?.Name} as {RequestedRole} is under review. We'll notify you once it's approved.";
+            PendingRequestMessage = _localizer["SignupPendingMessage", company?.Name ?? "", RequestedRole.ToString()];
             return Page();
         }
 
@@ -87,7 +160,7 @@ public class SignupModel : PageModel
         var selectedCompany = await _db.Companies.FindAsync(CompanyId);
         if (selectedCompany == null)
         {
-            Error = "Selected company not found.";
+            Error = _localizer["Error_Signup_CompanyNotFound"];
             return Page();
         }
 
@@ -113,7 +186,14 @@ public class SignupModel : PageModel
         _logger.LogInformation("New join request created: {Email} requesting {Role} at {Company}",
             Email, RequestedRole, selectedCompany.Name);
 
-        PendingRequestMessage = $"Your request to join {selectedCompany.Name} as {RequestedRole} has been submitted. We'll notify you once it's reviewed.";
+        // Notify all owners about the new access request
+        _ = _notificationService.NotifyOwnersOfAccessRequestAsync(
+            DisplayName,
+            Email,
+            selectedCompany.Name,
+            joinRequest.Id);
+
+        PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, RequestedRole.ToString()];
 
         // Clear form fields
         Email = string.Empty;

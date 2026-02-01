@@ -1,16 +1,122 @@
 @page
 @model ShiftManager.Pages.Requests.TimeOff.CreateModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
-<h2>Request Time-off</h2>
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Requests"], Url = "/Requests/Index" },
+    new BreadcrumbItem { Label = Localizer["RequestTimeOff"], IsActive = true }
+})
+
+<h2><loc key="RequestTimeOff" /></h2>
 <div class="card" style="max-width:560px">
-    <form method="post">
+    <form method="post" id="timeOffForm">
         <div style="display:grid; gap:.75rem">
-            <label>Start date<br /><input class="input" asp-for="StartDate" type="date" /></label>
-            <label>End date<br /><input class="input" asp-for="EndDate" type="date" /></label>
-            <label>Reason (optional)<br /><input class="input" asp-for="Reason" /></label>
-            <button class="btn btn-primary" type="submit">Submit</button>
+            <div>
+                <label style="font-weight: 600; margin-bottom: 0.5rem;"><loc key="TimeOffType" /></label>
+                <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="Type" value="0" checked onchange="updateDateFields()" style="cursor: pointer;" />
+                        <span><loc key="Vacation" /></span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="Type" value="1" onchange="updateDateFields()" style="cursor: pointer;" />
+                        <span><loc key="After" /></span>
+                    </label>
+                </div>
+                <small style="color: var(--muted); margin-top: 0.25rem; display: block;" id="typeDescription">
+                    @Localizer["VacationDescription"]
+                </small>
+            </div>
+
+            <label id="startDateLabel"><loc key="StartDate" /><br /><input class="input" asp-for="StartDate" type="date" /></label>
+            <label id="endDateLabel"><loc key="EndDate" /><br /><input class="input" asp-for="EndDate" type="date" /></label>
+            <label><loc key="ReasonOptional" /><br /><input class="input" asp-for="Reason" /></label>
+            <button class="btn btn-primary" type="submit"><loc key="Submit" /></button>
         </div>
     </form>
 </div>
+
+<script>
+function updateDateFields() {
+    const typeRadios = document.getElementsByName('Type');
+    const endDateLabel = document.getElementById('endDateLabel');
+    const startDateLabel = document.getElementById('startDateLabel');
+    const typeDescription = document.getElementById('typeDescription');
+
+    let selectedType = 0;
+    for (const radio of typeRadios) {
+        if (radio.checked) {
+            selectedType = parseInt(radio.value);
+            break;
+        }
+    }
+
+    if (selectedType === 1) { // After
+        // Hide end date field for "After" type
+        endDateLabel.style.display = 'none';
+
+        // Update only the label text, not the entire HTML (preserves input binding)
+        const labelText = startDateLabel.querySelector('loc') || startDateLabel.firstChild;
+        if (labelText && labelText.nodeType === Node.TEXT_NODE) {
+            labelText.textContent = '@Html.Raw(Localizer["Date"])';
+        } else if (labelText && labelText.tagName === 'LOC') {
+            labelText.setAttribute('key', 'Date');
+            labelText.textContent = '@Html.Raw(Localizer["Date"])';
+        }
+
+        typeDescription.textContent = '@Html.Raw(Localizer["AfterDescription"])';
+
+        // Set EndDate to same as StartDate for "After" type
+        const startDate = document.querySelector('input[name="StartDate"]');
+        const endDate = document.querySelector('input[name="EndDate"]');
+        if (startDate && endDate) {
+            endDate.value = startDate.value;
+        }
+    } else { // Vacation
+        // Show end date field for "Vacation" type
+        endDateLabel.style.display = 'block';
+
+        // Update only the label text, not the entire HTML (preserves input binding)
+        const labelText = startDateLabel.querySelector('loc') || startDateLabel.firstChild;
+        if (labelText && labelText.nodeType === Node.TEXT_NODE) {
+            labelText.textContent = '@Html.Raw(Localizer["StartDate"])';
+        } else if (labelText && labelText.tagName === 'LOC') {
+            labelText.setAttribute('key', 'StartDate');
+            labelText.textContent = '@Html.Raw(Localizer["StartDate"])';
+        }
+
+        typeDescription.textContent = '@Html.Raw(Localizer["VacationDescription"])';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', updateDateFields);
+
+// Sync EndDate with StartDate for "After" type
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'StartDate') {
+        const typeRadios = document.getElementsByName('Type');
+        let selectedType = 0;
+        for (const radio of typeRadios) {
+            if (radio.checked) {
+                selectedType = parseInt(radio.value);
+                break;
+            }
+        }
+
+        if (selectedType === 1) { // After
+            const endDate = document.querySelector('input[name="EndDate"]');
+            if (endDate) {
+                endDate.value = e.target.value;
+            }
+        }
+    }
+});
+</script>

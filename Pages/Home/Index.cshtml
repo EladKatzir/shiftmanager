@@ -1,0 +1,329 @@
+@page
+@model ShiftManager.Pages.Home.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Home"];
+    Layout = "_Layout";
+    var firstName = Model.UserName.Split(' ').FirstOrDefault() ?? Model.UserName;
+}
+
+@* ✅ Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Home"], IsActive = true }
+})
+
+@* Page Header *@
+<div class="page-header">
+    <h1 class="page-title">
+        @Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]
+    </h1>
+    <p class="page-subtitle"><loc key="ScheduleSubtitle" /></p>
+</div>
+
+<div class="home-dashboard">
+
+    @* Common Cards (All Users) *@
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        @* Next Shift Card *@
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><loc key="NextShift" /></h3>
+            </div>
+            <div class="card-body">
+                @if (Model.NextShift != null && Model.NextShift.ShiftInstance != null)
+                {
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div>
+                            <div class="text-subtle" style="font-size: 0.875rem;"><loc key="Date" /></div>
+                            <div class="text-body" style="font-weight: 500;">@Model.NextShift.ShiftInstance.WorkDate.ToString("dddd, MMMM dd")</div>
+                        </div>
+                        <div>
+                            <div class="text-subtle" style="font-size: 0.875rem;"><loc key="Time" /></div>
+                            <div class="text-body" style="font-weight: 500;">
+                                @if (Model.NextShift.ShiftInstance.ShiftType != null)
+                                {
+                                    <text>@Model.NextShift.ShiftInstance.ShiftType.Start.ToString(@"HH:mm") - @Model.NextShift.ShiftInstance.ShiftType.End.ToString(@"HH:mm")</text>
+                                }
+                            </div>
+                        </div>
+                        @if (Model.NextShift.ShiftInstance.ShiftType != null)
+                        {
+                            <div>
+                                <span class="badge" style="background: var(--primary-soft); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.875rem;">
+                                    @Model.NextShift.ShiftInstance.ShiftType.Name
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-subtle" style="margin: 0;"><loc key="NoUpcomingShifts" /></p>
+                }
+            </div>
+        </div>
+
+        @* Weekly Summary Card *@
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><loc key="ThisWeek" /></h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="text-subtle"><loc key="HoursThisWeek" /></span>
+                        <span class="text-title" style="color: var(--primary);">@Model.HoursThisWeek.ToString("F1")</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="text-subtle"><loc key="DaysWithShifts" /></span>
+                        <span class="text-body" style="font-weight: 500;">@Model.DaysWithShiftsThisWeek</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="text-subtle"><loc key="DaysOff" /></span>
+                        <span class="text-body" style="font-weight: 500;">@Model.DaysOffThisWeek</span>
+                    </div>
+                </div>
+                <a href="/Calendar/Month" class="btn" style="margin-top: 1rem; display: inline-block; text-align: center; width: 100%;">
+                    @Localizer["ViewFullSchedule"]
+                </a>
+            </div>
+        </div>
+
+        @* Notifications Card *@
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><loc key="Notifications" /></h3>
+                @if (Model.UnreadNotificationsCount > 0)
+                {
+                    <span class="badge" style="background: var(--danger); color: var(--danger-text); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">
+                        @Model.UnreadNotificationsCount @Localizer["Unread"]
+                    </span>
+                }
+            </div>
+            <div class="card-body">
+                @if (Model.RecentNotifications.Any())
+                {
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        @foreach (var notification in Model.RecentNotifications.Take(3))
+                        {
+                            <div style="padding: 0.5rem; background: var(--surface-soft); border-radius: 6px; @(notification.IsRead ? "" : "border-left: 3px solid var(--primary);")">
+                                <div class="text-body" style="font-size: 0.875rem; margin-bottom: 0.25rem;">@notification.Message</div>
+                                <div class="text-caption" style="color: var(--text-muted);">@notification.CreatedAt.ToString("MMM dd, HH:mm")</div>
+                            </div>
+                        }
+                    </div>
+                    <a href="/My/NotificationCenter" class="btn" style="margin-top: 1rem; display: inline-block; text-align: center; width: 100%;">
+                        @Localizer["ViewAllNotifications"]
+                    </a>
+                }
+                else
+                {
+                    <p class="text-subtle" style="margin: 0;"><loc key="NoNotifications" /></p>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Employee-Specific Cards *@
+    @if (!Model.IsAdmin)
+    {
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="MyRequests" /></h3>
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="card card--metric card--status-warning">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingRequestsCount</div>
+                        <div class="text-body"><loc key="PendingRequests" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric card--status-success">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.ApprovedRequestsCount</div>
+                        <div class="text-body"><loc key="ApprovedRequests" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric card--status-danger">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.DeclinedRequestsCount</div>
+                        <div class="text-body"><loc key="DeclinedRequests" /></div>
+                    </div>
+                </div>
+            </div>
+            <a href="/My/Requests" class="btn" style="margin-top: 1rem; display: inline-block;">
+                @Localizer["GoToMyRequests"] →
+            </a>
+        </div>
+    }
+
+    @* Manager-Specific Cards *@
+    @if (Model.IsAdmin && !Model.IsDirector)
+    {
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="StaffingOverview" /></h3>
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="card card--metric card--status-warning">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.UnassignedShiftsCount</div>
+                        <div class="text-body"><loc key="UnassignedShifts" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric card--status-danger">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.UnderstaffedDaysCount</div>
+                        <div class="text-body"><loc key="UnderstaffedDays" /></div>
+                    </div>
+                </div>
+            </div>
+            <a href="/Calendar/Month" class="btn" style="margin-top: 1rem; display: inline-block;">
+                @Localizer["OpenSchedulingWorkspace"] →
+            </a>
+        </div>
+
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="Approvals" /></h3>
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="card card--metric">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingTimeOffCount</div>
+                        <div class="text-body"><loc key="PendingTimeOff" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingSwapsCount</div>
+                        <div class="text-body"><loc key="PendingSwaps" /></div>
+                    </div>
+                </div>
+            </div>
+            <a href="/Requests/Index" class="btn" style="margin-top: 1rem; display: inline-block;">
+                @Localizer["OpenApprovals"] →
+            </a>
+        </div>
+    }
+
+    @* Director/Owner-Specific Cards *@
+    @if (Model.IsDirector)
+    {
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="StaffingOverview" /></h3>
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="card card--metric card--status-warning">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.UnassignedShiftsCount</div>
+                        <div class="text-body"><loc key="UnassignedShifts" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric card--status-danger">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.UnderstaffedDaysCount</div>
+                        <div class="text-body"><loc key="UnderstaffedDays" /></div>
+                    </div>
+                </div>
+            </div>
+            <a href="/Calendar/Month" class="btn" style="margin-top: 1rem; display: inline-block;">
+                @Localizer["OpenSchedulingWorkspace"] →
+            </a>
+        </div>
+
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="Approvals" /></h3>
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="card card--metric">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingTimeOffCount</div>
+                        <div class="text-body"><loc key="PendingTimeOff" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingSwapsCount</div>
+                        <div class="text-body"><loc key="PendingSwaps" /></div>
+                    </div>
+                </div>
+            </div>
+            <a href="/Requests/Index" class="btn" style="margin-top: 1rem; display: inline-block;">
+                @Localizer["OpenApprovals"] →
+            </a>
+        </div>
+
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="CompaniesOverview" /></h3>
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="card card--metric">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.TotalCompaniesCount</div>
+                        <div class="text-body"><loc key="TotalCompanies" /></div>
+                    </div>
+                </div>
+                <div class="card card--metric card--status-success">
+                    <div class="card-body" style="text-align: center;">
+                        <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.ActiveCompaniesCount</div>
+                        <div class="text-body"><loc key="ActiveCompanies" /></div>
+                    </div>
+                </div>
+            </div>
+            @if (Model.IsOwner)
+            {
+                <a href="/Admin/Companies" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">
+                    @Localizer["ManageCompanies"] →
+                </a>
+            }
+        </div>
+
+        @* ✅ PHASE 18: Owner-specific sections *@
+        @if (Model.IsOwner)
+        {
+            @* Analytics Summary Section *@
+            <div class="dashboard-section" style="margin-bottom: 2rem;">
+                <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="AnalyticsSummary" /></h3>
+                <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div class="card card--metric">
+                        <div class="card-body" style="text-align: center;">
+                            <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.TotalUsersCount</div>
+                            <div class="text-body"><loc key="TotalActiveUsers" /></div>
+                        </div>
+                    </div>
+                    <div class="card card--metric">
+                        <div class="card-body" style="text-align: center;">
+                            <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.TotalShiftsThisMonth</div>
+                            <div class="text-body"><loc key="ShiftsThisMonth" /></div>
+                        </div>
+                    </div>
+                    <div class="card card--metric @(Model.AverageStaffingRate >= 90 ? "card--status-success" : Model.AverageStaffingRate >= 75 ? "card--status-warning" : "card--status-danger")">
+                        <div class="card-body" style="text-align: center;">
+                            <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+                                @Model.AverageStaffingRate.ToString("F1")%
+                            </div>
+                            <div class="text-body"><loc key="AverageStaffingRate" /></div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/Admin/Analytics" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">
+                    @Localizer["ViewFullAnalytics"] →
+                </a>
+            </div>
+
+            @* System Health Section *@
+            <div class="dashboard-section" style="margin-bottom: 2rem;">
+                <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="SystemHealth" /></h3>
+                <div class="card">
+                    <div class="card-body" style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="flex: 1;">
+                            <div class="text-title" style="margin-bottom: 0.5rem;"><loc key="DiagnosticsAndMonitoring" /></div>
+                            <p class="text-subtle" style="margin: 0;"><loc key="ViewSystemStatusAndLogs" /></p>
+                        </div>
+                        <div>
+                            <a href="/Diagnostic" class="btn btn-secondary">
+                                @Localizer["OpenDiagnostics"] →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

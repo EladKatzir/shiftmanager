@@ -1,170 +1,952 @@
 @page
 @model ShiftManager.Pages.Calendar.WeekModel
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.ViewModels
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["Calendar_MyCalendar"] + " - " + Localizer["Week"];
 }
 
+@* ✅ PHASE 20: Include calendar inline editing JavaScript *@
+<script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
+
+@* ✅ PHASE 20: Breadcrumb with "My Calendar" branding *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendar_MyCalendar"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["Week"], IsActive = true }
+})
+
+@* B-007: Calendar Skeleton Loading Container *@
+<div class="calendar-skeleton-container" data-calendar-skeleton-container>
+    @await Component.InvokeAsync("CalendarSkeleton", new { viewType = "week" })
+    <div data-ui-version="v2" data-calendar-content class="calendar-content">
 <div class="calendar-header">
-    <div>
-        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text);">
-            Week of @Model.CurrentWeekStart.ToString("MMM dd") - @Model.CurrentWeekStart.AddDays(6).ToString("MMM dd, yyyy")
+    <div class="header-main">
+        <h2>
+            <span class="calendar-icon">📅</span>
+            Week of @Model.CurrentWeekStart.ToString("MMM dd, yyyy")
         </h2>
+        @* ✅ PHASE 20: Show My Items toggle *@
+        <div class="calendar-controls">
+            @await Component.InvokeAsync("ShowMyItemsToggle")
+        </div>
     </div>
+
+    @* ✅ PHASE 20: Navigation *@
     <div class="calendar-nav">
         <a class="btn btn-ghost" href="/Calendar/Week?year=@Model.Previous.WeekStart.Year&month=@Model.Previous.WeekStart.Month&day=@Model.Previous.WeekStart.Day">
-            ← @Model.Previous.Label
+            <span class="nav-icon">←</span>
+            <span class="nav-text">@Model.Previous.Label</span>
         </a>
-        <a class="btn btn-primary" href="/Calendar/Week">This Week</a>
+        <a class="btn btn-primary" href="/Calendar/Week">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text"><loc key="ThisWeek" /></span>
+        </a>
         <a class="btn btn-ghost" href="/Calendar/Week?year=@Model.Next.WeekStart.Year&month=@Model.Next.WeekStart.Month&day=@Model.Next.WeekStart.Day">
-            @Model.Next.Label →
+            <span class="nav-text">@Model.Next.Label</span>
+            <span class="nav-icon">→</span>
         </a>
     </div>
-    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+
+    @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
+    @if (Model.TotalItemCount > 0)
     {
-        <div class="calendar-help">
-            Click a shift badge to manage assignments.<br>
-            Use + / − to adjust required staffing.
-        </div>
-    }
-    else
-    {
-        <div class="calendar-help">
-            View your assigned shifts and team schedule.
+        <div class="calendar-metrics">
+            <div class="metric-item metric-shifts">
+                <span class="metric-icon">📅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.VisibleShiftCount</span>
+                    <span class="metric-label"><loc key="Calendar_Shifts" /></span>
+                </div>
+            </div>
+
+            @if (Model.VisibleChoreCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🧹</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.VisibleChoreCount</span>
+                        <span class="metric-label"><loc key="Calendar_Chores" /></span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.VisibleOnDutyCount > 0)
+            {
+                <div class="metric-item metric-shifts">
+                    <span class="metric-icon">🎯</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.VisibleOnDutyCount</span>
+                        <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
+                    </div>
+                </div>
+            }
+
+            @if (Model.PendingItemsCount > 0)
+            {
+                <div class="metric-item metric-pending">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-content">
+                        <span class="metric-value">@Model.PendingItemsCount</span>
+                        <span class="metric-label"><loc key="Calendar_Pending" /></span>
+                    </div>
+                </div>
+            }
+
+            <require-grant key="ViewAnalytics">
+            <div class="metric-item metric-coverage">
+                <span class="metric-icon">✅</span>
+                <div class="metric-content">
+                    <span class="metric-value">@Model.CoveragePercent%</span>
+                    <span class="metric-label"><loc key="Calendar_Coverage" /></span>
+                </div>
+            </div>
+            </require-grant>
         </div>
     }
 </div>
 
+@* ✅ PHASE 20: View switcher (removed Table link) *@
 <div class="calendar-view-switcher">
-    <a class="btn btn-ghost" href="/Calendar/Month">Month</a>
-    <a class="btn btn-primary" href="/Calendar/Week">Week</a>
-    <a class="btn btn-ghost" href="/Calendar/Day">Day</a>
+    <a class="btn btn-ghost" href="/Calendar/Month"><loc key="Month" /></a>
+    <a class="btn btn-primary" href="/Calendar/Week"><loc key="Week" /></a>
+    <a class="btn btn-ghost" href="/Calendar/Day"><loc key="Day" /></a>
 </div>
 
-<div class="week-grid">
+@* ✅ UI Overhaul: Scope Switcher (Mine/Company/Molecule) - reads from URL/cookie *@
+@await Component.InvokeAsync("ScopeSwitcher", new { calendarType = "shifts" })
+
+@* ✅ PHASE 20: Quick actions - Grant protected *@
+<require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
+<div class="calendar-quick-actions">
+    <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
+    <require-grant key="ViewShifts">
+    <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
+        <span>📊</span>
+        <loc key="Calendar_ManageShifts" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewChores">
+    <a class="btn btn-secondary btn-sm" href="/Public/Chores">
+        <span>🧹</span>
+        <loc key="Calendar_ManageChores" />
+    </a>
+    </require-grant>
+    <require-grant key="ViewDuties">
+    <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
+        <span>🛡️</span>
+        <loc key="Calendar_ManageOnDuty" />
+    </a>
+    </require-grant>
+</div>
+</require-grant>
+
+@* Hidden template for assignee select (rendered once, cloned via JS) *@
+<select id="assignee-options-template" class="calendar-template-hidden">
+    <option value=""><loc key="Calendar_SelectAssignee" /></option>
+    @foreach (var user in Model.EligibleAssignees)
+    {
+        <option value="@user.Id">@user.DisplayName</option>
+    }
+</select>
+
+@* ✅ UI Overhaul: Overall empty state for week view *@
+@if (Model.TotalItemCount == 0)
+{
+    <div class="calendar-empty">
+        <div class="calendar-empty__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+                <line x1="9" y1="18" x2="15" y2="18"></line>
+            </svg>
+        </div>
+        <h3 class="calendar-empty__title"><loc key="Calendar_Empty_NoShiftsWeek" /></h3>
+        <p class="calendar-empty__message">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <loc key="Calendar_Empty_Subtitle_Mine" />
+            }
+            else
+            {
+                <loc key="Calendar_Empty_Subtitle_All" />
+            }
+        </p>
+        <div class="calendar-empty__actions">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <a href="/Calendar/Week?year=@Model.CurrentWeekStart.Year&month=@Model.CurrentWeekStart.Month&day=@Model.CurrentWeekStart.Day&showMyItems=false" class="btn btn-secondary">
+                    <loc key="Calendar_Empty_Action_ViewAll" />
+                </a>
+            }
+            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+            {
+                <a href="/Calendar/Table" class="btn btn-primary">
+                    <loc key="Calendar_Empty_Action_CreateShift" />
+                </a>
+            }
+            @{
+                var todayDate = DateOnly.FromDateTime(DateTime.Today);
+                var weekContainsToday = Model.CurrentWeekStart <= todayDate && todayDate <= Model.CurrentWeekStart.AddDays(6);
+            }
+            @if (!weekContainsToday)
+            {
+                <a href="/Calendar/Week" class="btn btn-ghost">
+                    <loc key="Calendar_Empty_Action_GoToToday" />
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@* ✅ PHASE 20: Week view - 7 columns *@
+<div class="week-grid @(Model.TotalItemCount == 0 ? "week-grid--empty" : "")">
     @foreach (var day in Model.Days)
     {
-        var isToday = day.Date == DateOnly.FromDateTime(DateTime.Today);
-        var dayClass = isToday ? "week-day today" : "week-day";
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var isToday = day.Date == today;
+        var isPastDate = day.Date < today;
+        var columnClass = "week-column";
+        if (isToday) { columnClass += " today"; }
+        if (isPastDate) { columnClass += " past-date"; }
 
-        <div class="@dayClass">
-            <div class="day-header">
+        <div class="@columnClass" data-date="@day.Date.ToString("yyyy-MM-dd")">
+            <div class="column-header">
                 <div class="day-name">@day.DayName</div>
-                <div class="day-date">@day.Date.ToString("MMM dd")</div>
-            </div>
-            <div class="day-shifts">
-                @foreach (var l in day.Lines)
-                {
-                    if (l.Required > 0 || l.Assigned > 0)
+                <div class="day-date">
+                    @day.Date.ToString("MMM dd")
+                    @if (isToday)
                     {
-                        var badgeClass = l.Assigned >= l.Required ? "ok" : "warn";
-                        <div class="shift-line">
-                            <div class="assignment-tooltip">
-                                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
-                                {
-                                    <a href="/Assignments/Manage?date=@day.Date.ToString("yyyy-MM-dd")&shiftTypeId=@l.ShiftTypeId&returnUrl=@Uri.EscapeDataString("/Calendar/Week?year=" + Model.CurrentWeekStart.Year + "&month=" + Model.CurrentWeekStart.Month + "&day=" + Model.CurrentWeekStart.Day)">
-                                        <span class="shift-badge @l.ShiftTypeKey">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length))</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="shift-badge @l.ShiftTypeKey employee-badge">@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Substring(0, Math.Min(3, Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"].Value.Length))</span>
-                                }
-                                <div class="tooltip-content">
-                                    <div class="tooltip-header">
-                                        <div class="tooltip-title">
-                                            @if (!string.IsNullOrEmpty(l.ShiftName))
-                                            {
-                                                @l.ShiftName
-                                                <span class="tooltip-custom-name">(@Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"])</span>
-                                            }
-                                            else
-                                            {
-                                                @Localizer[$"ShiftType_{l.ShiftTypeKey.ToUpper()}"]
-                                            }
-                                        </div>
-                                        <div class="tooltip-hours">@l.StartTime - @l.EndTime</div>
-                                    </div>
+                        <span class="today-indicator">•</span>
+                    }
+                </div>
+            </div>
 
-                                    <div class="tooltip-section">
-                                        <div class="tooltip-section-title">Staffing</div>
-                                        <div class="tooltip-names">
-                                            @if (l.AssignedNames.Any())
-                                            {
-                                                @foreach (var name in l.AssignedNames)
-                                                {
-                                                    <span class="tooltip-name @l.ShiftTypeKey">@name</span>
-                                                }
-                                            }
-                                            @if (l.EmptySlots.Any())
-                                            {
-                                                @foreach (var empty in l.EmptySlots)
-                                                {
-                                                    <span class="tooltip-empty">@empty</span>
-                                                }
-                                            }
-                                            @if (!l.AssignedNames.Any() && !l.EmptySlots.Any())
-                                            {
-                                                <span class="tooltip-empty">No staffing required</span>
-                                            }
-                                        </div>
-                                    </div>
+            @* ✅ PHASE 20: Render items with density control *@
+            <div class="column-items">
+                @{
+                    var visibleItems = day.Items.Take(3).ToList();
+                    var hiddenCount = Math.Max(0, day.Items.Count - 3);
+                }
 
-                                    <div class="tooltip-stats">
-                                        <span class="tooltip-stat">
-                                            @l.Assigned/@l.Required staffed
-                                            @if (l.TraineeCount > 0)
-                                            {
-                                                <span style="margin-left: 0.5rem; padding: 0.125rem 0.375rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem; font-size: 0.75rem;">
-                                                    +@l.TraineeCount 👤
-                                                </span>
-                                            }
-                                        </span>
-                                        @if (l.Assigned >= l.Required)
-                                        {
-                                            <span class="tooltip-status-ok">✓ Fully Staffed</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="tooltip-status-warn">⚠ Needs @(l.Required - l.Assigned) more</span>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
+                @foreach (var item in visibleItems)
+                {
+                    <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
+                         title="@item.Details"
+                         data-item-type="@item.Type.ToString().ToLower()"
+                         data-item-id="@item.EntityId">
+                        <div class="item-header">
+                            <span class="item-icon">@item.Icon</span>
+                            <span class="item-title">@item.Title</span>
+                            @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
                             @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
                             {
-                                <div class="shift-counter" data-si="@l.InstanceId" data-conc="@l.Concurrency">
-                                    <button class="counter-btn" aria-label="Decrease required staffing"
-                                        onclick="window.adjustStaffing('@Url.Page("Week", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:-1, concurrency:@l.Concurrency }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">−</button>
-                                    <button class="counter-btn" aria-label="Increase required staffing"
-                                        onclick="window.adjustStaffing('@Url.Page("Week", "Adjust")', { date: '@day.Date.ToString("yyyy-MM-dd")', shiftTypeId:@l.ShiftTypeId, delta:1, concurrency:@l.Concurrency }, (d)=>{ this.parentElement.dataset.conc=d.concurrency; this.parentElement.nextElementSibling.innerText = d.assigned + '/' + d.required; }, (e)=>alert(e.message))">+</button>
-                                </div>
+                                @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
+                                {
+                                    <button class="btn-delete-item"
+                                            onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                            loc-title="Delete">
+                                        ×
+                                    </button>
+                                }
+                                else if (item.Type == CalendarItemType.Shift)
+                                {
+                                    <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
+                                        <span class="manage-icon">⚙️</span>
+                                    </a>
+                                }
                             }
-                            <span class="staffing-badge @badgeClass">@l.Assigned/@l.Required</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(l.ShiftName))
+                        <div class="item-assignee">@item.AssigneeName</div>
+                        @if (!string.IsNullOrEmpty(item.TimeRange))
                         {
-                            <div class="shift-display-name">
-                                @l.ShortName.ToLower()-'@l.ShiftName'
+                            <div class="item-time">@item.TimeRange</div>
+                        }
+                        @if (!string.IsNullOrEmpty(item.StaffingInfo))
+                        {
+                            <div class="item-staffing">@item.StaffingInfo</div>
+                        }
+                    </div>
+                }
+
+                @* ✅ PHASE 20: Show more button if > 3 items *@
+                @if (hiddenCount > 0)
+                {
+                    <button class="show-more-btn"
+                            onclick="toggleShowAll(this, '@day.Date.ToString("yyyy-MM-dd")')">
+                        <span class="show-more-text">+@hiddenCount <loc key="Calendar_MoreItems" /></span>
+                    </button>
+
+                    @* Hidden items *@
+                    <div class="hidden-items calendar-hidden-items">
+                        @foreach (var item in day.Items.Skip(3))
+                        {
+                            <div class="calendar-item @item.ColorClass @(item.IsCurrentUser ? "personal" : "other")"
+                                 title="@item.Details"
+                                 data-item-type="@item.Type.ToString().ToLower()"
+                                 data-item-id="@item.EntityId">
+                                <div class="item-header">
+                                    <span class="item-icon">@item.Icon</span>
+                                    <span class="item-title">@item.Title</span>
+                                    @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
+                                    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                                    {
+                                        @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
+                                        {
+                                            <button class="btn-delete-item"
+                                                    onclick="deleteItem('@item.Type.ToString().ToLower()', @item.EntityId)"
+                                                    loc-title="Delete">
+                                                ×
+                                            </button>
+                                        }
+                                        else if (item.Type == CalendarItemType.Shift)
+                                        {
+                                            <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
+                                                <span class="manage-icon">⚙️</span>
+                                            </a>
+                                        }
+                                    }
+                                </div>
+                                <div class="item-assignee">@item.AssigneeName</div>
+                                @if (!string.IsNullOrEmpty(item.TimeRange))
+                                {
+                                    <div class="item-time">@item.TimeRange</div>
+                                }
+                                @if (!string.IsNullOrEmpty(item.StaffingInfo))
+                                {
+                                    <div class="item-staffing">@item.StaffingInfo</div>
+                                }
                             </div>
                         }
-                    }
+                    </div>
                 }
+
+                @* ✅ PHASE 20: Quick-add form (managers only) *@
                 @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
                 {
-                    <button class="add-shift-btn" onclick="openShiftModal('@day.Date.ToString("yyyy-MM-dd")')">
-                        <span>+</span>
-                        <span>Add Shift</span>
-                    </button>
+                    <div class="quick-add-container">
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + <loc key="Calendar_AddChore" />
+                        </button>
+                        <button class="btn-quick-add" onclick="toggleQuickAdd('onduty', '@day.Date.ToString("yyyy-MM-dd")')">
+                            + <loc key="Calendar_AddOnDuty" />
+                        </button>
+                    </div>
+
+                    <div id="quickAddForm-@day.Date.ToString("yyyy-MM-dd")" class="quick-add-form hidden" data-type="">
+                        <select id="assigneeSelect-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm assignee-select-clone">
+                            @* Options will be cloned from template via JavaScript *@
+                        </select>
+
+                        <div id="choreFields-@day.Date.ToString("yyyy-MM-dd")" class="hidden">
+                            <input type="text"
+                                   id="choreTitle-@day.Date.ToString("yyyy-MM-dd")"
+                                   loc-placeholder="Calendar_ChoreTitle"
+                                   class="form-control form-control-sm"
+                                   maxlength="200" />
+                        </div>
+
+                        <div id="ondutyFields-@day.Date.ToString("yyyy-MM-dd")" class="hidden">
+                            <select id="ondutyType-@day.Date.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
+                                <option value="0"><loc key="OnDuty_Hakam" /></option>
+                                <option value="1"><loc key="OnDuty_Lead" /></option>
+                                @foreach (var customType in Model.CustomOnDutyTypes)
+                                {
+                                    var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                                    var displayName = cultureName.StartsWith("he") ? customType.NameHe : customType.NameEn;
+                                    <option value="@customType.TypeValue">@displayName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="quick-add-actions">
+                            <button class="btn btn-sm btn-primary" onclick="submitQuickAdd('@day.Date.ToString("yyyy-MM-dd")')">
+                                <loc key="Add" />
+                            </button>
+                            <button class="btn btn-sm btn-ghost" onclick="toggleQuickAdd('', '@day.Date.ToString("yyyy-MM-dd")')">
+                                <loc key="Cancel" />
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!day.Items.Any())
+                {
+                    <div class="empty-day">
+                        <svg class="empty-day__icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span class="empty-day__text"><loc key="Calendar_NoItems" /></span>
+                    </div>
                 }
             </div>
         </div>
     }
 </div>
+</div>
+    </div>@* End calendar-content *@
+</div>@* End calendar-skeleton-container *@
 
-<script>
-window.shiftTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["ShiftTypes"]));
-window.companies = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["Companies"]));
-</script>
+@* ✅ PHASE 20: JavaScript for show more/less functionality *@
+@section Scripts {
+    <script>
+        // Clone assignee options from template to all dropdowns (performance optimization)
+        document.addEventListener('DOMContentLoaded', function() {
+            const template = document.getElementById('assignee-options-template');
+            if (template) {
+                const selects = document.querySelectorAll('.assignee-select-clone');
+                selects.forEach(select => {
+                    // Clone all options from template
+                    const options = template.querySelectorAll('option');
+                    options.forEach(option => {
+                        select.appendChild(option.cloneNode(true));
+                    });
+                });
+            }
+
+            // B-007: Signal calendar content is ready
+            const calendarContent = document.querySelector('[data-calendar-content]');
+            if (calendarContent && window.CalendarSkeleton) {
+                window.CalendarSkeleton.signalReady(calendarContent);
+            }
+        });
+
+        // ✅ PHASE 20: Toggle showing all items in a day column
+        function toggleShowAll(button, dateStr) {
+            const column = document.querySelector(`[data-date="${dateStr}"]`);
+            if (!column) return;
+
+            const hiddenItems = column.querySelector('.hidden-items');
+            const btnText = button.querySelector('.show-more-text');
+
+            if (!hiddenItems.classList.contains('is-visible')) {
+                // Show all
+                hiddenItems.classList.add('is-visible');
+                button.classList.add('expanded');
+                btnText.textContent = '<loc key="Calendar_ShowLess" />';
+            } else {
+                // Hide extra items
+                hiddenItems.classList.remove('is-visible');
+                button.classList.remove('expanded');
+                const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
+                btnText.textContent = `+${hiddenCount} <loc key="Calendar_MoreItems" />`;
+            }
+        }
+    </script>
+}
+
+@* ✅ PHASE 20: Week-specific styles *@
+@section Styles {
+    <style>
+        /* ✅ PHASE 20: Week grid layout */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .week-column {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 400px;
+        }
+
+        .week-column.today {
+            border: 2px solid var(--primary);
+            background: linear-gradient(135deg, var(--surface), rgba(var(--primary-rgb), 0.05));
+        }
+
+        .column-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .day-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .day-date {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 0.25rem;
+        }
+
+        .column-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Reuse calendar-item styles from Month view */
+        .calendar-item {
+            position: relative;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-item.personal {
+            border-width: 3px;
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--bg), rgba(var(--primary-rgb), 0.05));
+            font-weight: 600;
+        }
+
+        .calendar-item.other {
+            opacity: 0.7;
+        }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .item-icon {
+            font-size: 1rem;
+        }
+
+        .item-title {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .item-assignee {
+            color: var(--text);
+            font-size: 0.8rem;
+        }
+
+        .item-time, .item-staffing {
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .item-manage-link {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .calendar-item:hover .item-manage-link {
+            opacity: 1;
+        }
+
+        .manage-icon {
+            font-size: 0.9rem;
+        }
+
+        .show-more-btn {
+            width: 100%;
+            padding: 6px;
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .show-more-btn:hover {
+            background: var(--surface-soft);
+            border-color: var(--primary);
+        }
+
+        .show-more-btn.expanded {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-style: solid;
+        }
+
+        /* Per-day empty state */
+        .empty-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--muted);
+        }
+
+        .empty-day__icon {
+            width: 32px;
+            height: 32px;
+            opacity: 0.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-day__text {
+            font-size: 0.85rem;
+        }
+
+        /* Overall week empty state */
+        .calendar-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-empty__icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-empty__icon svg {
+            width: 64px;
+            height: 64px;
+        }
+
+        .calendar-empty__title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .calendar-empty__message {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0 0 1.5rem 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .calendar-empty__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .calendar-empty__actions .btn {
+            min-width: 120px;
+        }
+
+        /* Hide week grid when empty (but keep for managers to add items) */
+        .week-grid--empty {
+            opacity: 0.6;
+        }
+
+        /* Quick actions */
+        .calendar-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--surface-soft);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .quick-actions-label {
+            font-weight: 600;
+            color: var(--muted);
+            margin-right: 0.5rem;
+        }
+
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .today-indicator {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-left: 4px;
+        }
+
+        /* ========================================
+           A-004: RESPONSIVE WEEK VIEW
+           Viewport support: 320px to 1920px+
+           ======================================== */
+
+        /* Large desktop (1920px+) */
+        @@media (min-width: 1920px) {
+            .week-grid {
+                max-width: 1800px;
+                margin: 0 auto;
+            }
+
+            .week-column {
+                min-height: 500px;
+            }
+        }
+
+        /* Desktop to large tablet */
+        @@media (max-width: 1200px) {
+            .week-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
+            }
+
+            .week-column {
+                min-height: 350px;
+            }
+        }
+
+        /* Tablet breakpoint - stack vertically */
+        @@media (max-width: 768px) {
+            .week-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .week-column {
+                min-height: auto;
+                padding: 0.75rem;
+            }
+
+            .column-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                text-align: left;
+                padding-bottom: 0.5rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .day-name {
+                font-size: 0.8rem;
+            }
+
+            .day-date {
+                font-size: 0.9rem;
+                margin-top: 0;
+            }
+
+            /* Horizontal layout for items on tablet */
+            .column-items {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .calendar-item {
+                padding: 0.5rem;
+            }
+
+            /* Header responsive */
+            .calendar-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .header-main {
+                width: 100%;
+            }
+
+            .calendar-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .calendar-metrics {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            /* View switcher full width */
+            .calendar-view-switcher {
+                width: 100%;
+                display: flex;
+            }
+
+            .calendar-view-switcher .btn {
+                flex: 1;
+                justify-content: center;
+                min-height: 44px;
+            }
+
+            /* Quick actions wrap */
+            .calendar-quick-actions {
+                flex-wrap: wrap;
+            }
+
+            .quick-actions-label {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        /* Mobile breakpoint */
+        @@media (max-width: 480px) {
+            .week-grid {
+                gap: 0.5rem;
+                margin-top: 1rem;
+            }
+
+            .week-column {
+                padding: 0.5rem;
+                border-radius: 8px;
+            }
+
+            .column-header {
+                padding-bottom: 0.375rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .day-name {
+                font-size: 0.75rem;
+            }
+
+            .day-date {
+                font-size: 0.85rem;
+            }
+
+            .calendar-item {
+                padding: 0.375rem;
+                font-size: 0.8rem;
+            }
+
+            .item-icon {
+                font-size: 0.9rem;
+            }
+
+            .item-title {
+                font-size: 0.8rem;
+            }
+
+            .item-assignee {
+                font-size: 0.75rem;
+            }
+
+            .item-time,
+            .item-staffing {
+                font-size: 0.7rem;
+            }
+
+            /* Navigation compact */
+            .calendar-nav .nav-text {
+                display: none;
+            }
+
+            .calendar-nav .btn {
+                padding: 0.5rem;
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            /* Empty day compact */
+            .empty-day {
+                padding: 1rem 0.5rem;
+            }
+
+            .empty-day__icon {
+                width: 24px;
+                height: 24px;
+            }
+
+            .empty-day__text {
+                font-size: 0.75rem;
+            }
+
+            /* Quick add buttons */
+            .quick-add-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+
+            .btn-quick-add {
+                flex: 1;
+                min-width: 100px;
+                min-height: 44px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Very small mobile (360px) */
+        @@media (max-width: 360px) {
+            .week-column {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            .week-column:first-child {
+                border-radius: 8px 8px 0 0;
+            }
+
+            .week-column:last-child {
+                border-radius: 0 0 8px 8px;
+            }
+
+            .calendar-item {
+                min-height: 44px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+
+        /* Prevent horizontal scroll */
+        @@media (max-width: 768px) {
+            [data-ui-version="v2"] {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
+            .week-grid {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+        }
+
+        /* Touch device enhancements */
+        @@media (pointer: coarse) {
+            .calendar-item {
+                min-height: 44px;
+            }
+
+            .btn-quick-add,
+            .show-more-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .week-column {
+                /* Larger touch targets */
+            }
+        }
+    </style>
+}

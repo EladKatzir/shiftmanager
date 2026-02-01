@@ -1,0 +1,82 @@
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+<script>
+    window.AppLocalizer = {
+        // Common UI
+        "Cancel": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Cancel"].Value)),
+        "Save": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Save"].Value)),
+        "Delete": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Delete"].Value)),
+        "Edit": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Edit"].Value)),
+        "Close": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Close"].Value)),
+        "Confirm": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Confirm"].Value)),
+
+        // Shift Management (site.js)
+        "CreateNewShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["CreateNewShift"].Value)),
+        "Date": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Date"].Value)),
+        "ShiftType": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ShiftType"].Value)),
+        "RequiredStaff": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["RequiredStaff"].Value)),
+        "NumberOfPeopleNeeded": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["NumberOfPeopleNeeded"].Value)),
+        "ShiftNameOptional": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ShiftNameOptional"].Value)),
+        "ShiftNamePlaceholder": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ShiftNamePlaceholder"].Value)),
+        "CreateShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["CreateShift"].Value)),
+        "PleaseSelectShiftType": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseSelectShiftType"].Value)),
+        "InvalidDateData": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["InvalidDateData"].Value)),
+        "FailedToCreateShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["FailedToCreateShift"].Value)),
+        "ShiftCreatedSuccessfully": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ShiftCreatedSuccessfully"].Value)),
+        "Person": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Person"].Value)),
+        "People": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["People"].Value)),
+        "ConfirmDeleteShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ConfirmDeleteShift"].Value)),
+        "AccessDenied": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["AccessDenied"].Value)),
+        "AccessDeniedMessage": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["AccessDeniedMessage"].Value)),
+        "Understood": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Understood"].Value)),
+        "NoShiftTypesAvailable": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["NoShiftTypesAvailable"].Value)),
+        "NoResultsFound": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["NoResultsFound"].Value)),
+        "Recent": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Recent"].Value)),
+        "Error": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error"].Value)),
+        "Company": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Company"].Value)),
+        "Required": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Required"].Value)),
+
+        // Calendar Inline Edit (calendar-inline-edit.js)
+        "ChoreCreatedSuccessfully": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ChoreCreatedSuccessfully"].Value)),
+        "ErrorCreatingChore": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ErrorCreatingChore"].Value)),
+        "ConflictDetected": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ConflictDetected"].Value)),
+        "OnDutyCreatedSuccessfully": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["OnDutyCreatedSuccessfully"].Value)),
+        "ErrorCreatingOnDuty": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ErrorCreatingOnDuty"].Value)),
+        "ItemDeletedSuccessfully": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ItemDeletedSuccessfully"].Value)),
+        "ErrorDeletingItem": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ErrorDeletingItem"].Value)),
+        "PleaseSelectAssignee": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseSelectAssignee"].Value)),
+        "PleaseEnterTitle": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseEnterTitle"].Value)),
+        "TitleMaxLengthExceeded": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["TitleMaxLengthExceeded"].Value)),
+
+        // MyTeam (myteam.js)
+        "Time": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Time"].Value)),
+        "ClickToView": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ClickToView"].Value)),
+        "ViewOnlyNoNavigation": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewOnlyNoNavigation"].Value)),
+        "AnErrorOccurred": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["AnErrorOccurred"].Value)),
+
+        // Command Palette (site.js) - Navigation items
+        "Home": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Home"].Value)),
+        "DashboardOverview": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DashboardOverview"].Value)),
+        "Calendar": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Calendar"].Value)),
+        "MonthlySchedule": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["MonthlySchedule"].Value)),
+        "WeeklySchedule": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["WeeklySchedule"].Value)),
+        "DailySchedule": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DailySchedule"].Value)),
+        "ManageRequests": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ManageRequests"].Value)),
+        "ViewReports": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewReports"].Value)),
+        "ManageEmployees": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ManageEmployees"].Value)),
+        "ManageOrganizations": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ManageOrganizations"].Value)),
+        "AssignDirectors": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["AssignDirectors"].Value)),
+        "SystemSettings": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["SystemSettings"].Value)),
+        "ManageShiftDefinitions": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ManageShiftDefinitions"].Value)),
+        "ApprovedTimeOff": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ApprovedTimeOff"].Value)),
+        "SystemActivityLog": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["SystemActivityLog"].Value)),
+        "TaskManagement": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["TaskManagement"].Value)),
+        "CurrentDutyRoster": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["CurrentDutyRoster"].Value)),
+        "ViewMyRequests": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewMyRequests"].Value)),
+        "ViewTeamMembers": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewTeamMembers"].Value)),
+        "UpdateMyInformation": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["UpdateMyInformation"].Value)),
+        "ViewNotifications": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewNotifications"].Value))
+    };
+</script>

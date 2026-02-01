@@ -1,0 +1,261 @@
+@page
+@model ShiftManager.Pages.Admin.SetupTasks.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.Support
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["SetupTasks"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .view-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .view-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-primary); }
+        .view-tab.active { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .filters-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .form-select { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; min-width: 200px; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-success { background: var(--success); color: var(--success-text); border-color: var(--success); }
+        .btn-warning { background: var(--warning); color: var(--warning-text); border-color: var(--warning); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border-color: transparent; }
+        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; }
+        .badge-pending { background: var(--warning-soft); color: var(--warning); }
+        .badge-inprogress { background: var(--primary-soft); color: var(--primary); }
+        .badge-completed { background: var(--success-soft); color: var(--success); }
+        .badge-skipped { background: var(--surface-soft); color: var(--text-muted); }
+        .badge-count { background: var(--primary-bg); color: var(--primary); }
+        .task-card { background: var(--surface-soft); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+        .task-title { font-weight: 600; color: var(--text-primary); margin: 0; }
+        .task-meta { font-size: 0.8125rem; color: var(--text-secondary); margin: 0.25rem 0; }
+        .task-description { font-size: 0.875rem; color: var(--text-secondary); margin: 0.5rem 0; }
+        .task-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .progress-card { background: var(--surface-soft); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .progress-title { font-weight: 600; color: var(--text-primary); margin: 0; }
+        .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        .progress-stats { display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary); }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .context-badge { font-size: 0.6875rem; background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="SetupTasks" /></h1>
+    <p class="page-subtitle"><loc key="SetupTasksDescription" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+<div class="section-card">
+    <div class="view-tabs">
+        <a href="?ViewMode=pending" class="view-tab @(Model.ViewMode == "pending" ? "active" : "")"><loc key="MyPendingTasks" /></a>
+        <a href="?ViewMode=all" class="view-tab @(Model.ViewMode == "all" ? "active" : "")"><loc key="AllTasks" /></a>
+        <a href="?ViewMode=progress" class="view-tab @(Model.ViewMode == "progress" ? "active" : "")"><loc key="Progress" /></a>
+    </div>
+
+    @if (Model.ViewMode == "progress")
+    {
+        <h3 class="section-header"><loc key="SetupProgressByMolecule" /></h3>
+
+        @if (Model.MoleculeProgress.Any())
+        {
+            @foreach (var progress in Model.MoleculeProgress)
+            {
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <p class="progress-title">@progress.MoleculeName</p>
+                        <span class="badge badge-count">@progress.CompletionPercent%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @progress.CompletionPercent%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span><loc key="Completed" />: @progress.CompletedTasks</span>
+                        <span><loc key="Pending" />: @progress.PendingTasks</span>
+                        <span><loc key="InProgress" />: @progress.InProgressTasks</span>
+                        <span><loc key="Skipped" />: @progress.SkippedTasks</span>
+                        <span><loc key="Total" />: @progress.TotalTasks</span>
+                        <a href="?ViewMode=all&FilterMoleculeId=@progress.MoleculeId" class="btn btn-ghost btn-sm"><loc key="ViewTasks" /></a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoSetupTasksYet" /></p>
+        }
+    }
+    else if (Model.ViewMode == "all")
+    {
+        <form method="get" class="filters-bar">
+            <input type="hidden" name="ViewMode" value="all" />
+            <div class="filter-group">
+                <label><loc key="Molecule" /></label>
+                <select name="FilterMoleculeId" class="form-select" onchange="this.form.submit()">
+                    <option value="">@Localizer["SelectMolecule"]</option>
+                    @foreach (var m in Model.AvailableMolecules)
+                    {
+                        <option value="@m.Id" selected="@(Model.FilterMoleculeId == m.Id)">@m.Name</option>
+                    }
+                </select>
+            </div>
+        </form>
+
+        @if (Model.AllTasks.Any())
+        {
+            @foreach (var task in Model.AllTasks)
+            {
+                <div class="task-card">
+                    <div class="task-header">
+                        <div>
+                            <p class="task-title">@task.Title</p>
+                            <p class="task-meta">
+                                @if (!string.IsNullOrEmpty(task.MoleculeName)) { <span class="context-badge">@task.MoleculeName</span> }
+                                @if (!string.IsNullOrEmpty(task.CompanyName)) { <span class="context-badge">@task.CompanyName</span> }
+                                @if (!string.IsNullOrEmpty(task.JobTypeName)) { <span class="context-badge">@task.JobTypeName</span> }
+                            </p>
+                        </div>
+                        @switch (task.Status)
+                        {
+                            case SetupTaskStatus.Pending:
+                                <span class="badge badge-pending"><loc key="Pending" /></span>
+                                break;
+                            case SetupTaskStatus.InProgress:
+                                <span class="badge badge-inprogress"><loc key="InProgress" /></span>
+                                break;
+                            case SetupTaskStatus.Completed:
+                                <span class="badge badge-completed"><loc key="Completed" /></span>
+                                break;
+                            case SetupTaskStatus.Skipped:
+                                <span class="badge badge-skipped"><loc key="Skipped" /></span>
+                                break;
+                        }
+                    </div>
+                    <p class="task-description">@task.Description</p>
+                    <p class="task-meta">
+                        <loc key="AssignedTo" />: @task.AssignedToUserName
+                        @if (task.CompletedAt.HasValue)
+                        {
+                            <span> · <loc key="CompletedAt" />: @task.CompletedAt.Value.ToString("yyyy-MM-dd") @(task.CompletedByUserName != null ? $"by {task.CompletedByUserName}" : "")</span>
+                        }
+                    </p>
+                    @if (task.Status == SetupTaskStatus.Pending || task.Status == SetupTaskStatus.InProgress)
+                    {
+                        <div class="task-actions">
+                            @if (task.Status == SetupTaskStatus.Pending)
+                            {
+                                <form method="post" asp-page-handler="Start" style="display:inline">
+                                    <input type="hidden" name="id" value="@task.Id" />
+                                    <button type="submit" class="btn btn-primary btn-sm"><loc key="Start" /></button>
+                                </form>
+                            }
+                            <form method="post" asp-page-handler="Complete" style="display:inline">
+                                <input type="hidden" name="id" value="@task.Id" />
+                                <button type="submit" class="btn btn-success btn-sm"><loc key="MarkComplete" /></button>
+                            </form>
+                            <form method="post" asp-page-handler="Skip" style="display:inline">
+                                <input type="hidden" name="id" value="@task.Id" />
+                                <button type="submit" class="btn btn-ghost btn-sm"><loc key="Skip" /></button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else if (Model.FilterMoleculeId.HasValue)
+        {
+            <p class="empty-state"><loc key="NoTasksForMolecule" /></p>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="SelectMoleculeToViewTasks" /></p>
+        }
+    }
+    else
+    {
+        <h3 class="section-header">
+            <loc key="MyPendingTasks" />
+            <span class="badge badge-count">@Model.PendingTasks.Count</span>
+        </h3>
+
+        @if (Model.PendingTasks.Any())
+        {
+            @foreach (var task in Model.PendingTasks)
+            {
+                <div class="task-card">
+                    <div class="task-header">
+                        <div>
+                            <p class="task-title">@task.Title</p>
+                            <p class="task-meta">
+                                @if (!string.IsNullOrEmpty(task.MoleculeName)) { <span class="context-badge">@task.MoleculeName</span> }
+                                @if (!string.IsNullOrEmpty(task.CompanyName)) { <span class="context-badge">@task.CompanyName</span> }
+                                @if (!string.IsNullOrEmpty(task.JobTypeName)) { <span class="context-badge">@task.JobTypeName</span> }
+                            </p>
+                        </div>
+                        @if (task.Status == SetupTaskStatus.InProgress)
+                        {
+                            <span class="badge badge-inprogress"><loc key="InProgress" /></span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-pending"><loc key="Pending" /></span>
+                        }
+                    </div>
+                    <p class="task-description">@task.Description</p>
+                    @if (task.SuggestedUserId.HasValue)
+                    {
+                        <p class="task-meta">
+                            <loc key="SuggestedUser" />: <strong>@task.SuggestedUserName</strong>
+                            @if (!string.IsNullOrEmpty(task.SuggestionReason))
+                            {
+                                <span> - @task.SuggestionReason</span>
+                            }
+                        </p>
+                    }
+                    <div class="task-actions">
+                        @if (task.Status == SetupTaskStatus.Pending)
+                        {
+                            <form method="post" asp-page-handler="Start" style="display:inline">
+                                <input type="hidden" name="id" value="@task.Id" />
+                                <button type="submit" class="btn btn-primary btn-sm"><loc key="Start" /></button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="Complete" style="display:inline">
+                            <input type="hidden" name="id" value="@task.Id" />
+                            <button type="submit" class="btn btn-success btn-sm"><loc key="MarkComplete" /></button>
+                        </form>
+                        <form method="post" asp-page-handler="Skip" style="display:inline">
+                            <input type="hidden" name="id" value="@task.Id" />
+                            <button type="submit" class="btn btn-ghost btn-sm"><loc key="Skip" /></button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoPendingTasks" /></p>
+        }
+    }
+</div>

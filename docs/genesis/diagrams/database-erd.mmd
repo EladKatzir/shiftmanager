@@ -1,0 +1,501 @@
+erDiagram
+    %% ShiftManager Complete Database Entity-Relationship Diagram
+    %% All 28 core tables with relationships and cardinality
+    %%
+    %% Legend:
+    %% ||--o{ : One to Many
+    %% ||--|| : One to One
+    %% }o--o{ : Many to Many
+    %% (PK) = Primary Key
+    %% (FK) = Foreign Key
+    %% [T] = Tenant-scoped (has CompanyId)
+    %% [G] = Global (no CompanyId)
+
+    %%================================================================
+    %% CORE DOMAIN - MULTI-TENANCY ROOT
+    %%================================================================
+
+    Companies {
+        int Id PK
+        string Name
+        string Slug "Unique URL identifier"
+        string DisplayName
+        string SettingsJson "JSON configuration"
+        datetime CreatedAt
+    }
+
+    AppUsers {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        string Email "Unique globally"
+        blob PasswordHash "PBKDF2 hash"
+        blob PasswordSalt
+        string DisplayName
+        int Role "Owner/Director/Manager/Assigner/Employee/Trainee"
+        bool IsActive
+        string PhoneNumber
+        datetime DateOfBirth
+        datetime HireDate
+        string AvatarFileName
+        int FailedLoginAttempts
+        datetime LockoutEnd
+        datetime LastLoginAttempt
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    %%================================================================
+    %% SHIFT SCHEDULING HIERARCHY
+    %%================================================================
+
+    ShiftTypes {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        string Key "MORNING/NOON/NIGHT/MIDDLE/OFFLINE"
+        string CustomName "Override default name"
+        time Start "Shift start time"
+        time End "Shift end time"
+        int SortOrder "Display order"
+        datetime CreatedAt
+    }
+
+    ShiftInstances {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int ShiftTypeId FK
+        date WorkDate "Shift occurrence date"
+        int StaffingRequired "Number of people needed"
+        string Name "Optional custom name"
+        blob Concurrency "Optimistic concurrency token"
+        datetime CreatedAt
+    }
+
+    ShiftAssignments {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int ShiftInstanceId FK
+        int UserId FK "Nullable - allows unassigned slots"
+        int TraineeUserId FK "Nullable - shadowing trainee"
+        datetime AssignedAt
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% REQUEST WORKFLOWS
+    %%================================================================
+
+    TimeOffRequests {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK "Requester"
+        int ApproverId FK "Nullable - designated approver"
+        int TimeOffType "Vacation(0) or After(1) half-day"
+        date StartDate
+        date EndDate
+        string Reason
+        int Status "Pending(0)/Approved(1)/Declined(2)"
+        string DeclineReason
+        int ReviewerId FK "Who approved/declined"
+        datetime ReviewedAt
+        datetime CreatedAt
+    }
+
+    SwapRequests {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int FromUserId FK
+        int FromAssignmentId FK
+        int ToUserId FK "Nullable"
+        int ToAssignmentId FK "Nullable"
+        string Reason
+        int Status "Pending(0)/Approved(1)/Declined(2)"
+        string DeclineReason
+        int ReviewerId FK "Who approved/declined"
+        datetime ReviewedAt
+        datetime CreatedAt
+    }
+
+    UserJoinRequests {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        string Email
+        string DisplayName
+        int RequestedRole
+        blob PasswordHash "Stored until approval"
+        blob PasswordSalt
+        int Status "Pending(0)/Approved(1)/Rejected(2)"
+        int ReviewerId FK "Who approved/rejected"
+        datetime ReviewedAt
+        int CreatedUserId FK "Nullable - auto-created user ID"
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% TASK ASSIGNMENTS
+    %%================================================================
+
+    Chores {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        date Date "One chore per user per day"
+        int UserId FK
+        string Title
+        string Notes
+        int CreatedById FK
+        datetime CreatedAt
+        datetime CanceledAt "Soft delete"
+        int CanceledById FK
+    }
+
+    OnDuties {
+        int Id PK
+        %% NO CompanyId - [G] Global visibility!
+        int UserId FK "Cross-company reference"
+        date Date
+        int OnDutyType "Hakam(0)/Lead(1)"
+        datetime CreatedAt
+        datetime CanceledAt "Soft delete"
+        int CanceledById FK
+    }
+
+    OnDutyRoleSubscriptions {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK
+        int OnDutyTypeValue "Which on-duty type to subscribe to"
+        bool IsActive
+        datetime CreatedAt
+    }
+
+    OnDutyTypeConfigs {
+        int Id PK
+        %% NO CompanyId - [G] Global config
+        int TypeValue "Unique - Hakam(0)/Lead(1)/Custom"
+        string NameEn "English name"
+        string NameHe "Hebrew name"
+        string Icon "UI icon"
+        string Color "UI color"
+        bool IsActive
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% TEAM COLLABORATION
+    %%================================================================
+
+    TeamCalendars {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int OwnerId FK "User who created the calendar"
+        string Name "Unique per owner when not deleted"
+        bool IsDeleted "Soft delete"
+        datetime CreatedAt
+    }
+
+    TeamCalendarMembers {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int TeamCalendarId FK
+        int MemberUserId FK
+        int SortOrder "Optional manual ordering"
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% NOTIFICATIONS
+    %%================================================================
+
+    UserNotifications {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK
+        int NotificationType "18 types - ShiftAdded/TimeOffApproved/etc"
+        string Title
+        string Message
+        string RelatedEntityType "Polymorphic reference"
+        int RelatedEntityId
+        bool IsRead
+        datetime CreatedAt
+    }
+
+    DailyNotificationPreferences {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK "Unique per user when IsActive=1"
+        time PreferredTime "When to send digest"
+        bool IsActive
+        bool IncludeUpcomingShifts
+        bool IncludePendingRequests
+        bool IncludeChores
+        bool IncludeOnDuty
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% AUDIT & COMPLIANCE
+    %%================================================================
+
+    AuditLogs {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK "Nullable - denormalized email/name preserved"
+        string UserEmail "Denormalized"
+        string UserDisplayName "Denormalized"
+        string Action "What happened"
+        string EntityType "Polymorphic reference"
+        int EntityId
+        string Details "JSON - before/after state"
+        string IpAddress
+        string UserAgent
+        datetime Timestamp
+    }
+
+    RoleAssignmentAudits {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int TargetUserId FK
+        int FromRole "Old role"
+        int ToRole "New role"
+        int ChangedById FK
+        datetime Timestamp
+    }
+
+    ProfileChangeAudits {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int TargetUserId FK
+        int ChangedByUserId FK
+        string FieldName "Which field changed"
+        string OldValue
+        string NewValue
+        datetime Timestamp
+    }
+
+    %%================================================================
+    %% CONFIGURATION
+    %%================================================================
+
+    Configs {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        string Key "RestHours/WeeklyHoursCap/GameEnabled/etc"
+        string Value
+        datetime CreatedAt
+    }
+
+    EmailConfigs {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation - Unique per company"
+        string EncryptedApiKey "API key encrypted at rest"
+        string ApiUrl "Email service endpoint"
+        string FromAddress "Sender email"
+        bool Enabled
+        datetime CreatedAt
+    }
+
+    EmailApiLogs {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        string ToAddress
+        string Subject
+        string Body
+        string Request "JSON request payload"
+        string Response "JSON response"
+        bool Success
+        string ValidationErrors
+        datetime CreatedAt
+    }
+
+    GriffinConfigs {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        string BaseUrl "Griffin ADFS base URL"
+        string TokenConsumerUrl "Callback URL"
+        bool AutoProvisionUsers "Auto-create users on first login"
+        int DefaultProvisionedRole "Employee by default"
+        int TimeoutSeconds
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% API INFRASTRUCTURE (Sidecar - No Query Filters)
+    %%================================================================
+
+    ApiKeys {
+        int Id PK
+        int CompanyId FK "Has CompanyId but no query filter"
+        int CreatedById FK
+        string Name "Friendly name"
+        string KeyHash "Unique - bcrypt hash"
+        string PlainTextKey "WARNING: Security concern"
+        string Scopes "Comma-separated - user:read,shift:write"
+        int RateLimitPerMinute
+        datetime ExpiresAt
+        datetime LastUsedAt
+        bool IsActive
+        datetime CreatedAt
+    }
+
+    ApiKeyRequests {
+        int Id PK
+        int CompanyId FK "Has CompanyId but no query filter"
+        int RequestedById FK
+        string Name
+        string RequestedScopes
+        string Reason
+        int Status "Pending(0)/Approved(1)/Rejected(2)"
+        int ReviewedById FK
+        string ApprovedScopes "May differ from requested"
+        int ApprovedRateLimitPerMinute
+        int GeneratedApiKeyId FK "Nullable - points to created ApiKey"
+        datetime ReviewedAt
+        datetime CreatedAt
+    }
+
+    ApiRequestLogs {
+        int Id PK
+        int CompanyId FK "Nullable - not all requests have company context"
+        int ApiKeyId FK "Nullable - anonymous requests"
+        string Method "GET/POST/PUT/DELETE"
+        string Path "/api/v1/users"
+        string QueryString
+        string RequestBody "JSON"
+        string ResponseBody "JSON"
+        int StatusCode "200/400/401/404/500"
+        int DurationMs
+        string CorrelationId "Request tracing"
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% MULTI-TENANCY CROSS-COMPANY
+    %%================================================================
+
+    DirectorCompanies {
+        int Id PK
+        %% NO QUERY FILTER - Intentionally cross-tenant
+        int UserId FK "Director user"
+        int CompanyId FK "Company they can access"
+        int GrantedById FK "Who granted access"
+        bool IsDeleted "Soft delete"
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% GAMIFICATION
+    %%================================================================
+
+    GameScores {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK
+        int Score
+        string CurrentMonth "YYYY-MM format for leaderboard filtering"
+        datetime PlayedAt
+    }
+
+    Feedbacks {
+        int Id PK
+        int CompanyId FK "[T] Tenant isolation"
+        int UserId FK "Nullable - anonymous feedback allowed"
+        int FeedbackType "Bug/Feature/General"
+        string Content
+        string ImageFileName "Optional screenshot"
+        int Status "New/InProgress/Resolved/Closed"
+        datetime CreatedAt
+    }
+
+    %%================================================================
+    %% RELATIONSHIPS
+    %%================================================================
+
+    %% Companies → Users (One-to-Many)
+    Companies ||--o{ AppUsers : "has employees"
+
+    %% Companies → ShiftTypes → ShiftInstances → ShiftAssignments (Hierarchy)
+    Companies ||--o{ ShiftTypes : "defines shift types"
+    ShiftTypes ||--o{ ShiftInstances : "has occurrences"
+    ShiftInstances ||--o{ ShiftAssignments : "has assignments"
+    AppUsers ||--o{ ShiftAssignments : "assigned to user"
+    AppUsers ||--o{ ShiftAssignments : "trainee shadows (TraineeUserId)"
+
+    %% Request Workflows
+    AppUsers ||--o{ TimeOffRequests : "requests time-off"
+    AppUsers ||--o{ TimeOffRequests : "approves (ApproverId)"
+    AppUsers ||--o{ TimeOffRequests : "reviews (ReviewerId)"
+
+    AppUsers ||--o{ SwapRequests : "requests swap (FromUserId)"
+    ShiftAssignments ||--o{ SwapRequests : "from assignment"
+    AppUsers ||--o{ SwapRequests : "swap with (ToUserId)"
+    ShiftAssignments ||--o{ SwapRequests : "to assignment"
+    AppUsers ||--o{ SwapRequests : "reviews (ReviewerId)"
+
+    Companies ||--o{ UserJoinRequests : "pending signups"
+    AppUsers ||--o{ UserJoinRequests : "reviews (ReviewerId)"
+    AppUsers ||--o{ UserJoinRequests : "created user (CreatedUserId)"
+
+    %% Task Assignments
+    Companies ||--o{ Chores : "has chores"
+    AppUsers ||--o{ Chores : "assigned to"
+    AppUsers ||--o{ Chores : "created by (CreatedById)"
+    AppUsers ||--o{ Chores : "canceled by (CanceledById)"
+
+    AppUsers ||--o{ OnDuties : "assigned to (cross-company)"
+    AppUsers ||--o{ OnDuties : "canceled by (CanceledById)"
+
+    Companies ||--o{ OnDutyRoleSubscriptions : "has subscriptions"
+    AppUsers ||--o{ OnDutyRoleSubscriptions : "subscribes to type"
+
+    %% Team Collaboration
+    Companies ||--o{ TeamCalendars : "has calendars"
+    AppUsers ||--o{ TeamCalendars : "owns calendar (OwnerId)"
+    TeamCalendars ||--o{ TeamCalendarMembers : "has members"
+    AppUsers ||--o{ TeamCalendarMembers : "member of (MemberUserId)"
+
+    %% Notifications
+    Companies ||--o{ UserNotifications : "has notifications"
+    AppUsers ||--o{ UserNotifications : "receives notifications"
+
+    Companies ||--o{ DailyNotificationPreferences : "has preferences"
+    AppUsers ||--o{ DailyNotificationPreferences : "sets preferences"
+
+    %% Audit Trails
+    Companies ||--o{ AuditLogs : "has audit logs"
+    AppUsers ||--o{ AuditLogs : "actions logged (nullable)"
+
+    Companies ||--o{ RoleAssignmentAudits : "has role audits"
+    AppUsers ||--o{ RoleAssignmentAudits : "target user (TargetUserId)"
+    AppUsers ||--o{ RoleAssignmentAudits : "changed by (ChangedById)"
+
+    Companies ||--o{ ProfileChangeAudits : "has profile audits"
+    AppUsers ||--o{ ProfileChangeAudits : "target user (TargetUserId)"
+    AppUsers ||--o{ ProfileChangeAudits : "changed by (ChangedByUserId)"
+
+    %% Configuration
+    Companies ||--o{ Configs : "has config"
+    Companies ||--|| EmailConfigs : "has email config (one-to-one)"
+    Companies ||--o{ EmailApiLogs : "has email logs"
+    Companies ||--o{ GriffinConfigs : "has Griffin config"
+
+    %% API Infrastructure
+    Companies ||--o{ ApiKeys : "has API keys"
+    AppUsers ||--o{ ApiKeys : "created by (CreatedById)"
+
+    Companies ||--o{ ApiKeyRequests : "has key requests"
+    AppUsers ||--o{ ApiKeyRequests : "requested by (RequestedById)"
+    AppUsers ||--o{ ApiKeyRequests : "reviewed by (ReviewedById)"
+    ApiKeys ||--o{ ApiKeyRequests : "generated key (GeneratedApiKeyId)"
+
+    ApiKeys ||--o{ ApiRequestLogs : "used in requests (nullable)"
+
+    %% Multi-Tenancy Cross-Company
+    AppUsers ||--o{ DirectorCompanies : "director can access (UserId)"
+    Companies ||--o{ DirectorCompanies : "company accessible to directors"
+    AppUsers ||--o{ DirectorCompanies : "access granted by (GrantedById)"
+
+    %% Gamification
+    Companies ||--o{ GameScores : "has game scores"
+    AppUsers ||--o{ GameScores : "played game"
+
+    Companies ||--o{ Feedbacks : "has feedback"
+    AppUsers ||--o{ Feedbacks : "submitted feedback (nullable)"
