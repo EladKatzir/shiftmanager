@@ -6,13 +6,13 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Shift Blueprints";
+    ViewData["Title"] = Localizer["Blueprints_Title"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
     new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
-    new BreadcrumbItem { Label = "Blueprints", IsActive = true }
+    new BreadcrumbItem { Label = Localizer["Section_Blueprints"], IsActive = true }
 })
 
 @* Owner Company Selector *@
@@ -22,9 +22,9 @@
     <div class="page-header">
         <h1>
             <span class="page-icon">📋</span>
-            Shift Blueprints
+            <loc key="Blueprints_Title">Shift Blueprints</loc>
         </h1>
-        <p class="page-subtitle">Manage shift type definitions with bilingual names</p>
+        <p class="page-subtitle"><loc key="Blueprints_Subtitle">Manage shift type definitions with bilingual names</loc></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Success))
@@ -57,48 +57,48 @@
 
     @* Create New ShiftType Section *@
     <div class="feature-category">
-        <h2>➕ Create New Shift Type</h2>
+        <h2>➕ <loc key="Blueprints_CreateNew">Create New Shift Type</loc></h2>
         <form method="post" asp-page-handler="CreateShiftType">
             <div class="form-group-grid" style="grid-template-columns: repeat(5, 1fr);">
                 <div class="form-group">
-                    <label asp-for="NewShiftKey">Shift Key</label>
+                    <label asp-for="NewShiftKey"><loc key="Label_ShiftKey">Shift Key</loc></label>
                     <input type="text" asp-for="NewShiftKey" class="form-control"
                            placeholder="e.g., CUSTOM_1" required />
                     <small class="form-text text-muted">Uppercase, e.g., CUSTOM_DAY</small>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="NewShiftNameEn">English Name</label>
+                    <label asp-for="NewShiftNameEn"><loc key="Label_EnglishName">English Name</loc></label>
                     <input type="text" asp-for="NewShiftNameEn" class="form-control"
                            placeholder="Day Shift" required />
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="NewShiftNameHe">Hebrew Name</label>
+                    <label asp-for="NewShiftNameHe"><loc key="Label_HebrewName">Hebrew Name</loc></label>
                     <input type="text" asp-for="NewShiftNameHe" class="form-control"
                            placeholder="משמרת יום" required dir="rtl" />
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="NewShiftStart">Start Time</label>
+                    <label asp-for="NewShiftStart"><loc key="Label_StartTime">Start Time</loc></label>
                     <input type="time" asp-for="NewShiftStart" class="form-control" required />
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="NewShiftEnd">End Time</label>
+                    <label asp-for="NewShiftEnd"><loc key="Label_EndTime">End Time</loc></label>
                     <input type="time" asp-for="NewShiftEnd" class="form-control" required />
                 </div>
             </div>
 
             <button type="submit" class="btn btn-primary">
-                ➕ Create Shift Type
+                ➕ <loc key="Button_CreateShiftType">Create Shift Type</loc>
             </button>
         </form>
     </div>
 
     @* Existing ShiftTypes Table *@
     <div class="feature-category">
-        <h2>📋 Existing Shift Types</h2>
+        <h2>📋 <loc key="Blueprints_ExistingTypes">Existing Shift Types</loc></h2>
 
         @if (Model.ShiftTypes.Count == 0)
         {
@@ -211,25 +211,25 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Edit Shift Type Name</h3>
+                <h3><loc key="Modal_EditShiftTypeName">Edit Shift Type Name</loc></h3>
                 <button type="button" class="close-modal" onclick="closeEditNameModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editNameShiftId" />
 
                 <div class="form-group">
-                    <label for="editNameEn">English Name</label>
+                    <label for="editNameEn"><loc key="Label_EnglishName">English Name</loc></label>
                     <input type="text" id="editNameEn" class="form-control" required />
                 </div>
 
                 <div class="form-group">
-                    <label for="editNameHe">Hebrew Name</label>
+                    <label for="editNameHe"><loc key="Label_HebrewName">Hebrew Name</loc></label>
                     <input type="text" id="editNameHe" class="form-control" required dir="rtl" />
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeEditNameModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveShiftName()">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditNameModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-primary" onclick="saveShiftName()"><loc key="Button_Save">Save</loc></button>
             </div>
         </div>
     </div>
@@ -240,25 +240,25 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Edit Shift Times</h3>
+                <h3><loc key="Modal_EditShiftTimes">Edit Shift Times</loc></h3>
                 <button type="button" class="close-modal" onclick="closeEditTimeModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editTimeShiftId" />
 
                 <div class="form-group">
-                    <label for="editStartTime">Start Time</label>
+                    <label for="editStartTime"><loc key="Label_StartTime">Start Time</loc></label>
                     <input type="time" id="editStartTime" class="form-control" required />
                 </div>
 
                 <div class="form-group">
-                    <label for="editEndTime">End Time</label>
+                    <label for="editEndTime"><loc key="Label_EndTime">End Time</loc></label>
                     <input type="time" id="editEndTime" class="form-control" required />
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeEditTimeModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveShiftTimes()">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditTimeModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-primary" onclick="saveShiftTimes()"><loc key="Button_Save">Save</loc></button>
             </div>
         </div>
     </div>
@@ -273,7 +273,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="deleteModalTitle">Confirm Shift Type Deletion</h3>
+                <h3 id="deleteModalTitle"><loc key="Modal_ConfirmShiftTypeDeletion">Confirm Shift Type Deletion</loc></h3>
                 <button type="button" class="close-modal" onclick="closeDeleteConfirmModal()" loc-aria-label="Aria_CloseButton">&times;</button>
             </div>
             <div class="modal-body">
@@ -311,12 +311,12 @@
                 <div id="deleteErrorMessage" style="display: none; background: var(--danger-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--danger);" role="alert" data-error-state="false">
                     <p><strong>Error</strong></p>
                     <p id="deleteErrorText"></p>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="retryCheckUsage()" style="margin-top: 10px;">Retry</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="retryCheckUsage()" style="margin-top: 10px;"><loc key="Button_Retry">Retry</loc></button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirmModal()">Cancel</button>
-                <button type="button" id="deleteConfirmButton" class="btn btn-danger" onclick="proceedDeleteShiftType()" style="display: none;" data-can-submit="false">Confirm Delete</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirmModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" id="deleteConfirmButton" class="btn btn-danger" onclick="proceedDeleteShiftType()" style="display: none;" data-can-submit="false"><loc key="Button_ConfirmDelete">Confirm Delete</loc></button>
             </div>
         </div>
     </div>

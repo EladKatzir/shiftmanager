@@ -14,7 +14,7 @@
     new BreadcrumbItem { Label = "Edit Profile", IsActive = true }
 })
 
-<h2>Edit Employee Profile</h2>
+<h2><loc key="EditProfile_Title">Edit Employee Profile</loc></h2>
 
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
@@ -34,7 +34,7 @@
     <input type="hidden" asp-for="UserId" />
 
     <div class="card">
-        <h3 style="margin-top:0">Avatar</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_Avatar">Avatar</loc></h3>
 
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
             @if (!string.IsNullOrEmpty(Model.AvatarUrl))
@@ -49,13 +49,13 @@
             }
 
             <div style="flex: 1;">
-                <label>Upload New Avatar (max 5MB, JPEG/PNG)</label>
+                <label><loc key="EditProfile_UploadAvatar">Upload New Avatar (max 5MB, JPEG/PNG)</loc></label>
                 <input type="file" name="AvatarFile" accept=".jpg,.jpeg,.png" />
 
                 @if (!string.IsNullOrEmpty(Model.AvatarUrl))
                 {
                     <button type="submit" asp-page-handler="DeleteAvatar" class="btn-secondary" style="margin-top: 0.5rem;">
-                        Delete Avatar
+                        <loc key="EditProfile_DeleteAvatar">Delete Avatar</loc>
                     </button>
                 }
             </div>
@@ -63,47 +63,47 @@
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">Account Settings</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_AccountSettings">Account Settings</loc></h3>
 
-        <label>Email *</label>
+        <label><loc key="Label_Email">Email</loc> *</label>
         <input type="email" asp-for="Email" required />
 
-        <label>Role *</label>
+        <label><loc key="Label_Role">Role</loc> *</label>
         <select asp-for="Role" required>
-            <option value="@UserRole.Employee">Employee</option>
-            <option value="@UserRole.Manager">Manager</option>
-            <option value="@UserRole.Owner">Owner</option>
-            <option value="@UserRole.Director">Director</option>
-            <option value="@UserRole.Trainee">Trainee</option>
+            <option value="@UserRole.Employee"><loc key="Role_Employee">Employee</loc></option>
+            <option value="@UserRole.Manager"><loc key="Role_Manager">Manager</loc></option>
+            <option value="@UserRole.Owner"><loc key="Role_Owner">Owner</loc></option>
+            <option value="@UserRole.Director"><loc key="Role_Director">Director</loc></option>
+            <option value="@UserRole.Trainee"><loc key="Role_Trainee">Trainee</loc></option>
         </select>
 
         <label style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="checkbox" asp-for="IsActive" style="width: auto; margin: 0;" />
-            Active Account
+            <loc key="EditProfile_ActiveAccount">Active Account</loc>
         </label>
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">Personal Information</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_PersonalInfo">Personal Information</loc></h3>
 
-        <label>Display Name *</label>
+        <label><loc key="Label_DisplayName">Display Name</loc> *</label>
         <input type="text" asp-for="DisplayName" required />
 
-        <label>Preferred Name</label>
-        <input type="text" asp-for="PreferredName" placeholder="What they prefer to be called" />
+        <label><loc key="Label_PreferredName">Preferred Name</loc></label>
+        <input type="text" asp-for="PreferredName" loc-placeholder="Placeholder_PreferredName" />
 
-        <label>Phone</label>
-        <input type="tel" asp-for="Phone" placeholder="e.g., 050-1234567" />
+        <label><loc key="Label_Phone">Phone</loc></label>
+        <input type="tel" asp-for="Phone" loc-placeholder="Placeholder_Phone" />
 
-        <label>City</label>
-        <input type="text" asp-for="City" placeholder="City of residence" />
+        <label><loc key="Label_City">City</loc></label>
+        <input type="text" asp-for="City" loc-placeholder="Placeholder_City" />
 
-        <label>Date of Birth</label>
+        <label><loc key="Label_DateOfBirth">Date of Birth</loc></label>
         <input type="date" asp-for="DateOfBirth" />
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">Organizational Assignment</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_OrgAssignment">Organizational Assignment</loc></h3>
 
         @if (Model.IsWorkforceMolecule && Model.AvailableJobTypes.Any())
         {
@@ -115,7 +115,7 @@
                     <option value="@jt.Id">@jt.Name</option>
                 }
             </select>
-            <small style="color: #666; display: block; margin-bottom: 1rem;">@Localizer["JobTypeDescription"]</small>
+            <small style="color: var(--text-muted); display: block; margin-bottom: 1rem;">@Localizer["JobTypeDescription"]</small>
         }
 
         @if (Model.IsTechMolecule && Model.AvailableDepartments.Any())
@@ -128,7 +128,7 @@
                     <option value="@dept.Id">@dept.Name</option>
                 }
             </select>
-            <small style="color: #666; display: block; margin-bottom: 1rem;">@Localizer["DepartmentDescription"]</small>
+            <small style="color: var(--text-muted); display: block; margin-bottom: 1rem;">@Localizer["DepartmentDescription"]</small>
         }
 
         <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--surface-soft); border-radius: 8px; margin-bottom: 1rem;">
@@ -142,59 +142,59 @@
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">Professional Information</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_ProfessionalInfo">Professional Information</loc></h3>
 
-        <label>Department (Legacy)</label>
-        <input type="text" asp-for="Department" placeholder="e.g., Kitchen, Front of House, Management" />
-        <small style="color: #666; display: block; margin-bottom: 1rem;">@Localizer["LegacyDepartmentNote"]</small>
+        <label><loc key="Label_DepartmentLegacy">Department (Legacy)</loc></label>
+        <input type="text" asp-for="Department" loc-placeholder="Placeholder_Department" />
+        <small style="color: var(--text-muted); display: block; margin-bottom: 1rem;">@Localizer["LegacyDepartmentNote"]</small>
 
-        <label>Job Title</label>
-        <input type="text" asp-for="JobTitle" placeholder="e.g., Line Cook, Server, Shift Manager" />
+        <label><loc key="Label_JobTitle">Job Title</loc></label>
+        <input type="text" asp-for="JobTitle" loc-placeholder="Placeholder_JobTitle" />
 
-        <label>Hire Date</label>
+        <label><loc key="Label_HireDate">Hire Date</loc></label>
         <input type="date" asp-for="HireDate" />
 
-        <label>Skills (comma-separated)</label>
-        <input type="text" asp-for="Skills" placeholder="e.g., Grill, Prep, Cleaning" />
-        <small style="color: #666; display: block; margin-top: 0.25rem;">Enter skills separated by commas</small>
+        <label><loc key="Label_Skills">Skills (comma-separated)</loc></label>
+        <input type="text" asp-for="Skills" loc-placeholder="Placeholder_Skills" />
+        <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Enter skills separated by commas</small>
 
-        <label>Certifications (comma-separated)</label>
-        <input type="text" asp-for="Certifications" placeholder="e.g., Food Safety, First Aid" />
-        <small style="color: #666; display: block; margin-top: 0.25rem;">Enter certifications separated by commas</small>
+        <label><loc key="Label_Certifications">Certifications (comma-separated)</loc></label>
+        <input type="text" asp-for="Certifications" loc-placeholder="Placeholder_Certifications" />
+        <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Enter certifications separated by commas</small>
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">Emergency Contact</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_EmergencyContact">Emergency Contact</loc></h3>
 
-        <label>Emergency Contact Name</label>
-        <input type="text" asp-for="EmergencyContactName" placeholder="Full name" />
+        <label><loc key="Label_EmergencyContactName">Emergency Contact Name</loc></label>
+        <input type="text" asp-for="EmergencyContactName" loc-placeholder="Placeholder_EmergencyContactName" />
 
-        <label>Emergency Contact Phone</label>
-        <input type="tel" asp-for="EmergencyContactPhone" placeholder="e.g., 050-1234567" />
+        <label><loc key="Label_EmergencyContactPhone">Emergency Contact Phone</loc></label>
+        <input type="tel" asp-for="EmergencyContactPhone" loc-placeholder="Placeholder_Phone" />
 
-        <label>Relationship</label>
-        <input type="text" asp-for="EmergencyContactRelation" placeholder="e.g., Spouse, Parent, Friend" />
+        <label><loc key="Label_Relationship">Relationship</loc></label>
+        <input type="text" asp-for="EmergencyContactRelation" loc-placeholder="Placeholder_EmergencyContactRelation" />
     </div>
 
     <div style="display: flex; gap: 0.5rem;">
-        <button type="submit" class="btn-primary">Save Changes</button>
-        <a href="/Admin/Users" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary"><loc key="Button_SaveChanges">Save Changes</loc></button>
+        <a href="/Admin/Users" class="btn-secondary"><loc key="Button_Cancel">Cancel</loc></a>
     </div>
 </form>
 
 @if (Model.RecentChanges.Any())
 {
     <div class="card" style="margin-top: 1rem;">
-        <h3 style="margin-top:0">Recent Profile Changes (Last 30 Days)</h3>
+        <h3 style="margin-top:0"><loc key="EditProfile_RecentChanges">Recent Profile Changes (Last 30 Days)</loc></h3>
 
         <table>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Field</th>
-                    <th>Old Value</th>
-                    <th>New Value</th>
-                    <th>Changed By</th>
+                    <th><loc key="Table_Date">Date</loc></th>
+                    <th><loc key="Table_Field">Field</loc></th>
+                    <th><loc key="Table_OldValue">Old Value</loc></th>
+                    <th><loc key="Table_NewValue">New Value</loc></th>
+                    <th><loc key="Table_ChangedBy">Changed By</loc></th>
                 </tr>
             </thead>
             <tbody>
@@ -203,7 +203,7 @@
                     <tr>
                         <td>@change.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@change.FieldName</td>
-                        <td><small style="color: #666;">@(change.OldValue ?? "(empty)")</small></td>
+                        <td><small style="color: var(--text-muted);">@(change.OldValue ?? "(empty)")</small></td>
                         <td><small style="font-weight: bold;">@(change.NewValue ?? "(empty)")</small></td>
                         <td>@(change.ChangedByUser?.DisplayName ?? "Unknown")</td>
                     </tr>

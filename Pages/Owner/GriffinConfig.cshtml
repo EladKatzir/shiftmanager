@@ -235,7 +235,7 @@
                     <small class="form-text">Default role assigned to auto-provisioned users across all companies</small>
                 </div>
 
-                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-light, #fef3c7); border-left: 4px solid var(--warning, #f59e0b); border-radius: 6px;">
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-soft); border-left: 4px solid var(--warning); border-radius: 6px;">
                     <p style="margin: 0; color: var(--text); line-height: 1.6;">
                         <strong>⚠️ Security Note:</strong> Auto-provisioning applies to <strong>all companies</strong>. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.
                     </p>
@@ -249,10 +249,10 @@
                 <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
                     🔌 Test Connection
                 </button>
-                <a href="/GriffinDiagnostic" class="btn btn-secondary" target="_blank" style="background: #8b5cf6; border-color: #8b5cf6;">
+                <a href="/GriffinDiagnostic" class="btn btn-secondary" target="_blank" style="background: var(--accent); border-color: var(--accent);">
                     🔍 Run Full Diagnostic
                 </a>
-                <a href="/Owner/Index" class="btn btn-outline">Cancel</a>
+                <a href="/Owner/Index" class="btn btn-outline"><loc key="Button_Cancel">Cancel</loc></a>
             </div>
         </div>
     </form>
@@ -280,7 +280,7 @@
                 <li><strong>Consistent authentication</strong> across all companies and users</li>
             </ul>
 
-            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--info-light, #dbeafe); border-left: 4px solid var(--info, #3b82f6); border-radius: 6px;">
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--info-soft); border-left: 4px solid var(--info); border-radius: 6px;">
                 <p style="margin: 0; color: var(--text); line-height: 1.6;">
                     <strong>💡 Note:</strong> Individual companies cannot override or disable ADFS authentication. If enabled here, all users across all companies will see the "Login with Griffin ADFS" option on the login page.
                 </p>
@@ -433,14 +433,14 @@
 <style>
 /* System-Wide Banner */
 .system-wide-banner {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 2rem;
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: var(--shadow-primary);
     color: white;
 }
 
@@ -502,18 +502,18 @@
 }
 
 .status-indicator.status-success {
-    background: #10b981;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    background: var(--success);
+    box-shadow: 0 0 0 4px var(--success-soft);
 }
 
 .status-indicator.status-error {
-    background: #ef4444;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    background: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-soft);
 }
 
 .status-indicator.status-unknown {
-    background: #9ca3af;
-    box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.2);
+    background: var(--text-muted);
+    box-shadow: 0 0 0 4px var(--surface-soft);
 }
 
 .status-info {
@@ -535,7 +535,7 @@
 
 .status-error-message {
     font-size: 0.875rem;
-    color: var(--danger, #ef4444);
+    color: var(--danger);
     margin-top: 0.25rem;
 }
 
@@ -574,7 +574,7 @@
 }
 
 .context-panel {
-    background: var(--surface-soft, #f9fafb);
+    background: var(--surface-soft);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 1rem;
@@ -618,7 +618,7 @@
 
 .example-code {
     display: block;
-    background: var(--background, #fff);
+    background: var(--bg);
     border: 1px solid var(--border);
     padding: 0.5rem;
     border-radius: 4px;
@@ -651,7 +651,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--surface-soft, #f9fafb);
+    background: var(--surface-soft);
 }
 
 .card-header h2 {
@@ -731,7 +731,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: var(--border);
     transition: .4s;
     border-radius: 30px;
 }
@@ -749,7 +749,7 @@
 }
 
 input:checked + .toggle-slider {
-    background-color: var(--primary, #3b82f6);
+    background-color: var(--primary);
 }
 
 input:checked + .toggle-slider:before {
@@ -775,15 +775,15 @@ input:checked + .toggle-slider:before {
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid var(--success, #10b981);
-    color: var(--success, #10b981);
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
 }
 
 .alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid var(--danger, #ef4444);
-    color: var(--danger, #ef4444);
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
 }
 
 .btn-outline {
@@ -846,11 +846,11 @@ input:checked + .toggle-slider:before {
 }
 
 .log-success {
-    background: rgba(16, 185, 129, 0.05);
+    background: var(--success-soft);
 }
 
 .log-failure {
-    background: rgba(239, 68, 68, 0.05);
+    background: var(--danger-soft);
 }
 
 .truncate {
@@ -870,22 +870,22 @@ input:checked + .toggle-slider:before {
 }
 
 .badge-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
+    background: var(--success-soft);
+    color: var(--success);
 }
 
 .badge-error {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 /* Failure Items */
 .failure-item {
     padding: 1rem;
-    background: var(--background);
+    background: var(--bg);
     border-radius: 8px;
     margin-bottom: 1rem;
-    border-left: 4px solid var(--danger, #ef4444);
+    border-left: 4px solid var(--danger);
 }
 
 .failure-item:last-child {
@@ -900,7 +900,7 @@ input:checked + .toggle-slider:before {
 }
 
 .failure-message {
-    color: var(--danger, #ef4444);
+    color: var(--danger);
     margin-bottom: 0.5rem;
 }
 
@@ -939,7 +939,7 @@ input:checked + .toggle-slider:before {
 }
 
 .find-this-button:hover {
-    background: var(--primary-dark, #2563eb);
+    background: var(--primary-hover);
     transform: translateY(-1px);
 }
 
@@ -1059,8 +1059,8 @@ input:checked + .toggle-slider:before {
 
 /* Modal note */
 .modal-note {
-    background: var(--warning-light, #fef3c7);
-    border-left: 4px solid var(--warning, #f59e0b);
+    background: var(--warning-soft);
+    border-left: 4px solid var(--warning);
     padding: 1rem;
     border-radius: 6px;
     font-size: 0.875rem;

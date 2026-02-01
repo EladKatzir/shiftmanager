@@ -6408,6 +6408,132 @@
     <comment>A-015 - Confirmation message for delete override</comment>
   </data>
 
+  <!-- A-015: Additional Section Descriptions -->
+  <data name="DirectorHub_Subtitle" xml:space="preserve">
+    <value>מרכז ניהול חוצה חברות</value>
+    <comment>A-015 - Page subtitle for director hub</comment>
+  </data>
+  <data name="Blueprints_Subtitle" xml:space="preserve">
+    <value>נהל הגדרות סוגי משמרות עם שמות דו-לשוניים</value>
+    <comment>A-015 - Page subtitle for blueprints</comment>
+  </data>
+  <data name="Section_CompanyScope" xml:space="preserve">
+    <value>חברה והיקף</value>
+    <comment>A-015 - Section header for company scope</comment>
+  </data>
+  <data name="Section_CompaniesDesc" xml:space="preserve">
+    <value>נהל דיירים, צור/ערוך חברות</value>
+    <comment>A-015 - Description for companies section</comment>
+  </data>
+  <data name="Section_CompanyContextDesc" xml:space="preserve">
+    <value>בחר חברה פעילה לפעולות</value>
+    <comment>A-015 - Description for company context section</comment>
+  </data>
+  <data name="Section_UsersDesc" xml:space="preserve">
+    <value>CRUD משתמשים, הקצאת תפקידים, אישורים</value>
+    <comment>A-015 - Description for users section</comment>
+  </data>
+  <data name="Section_ProgramsDesc" xml:space="preserve">
+    <value>צור תבניות לוח זמנים שבועי</value>
+    <comment>A-015 - Description for programs section</comment>
+  </data>
+  <data name="Section_CompanySettingsDesc" xml:space="preserve">
+    <value>שעות מנוחה, מכסה שבועית, סוגי תורנות</value>
+    <comment>A-015 - Description for company settings section</comment>
+  </data>
+  <data name="Section_ShiftAssignmentsDesc" xml:space="preserve">
+    <value>נהל איוש משמרות עם לוח צוות</value>
+    <comment>A-015 - Description for shift assignments section</comment>
+  </data>
+  <data name="Section_OnDutyManagementDesc" xml:space="preserve">
+    <value>שיבוצי תורנויות</value>
+    <comment>A-015 - Description for onduty management section</comment>
+  </data>
+  <data name="Section_RequestsApprovals" xml:space="preserve">
+    <value>בקשות ואישורים</value>
+    <comment>A-015 - Section header for requests and approvals</comment>
+  </data>
+  <data name="Section_RequestsApprovalsDesc" xml:space="preserve">
+    <value>ניהול בקשות חופשה והחלפות</value>
+    <comment>A-015 - Description for requests and approvals section</comment>
+  </data>
+  <data name="Section_MonitoringAnalytics" xml:space="preserve">
+    <value>ניטור ואנליטיקה</value>
+    <comment>A-015 - Section header for monitoring and analytics</comment>
+  </data>
+  <data name="Section_AnalyticsDashboardDesc" xml:space="preserve">
+    <value>מדדים, מגמות, תובנות</value>
+    <comment>A-015 - Description for analytics dashboard section</comment>
+  </data>
+  <data name="Section_AuditLogDesc" xml:space="preserve">
+    <value>מעקב ביקורת מערכתי ותאימות</value>
+    <comment>A-015 - Description for audit log section</comment>
+  </data>
+  <data name="Section_SystemHealthDesc" xml:space="preserve">
+    <value>סטטוס שרת, ניטור ביצועים</value>
+    <comment>A-015 - Description for system health section</comment>
+  </data>
+  <data name="Section_FeatureFlagsDesc" xml:space="preserve">
+    <value>הפעל/כבה תכונות</value>
+    <comment>A-015 - Description for feature flags section</comment>
+  </data>
+  <data name="Section_EmailConfigurationDesc" xml:space="preserve">
+    <value>הגדרות SMTP ותבניות דוא"ל</value>
+    <comment>A-015 - Description for email configuration section</comment>
+  </data>
+  <data name="Section_GriffinAdfsDesc" xml:space="preserve">
+    <value>הגדרת אימות OAuth</value>
+    <comment>A-015 - Description for Griffin ADFS section</comment>
+  </data>
+  <data name="Section_LanguageManagementDesc" xml:space="preserve">
+    <value>מחרוזות לוקליזציה ותרגומים</value>
+    <comment>A-015 - Description for language management section</comment>
+  </data>
+  <data name="Section_GameConfigurationDesc" xml:space="preserve">
+    <value>הגדרות משחוק ולוחות תוצאות</value>
+    <comment>A-015 - Description for game configuration section</comment>
+  </data>
+  <data name="Section_RequestsDesc" xml:space="preserve">
+    <value>סקור בקשות חופשה והחלפות</value>
+    <comment>A-015 - Description for requests section</comment>
+  </data>
+  <data name="Section_NotificationHubDesc" xml:space="preserve">
+    <value>התראות חוצות חברות</value>
+    <comment>A-015 - Description for notification hub section</comment>
+  </data>
+  <data name="Button_CreateShiftType" xml:space="preserve">
+    <value>צור סוג משמרת</value>
+    <comment>A-015 - Button text for create shift type</comment>
+  </data>
+  <data name="Blueprints_CreateNew" xml:space="preserve">
+    <value>צור סוג משמרת חדש</value>
+    <comment>A-015 - Section header for create new shift type</comment>
+  </data>
+  <data name="Blueprints_ExistingTypes" xml:space="preserve">
+    <value>סוגי משמרות קיימים</value>
+    <comment>A-015 - Section header for existing shift types</comment>
+  </data>
+  <data name="Label_DisplayName" xml:space="preserve">
+    <value>שם תצוגה</value>
+    <comment>A-015 - Label for display name field</comment>
+  </data>
+  <data name="Label_DepartmentLegacy" xml:space="preserve">
+    <value>מחלקה (ישן)</value>
+    <comment>A-015 - Label for legacy department field</comment>
+  </data>
+  <data name="Label_Skills" xml:space="preserve">
+    <value>כישורים (מופרדים בפסיקים)</value>
+    <comment>A-015 - Label for skills field</comment>
+  </data>
+  <data name="Label_Certifications" xml:space="preserve">
+    <value>הסמכות (מופרדות בפסיקים)</value>
+    <comment>A-015 - Label for certifications field</comment>
+  </data>
+  <data name="EditProfile_RecentChanges" xml:space="preserve">
+    <value>שינויי פרופיל אחרונים (30 יום אחרונים)</value>
+    <comment>A-015 - Section header for recent changes</comment>
+  </data>
+
   <!-- A-015: Feature Flags -->
   <data name="FeatureFlag_EnforceCompanyScope" xml:space="preserve">
     <value>EnforceCompanyScope</value>

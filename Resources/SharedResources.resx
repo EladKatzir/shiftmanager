@@ -6900,6 +6900,132 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>A-015 - Confirmation message for delete override</comment>
   </data>
 
+  <!-- A-015: Additional Section Descriptions -->
+  <data name="DirectorHub_Subtitle" xml:space="preserve">
+    <value>Cross-Company Management Center</value>
+    <comment>A-015 - Page subtitle for director hub</comment>
+  </data>
+  <data name="Blueprints_Subtitle" xml:space="preserve">
+    <value>Manage shift type definitions with bilingual names</value>
+    <comment>A-015 - Page subtitle for blueprints</comment>
+  </data>
+  <data name="Section_CompanyScope" xml:space="preserve">
+    <value>Company &amp; Scope</value>
+    <comment>A-015 - Section header for company scope</comment>
+  </data>
+  <data name="Section_CompaniesDesc" xml:space="preserve">
+    <value>Manage tenants, create/edit companies</value>
+    <comment>A-015 - Description for companies section</comment>
+  </data>
+  <data name="Section_CompanyContextDesc" xml:space="preserve">
+    <value>Select active company for operations</value>
+    <comment>A-015 - Description for company context section</comment>
+  </data>
+  <data name="Section_UsersDesc" xml:space="preserve">
+    <value>User CRUD, role assignment, approvals</value>
+    <comment>A-015 - Description for users section</comment>
+  </data>
+  <data name="Section_ProgramsDesc" xml:space="preserve">
+    <value>Create weekly schedule templates</value>
+    <comment>A-015 - Description for programs section</comment>
+  </data>
+  <data name="Section_CompanySettingsDesc" xml:space="preserve">
+    <value>RestHours, WeeklyCap, OnDuty types</value>
+    <comment>A-015 - Description for company settings section</comment>
+  </data>
+  <data name="Section_ShiftAssignmentsDesc" xml:space="preserve">
+    <value>Manage shift staffing with Roster Dock</value>
+    <comment>A-015 - Description for shift assignments section</comment>
+  </data>
+  <data name="Section_OnDutyManagementDesc" xml:space="preserve">
+    <value>On-call duty assignments</value>
+    <comment>A-015 - Description for onduty management section</comment>
+  </data>
+  <data name="Section_RequestsApprovals" xml:space="preserve">
+    <value>Requests &amp; Approvals</value>
+    <comment>A-015 - Section header for requests and approvals</comment>
+  </data>
+  <data name="Section_RequestsApprovalsDesc" xml:space="preserve">
+    <value>Time-off and swap request management</value>
+    <comment>A-015 - Description for requests and approvals section</comment>
+  </data>
+  <data name="Section_MonitoringAnalytics" xml:space="preserve">
+    <value>Monitoring &amp; Analytics</value>
+    <comment>A-015 - Section header for monitoring and analytics</comment>
+  </data>
+  <data name="Section_AnalyticsDashboardDesc" xml:space="preserve">
+    <value>Metrics, trends, insights</value>
+    <comment>A-015 - Description for analytics dashboard section</comment>
+  </data>
+  <data name="Section_AuditLogDesc" xml:space="preserve">
+    <value>System audit trail and compliance</value>
+    <comment>A-015 - Description for audit log section</comment>
+  </data>
+  <data name="Section_SystemHealthDesc" xml:space="preserve">
+    <value>Server status, performance monitoring</value>
+    <comment>A-015 - Description for system health section</comment>
+  </data>
+  <data name="Section_FeatureFlagsDesc" xml:space="preserve">
+    <value>Toggle features on/off</value>
+    <comment>A-015 - Description for feature flags section</comment>
+  </data>
+  <data name="Section_EmailConfigurationDesc" xml:space="preserve">
+    <value>SMTP settings and email templates</value>
+    <comment>A-015 - Description for email configuration section</comment>
+  </data>
+  <data name="Section_GriffinAdfsDesc" xml:space="preserve">
+    <value>OAuth authentication configuration</value>
+    <comment>A-015 - Description for Griffin ADFS section</comment>
+  </data>
+  <data name="Section_LanguageManagementDesc" xml:space="preserve">
+    <value>Localization strings and translations</value>
+    <comment>A-015 - Description for language management section</comment>
+  </data>
+  <data name="Section_GameConfigurationDesc" xml:space="preserve">
+    <value>Gamification settings and leaderboards</value>
+    <comment>A-015 - Description for game configuration section</comment>
+  </data>
+  <data name="Section_RequestsDesc" xml:space="preserve">
+    <value>Review time-off and swap requests</value>
+    <comment>A-015 - Description for requests section</comment>
+  </data>
+  <data name="Section_NotificationHubDesc" xml:space="preserve">
+    <value>Cross-company notifications</value>
+    <comment>A-015 - Description for notification hub section</comment>
+  </data>
+  <data name="Button_CreateShiftType" xml:space="preserve">
+    <value>Create Shift Type</value>
+    <comment>A-015 - Button text for create shift type</comment>
+  </data>
+  <data name="Blueprints_CreateNew" xml:space="preserve">
+    <value>Create New Shift Type</value>
+    <comment>A-015 - Section header for create new shift type</comment>
+  </data>
+  <data name="Blueprints_ExistingTypes" xml:space="preserve">
+    <value>Existing Shift Types</value>
+    <comment>A-015 - Section header for existing shift types</comment>
+  </data>
+  <data name="Label_DisplayName" xml:space="preserve">
+    <value>Display Name</value>
+    <comment>A-015 - Label for display name field</comment>
+  </data>
+  <data name="Label_DepartmentLegacy" xml:space="preserve">
+    <value>Department (Legacy)</value>
+    <comment>A-015 - Label for legacy department field</comment>
+  </data>
+  <data name="Label_Skills" xml:space="preserve">
+    <value>Skills (comma-separated)</value>
+    <comment>A-015 - Label for skills field</comment>
+  </data>
+  <data name="Label_Certifications" xml:space="preserve">
+    <value>Certifications (comma-separated)</value>
+    <comment>A-015 - Label for certifications field</comment>
+  </data>
+  <data name="EditProfile_RecentChanges" xml:space="preserve">
+    <value>Recent Profile Changes (Last 30 Days)</value>
+    <comment>A-015 - Section header for recent changes</comment>
+  </data>
+
   <!-- A-015: Feature Flags -->
   <data name="FeatureFlag_EnforceCompanyScope" xml:space="preserve">
     <value>EnforceCompanyScope</value>
