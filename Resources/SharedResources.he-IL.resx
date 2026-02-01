@@ -6671,4 +6671,74 @@
     <value>נסה שוב</value>
     <comment>B-050 - Retry button text</comment>
   </data>
+
+  <!-- B-017: Partial Data / Loading Failures -->
+  <data name="PartialData_SectionLoading" xml:space="preserve">
+    <value>טוען...</value>
+    <comment>B-017 - Section loading text</comment>
+  </data>
+  <data name="PartialData_SectionError" xml:space="preserve">
+    <value>הטעינה נכשלה</value>
+    <comment>B-017 - Section error title</comment>
+  </data>
+  <data name="PartialData_SectionErrorDesc" xml:space="preserve">
+    <value>לא ניתן היה לטעון חלק זה. אנא נסה שוב.</value>
+    <comment>B-017 - Section error description</comment>
+  </data>
+  <data name="PartialData_SectionRetry" xml:space="preserve">
+    <value>נסה שוב</value>
+    <comment>B-017 - Section retry button</comment>
+  </data>
+  <data name="PartialData_SectionDismiss" xml:space="preserve">
+    <value>סגור</value>
+    <comment>B-017 - Section dismiss button</comment>
+  </data>
+  <data name="PartialData_SectionStale" xml:space="preserve">
+    <value>הנתונים עשויים להיות לא מעודכנים</value>
+    <comment>B-017 - Stale data indicator text</comment>
+  </data>
+  <data name="PartialData_SectionStaleRefresh" xml:space="preserve">
+    <value>רענן</value>
+    <comment>B-017 - Stale data refresh button</comment>
+  </data>
+  <data name="PartialData_PartialSuccess" xml:space="preserve">
+    <value>חלק מהנתונים לא נטענו</value>
+    <comment>B-017 - Partial success toast title</comment>
+  </data>
+  <data name="PartialData_PartialSuccessDesc" xml:space="preserve">
+    <value>{0} חלקים נכשלו בטעינה. מציג נתונים זמינים.</value>
+    <comment>B-017 - Partial success description with count parameter</comment>
+  </data>
+  <data name="PartialData_AllFailed" xml:space="preserve">
+    <value>לא ניתן לטעון נתונים</value>
+    <comment>B-017 - All sections failed toast title</comment>
+  </data>
+  <data name="PartialData_AllFailedDesc" xml:space="preserve">
+    <value>כל החלקים נכשלו בטעינה. אנא בדוק את החיבור שלך ונסה שוב.</value>
+    <comment>B-017 - All sections failed description</comment>
+  </data>
+  <data name="PartialData_RetryAll" xml:space="preserve">
+    <value>נסה הכל שוב</value>
+    <comment>B-017 - Retry all sections button</comment>
+  </data>
+  <data name="PartialData_RetryFailed" xml:space="preserve">
+    <value>נסה שוב כשלונות</value>
+    <comment>B-017 - Retry failed sections only button</comment>
+  </data>
+  <data name="PartialData_LastUpdated" xml:space="preserve">
+    <value>עודכן לאחרונה</value>
+    <comment>B-017 - Last updated label for stale indicator</comment>
+  </data>
+  <data name="PartialData_JustNow" xml:space="preserve">
+    <value>עכשיו</value>
+    <comment>B-017 - Relative time: just now</comment>
+  </data>
+  <data name="PartialData_MinutesAgo" xml:space="preserve">
+    <value>לפני {0} דקות</value>
+    <comment>B-017 - Relative time: minutes ago</comment>
+  </data>
+  <data name="PartialData_HoursAgo" xml:space="preserve">
+    <value>לפני {0} שעות</value>
+    <comment>B-017 - Relative time: hours ago</comment>
+  </data>
 </root>

@@ -7163,4 +7163,74 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Retry</value>
     <comment>B-050 - Retry button text</comment>
   </data>
+
+  <!-- B-017: Partial Data / Loading Failures -->
+  <data name="PartialData_SectionLoading" xml:space="preserve">
+    <value>Loading...</value>
+    <comment>B-017 - Section loading text</comment>
+  </data>
+  <data name="PartialData_SectionError" xml:space="preserve">
+    <value>Failed to load</value>
+    <comment>B-017 - Section error title</comment>
+  </data>
+  <data name="PartialData_SectionErrorDesc" xml:space="preserve">
+    <value>This section could not be loaded. Please try again.</value>
+    <comment>B-017 - Section error description</comment>
+  </data>
+  <data name="PartialData_SectionRetry" xml:space="preserve">
+    <value>Retry</value>
+    <comment>B-017 - Section retry button</comment>
+  </data>
+  <data name="PartialData_SectionDismiss" xml:space="preserve">
+    <value>Dismiss</value>
+    <comment>B-017 - Section dismiss button</comment>
+  </data>
+  <data name="PartialData_SectionStale" xml:space="preserve">
+    <value>Data may be outdated</value>
+    <comment>B-017 - Stale data indicator text</comment>
+  </data>
+  <data name="PartialData_SectionStaleRefresh" xml:space="preserve">
+    <value>Refresh</value>
+    <comment>B-017 - Stale data refresh button</comment>
+  </data>
+  <data name="PartialData_PartialSuccess" xml:space="preserve">
+    <value>Some data could not be loaded</value>
+    <comment>B-017 - Partial success toast title</comment>
+  </data>
+  <data name="PartialData_PartialSuccessDesc" xml:space="preserve">
+    <value>{0} section(s) failed to load. Showing available data.</value>
+    <comment>B-017 - Partial success description with count parameter</comment>
+  </data>
+  <data name="PartialData_AllFailed" xml:space="preserve">
+    <value>Could not load data</value>
+    <comment>B-017 - All sections failed toast title</comment>
+  </data>
+  <data name="PartialData_AllFailedDesc" xml:space="preserve">
+    <value>All sections failed to load. Please check your connection and try again.</value>
+    <comment>B-017 - All sections failed description</comment>
+  </data>
+  <data name="PartialData_RetryAll" xml:space="preserve">
+    <value>Retry All</value>
+    <comment>B-017 - Retry all sections button</comment>
+  </data>
+  <data name="PartialData_RetryFailed" xml:space="preserve">
+    <value>Retry Failed</value>
+    <comment>B-017 - Retry failed sections only button</comment>
+  </data>
+  <data name="PartialData_LastUpdated" xml:space="preserve">
+    <value>Last updated</value>
+    <comment>B-017 - Last updated label for stale indicator</comment>
+  </data>
+  <data name="PartialData_JustNow" xml:space="preserve">
+    <value>just now</value>
+    <comment>B-017 - Relative time: just now</comment>
+  </data>
+  <data name="PartialData_MinutesAgo" xml:space="preserve">
+    <value>{0} minute(s) ago</value>
+    <comment>B-017 - Relative time: minutes ago</comment>
+  </data>
+  <data name="PartialData_HoursAgo" xml:space="preserve">
+    <value>{0} hour(s) ago</value>
+    <comment>B-017 - Relative time: hours ago</comment>
+  </data>
 </root>
