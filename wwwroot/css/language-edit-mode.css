@@ -239,13 +239,85 @@
     line-height: 1.5;
 }
 
-/* Dark mode support (if theme system exists) */
+/* Dark mode support - use design tokens from tokens.css */
 [data-theme="dark"] .edit-mode-modal {
-    --surface: #1f2937;
-    --background: #111827;
-    --border: #374151;
-    --text: #f9fafb;
-    --muted: #9ca3af;
+    --surface: var(--surface, #1A2332);
+    --background: var(--bg, #0F1419);
+    --border: var(--border, #2D3B4E);
+    --text: var(--text, #E8EDF5);
+    --muted: var(--text-muted, #94A3B8);
+}
+
+/* Dark mode for editable element indicators */
+[data-theme="dark"] [data-loc-key].loc-editable:hover {
+    background: rgba(244, 211, 94, 0.15);
+    outline-color: var(--warning, #F4D35E);
+}
+
+[data-theme="dark"] [data-loc-key].has-draft {
+    background: rgba(82, 183, 136, 0.1);
+    border-bottom-color: var(--success, #52B788);
+}
+
+[data-theme="dark"] .edit-mode-textarea:focus {
+    border-color: var(--primary, #5B9BD5);
+    box-shadow: 0 0 0 3px rgba(91, 155, 213, 0.2);
+}
+
+[data-theme="dark"] .edit-mode-btn-save {
+    background: var(--primary, #5B9BD5);
+    color: var(--primary-contrast, #FFFFFF);
+}
+
+[data-theme="dark"] .edit-mode-btn-save:hover {
+    background: var(--primary-hover, #7AB3E3);
+}
+
+[data-theme="dark"] .draft-item strong {
+    color: var(--primary, #5B9BD5);
+}
+
+[data-theme="dark"] body.interactions-frozen button::after {
+    background: var(--danger, #FC8181);
+}
+
+/* prefers-color-scheme support for system dark mode */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .edit-mode-modal {
+        --surface: var(--surface, #1A2332);
+        --background: var(--bg, #0F1419);
+        --border: var(--border, #2D3B4E);
+        --text: var(--text, #E8EDF5);
+        --muted: var(--text-muted, #94A3B8);
+    }
+
+    :root:not([data-theme="light"]) [data-loc-key].loc-editable:hover {
+        background: rgba(244, 211, 94, 0.15);
+        outline-color: var(--warning, #F4D35E);
+    }
+
+    :root:not([data-theme="light"]) [data-loc-key].has-draft {
+        background: rgba(82, 183, 136, 0.1);
+        border-bottom-color: var(--success, #52B788);
+    }
+
+    :root:not([data-theme="light"]) .edit-mode-textarea:focus {
+        border-color: var(--primary, #5B9BD5);
+        box-shadow: 0 0 0 3px rgba(91, 155, 213, 0.2);
+    }
+
+    :root:not([data-theme="light"]) .edit-mode-btn-save {
+        background: var(--primary, #5B9BD5);
+        color: var(--primary-contrast, #FFFFFF);
+    }
+
+    :root:not([data-theme="light"]) .edit-mode-btn-save:hover {
+        background: var(--primary-hover, #7AB3E3);
+    }
+
+    :root:not([data-theme="light"]) .draft-item strong {
+        color: var(--primary, #5B9BD5);
+    }
 }
 
 /* RTL Support */
