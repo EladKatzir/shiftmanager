@@ -230,3 +230,979 @@
   from { opacity: 0; transform: translateX(-20px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* ========================================
+   A-014: RTL Layout Polish - Calendar Enhancements
+   ======================================== */
+
+/* Calendar navigation arrows - flip direction */
+[dir="rtl"] .calendar-nav .nav-icon {
+  transform: scaleX(-1);
+}
+
+/* Calendar navigation button order */
+[dir="rtl"] .calendar-nav {
+  flex-direction: row-reverse;
+}
+
+/* Today indicator - use logical properties */
+[dir="rtl"] .today-indicator {
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+/* Calendar metrics layout */
+[dir="rtl"] .calendar-metrics {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .metric-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .metric-content {
+  text-align: right;
+}
+
+/* Quick actions label spacing */
+[dir="rtl"] .quick-actions-label {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+/* Calendar quick actions */
+[dir="rtl"] .calendar-quick-actions {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Calendar View Switcher RTL
+   ======================================== */
+
+[dir="rtl"] .calendar-view-switcher {
+  flex-direction: row-reverse;
+}
+
+/* View button border radius flip */
+[dir="rtl"] .view-btn:first-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+[dir="rtl"] .view-btn:last-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+/* ========================================
+   A-014: Calendar Item RTL Fixes
+   ======================================== */
+
+/* Item header layout */
+[dir="rtl"] .item-header {
+  flex-direction: row-reverse;
+}
+
+/* Item manage link position */
+[dir="rtl"] .item-manage-link {
+  right: auto;
+  left: 4px;
+}
+
+/* Delete button position */
+[dir="rtl"] .btn-delete-item {
+  right: auto;
+  left: 4px;
+}
+
+/* Item content text alignment */
+[dir="rtl"] .item-title,
+[dir="rtl"] .item-assignee,
+[dir="rtl"] .item-time,
+[dir="rtl"] .item-staffing {
+  text-align: right;
+}
+
+/* ========================================
+   A-014: Week View RTL Fixes
+   ======================================== */
+
+/* Week column header alignment */
+[dir="rtl"] .column-header {
+  text-align: right;
+}
+
+/* Week grid reversal (Sunday-Saturday order maintained) */
+[dir="rtl"] .week-grid {
+  direction: rtl;
+}
+
+/* Empty day state */
+[dir="rtl"] .empty-day {
+  text-align: right;
+}
+
+/* ========================================
+   A-014: Day View RTL Fixes
+   ======================================== */
+
+/* Day item layout */
+[dir="rtl"] .day-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .day-item .item-main {
+  text-align: right;
+}
+
+[dir="rtl"] .day-item .item-header {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+[dir="rtl"] .day-item .item-details {
+  text-align: right;
+}
+
+[dir="rtl"] .day-item .item-actions {
+  flex-direction: row-reverse;
+}
+
+/* Detail labels and values */
+[dir="rtl"] .detail-label,
+[dir="rtl"] .detail-value {
+  text-align: right;
+}
+
+/* Trainee badge position */
+[dir="rtl"] .trainee-badge {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* ========================================
+   A-014: Shift Badge Border Flip
+   ======================================== */
+
+/* Use logical properties for shift color indicators */
+[dir="rtl"] .shift-morning,
+[dir="rtl"] .shift-middle,
+[dir="rtl"] .shift-noon,
+[dir="rtl"] .shift-night,
+[dir="rtl"] .chore-green,
+[dir="rtl"] .onduty-hakam,
+[dir="rtl"] .onduty-lead {
+  border-left: none;
+  border-right-width: 4px;
+  border-right-style: solid;
+}
+
+[dir="rtl"] .shift-morning {
+  border-right-color: var(--shift-morning);
+}
+
+[dir="rtl"] .shift-middle {
+  border-right-color: var(--shift-afternoon);
+}
+
+[dir="rtl"] .shift-noon {
+  border-right-color: var(--shift-noon, var(--warning));
+}
+
+[dir="rtl"] .shift-night {
+  border-right-color: var(--shift-night);
+}
+
+[dir="rtl"] .chore-green {
+  border-right-color: var(--success);
+}
+
+[dir="rtl"] .onduty-hakam {
+  border-right-color: var(--shift-hakam);
+}
+
+[dir="rtl"] .onduty-lead {
+  border-right-color: var(--shift-lead, var(--accent));
+}
+
+/* Day view thicker borders */
+[dir="rtl"] .day-item.shift-morning,
+[dir="rtl"] .day-item.shift-middle,
+[dir="rtl"] .day-item.shift-noon,
+[dir="rtl"] .day-item.shift-night,
+[dir="rtl"] .day-item.chore-green,
+[dir="rtl"] .day-item.onduty-hakam,
+[dir="rtl"] .day-item.onduty-lead {
+  border-right-width: 6px;
+}
+
+/* ========================================
+   A-014: Quick Add Form RTL
+   ======================================== */
+
+[dir="rtl"] .quick-add-container {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .quick-add-form {
+  text-align: right;
+}
+
+[dir="rtl"] .quick-add-actions {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Scope Switcher RTL
+   ======================================== */
+
+[dir="rtl"] .scope-switcher {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .scope-switcher__buttons {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .scope-switcher__btn {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Calendar Cell RTL
+   ======================================== */
+
+[dir="rtl"] .calendar-cell {
+  text-align: right;
+}
+
+[dir="rtl"] .cell-date {
+  text-align: right;
+}
+
+[dir="rtl"] .cell-items {
+  text-align: right;
+}
+
+/* Weekday headers */
+[dir="rtl"] .calendar-weekdays {
+  direction: rtl;
+}
+
+[dir="rtl"] .weekday-header {
+  text-align: right;
+}
+
+/* ========================================
+   A-014: Show More Button RTL
+   ======================================== */
+
+[dir="rtl"] .show-more-btn {
+  text-align: right;
+}
+
+/* ========================================
+   A-014: Calendar Empty State RTL
+   ======================================== */
+
+[dir="rtl"] .calendar-empty {
+  text-align: right;
+}
+
+[dir="rtl"] .calendar-empty__actions {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Pagination RTL
+   ======================================== */
+
+[dir="rtl"] .pagination {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .pagination__controls {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Table RTL Alignment
+   ======================================== */
+
+[dir="rtl"] .table__actions {
+  text-align: start;
+}
+
+/* ========================================
+   A-014: Breadcrumb Separator
+   ======================================== */
+
+[dir="rtl"] .breadcrumb__separator {
+  transform: scaleX(-1);
+}
+
+/* ========================================
+   A-014: Input with Icons RTL
+   ======================================== */
+
+[dir="rtl"] .input-wrapper--with-icon input,
+[dir="rtl"] .input-wrapper--with-icon select,
+[dir="rtl"] .input-wrapper--with-icon textarea {
+  padding-right: var(--input-padding-x);
+  padding-left: var(--space-10);
+}
+
+[dir="rtl"] .input-wrapper__icon {
+  right: auto;
+  left: var(--space-3);
+}
+
+/* ========================================
+   A-014: Icon Circle/Status Indicators
+   ======================================== */
+
+[dir="rtl"] .icon-circle {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* ========================================
+   A-014: Widget RTL Fixes
+   ======================================== */
+
+[dir="rtl"] .widget__header-left {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .widget__toggle {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* On-call contact RTL */
+[dir="rtl"] .oncall-contact {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .oncall-contact__info {
+  text-align: right;
+}
+
+/* Office number RTL */
+[dir="rtl"] .office-number {
+  flex-direction: row-reverse;
+}
+
+/* Friend on-call RTL */
+[dir="rtl"] .friend-oncall {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .friend-oncall__info {
+  text-align: right;
+}
+
+/* Next shift widget RTL */
+[dir="rtl"] .next-shift {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .next-shift__details {
+  text-align: right;
+}
+
+/* Pending request RTL */
+[dir="rtl"] .pending-request {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .pending-request__content {
+  text-align: right;
+}
+
+/* Announcement RTL */
+[dir="rtl"] .announcement__header {
+  flex-direction: row-reverse;
+}
+
+/* Quick actions grid RTL */
+[dir="rtl"] .quick-actions {
+  direction: rtl;
+}
+
+/* Metrics widget RTL */
+[dir="rtl"] .metrics-widget {
+  direction: rtl;
+}
+
+[dir="rtl"] .metric {
+  text-align: right;
+}
+
+/* ========================================
+   A-014: Shift Line RTL
+   ======================================== */
+
+[dir="rtl"] .shift-line {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .shift-line__type {
+  margin-left: 0;
+  margin-right: var(--space-3);
+}
+
+[dir="rtl"] .shift-line__content {
+  text-align: right;
+}
+
+[dir="rtl"] .shift-line__actions {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Alert/Banner RTL
+   ======================================== */
+
+[dir="rtl"] .alert {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .alert__content {
+  text-align: right;
+}
+
+/* Error banner RTL */
+[dir="rtl"] .error-banner {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .error-banner__content {
+  text-align: right;
+}
+
+[dir="rtl"] .error-banner__actions {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   A-014: Flex/Grid Reversals
+   ======================================== */
+
+/* Generic flex reversal for horizontal layouts */
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Avatar group RTL */
+[dir="rtl"] .avatar-group {
+  flex-direction: row;
+}
+
+[dir="rtl"] .avatar-group .avatar {
+  margin-inline-start: 0;
+  margin-inline-end: -8px;
+}
+
+[dir="rtl"] .avatar-group .avatar:last-child {
+  margin-inline-end: 0;
+}
+
+/* ========================================
+   A-014: Validation Summary RTL
+   ======================================== */
+
+[dir="rtl"] .validation-summary-errors ul {
+  padding-left: 0;
+  padding-right: var(--space-4);
+}
+
+[dir="rtl"] .validation-summary-errors::before {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* ========================================
+   A-014: RTL Layout Polish - Additional Fixes
+   ======================================== */
+
+/* ----------------------------------------
+   Command Palette RTL
+   ---------------------------------------- */
+[dir="rtl"] .command-palette-search {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .command-palette-icon {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+[dir="rtl"] .command-palette-hint {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .command-palette-results {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   App Header RTL
+   ---------------------------------------- */
+[dir="rtl"] .app-header-main {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .app-header-left {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .app-header-right {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .page-title {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Employee Navigation RTL
+   ---------------------------------------- */
+[dir="rtl"] .employee-nav {
+  flex-direction: row-reverse;
+  margin-left: 0;
+  margin-right: 2rem;
+}
+
+[dir="rtl"] .nav-item {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Action Buttons RTL
+   ---------------------------------------- */
+[dir="rtl"] .action-btn {
+  flex-direction: row-reverse;
+}
+
+/* Notification badge positioning */
+[dir="rtl"] .action-btn .notification-badge {
+  right: auto;
+  left: -4px;
+}
+
+/* ----------------------------------------
+   Welcome Section RTL
+   ---------------------------------------- */
+[dir="rtl"] .employee-welcome {
+  text-align: right;
+}
+
+[dir="rtl"] .welcome-content {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Sidebar Brand RTL
+   ---------------------------------------- */
+[dir="rtl"] .sidebar-brand {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .sidebar-brand__text {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Sidebar User RTL
+   ---------------------------------------- */
+[dir="rtl"] .sidebar-user {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .sidebar-user__info {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Sidebar Shortcut RTL
+   ---------------------------------------- */
+[dir="rtl"] .sidebar-shortcut {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Context Switcher RTL
+   ---------------------------------------- */
+[dir="rtl"] .context-switcher__trigger {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .context-switcher__current {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .context-switcher__name {
+  text-align: right;
+}
+
+[dir="rtl"] .context-switcher__option {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+[dir="rtl"] .context-switcher__option-check {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
+
+/* ----------------------------------------
+   Calendar Header RTL
+   ---------------------------------------- */
+[dir="rtl"] .header-main {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-main h2 {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .calendar-icon {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* ----------------------------------------
+   Calendar Controls RTL
+   ---------------------------------------- */
+[dir="rtl"] .calendar-controls {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Today Indicator RTL
+   ---------------------------------------- */
+[dir="rtl"] .today-indicator {
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+/* ----------------------------------------
+   Nav Section Header RTL
+   ---------------------------------------- */
+[dir="rtl"] .nav-section-header {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Sidebar Nav Items RTL
+   ---------------------------------------- */
+[dir="rtl"] .app-sidebar-nav-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .app-sidebar-nav-icon {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* ----------------------------------------
+   Loading Spinner/Page Loader RTL
+   ---------------------------------------- */
+[dir="rtl"] .page-loader__brand {
+  text-align: center;
+}
+
+/* ----------------------------------------
+   View As Mode Banner RTL
+   ---------------------------------------- */
+[dir="rtl"] .view-as-banner a {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+/* ----------------------------------------
+   Language Edit Mode Banner RTL
+   ---------------------------------------- */
+[dir="rtl"] .language-edit-banner {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Calendar Item Manage Link RTL
+   ---------------------------------------- */
+[dir="rtl"] .item-manage-link {
+  right: auto;
+  left: 4px;
+}
+
+/* ----------------------------------------
+   Metric Item RTL
+   ---------------------------------------- */
+[dir="rtl"] .metric-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .metric-icon {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+[dir="rtl"] .metric-content {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Widget Header Left RTL
+   ---------------------------------------- */
+[dir="rtl"] .widget__header-left {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .widget__icon {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* ----------------------------------------
+   OnCall Contact RTL
+   ---------------------------------------- */
+[dir="rtl"] .oncall-contact {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .oncall-contact__info {
+  text-align: right;
+}
+
+[dir="rtl"] .oncall-contact__phone {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Friend OnCall RTL
+   ---------------------------------------- */
+[dir="rtl"] .friend-oncall {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .friend-oncall__info {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Office Number RTL
+   ---------------------------------------- */
+[dir="rtl"] .office-number {
+  flex-direction: row-reverse;
+}
+
+/* Phone numbers should remain LTR for readability */
+[dir="rtl"] .office-number__value {
+  direction: ltr;
+  text-align: left;
+}
+
+/* ----------------------------------------
+   Next Shift Widget RTL
+   ---------------------------------------- */
+[dir="rtl"] .next-shift {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .next-shift__details {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Pending Request RTL
+   ---------------------------------------- */
+[dir="rtl"] .pending-request {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .pending-request__content {
+  text-align: right;
+}
+
+[dir="rtl"] .pending-request__actions {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Announcement RTL
+   ---------------------------------------- */
+[dir="rtl"] .announcement__header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .announcement__body {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Quick Actions Grid RTL
+   ---------------------------------------- */
+[dir="rtl"] .quick-actions {
+  direction: rtl;
+}
+
+[dir="rtl"] .quick-action {
+  text-align: center;
+}
+
+/* ----------------------------------------
+   Metrics Widget RTL
+   ---------------------------------------- */
+[dir="rtl"] .metrics-widget {
+  direction: rtl;
+}
+
+[dir="rtl"] .metric {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Skip Link RTL
+   ---------------------------------------- */
+[dir="rtl"] .skip-link {
+  left: auto;
+  right: 0;
+}
+
+/* ----------------------------------------
+   Form Check RTL
+   ---------------------------------------- */
+[dir="rtl"] .form-check {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .form-check__label {
+  margin-left: 0;
+  margin-right: var(--space-2);
+}
+
+/* ----------------------------------------
+   Tabs RTL
+   ---------------------------------------- */
+[dir="rtl"] .tabs {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .tabs__item {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Shift Line Type Indicator RTL
+   ---------------------------------------- */
+[dir="rtl"] .shift-line__type {
+  margin-left: var(--space-3);
+  margin-right: 0;
+}
+
+/* ----------------------------------------
+   Loading Inline RTL
+   ---------------------------------------- */
+[dir="rtl"] .loading-inline {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .loading-inline .spinner {
+  margin-left: 0;
+  margin-right: var(--space-2);
+}
+
+/* ----------------------------------------
+   Decision Ribbon RTL
+   ---------------------------------------- */
+[dir="rtl"] .decision-ribbon__content {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .decision-ribbon__icon {
+  margin-right: 0;
+  margin-left: var(--space-2);
+}
+
+/* ----------------------------------------
+   Show My Items Toggle RTL
+   ---------------------------------------- */
+[dir="rtl"] .show-my-items-toggle {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .show-my-items-toggle__label {
+  margin-left: 0;
+  margin-right: var(--space-2);
+}
+
+/* ----------------------------------------
+   Nav Icons Flip (Arrows/Chevrons)
+   ---------------------------------------- */
+[dir="rtl"] .nav-icon {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .calendar-nav .nav-icon {
+  transform: scaleX(-1);
+}
+
+/* Don't flip emoji icons, only arrow/chevron icons */
+[dir="rtl"] .nav-icon:not([data-flip="false"]) {
+  transform: scaleX(-1);
+}
+
+/* Calendar icon should not flip */
+[dir="rtl"] .calendar-icon {
+  transform: none;
+}
+
+/* ----------------------------------------
+   Sidebar Widget Container RTL
+   ---------------------------------------- */
+[dir="rtl"] .sidebar-widget-container {
+  text-align: right;
+}
+
+/* ----------------------------------------
+   Widget Empty State RTL
+   ---------------------------------------- */
+[dir="rtl"] .widget-empty {
+  text-align: center;
+}
+
+[dir="rtl"] .widget-empty--oncall .widget-empty__hint {
+  text-align: center;
+}
+
+/* ----------------------------------------
+   Widget Loading RTL
+   ---------------------------------------- */
+[dir="rtl"] .widget-loading__item {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Mobile Responsive RTL Adjustments
+   ---------------------------------------- */
+@media (max-width: 768px) {
+  [dir="rtl"] .calendar-header {
+    text-align: right;
+  }
+
+  [dir="rtl"] .column-header {
+    text-align: right;
+  }
+
+  [dir="rtl"] .calendar-week__day-header {
+    text-align: right;
+  }
+
+  [dir="rtl"] .calendar-nav {
+    flex-direction: row-reverse;
+  }
+
+  [dir="rtl"] .calendar-view-switcher {
+    flex-direction: row-reverse;
+  }
+}
