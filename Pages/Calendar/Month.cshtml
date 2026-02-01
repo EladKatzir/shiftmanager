@@ -20,7 +20,10 @@
     new BreadcrumbItem { Label = Localizer["Month"], IsActive = true }
 })
 
-<div data-ui-version="v2">
+@* B-007: Calendar Skeleton Loading Container *@
+<div class="calendar-skeleton-container" data-calendar-skeleton-container>
+    @await Component.InvokeAsync("CalendarSkeleton", new { viewType = "month", cellCount = 35 })
+    <div data-ui-version="v2" data-calendar-content class="calendar-content">
 <div class="calendar-header">
     <div class="header-main">
         <h2>
@@ -201,17 +204,43 @@
     </div>
 }
 
+@* A-013: Screen reader announcer for keyboard navigation *@
+<div id="calendar-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
 @* ✅ PHASE 20: Unified calendar grid *@
-<div class="calendar-grid @(Model.TotalItemCount == 0 ? "calendar-grid--empty" : "")">
-    <!-- Weekday headers -->
-    <div class="calendar-weekdays">
-        <div class="weekday-header"><loc key="Sun" /></div>
-        <div class="weekday-header"><loc key="Mon" /></div>
-        <div class="weekday-header"><loc key="Tue" /></div>
-        <div class="weekday-header"><loc key="Wed" /></div>
-        <div class="weekday-header"><loc key="Thu" /></div>
-        <div class="weekday-header"><loc key="Fri" /></div>
-        <div class="weekday-header"><loc key="Sat" /></div>
+@* A-004: Responsive calendar grid with abbreviated day names for mobile *@
+<div class="calendar-grid @(Model.TotalItemCount == 0 ? "calendar-grid--empty" : "")" role="grid" aria-label="@Localizer["Calendar_MonthView"]">
+    <!-- Weekday headers with responsive abbreviations -->
+    <!-- data-day-full: Full name, data-day-abbr: 3-letter, data-day-letter: single letter for mobile -->
+    <div class="calendar-weekdays" role="row">
+        <div class="weekday-header" role="columnheader" data-day-full="Sunday" data-day-abbr="Sun" data-day-letter="S">
+            <span class="day-full"><loc key="Sun" /></span>
+            <span class="day-abbr" aria-hidden="true">S</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Monday" data-day-abbr="Mon" data-day-letter="M">
+            <span class="day-full"><loc key="Mon" /></span>
+            <span class="day-abbr" aria-hidden="true">M</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Tuesday" data-day-abbr="Tue" data-day-letter="T">
+            <span class="day-full"><loc key="Tue" /></span>
+            <span class="day-abbr" aria-hidden="true">T</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Wednesday" data-day-abbr="Wed" data-day-letter="W">
+            <span class="day-full"><loc key="Wed" /></span>
+            <span class="day-abbr" aria-hidden="true">W</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Thursday" data-day-abbr="Thu" data-day-letter="T">
+            <span class="day-full"><loc key="Thu" /></span>
+            <span class="day-abbr" aria-hidden="true">T</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Friday" data-day-abbr="Fri" data-day-letter="F">
+            <span class="day-full"><loc key="Fri" /></span>
+            <span class="day-abbr" aria-hidden="true">F</span>
+        </div>
+        <div class="weekday-header" role="columnheader" data-day-full="Saturday" data-day-abbr="Sat" data-day-letter="S">
+            <span class="day-full"><loc key="Sat" /></span>
+            <span class="day-abbr" aria-hidden="true">S</span>
+        </div>
     </div>
 
     @* ✅ PHASE 20: Render calendar cells with unified items *@
@@ -228,7 +257,7 @@
             if (isToday) { cellClass += " today"; }
             if (isPastDate) { cellClass += " past-date"; }
 
-            <div class="@cellClass" data-date="@day.Date.ToString("yyyy-MM-dd")">
+            <div class="@cellClass" role="gridcell" tabindex="@(isToday ? "0" : "-1")" data-date="@day.Date.ToString("yyyy-MM-dd")" data-day-name="@day.Date.ToString("ddd")" aria-label="@day.Date.ToString("MMMM d, yyyy")">
                 <div class="cell-date">
                     @day.Date.Day
                     @if (isToday)
@@ -416,6 +445,8 @@
     }
 </div>
 </div>
+    </div>@* End calendar-content *@
+</div>@* End calendar-skeleton-container *@
 
 @* ✅ PHASE 20: JavaScript for show more/less functionality *@
 @section Scripts {
@@ -432,6 +463,12 @@
                         select.appendChild(option.cloneNode(true));
                     });
                 });
+            }
+
+            // B-007: Signal calendar content is ready
+            const calendarContent = document.querySelector('[data-calendar-content]');
+            if (calendarContent && window.CalendarSkeleton) {
+                window.CalendarSkeleton.signalReady(calendarContent);
             }
         });
 
@@ -456,6 +493,48 @@
                 btnText.textContent = `+${hiddenCount} <loc key="Calendar_MoreItems" />`;
             }
         }
+
+        // B-037: Initialize calendar keyboard navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarGrid = document.querySelector('.calendar-grid');
+            if (calendarGrid && window.KeyboardNav) {
+                window.KeyboardNav.initCalendar({
+                    grid: calendarGrid,
+                    cellSelector: '.calendar-cell:not(.other-month)',
+                    onNavigate: function(cell) {
+                        // Announce date to screen readers
+                        const date = cell.getAttribute('data-date');
+                        if (date) {
+                            const dateObj = new Date(date);
+                            const announcement = dateObj.toLocaleDateString(undefined, {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                            // Update ARIA live region if present
+                            const liveRegion = document.getElementById('calendar-announcer');
+                            if (liveRegion) {
+                                liveRegion.textContent = announcement;
+                            }
+                        }
+                    },
+                    onSelect: function(cell) {
+                        // Click the first clickable element in the cell
+                        const dateLink = cell.querySelector('.calendar-item, button, a');
+                        if (dateLink) {
+                            dateLink.click();
+                        } else {
+                            // If no items, trigger quick add if available
+                            const quickAddBtn = cell.querySelector('[onclick*="toggleQuickAdd"]');
+                            if (quickAddBtn) {
+                                quickAddBtn.click();
+                            }
+                        }
+                    }
+                });
+            }
+        });
     </script>
 }
 
@@ -647,6 +726,259 @@
         /* Dim grid when empty */
         .calendar-grid--empty {
             opacity: 0.6;
+        }
+
+        /* ========================================
+           A-004: RESPONSIVE CALENDAR GRID
+           ======================================== */
+
+        /* Weekday header base styles */
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .weekday-header {
+            background: var(--surface-soft);
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Day name display control */
+        .weekday-header .day-abbr {
+            display: none;
+        }
+
+        .weekday-header .day-full {
+            display: inline;
+        }
+
+        /* Calendar grid responsive */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .calendar-cell {
+            background: var(--surface);
+            min-height: 120px;
+            padding: 0.5rem;
+        }
+
+        /* Touch-friendly tap targets */
+        .btn-quick-add,
+        .show-more-btn,
+        .btn-delete-item,
+        .item-manage-link {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Tablet breakpoint (768px) - Abbreviated day names */
+        @@media (max-width: 768px) {
+            .weekday-header .day-full {
+                display: none;
+            }
+
+            .weekday-header .day-abbr {
+                display: inline;
+                font-size: 0.8rem;
+            }
+
+            .calendar-cell {
+                min-height: 80px;
+                padding: 0.375rem;
+            }
+
+            .calendar-item {
+                padding: 6px;
+                font-size: 0.8rem;
+            }
+
+            .item-icon {
+                font-size: 0.9rem;
+            }
+
+            .item-title {
+                font-size: 0.8rem;
+            }
+
+            .item-assignee,
+            .item-time,
+            .item-staffing {
+                font-size: 0.7rem;
+            }
+
+            /* Quick actions compact */
+            .calendar-quick-actions {
+                flex-wrap: wrap;
+                padding: 0.75rem;
+            }
+
+            .quick-actions-label {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Calendar header responsive */
+            .calendar-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .header-main {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .calendar-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .calendar-metrics {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            /* View switcher full width */
+            .calendar-view-switcher {
+                width: 100%;
+                display: flex;
+            }
+
+            .calendar-view-switcher .btn {
+                flex: 1;
+                justify-content: center;
+                min-height: 44px;
+            }
+        }
+
+        /* Mobile breakpoint (480px) - Single letter day names */
+        @@media (max-width: 480px) {
+            .weekday-header {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.75rem;
+            }
+
+            .calendar-cell {
+                min-height: 70px;
+                padding: 0.25rem;
+            }
+
+            .cell-date {
+                font-size: 0.8rem;
+            }
+
+            .calendar-item {
+                padding: 4px;
+                margin-bottom: 4px;
+                font-size: 0.75rem;
+            }
+
+            .item-header {
+                gap: 2px;
+            }
+
+            .item-icon {
+                font-size: 0.8rem;
+            }
+
+            /* Hide some details on very small screens */
+            .item-staffing {
+                display: none;
+            }
+
+            /* Navigation compact */
+            .calendar-nav .nav-text {
+                display: none;
+            }
+
+            .calendar-nav .btn {
+                padding: 0.5rem;
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            /* Metrics scrollable */
+            .calendar-metrics {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 0.5rem;
+            }
+
+            .metric-item {
+                flex-shrink: 0;
+            }
+        }
+
+        /* Very small mobile (360px) - List view */
+        @@media (max-width: 360px) {
+            .calendar-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-weekdays {
+                display: none;
+            }
+
+            .calendar-cell {
+                min-height: auto;
+                padding: 0.75rem;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .calendar-cell::before {
+                content: attr(data-day-name);
+                display: block;
+                font-weight: 600;
+                color: var(--text-muted);
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .cell-date {
+                font-size: 1rem;
+                font-weight: 700;
+            }
+        }
+
+        /* Prevent horizontal scroll on all mobile */
+        @@media (max-width: 768px) {
+            [data-ui-version="v2"] {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
+            .calendar-grid {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+        }
+
+        /* Touch device enhancements */
+        @@media (pointer: coarse) {
+            .calendar-item {
+                min-height: 44px;
+            }
+
+            .btn-quick-add {
+                padding: 0.75rem;
+            }
+
+            .show-more-btn {
+                padding: 0.75rem;
+            }
         }
     </style>
 }

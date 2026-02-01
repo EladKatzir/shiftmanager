@@ -124,10 +124,10 @@
     border-radius: 50%;
 }
 
-.legend-dot.vacation { background: #58a6ff; }
-.legend-dot.onduty { background: #ff6b6b; }
-.legend-dot.shift { background: #9b59b6; }
-.legend-dot.chore { background: #ffd54f; }
+.legend-dot.vacation { background: var(--info); }
+.legend-dot.onduty { background: var(--danger); }
+.legend-dot.shift { background: var(--accent); }
+.legend-dot.chore { background: var(--warning); }
 
 /* View Toggle */
 .view-toggle {
@@ -197,10 +197,10 @@
     flex-shrink: 0;
 }
 
-.item-colorbar.vacation { background: #58a6ff; }
-.item-colorbar.onduty { background: #ff6b6b; }
-.item-colorbar.shift { background: #9b59b6; }
-.item-colorbar.chore { background: #ffd54f; }
+.item-colorbar.vacation { background: var(--info); }
+.item-colorbar.onduty { background: var(--danger); }
+.item-colorbar.shift { background: var(--accent); }
+.item-colorbar.chore { background: var(--warning); }
 
 .item-icon {
     font-size: 1.5rem;
@@ -571,7 +571,7 @@
 <div class="drawer" id="detailDrawer">
     <div class="drawer-header">
         <h3 id="drawerTitle"><loc key="Details" /></h3>
-        <button class="drawer-close" onclick="closeDrawer()">×</button>
+        <button class="drawer-close" onclick="closeDrawer()" loc-aria-label="Aria_CloseDialog">×</button>
     </div>
     <div class="drawer-content" id="drawerContent">
         <!-- Content will be injected by JavaScript -->
@@ -678,15 +678,15 @@ const ctx = canvas.getContext('2d');
 
 function drawStatsChart(mode) {
     const data = mode === 'count' ? [
-        { label: localizer.vacations, value: statsData.vacationCount, color: '#58a6ff' },
-        { label: localizer.onDuty, value: statsData.onDutyCount, color: '#ff6b6b' },
-        { label: localizer.shifts, value: statsData.shiftCount, color: '#9b59b6' },
-        { label: localizer.chores, value: statsData.choreCount, color: '#ffd54f' }
+        { label: localizer.vacations, value: statsData.vacationCount, color: getComputedStyle(document.documentElement).getPropertyValue('--info').trim() || '#58a6ff' },
+        { label: localizer.onDuty, value: statsData.onDutyCount, color: getComputedStyle(document.documentElement).getPropertyValue('--danger').trim() || '#ff6b6b' },
+        { label: localizer.shifts, value: statsData.shiftCount, color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#9b59b6' },
+        { label: localizer.chores, value: statsData.choreCount, color: getComputedStyle(document.documentElement).getPropertyValue('--warning').trim() || '#ffd54f' }
     ] : [
-        { label: localizer.vacations, value: statsData.vacationHours, color: '#58a6ff' },
-        { label: localizer.onDuty, value: statsData.onDutyHours, color: '#ff6b6b' },
-        { label: localizer.shifts, value: statsData.shiftHours, color: '#9b59b6' },
-        { label: localizer.chores, value: statsData.choreHours, color: '#ffd54f' }
+        { label: localizer.vacations, value: statsData.vacationHours, color: getComputedStyle(document.documentElement).getPropertyValue('--info').trim() || '#58a6ff' },
+        { label: localizer.onDuty, value: statsData.onDutyHours, color: getComputedStyle(document.documentElement).getPropertyValue('--danger').trim() || '#ff6b6b' },
+        { label: localizer.shifts, value: statsData.shiftHours, color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#9b59b6' },
+        { label: localizer.chores, value: statsData.choreHours, color: getComputedStyle(document.documentElement).getPropertyValue('--warning').trim() || '#ffd54f' }
     ];
 
     // Get CSS colors
