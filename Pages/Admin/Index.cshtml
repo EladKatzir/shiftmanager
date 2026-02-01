@@ -56,16 +56,14 @@
         </div>
     </div>
 
-    @if (Model.IsOwner || Model.IsDirector)
-    {
-        @* Company & Scope Section *@
+    @* B-035: Company & Scope Section - Grant-protected links *@
+    <require-grant key="EditCompany,AssignRoles" mode="any">
         <h2 class="section-title">
             <span class="section-icon">🏢</span>
             Company & Scope
         </h2>
         <div class="admin-tools-grid">
-            @if (Model.IsOwner)
-            {
+            <require-grant key="EditCompany">
                 <a href="/Admin/Companies" class="admin-tool-card">
                     <div class="tool-icon">🏢</div>
                     <div class="tool-content">
@@ -74,7 +72,9 @@
                     </div>
                     <div class="tool-arrow">→</div>
                 </a>
+            </require-grant>
 
+            <require-grant key="AssignRoles">
                 <a href="/Admin/Directors" class="admin-tool-card">
                     <div class="tool-icon">👔</div>
                     <div class="tool-content">
@@ -83,7 +83,7 @@
                     </div>
                     <div class="tool-arrow">→</div>
                 </a>
-            }
+            </require-grant>
 
             @if (Model.IsDirector)
             {
@@ -97,7 +97,7 @@
                 </a>
             }
         </div>
-    }
+    </require-grant>
 
     @* People Management *@
     <h2 class="section-title">
@@ -252,8 +252,8 @@
             <div class="tool-arrow">→</div>
         </a>
 
-        @if (Model.IsOwner)
-        {
+        @* B-035: Grant-protected System Health link *@
+        <require-grant key="AdminAccess">
             <a href="/Owner/SystemHealth" class="admin-tool-card">
                 <div class="tool-icon">🏥</div>
                 <div class="tool-content">
@@ -262,34 +262,37 @@
                 </div>
                 <div class="tool-arrow">→</div>
             </a>
-        }
+        </require-grant>
     </div>
 
-    @if (Model.IsOwner)
-    {
-        @* Advanced Tools (Owner Only) *@
+    @* B-035: Advanced Tools (Grant-protected) *@
+    <require-grant key="AdminAccess">
         <h2 class="section-title">
             <span class="section-icon">🔧</span>
             Advanced Tools
         </h2>
         <div class="admin-tools-grid">
-            <a href="/Owner/FeatureFlags" class="admin-tool-card">
-                <div class="tool-icon">🚩</div>
-                <div class="tool-content">
-                    <h3>Feature Flags</h3>
-                    <p>Toggle features on/off</p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
+            <require-grant key="SystemConfiguration">
+                <a href="/Owner/FeatureFlags" class="admin-tool-card">
+                    <div class="tool-icon">🚩</div>
+                    <div class="tool-content">
+                        <h3>Feature Flags</h3>
+                        <p>Toggle features on/off</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            </require-grant>
 
-            <a href="/Owner/EmailConfig" class="admin-tool-card">
-                <div class="tool-icon">📧</div>
-                <div class="tool-content">
-                    <h3>Email Configuration</h3>
-                    <p>SMTP settings and email templates</p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
+            <require-grant key="ConfigureEmailSettings">
+                <a href="/Owner/EmailConfig" class="admin-tool-card">
+                    <div class="tool-icon">📧</div>
+                    <div class="tool-content">
+                        <h3>Email Configuration</h3>
+                        <p>SMTP settings and email templates</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            </require-grant>
 
             <a href="/Owner/GriffinConfig" class="admin-tool-card">
                 <div class="tool-icon">🔐</div>
@@ -309,14 +312,16 @@
                 <div class="tool-arrow">→</div>
             </a>
 
-            <a href="/Owner/DatabaseConsole" class="admin-tool-card">
-                <div class="tool-icon">💾</div>
-                <div class="tool-content">
-                    <h3>Database Console</h3>
-                    <p>Direct database operations</p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
+            <require-grant key="SystemConfiguration">
+                <a href="/Owner/DatabaseConsole" class="admin-tool-card">
+                    <div class="tool-icon">💾</div>
+                    <div class="tool-content">
+                        <h3>Database Console</h3>
+                        <p>Direct database operations</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            </require-grant>
 
             <a href="/Owner/Backup" class="admin-tool-card">
                 <div class="tool-icon">💼</div>
@@ -327,14 +332,16 @@
                 <div class="tool-arrow">→</div>
             </a>
 
-            <a href="/Owner/DataLifecycle" class="admin-tool-card">
-                <div class="tool-icon">♻️</div>
-                <div class="tool-content">
-                    <h3>Data Lifecycle</h3>
-                    <p>Retention policies and cleanup</p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
+            <require-grant key="SystemConfiguration">
+                <a href="/Owner/DataLifecycle" class="admin-tool-card">
+                    <div class="tool-icon">♻️</div>
+                    <div class="tool-content">
+                        <h3>Data Lifecycle</h3>
+                        <p>Retention policies and cleanup</p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            </require-grant>
 
             <a href="/Owner/GameConfig" class="admin-tool-card">
                 <div class="tool-icon">🎮</div>
@@ -345,7 +352,7 @@
                 <div class="tool-arrow">→</div>
             </a>
         </div>
-    }
+    </require-grant>
 
 <style>
 .owner-panel-container {
