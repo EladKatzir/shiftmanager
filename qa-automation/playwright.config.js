@@ -89,6 +89,18 @@ module.exports = defineConfig({
   /* Expect timeout */
   expect: {
     timeout: 5000,
+    /* Visual comparison configuration */
+    toHaveScreenshot: {
+      /* Maximum allowed pixel difference ratio (0.2% = 0.002) */
+      maxDiffPixelRatio: 0.002,
+      /* Threshold for color differences (0-1, lower = stricter) */
+      threshold: 0.2,
+      /* Animation tolerance settings */
+      animations: 'disabled',
+    },
+    toMatchSnapshot: {
+      maxDiffPixelRatio: 0.002,
+    },
   },
 
   /* Output folder for test artifacts */
