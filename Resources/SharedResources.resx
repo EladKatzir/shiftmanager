@@ -5726,6 +5726,86 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Back Online</value>
   </data>
 
+  <!-- Timeout and Partial Load Errors (B-017) -->
+  <data name="Error_Timeout" xml:space="preserve">
+    <value>Loading is taking longer than expected. Please try again.</value>
+    <comment>Shown when API request takes longer than 10 seconds</comment>
+  </data>
+  <data name="Error_Timeout_Title" xml:space="preserve">
+    <value>Loading Slow</value>
+    <comment>Title for timeout error message</comment>
+  </data>
+  <data name="Error_PartialLoad" xml:space="preserve">
+    <value>Some data could not be loaded.</value>
+    <comment>Shown when some API requests succeed but others fail</comment>
+  </data>
+  <data name="Error_PartialLoad_Title" xml:space="preserve">
+    <value>Partial Load</value>
+    <comment>Title for partial load warning</comment>
+  </data>
+  <data name="Error_PartialLoad_Details" xml:space="preserve">
+    <value>{0} of {1} items loaded successfully.</value>
+    <comment>Details showing how many items loaded. {0}=success count, {1}=total count</comment>
+  </data>
+  <data name="Error_CouldNotLoad" xml:space="preserve">
+    <value>Could not load the requested data. Please try again.</value>
+    <comment>Shown on 500 server errors</comment>
+  </data>
+  <data name="Error_CouldNotLoad_Title" xml:space="preserve">
+    <value>Could Not Load</value>
+    <comment>Title for server error message</comment>
+  </data>
+
+  <!-- Toast Notifications (B-052) -->
+  <data name="Toast_CloseNotification" xml:space="preserve">
+    <value>Close notification</value>
+    <comment>Screen reader label for toast close button</comment>
+  </data>
+  <data name="Toast_Success" xml:space="preserve">
+    <value>Success</value>
+    <comment>Default toast success title</comment>
+  </data>
+  <data name="Toast_Info" xml:space="preserve">
+    <value>Information</value>
+    <comment>Default toast info title</comment>
+  </data>
+  <data name="Toast_Warning" xml:space="preserve">
+    <value>Warning</value>
+    <comment>Default toast warning title</comment>
+  </data>
+  <data name="Toast_Error" xml:space="preserve">
+    <value>Error</value>
+    <comment>Default toast error title</comment>
+  </data>
+  <data name="Toast_ChangesSaved" xml:space="preserve">
+    <value>Changes saved successfully</value>
+    <comment>Generic success toast for save operations</comment>
+  </data>
+  <data name="Toast_ItemCreated" xml:space="preserve">
+    <value>Item created successfully</value>
+    <comment>Generic success toast for create operations</comment>
+  </data>
+  <data name="Toast_ItemDeleted" xml:space="preserve">
+    <value>Item deleted successfully</value>
+    <comment>Generic success toast for delete operations</comment>
+  </data>
+  <data name="Toast_EmailSent" xml:space="preserve">
+    <value>Email sent successfully</value>
+    <comment>Success toast for email operations</comment>
+  </data>
+  <data name="Toast_ProfileUpdated" xml:space="preserve">
+    <value>Profile updated successfully</value>
+    <comment>Success toast for profile updates</comment>
+  </data>
+  <data name="Toast_ShiftSaved" xml:space="preserve">
+    <value>Shift saved successfully</value>
+    <comment>Success toast for shift operations</comment>
+  </data>
+  <data name="Toast_RequestSubmitted" xml:space="preserve">
+    <value>Request submitted successfully</value>
+    <comment>Success toast for request submissions</comment>
+  </data>
+
   <!-- Form Validation Messages (B-008) -->
   <data name="Validation_Required" xml:space="preserve">
     <value>This field is required</value>
@@ -5810,5 +5890,1151 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ConcurrencyConflict_Cancel" xml:space="preserve">
     <value>Cancel</value>
     <comment>B-018 - Button to cancel the conflicting operation</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - Placeholders -->
+  <data name="Placeholder_CompanyName" xml:space="preserve">
+    <value>My Company Inc.</value>
+    <comment>A-015 - Placeholder for company name input</comment>
+  </data>
+  <data name="Placeholder_CompanySlug" xml:space="preserve">
+    <value>my-company</value>
+    <comment>A-015 - Placeholder for company slug input</comment>
+  </data>
+  <data name="Placeholder_CompanyDisplayName" xml:space="preserve">
+    <value>My Company</value>
+    <comment>A-015 - Placeholder for company display name</comment>
+  </data>
+  <data name="Placeholder_Email" xml:space="preserve">
+    <value>manager@company.com</value>
+    <comment>A-015 - Placeholder for email input</comment>
+  </data>
+  <data name="Placeholder_FullName" xml:space="preserve">
+    <value>John Doe</value>
+    <comment>A-015 - Placeholder for full name input</comment>
+  </data>
+  <data name="Placeholder_Password" xml:space="preserve">
+    <value>••••••••</value>
+    <comment>A-015 - Placeholder for password input</comment>
+  </data>
+  <data name="Placeholder_PreferredName" xml:space="preserve">
+    <value>What they prefer to be called</value>
+    <comment>A-015 - Placeholder for preferred name input</comment>
+  </data>
+  <data name="Placeholder_Phone" xml:space="preserve">
+    <value>e.g., 050-1234567</value>
+    <comment>A-015 - Placeholder for phone input</comment>
+  </data>
+  <data name="Placeholder_City" xml:space="preserve">
+    <value>City of residence</value>
+    <comment>A-015 - Placeholder for city input</comment>
+  </data>
+  <data name="Placeholder_Department" xml:space="preserve">
+    <value>e.g., Kitchen, Front of House, Management</value>
+    <comment>A-015 - Placeholder for department input</comment>
+  </data>
+  <data name="Placeholder_JobTitle" xml:space="preserve">
+    <value>e.g., Line Cook, Server, Shift Manager</value>
+    <comment>A-015 - Placeholder for job title input</comment>
+  </data>
+  <data name="Placeholder_Skills" xml:space="preserve">
+    <value>e.g., Grill, Prep, Cleaning</value>
+    <comment>A-015 - Placeholder for skills input</comment>
+  </data>
+  <data name="Placeholder_Certifications" xml:space="preserve">
+    <value>e.g., Food Safety, First Aid</value>
+    <comment>A-015 - Placeholder for certifications input</comment>
+  </data>
+  <data name="Placeholder_EmergencyContactName" xml:space="preserve">
+    <value>Full name</value>
+    <comment>A-015 - Placeholder for emergency contact name</comment>
+  </data>
+  <data name="Placeholder_EmergencyContactRelation" xml:space="preserve">
+    <value>e.g., Spouse, Parent, Friend</value>
+    <comment>A-015 - Placeholder for emergency contact relation</comment>
+  </data>
+  <data name="Placeholder_AreaKey" xml:space="preserve">
+    <value>area-key</value>
+    <comment>A-015 - Placeholder for area key input</comment>
+  </data>
+  <data name="Placeholder_AreaName" xml:space="preserve">
+    <value>Area Name</value>
+    <comment>A-015 - Placeholder for area display name</comment>
+  </data>
+  <data name="Placeholder_DepartmentKey" xml:space="preserve">
+    <value>department-key</value>
+    <comment>A-015 - Placeholder for department key input</comment>
+  </data>
+  <data name="Placeholder_DepartmentName" xml:space="preserve">
+    <value>Department Name</value>
+    <comment>A-015 - Placeholder for department display name</comment>
+  </data>
+  <data name="Placeholder_JobTypeKey" xml:space="preserve">
+    <value>job-type-key</value>
+    <comment>A-015 - Placeholder for job type key input</comment>
+  </data>
+  <data name="Placeholder_JobTypeName" xml:space="preserve">
+    <value>Job Type Name</value>
+    <comment>A-015 - Placeholder for job type display name</comment>
+  </data>
+  <data name="Placeholder_MoleculeKey" xml:space="preserve">
+    <value>molecule-key</value>
+    <comment>A-015 - Placeholder for molecule key input</comment>
+  </data>
+  <data name="Placeholder_MoleculeName" xml:space="preserve">
+    <value>Molecule Display Name</value>
+    <comment>A-015 - Placeholder for molecule display name</comment>
+  </data>
+  <data name="Placeholder_ProjectKey" xml:space="preserve">
+    <value>project-key</value>
+    <comment>A-015 - Placeholder for project key input</comment>
+  </data>
+  <data name="Placeholder_ProjectName" xml:space="preserve">
+    <value>Project Name</value>
+    <comment>A-015 - Placeholder for project display name</comment>
+  </data>
+  <data name="Placeholder_GroupingKey" xml:space="preserve">
+    <value>grouping-key</value>
+    <comment>A-015 - Placeholder for grouping key input</comment>
+  </data>
+  <data name="Placeholder_GroupingName" xml:space="preserve">
+    <value>Grouping Display Name</value>
+    <comment>A-015 - Placeholder for grouping display name</comment>
+  </data>
+  <data name="Placeholder_ShiftName" xml:space="preserve">
+    <value>e.g., Store Opening, Security Round, etc.</value>
+    <comment>A-015 - Placeholder for shift name input</comment>
+  </data>
+  <data name="Placeholder_ShiftNameShort" xml:space="preserve">
+    <value>Shift Name</value>
+    <comment>A-015 - Short placeholder for shift name</comment>
+  </data>
+  <data name="Placeholder_EveningShift" xml:space="preserve">
+    <value>e.g., Evening Shift</value>
+    <comment>A-015 - Placeholder for custom shift row name</comment>
+  </data>
+  <data name="Placeholder_SearchEmployees" xml:space="preserve">
+    <value>Search employees...</value>
+    <comment>A-015 - Placeholder for employee search</comment>
+  </data>
+  <data name="Placeholder_ApiScopes" xml:space="preserve">
+    <value>user:read,shift:read</value>
+    <comment>A-015 - Placeholder for API scopes input</comment>
+  </data>
+  <data name="Placeholder_NeverExpires" xml:space="preserve">
+    <value>Never expires</value>
+    <comment>A-015 - Placeholder for expiration days input</comment>
+  </data>
+  <data name="Placeholder_ApprovalNotes" xml:space="preserve">
+    <value>Optional notes about the approval</value>
+    <comment>A-015 - Placeholder for approval notes</comment>
+  </data>
+  <data name="Placeholder_RejectionReason" xml:space="preserve">
+    <value>Why is this request being rejected?</value>
+    <comment>A-015 - Placeholder for rejection reason</comment>
+  </data>
+  <data name="Placeholder_RevokeReason" xml:space="preserve">
+    <value>Why is this key being revoked?</value>
+    <comment>A-015 - Placeholder for revoke reason</comment>
+  </data>
+  <data name="Placeholder_ShiftKey" xml:space="preserve">
+    <value>e.g., CUSTOM_1</value>
+    <comment>A-015 - Placeholder for shift key input</comment>
+  </data>
+  <data name="Placeholder_DayShift" xml:space="preserve">
+    <value>Day Shift</value>
+    <comment>A-015 - Placeholder for English shift name</comment>
+  </data>
+  <data name="Placeholder_EmailApiUrl" xml:space="preserve">
+    <value>https://api.yourcompany.com/v1/mail/send</value>
+    <comment>A-015 - Placeholder for email API URL</comment>
+  </data>
+  <data name="Placeholder_EmailFrom" xml:space="preserve">
+    <value>noreply@example.com</value>
+    <comment>A-015 - Placeholder for email from address</comment>
+  </data>
+  <data name="Placeholder_TestEmail" xml:space="preserve">
+    <value>test@example.com</value>
+    <comment>A-015 - Placeholder for test email address</comment>
+  </data>
+  <data name="Placeholder_Milestones" xml:space="preserve">
+    <value>1000,2500,5000,7500,10000,15000,20000</value>
+    <comment>A-015 - Placeholder for game milestones</comment>
+  </data>
+  <data name="Placeholder_GriffinUrl" xml:space="preserve">
+    <value>http://griffin-auth.example.mil</value>
+    <comment>A-015 - Placeholder for Griffin server URL</comment>
+  </data>
+  <data name="Placeholder_CallbackUrl" xml:space="preserve">
+    <value>https://your-app.local/Auth/GriffinCallback</value>
+    <comment>A-015 - Placeholder for callback URL</comment>
+  </data>
+  <data name="Placeholder_SearchKeyValue" xml:space="preserve">
+    <value>Search by key or value...</value>
+    <comment>A-015 - Placeholder for language search</comment>
+  </data>
+  <data name="Placeholder_ResourceKey" xml:space="preserve">
+    <value>Button_Save</value>
+    <comment>A-015 - Placeholder for resource key</comment>
+  </data>
+  <data name="Placeholder_CustomTranslation" xml:space="preserve">
+    <value>Custom translation text</value>
+    <comment>A-015 - Placeholder for custom translation</comment>
+  </data>
+  <data name="Placeholder_MasterProgramName" xml:space="preserve">
+    <value>e.g., Standard Week Schedule</value>
+    <comment>A-015 - Placeholder for master program name</comment>
+  </data>
+  <data name="Placeholder_MasterProgramDesc" xml:space="preserve">
+    <value>Description of this complete weekly schedule</value>
+    <comment>A-015 - Placeholder for master program description</comment>
+  </data>
+  <data name="Placeholder_ProgramName" xml:space="preserve">
+    <value>e.g., Morning Shifts Mon-Fri</value>
+    <comment>A-015 - Placeholder for program name</comment>
+  </data>
+  <data name="Placeholder_UseDefault" xml:space="preserve">
+    <value>Use default</value>
+    <comment>A-015 - Placeholder for optional staffing input</comment>
+  </data>
+  <data name="Placeholder_SlugPattern" xml:space="preserve">
+    <value>Only lowercase letters, numbers, and hyphens allowed</value>
+    <comment>A-015 - Title/validation message for slug pattern</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - ARIA Labels -->
+  <data name="Aria_CloseDialog" xml:space="preserve">
+    <value>Close dialog</value>
+    <comment>A-015 - ARIA label for close dialog button</comment>
+  </data>
+  <data name="Aria_CloseButton" xml:space="preserve">
+    <value>Close</value>
+    <comment>A-015 - ARIA label for generic close button</comment>
+  </data>
+  <data name="Aria_SearchEmployees" xml:space="preserve">
+    <value>Search employees</value>
+    <comment>A-015 - ARIA label for employee search input</comment>
+  </data>
+  <data name="Aria_SearchCommands" xml:space="preserve">
+    <value>Search commands</value>
+    <comment>A-015 - ARIA label for command palette search</comment>
+  </data>
+  <data name="Aria_LoadingPage" xml:space="preserve">
+    <value>Loading page</value>
+    <comment>A-015 - ARIA label for page loading indicator</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - Tooltips/Titles -->
+  <data name="Title_ShiftModified" xml:space="preserve">
+    <value>This shift was manually modified and detached from its Program</value>
+    <comment>A-015 - Tooltip for detached shift badge</comment>
+  </data>
+  <data name="Title_ResetToProgram" xml:space="preserve">
+    <value>Reset to Program defaults</value>
+    <comment>A-015 - Tooltip for reset to program button</comment>
+  </data>
+  <data name="Title_DragToCopy" xml:space="preserve">
+    <value>Drag to copy across days</value>
+    <comment>A-015 - Tooltip for drag handle</comment>
+  </data>
+  <data name="Title_OpenRosterDock" xml:space="preserve">
+    <value>Open Roster Dock</value>
+    <comment>A-015 - Tooltip for roster dock toggle button</comment>
+  </data>
+  <data name="Title_ToggleRadarMode" xml:space="preserve">
+    <value>Toggle Radar Mode - Highlight understaffed and overstaffed shifts</value>
+    <comment>A-015 - Tooltip for radar mode toggle button</comment>
+  </data>
+  <data name="Title_DeleteOverride" xml:space="preserve">
+    <value>Delete</value>
+    <comment>A-015 - Tooltip for delete override button</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - Page Headers and Sections -->
+  <data name="EditProfile_Title" xml:space="preserve">
+    <value>Edit Employee Profile</value>
+    <comment>A-015 - Page title for edit profile</comment>
+  </data>
+  <data name="EditProfile_Avatar" xml:space="preserve">
+    <value>Avatar</value>
+    <comment>A-015 - Section header for avatar</comment>
+  </data>
+  <data name="EditProfile_UploadAvatar" xml:space="preserve">
+    <value>Upload New Avatar (max 5MB, JPEG/PNG)</value>
+    <comment>A-015 - Label for avatar upload</comment>
+  </data>
+  <data name="EditProfile_DeleteAvatar" xml:space="preserve">
+    <value>Delete Avatar</value>
+    <comment>A-015 - Button text for delete avatar</comment>
+  </data>
+  <data name="EditProfile_AccountSettings" xml:space="preserve">
+    <value>Account Settings</value>
+    <comment>A-015 - Section header for account settings</comment>
+  </data>
+  <data name="EditProfile_PersonalInfo" xml:space="preserve">
+    <value>Personal Information</value>
+    <comment>A-015 - Section header for personal information</comment>
+  </data>
+  <data name="EditProfile_OrgAssignment" xml:space="preserve">
+    <value>Organizational Assignment</value>
+    <comment>A-015 - Section header for org assignment</comment>
+  </data>
+  <data name="EditProfile_ProfessionalInfo" xml:space="preserve">
+    <value>Professional Information</value>
+    <comment>A-015 - Section header for professional info</comment>
+  </data>
+  <data name="EditProfile_EmergencyContact" xml:space="preserve">
+    <value>Emergency Contact</value>
+    <comment>A-015 - Section header for emergency contact</comment>
+  </data>
+  <data name="EditProfile_ActiveAccount" xml:space="preserve">
+    <value>Active Account</value>
+    <comment>A-015 - Checkbox label for active account</comment>
+  </data>
+
+  <!-- A-015: Form Labels -->
+  <data name="Label_Email" xml:space="preserve">
+    <value>Email</value>
+    <comment>A-015 - Form label for email</comment>
+  </data>
+  <data name="Label_Role" xml:space="preserve">
+    <value>Role</value>
+    <comment>A-015 - Form label for role</comment>
+  </data>
+  <data name="Label_PreferredName" xml:space="preserve">
+    <value>Preferred Name</value>
+    <comment>A-015 - Form label for preferred name</comment>
+  </data>
+  <data name="Label_Phone" xml:space="preserve">
+    <value>Phone</value>
+    <comment>A-015 - Form label for phone</comment>
+  </data>
+  <data name="Label_City" xml:space="preserve">
+    <value>City</value>
+    <comment>A-015 - Form label for city</comment>
+  </data>
+  <data name="Label_DateOfBirth" xml:space="preserve">
+    <value>Date of Birth</value>
+    <comment>A-015 - Form label for date of birth</comment>
+  </data>
+  <data name="Label_Department" xml:space="preserve">
+    <value>Department</value>
+    <comment>A-015 - Form label for department</comment>
+  </data>
+  <data name="Label_JobTitle" xml:space="preserve">
+    <value>Job Title</value>
+    <comment>A-015 - Form label for job title</comment>
+  </data>
+  <data name="Label_HireDate" xml:space="preserve">
+    <value>Hire Date</value>
+    <comment>A-015 - Form label for hire date</comment>
+  </data>
+  <data name="Label_Skills" xml:space="preserve">
+    <value>Skills</value>
+    <comment>A-015 - Form label for skills</comment>
+  </data>
+  <data name="Label_Certifications" xml:space="preserve">
+    <value>Certifications</value>
+    <comment>A-015 - Form label for certifications</comment>
+  </data>
+  <data name="Label_EmergencyContactName" xml:space="preserve">
+    <value>Emergency Contact Name</value>
+    <comment>A-015 - Form label for emergency contact name</comment>
+  </data>
+  <data name="Label_EmergencyContactPhone" xml:space="preserve">
+    <value>Emergency Contact Phone</value>
+    <comment>A-015 - Form label for emergency contact phone</comment>
+  </data>
+  <data name="Label_Relationship" xml:space="preserve">
+    <value>Relationship</value>
+    <comment>A-015 - Form label for relationship</comment>
+  </data>
+  <data name="Label_ShiftKey" xml:space="preserve">
+    <value>Shift Key</value>
+    <comment>A-015 - Form label for shift key</comment>
+  </data>
+  <data name="Label_EnglishName" xml:space="preserve">
+    <value>English Name</value>
+    <comment>A-015 - Form label for English name</comment>
+  </data>
+  <data name="Label_HebrewName" xml:space="preserve">
+    <value>Hebrew Name</value>
+    <comment>A-015 - Form label for Hebrew name</comment>
+  </data>
+  <data name="Label_StartTime" xml:space="preserve">
+    <value>Start Time</value>
+    <comment>A-015 - Form label for start time</comment>
+  </data>
+  <data name="Label_EndTime" xml:space="preserve">
+    <value>End Time</value>
+    <comment>A-015 - Form label for end time</comment>
+  </data>
+  <data name="Label_StartDate" xml:space="preserve">
+    <value>Start Date</value>
+    <comment>A-015 - Form label for start date</comment>
+  </data>
+  <data name="Label_EndDate" xml:space="preserve">
+    <value>End Date</value>
+    <comment>A-015 - Form label for end date</comment>
+  </data>
+  <data name="Label_ShiftType" xml:space="preserve">
+    <value>Shift Type</value>
+    <comment>A-015 - Form label for shift type</comment>
+  </data>
+  <data name="Label_ProgramName" xml:space="preserve">
+    <value>Program Name</value>
+    <comment>A-015 - Form label for program name</comment>
+  </data>
+  <data name="Label_DefaultStaffing" xml:space="preserve">
+    <value>Default Staffing Required</value>
+    <comment>A-015 - Form label for default staffing</comment>
+  </data>
+  <data name="Label_MasterProgramName" xml:space="preserve">
+    <value>Master Program Name</value>
+    <comment>A-015 - Form label for master program name</comment>
+  </data>
+  <data name="Label_SelectPrograms" xml:space="preserve">
+    <value>Select Programs to Include</value>
+    <comment>A-015 - Label for program selection</comment>
+  </data>
+  <data name="Label_GriffinServerUrl" xml:space="preserve">
+    <value>Griffin Server URL</value>
+    <comment>A-015 - Form label for Griffin server URL</comment>
+  </data>
+  <data name="Label_ApplicationCallbackUrl" xml:space="preserve">
+    <value>Application Callback URL</value>
+    <comment>A-015 - Form label for application callback URL</comment>
+  </data>
+  <data name="Label_ResourceKey" xml:space="preserve">
+    <value>Resource Key</value>
+    <comment>A-015 - Form label for resource key</comment>
+  </data>
+  <data name="Label_Culture" xml:space="preserve">
+    <value>Culture</value>
+    <comment>A-015 - Form label for culture</comment>
+  </data>
+  <data name="Label_OverrideValue" xml:space="preserve">
+    <value>Override Value</value>
+    <comment>A-015 - Form label for override value</comment>
+  </data>
+  <data name="Label_DefaultLanguage" xml:space="preserve">
+    <value>Default Language</value>
+    <comment>A-015 - Form label for default language</comment>
+  </data>
+  <data name="Label_AlternateLanguage" xml:space="preserve">
+    <value>Alternate Language</value>
+    <comment>A-015 - Form label for alternate language</comment>
+  </data>
+  <data name="Label_SelectCultureToEdit" xml:space="preserve">
+    <value>Select Culture to Edit</value>
+    <comment>A-015 - Label for culture selection</comment>
+  </data>
+  <data name="Label_ShiftName" xml:space="preserve">
+    <value>Shift Name</value>
+    <comment>A-015 - Form label for shift name</comment>
+  </data>
+
+  <!-- A-015: Role Names -->
+  <data name="Role_Employee" xml:space="preserve">
+    <value>Employee</value>
+    <comment>A-015 - Role name for employee</comment>
+  </data>
+  <data name="Role_Manager" xml:space="preserve">
+    <value>Manager</value>
+    <comment>A-015 - Role name for manager</comment>
+  </data>
+  <data name="Role_Owner" xml:space="preserve">
+    <value>Owner</value>
+    <comment>A-015 - Role name for owner</comment>
+  </data>
+  <data name="Role_Director" xml:space="preserve">
+    <value>Director</value>
+    <comment>A-015 - Role name for director</comment>
+  </data>
+  <data name="Role_Trainee" xml:space="preserve">
+    <value>Trainee</value>
+    <comment>A-015 - Role name for trainee</comment>
+  </data>
+
+  <!-- A-015: Button Text -->
+  <data name="Button_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+    <comment>A-015 - Button text for save changes</comment>
+  </data>
+  <data name="Button_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>A-015 - Button text for cancel</comment>
+  </data>
+  <data name="Button_Submit" xml:space="preserve">
+    <value>Submit</value>
+    <comment>A-015 - Button text for submit</comment>
+  </data>
+  <data name="Button_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>A-015 - Button text for save</comment>
+  </data>
+  <data name="Button_Apply" xml:space="preserve">
+    <value>Apply</value>
+    <comment>A-015 - Button text for apply</comment>
+  </data>
+  <data name="Button_Retry" xml:space="preserve">
+    <value>Retry</value>
+    <comment>A-015 - Button text for retry</comment>
+  </data>
+  <data name="Button_ConfirmDelete" xml:space="preserve">
+    <value>Confirm Delete</value>
+    <comment>A-015 - Button text for confirm delete</comment>
+  </data>
+  <data name="Button_CreateShiftRow" xml:space="preserve">
+    <value>Create Shift Row</value>
+    <comment>A-015 - Button text for create shift row</comment>
+  </data>
+  <data name="Button_ReturnToLogin" xml:space="preserve">
+    <value>Return to Login</value>
+    <comment>A-015 - Button text for return to login</comment>
+  </data>
+  <data name="Button_GoToLoginNow" xml:space="preserve">
+    <value>Go to Login Now</value>
+    <comment>A-015 - Link text for go to login</comment>
+  </data>
+
+  <!-- A-015: Page and Section Titles -->
+  <data name="AdminHub_Title" xml:space="preserve">
+    <value>Admin Hub</value>
+    <comment>A-015 - Page title for admin hub</comment>
+  </data>
+  <data name="DirectorHub_Title" xml:space="preserve">
+    <value>Director Hub</value>
+    <comment>A-015 - Page title for director hub</comment>
+  </data>
+  <data name="Blueprints_Title" xml:space="preserve">
+    <value>Shift Blueprints</value>
+    <comment>A-015 - Page title for blueprints</comment>
+  </data>
+  <data name="MasterPrograms_Title" xml:space="preserve">
+    <value>Master Programs</value>
+    <comment>A-015 - Page title for master programs</comment>
+  </data>
+  <data name="LanguageManagement_Title" xml:space="preserve">
+    <value>Language Management</value>
+    <comment>A-015 - Page title for language management</comment>
+  </data>
+  <data name="ProposeSwap_Title" xml:space="preserve">
+    <value>Propose Swap</value>
+    <comment>A-015 - Page title for propose swap</comment>
+  </data>
+
+  <!-- A-015: Section Headers -->
+  <data name="Section_Companies" xml:space="preserve">
+    <value>Companies</value>
+    <comment>A-015 - Section header for companies</comment>
+  </data>
+  <data name="Section_Directors" xml:space="preserve">
+    <value>Directors</value>
+    <comment>A-015 - Section header for directors</comment>
+  </data>
+  <data name="Section_DirectorsDesc" xml:space="preserve">
+    <value>Assign directors to companies</value>
+    <comment>A-015 - Description for directors section</comment>
+  </data>
+  <data name="Section_CompanyContext" xml:space="preserve">
+    <value>Company Context</value>
+    <comment>A-015 - Section header for company context</comment>
+  </data>
+  <data name="Section_PeopleManagement" xml:space="preserve">
+    <value>People Management</value>
+    <comment>A-015 - Section header for people management</comment>
+  </data>
+  <data name="Section_Users" xml:space="preserve">
+    <value>Users</value>
+    <comment>A-015 - Section header for users</comment>
+  </data>
+  <data name="Section_MyTeam" xml:space="preserve">
+    <value>My Team</value>
+    <comment>A-015 - Section header for my team</comment>
+  </data>
+  <data name="Section_MyTeamDesc" xml:space="preserve">
+    <value>View team members and schedules</value>
+    <comment>A-015 - Description for my team section</comment>
+  </data>
+  <data name="Section_SchedulingConfig" xml:space="preserve">
+    <value>Scheduling Configuration</value>
+    <comment>A-015 - Section header for scheduling config</comment>
+  </data>
+  <data name="Section_Blueprints" xml:space="preserve">
+    <value>Blueprints</value>
+    <comment>A-015 - Section header for blueprints</comment>
+  </data>
+  <data name="Section_BlueprintsDesc" xml:space="preserve">
+    <value>Manage shift type definitions</value>
+    <comment>A-015 - Description for blueprints section</comment>
+  </data>
+  <data name="Section_Programs" xml:space="preserve">
+    <value>Programs</value>
+    <comment>A-015 - Section header for programs</comment>
+  </data>
+  <data name="Section_MasterPrograms" xml:space="preserve">
+    <value>Master Programs</value>
+    <comment>A-015 - Section header for master programs</comment>
+  </data>
+  <data name="Section_MasterProgramsDesc" xml:space="preserve">
+    <value>Advanced program configuration</value>
+    <comment>A-015 - Description for master programs section</comment>
+  </data>
+  <data name="Section_ShiftTypes" xml:space="preserve">
+    <value>Shift Types</value>
+    <comment>A-015 - Section header for shift types</comment>
+  </data>
+  <data name="Section_ShiftTypesDesc" xml:space="preserve">
+    <value>Configure shift parameters</value>
+    <comment>A-015 - Description for shift types section</comment>
+  </data>
+  <data name="Section_CompanySettings" xml:space="preserve">
+    <value>Company Settings</value>
+    <comment>A-015 - Section header for company settings</comment>
+  </data>
+  <data name="Section_OperationsManagement" xml:space="preserve">
+    <value>Operations Management</value>
+    <comment>A-015 - Section header for operations management</comment>
+  </data>
+  <data name="Section_ShiftAssignments" xml:space="preserve">
+    <value>Shift Assignments</value>
+    <comment>A-015 - Section header for shift assignments</comment>
+  </data>
+  <data name="Section_AssignmentManager" xml:space="preserve">
+    <value>Assignment Manager</value>
+    <comment>A-015 - Section header for assignment manager</comment>
+  </data>
+  <data name="Section_AssignmentManagerDesc" xml:space="preserve">
+    <value>Advanced assignment operations</value>
+    <comment>A-015 - Description for assignment manager section</comment>
+  </data>
+  <data name="Section_ChoresManagement" xml:space="preserve">
+    <value>Chores Management</value>
+    <comment>A-015 - Section header for chores management</comment>
+  </data>
+  <data name="Section_ChoresManagementDesc" xml:space="preserve">
+    <value>Chore calendar and assignments</value>
+    <comment>A-015 - Description for chores management section</comment>
+  </data>
+  <data name="Section_OnDutyManagement" xml:space="preserve">
+    <value>OnDuty Management</value>
+    <comment>A-015 - Section header for onduty management</comment>
+  </data>
+  <data name="Section_AnalyticsDashboard" xml:space="preserve">
+    <value>Analytics Dashboard</value>
+    <comment>A-015 - Section header for analytics dashboard</comment>
+  </data>
+  <data name="Section_AuditLog" xml:space="preserve">
+    <value>Audit Log</value>
+    <comment>A-015 - Section header for audit log</comment>
+  </data>
+  <data name="Section_SystemHealth" xml:space="preserve">
+    <value>System Health</value>
+    <comment>A-015 - Section header for system health</comment>
+  </data>
+  <data name="Section_AdvancedTools" xml:space="preserve">
+    <value>Advanced Tools</value>
+    <comment>A-015 - Section header for advanced tools</comment>
+  </data>
+  <data name="Section_FeatureFlags" xml:space="preserve">
+    <value>Feature Flags</value>
+    <comment>A-015 - Section header for feature flags</comment>
+  </data>
+  <data name="Section_EmailConfiguration" xml:space="preserve">
+    <value>Email Configuration</value>
+    <comment>A-015 - Section header for email configuration</comment>
+  </data>
+  <data name="Section_GriffinAdfs" xml:space="preserve">
+    <value>Griffin ADFS</value>
+    <comment>A-015 - Section header for Griffin ADFS</comment>
+  </data>
+  <data name="Section_LanguageManagement" xml:space="preserve">
+    <value>Language Management</value>
+    <comment>A-015 - Section header for language management</comment>
+  </data>
+  <data name="Section_DatabaseConsole" xml:space="preserve">
+    <value>Database Console</value>
+    <comment>A-015 - Section header for database console</comment>
+  </data>
+  <data name="Section_DatabaseConsoleDesc" xml:space="preserve">
+    <value>Direct database operations</value>
+    <comment>A-015 - Description for database console section</comment>
+  </data>
+  <data name="Section_Backups" xml:space="preserve">
+    <value>Backups</value>
+    <comment>A-015 - Section header for backups</comment>
+  </data>
+  <data name="Section_BackupsDesc" xml:space="preserve">
+    <value>Database backup management</value>
+    <comment>A-015 - Description for backups section</comment>
+  </data>
+  <data name="Section_DataLifecycle" xml:space="preserve">
+    <value>Data Lifecycle</value>
+    <comment>A-015 - Section header for data lifecycle</comment>
+  </data>
+  <data name="Section_DataLifecycleDesc" xml:space="preserve">
+    <value>Retention policies and cleanup</value>
+    <comment>A-015 - Description for data lifecycle section</comment>
+  </data>
+  <data name="Section_GameConfiguration" xml:space="preserve">
+    <value>Game Configuration</value>
+    <comment>A-015 - Section header for game configuration</comment>
+  </data>
+  <data name="Section_QuickActions" xml:space="preserve">
+    <value>Quick Actions</value>
+    <comment>A-015 - Section header for quick actions</comment>
+  </data>
+  <data name="Section_DirectorUtilities" xml:space="preserve">
+    <value>Director Utilities</value>
+    <comment>A-015 - Section header for director utilities</comment>
+  </data>
+  <data name="Section_Calendar" xml:space="preserve">
+    <value>Calendar</value>
+    <comment>A-015 - Section header for calendar</comment>
+  </data>
+  <data name="Section_CalendarDesc" xml:space="preserve">
+    <value>View and manage schedules</value>
+    <comment>A-015 - Description for calendar section</comment>
+  </data>
+  <data name="Section_ManageUsers" xml:space="preserve">
+    <value>Manage Users</value>
+    <comment>A-015 - Section header for manage users</comment>
+  </data>
+  <data name="Section_ManageUsersDesc" xml:space="preserve">
+    <value>User management and roles</value>
+    <comment>A-015 - Description for manage users section</comment>
+  </data>
+  <data name="Section_Requests" xml:space="preserve">
+    <value>Requests</value>
+    <comment>A-015 - Section header for requests</comment>
+  </data>
+  <data name="Section_ShiftManagement" xml:space="preserve">
+    <value>Shift Management</value>
+    <comment>A-015 - Section header for shift management</comment>
+  </data>
+  <data name="Section_ShiftManagementDesc" xml:space="preserve">
+    <value>Edit shifts with Roster Dock</value>
+    <comment>A-015 - Description for shift management section</comment>
+  </data>
+  <data name="Section_Analytics" xml:space="preserve">
+    <value>Analytics</value>
+    <comment>A-015 - Section header for analytics</comment>
+  </data>
+  <data name="Section_AnalyticsDesc" xml:space="preserve">
+    <value>View metrics and reports</value>
+    <comment>A-015 - Description for analytics section</comment>
+  </data>
+  <data name="Section_AdminHub" xml:space="preserve">
+    <value>Admin Hub</value>
+    <comment>A-015 - Section header for admin hub</comment>
+  </data>
+  <data name="Section_AdminHubDesc" xml:space="preserve">
+    <value>Full management center</value>
+    <comment>A-015 - Description for admin hub section</comment>
+  </data>
+  <data name="Section_ViewAsManager" xml:space="preserve">
+    <value>View As Manager</value>
+    <comment>A-015 - Section header for view as manager</comment>
+  </data>
+  <data name="Section_ViewAsManagerDesc" xml:space="preserve">
+    <value>Impersonate Manager perspective</value>
+    <comment>A-015 - Description for view as manager section</comment>
+  </data>
+  <data name="Section_NotificationHub" xml:space="preserve">
+    <value>Notification Hub</value>
+    <comment>A-015 - Section header for notification hub</comment>
+  </data>
+
+  <!-- A-015: Table Headers -->
+  <data name="Table_Date" xml:space="preserve">
+    <value>Date</value>
+    <comment>A-015 - Table header for date</comment>
+  </data>
+  <data name="Table_Field" xml:space="preserve">
+    <value>Field</value>
+    <comment>A-015 - Table header for field</comment>
+  </data>
+  <data name="Table_OldValue" xml:space="preserve">
+    <value>Old Value</value>
+    <comment>A-015 - Table header for old value</comment>
+  </data>
+  <data name="Table_NewValue" xml:space="preserve">
+    <value>New Value</value>
+    <comment>A-015 - Table header for new value</comment>
+  </data>
+  <data name="Table_ChangedBy" xml:space="preserve">
+    <value>Changed By</value>
+    <comment>A-015 - Table header for changed by</comment>
+  </data>
+  <data name="Table_ShiftType" xml:space="preserve">
+    <value>Shift Type</value>
+    <comment>A-015 - Table header for shift type</comment>
+  </data>
+  <data name="Table_TimeRange" xml:space="preserve">
+    <value>Time Range</value>
+    <comment>A-015 - Table header for time range</comment>
+  </data>
+  <data name="Table_Type" xml:space="preserve">
+    <value>Type</value>
+    <comment>A-015 - Table header for type</comment>
+  </data>
+  <data name="Table_Actions" xml:space="preserve">
+    <value>Actions</value>
+    <comment>A-015 - Table header for actions</comment>
+  </data>
+  <data name="Table_Shift" xml:space="preserve">
+    <value>Shift</value>
+    <comment>A-015 - Table header for shift</comment>
+  </data>
+  <data name="Table_ResourceKey" xml:space="preserve">
+    <value>Resource Key</value>
+    <comment>A-015 - Table header for resource key</comment>
+  </data>
+  <data name="Table_Culture" xml:space="preserve">
+    <value>Culture</value>
+    <comment>A-015 - Table header for culture</comment>
+  </data>
+  <data name="Table_BaseValue" xml:space="preserve">
+    <value>Base Value</value>
+    <comment>A-015 - Table header for base value</comment>
+  </data>
+  <data name="Table_OverrideValue" xml:space="preserve">
+    <value>Override Value</value>
+    <comment>A-015 - Table header for override value</comment>
+  </data>
+  <data name="Table_LastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+    <comment>A-015 - Table header for last updated</comment>
+  </data>
+
+  <!-- A-015: Status and Badge Labels -->
+  <data name="Status_Active" xml:space="preserve">
+    <value>Active</value>
+    <comment>A-015 - Status badge for active</comment>
+  </data>
+  <data name="Status_Offline" xml:space="preserve">
+    <value>Offline</value>
+    <comment>A-015 - Status badge for offline</comment>
+  </data>
+  <data name="Status_Custom" xml:space="preserve">
+    <value>Custom</value>
+    <comment>A-015 - Status badge for custom</comment>
+  </data>
+  <data name="Status_Predefined" xml:space="preserve">
+    <value>Predefined</value>
+    <comment>A-015 - Status badge for predefined</comment>
+  </data>
+  <data name="Status_Running" xml:space="preserve">
+    <value>Running</value>
+    <comment>A-015 - Status badge for running</comment>
+  </data>
+  <data name="Status_Tech" xml:space="preserve">
+    <value>Tech</value>
+    <comment>A-015 - Badge for tech department</comment>
+  </data>
+  <data name="Status_OVR" xml:space="preserve">
+    <value>OVR</value>
+    <comment>A-015 - Badge for overridden shift</comment>
+  </data>
+
+  <!-- A-015: Stat Labels -->
+  <data name="Stat_Users" xml:space="preserve">
+    <value>Users</value>
+    <comment>A-015 - Stat label for users count</comment>
+  </data>
+  <data name="Stat_Shifts" xml:space="preserve">
+    <value>Shifts</value>
+    <comment>A-015 - Stat label for shifts count</comment>
+  </data>
+  <data name="Stat_Chores" xml:space="preserve">
+    <value>Chores</value>
+    <comment>A-015 - Stat label for chores count</comment>
+  </data>
+  <data name="Stat_Assignments" xml:space="preserve">
+    <value>Assignments</value>
+    <comment>A-015 - Stat label for assignments count</comment>
+  </data>
+  <data name="Stat_ActiveUsers" xml:space="preserve">
+    <value>Active Users</value>
+    <comment>A-015 - Stat label for active users</comment>
+  </data>
+  <data name="Stat_TotalShifts" xml:space="preserve">
+    <value>Total Shifts</value>
+    <comment>A-015 - Stat label for total shifts</comment>
+  </data>
+  <data name="Stat_PendingRequests" xml:space="preserve">
+    <value>Pending Requests</value>
+    <comment>A-015 - Stat label for pending requests</comment>
+  </data>
+  <data name="Stat_Errors" xml:space="preserve">
+    <value>Errors</value>
+    <comment>A-015 - Log stat label for errors</comment>
+  </data>
+  <data name="Stat_Warnings" xml:space="preserve">
+    <value>Warnings</value>
+    <comment>A-015 - Log stat label for warnings</comment>
+  </data>
+  <data name="Stat_Info" xml:space="preserve">
+    <value>Info</value>
+    <comment>A-015 - Log stat label for info</comment>
+  </data>
+
+  <!-- A-015: Modal Titles -->
+  <data name="Modal_AddCustomShiftRow" xml:space="preserve">
+    <value>Add Custom Shift Row</value>
+    <comment>A-015 - Modal title for add custom shift row</comment>
+  </data>
+  <data name="Modal_EditShiftTypeName" xml:space="preserve">
+    <value>Edit Shift Type Name</value>
+    <comment>A-015 - Modal title for edit shift type name</comment>
+  </data>
+  <data name="Modal_EditShiftTimes" xml:space="preserve">
+    <value>Edit Shift Times</value>
+    <comment>A-015 - Modal title for edit shift times</comment>
+  </data>
+  <data name="Modal_ConfirmShiftTypeDeletion" xml:space="preserve">
+    <value>Confirm Shift Type Deletion</value>
+    <comment>A-015 - Modal title for confirm deletion</comment>
+  </data>
+  <data name="Modal_GenerateShiftInstances" xml:space="preserve">
+    <value>Generate Shift Instances</value>
+    <comment>A-015 - Modal title for generate instances</comment>
+  </data>
+  <data name="Modal_GenerateFullWeeklySchedule" xml:space="preserve">
+    <value>Generate Full Weekly Schedule</value>
+    <comment>A-015 - Modal title for generate weekly schedule</comment>
+  </data>
+
+  <!-- A-015: Calendar Views -->
+  <data name="CalendarView_Week" xml:space="preserve">
+    <value>Week</value>
+    <comment>A-015 - Calendar view button for week</comment>
+  </data>
+  <data name="CalendarView_Month" xml:space="preserve">
+    <value>Month</value>
+    <comment>A-015 - Calendar view button for month</comment>
+  </data>
+
+  <!-- A-015: Auth Messages -->
+  <data name="Auth_AuthenticationFailed" xml:space="preserve">
+    <value>Authentication Failed</value>
+    <comment>A-015 - Alert heading for auth failure</comment>
+  </data>
+  <data name="Auth_AccountPendingApproval" xml:space="preserve">
+    <value>Account Pending Approval</value>
+    <comment>A-015 - Alert heading for pending approval</comment>
+  </data>
+  <data name="Auth_SuccessfullyLoggedOut" xml:space="preserve">
+    <value>Successfully Logged Out</value>
+    <comment>A-015 - Message for successful logout</comment>
+  </data>
+
+  <!-- A-015: Miscellaneous -->
+  <data name="Misc_ConfigureShiftTypes" xml:space="preserve">
+    <value>Configure shift types</value>
+    <comment>A-015 - Link text for configure shift types</comment>
+  </data>
+  <data name="Misc_ToStartScheduling" xml:space="preserve">
+    <value>to start scheduling.</value>
+    <comment>A-015 - Text for start scheduling hint</comment>
+  </data>
+  <data name="Misc_NoProgramsAvailable" xml:space="preserve">
+    <value>No programs available.</value>
+    <comment>A-015 - Message when no programs exist</comment>
+  </data>
+  <data name="Misc_CreateProgramsFirst" xml:space="preserve">
+    <value>Create programs</value>
+    <comment>A-015 - Link text for create programs</comment>
+  </data>
+  <data name="Misc_First" xml:space="preserve">
+    <value>first.</value>
+    <comment>A-015 - Text following create programs link</comment>
+  </data>
+  <data name="Misc_ClearFilters" xml:space="preserve">
+    <value>Clear filters</value>
+    <comment>A-015 - Link text for clear filters</comment>
+  </data>
+  <data name="Misc_AllLanguages" xml:space="preserve">
+    <value>All Languages</value>
+    <comment>A-015 - Dropdown option for all languages</comment>
+  </data>
+  <data name="Misc_English" xml:space="preserve">
+    <value>English</value>
+    <comment>A-015 - Language name for English</comment>
+  </data>
+  <data name="Misc_Hebrew" xml:space="preserve">
+    <value>Hebrew</value>
+    <comment>A-015 - Language name for Hebrew</comment>
+  </data>
+  <data name="Misc_ManageCompanyFilter" xml:space="preserve">
+    <value>Manage Company Filter</value>
+    <comment>A-015 - Link text for manage company filter</comment>
+  </data>
+  <data name="Misc_ExitViewMode" xml:space="preserve">
+    <value>Exit View Mode</value>
+    <comment>A-015 - Link text for exit view mode</comment>
+  </data>
+  <data name="Misc_Ctrl" xml:space="preserve">
+    <value>Ctrl</value>
+    <comment>A-015 - Keyboard key name</comment>
+  </data>
+  <data name="Misc_Purpose" xml:space="preserve">
+    <value>Purpose</value>
+    <comment>A-015 - Label for purpose section</comment>
+  </data>
+  <data name="Misc_Recommendation" xml:space="preserve">
+    <value>Recommendation</value>
+    <comment>A-015 - Label for recommendation section</comment>
+  </data>
+  <data name="Misc_DeleteShiftDeletionNote" xml:space="preserve">
+    <value>Deleting it will NOT delete those shifts. Historical shift data will be preserved.</value>
+    <comment>A-015 - Note about shift type deletion</comment>
+  </data>
+  <data name="Misc_Error" xml:space="preserve">
+    <value>Error</value>
+    <comment>A-015 - Error label</comment>
+  </data>
+  <data name="Misc_DeleteOverrideConfirm" xml:space="preserve">
+    <value>Delete this override?</value>
+    <comment>A-015 - Confirmation message for delete override</comment>
+  </data>
+
+  <!-- A-015: Feature Flags -->
+  <data name="FeatureFlag_EnforceCompanyScope" xml:space="preserve">
+    <value>EnforceCompanyScope</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_EnableDirectorRole" xml:space="preserve">
+    <value>EnableDirectorRole</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_AllowPublicSignup" xml:space="preserve">
+    <value>AllowPublicSignup</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_EnableApiKeyManagement" xml:space="preserve">
+    <value>EnableApiKeyManagement</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_ImpactCritical" xml:space="preserve">
+    <value>Critical</value>
+    <comment>A-015 - Feature flag impact level</comment>
+  </data>
+  <data name="FeatureFlag_ImpactHigh" xml:space="preserve">
+    <value>High</value>
+    <comment>A-015 - Feature flag impact level</comment>
+  </data>
+  <data name="FeatureFlag_ImpactMedium" xml:space="preserve">
+    <value>Medium</value>
+    <comment>A-015 - Feature flag impact level</comment>
+  </data>
+
+  <!-- B-051: Error Boundary -->
+  <data name="ErrorBoundary_SomethingWentWrong" xml:space="preserve">
+    <value>Something went wrong</value>
+    <comment>B-051 - Error boundary title</comment>
+  </data>
+  <data name="ErrorBoundary_SomethingWentWrongDesc" xml:space="preserve">
+    <value>An unexpected error occurred. Please try again.</value>
+    <comment>B-051 - Error boundary description</comment>
+  </data>
+  <data name="ErrorBoundary_Retry" xml:space="preserve">
+    <value>Retry</value>
+    <comment>B-051 - Retry button text</comment>
+  </data>
+  <data name="ErrorBoundary_ReloadPage" xml:space="preserve">
+    <value>Reload Page</value>
+    <comment>B-051 - Reload page button text</comment>
+  </data>
+  <data name="ErrorBoundary_Dismiss" xml:space="preserve">
+    <value>Dismiss</value>
+    <comment>B-051 - Dismiss button text</comment>
+  </data>
+  <data name="ErrorBoundary_ComponentError" xml:space="preserve">
+    <value>This section encountered an error</value>
+    <comment>B-051 - Component error title</comment>
+  </data>
+  <data name="ErrorBoundary_ComponentErrorDesc" xml:space="preserve">
+    <value>Click retry to reload this section.</value>
+    <comment>B-051 - Component error description</comment>
+  </data>
+  <data name="ErrorBoundary_CriticalError" xml:space="preserve">
+    <value>Critical Error</value>
+    <comment>B-051 - Critical error title</comment>
+  </data>
+  <data name="ErrorBoundary_CriticalErrorDesc" xml:space="preserve">
+    <value>A critical error occurred. Please reload the page to continue.</value>
+    <comment>B-051 - Critical error description</comment>
+  </data>
+  <data name="ErrorBoundary_MultipleErrors" xml:space="preserve">
+    <value>Multiple errors detected</value>
+    <comment>B-051 - Multiple errors title</comment>
+  </data>
+  <data name="ErrorBoundary_MultipleErrorsDesc" xml:space="preserve">
+    <value>The page is experiencing issues. Please reload.</value>
+    <comment>B-051 - Multiple errors description</comment>
+  </data>
+  <data name="ErrorBoundary_ErrorDetails" xml:space="preserve">
+    <value>Error Details</value>
+    <comment>B-051 - Error details summary text</comment>
+  </data>
+  <data name="ErrorBoundary_HideDetails" xml:space="preserve">
+    <value>Hide Details</value>
+    <comment>B-051 - Hide details text</comment>
+  </data>
+
+  <!-- B-050: Offline/Flaky Network Handling -->
+  <data name="Offline_Banner" xml:space="preserve">
+    <value>You are offline. Changes will sync when reconnected.</value>
+    <comment>B-050 - Offline banner message</comment>
+  </data>
+  <data name="Offline_QueuedActions" xml:space="preserve">
+    <value>{0} action(s) pending sync</value>
+    <comment>B-050 - Queued actions count</comment>
+  </data>
+  <data name="Offline_Syncing" xml:space="preserve">
+    <value>Syncing...</value>
+    <comment>B-050 - Syncing status text</comment>
+  </data>
+  <data name="Offline_SyncComplete" xml:space="preserve">
+    <value>All changes synced</value>
+    <comment>B-050 - Sync complete message</comment>
+  </data>
+  <data name="Offline_SyncFailed" xml:space="preserve">
+    <value>Some changes could not be synced</value>
+    <comment>B-050 - Sync failed message</comment>
+  </data>
+  <data name="Offline_ConnectionRestored" xml:space="preserve">
+    <value>Connection restored</value>
+    <comment>B-050 - Connection restored message</comment>
+  </data>
+  <data name="Offline_ConflictDetected" xml:space="preserve">
+    <value>This record was modified while you were offline. Your changes may need review.</value>
+    <comment>B-050 - Conflict detected message</comment>
+  </data>
+  <data name="Offline_FormQueued" xml:space="preserve">
+    <value>Your changes have been saved locally and will sync when online.</value>
+    <comment>B-050 - Form queued message</comment>
+  </data>
+  <data name="Offline_RetryLater" xml:space="preserve">
+    <value>Unable to sync. Will retry when connection is stable.</value>
+    <comment>B-050 - Retry later message</comment>
+  </data>
+  <data name="Offline_TimeoutSuggestOffline" xml:space="preserve">
+    <value>Request timed out. You may be offline or have a slow connection.</value>
+    <comment>B-050 - Timeout suggests offline message</comment>
+  </data>
+  <data name="Offline_QueueCleared" xml:space="preserve">
+    <value>Offline queue cleared</value>
+    <comment>B-050 - Queue cleared message</comment>
+  </data>
+  <data name="Offline_ViewQueue" xml:space="preserve">
+    <value>View pending</value>
+    <comment>B-050 - View queue button text</comment>
+  </data>
+  <data name="Offline_Retry" xml:space="preserve">
+    <value>Retry</value>
+    <comment>B-050 - Retry button text</comment>
   </data>
 </root>

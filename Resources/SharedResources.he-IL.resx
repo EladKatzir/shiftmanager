@@ -5246,6 +5246,74 @@
     <value>מחובר שוב</value>
   </data>
 
+  <!-- Timeout and Partial Load Errors (B-017) -->
+  <data name="Error_Timeout" xml:space="preserve">
+    <value>הטעינה לוקחת יותר זמן מהצפוי. אנא נסה שוב.</value>
+    <comment>Shown when API request takes longer than 10 seconds</comment>
+  </data>
+  <data name="Error_Timeout_Title" xml:space="preserve">
+    <value>טעינה איטית</value>
+    <comment>Title for timeout error message</comment>
+  </data>
+  <data name="Error_PartialLoad" xml:space="preserve">
+    <value>חלק מהנתונים לא נטענו.</value>
+    <comment>Shown when some API requests succeed but others fail</comment>
+  </data>
+  <data name="Error_PartialLoad_Title" xml:space="preserve">
+    <value>טעינה חלקית</value>
+    <comment>Title for partial load warning</comment>
+  </data>
+  <data name="Error_PartialLoad_Details" xml:space="preserve">
+    <value>{0} מתוך {1} פריטים נטענו בהצלחה.</value>
+    <comment>Details showing how many items loaded. {0}=success count, {1}=total count</comment>
+  </data>
+  <data name="Error_CouldNotLoad" xml:space="preserve">
+    <value>לא ניתן לטעון את הנתונים המבוקשים. אנא נסה שוב.</value>
+    <comment>Shown on 500 server errors</comment>
+  </data>
+  <data name="Error_CouldNotLoad_Title" xml:space="preserve">
+    <value>לא ניתן לטעון</value>
+    <comment>Title for server error message</comment>
+  </data>
+
+  <!-- Toast Notifications (B-052) -->
+  <data name="Toast_CloseNotification" xml:space="preserve">
+    <value>סגור התראה</value>
+  </data>
+  <data name="Toast_Success" xml:space="preserve">
+    <value>הצלחה</value>
+  </data>
+  <data name="Toast_Info" xml:space="preserve">
+    <value>מידע</value>
+  </data>
+  <data name="Toast_Warning" xml:space="preserve">
+    <value>אזהרה</value>
+  </data>
+  <data name="Toast_Error" xml:space="preserve">
+    <value>שגיאה</value>
+  </data>
+  <data name="Toast_ChangesSaved" xml:space="preserve">
+    <value>השינויים נשמרו בהצלחה</value>
+  </data>
+  <data name="Toast_ItemCreated" xml:space="preserve">
+    <value>הפריט נוצר בהצלחה</value>
+  </data>
+  <data name="Toast_ItemDeleted" xml:space="preserve">
+    <value>הפריט נמחק בהצלחה</value>
+  </data>
+  <data name="Toast_EmailSent" xml:space="preserve">
+    <value>הדוא"ל נשלח בהצלחה</value>
+  </data>
+  <data name="Toast_ProfileUpdated" xml:space="preserve">
+    <value>הפרופיל עודכן בהצלחה</value>
+  </data>
+  <data name="Toast_ShiftSaved" xml:space="preserve">
+    <value>המשמרת נשמרה בהצלחה</value>
+  </data>
+  <data name="Toast_RequestSubmitted" xml:space="preserve">
+    <value>הבקשה הוגשה בהצלחה</value>
+  </data>
+
   <!-- Form Validation Messages (B-008) -->
   <data name="Validation_Required" xml:space="preserve">
     <value>שדה חובה</value>
@@ -5330,5 +5398,1151 @@
   <data name="ConcurrencyConflict_Cancel" xml:space="preserve">
     <value>ביטול</value>
     <comment>B-018 - Button to cancel the conflicting operation</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - Placeholders -->
+  <data name="Placeholder_CompanyName" xml:space="preserve">
+    <value>החברה שלי בע"מ</value>
+    <comment>A-015 - Placeholder for company name input</comment>
+  </data>
+  <data name="Placeholder_CompanySlug" xml:space="preserve">
+    <value>my-company</value>
+    <comment>A-015 - Placeholder for company slug input</comment>
+  </data>
+  <data name="Placeholder_CompanyDisplayName" xml:space="preserve">
+    <value>החברה שלי</value>
+    <comment>A-015 - Placeholder for company display name</comment>
+  </data>
+  <data name="Placeholder_Email" xml:space="preserve">
+    <value>manager@company.com</value>
+    <comment>A-015 - Placeholder for email input</comment>
+  </data>
+  <data name="Placeholder_FullName" xml:space="preserve">
+    <value>ישראל ישראלי</value>
+    <comment>A-015 - Placeholder for full name input</comment>
+  </data>
+  <data name="Placeholder_Password" xml:space="preserve">
+    <value>••••••••</value>
+    <comment>A-015 - Placeholder for password input</comment>
+  </data>
+  <data name="Placeholder_PreferredName" xml:space="preserve">
+    <value>איך הם מעדיפים שיקראו להם</value>
+    <comment>A-015 - Placeholder for preferred name input</comment>
+  </data>
+  <data name="Placeholder_Phone" xml:space="preserve">
+    <value>לדוגמה, 050-1234567</value>
+    <comment>A-015 - Placeholder for phone input</comment>
+  </data>
+  <data name="Placeholder_City" xml:space="preserve">
+    <value>עיר מגורים</value>
+    <comment>A-015 - Placeholder for city input</comment>
+  </data>
+  <data name="Placeholder_Department" xml:space="preserve">
+    <value>לדוגמה, מטבח, אולם, הנהלה</value>
+    <comment>A-015 - Placeholder for department input</comment>
+  </data>
+  <data name="Placeholder_JobTitle" xml:space="preserve">
+    <value>לדוגמה, טבח, מלצר, מנהל משמרת</value>
+    <comment>A-015 - Placeholder for job title input</comment>
+  </data>
+  <data name="Placeholder_Skills" xml:space="preserve">
+    <value>לדוגמה, גריל, הכנות, ניקיון</value>
+    <comment>A-015 - Placeholder for skills input</comment>
+  </data>
+  <data name="Placeholder_Certifications" xml:space="preserve">
+    <value>לדוגמה, בטיחות מזון, עזרה ראשונה</value>
+    <comment>A-015 - Placeholder for certifications input</comment>
+  </data>
+  <data name="Placeholder_EmergencyContactName" xml:space="preserve">
+    <value>שם מלא</value>
+    <comment>A-015 - Placeholder for emergency contact name</comment>
+  </data>
+  <data name="Placeholder_EmergencyContactRelation" xml:space="preserve">
+    <value>לדוגמה, בן/בת זוג, הורה, חבר</value>
+    <comment>A-015 - Placeholder for emergency contact relation</comment>
+  </data>
+  <data name="Placeholder_AreaKey" xml:space="preserve">
+    <value>מפתח-אזור</value>
+    <comment>A-015 - Placeholder for area key input</comment>
+  </data>
+  <data name="Placeholder_AreaName" xml:space="preserve">
+    <value>שם האזור</value>
+    <comment>A-015 - Placeholder for area display name</comment>
+  </data>
+  <data name="Placeholder_DepartmentKey" xml:space="preserve">
+    <value>מפתח-מחלקה</value>
+    <comment>A-015 - Placeholder for department key input</comment>
+  </data>
+  <data name="Placeholder_DepartmentName" xml:space="preserve">
+    <value>שם המחלקה</value>
+    <comment>A-015 - Placeholder for department display name</comment>
+  </data>
+  <data name="Placeholder_JobTypeKey" xml:space="preserve">
+    <value>מפתח-תפקיד</value>
+    <comment>A-015 - Placeholder for job type key input</comment>
+  </data>
+  <data name="Placeholder_JobTypeName" xml:space="preserve">
+    <value>שם סוג התפקיד</value>
+    <comment>A-015 - Placeholder for job type display name</comment>
+  </data>
+  <data name="Placeholder_MoleculeKey" xml:space="preserve">
+    <value>מפתח-מולקולה</value>
+    <comment>A-015 - Placeholder for molecule key input</comment>
+  </data>
+  <data name="Placeholder_MoleculeName" xml:space="preserve">
+    <value>שם תצוגת מולקולה</value>
+    <comment>A-015 - Placeholder for molecule display name</comment>
+  </data>
+  <data name="Placeholder_ProjectKey" xml:space="preserve">
+    <value>מפתח-פרויקט</value>
+    <comment>A-015 - Placeholder for project key input</comment>
+  </data>
+  <data name="Placeholder_ProjectName" xml:space="preserve">
+    <value>שם הפרויקט</value>
+    <comment>A-015 - Placeholder for project display name</comment>
+  </data>
+  <data name="Placeholder_GroupingKey" xml:space="preserve">
+    <value>מפתח-קבוצה</value>
+    <comment>A-015 - Placeholder for grouping key input</comment>
+  </data>
+  <data name="Placeholder_GroupingName" xml:space="preserve">
+    <value>שם תצוגת הקבוצה</value>
+    <comment>A-015 - Placeholder for grouping display name</comment>
+  </data>
+  <data name="Placeholder_ShiftName" xml:space="preserve">
+    <value>לדוגמה, פתיחת חנות, סיור אבטחה וכו'</value>
+    <comment>A-015 - Placeholder for shift name input</comment>
+  </data>
+  <data name="Placeholder_ShiftNameShort" xml:space="preserve">
+    <value>שם משמרת</value>
+    <comment>A-015 - Short placeholder for shift name</comment>
+  </data>
+  <data name="Placeholder_EveningShift" xml:space="preserve">
+    <value>לדוגמה, משמרת ערב</value>
+    <comment>A-015 - Placeholder for custom shift row name</comment>
+  </data>
+  <data name="Placeholder_SearchEmployees" xml:space="preserve">
+    <value>חפש עובדים...</value>
+    <comment>A-015 - Placeholder for employee search</comment>
+  </data>
+  <data name="Placeholder_ApiScopes" xml:space="preserve">
+    <value>user:read,shift:read</value>
+    <comment>A-015 - Placeholder for API scopes input</comment>
+  </data>
+  <data name="Placeholder_NeverExpires" xml:space="preserve">
+    <value>ללא תפוגה</value>
+    <comment>A-015 - Placeholder for expiration days input</comment>
+  </data>
+  <data name="Placeholder_ApprovalNotes" xml:space="preserve">
+    <value>הערות אופציונליות לגבי האישור</value>
+    <comment>A-015 - Placeholder for approval notes</comment>
+  </data>
+  <data name="Placeholder_RejectionReason" xml:space="preserve">
+    <value>מדוע הבקשה נדחית?</value>
+    <comment>A-015 - Placeholder for rejection reason</comment>
+  </data>
+  <data name="Placeholder_RevokeReason" xml:space="preserve">
+    <value>מדוע המפתח מבוטל?</value>
+    <comment>A-015 - Placeholder for revoke reason</comment>
+  </data>
+  <data name="Placeholder_ShiftKey" xml:space="preserve">
+    <value>לדוגמה, CUSTOM_1</value>
+    <comment>A-015 - Placeholder for shift key input</comment>
+  </data>
+  <data name="Placeholder_DayShift" xml:space="preserve">
+    <value>משמרת יום</value>
+    <comment>A-015 - Placeholder for English shift name</comment>
+  </data>
+  <data name="Placeholder_EmailApiUrl" xml:space="preserve">
+    <value>https://api.yourcompany.com/v1/mail/send</value>
+    <comment>A-015 - Placeholder for email API URL</comment>
+  </data>
+  <data name="Placeholder_EmailFrom" xml:space="preserve">
+    <value>noreply@example.com</value>
+    <comment>A-015 - Placeholder for email from address</comment>
+  </data>
+  <data name="Placeholder_TestEmail" xml:space="preserve">
+    <value>test@example.com</value>
+    <comment>A-015 - Placeholder for test email address</comment>
+  </data>
+  <data name="Placeholder_Milestones" xml:space="preserve">
+    <value>1000,2500,5000,7500,10000,15000,20000</value>
+    <comment>A-015 - Placeholder for game milestones</comment>
+  </data>
+  <data name="Placeholder_GriffinUrl" xml:space="preserve">
+    <value>http://griffin-auth.example.mil</value>
+    <comment>A-015 - Placeholder for Griffin server URL</comment>
+  </data>
+  <data name="Placeholder_CallbackUrl" xml:space="preserve">
+    <value>https://your-app.local/Auth/GriffinCallback</value>
+    <comment>A-015 - Placeholder for callback URL</comment>
+  </data>
+  <data name="Placeholder_SearchKeyValue" xml:space="preserve">
+    <value>חפש לפי מפתח או ערך...</value>
+    <comment>A-015 - Placeholder for language search</comment>
+  </data>
+  <data name="Placeholder_ResourceKey" xml:space="preserve">
+    <value>Button_Save</value>
+    <comment>A-015 - Placeholder for resource key</comment>
+  </data>
+  <data name="Placeholder_CustomTranslation" xml:space="preserve">
+    <value>טקסט תרגום מותאם אישית</value>
+    <comment>A-015 - Placeholder for custom translation</comment>
+  </data>
+  <data name="Placeholder_MasterProgramName" xml:space="preserve">
+    <value>לדוגמה, לוח זמנים שבועי סטנדרטי</value>
+    <comment>A-015 - Placeholder for master program name</comment>
+  </data>
+  <data name="Placeholder_MasterProgramDesc" xml:space="preserve">
+    <value>תיאור של לוח הזמנים השבועי המלא</value>
+    <comment>A-015 - Placeholder for master program description</comment>
+  </data>
+  <data name="Placeholder_ProgramName" xml:space="preserve">
+    <value>לדוגמה, משמרות בוקר ראשון-חמישי</value>
+    <comment>A-015 - Placeholder for program name</comment>
+  </data>
+  <data name="Placeholder_UseDefault" xml:space="preserve">
+    <value>השתמש בברירת מחדל</value>
+    <comment>A-015 - Placeholder for optional staffing input</comment>
+  </data>
+  <data name="Placeholder_SlugPattern" xml:space="preserve">
+    <value>מותרים רק אותיות קטנות באנגלית, מספרים ומקפים</value>
+    <comment>A-015 - Title/validation message for slug pattern</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - ARIA Labels -->
+  <data name="Aria_CloseDialog" xml:space="preserve">
+    <value>סגור חלון</value>
+    <comment>A-015 - ARIA label for close dialog button</comment>
+  </data>
+  <data name="Aria_CloseButton" xml:space="preserve">
+    <value>סגור</value>
+    <comment>A-015 - ARIA label for generic close button</comment>
+  </data>
+  <data name="Aria_SearchEmployees" xml:space="preserve">
+    <value>חפש עובדים</value>
+    <comment>A-015 - ARIA label for employee search input</comment>
+  </data>
+  <data name="Aria_SearchCommands" xml:space="preserve">
+    <value>חפש פקודות</value>
+    <comment>A-015 - ARIA label for command palette search</comment>
+  </data>
+  <data name="Aria_LoadingPage" xml:space="preserve">
+    <value>טוען עמוד</value>
+    <comment>A-015 - ARIA label for page loading indicator</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - Tooltips/Titles -->
+  <data name="Title_ShiftModified" xml:space="preserve">
+    <value>משמרת זו שונתה ידנית ונותקה מהתוכנית שלה</value>
+    <comment>A-015 - Tooltip for detached shift badge</comment>
+  </data>
+  <data name="Title_ResetToProgram" xml:space="preserve">
+    <value>אפס להגדרות ברירת המחדל של התוכנית</value>
+    <comment>A-015 - Tooltip for reset to program button</comment>
+  </data>
+  <data name="Title_DragToCopy" xml:space="preserve">
+    <value>גרור להעתקה לימים אחרים</value>
+    <comment>A-015 - Tooltip for drag handle</comment>
+  </data>
+  <data name="Title_OpenRosterDock" xml:space="preserve">
+    <value>פתח לוח צוות</value>
+    <comment>A-015 - Tooltip for roster dock toggle button</comment>
+  </data>
+  <data name="Title_ToggleRadarMode" xml:space="preserve">
+    <value>הפעל מצב רדאר - הדגש משמרות עם חוסר או עודף צוות</value>
+    <comment>A-015 - Tooltip for radar mode toggle button</comment>
+  </data>
+  <data name="Title_DeleteOverride" xml:space="preserve">
+    <value>מחק</value>
+    <comment>A-015 - Tooltip for delete override button</comment>
+  </data>
+
+  <!-- A-015: Missing Localization Strings - Page Headers and Sections -->
+  <data name="EditProfile_Title" xml:space="preserve">
+    <value>עריכת פרופיל עובד</value>
+    <comment>A-015 - Page title for edit profile</comment>
+  </data>
+  <data name="EditProfile_Avatar" xml:space="preserve">
+    <value>תמונה</value>
+    <comment>A-015 - Section header for avatar</comment>
+  </data>
+  <data name="EditProfile_UploadAvatar" xml:space="preserve">
+    <value>העלה תמונה חדשה (עד 5MB, JPEG/PNG)</value>
+    <comment>A-015 - Label for avatar upload</comment>
+  </data>
+  <data name="EditProfile_DeleteAvatar" xml:space="preserve">
+    <value>מחק תמונה</value>
+    <comment>A-015 - Button text for delete avatar</comment>
+  </data>
+  <data name="EditProfile_AccountSettings" xml:space="preserve">
+    <value>הגדרות חשבון</value>
+    <comment>A-015 - Section header for account settings</comment>
+  </data>
+  <data name="EditProfile_PersonalInfo" xml:space="preserve">
+    <value>מידע אישי</value>
+    <comment>A-015 - Section header for personal information</comment>
+  </data>
+  <data name="EditProfile_OrgAssignment" xml:space="preserve">
+    <value>שיוך ארגוני</value>
+    <comment>A-015 - Section header for org assignment</comment>
+  </data>
+  <data name="EditProfile_ProfessionalInfo" xml:space="preserve">
+    <value>מידע מקצועי</value>
+    <comment>A-015 - Section header for professional info</comment>
+  </data>
+  <data name="EditProfile_EmergencyContact" xml:space="preserve">
+    <value>איש קשר לחירום</value>
+    <comment>A-015 - Section header for emergency contact</comment>
+  </data>
+  <data name="EditProfile_ActiveAccount" xml:space="preserve">
+    <value>חשבון פעיל</value>
+    <comment>A-015 - Checkbox label for active account</comment>
+  </data>
+
+  <!-- A-015: Form Labels -->
+  <data name="Label_Email" xml:space="preserve">
+    <value>דוא"ל</value>
+    <comment>A-015 - Form label for email</comment>
+  </data>
+  <data name="Label_Role" xml:space="preserve">
+    <value>תפקיד</value>
+    <comment>A-015 - Form label for role</comment>
+  </data>
+  <data name="Label_PreferredName" xml:space="preserve">
+    <value>שם מועדף</value>
+    <comment>A-015 - Form label for preferred name</comment>
+  </data>
+  <data name="Label_Phone" xml:space="preserve">
+    <value>טלפון</value>
+    <comment>A-015 - Form label for phone</comment>
+  </data>
+  <data name="Label_City" xml:space="preserve">
+    <value>עיר</value>
+    <comment>A-015 - Form label for city</comment>
+  </data>
+  <data name="Label_DateOfBirth" xml:space="preserve">
+    <value>תאריך לידה</value>
+    <comment>A-015 - Form label for date of birth</comment>
+  </data>
+  <data name="Label_Department" xml:space="preserve">
+    <value>מחלקה</value>
+    <comment>A-015 - Form label for department</comment>
+  </data>
+  <data name="Label_JobTitle" xml:space="preserve">
+    <value>תפקיד</value>
+    <comment>A-015 - Form label for job title</comment>
+  </data>
+  <data name="Label_HireDate" xml:space="preserve">
+    <value>תאריך קבלה לעבודה</value>
+    <comment>A-015 - Form label for hire date</comment>
+  </data>
+  <data name="Label_Skills" xml:space="preserve">
+    <value>מיומנויות</value>
+    <comment>A-015 - Form label for skills</comment>
+  </data>
+  <data name="Label_Certifications" xml:space="preserve">
+    <value>הסמכות</value>
+    <comment>A-015 - Form label for certifications</comment>
+  </data>
+  <data name="Label_EmergencyContactName" xml:space="preserve">
+    <value>שם איש קשר לחירום</value>
+    <comment>A-015 - Form label for emergency contact name</comment>
+  </data>
+  <data name="Label_EmergencyContactPhone" xml:space="preserve">
+    <value>טלפון איש קשר לחירום</value>
+    <comment>A-015 - Form label for emergency contact phone</comment>
+  </data>
+  <data name="Label_Relationship" xml:space="preserve">
+    <value>קרבה</value>
+    <comment>A-015 - Form label for relationship</comment>
+  </data>
+  <data name="Label_ShiftKey" xml:space="preserve">
+    <value>מפתח משמרת</value>
+    <comment>A-015 - Form label for shift key</comment>
+  </data>
+  <data name="Label_EnglishName" xml:space="preserve">
+    <value>שם באנגלית</value>
+    <comment>A-015 - Form label for English name</comment>
+  </data>
+  <data name="Label_HebrewName" xml:space="preserve">
+    <value>שם בעברית</value>
+    <comment>A-015 - Form label for Hebrew name</comment>
+  </data>
+  <data name="Label_StartTime" xml:space="preserve">
+    <value>שעת התחלה</value>
+    <comment>A-015 - Form label for start time</comment>
+  </data>
+  <data name="Label_EndTime" xml:space="preserve">
+    <value>שעת סיום</value>
+    <comment>A-015 - Form label for end time</comment>
+  </data>
+  <data name="Label_StartDate" xml:space="preserve">
+    <value>תאריך התחלה</value>
+    <comment>A-015 - Form label for start date</comment>
+  </data>
+  <data name="Label_EndDate" xml:space="preserve">
+    <value>תאריך סיום</value>
+    <comment>A-015 - Form label for end date</comment>
+  </data>
+  <data name="Label_ShiftType" xml:space="preserve">
+    <value>סוג משמרת</value>
+    <comment>A-015 - Form label for shift type</comment>
+  </data>
+  <data name="Label_ProgramName" xml:space="preserve">
+    <value>שם תוכנית</value>
+    <comment>A-015 - Form label for program name</comment>
+  </data>
+  <data name="Label_DefaultStaffing" xml:space="preserve">
+    <value>צוות ברירת מחדל נדרש</value>
+    <comment>A-015 - Form label for default staffing</comment>
+  </data>
+  <data name="Label_MasterProgramName" xml:space="preserve">
+    <value>שם תוכנית ראשית</value>
+    <comment>A-015 - Form label for master program name</comment>
+  </data>
+  <data name="Label_SelectPrograms" xml:space="preserve">
+    <value>בחר תוכניות לכלול</value>
+    <comment>A-015 - Label for program selection</comment>
+  </data>
+  <data name="Label_GriffinServerUrl" xml:space="preserve">
+    <value>כתובת שרת גריפין</value>
+    <comment>A-015 - Form label for Griffin server URL</comment>
+  </data>
+  <data name="Label_ApplicationCallbackUrl" xml:space="preserve">
+    <value>כתובת Callback של האפליקציה</value>
+    <comment>A-015 - Form label for application callback URL</comment>
+  </data>
+  <data name="Label_ResourceKey" xml:space="preserve">
+    <value>מפתח משאב</value>
+    <comment>A-015 - Form label for resource key</comment>
+  </data>
+  <data name="Label_Culture" xml:space="preserve">
+    <value>שפה</value>
+    <comment>A-015 - Form label for culture</comment>
+  </data>
+  <data name="Label_OverrideValue" xml:space="preserve">
+    <value>ערך דריסה</value>
+    <comment>A-015 - Form label for override value</comment>
+  </data>
+  <data name="Label_DefaultLanguage" xml:space="preserve">
+    <value>שפת ברירת מחדל</value>
+    <comment>A-015 - Form label for default language</comment>
+  </data>
+  <data name="Label_AlternateLanguage" xml:space="preserve">
+    <value>שפה חלופית</value>
+    <comment>A-015 - Form label for alternate language</comment>
+  </data>
+  <data name="Label_SelectCultureToEdit" xml:space="preserve">
+    <value>בחר שפה לעריכה</value>
+    <comment>A-015 - Label for culture selection</comment>
+  </data>
+  <data name="Label_ShiftName" xml:space="preserve">
+    <value>שם משמרת</value>
+    <comment>A-015 - Form label for shift name</comment>
+  </data>
+
+  <!-- A-015: Role Names -->
+  <data name="Role_Employee" xml:space="preserve">
+    <value>עובד</value>
+    <comment>A-015 - Role name for employee</comment>
+  </data>
+  <data name="Role_Manager" xml:space="preserve">
+    <value>מנהל</value>
+    <comment>A-015 - Role name for manager</comment>
+  </data>
+  <data name="Role_Owner" xml:space="preserve">
+    <value>בעלים</value>
+    <comment>A-015 - Role name for owner</comment>
+  </data>
+  <data name="Role_Director" xml:space="preserve">
+    <value>דירקטור</value>
+    <comment>A-015 - Role name for director</comment>
+  </data>
+  <data name="Role_Trainee" xml:space="preserve">
+    <value>מתלמד</value>
+    <comment>A-015 - Role name for trainee</comment>
+  </data>
+
+  <!-- A-015: Button Text -->
+  <data name="Button_SaveChanges" xml:space="preserve">
+    <value>שמור שינויים</value>
+    <comment>A-015 - Button text for save changes</comment>
+  </data>
+  <data name="Button_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+    <comment>A-015 - Button text for cancel</comment>
+  </data>
+  <data name="Button_Submit" xml:space="preserve">
+    <value>שלח</value>
+    <comment>A-015 - Button text for submit</comment>
+  </data>
+  <data name="Button_Save" xml:space="preserve">
+    <value>שמור</value>
+    <comment>A-015 - Button text for save</comment>
+  </data>
+  <data name="Button_Apply" xml:space="preserve">
+    <value>החל</value>
+    <comment>A-015 - Button text for apply</comment>
+  </data>
+  <data name="Button_Retry" xml:space="preserve">
+    <value>נסה שוב</value>
+    <comment>A-015 - Button text for retry</comment>
+  </data>
+  <data name="Button_ConfirmDelete" xml:space="preserve">
+    <value>אשר מחיקה</value>
+    <comment>A-015 - Button text for confirm delete</comment>
+  </data>
+  <data name="Button_CreateShiftRow" xml:space="preserve">
+    <value>צור שורת משמרת</value>
+    <comment>A-015 - Button text for create shift row</comment>
+  </data>
+  <data name="Button_ReturnToLogin" xml:space="preserve">
+    <value>חזור לכניסה</value>
+    <comment>A-015 - Button text for return to login</comment>
+  </data>
+  <data name="Button_GoToLoginNow" xml:space="preserve">
+    <value>עבור לכניסה עכשיו</value>
+    <comment>A-015 - Link text for go to login</comment>
+  </data>
+
+  <!-- A-015: Page and Section Titles -->
+  <data name="AdminHub_Title" xml:space="preserve">
+    <value>מרכז ניהול</value>
+    <comment>A-015 - Page title for admin hub</comment>
+  </data>
+  <data name="DirectorHub_Title" xml:space="preserve">
+    <value>מרכז דירקטור</value>
+    <comment>A-015 - Page title for director hub</comment>
+  </data>
+  <data name="Blueprints_Title" xml:space="preserve">
+    <value>תבניות משמרות</value>
+    <comment>A-015 - Page title for blueprints</comment>
+  </data>
+  <data name="MasterPrograms_Title" xml:space="preserve">
+    <value>תוכניות ראשיות</value>
+    <comment>A-015 - Page title for master programs</comment>
+  </data>
+  <data name="LanguageManagement_Title" xml:space="preserve">
+    <value>ניהול שפות</value>
+    <comment>A-015 - Page title for language management</comment>
+  </data>
+  <data name="ProposeSwap_Title" xml:space="preserve">
+    <value>הצע החלפה</value>
+    <comment>A-015 - Page title for propose swap</comment>
+  </data>
+
+  <!-- A-015: Section Headers -->
+  <data name="Section_Companies" xml:space="preserve">
+    <value>חברות</value>
+    <comment>A-015 - Section header for companies</comment>
+  </data>
+  <data name="Section_Directors" xml:space="preserve">
+    <value>דירקטורים</value>
+    <comment>A-015 - Section header for directors</comment>
+  </data>
+  <data name="Section_DirectorsDesc" xml:space="preserve">
+    <value>הקצה דירקטורים לחברות</value>
+    <comment>A-015 - Description for directors section</comment>
+  </data>
+  <data name="Section_CompanyContext" xml:space="preserve">
+    <value>הקשר חברה</value>
+    <comment>A-015 - Section header for company context</comment>
+  </data>
+  <data name="Section_PeopleManagement" xml:space="preserve">
+    <value>ניהול אנשים</value>
+    <comment>A-015 - Section header for people management</comment>
+  </data>
+  <data name="Section_Users" xml:space="preserve">
+    <value>משתמשים</value>
+    <comment>A-015 - Section header for users</comment>
+  </data>
+  <data name="Section_MyTeam" xml:space="preserve">
+    <value>הצוות שלי</value>
+    <comment>A-015 - Section header for my team</comment>
+  </data>
+  <data name="Section_MyTeamDesc" xml:space="preserve">
+    <value>צפה בחברי צוות ולוחות זמנים</value>
+    <comment>A-015 - Description for my team section</comment>
+  </data>
+  <data name="Section_SchedulingConfig" xml:space="preserve">
+    <value>הגדרת לוח זמנים</value>
+    <comment>A-015 - Section header for scheduling config</comment>
+  </data>
+  <data name="Section_Blueprints" xml:space="preserve">
+    <value>תבניות</value>
+    <comment>A-015 - Section header for blueprints</comment>
+  </data>
+  <data name="Section_BlueprintsDesc" xml:space="preserve">
+    <value>נהל הגדרות סוגי משמרות</value>
+    <comment>A-015 - Description for blueprints section</comment>
+  </data>
+  <data name="Section_Programs" xml:space="preserve">
+    <value>תוכניות</value>
+    <comment>A-015 - Section header for programs</comment>
+  </data>
+  <data name="Section_MasterPrograms" xml:space="preserve">
+    <value>תוכניות ראשיות</value>
+    <comment>A-015 - Section header for master programs</comment>
+  </data>
+  <data name="Section_MasterProgramsDesc" xml:space="preserve">
+    <value>הגדרת תוכנית מתקדמת</value>
+    <comment>A-015 - Description for master programs section</comment>
+  </data>
+  <data name="Section_ShiftTypes" xml:space="preserve">
+    <value>סוגי משמרות</value>
+    <comment>A-015 - Section header for shift types</comment>
+  </data>
+  <data name="Section_ShiftTypesDesc" xml:space="preserve">
+    <value>הגדר פרמטרים של משמרות</value>
+    <comment>A-015 - Description for shift types section</comment>
+  </data>
+  <data name="Section_CompanySettings" xml:space="preserve">
+    <value>הגדרות חברה</value>
+    <comment>A-015 - Section header for company settings</comment>
+  </data>
+  <data name="Section_OperationsManagement" xml:space="preserve">
+    <value>ניהול תפעול</value>
+    <comment>A-015 - Section header for operations management</comment>
+  </data>
+  <data name="Section_ShiftAssignments" xml:space="preserve">
+    <value>שיבוצי משמרות</value>
+    <comment>A-015 - Section header for shift assignments</comment>
+  </data>
+  <data name="Section_AssignmentManager" xml:space="preserve">
+    <value>מנהל שיבוצים</value>
+    <comment>A-015 - Section header for assignment manager</comment>
+  </data>
+  <data name="Section_AssignmentManagerDesc" xml:space="preserve">
+    <value>פעולות שיבוץ מתקדמות</value>
+    <comment>A-015 - Description for assignment manager section</comment>
+  </data>
+  <data name="Section_ChoresManagement" xml:space="preserve">
+    <value>ניהול משימות</value>
+    <comment>A-015 - Section header for chores management</comment>
+  </data>
+  <data name="Section_ChoresManagementDesc" xml:space="preserve">
+    <value>לוח שנה ושיבוצי משימות</value>
+    <comment>A-015 - Description for chores management section</comment>
+  </data>
+  <data name="Section_OnDutyManagement" xml:space="preserve">
+    <value>ניהול תורנויות</value>
+    <comment>A-015 - Section header for onduty management</comment>
+  </data>
+  <data name="Section_AnalyticsDashboard" xml:space="preserve">
+    <value>לוח בקרה אנליטי</value>
+    <comment>A-015 - Section header for analytics dashboard</comment>
+  </data>
+  <data name="Section_AuditLog" xml:space="preserve">
+    <value>יומן ביקורת</value>
+    <comment>A-015 - Section header for audit log</comment>
+  </data>
+  <data name="Section_SystemHealth" xml:space="preserve">
+    <value>תקינות מערכת</value>
+    <comment>A-015 - Section header for system health</comment>
+  </data>
+  <data name="Section_AdvancedTools" xml:space="preserve">
+    <value>כלים מתקדמים</value>
+    <comment>A-015 - Section header for advanced tools</comment>
+  </data>
+  <data name="Section_FeatureFlags" xml:space="preserve">
+    <value>דגלי תכונות</value>
+    <comment>A-015 - Section header for feature flags</comment>
+  </data>
+  <data name="Section_EmailConfiguration" xml:space="preserve">
+    <value>הגדרת דוא"ל</value>
+    <comment>A-015 - Section header for email configuration</comment>
+  </data>
+  <data name="Section_GriffinAdfs" xml:space="preserve">
+    <value>Griffin ADFS</value>
+    <comment>A-015 - Section header for Griffin ADFS</comment>
+  </data>
+  <data name="Section_LanguageManagement" xml:space="preserve">
+    <value>ניהול שפות</value>
+    <comment>A-015 - Section header for language management</comment>
+  </data>
+  <data name="Section_DatabaseConsole" xml:space="preserve">
+    <value>קונסולת מסד נתונים</value>
+    <comment>A-015 - Section header for database console</comment>
+  </data>
+  <data name="Section_DatabaseConsoleDesc" xml:space="preserve">
+    <value>פעולות ישירות על מסד הנתונים</value>
+    <comment>A-015 - Description for database console section</comment>
+  </data>
+  <data name="Section_Backups" xml:space="preserve">
+    <value>גיבויים</value>
+    <comment>A-015 - Section header for backups</comment>
+  </data>
+  <data name="Section_BackupsDesc" xml:space="preserve">
+    <value>ניהול גיבויי מסד נתונים</value>
+    <comment>A-015 - Description for backups section</comment>
+  </data>
+  <data name="Section_DataLifecycle" xml:space="preserve">
+    <value>מחזור חיי נתונים</value>
+    <comment>A-015 - Section header for data lifecycle</comment>
+  </data>
+  <data name="Section_DataLifecycleDesc" xml:space="preserve">
+    <value>מדיניות שמירה וניקוי</value>
+    <comment>A-015 - Description for data lifecycle section</comment>
+  </data>
+  <data name="Section_GameConfiguration" xml:space="preserve">
+    <value>הגדרת משחק</value>
+    <comment>A-015 - Section header for game configuration</comment>
+  </data>
+  <data name="Section_QuickActions" xml:space="preserve">
+    <value>פעולות מהירות</value>
+    <comment>A-015 - Section header for quick actions</comment>
+  </data>
+  <data name="Section_DirectorUtilities" xml:space="preserve">
+    <value>כלי דירקטור</value>
+    <comment>A-015 - Section header for director utilities</comment>
+  </data>
+  <data name="Section_Calendar" xml:space="preserve">
+    <value>לוח שנה</value>
+    <comment>A-015 - Section header for calendar</comment>
+  </data>
+  <data name="Section_CalendarDesc" xml:space="preserve">
+    <value>צפה ונהל לוחות זמנים</value>
+    <comment>A-015 - Description for calendar section</comment>
+  </data>
+  <data name="Section_ManageUsers" xml:space="preserve">
+    <value>נהל משתמשים</value>
+    <comment>A-015 - Section header for manage users</comment>
+  </data>
+  <data name="Section_ManageUsersDesc" xml:space="preserve">
+    <value>ניהול משתמשים ותפקידים</value>
+    <comment>A-015 - Description for manage users section</comment>
+  </data>
+  <data name="Section_Requests" xml:space="preserve">
+    <value>בקשות</value>
+    <comment>A-015 - Section header for requests</comment>
+  </data>
+  <data name="Section_ShiftManagement" xml:space="preserve">
+    <value>ניהול משמרות</value>
+    <comment>A-015 - Section header for shift management</comment>
+  </data>
+  <data name="Section_ShiftManagementDesc" xml:space="preserve">
+    <value>ערוך משמרות עם לוח צוות</value>
+    <comment>A-015 - Description for shift management section</comment>
+  </data>
+  <data name="Section_Analytics" xml:space="preserve">
+    <value>אנליטיקה</value>
+    <comment>A-015 - Section header for analytics</comment>
+  </data>
+  <data name="Section_AnalyticsDesc" xml:space="preserve">
+    <value>צפה במדדים ודוחות</value>
+    <comment>A-015 - Description for analytics section</comment>
+  </data>
+  <data name="Section_AdminHub" xml:space="preserve">
+    <value>מרכז ניהול</value>
+    <comment>A-015 - Section header for admin hub</comment>
+  </data>
+  <data name="Section_AdminHubDesc" xml:space="preserve">
+    <value>מרכז ניהול מלא</value>
+    <comment>A-015 - Description for admin hub section</comment>
+  </data>
+  <data name="Section_ViewAsManager" xml:space="preserve">
+    <value>צפה כמנהל</value>
+    <comment>A-015 - Section header for view as manager</comment>
+  </data>
+  <data name="Section_ViewAsManagerDesc" xml:space="preserve">
+    <value>התחזה לנקודת מבט של מנהל</value>
+    <comment>A-015 - Description for view as manager section</comment>
+  </data>
+  <data name="Section_NotificationHub" xml:space="preserve">
+    <value>מרכז התראות</value>
+    <comment>A-015 - Section header for notification hub</comment>
+  </data>
+
+  <!-- A-015: Table Headers -->
+  <data name="Table_Date" xml:space="preserve">
+    <value>תאריך</value>
+    <comment>A-015 - Table header for date</comment>
+  </data>
+  <data name="Table_Field" xml:space="preserve">
+    <value>שדה</value>
+    <comment>A-015 - Table header for field</comment>
+  </data>
+  <data name="Table_OldValue" xml:space="preserve">
+    <value>ערך ישן</value>
+    <comment>A-015 - Table header for old value</comment>
+  </data>
+  <data name="Table_NewValue" xml:space="preserve">
+    <value>ערך חדש</value>
+    <comment>A-015 - Table header for new value</comment>
+  </data>
+  <data name="Table_ChangedBy" xml:space="preserve">
+    <value>שונה על ידי</value>
+    <comment>A-015 - Table header for changed by</comment>
+  </data>
+  <data name="Table_ShiftType" xml:space="preserve">
+    <value>סוג משמרת</value>
+    <comment>A-015 - Table header for shift type</comment>
+  </data>
+  <data name="Table_TimeRange" xml:space="preserve">
+    <value>טווח זמן</value>
+    <comment>A-015 - Table header for time range</comment>
+  </data>
+  <data name="Table_Type" xml:space="preserve">
+    <value>סוג</value>
+    <comment>A-015 - Table header for type</comment>
+  </data>
+  <data name="Table_Actions" xml:space="preserve">
+    <value>פעולות</value>
+    <comment>A-015 - Table header for actions</comment>
+  </data>
+  <data name="Table_Shift" xml:space="preserve">
+    <value>משמרת</value>
+    <comment>A-015 - Table header for shift</comment>
+  </data>
+  <data name="Table_ResourceKey" xml:space="preserve">
+    <value>מפתח משאב</value>
+    <comment>A-015 - Table header for resource key</comment>
+  </data>
+  <data name="Table_Culture" xml:space="preserve">
+    <value>שפה</value>
+    <comment>A-015 - Table header for culture</comment>
+  </data>
+  <data name="Table_BaseValue" xml:space="preserve">
+    <value>ערך בסיס</value>
+    <comment>A-015 - Table header for base value</comment>
+  </data>
+  <data name="Table_OverrideValue" xml:space="preserve">
+    <value>ערך דריסה</value>
+    <comment>A-015 - Table header for override value</comment>
+  </data>
+  <data name="Table_LastUpdated" xml:space="preserve">
+    <value>עודכן לאחרונה</value>
+    <comment>A-015 - Table header for last updated</comment>
+  </data>
+
+  <!-- A-015: Status and Badge Labels -->
+  <data name="Status_Active" xml:space="preserve">
+    <value>פעיל</value>
+    <comment>A-015 - Status badge for active</comment>
+  </data>
+  <data name="Status_Offline" xml:space="preserve">
+    <value>לא מקוון</value>
+    <comment>A-015 - Status badge for offline</comment>
+  </data>
+  <data name="Status_Custom" xml:space="preserve">
+    <value>מותאם אישית</value>
+    <comment>A-015 - Status badge for custom</comment>
+  </data>
+  <data name="Status_Predefined" xml:space="preserve">
+    <value>מוגדר מראש</value>
+    <comment>A-015 - Status badge for predefined</comment>
+  </data>
+  <data name="Status_Running" xml:space="preserve">
+    <value>פועל</value>
+    <comment>A-015 - Status badge for running</comment>
+  </data>
+  <data name="Status_Tech" xml:space="preserve">
+    <value>טכנולוגי</value>
+    <comment>A-015 - Badge for tech department</comment>
+  </data>
+  <data name="Status_OVR" xml:space="preserve">
+    <value>OVR</value>
+    <comment>A-015 - Badge for overridden shift</comment>
+  </data>
+
+  <!-- A-015: Stat Labels -->
+  <data name="Stat_Users" xml:space="preserve">
+    <value>משתמשים</value>
+    <comment>A-015 - Stat label for users count</comment>
+  </data>
+  <data name="Stat_Shifts" xml:space="preserve">
+    <value>משמרות</value>
+    <comment>A-015 - Stat label for shifts count</comment>
+  </data>
+  <data name="Stat_Chores" xml:space="preserve">
+    <value>משימות</value>
+    <comment>A-015 - Stat label for chores count</comment>
+  </data>
+  <data name="Stat_Assignments" xml:space="preserve">
+    <value>שיבוצים</value>
+    <comment>A-015 - Stat label for assignments count</comment>
+  </data>
+  <data name="Stat_ActiveUsers" xml:space="preserve">
+    <value>משתמשים פעילים</value>
+    <comment>A-015 - Stat label for active users</comment>
+  </data>
+  <data name="Stat_TotalShifts" xml:space="preserve">
+    <value>סה"כ משמרות</value>
+    <comment>A-015 - Stat label for total shifts</comment>
+  </data>
+  <data name="Stat_PendingRequests" xml:space="preserve">
+    <value>בקשות ממתינות</value>
+    <comment>A-015 - Stat label for pending requests</comment>
+  </data>
+  <data name="Stat_Errors" xml:space="preserve">
+    <value>שגיאות</value>
+    <comment>A-015 - Log stat label for errors</comment>
+  </data>
+  <data name="Stat_Warnings" xml:space="preserve">
+    <value>אזהרות</value>
+    <comment>A-015 - Log stat label for warnings</comment>
+  </data>
+  <data name="Stat_Info" xml:space="preserve">
+    <value>מידע</value>
+    <comment>A-015 - Log stat label for info</comment>
+  </data>
+
+  <!-- A-015: Modal Titles -->
+  <data name="Modal_AddCustomShiftRow" xml:space="preserve">
+    <value>הוסף שורת משמרת מותאמת</value>
+    <comment>A-015 - Modal title for add custom shift row</comment>
+  </data>
+  <data name="Modal_EditShiftTypeName" xml:space="preserve">
+    <value>ערוך שם סוג משמרת</value>
+    <comment>A-015 - Modal title for edit shift type name</comment>
+  </data>
+  <data name="Modal_EditShiftTimes" xml:space="preserve">
+    <value>ערוך זמני משמרת</value>
+    <comment>A-015 - Modal title for edit shift times</comment>
+  </data>
+  <data name="Modal_ConfirmShiftTypeDeletion" xml:space="preserve">
+    <value>אשר מחיקת סוג משמרת</value>
+    <comment>A-015 - Modal title for confirm deletion</comment>
+  </data>
+  <data name="Modal_GenerateShiftInstances" xml:space="preserve">
+    <value>צור מופעי משמרת</value>
+    <comment>A-015 - Modal title for generate instances</comment>
+  </data>
+  <data name="Modal_GenerateFullWeeklySchedule" xml:space="preserve">
+    <value>צור לוח שבועי מלא</value>
+    <comment>A-015 - Modal title for generate weekly schedule</comment>
+  </data>
+
+  <!-- A-015: Calendar Views -->
+  <data name="CalendarView_Week" xml:space="preserve">
+    <value>שבוע</value>
+    <comment>A-015 - Calendar view button for week</comment>
+  </data>
+  <data name="CalendarView_Month" xml:space="preserve">
+    <value>חודש</value>
+    <comment>A-015 - Calendar view button for month</comment>
+  </data>
+
+  <!-- A-015: Auth Messages -->
+  <data name="Auth_AuthenticationFailed" xml:space="preserve">
+    <value>האימות נכשל</value>
+    <comment>A-015 - Alert heading for auth failure</comment>
+  </data>
+  <data name="Auth_AccountPendingApproval" xml:space="preserve">
+    <value>החשבון ממתין לאישור</value>
+    <comment>A-015 - Alert heading for pending approval</comment>
+  </data>
+  <data name="Auth_SuccessfullyLoggedOut" xml:space="preserve">
+    <value>התנתקת בהצלחה</value>
+    <comment>A-015 - Message for successful logout</comment>
+  </data>
+
+  <!-- A-015: Miscellaneous -->
+  <data name="Misc_ConfigureShiftTypes" xml:space="preserve">
+    <value>הגדר סוגי משמרות</value>
+    <comment>A-015 - Link text for configure shift types</comment>
+  </data>
+  <data name="Misc_ToStartScheduling" xml:space="preserve">
+    <value>כדי להתחיל לתזמן.</value>
+    <comment>A-015 - Text for start scheduling hint</comment>
+  </data>
+  <data name="Misc_NoProgramsAvailable" xml:space="preserve">
+    <value>אין תוכניות זמינות.</value>
+    <comment>A-015 - Message when no programs exist</comment>
+  </data>
+  <data name="Misc_CreateProgramsFirst" xml:space="preserve">
+    <value>צור תוכניות</value>
+    <comment>A-015 - Link text for create programs</comment>
+  </data>
+  <data name="Misc_First" xml:space="preserve">
+    <value>קודם.</value>
+    <comment>A-015 - Text following create programs link</comment>
+  </data>
+  <data name="Misc_ClearFilters" xml:space="preserve">
+    <value>נקה מסננים</value>
+    <comment>A-015 - Link text for clear filters</comment>
+  </data>
+  <data name="Misc_AllLanguages" xml:space="preserve">
+    <value>כל השפות</value>
+    <comment>A-015 - Dropdown option for all languages</comment>
+  </data>
+  <data name="Misc_English" xml:space="preserve">
+    <value>אנגלית</value>
+    <comment>A-015 - Language name for English</comment>
+  </data>
+  <data name="Misc_Hebrew" xml:space="preserve">
+    <value>עברית</value>
+    <comment>A-015 - Language name for Hebrew</comment>
+  </data>
+  <data name="Misc_ManageCompanyFilter" xml:space="preserve">
+    <value>נהל מסנן חברה</value>
+    <comment>A-015 - Link text for manage company filter</comment>
+  </data>
+  <data name="Misc_ExitViewMode" xml:space="preserve">
+    <value>צא ממצב צפייה</value>
+    <comment>A-015 - Link text for exit view mode</comment>
+  </data>
+  <data name="Misc_Ctrl" xml:space="preserve">
+    <value>Ctrl</value>
+    <comment>A-015 - Keyboard key name</comment>
+  </data>
+  <data name="Misc_Purpose" xml:space="preserve">
+    <value>מטרה</value>
+    <comment>A-015 - Label for purpose section</comment>
+  </data>
+  <data name="Misc_Recommendation" xml:space="preserve">
+    <value>המלצה</value>
+    <comment>A-015 - Label for recommendation section</comment>
+  </data>
+  <data name="Misc_DeleteShiftDeletionNote" xml:space="preserve">
+    <value>מחיקתו לא תמחק את המשמרות הללו. נתוני משמרות היסטוריים יישמרו.</value>
+    <comment>A-015 - Note about shift type deletion</comment>
+  </data>
+  <data name="Misc_Error" xml:space="preserve">
+    <value>שגיאה</value>
+    <comment>A-015 - Error label</comment>
+  </data>
+  <data name="Misc_DeleteOverrideConfirm" xml:space="preserve">
+    <value>למחוק דריסה זו?</value>
+    <comment>A-015 - Confirmation message for delete override</comment>
+  </data>
+
+  <!-- A-015: Feature Flags -->
+  <data name="FeatureFlag_EnforceCompanyScope" xml:space="preserve">
+    <value>EnforceCompanyScope</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_EnableDirectorRole" xml:space="preserve">
+    <value>EnableDirectorRole</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_AllowPublicSignup" xml:space="preserve">
+    <value>AllowPublicSignup</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_EnableApiKeyManagement" xml:space="preserve">
+    <value>EnableApiKeyManagement</value>
+    <comment>A-015 - Feature flag name</comment>
+  </data>
+  <data name="FeatureFlag_ImpactCritical" xml:space="preserve">
+    <value>קריטי</value>
+    <comment>A-015 - Feature flag impact level</comment>
+  </data>
+  <data name="FeatureFlag_ImpactHigh" xml:space="preserve">
+    <value>גבוה</value>
+    <comment>A-015 - Feature flag impact level</comment>
+  </data>
+  <data name="FeatureFlag_ImpactMedium" xml:space="preserve">
+    <value>בינוני</value>
+    <comment>A-015 - Feature flag impact level</comment>
+  </data>
+
+  <!-- B-051: Error Boundary -->
+  <data name="ErrorBoundary_SomethingWentWrong" xml:space="preserve">
+    <value>משהו השתבש</value>
+    <comment>B-051 - Error boundary title</comment>
+  </data>
+  <data name="ErrorBoundary_SomethingWentWrongDesc" xml:space="preserve">
+    <value>אירעה שגיאה בלתי צפויה. אנא נסה שוב.</value>
+    <comment>B-051 - Error boundary description</comment>
+  </data>
+  <data name="ErrorBoundary_Retry" xml:space="preserve">
+    <value>נסה שוב</value>
+    <comment>B-051 - Retry button text</comment>
+  </data>
+  <data name="ErrorBoundary_ReloadPage" xml:space="preserve">
+    <value>טען מחדש את הדף</value>
+    <comment>B-051 - Reload page button text</comment>
+  </data>
+  <data name="ErrorBoundary_Dismiss" xml:space="preserve">
+    <value>סגור</value>
+    <comment>B-051 - Dismiss button text</comment>
+  </data>
+  <data name="ErrorBoundary_ComponentError" xml:space="preserve">
+    <value>חלק זה נתקל בשגיאה</value>
+    <comment>B-051 - Component error title</comment>
+  </data>
+  <data name="ErrorBoundary_ComponentErrorDesc" xml:space="preserve">
+    <value>לחץ על נסה שוב כדי לטעון מחדש את החלק הזה.</value>
+    <comment>B-051 - Component error description</comment>
+  </data>
+  <data name="ErrorBoundary_CriticalError" xml:space="preserve">
+    <value>שגיאה קריטית</value>
+    <comment>B-051 - Critical error title</comment>
+  </data>
+  <data name="ErrorBoundary_CriticalErrorDesc" xml:space="preserve">
+    <value>אירעה שגיאה קריטית. אנא טען מחדש את הדף כדי להמשיך.</value>
+    <comment>B-051 - Critical error description</comment>
+  </data>
+  <data name="ErrorBoundary_MultipleErrors" xml:space="preserve">
+    <value>זוהו שגיאות מרובות</value>
+    <comment>B-051 - Multiple errors title</comment>
+  </data>
+  <data name="ErrorBoundary_MultipleErrorsDesc" xml:space="preserve">
+    <value>הדף חווה בעיות. אנא טען מחדש.</value>
+    <comment>B-051 - Multiple errors description</comment>
+  </data>
+  <data name="ErrorBoundary_ErrorDetails" xml:space="preserve">
+    <value>פרטי השגיאה</value>
+    <comment>B-051 - Error details summary text</comment>
+  </data>
+  <data name="ErrorBoundary_HideDetails" xml:space="preserve">
+    <value>הסתר פרטים</value>
+    <comment>B-051 - Hide details text</comment>
+  </data>
+
+  <!-- B-050: Offline/Flaky Network Handling -->
+  <data name="Offline_Banner" xml:space="preserve">
+    <value>אתה במצב לא מקוון. השינויים יסונכרנו כשהחיבור יחזור.</value>
+    <comment>B-050 - Offline banner message</comment>
+  </data>
+  <data name="Offline_QueuedActions" xml:space="preserve">
+    <value>{0} פעולה/ות ממתינות לסנכרון</value>
+    <comment>B-050 - Queued actions count</comment>
+  </data>
+  <data name="Offline_Syncing" xml:space="preserve">
+    <value>מסנכרן...</value>
+    <comment>B-050 - Syncing status text</comment>
+  </data>
+  <data name="Offline_SyncComplete" xml:space="preserve">
+    <value>כל השינויים סונכרנו</value>
+    <comment>B-050 - Sync complete message</comment>
+  </data>
+  <data name="Offline_SyncFailed" xml:space="preserve">
+    <value>חלק מהשינויים לא ניתן היה לסנכרן</value>
+    <comment>B-050 - Sync failed message</comment>
+  </data>
+  <data name="Offline_ConnectionRestored" xml:space="preserve">
+    <value>החיבור שוחזר</value>
+    <comment>B-050 - Connection restored message</comment>
+  </data>
+  <data name="Offline_ConflictDetected" xml:space="preserve">
+    <value>רשומה זו שונתה בזמן שהיית במצב לא מקוון. ייתכן שיש צורך לבדוק את השינויים שלך.</value>
+    <comment>B-050 - Conflict detected message</comment>
+  </data>
+  <data name="Offline_FormQueued" xml:space="preserve">
+    <value>השינויים שלך נשמרו מקומית ויסונכרנו כשתהיה מחובר.</value>
+    <comment>B-050 - Form queued message</comment>
+  </data>
+  <data name="Offline_RetryLater" xml:space="preserve">
+    <value>לא ניתן לסנכרן. ננסה שוב כשהחיבור יהיה יציב.</value>
+    <comment>B-050 - Retry later message</comment>
+  </data>
+  <data name="Offline_TimeoutSuggestOffline" xml:space="preserve">
+    <value>הבקשה נכשלה בגלל זמן קצוב. ייתכן שאתה במצב לא מקוון או שיש לך חיבור איטי.</value>
+    <comment>B-050 - Timeout suggests offline message</comment>
+  </data>
+  <data name="Offline_QueueCleared" xml:space="preserve">
+    <value>תור הפעולות הלא מקוונות נוקה</value>
+    <comment>B-050 - Queue cleared message</comment>
+  </data>
+  <data name="Offline_ViewQueue" xml:space="preserve">
+    <value>הצג ממתינים</value>
+    <comment>B-050 - View queue button text</comment>
+  </data>
+  <data name="Offline_Retry" xml:space="preserve">
+    <value>נסה שוב</value>
+    <comment>B-050 - Retry button text</comment>
   </data>
 </root>

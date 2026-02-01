@@ -55,6 +55,8 @@
     }
     @* Lucide Icons - MIT licensed SVG icon library (local copy for air-gapped environments) *@
     <script src="~/lib/lucide/lucide.min.js" asp-append-version="true"></script>
+    @* B-007: Calendar skeleton loading handler *@
+    <script src="~/js/calendar-skeleton.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Styles", required: false)
     @* B-034: Anti-forgery token for AJAX requests - must load before other scripts *@
     @if (User?.Identity?.IsAuthenticated ?? false)
@@ -93,6 +95,8 @@
     @await Html.PartialAsync("_LocalizationScript")
     @* B-001-EXT: Reduced Motion Utility - Must load before animation scripts *@
     <script defer src="~/js/reduced-motion.js" asp-append-version="true"></script>
+    @* B-052: Toast Notification System - Must load before site.js for showToast compatibility *@
+    <script defer src="~/js/toast-notifications.js" asp-append-version="true"></script>
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
     <script defer src="~/js/site.js"></script>
     @* Localization API - Load on all pages for attribute localization and JavaScript string access *@
@@ -117,19 +121,27 @@
     }
     @* Modal Focus Management (B-013) - Accessibility focus trap and keyboard handling *@
     <script defer src="~/js/modal-focus.js" asp-append-version="true"></script>
+    @* Keyboard Navigation (B-037) - Comprehensive keyboard accessibility *@
+    <script defer src="~/js/keyboard-nav.js" asp-append-version="true"></script>
     @* Mobile Navigation (B-011) - Hamburger menu with focus trap *@
     <script defer src="~/js/mobile-nav.js" asp-append-version="true"></script>
     @* Form Validation Enhancement (B-008) - Accessible error states and field highlighting *@
     <script defer src="~/js/form-validation.js" asp-append-version="true"></script>
     @* API Client with Rate Limit Handling (B-027) - Automatic retry with backoff *@
     <script defer src="~/js/api-client.js" asp-append-version="true"></script>
+    @* B-050: Offline/Flaky Network Handling - Form queue and offline banner *@
+    <script defer src="~/js/offline-handler.js" asp-append-version="true"></script>
     @* Client Telemetry (B-019, B-020, B-021) - Local observability for air-gapped environments *@
     <script defer src="~/js/telemetry.js" asp-append-version="true"></script>
+    @* Error Boundary (B-051) - Graceful error handling with fallback UI *@
+    <script defer src="~/js/error-boundary.js" asp-append-version="true"></script>
     @* Code Splitting Utilities (B-030) - Lazy loading for reduced initial payload *@
     <script defer src="~/js/lazy-loader.js" asp-append-version="true"></script>
     <script defer src="~/js/modal-loader.js" asp-append-version="true"></script>
     @* A-008: Widget Collapse Persistence - Remember widget expanded/collapsed state *@
     <script defer src="~/js/widget-persistence.js" asp-append-version="true"></script>
+    @* B-006: Calendar Print Button - Adds print functionality to calendar pages *@
+    <script defer src="~/js/calendar-print.js" asp-append-version="true"></script>
     @* A-002: Sidebar Collapse State Persistence - Apply BEFORE first paint to prevent flash *@
     <script>
     (function() {
@@ -218,7 +230,7 @@
 
                     // Show visual warning banner
                     var warning = document.createElement('div');
-                    warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:white;padding:12px;text-align:center;z-index:9999;font-family:system-ui;font-size:14px';
+                    warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:var(--danger);color:var(--danger-text);padding:12px;text-align:center;z-index:9999;font-family:system-ui;font-size:14px';
                     warning.textContent = '⚠️ CSS Loading Issue - Press Ctrl+F5 to refresh. If issue persists, run UNBLOCK_FILES.bat';
                     document.body.insertBefore(warning, document.body.firstChild);
                 } else {
@@ -230,8 +242,11 @@
     </script>
 </head>
 <body>
+    @* A-013: Skip link for keyboard navigation (WCAG 2.4.1) *@
+    <a href="#main-content" class="skip-link">@(isHebrew ? "דלג לתוכן הראשי" : "Skip to main content")</a>
+
     @* B-015: Brand Loading Animation - Shows during initial page load *@
-    <div class="page-loader" id="pageLoader" role="status" aria-label="Loading page">
+    <div class="page-loader" id="pageLoader" role="status" loc-aria-label="Aria_LoadingPage">
         <div class="page-loader__brand">
             <div class="page-loader__logo">
                 <img src="~/images/shifty-logo.svg" alt="" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
@@ -568,7 +583,7 @@
             @* View As Manager Warning *@
             @if (isViewingAsManager && viewAsCompanyName != null)
             {
-                <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid #d97706;">
+                <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid var(--warning-hover);">
                     ⚠️ Viewing as Manager of <strong>@viewAsCompanyName</strong> —
                     <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-left: 1rem;">Exit View Mode</a>
                 </div>
@@ -588,7 +603,7 @@
             }
 
             @* Main Content *@
-            <main class="app-content">
+            <main class="app-content" id="main-content" tabindex="-1">
                 @RenderBody()
             </main>
         </div>
@@ -600,7 +615,7 @@
         <div class="command-palette-content">
             <div class="command-palette-search">
                 <span class="command-palette-icon">🔍</span>
-                <input type="text" id="commandPaletteInput" loc-placeholder="CommandPaletteSearch" autocomplete="off" />
+                <input type="text" id="commandPaletteInput" loc-placeholder="CommandPaletteSearch" autocomplete="off" loc-aria-label="Aria_SearchCommands" />
                 <span class="command-palette-hint">Ctrl+K</span>
             </div>
             <div id="commandPaletteResults" class="command-palette-results">
