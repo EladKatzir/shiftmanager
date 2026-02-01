@@ -1,0 +1,72 @@
+@model ShiftManager.ViewComponents.CalendarSkeletonModel
+
+@* Table View Skeleton (B-007) *@
+<div class="skeleton-calendar-header">
+    <div class="skeleton-header-title calendar-skeleton-shimmer"></div>
+    <div class="skeleton-header-nav">
+        <div class="skeleton-nav-btn skeleton-nav-btn--icon calendar-skeleton-shimmer"></div>
+        <div class="skeleton-nav-btn calendar-skeleton-shimmer"></div>
+        <div class="skeleton-nav-btn skeleton-nav-btn--icon calendar-skeleton-shimmer"></div>
+    </div>
+</div>
+
+<div class="skeleton-calendar-metrics">
+    @for (var m = 0; m < 4; m++)
+    {
+        <div class="skeleton-metric-item">
+            <div class="skeleton-metric-icon calendar-skeleton-shimmer"></div>
+            <div class="skeleton-metric-value calendar-skeleton-shimmer"></div>
+            <div class="skeleton-metric-label calendar-skeleton-shimmer"></div>
+        </div>
+    }
+</div>
+
+<div class="skeleton-view-switcher">
+    <div class="skeleton-view-btn calendar-skeleton-shimmer"></div>
+    <div class="skeleton-view-btn calendar-skeleton-shimmer"></div>
+    <div class="skeleton-view-btn calendar-skeleton-shimmer"></div>
+</div>
+
+<div class="skeleton-table-container">
+    <table class="skeleton-table">
+        <thead class="skeleton-table-header">
+            <tr>
+                <th class="skeleton-table-cell skeleton-table-cell--header">
+                    <div class="skeleton-shift-name calendar-skeleton-shimmer"></div>
+                </th>
+                @for (var d = 0; d < Model.TableDateColumns; d++)
+                {
+                    <th class="skeleton-table-header-cell">
+                        <div class="skeleton-header-day calendar-skeleton-shimmer"></div>
+                        <div class="skeleton-header-date calendar-skeleton-shimmer"></div>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (var r = 0; r < Model.TableRows; r++)
+            {
+                <tr class="skeleton-table-row">
+                    <td class="skeleton-table-cell skeleton-table-cell--shift">
+                        <div class="skeleton-shift-name calendar-skeleton-shimmer"></div>
+                        <div class="skeleton-shift-time calendar-skeleton-shimmer"></div>
+                    </td>
+                    @for (var c = 0; c < Model.TableDateColumns; c++)
+                    {
+                        <td class="skeleton-table-cell">
+                            <div class="skeleton-assignment-slots">
+                                @{
+                                    var slotsInCell = ((r + c) % 3) + 1;
+                                }
+                                @for (var s = 0; s < Math.Min(slotsInCell, 2); s++)
+                                {
+                                    <div class="skeleton-assignment-slot calendar-skeleton-shimmer"></div>
+                                }
+                            </div>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

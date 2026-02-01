@@ -1,0 +1,68 @@
+@model ShiftManager.ViewComponents.CalendarSkeletonModel
+
+@* Day View Skeleton (B-007) *@
+<div class="skeleton-calendar-header">
+    <div class="skeleton-header-title calendar-skeleton-shimmer"></div>
+    <div class="skeleton-header-nav">
+        <div class="skeleton-nav-btn skeleton-nav-btn--icon calendar-skeleton-shimmer"></div>
+        <div class="skeleton-nav-btn calendar-skeleton-shimmer"></div>
+        <div class="skeleton-nav-btn skeleton-nav-btn--icon calendar-skeleton-shimmer"></div>
+    </div>
+</div>
+
+<div class="skeleton-calendar-metrics">
+    @for (var m = 0; m < 4; m++)
+    {
+        <div class="skeleton-metric-item">
+            <div class="skeleton-metric-icon calendar-skeleton-shimmer"></div>
+            <div class="skeleton-metric-value calendar-skeleton-shimmer"></div>
+            <div class="skeleton-metric-label calendar-skeleton-shimmer"></div>
+        </div>
+    }
+</div>
+
+<div class="skeleton-view-switcher">
+    <div class="skeleton-view-btn calendar-skeleton-shimmer"></div>
+    <div class="skeleton-view-btn calendar-skeleton-shimmer"></div>
+    <div class="skeleton-view-btn calendar-skeleton-shimmer"></div>
+</div>
+
+<div class="skeleton-quick-actions">
+    <div class="skeleton-quick-action-label calendar-skeleton-shimmer"></div>
+    <div class="skeleton-quick-action-btn calendar-skeleton-shimmer"></div>
+    <div class="skeleton-quick-action-btn calendar-skeleton-shimmer"></div>
+</div>
+
+<div class="skeleton-day-container">
+    @for (var i = 0; i < Model.ItemCount; i++)
+    {
+        <div class="skeleton-day-item">
+            <div class="skeleton-day-item-main">
+                <div class="skeleton-day-item-header">
+                    <div class="skeleton-item-icon calendar-skeleton-shimmer"></div>
+                    <div class="skeleton-item-title calendar-skeleton-shimmer"></div>
+                </div>
+                <div class="skeleton-day-item-details">
+                    <div class="skeleton-detail-row">
+                        <div class="skeleton-detail-label calendar-skeleton-shimmer"></div>
+                        <div class="skeleton-detail-value calendar-skeleton-shimmer"></div>
+                    </div>
+                    <div class="skeleton-detail-row">
+                        <div class="skeleton-detail-label calendar-skeleton-shimmer"></div>
+                        <div class="skeleton-detail-value calendar-skeleton-shimmer"></div>
+                    </div>
+                    @if (i % 2 == 0)
+                    {
+                        <div class="skeleton-detail-row">
+                            <div class="skeleton-detail-label calendar-skeleton-shimmer"></div>
+                            <div class="skeleton-detail-value calendar-skeleton-shimmer"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="skeleton-day-item-actions">
+                <div class="skeleton-action-btn calendar-skeleton-shimmer"></div>
+            </div>
+        </div>
+    }
+</div>

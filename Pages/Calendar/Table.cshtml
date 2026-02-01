@@ -112,8 +112,8 @@
 }
 
 .assignment-slot {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: var(--primary-contrast);
     padding: 0.5rem 0.75rem;
     border-radius: 0.5rem;
     font-size: 0.875rem;
@@ -156,8 +156,8 @@
 
 .add-assignment-btn {
     background: transparent;
-    border: 2px dashed #007bff;
-    color: #007bff;
+    border: 2px dashed var(--primary);
+    color: var(--primary);
     padding: 0.75rem;
     border-radius: 0.5rem;
     cursor: pointer;
@@ -167,8 +167,8 @@
 }
 
 .add-assignment-btn:hover {
-    background: #007bff;
-    color: white;
+    background: var(--primary);
+    color: var(--primary-contrast);
     border-style: solid;
 }
 
@@ -243,7 +243,7 @@
 }
 
 .action-menu-item.danger:hover {
-    background-color: #fee;
+    background-color: var(--danger-soft);
     color: var(--danger);
 }
 
@@ -286,34 +286,34 @@
 
 /* Busy user indicators with color coding */
 .employee-option.busy-vacation {
-    background-color: #cce5ff !important;
-    color: #004085 !important;
-    border-left: 4px solid #007bff;
+    background-color: var(--info-soft);
+    color: var(--info);
+    border-left: 4px solid var(--info);
 }
 
 .employee-option.busy-shift {
-    background-color: #f8d7da !important;
-    color: #721c24 !important;
-    border-left: 4px solid #dc3545;
+    background-color: var(--danger-soft);
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
 }
 
 .employee-option.busy-chore {
-    background-color: #fff3cd !important;
-    color: #856404 !important;
-    border-left: 4px solid #ffc107;
+    background-color: var(--warning-soft);
+    color: var(--warning);
+    border-left: 4px solid var(--warning);
 }
 
 /* Hover states for busy indicators (slightly darker) */
 .employee-option.busy-vacation:hover {
-    background-color: #b3d7ff !important;
+    background-color: color-mix(in srgb, var(--info-soft) 80%, var(--info));
 }
 
 .employee-option.busy-shift:hover {
-    background-color: #f5c6cb !important;
+    background-color: color-mix(in srgb, var(--danger-soft) 80%, var(--danger));
 }
 
 .employee-option.busy-chore:hover {
-    background-color: #ffe69c !important;
+    background-color: color-mix(in srgb, var(--warning-soft) 80%, var(--warning));
 }
 
 .nav-buttons {
@@ -351,7 +351,7 @@
 
 .nav-buttons .btn-primary {
     background: var(--primary);
-    color: white !important;
+    color: var(--primary-contrast);
     border: none;
 }
 
@@ -446,15 +446,15 @@
 }
 
 .add-shift-row-btn:hover {
-    background: #0056b3;
+    background: var(--primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
 
 .shift-edit-btn {
     background: transparent;
-    border: 1px solid #ddd;
-    color: #666;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     cursor: pointer;
@@ -496,8 +496,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    background: #f97316;
-    color: white;
+    background: var(--warning);
+    color: var(--warning-text);
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
     font-size: 0.625rem;
@@ -509,21 +509,21 @@
 }
 
 .ovr-badge:hover {
-    background: #ea580c;
+    background: var(--warning-hover);
 }
 
 .assignment-cell.detached {
-    background-color: rgba(249, 115, 22, 0.05);
-    border-left: 3px solid #f97316;
+    background-color: rgba(var(--warning-rgb), 0.05);
+    border-left: 3px solid var(--warning);
 }
 
 .assignment-cell.detached:hover {
-    background-color: rgba(249, 115, 22, 0.1);
+    background-color: rgba(var(--warning-rgb), 0.1);
 }
 
 .reset-program-btn {
-    background: #10b981;
-    color: white;
+    background: var(--success);
+    color: var(--success-text);
     padding: 0.375rem 0.75rem;
     border-radius: 0.25rem;
     cursor: pointer;
@@ -539,7 +539,7 @@
 }
 
 .reset-program-btn:hover {
-    background: #059669;
+    background: var(--success-hover);
     transform: translateY(-1px);
     box-shadow: 0 3px 6px rgba(0,0,0,0.15);
 }
@@ -807,18 +807,18 @@
 }
 
 .roster-status-chip.vacation {
-    background: #cce5ff;
-    color: #004085;
+    background: var(--info-soft);
+    color: var(--info);
 }
 
 .roster-status-chip.shift {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 .roster-status-chip.chore {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--warning-soft);
+    color: var(--warning);
 }
 
 .roster-toggle-btn {
@@ -883,27 +883,27 @@
 }
 
 .radar-toggle-btn.active {
-    background: #10b981;
-    color: white;
-    border-color: #10b981;
+    background: var(--success);
+    color: var(--success-text);
+    border-color: var(--success);
 }
 
 /* Radar Mode conflict highlights */
 .assignment-cell.underfilled {
-    background: #FEF3C7 !important;
+    background: var(--warning-soft);
 }
 
 .assignment-cell.overfilled {
-    background: #FEE2E2 !important;
-    border: 2px solid #ef4444 !important;
+    background: var(--danger-soft);
+    border: 2px solid var(--danger);
 }
 
 .radar-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    background: #fbbf24;
-    color: #78350f;
+    background: var(--warning);
+    color: var(--warning-text);
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
     font-size: 0.625rem;
@@ -913,8 +913,8 @@
 }
 
 .radar-badge.error {
-    background: #ef4444;
-    color: white;
+    background: var(--danger);
+    color: var(--danger-text);
 }
 
 /* ============= Fill Handle ============= */
@@ -1052,28 +1052,28 @@
 }
 
 .drop-zone-active {
-    background: rgba(59, 130, 246, 0.1);
-    border: 2px dashed #3b82f6;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 2px dashed var(--primary);
     transition: all 0.2s;
 }
 
 .drag-over {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: #2563eb;
+    background: rgba(var(--primary-rgb), 0.2);
+    border-color: var(--primary-hover);
 }
 
 .fill-source {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-    background: rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.5);
+    background: rgba(var(--primary-rgb), 0.1);
 }
 
 .fill-target {
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
-    background: rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--success-rgb), 0.5);
+    background: rgba(var(--success-rgb), 0.1);
 }
 
 .fill-available {
-    border: 2px dashed rgba(156, 163, 175, 0.5);
+    border: 2px dashed rgba(var(--text-rgb), 0.3);
 }
 
 /* ============= Fill Options Modal ============= */
@@ -1152,7 +1152,7 @@
 
 .fill-option:hover {
     border-color: var(--primary);
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(var(--primary-rgb), 0.05);
 }
 
 .fill-option input[type="radio"] {
@@ -1191,13 +1191,13 @@
 }
 
 .radar-underfilled {
-    background: rgba(251, 191, 36, 0.15) !important;
-    border-left: 4px solid #f59e0b;
+    background: rgba(var(--warning-rgb), 0.15);
+    border-left: 4px solid var(--warning);
 }
 
 .radar-overfilled {
-    background: rgba(239, 68, 68, 0.15) !important;
-    border-left: 4px solid #ef4444;
+    background: rgba(var(--danger-rgb), 0.15);
+    border-left: 4px solid var(--danger);
 }
 
 .conflict-badge {
@@ -1213,11 +1213,11 @@
 }
 
 .conflict-badge.badge-warning {
-    background: #f59e0b;
+    background: var(--warning);
 }
 
 .conflict-badge.badge-danger {
-    background: #ef4444;
+    background: var(--danger);
 }
 
 .conflict-tooltip {
@@ -1284,7 +1284,196 @@
         opacity: 0.5;
     }
 }
+
+/* ========================================
+   A-004: RESPONSIVE TABLE VIEW
+   ======================================== */
+
+/* Tablet breakpoint */
+@@media (max-width: 768px) {
+    .nav-buttons {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .nav-buttons span {
+        width: 100%;
+        text-align: center;
+        order: -1;
+    }
+
+    .nav-buttons .btn-secondary,
+    .nav-buttons .btn {
+        flex: 1;
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .view-mode-toggle {
+        width: 100%;
+    }
+
+    .view-mode-btn {
+        flex: 1;
+        text-align: center;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-shift-row-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Table horizontal scroll container */
+    .table-view-container {
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+
+    /* Roster dock adjustments */
+    .roster-dock {
+        width: 280px;
+    }
+
+    .roster-toggle-btn,
+    .radar-toggle-btn {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .roster-toggle-btn {
+        top: 70px;
+        right: 10px;
+    }
+
+    .radar-toggle-btn {
+        top: 120px;
+        right: 10px;
+    }
+}
+
+/* Mobile breakpoint */
+@@media (max-width: 480px) {
+    .nav-buttons {
+        padding: 0.75rem;
+    }
+
+    .nav-buttons .btn-secondary,
+    .nav-buttons .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .view-mode-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .add-shift-row-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    /* Table cells compact */
+    .shift-table th,
+    .shift-table td {
+        padding: 0.5rem;
+        min-width: 100px;
+        font-size: 0.75rem;
+    }
+
+    .assignment-slot {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+        min-height: 44px;
+    }
+
+    .adjust-headcount-btn,
+    .shift-delete-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+
+    .amount-picker {
+        margin: 1.5rem 0;
+    }
+
+    .amount-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Roster dock full width on very small screens */
+    .roster-dock {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* Very small mobile (360px) */
+@@media (max-width: 360px) {
+    .shift-table th,
+    .shift-table td {
+        min-width: 80px;
+        padding: 0.375rem;
+    }
+
+    .shift-table.dense th,
+    .shift-table.dense td {
+        min-width: 60px;
+        padding: 0.25rem;
+    }
+
+    .assignment-slot {
+        padding: 0.25rem 0.375rem;
+    }
+
+    .roster-dock {
+        width: 100%;
+    }
+}
+
+/* Touch device enhancements */
+@@media (pointer: coarse) {
+    .assignment-slot,
+    .add-assignment-btn,
+    .adjust-headcount-btn,
+    .shift-delete-btn,
+    .shift-edit-btn,
+    .view-mode-btn,
+    .nav-buttons .btn,
+    .nav-buttons .btn-secondary {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .employee-option {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .action-menu-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+}
 </style>
+
+@* B-007: Calendar Skeleton Loading Container *@
+<div class="calendar-skeleton-container" data-calendar-skeleton-container>
+    @await Component.InvokeAsync("CalendarSkeleton", new { viewType = "table" })
+    <div data-calendar-content class="calendar-content">
 
 <h2><loc key="ShiftAssignmentTable" /></h2>
 
@@ -1326,10 +1515,10 @@
 
 @if (!Model.ShiftTypes.Any())
 {
-    <div class="alert alert-warning" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem; background: #fff3cd; border: 1px solid #ffc107;">
+    <div class="alert alert--warning" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem;">
         <strong>⚠️ No shift types configured.</strong>
         <p style="margin: 0.5rem 0 0 0;">
-            <a href="/Admin/ShiftTypes" style="color: #856404;">Configure shift types</a> to start scheduling.
+            <a href="/Admin/ShiftTypes">Configure shift types</a> to start scheduling.
         </p>
     </div>
 }
@@ -1365,7 +1554,7 @@
                         <div class="shift-row-header">
                             <div class="shift-metadata" id="metadata-@shiftType.Id">
                                 <strong>@(shiftType.Key.StartsWith("CUSTOM_") ? shiftType.Name : Localizer[$"ShiftType_{shiftType.Key}"].Value)</strong>
-                                <small style="color: #666;">@shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")</small>
+                                <small style="color: var(--text-muted);">@shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")</small>
                             </div>
                             <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
                                 <input type="text"
@@ -1455,12 +1644,12 @@
                                     <div class="shift-actions-row">
                                         @if (isDetached)
                                         {
-                                            <span class="ovr-badge" title="This shift was manually modified and detached from its Program">
-                                                OVR
+                                            <span class="ovr-badge" loc-title="Title_ShiftModified">
+                                                <loc key="Status_OVR">OVR</loc>
                                             </span>
                                             @if (originalProgramId.HasValue)
                                             {
-                                                <button class="reset-program-btn" onclick="resetToProgram(@instanceId, event)" title="Reset to Program defaults">
+                                                <button class="reset-program-btn" onclick="resetToProgram(@instanceId, event)" loc-title="Title_ResetToProgram">
                                                     🔄 Reset
                                                 </button>
                                             }
@@ -1489,7 +1678,7 @@
                                      data-source-date="@date.ToString("yyyy-MM-dd")"
                                      data-shift-type="@shiftType.Id"
                                      onmousedown="startFillDrag(event, this)"
-                                     title="Drag to copy across days">
+                                     loc-title="Title_DragToCopy">
                                 </div>
                             }
 
@@ -1520,26 +1709,26 @@
 <!-- Add Shift Row Modal -->
 <div class="modal-overlay" id="addShiftRowModal">
     <div class="modal-content">
-        <div class="modal-header">Add Custom Shift Row</div>
+        <div class="modal-header"><loc key="Modal_AddCustomShiftRow">Add Custom Shift Row</loc></div>
         <div style="display: flex; flex-direction: column; gap: 1rem; margin: 1rem 0;">
             <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Shift Name</label>
-                <input type="text" id="newShiftName" placeholder="e.g., Evening Shift" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;" />
+                <label for="newShiftName" style="display: block; margin-bottom: 0.5rem; font-weight: 600;"><loc key="Label_ShiftName">Shift Name</loc></label>
+                <input type="text" id="newShiftName" loc-placeholder="Placeholder_EveningShift" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem;" />
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Start Time</label>
-                    <input type="time" id="newShiftStart" value="09:00" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;" />
+                    <label for="newShiftStart" style="display: block; margin-bottom: 0.5rem; font-weight: 600;"><loc key="Label_StartTime">Start Time</loc></label>
+                    <input type="time" id="newShiftStart" value="09:00" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem;" />
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">End Time</label>
-                    <input type="time" id="newShiftEnd" value="17:00" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;" />
+                    <label for="newShiftEnd" style="display: block; margin-bottom: 0.5rem; font-weight: 600;"><loc key="Label_EndTime">End Time</loc></label>
+                    <input type="time" id="newShiftEnd" value="17:00" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem;" />
                 </div>
             </div>
         </div>
         <div class="modal-actions">
-            <button class="modal-btn modal-btn-secondary" onclick="closeAddShiftRowModal()">Cancel</button>
-            <button class="modal-btn modal-btn-primary" onclick="createCustomShiftRow()">Create Shift Row</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeAddShiftRowModal()"><loc key="Button_Cancel">Cancel</loc></button>
+            <button class="modal-btn modal-btn-primary" onclick="createCustomShiftRow()"><loc key="Button_CreateShiftRow">Create Shift Row</loc></button>
         </div>
     </div>
 </div>
@@ -1579,7 +1768,7 @@
     <div class="fill-options-content">
         <div class="fill-options-header">
             <h3>📋 Copy Shift Across Days</h3>
-            <button onclick="closeFillOptions()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">×</button>
+            <button onclick="closeFillOptions()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
         </div>
 
         <div class="fill-preview-info">
@@ -2236,7 +2425,42 @@ let focusedCell = null;
 // Initialize keyboard navigation
 document.addEventListener('DOMContentLoaded', function() {
     initializeKeyboardNavigation();
+    initializeMenuKeyboardNav();
 });
+
+// B-037: Initialize keyboard navigation for action menus
+function initializeMenuKeyboardNav() {
+    // Context menu keyboard navigation
+    const contextMenu = document.getElementById('slotContextMenu');
+    if (contextMenu && window.KeyboardNav) {
+        window.KeyboardNav.initMenu({
+            menu: contextMenu,
+            itemSelector: '.action-menu-item:not([style*="display: none"])',
+            onClose: function() {
+                contextMenu.classList.remove('show');
+                // Return focus to the slot that opened the menu
+                if (currentSlot) {
+                    currentSlot.focus();
+                }
+            }
+        });
+    }
+
+    // Employee dropdown keyboard navigation
+    const employeeDropdown = document.getElementById('employeeDropdown');
+    if (employeeDropdown && window.KeyboardNav) {
+        window.KeyboardNav.initMenu({
+            menu: employeeDropdown,
+            itemSelector: '.employee-option',
+            onClose: function() {
+                employeeDropdown.classList.remove('show');
+                if (currentSlot) {
+                    currentSlot.focus();
+                }
+            }
+        });
+    }
+}
 
 function initializeKeyboardNavigation() {
     const cells = document.querySelectorAll('.assignment-cell');
@@ -2510,19 +2734,19 @@ async function detachFromProgram(instanceId, reason) {
         <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">
             👥 Roster
         </h3>
-        <button class="close-roster-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">
+        <button class="close-roster-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">
             ×
         </button>
     </div>
 
     <div class="roster-dock-search">
-        <input type="text" id="rosterSearch" placeholder="Search employees..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.375rem; font-size: 0.875rem;">
+        <input type="text" id="rosterSearch" loc-placeholder="Placeholder_SearchEmployees" loc-aria-label="Aria_SearchEmployees" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.375rem; font-size: 0.875rem;">
     </div>
 
     <div class="roster-dock-content">
         <div id="rosterEmployeeList">
             <!-- Employee items will be dynamically populated -->
-            <div style="padding: 2rem; text-align: center; color: #9ca3af;">
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
                 <p>Loading employees...</p>
             </div>
         </div>
@@ -2530,12 +2754,12 @@ async function detachFromProgram(instanceId, reason) {
 </div>
 
 <!-- Roster Dock Toggle Button (Fixed Position) -->
-<button id="rosterDockToggle" class="roster-toggle-btn" title="Open Roster Dock">
+<button id="rosterDockToggle" class="roster-toggle-btn" loc-title="Title_OpenRosterDock">
     ☰ Roster
 </button>
 
 <!-- Radar Mode Toggle Button (Fixed Position) -->
-<button id="radarToggle" class="radar-toggle-btn" onclick="toggleRadarMode()" title="Toggle Radar Mode - Highlight understaffed and overstaffed shifts">
+<button id="radarToggle" class="radar-toggle-btn" onclick="toggleRadarMode()" loc-title="Title_ToggleRadarMode">
     📡 Radar
 </button>
 
@@ -2546,4 +2770,13 @@ async function detachFromProgram(instanceId, reason) {
     <script src="~/js/roster-dock.js" asp-append-version="true"></script>
     <script src="~/js/calendar-radar.js" asp-append-version="true"></script>
     <script src="~/js/calendar-fill-handle.js" asp-append-version="true"></script>
+    <script>
+        // B-007: Signal calendar content is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarContent = document.querySelector('[data-calendar-content]');
+            if (calendarContent && window.CalendarSkeleton) {
+                window.CalendarSkeleton.signalReady(calendarContent);
+            }
+        });
+    </script>
 }
