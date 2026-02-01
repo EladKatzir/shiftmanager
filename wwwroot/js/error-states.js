@@ -14,7 +14,7 @@
     // Configuration
     const CONFIG = {
         toastDuration: 5000,          // Default toast auto-dismiss in ms
-        toastMaxVisible: 5,           // Maximum toasts visible at once
+        toastMaxVisible: 1,           // B-052: Only 1 toast visible at a time (queue others)
         networkCheckInterval: 30000,  // Check network every 30 seconds when offline
         networkCheckEndpoint: '/api/health' // Endpoint to check connectivity
     };
@@ -44,7 +44,13 @@
             concurrencyConflictTitle: 'Edit Conflict',
             concurrencyReload: 'Reload',
             concurrencyOverwrite: 'Overwrite',
-            concurrencyCancel: 'Cancel'
+            concurrencyCancel: 'Cancel',
+            // B-017: Timeout and partial load messages
+            timeout: 'Loading is taking longer than expected. Please try again.',
+            timeoutTitle: 'Loading Slow',
+            partialLoad: 'Some data could not be loaded.',
+            partialLoadTitle: 'Partial Load',
+            partialLoadDetails: '{successCount} of {totalCount} items loaded successfully.'
         },
         'he-IL': {
             networkError: 'לא ניתן להתחבר. אנא בדוק את החיבור שלך.',
@@ -69,7 +75,13 @@
             concurrencyConflictTitle: 'התנגשות עריכה',
             concurrencyReload: 'טען מחדש',
             concurrencyOverwrite: 'דרוס',
-            concurrencyCancel: 'ביטול'
+            concurrencyCancel: 'ביטול',
+            // B-017: Timeout and partial load messages
+            timeout: 'הטעינה לוקחת יותר זמן מהצפוי. אנא נסה שוב.',
+            timeoutTitle: 'טעינה איטית',
+            partialLoad: 'חלק מהנתונים לא נטענו.',
+            partialLoadTitle: 'טעינה חלקית',
+            partialLoadDetails: '{successCount} מתוך {totalCount} פריטים נטענו בהצלחה.'
         }
     };
 
@@ -593,9 +605,9 @@
      */
     function handleConcurrencyConflict(event) {
         const { entityType, entityId } = event.detail;
-        
+
         console.warn(`[ErrorStates] Concurrency conflict for ${entityType}${entityId ? ` (ID: ${entityId})` : ''}`);
-        
+
         showConcurrencyConflictDialog({
             entityType: entityType,
             onReload: () => window.location.reload(),
@@ -604,10 +616,128 @@
     }
 
     /**
+     * Handle timeout event from API client (B-017)
+     * Shows a warning toast with retry option
+     */
+    function handleTimeoutEvent(event) {
+        const { url, retryable } = event.detail;
+
+        console.warn(`[ErrorStates] Request timeout for: ${url}`);
+
+        showToast({
+            level: 'warning',
+            title: getMessage('timeoutTitle'),
+            message: getMessage('timeout'),
+            showClose: true,
+            duration: 0, // Don't auto-dismiss for timeout errors
+            onRetry: retryable ? () => {
+                // Dispatch a custom event that the calling code can listen for
+                window.dispatchEvent(new CustomEvent('api:retryrequest', {
+                    detail: { url }
+                }));
+            } : undefined
+        });
+    }
+
+    /**
+     * Handle access denied event from API client (B-017)
+     * Shows an error toast without retry option (403 should not be retried)
+     */
+    function handleAccessDeniedEvent(event) {
+        const { url } = event.detail;
+
+        console.warn(`[ErrorStates] Access denied for: ${url}`);
+
+        showToast({
+            level: 'error',
+            title: getMessage('accessDeniedTitle'),
+            message: getMessage('accessDenied'),
+            showClose: true,
+            duration: 8000
+            // No retry - 403 errors should not be retried
+        });
+    }
+
+    /**
+     * Handle server error event from API client (B-017)
+     * Shows an error toast with retry option
+     */
+    function handleServerErrorEvent(event) {
+        const { url, status, retryable } = event.detail;
+
+        console.error(`[ErrorStates] Server error (${status}) for: ${url}`);
+
+        showToast({
+            level: 'error',
+            title: getMessage('serverErrorTitle'),
+            message: getMessage('serverError'),
+            showClose: true,
+            duration: 0, // Don't auto-dismiss for server errors
+            onRetry: retryable ? () => {
+                window.dispatchEvent(new CustomEvent('api:retryrequest', {
+                    detail: { url }
+                }));
+            } : undefined
+        });
+    }
+
+    /**
+     * Handle network error event from API client (B-017)
+     * Shows an error toast with retry option
+     */
+    function handleNetworkErrorEvent(event) {
+        const { url, retryable } = event.detail;
+
+        console.error(`[ErrorStates] Network error for: ${url}`);
+
+        showToast({
+            level: 'error',
+            title: getMessage('networkErrorTitle'),
+            message: getMessage('networkError'),
+            showClose: true,
+            duration: 0, // Don't auto-dismiss for network errors
+            onRetry: retryable ? () => {
+                window.dispatchEvent(new CustomEvent('api:retryrequest', {
+                    detail: { url }
+                }));
+            } : undefined
+        });
+    }
+
+    /**
+     * Handle partial load event from API client (B-017)
+     * Shows a warning banner indicating partial success
+     */
+    function handlePartialLoadEvent(event) {
+        const { successCount, failedCount, totalCount, failedRequests } = event.detail;
+
+        console.warn(`[ErrorStates] Partial load: ${successCount}/${totalCount} succeeded, ${failedCount} failed`);
+
+        const detailMessage = getMessage('partialLoadDetails', {
+            successCount: successCount,
+            totalCount: totalCount
+        });
+
+        showToast({
+            level: 'warning',
+            title: getMessage('partialLoadTitle'),
+            message: `${getMessage('partialLoad')} ${detailMessage}`,
+            showClose: true,
+            duration: 10000, // Stay visible longer for partial load warnings
+            onRetry: () => {
+                // Dispatch event to retry failed requests
+                window.dispatchEvent(new CustomEvent('api:retryfailed', {
+                    detail: { failedRequests }
+                }));
+            }
+        });
+    }
+
+    /**
      * Initialize error states system
      */
     function initialize() {
-        console.log('Initializing error states system');
+        console.log('Initializing error states system (B-004 + B-017)');
 
         // Set up network status listeners
         window.addEventListener('online', handleOnline);
@@ -615,6 +745,13 @@
 
         // Set up concurrency conflict listener
         window.addEventListener('api:concurrencyconflict', handleConcurrencyConflict);
+
+        // Set up B-017 error event listeners
+        window.addEventListener('api:timeout', handleTimeoutEvent);
+        window.addEventListener('api:accessdenied', handleAccessDeniedEvent);
+        window.addEventListener('api:servererror', handleServerErrorEvent);
+        window.addEventListener('api:networkerror', handleNetworkErrorEvent);
+        window.addEventListener('api:partialload', handlePartialLoadEvent);
 
         // Check initial state
         if (!navigator.onLine) {

@@ -22,10 +22,10 @@
             @if (Model.LoggedOut)
             {
                 <div style="color: var(--success); font-size: 3rem; margin-bottom: 1rem;">✓</div>
-                <h2 style="color: var(--text); margin-bottom: 1rem;">Successfully Logged Out</h2>
+                <h2 style="color: var(--text); margin-bottom: 1rem;"><loc key="Auth_SuccessfullyLoggedOut">Successfully Logged Out</loc></h2>
                 <p style="color: var(--muted); margin-bottom: 2rem;">You have been securely logged out of the Shift Manager.</p>
                 <p style="color: var(--muted); font-size: 0.9rem;">Redirecting to login page in 3 seconds...</p>
-                <a href="/Auth/Login" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 500;">Go to Login Now</a>
+                <a href="/Auth/Login" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 500;"><loc key="Button_GoToLoginNow">Go to Login Now</loc></a>
             }
             else
             {

@@ -121,19 +121,19 @@
 
                 @if (busyStatus != null && busyStatus.HasVacation)
                 {
-                    <option value="@u.Id" style="background-color: #cce5ff; color: #004085;">🏖️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                    <option value="@u.Id" style="background-color: var(--info-soft); color: var(--info);">🏖️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
                 }
                 else if (busyStatus != null && busyStatus.HasShift)
                 {
-                    <option value="@u.Id" style="background-color: #f8d7da; color: #721c24;">⚠️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                    <option value="@u.Id" style="background-color: var(--danger-soft); color: var(--danger);">⚠️ @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
                 }
                 else if (busyStatus != null && busyStatus.HasChore)
                 {
-                    <option value="@u.Id" style="background-color: #fff3cd; color: #856404;">📋 @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
+                    <option value="@u.Id" style="background-color: var(--warning-soft); color: var(--warning);">📋 @u.DisplayName (@u.Email) - Busy: @busyStatus.DisplayText</option>
                 }
                 else if (Model.UsersOnTimeOff.Contains(u.Id))
                 {
-                    <option value="@u.Id" style="background-color: #cce5ff; color: #004085;">🏖️ @u.DisplayName (@u.Email) - @Localizer["OnTimeOff"]</option>
+                    <option value="@u.Id" style="background-color: var(--info-soft); color: var(--info);">🏖️ @u.DisplayName (@u.Email) - @Localizer["OnTimeOff"]</option>
                 }
                 else
                 {

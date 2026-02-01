@@ -365,6 +365,104 @@ background: linear-gradient(135deg,
 
 ## Component Patterns
 
+### Notification Patterns (B-052)
+
+ShiftManager uses three distinct notification patterns, each optimized for different use cases:
+
+#### Pattern Decision Matrix
+
+| Situation | Pattern | Auto-dismiss | User Action |
+|-----------|---------|--------------|-------------|
+| Success confirmation | **Toast** | Yes (5s) | None needed |
+| Network/API error | **Alert Banner** | No | Retry/Dismiss |
+| Form validation error | **Inline Error** | No | Fix fields |
+| Session expiring | **Modal** | No | Confirm/Cancel |
+| Delete confirmation | **Modal** | No | Confirm/Cancel |
+
+#### 1. Toast Notifications (Transient Success)
+
+**Use for:** Brief confirmations that don't require user action
+- "Shift saved successfully"
+- "Profile updated"
+- "Email sent"
+- "Changes saved"
+
+**Behavior:**
+- Auto-dismiss after 5 seconds
+- Only 1 toast visible at a time (others queued)
+- Position: top-right (left in RTL)
+- Progress bar shows remaining time
+
+**JavaScript API:**
+```javascript
+// Show success toast (most common)
+Toast.success('Shift saved successfully');
+Toast.success('Changes saved', 'Success');
+
+// Show info toast
+Toast.info('Processing your request...');
+
+// Generic method
+Toast.show('Message', 'success');
+```
+
+**CSS Classes:**
+```css
+.toast-container      /* Fixed position container */
+.toast                /* Base toast element */
+.toast--success       /* Green left border */
+.toast--info          /* Blue left border */
+.toast--warning       /* Yellow left border */
+.toast--danger        /* Red left border */
+.toast--with-progress /* Shows auto-dismiss progress bar */
+.toast--dismissing    /* Exit animation */
+```
+
+#### 2. Alert/Banner (Persistent Warnings/Errors)
+
+**Use for:** Issues that persist until resolved or explicitly dismissed
+- Network connectivity lost
+- Session expiring warning
+- Server-side errors
+- System maintenance notices
+
+**Implementation:** Use the `ErrorBanner` ViewComponent:
+```html
+<vc:error-banner
+    level="error"
+    message-key="Error_NetworkError"
+    dismissible="true"
+    show-retry="true" />
+```
+
+**Levels:**
+- `error` - Red, critical issues
+- `warning` - Yellow, attention needed
+- `info` - Blue, informational
+
+**CSS Classes:**
+```css
+.error-banner              /* Base banner */
+.error-banner--error       /* Red styling */
+.error-banner--warning     /* Yellow styling */
+.error-banner--info        /* Blue styling */
+```
+
+#### 3. Modal (Blocking Actions)
+
+**Use for:** Actions that require explicit user decision
+- Delete confirmations
+- Unsaved changes warning
+- Session timeout with countdown
+- Concurrency conflict resolution
+
+**When NOT to use a modal:**
+- Simple success confirmations (use Toast)
+- Non-blocking errors (use Alert Banner)
+- Form validation errors (use inline errors)
+
+---
+
 ### Calendar Header Pattern
 
 **Structure:**

@@ -12,7 +12,7 @@
 
     @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
     {
-        <div class="card" style="background:var(--success-bg, #d4edda); color:var(--success-text, #155724); border-color:var(--success, #c3e6cb); padding:1rem; margin-bottom:1rem">
+        <div class="card" style="background:var(--success-soft); color:var(--success); border-color:var(--success); padding:1rem; margin-bottom:1rem">
             <strong>✓ @Localizer["RequestSubmitted"]</strong>
             <p style="margin:.5rem 0 0 0">@Model.PendingRequestMessage</p>
         </div>
@@ -70,7 +70,7 @@
                     <option value="@((int)UserRole.Trainee)"><loc key="Trainee" /></option>
                     <option value="@((int)UserRole.Assigner)"><loc key="Assigner" /></option>
                 </select>
-                <small style="color:var(--muted, #6c757d)"><loc key="RequestNeedsApproval" /></small>
+                <small style="color:var(--text-muted)"><loc key="RequestNeedsApproval" /></small>
             </label>
 
             <button class="btn btn-primary" type="submit"><loc key="SubmitRequest" /></button>

@@ -281,77 +281,77 @@
         }
 
         .status-badge.vacation {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-color: #90caf9;
+            background: var(--info-soft);
+            color: var(--info);
+            border-color: var(--info);
         }
 
         [data-theme="dark"] .status-badge.vacation {
-            background: #0d47a1;
-            color: #90caf9;
-            border-color: #1565c0;
+            background: var(--info-soft);
+            color: var(--info);
+            border-color: var(--info);
         }
 
         .status-badge.vacation-partial {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-color: #90caf9;
+            background: var(--info-soft);
+            color: var(--info);
+            border-color: var(--info);
             font-size: 0.75rem;
         }
 
         [data-theme="dark"] .status-badge.vacation-partial {
-            background: #0d47a1;
-            color: #90caf9;
-            border-color: #1565c0;
+            background: var(--info-soft);
+            color: var(--info);
+            border-color: var(--info);
         }
 
         .status-badge.after-partial {
-            background: #fff3e0;
-            color: #e65100;
-            border-color: #ffb74d;
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-color: var(--warning);
             font-size: 0.75rem;
         }
 
         [data-theme="dark"] .status-badge.after-partial {
-            background: #e65100;
-            color: #ffb74d;
-            border-color: #ff9800;
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-color: var(--warning);
         }
 
         .status-badge.onduty {
-            background: #ffebee;
-            color: #c62828;
-            border-color: #ef9a9a;
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: var(--danger);
         }
 
         [data-theme="dark"] .status-badge.onduty {
-            background: #b71c1c;
-            color: #ef9a9a;
-            border-color: #c62828;
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: var(--danger);
         }
 
         .status-badge.shift {
-            background: #f3e5f5;
-            color: #6a1b9a;
-            border-color: #ce93d8;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-color: var(--accent);
         }
 
         [data-theme="dark"] .status-badge.shift {
-            background: #4a148c;
-            color: #ce93d8;
-            border-color: #6a1b9a;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-color: var(--accent);
         }
 
         .status-badge.chore {
-            background: #fff9c4;
-            color: #f57f17;
-            border-color: #fff176;
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-color: var(--warning);
         }
 
         [data-theme="dark"] .status-badge.chore {
-            background: #f57f17;
-            color: #fff176;
-            border-color: #fbc02d;
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-color: var(--warning);
         }
 
         .status-time {
@@ -889,7 +889,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2><loc key="MyCalendars" /></h2>
-            <button class="modal-close" onclick="closeModal('modalSwitchCalendar')">&times;</button>
+            <button class="modal-close" onclick="closeModal('modalSwitchCalendar')" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <div class="modal-body">
             <div id="calendarListContainer">
@@ -906,7 +906,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="calendarFormTitle"><loc key="NewCalendar" /></h2>
-            <button class="modal-close" onclick="closeModal('modalCalendarForm')">&times;</button>
+            <button class="modal-close" onclick="closeModal('modalCalendarForm')" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -927,7 +927,7 @@
     <div class="modal-content large">
         <div class="modal-header">
             <h2><loc key="ConfigureTeamMembers" /></h2>
-            <button class="modal-close" onclick="closeModal('modalConfigureMembers')">&times;</button>
+            <button class="modal-close" onclick="closeModal('modalConfigureMembers')" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <div class="modal-body">
             <div id="memberSelectorContainer">
@@ -948,7 +948,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2><loc key="DeleteCalendar" /></h2>
-            <button class="modal-close" onclick="closeModal('modalDeleteConfirm')">&times;</button>
+            <button class="modal-close" onclick="closeModal('modalDeleteConfirm')" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <div class="modal-body">
             <p><loc key="ConfirmDeleteCalendar" /> "<span id="deleteCalendarName"></span>"?</p>

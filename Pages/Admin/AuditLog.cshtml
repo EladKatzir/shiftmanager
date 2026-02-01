@@ -52,7 +52,7 @@
         .entity-cell { display: flex; flex-direction: column; gap: 0.125rem; }
         .entity-type { font-weight: 500; }
         .entity-id { font-size: 0.85rem; color: var(--text-muted); }
-        .action-badge { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .action-badge { background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%); color: var(--primary-contrast); padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
         .ip-code { background: var(--surface-soft); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.85rem; font-family: 'Courier New', monospace; }
         .details-content { padding: 1rem; }
         .details-section { margin-bottom: 1rem; }
@@ -85,16 +85,16 @@
     <form method="get">
         <div class="filter-grid">
             <div>
-                <label class="form-label"><loc key="StartDate" /></label>
-                <input type="date" name="StartDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-input" />
+                <label class="form-label" for="auditStartDate"><loc key="StartDate" /></label>
+                <input type="date" name="StartDate" id="auditStartDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-input" />
             </div>
             <div>
-                <label class="form-label"><loc key="EndDate" /></label>
-                <input type="date" name="EndDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-input" />
+                <label class="form-label" for="auditEndDate"><loc key="EndDate" /></label>
+                <input type="date" name="EndDate" id="auditEndDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-input" />
             </div>
             <div>
-                <label class="form-label"><loc key="User" /></label>
-                <select name="UserId" class="form-input">
+                <label class="form-label" for="auditUserId"><loc key="User" /></label>
+                <select name="UserId" id="auditUserId" class="form-input">
                     <option value=""><loc key="AllUsers" /></option>
                     @foreach (var user in Model.Users)
                     {
@@ -103,8 +103,8 @@
                 </select>
             </div>
             <div>
-                <label class="form-label"><loc key="Action" /></label>
-                <select name="Action" class="form-input">
+                <label class="form-label" for="auditAction"><loc key="Action" /></label>
+                <select name="Action" id="auditAction" class="form-input">
                     <option value=""><loc key="AllActions" /></option>
                     @foreach (var action in Model.Actions)
                     {
@@ -113,8 +113,8 @@
                 </select>
             </div>
             <div>
-                <label class="form-label"><loc key="EntityType" /></label>
-                <select name="EntityType" class="form-input">
+                <label class="form-label" for="auditEntityType"><loc key="EntityType" /></label>
+                <select name="EntityType" id="auditEntityType" class="form-input">
                     <option value=""><loc key="AllEntityTypes" /></option>
                     @foreach (var entityType in Model.EntityTypes)
                     {
@@ -123,8 +123,8 @@
                 </select>
             </div>
             <div>
-                <label class="form-label"><loc key="Search" /></label>
-                <input type="text" name="SearchTerm" value="@Model.SearchTerm" placeholder="@Localizer["SearchPlaceholder"]" class="form-input" />
+                <label class="form-label" for="auditSearchTerm"><loc key="Search" /></label>
+                <input type="text" name="SearchTerm" id="auditSearchTerm" value="@Model.SearchTerm" placeholder="@Localizer["SearchPlaceholder"]" class="form-input" />
             </div>
         </div>
         <div class="filter-actions">

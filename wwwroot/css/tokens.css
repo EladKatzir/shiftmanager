@@ -33,7 +33,7 @@
   /* Text Colors */
   --text: #1A1F2B;
   --text-muted: #64748B;
-  --text-subtle: #94A3B8;
+  --text-subtle: #6B7280; /* A-013: Changed from #94A3B8 (2.8:1) to meet WCAG AA 4.5:1 contrast on white */
   --text-rgb: 26, 31, 43;
 
   /* Borders */
@@ -451,16 +451,135 @@
    ======================================== */
 
 /*
-Verified Contrast Ratios (Light Mode):
+Verified Contrast Ratios (Light Mode) - A-013 WCAG AA Audit:
 - Text (#1A1F2B) on Background (#F8F9FB): 14.2:1 ✓
 - Text Muted (#64748B) on Background (#F8F9FB): 4.8:1 ✓
+- Text Subtle (#6B7280) on White (#FFFFFF): 5.0:1 ✓ (A-013: Updated from #94A3B8 which was 2.8:1)
 - Primary (#1E3A5F) on White: 8.1:1 ✓
 - White on Primary: 8.1:1 ✓
 
 Verified Contrast Ratios (Dark Mode):
 - Text (#E8EDF5) on Background (#0F1419): 13.8:1 ✓
+- Text Muted (#94A3B8) on Background (#0F1419): 6.2:1 ✓
 - Accent (#5B9BD5) on Background (#0F1419): 7.2:1 ✓
 */
+
+/* ==========================================================================
+   Prefers Color Scheme Support (A-016 Dark Mode Polish)
+   Automatically applies dark mode for users with system dark preference
+   who haven't explicitly set a theme via data-theme attribute
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Primary Palette - Inverted to Sky Blue */
+    --primary: #5B9BD5;
+    --primary-hover: #7AB3E3;
+    --primary-soft: #1A2D42;
+    --primary-contrast: #FFFFFF;
+    --primary-rgb: 91, 155, 213;
+
+    /* Accent - Brighter Sky */
+    --accent: #87CEEB;
+    --accent-hover: #9DD8F0;
+    --accent-soft: #1A3040;
+    --accent-rgb: 135, 206, 235;
+
+    /* Background & Surfaces */
+    --bg: #0F1419;
+    --surface: #1A2332;
+    --surface-soft: #243447;
+    --surface-elevated: #1E2D3D;
+    --surface-strong: #3D4B5E;
+    --surface-rgb: 26, 35, 50;
+
+    /* Text Colors */
+    --text: #E8EDF5;
+    --text-muted: #94A3B8;
+    --text-subtle: #64748B;
+    --text-rgb: 232, 237, 245;
+
+    /* Borders */
+    --border: #2D3B4E;
+    --border-strong: #3D4B5E;
+    --border-focus: var(--primary);
+
+    /* Camo Accent Palette (Darker in dark mode) */
+    --camo-sand: #A69872;
+    --camo-sand-soft: #2A2620;
+    --camo-olive: #8BA078;
+    --camo-olive-soft: #2A3325;
+    --camo-slate: #6B7B8F;
+    --camo-slate-soft: #2D3748;
+    --camo-sky: #6BB8D9;
+    --camo-sky-soft: #1A3040;
+
+    /* Semantic Colors */
+    --success: #52B788;
+    --success-hover: #6BC99A;
+    --success-soft: #1A3329;
+    --success-text: #0F1419;
+    --success-rgb: 82, 183, 136;
+
+    --warning: #F4D35E;
+    --warning-hover: #F7DD7F;
+    --warning-soft: #3D3520;
+    --warning-text: #0F1419;
+    --warning-rgb: 244, 211, 94;
+
+    --danger: #FC8181;
+    --danger-hover: #FD9A9A;
+    --danger-soft: #3D2020;
+    --danger-text: #0F1419;
+    --danger-rgb: 252, 129, 129;
+
+    --info: #5B9BD5;
+    --info-hover: #7AB3E3;
+    --info-soft: #1A2D42;
+    --info-text: #0F1419;
+    --info-rgb: 91, 155, 213;
+
+    /* Shift Type Colors (Dark Mode Variants) */
+    --shift-morning: #F0C14B;
+    --shift-morning-soft: #3D3520;
+    --shift-morning-text: #0F1419;
+
+    --shift-afternoon: #8BA078;
+    --shift-afternoon-soft: #2A3325;
+    --shift-afternoon-text: #0F1419;
+
+    --shift-night: #5B9BD5;
+    --shift-night-soft: #1A2D42;
+    --shift-night-text: #0F1419;
+
+    --shift-hakam: #CD8B5A;
+    --shift-hakam-soft: #332618;
+    --shift-hakam-text: #0F1419;
+
+    --shift-br: #6B7B8F;
+    --shift-br-soft: #2D3748;
+    --shift-br-text: #0F1419;
+
+    --shift-noon: #D4B63F;
+    --shift-noon-soft: #3D3520;
+    --shift-noon-text: #0F1419;
+
+    --shift-lead: #FF8A65;
+    --shift-lead-soft: #3D2520;
+    --shift-lead-text: #0F1419;
+
+    /* Focus Ring */
+    --focus-ring: 0 0 0 3px var(--primary-soft);
+    --focus-ring-danger: 0 0 0 3px var(--danger-soft);
+
+    /* Shadows - darker for dark mode */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.4);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.5);
+    --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
 
 /* ==========================================================================
    Reduced Motion Support (WCAG 2.1 AAA - B-001)

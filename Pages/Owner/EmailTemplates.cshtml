@@ -32,7 +32,7 @@
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             @Model.Error
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" loc-aria-label="Aria_CloseButton"></button>
         </div>
     }
 
@@ -40,7 +40,7 @@
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" loc-aria-label="Aria_CloseButton"></button>
         </div>
     }
 
@@ -126,7 +126,7 @@
             <form method="post" asp-page-handler="SaveTemplate">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalLabel"><loc key="EmailTemplates_EditTemplate" /></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" loc-aria-label="Aria_CloseButton"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" asp-for="EditingTemplateType" id="editingTemplateType" />
@@ -222,10 +222,10 @@
         }
 
         .template-card {
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            background: white;
+            background: var(--surface);
             transition: box-shadow 0.3s;
         }
 
@@ -234,7 +234,7 @@
         }
 
         .template-enabled {
-            border-color: #198754;
+            border-color: var(--success);
             border-width: 2px;
         }
 
@@ -244,7 +244,7 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid var(--border);
         }
 
         .template-header h3 {
@@ -262,7 +262,7 @@
         }
 
         .preview-text {
-            background: #f8f9fa;
+            background: var(--surface-soft);
             padding: 10px;
             border-radius: 4px;
             margin-top: 5px;
@@ -283,12 +283,12 @@
         }
 
         .variable-tag {
-            background: #e7f1ff;
-            color: #0d6efd;
+            background: var(--info-soft);
+            color: var(--info);
             padding: 2px 8px;
             border-radius: 4px;
             font-size: 0.85rem;
-            border: 1px solid #b6d4fe;
+            border: 1px solid var(--accent-soft);
         }
 
         .template-actions {
@@ -297,8 +297,8 @@
         }
 
         .info-box {
-            background: #e7f1ff;
-            border: 1px solid #b6d4fe;
+            background: var(--info-soft);
+            border: 1px solid var(--accent-soft);
             border-radius: 8px;
             padding: 15px;
             display: flex;

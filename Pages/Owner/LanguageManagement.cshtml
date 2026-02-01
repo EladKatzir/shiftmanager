@@ -118,8 +118,10 @@
                 @* Search/Filter Form *@
                 <form method="get" class="search-form">
                     <div class="search-row">
-                        <input type="text" name="searchTerm" placeholder="Search by key or value..." value="@Model.SearchTerm" class="search-input" />
-                        <select name="filterCulture" class="filter-select">
+                        <label for="langSearchTerm" class="sr-only">Search by key or value</label>
+                        <input type="text" name="searchTerm" id="langSearchTerm" placeholder="Search by key or value..." value="@Model.SearchTerm" class="search-input" />
+                        <label for="langFilterCulture" class="sr-only">Filter by language</label>
+                        <select name="filterCulture" id="langFilterCulture" class="filter-select">
                             <option value="">All Languages</option>
                             <option value="en-US" selected="@(Model.FilterCulture == "en-US")">English</option>
                             <option value="he-IL" selected="@(Model.FilterCulture == "he-IL")">Hebrew</option>
@@ -265,7 +267,7 @@
     }
 
     .edit-mode-card {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
         color: white;
         border: none;
     }
@@ -373,9 +375,9 @@
     }
 
     .btn-primary:hover {
-        background: #2563eb;
+        background: var(--primary-hover);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        box-shadow: var(--shadow-primary);
     }
 
     .btn-secondary {
@@ -390,16 +392,16 @@
     }
 
     .btn-warning {
-        background: #f59e0b;
-        color: white;
+        background: var(--warning);
+        color: var(--warning-text);
         font-size: 1rem;
         padding: 0.75rem 1.5rem;
     }
 
     .btn-warning:hover {
-        background: #d97706;
+        background: var(--warning-hover);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        box-shadow: var(--shadow-warning);
     }
 
     .btn-delete {
@@ -426,15 +428,15 @@
     }
 
     .alert-success {
-        background: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        color: #059669;
+        background: var(--success-soft);
+        border: 1px solid var(--success);
+        color: var(--success);
     }
 
     .alert-error {
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: #dc2626;
+        background: var(--danger-soft);
+        border: 1px solid var(--danger);
+        color: var(--danger);
     }
 
     .search-form {

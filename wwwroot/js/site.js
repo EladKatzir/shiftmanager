@@ -174,15 +174,36 @@ async function adjustStaffing(url, payload, onOk, onError) {
   }
 }
 
-// Toast notification system (B-001-EXT: Respects prefers-reduced-motion)
+// Toast notification system (B-052: Delegate to standardized Toast API)
+// This function is kept for backward compatibility with existing code
+// The actual implementation is in toast-notifications.js which provides:
+// - Queue management (max 1 visible at a time)
+// - 5 second auto-dismiss
+// - Consistent styling via CSS components
+// - RTL support
+// - Screen reader announcements
 function showToast(message, type = 'info') {
+  // Delegate to the new Toast API if available
+  if (window.Toast) {
+    const typeMap = {
+      'success': 'success',
+      'info': 'info',
+      'warning': 'warning',
+      'error': 'error',
+      'danger': 'error'
+    };
+    const mappedType = typeMap[type] || 'success';
+    window.Toast.show(message, mappedType);
+    return;
+  }
+
+  // Fallback for edge cases where Toast API isn't loaded yet
+  console.warn('[showToast] Toast API not available, using fallback');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
 
-  // Check for reduced motion preference
   const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
-  const transitionDuration = reducedMotion ? 0 : 0.3;
 
   toast.style.cssText = `
     position: fixed;
@@ -202,15 +223,13 @@ function showToast(message, type = 'info') {
 
   document.body.appendChild(toast);
 
-  // Slide in (skip animation if reduced motion)
   if (!reducedMotion) {
     setTimeout(() => {
       toast.style.transform = 'translateX(0)';
     }, 10);
   }
 
-  // Slide out and remove
-  const displayTime = 3000;
+  const displayTime = 5000; // B-052: 5 seconds
   const animationTime = reducedMotion ? 0 : 300;
 
   setTimeout(() => {
@@ -475,12 +494,36 @@ function populateShiftTypes(types) {
     return;
   }
 
-  filteredTypes.forEach(type => {
+  filteredTypes.forEach((type, index) => {
     const option = document.createElement('div');
     option.className = 'shift-type-option';
     option.dataset.typeId = type.id;
     option.dataset.typeKey = type.key;
     option.onclick = () => selectShiftType(option);
+    // B-037: Make shift type options keyboard navigable
+    option.setAttribute('tabindex', '0');
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', 'false');
+
+    // B-037: Handle keyboard selection
+    option.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectShiftType(option);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = option.nextElementSibling;
+        if (next && next.classList.contains('shift-type-option')) {
+          next.focus();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = option.previousElementSibling;
+        if (prev && prev.classList.contains('shift-type-option')) {
+          prev.focus();
+        }
+      }
+    };
 
     const companyLabel = type.companyName && selectedCompanyId === null
       ? `<div class="shift-type-company">${type.companyName}</div>`
@@ -494,6 +537,10 @@ function populateShiftTypes(types) {
 
     grid.appendChild(option);
   });
+
+  // B-037: Set up listbox role on grid
+  grid.setAttribute('role', 'listbox');
+  grid.setAttribute('aria-label', window.AppLocalizer?.ShiftType || 'Shift Type');
 }
 
 function filterShiftTypesByCompany() {
@@ -505,10 +552,12 @@ function selectShiftType(option) {
   // Remove selection from all options
   document.querySelectorAll('.shift-type-option').forEach(opt => {
     opt.classList.remove('selected');
+    opt.setAttribute('aria-selected', 'false'); // B-037
   });
 
   // Select clicked option
   option.classList.add('selected');
+  option.setAttribute('aria-selected', 'true'); // B-037
 }
 
 function adjustStaffingCount(delta) {
@@ -597,55 +646,7 @@ async function createShift() {
   }
 }
 
-// Enhanced toast with success styling (B-001-EXT: Respects prefers-reduced-motion)
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-
-  // Check for reduced motion preference
-  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
-
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 500;
-    z-index: 10001;
-    transform: translateX(${reducedMotion ? '0' : '400px'});
-    transition: ${reducedMotion ? 'none' : 'transform 0.3s ease'};
-    max-width: 300px;
-    word-wrap: break-word;
-    ${type === 'error' ? 'background: #dc3545;' : type === 'success' ? 'background: #28a745;' : 'background: #2e7d32;'}
-  `;
-
-  document.body.appendChild(toast);
-
-  // Slide in (skip animation if reduced motion)
-  if (!reducedMotion) {
-    setTimeout(() => {
-      toast.style.transform = 'translateX(0)';
-    }, 10);
-  }
-
-  // Slide out and remove
-  const displayTime = 4000;
-  const animationTime = reducedMotion ? 0 : 300;
-
-  setTimeout(() => {
-    if (!reducedMotion) {
-      toast.style.transform = 'translateX(400px)';
-    }
-    setTimeout(() => {
-      if (document.body.contains(toast)) {
-        document.body.removeChild(toast);
-      }
-    }, animationTime);
-  }, displayTime);
-}
+// B-052: Removed duplicate showToast function - using standardized Toast API from toast-notifications.js
 
 window.adjustStaffing = adjustStaffing;
 window.openShiftModal = openShiftModal;

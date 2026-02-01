@@ -50,7 +50,7 @@
     @* Account lockout countdown timer (when account is locked) *@
     @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
     {
-        <div class="alert alert-danger" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: #fef2f2; border: 1px solid #dc2626; color: #991b1b;">
+        <div class="alert alert-danger" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger);">
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                 <span style="font-size: 1.25rem;">🔒</span>
                 <strong>@Localizer["Login_AccountLocked_Title"]</strong>
@@ -63,7 +63,7 @@
     @* Warning after 3+ failed attempts (but not locked yet) *@
     else if (Model.ShowLockoutWarning && !Model.IsAccountLocked)
     {
-        <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: #fffbeb; border: 1px solid #f59e0b; color: #92400e;">
+        <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: var(--warning-soft); border: 1px solid var(--warning); color: var(--warning);">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="font-size: 1.25rem;">⚠️</span>
                 <div>@Localizer["Login_FailedAttempts_Warning"]</div>
@@ -153,9 +153,9 @@
             @:        if (minutesRemaining <= 0) {
             @:            const retryMessage = isHebrew ? 'ניתן לנסות להתחבר שוב כעת.' : 'You may try logging in again now.';
             @:            lockoutMessageEl.textContent = retryMessage;
-            @:            lockoutMessageEl.parentElement.style.background = '#d4edda';
-            @:            lockoutMessageEl.parentElement.style.borderColor = '#28a745';
-            @:            lockoutMessageEl.parentElement.style.color = '#155724';
+            @:            lockoutMessageEl.parentElement.style.background = 'var(--success-soft)';
+            @:            lockoutMessageEl.parentElement.style.borderColor = 'var(--success)';
+            @:            lockoutMessageEl.parentElement.style.color = 'var(--success)';
             @:            return;
             @:        }
             @:        const messageTemplate = isHebrew ? 'החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.' : 'Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.';

@@ -101,12 +101,12 @@
     position: relative;
 }
 .onduty-item.hakam {
-    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+    color: var(--primary-contrast);
 }
 .onduty-item.lead {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--warning) 0%, var(--warning-hover) 100%);
+    color: var(--warning-text);
 }
 .onduty-item:hover {
     transform: translateY(-2px);
@@ -237,12 +237,12 @@
     font-weight: 600;
 }
 .type-badge.hakam {
-    background: #8b5cf6;
-    color: white;
+    background: var(--accent);
+    color: var(--primary-contrast);
 }
 .type-badge.lead {
-    background: #f59e0b;
-    color: white;
+    background: var(--warning);
+    color: var(--warning-text);
 }
 </style>
 
@@ -433,26 +433,26 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3><loc key="CreateOnDuty" /></h3>
-            <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+            <button class="modal-close" onclick="closeCreateModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <form method="post" asp-page-handler="CreateOnDuty">
             @Html.AntiForgeryToken()
             <div class="form-group">
-                <label class="form-label"><loc key="Date" /></label>
+                <label class="form-label" for="onDutyDate"><loc key="Date" /></label>
                 <input type="date" name="OnDutyDate" id="onDutyDate" class="form-input" required />
             </div>
             <div class="form-group">
-                <label class="form-label"><loc key="Assignee" /></label>
+                <label class="form-label" id="onDutyAssigneeLabel"><loc key="Assignee" /></label>
                 <input type="hidden" name="AssigneeId" id="selectedOnDutyAssigneeId" required />
                 <div class="custom-select-container">
-                    <div class="custom-select-trigger" id="onDutyAssigneeTrigger" onclick="toggleOnDutyAssigneeDropdown()">
+                    <div class="custom-select-trigger" id="onDutyAssigneeTrigger" onclick="toggleOnDutyAssigneeDropdown()" role="combobox" aria-labelledby="onDutyAssigneeLabel" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
                         <span id="selectedOnDutyAssigneeName"><loc key="SelectAssignee" /></span>
-                        <span class="dropdown-arrow">▼</span>
+                        <span class="dropdown-arrow" aria-hidden="true">▼</span>
                     </div>
-                    <div class="custom-dropdown" id="onDutyAssigneeDropdown" style="display: none;">
+                    <div class="custom-dropdown" id="onDutyAssigneeDropdown" style="display: none;" role="listbox" aria-labelledby="onDutyAssigneeLabel">
                         @foreach (var user in Model.EligibleAssignees)
                         {
-                            <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" onclick="selectOnDutyAssignee(@user.Id, '@user.DisplayName')">
+                            <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" onclick="selectOnDutyAssignee(@user.Id, '@user.DisplayName')" role="option">
                                 @user.DisplayName (@user.Email)
                             </div>
                         }
@@ -460,8 +460,8 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label"><loc key="Type" /></label>
-                <select name="OnDutyType" class="form-select" required>
+                <label class="form-label" for="onDutyType"><loc key="Type" /></label>
+                <select name="OnDutyType" id="onDutyType" class="form-select" required>
                     <option value=""><loc key="SelectType" /></option>
                     @* ✅ PHASE 18: Show default OnDuty types (from enum) *@
                     <option value="@((int)OnDutyType.Hakam)">🛡️ @Localizer["OnDutyHakam"]</option>
@@ -491,7 +491,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3><loc key="ConfirmDelete" /></h3>
-            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            <button class="modal-close" onclick="closeDeleteModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <p><loc key="AreYouSureDeleteOnDuty" /> "<span id="deleteOnDutyTitle"></span>"?</p>
         <form method="post" asp-page-handler="CancelOnDuty" id="deleteOnDutyForm">
@@ -510,7 +510,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3><loc key="OnDutyDetails" /></h3>
-            <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
+            <button class="modal-close" onclick="closeDetailsModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <div>
             <p><strong>@Localizer["Type"]:</strong> <span id="detailType"></span></p>
@@ -533,7 +533,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3>ℹ️ <loc key="Information" /></h3>
-            <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+            <button class="modal-close" onclick="closeInfoModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <p><loc key="NoOnDutyContactManager" /></p>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
@@ -694,14 +694,66 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdown.style.display = 'none';
         }
     });
+
+    // B-037: Initialize keyboard navigation for assignee dropdown
+    const assigneeTrigger = document.getElementById('onDutyAssigneeTrigger');
+    const assigneeDropdown = document.getElementById('onDutyAssigneeDropdown');
+    if (assigneeTrigger && assigneeDropdown && window.KeyboardNav) {
+        window.KeyboardNav.initDropdown({
+            trigger: assigneeTrigger,
+            dropdown: assigneeDropdown,
+            optionSelector: '.dropdown-option',
+            onSelect: function(option) {
+                const id = option.getAttribute('data-id');
+                const name = option.getAttribute('data-name');
+                selectOnDutyAssignee(id, name);
+            },
+            onClose: function() {
+                assigneeDropdown.style.display = 'none';
+            }
+        });
+    }
+
+    // B-037: Initialize keyboard navigation for calendar grid
+    const calendarGrid = document.querySelector('.calendar-grid');
+    if (calendarGrid && window.KeyboardNav) {
+        window.KeyboardNav.initCalendar({
+            grid: calendarGrid,
+            cellSelector: '.calendar-day:not(.empty)',
+            onSelect: function(cell) {
+                const date = cell.getAttribute('data-date');
+                if (date) {
+                    const hasDuty = cell.querySelector('.duty-entry');
+                    handleCellClick(date, !!hasDuty);
+                }
+            }
+        });
+    }
 });
 
-// Close modals on backdrop click
+// Close modals on backdrop click and ESC key (B-037)
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             modal.classList.remove('active');
         }
     });
+
+    // Register with global ESC handler
+    if (window.KeyboardNav) {
+        window.KeyboardNav.registerOverlay(modal, function() {
+            modal.classList.remove('active');
+        }, 10);
+    }
+});
+
+// B-037: Global ESC handler for modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            activeModal.classList.remove('active');
+        }
+    }
 });
 </script>
