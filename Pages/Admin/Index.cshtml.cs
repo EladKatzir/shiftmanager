@@ -28,7 +28,7 @@ public class IndexModel : PageModel
         _directorService = directorService;
     }
 
-    // Role checks for conditional rendering
+    // Role checks for stats calculation
     public bool IsOwner => User.IsInRole("Owner");
     public bool IsDirector => User.IsInRole("Director");
     public bool IsManager => User.IsInRole("Manager");

@@ -7,11 +7,11 @@ namespace ShiftManager.Services;
 
 public interface IChoreService
 {
-    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false);
+    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null);
     Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null);
     Task<(bool Success, string Message, Chore? Chore)> ReplaceShiftWithChoreAsync(int shiftAssignmentId, string title, string? notes = null);
     Task<(bool Success, string Message)> ReplaceChoreWithShiftAsync(int choreId, int shiftInstanceId);
-    Task<List<Chore>> GetChoresAsync(DateOnly? startDate = null, DateOnly? endDate = null, int? userId = null, bool? includeCancel = false);
+    Task<List<Chore>> GetChoresAsync(DateOnly? startDate = null, DateOnly? endDate = null, int? userId = null, bool? includeCancel = false, int? moleculeId = null);
     Task<Chore?> GetChoreByIdAsync(int choreId);
     Task<bool> HasActiveChoreOnDateAsync(int userId, DateOnly date);
     Task<bool> HasShiftOnDateAsync(int userId, DateOnly date);
@@ -245,7 +245,8 @@ public class ChoreService : IChoreService
         DateOnly date,
         string title,
         string? notes = null,
-        bool forceAssign = false)
+        bool forceAssign = false,
+        int? moleculeId = null)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -309,10 +310,19 @@ public class ChoreService : IChoreService
                 return (false, "Chore title is required.", null);
             }
 
+            // Get MoleculeId from the assignee's company if not explicitly provided
+            var effectiveMoleculeId = moleculeId;
+            if (!effectiveMoleculeId.HasValue)
+            {
+                var company = await _db.Companies.FindAsync(assignee.CompanyId);
+                effectiveMoleculeId = company?.MoleculeId;
+            }
+
             // Create the chore
             var chore = new Chore
             {
                 CompanyId = assignee.CompanyId, // Use assignee's company ID for multi-tenant support
+                MoleculeId = effectiveMoleculeId, // Nullable - will be null for legacy/unassigned molecules
                 UserId = assigneeId,
                 Date = date,
                 Title = title.Trim(),
@@ -591,12 +601,14 @@ public class ChoreService : IChoreService
         DateOnly? startDate = null,
         DateOnly? endDate = null,
         int? userId = null,
-        bool? includeCanceled = false)
+        bool? includeCanceled = false,
+        int? moleculeId = null)
     {
         var query = _db.Chores
             .Include(c => c.User)
             .Include(c => c.Creator)
             .Include(c => c.Canceler)
+            .Include(c => c.Molecule)
             .AsQueryable();
 
         if (startDate.HasValue)
@@ -612,6 +624,11 @@ public class ChoreService : IChoreService
         if (userId.HasValue)
         {
             query = query.Where(c => c.UserId == userId.Value);
+        }
+
+        if (moleculeId.HasValue)
+        {
+            query = query.Where(c => c.MoleculeId == moleculeId.Value);
         }
 
         if (includeCanceled == false)

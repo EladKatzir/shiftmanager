@@ -27,7 +27,7 @@
 <div class="home-dashboard">
 
     @* Common Cards (All Users) *@
-    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="dashboard-grid" style="margin-bottom: 2rem;">
         @* Next Shift Card *@
         <div class="card">
             <div class="card-header">
@@ -133,7 +133,7 @@
     {
         <div class="dashboard-section" style="margin-bottom: 2rem;">
             <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="MyRequests" /></h3>
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="card card--metric card--status-warning">
                     <div class="card-body" style="text-align: center;">
                         <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingRequestsCount</div>
@@ -164,7 +164,7 @@
     {
         <div class="dashboard-section" style="margin-bottom: 2rem;">
             <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="StaffingOverview" /></h3>
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="card card--metric card--status-warning">
                     <div class="card-body" style="text-align: center;">
                         <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.UnassignedShiftsCount</div>
@@ -185,7 +185,7 @@
 
         <div class="dashboard-section" style="margin-bottom: 2rem;">
             <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="Approvals" /></h3>
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="card card--metric">
                     <div class="card-body" style="text-align: center;">
                         <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingTimeOffCount</div>
@@ -210,7 +210,7 @@
     {
         <div class="dashboard-section" style="margin-bottom: 2rem;">
             <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="StaffingOverview" /></h3>
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="card card--metric card--status-warning">
                     <div class="card-body" style="text-align: center;">
                         <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.UnassignedShiftsCount</div>
@@ -231,7 +231,7 @@
 
         <div class="dashboard-section" style="margin-bottom: 2rem;">
             <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="Approvals" /></h3>
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="card card--metric">
                     <div class="card-body" style="text-align: center;">
                         <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.PendingTimeOffCount</div>
@@ -252,7 +252,7 @@
 
         <div class="dashboard-section" style="margin-bottom: 2rem;">
             <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="CompaniesOverview" /></h3>
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="card card--metric">
                     <div class="card-body" style="text-align: center;">
                         <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.TotalCompaniesCount</div>
@@ -280,7 +280,7 @@
             @* Analytics Summary Section *@
             <div class="dashboard-section" style="margin-bottom: 2rem;">
                 <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="AnalyticsSummary" /></h3>
-                <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="dashboard-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                     <div class="card card--metric">
                         <div class="card-body" style="text-align: center;">
                             <div class="text-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">@Model.TotalUsersCount</div>

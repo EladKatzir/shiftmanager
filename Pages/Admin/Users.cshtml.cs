@@ -49,7 +49,7 @@ public class UsersModel : LocalizedPageModel
         _notificationService = notificationService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, string? JobTypeName, string? DepartmentName, int GrantsCount);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? DepartmentName, int GrantsCount);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, DateTime CreatedAt, JoinRequestStatus Status);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName);
@@ -130,6 +130,10 @@ public class UsersModel : LocalizedPageModel
     // Owner cross-company user management
     [BindProperty]
     public int? NewUserCompanyId { get; set; }
+
+    // Job type for new user
+    [BindProperty]
+    public int? NewJobTypeId { get; set; }
 
     public List<Company> Companies { get; set; } = new();
 
@@ -391,6 +395,7 @@ public class UsersModel : LocalizedPageModel
                         u.IsActive,
                         u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
                         u.LockoutEnd,
+                        u.JobTypeId,
                         u.JobType?.DisplayName,
                         u.Department?.DisplayName,
                         userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0
@@ -417,6 +422,7 @@ public class UsersModel : LocalizedPageModel
                         u.IsActive,
                         u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
                         u.LockoutEnd,
+                        u.JobTypeId,
                         u.JobType?.DisplayName,
                         u.Department?.DisplayName,
                         userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0
@@ -500,6 +506,19 @@ public class UsersModel : LocalizedPageModel
             targetCompanyId = _companyContext.GetCompanyIdOrThrow();
         }
 
+        // Validate job type if specified
+        if (NewJobTypeId.HasValue)
+        {
+            var jobType = await _db.JobTypes
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(jt => jt.Id == NewJobTypeId.Value && jt.IsActive);
+            if (jobType == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"];
+                return RedirectToPage();
+            }
+        }
+
         var (h, s) = PasswordHasher.CreateHash(NewPassword);
         var newUser = new AppUser
         {
@@ -509,7 +528,8 @@ public class UsersModel : LocalizedPageModel
             Role = targetRole,
             IsActive = true,
             PasswordHash = h,
-            PasswordSalt = s
+            PasswordSalt = s,
+            JobTypeId = NewJobTypeId
         };
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
@@ -728,6 +748,65 @@ public class UsersModel : LocalizedPageModel
 
             TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleUpdated"], targetRole, u.DisplayName);
         }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostJobTypeAsync(int id, int? jobTypeId)
+    {
+        // SECURITY FIX: Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
+            return RedirectToPage();
+        }
+
+        var u = await _db.Users.FindAsync(id);
+        if (u == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"];
+            return RedirectToPage();
+        }
+
+        // Check if current user has permission to modify this user
+        if (!CanModifyUser(u.Role))
+        {
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionModifyUser"], u.Role);
+            return RedirectToPage();
+        }
+
+        // Validate job type if specified
+        string? jobTypeName = null;
+        if (jobTypeId.HasValue)
+        {
+            var jobType = await _db.JobTypes
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(jt => jt.Id == jobTypeId.Value && jt.IsActive);
+            if (jobType == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"];
+                return RedirectToPage();
+            }
+            jobTypeName = jobType.DisplayName;
+        }
+
+        var oldJobTypeId = u.JobTypeId;
+        u.JobTypeId = jobTypeId;
+        await _db.SaveChangesAsync();
+
+        // Audit logging
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var currentUserId))
+        {
+            await _auditLogService.LogUserActionAsync(
+                userId: currentUserId,
+                action: "JobTypeChanged",
+                entityType: "User",
+                entityId: u.Id,
+                description: $"Changed job type for {u.DisplayName} from {oldJobTypeId} to {jobTypeId}"
+            );
+        }
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeUpdated"], u.DisplayName, jobTypeName ?? "-");
         return RedirectToPage();
     }
 

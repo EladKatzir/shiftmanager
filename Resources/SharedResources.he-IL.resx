@@ -132,6 +132,12 @@
   <data name="Logout" xml:space="preserve">
     <value>התנתקות</value>
   </data>
+  <data name="UserMenu_Profile" xml:space="preserve">
+    <value>פרופיל</value>
+  </data>
+  <data name="UserMenu_Settings" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>בית</value>
   </data>
@@ -311,6 +317,12 @@
   <data name="Edit" xml:space="preserve">
     <value>עריכה</value>
   </data>
+  <data name="EditJobType" xml:space="preserve">
+    <value>ערוך סוג עבודה</value>
+  </data>
+  <data name="EditRole" xml:space="preserve">
+    <value>ערוך תפקיד</value>
+  </data>
   <data name="Add" xml:space="preserve">
     <value>הוסף</value>
   </data>
@@ -377,8 +389,14 @@
   <data name="Hebrew" xml:space="preserve">
     <value>עברית</value>
   </data>
+  <data name="ToggleLanguage" xml:space="preserve">
+    <value>החלף שפה</value>
+  </data>
+  <data name="ToggleTheme" xml:space="preserve">
+    <value>החלף ערכת נושא</value>
+  </data>
 
-  
+
   <data name="NotificationCenter" xml:space="preserve">
     <value>מרכז התראות</value>
   </data>
@@ -1321,6 +1339,45 @@
   <data name="NoUnderstaffingIssues" xml:space="preserve">
     <value>אין בעיות תת-איוש</value>
   </data>
+  <data name="SelectPeriod" xml:space="preserve">
+    <value>בחר תקופה</value>
+  </data>
+  <data name="EmployeeHours" xml:space="preserve">
+    <value>שעות עובדים</value>
+  </data>
+  <data name="ShiftCoverage" xml:space="preserve">
+    <value>כיסוי משמרות</value>
+  </data>
+  <data name="TimeOffRate" xml:space="preserve">
+    <value>שיעור חופשות</value>
+  </data>
+  <data name="TimeOffApproval" xml:space="preserve">
+    <value>אישור חופשות</value>
+  </data>
+  <data name="SwapRate" xml:space="preserve">
+    <value>שיעור החלפות</value>
+  </data>
+  <data name="ShiftSwaps" xml:space="preserve">
+    <value>החלפות משמרות</value>
+  </data>
+  <data name="PerEmployee" xml:space="preserve">
+    <value>לעובד</value>
+  </data>
+  <data name="AvgHoursPerWeek" xml:space="preserve">
+    <value>ממוצע שעות/שבוע</value>
+  </data>
+  <data name="UnderstaffingReport" xml:space="preserve">
+    <value>דוח תת-איוש</value>
+  </data>
+  <data name="MostActiveSwappers" xml:space="preserve">
+    <value>המחליפים הפעילים ביותר</value>
+  </data>
+  <data name="SwapStatistics" xml:space="preserve">
+    <value>סטטיסטיקת החלפות</value>
+  </data>
+  <data name="TimeOffStatistics" xml:space="preserve">
+    <value>סטטיסטיקת חופשות</value>
+  </data>
   <data name="NoOverstaffingIssues" xml:space="preserve">
     <value>אין בעיות איוש-יתר</value>
   </data>
@@ -1678,8 +1735,23 @@
   <data name="ConfirmDeleteTimeOff" xml:space="preserve">
     <value>האם אתה בטוח שברצונך למחוק את החופש המאושר עבור {0}? לא ניתן לבטל פעולה זו.</value>
   </data>
+  <data name="ConfirmRoleChange" xml:space="preserve">
+    <value>לשנות תפקיד עבור {0} מ-{1} ל-{2}?</value>
+  </data>
+  <data name="SelectJobType" xml:space="preserve">
+    <value>בחר סוג עבודה</value>
+  </data>
+  <data name="Error_InvalidJobTypeSelected" xml:space="preserve">
+    <value>סוג העבודה שנבחר אינו תקף או אינו פעיל.</value>
+  </data>
+  <data name="ChangeJobType" xml:space="preserve">
+    <value>שנה סוג עבודה</value>
+  </data>
+  <data name="ConfirmJobTypeChange" xml:space="preserve">
+    <value>לשנות סוג עבודה עבור {0} ל-{1}?</value>
+  </data>
 
-  
+
   <data name="WelcomeToShiftManager" xml:space="preserve">
     <value>ברוכים הבאים למנהל משמרות</value>
   </data>
@@ -2954,6 +3026,111 @@
   <data name="Owner_SecurityAudit_Desc" xml:space="preserve">
     <value>צפייה ברישומי ביקורת אבטחה</value>
   </data>
+  <data name="Owner_JobTypes" xml:space="preserve">
+    <value>סוגי תפקידים</value>
+  </data>
+  <data name="Owner_JobTypes_Desc" xml:space="preserve">
+    <value>ניהול סוגי תפקידים ותפקידים בארגון</value>
+  </data>
+  <data name="Owner_Hierarchy" xml:space="preserve">
+    <value>היררכיה</value>
+  </data>
+  <data name="Owner_Hierarchy_Desc" xml:space="preserve">
+    <value>הגדרת מבנה ארגוני ושרשרות דיווח</value>
+  </data>
+  <data name="Owner_AreaConfig" xml:space="preserve">
+    <value>הגדרות אזור</value>
+  </data>
+  <data name="Owner_AreaConfig_Desc" xml:space="preserve">
+    <value>הגדרת שעות פעילות לחדרי כושר, חנויות ומיקומים</value>
+  </data>
+  <data name="Owner_Permissions" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="Owner_Permissions_Desc" xml:space="preserve">
+    <value>ניהול הרשאות וגישות משתמשים</value>
+  </data>
+  <data name="Owner_Section_Operations" xml:space="preserve">
+    <value>תפעול</value>
+  </data>
+  <data name="Owner_Section_Infrastructure" xml:space="preserve">
+    <value>תשתיות</value>
+  </data>
+  <data name="Owner_MasterPrograms" xml:space="preserve">
+    <value>תוכניות ראשיות</value>
+  </data>
+  <data name="Owner_MasterPrograms_Desc" xml:space="preserve">
+    <value>הגדרות תוכניות מתקדמות</value>
+  </data>
+  <data name="Permissions_TotalGrants" xml:space="preserve">
+    <value>סה״כ הרשאות</value>
+  </data>
+  <data name="Permissions_UsersWithGrants" xml:space="preserve">
+    <value>משתמשים עם הרשאות</value>
+  </data>
+  <data name="Permissions_AutoGrants" xml:space="preserve">
+    <value>הרשאות אוטומטיות</value>
+  </data>
+  <data name="Permissions_ManualGrants" xml:space="preserve">
+    <value>הרשאות ידניות</value>
+  </data>
+  <data name="Permissions_GrantTypeBreakdown" xml:space="preserve">
+    <value>פילוח לפי סוג הרשאה</value>
+  </data>
+  <data name="Permissions_RecentGrants" xml:space="preserve">
+    <value>הרשאות אחרונות</value>
+  </data>
+  <data name="ViewAllGrants" xml:space="preserve">
+    <value>צפה בכל ההרשאות</value>
+  </data>
+  <data name="ViewAllGrants_Desc" xml:space="preserve">
+    <value>דפדוף וניהול כל הרשאות המשתמשים</value>
+  </data>
+  <data name="AssignGrant_Desc" xml:space="preserve">
+    <value>הקצה הרשאה חדשה למשתמש</value>
+  </data>
+  <data name="ManageRoles_Desc" xml:space="preserve">
+    <value>הגדר תפקידים והרשאותיהם</value>
+  </data>
+  <data name="AreaConfig_RestHours" xml:space="preserve">
+    <value>שעות מנוחה ברירת מחדל</value>
+  </data>
+  <data name="AreaConfig_RestHours_Hint" xml:space="preserve">
+    <value>מינימום שעות בין משמרות (0-24)</value>
+  </data>
+  <data name="AreaConfig_WeeklyCap" xml:space="preserve">
+    <value>תקרת שעות שבועית</value>
+  </data>
+  <data name="AreaConfig_WeeklyCap_Hint" xml:space="preserve">
+    <value>מקסימום שעות בשבוע (0-168)</value>
+  </data>
+  <data name="EditAreaSettings" xml:space="preserve">
+    <value>ערוך הגדרות אזור</value>
+  </data>
+  <data name="EditSettings" xml:space="preserve">
+    <value>ערוך הגדרות</value>
+  </data>
+  <data name="Success_AreaSettingsUpdated" xml:space="preserve">
+    <value>ההגדרות עודכנו עבור {0}</value>
+  </data>
+  <data name="Error_InvalidRestHours" xml:space="preserve">
+    <value>שעות מנוחה חייבות להיות בין 0 ל-24</value>
+  </data>
+  <data name="Error_InvalidWeeklyCap" xml:space="preserve">
+    <value>תקרת שעות שבועית חייבת להיות בין 0 ל-168</value>
+  </data>
+  <data name="Error_AreaNotFound" xml:space="preserve">
+    <value>אזור לא נמצא</value>
+  </data>
+  <data name="Error_InvalidArea" xml:space="preserve">
+    <value>אזור לא תקין נבחר</value>
+  </data>
+  <data name="NoAreasFound" xml:space="preserve">
+    <value>לא נמצאו אזורים. צור אזורים בהגדרות הארגון.</value>
+  </data>
+  <data name="BottomDock_Toggle" xml:space="preserve">
+    <value>הצג/הסתר לוח כוננויות</value>
+  </data>
   <data name="Owner_Companies" xml:space="preserve">
     <value>חברות</value>
   </data>
@@ -3445,6 +3622,9 @@
   </data>
   <data name="Success_AccountUnlocked" xml:space="preserve">
     <value>חשבון נפתח עבור {0}. ניסיונות כניסה כושלים אופסו.</value>
+  </data>
+  <data name="Success_JobTypeUpdated" xml:space="preserve">
+    <value>סוג עבודה עודכן עבור {0} ל-{1}.</value>
   </data>
   <data name="Error_NoPermissionToUnlock" xml:space="preserve">
     <value>אין לך הרשאה לפתוח חשבונות למשתמשים עם תפקיד {0}.</value>
@@ -4535,7 +4715,7 @@
     <value>מרכז ניהול</value>
   </data>
   <data name="AdminHub_Subtitle" xml:space="preserve">
-    <value>מרכז ניהול והגדרות</value>
+    <value>מרכז תפעול</value>
   </data>
   <data name="CompanyScope" xml:space="preserve">
     <value>חברה והיקף</value>
@@ -4654,6 +4834,9 @@
   </data>
 
   <!-- UI Overhaul v3.0 - On-Call Widget -->
+  <data name="Widget_QuickInfo" xml:space="preserve">
+    <value>מידע מהיר</value>
+  </data>
   <data name="Widget_OnCallNow" xml:space="preserve">
     <value>בכוננות עכשיו</value>
   </data>
@@ -6337,6 +6520,90 @@
     <value>התנתקת בהצלחה</value>
     <comment>A-015 - Message for successful logout</comment>
   </data>
+  <data name="Auth_LoggedOutTitle" xml:space="preserve">
+    <value>התנתקת</value>
+  </data>
+  <data name="Auth_SecurelyLoggedOutMessage" xml:space="preserve">
+    <value>התנתקת בצורה מאובטחת ממערכת Shift Manager.</value>
+  </data>
+  <data name="Auth_RedirectingToLogin" xml:space="preserve">
+    <value>מפנה לדף הכניסה בעוד 3 שניות...</value>
+  </data>
+  <data name="Auth_GoToLoginNow" xml:space="preserve">
+    <value>עבור לכניסה עכשיו</value>
+  </data>
+  <data name="Auth_LoggingOut" xml:space="preserve">
+    <value>מתנתק...</value>
+  </data>
+  <data name="Auth_PleaseWaitLoggingOut" xml:space="preserve">
+    <value>אנא המתן בזמן שאנו מנתקים אותך בצורה מאובטחת.</value>
+  </data>
+  <data name="Auth_HeroTagline" xml:space="preserve">
+    <value>ייעל את תזמון הצוות שלך עם ניהול משמרות חכם</value>
+  </data>
+  <data name="Auth_WelcomeBack" xml:space="preserve">
+    <value>ברוך שובך</value>
+  </data>
+  <data name="Auth_SignInToContinue" xml:space="preserve">
+    <value>היכנס כדי להמשיך ל-Shift Manager</value>
+  </data>
+  <data name="Auth_OrContinueWith" xml:space="preserve">
+    <value>או המשך עם אימייל</value>
+  </data>
+  <data name="Auth_EmailPlaceholder" xml:space="preserve">
+    <value>הזן את האימייל שלך</value>
+  </data>
+  <data name="Auth_PasswordPlaceholder" xml:space="preserve">
+    <value>הזן את הסיסמה שלך</value>
+  </data>
+  <data name="Auth_NamePlaceholder" xml:space="preserve">
+    <value>הזן את שמך המלא</value>
+  </data>
+  <data name="Auth_SignupTagline" xml:space="preserve">
+    <value>הצטרף לצוות שלך והתחל לנהל משמרות בקלות</value>
+  </data>
+  <data name="Auth_SignupSubtitle" xml:space="preserve">
+    <value>בקש גישה למערכת ניהול המשמרות של הארגון שלך</value>
+  </data>
+  <data name="Auth_SignupDisabledTitle" xml:space="preserve">
+    <value>הרשמה ציבורית אינה זמינה</value>
+  </data>
+  <data name="Auth_SignupDisabledMessage" xml:space="preserve">
+    <value>אנא צור קשר עם מנהל המערכת כדי לבקש גישה למערכת.</value>
+  </data>
+  <data name="Auth_StepAccount" xml:space="preserve">
+    <value>חשבון</value>
+  </data>
+  <data name="Auth_StepOrganization" xml:space="preserve">
+    <value>ארגון</value>
+  </data>
+  <data name="Auth_StepRole" xml:space="preserve">
+    <value>תפקיד</value>
+  </data>
+  <data name="Auth_SelectMolecule" xml:space="preserve">
+    <value>בחר יחידה</value>
+  </data>
+  <data name="Auth_ChooseMolecule" xml:space="preserve">
+    <value>בחר יחידה...</value>
+  </data>
+  <data name="Auth_ChooseCompanyFirst" xml:space="preserve">
+    <value>בחר יחידה קודם</value>
+  </data>
+  <data name="Auth_SelectJobType" xml:space="preserve">
+    <value>סוג תפקיד (אופציונלי)</value>
+  </data>
+  <data name="Auth_ChooseJobTypeFirst" xml:space="preserve">
+    <value>בחר יחידה קודם</value>
+  </data>
+  <data name="Auth_NoCompaniesAvailable" xml:space="preserve">
+    <value>אין חברות זמינות ביחידה זו</value>
+  </data>
+  <data name="Auth_NoJobTypesAvailable" xml:space="preserve">
+    <value>אין סוגי תפקידים זמינים</value>
+  </data>
+  <data name="Error_LoadingData" xml:space="preserve">
+    <value>שגיאה בטעינת נתונים</value>
+  </data>
 
   <!-- A-015: Miscellaneous -->
   <data name="Misc_ConfigureShiftTypes" xml:space="preserve">
@@ -6532,6 +6799,18 @@
   <data name="EditProfile_RecentChanges" xml:space="preserve">
     <value>שינויי פרופיל אחרונים (30 יום אחרונים)</value>
     <comment>A-015 - Section header for recent changes</comment>
+  </data>
+  <data name="EditProfile_SkillsCertifications" xml:space="preserve">
+    <value>כישורים והסמכות</value>
+  </data>
+  <data name="EditingProfile" xml:space="preserve">
+    <value>עריכת פרופיל עבור</value>
+  </data>
+  <data name="SkillsHint" xml:space="preserve">
+    <value>הזן כישורים מופרדים בפסיקים</value>
+  </data>
+  <data name="CertificationsHint" xml:space="preserve">
+    <value>הזן הסמכות מופרדות בפסיקים</value>
   </data>
 
   <!-- A-015: Feature Flags -->

@@ -26,7 +26,23 @@ public class SelectCompanyModel : PageModel
         _logger = logger;
     }
 
+    /// <summary>
+    /// GET handler - allows company selection via URL (e.g., from context switcher).
+    /// </summary>
+    public async Task<IActionResult> OnGetAsync(int companyId, string? returnUrl = null)
+    {
+        return await SelectCompanyAsync(companyId, returnUrl);
+    }
+
+    /// <summary>
+    /// POST handler - allows company selection via form submission.
+    /// </summary>
     public async Task<IActionResult> OnPostAsync(int companyId, string? returnUrl = null)
+    {
+        return await SelectCompanyAsync(companyId, returnUrl);
+    }
+
+    private async Task<IActionResult> SelectCompanyAsync(int companyId, string? returnUrl)
     {
         var success = await _ownerCompanySelector.SelectCompanyAsync(companyId);
 

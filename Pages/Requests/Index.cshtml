@@ -134,6 +134,20 @@
             font-weight: 600;
         }
 
+        .tab-button:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .tab-button:focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        .tab-button:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         .tab-panel {
             display: none;
         }
@@ -391,33 +405,51 @@
     </div>
 }
 
-<!-- ✅ Phase 18: Tab Navigation -->
-<div class="tab-navigation">
-    <button class="tab-button active" data-tab="timeoff">
+<!-- ✅ Phase 18: Tab Navigation (WCAG 2.1 compliant) -->
+<div class="tab-navigation" role="tablist" aria-label="@Localizer["Requests"]">
+    <button class="tab-button active"
+            id="tab-btn-timeoff"
+            data-tab="timeoff"
+            role="tab"
+            aria-selected="true"
+            aria-controls="tab-timeoff"
+            tabindex="0">
         @Localizer["PendingTimeOffTab"]
         @if (Model.TimeOff.Any())
         {
-            <span class="count-badge" style="margin-left: 0.5rem;">@Model.TimeOff.Count</span>
+            <span class="count-badge" style="margin-left: 0.5rem;" aria-label="@Model.TimeOff.Count @Localizer["Requests"]">@Model.TimeOff.Count</span>
         }
     </button>
-    <button class="tab-button" data-tab="swaps">
+    <button class="tab-button"
+            id="tab-btn-swaps"
+            data-tab="swaps"
+            role="tab"
+            aria-selected="false"
+            aria-controls="tab-swaps"
+            tabindex="-1">
         @Localizer["PendingSwapsTab"]
         @if (Model.Swaps.Any())
         {
-            <span class="count-badge" style="margin-left: 0.5rem;">@Model.Swaps.Count</span>
+            <span class="count-badge" style="margin-left: 0.5rem;" aria-label="@Model.Swaps.Count @Localizer["Requests"]">@Model.Swaps.Count</span>
         }
     </button>
-    <button class="tab-button" data-tab="approved">
+    <button class="tab-button"
+            id="tab-btn-approved"
+            data-tab="approved"
+            role="tab"
+            aria-selected="false"
+            aria-controls="tab-approved"
+            tabindex="-1">
         @Localizer["ApprovedTimeOffTab"]
         @if (Model.ApprovedTimeOffs.Any())
         {
-            <span class="count-badge" style="margin-left: 0.5rem;">@Model.ApprovedTimeOffs.Count</span>
+            <span class="count-badge" style="margin-left: 0.5rem;" aria-label="@Model.ApprovedTimeOffs.Count @Localizer["Requests"]">@Model.ApprovedTimeOffs.Count</span>
         }
     </button>
 </div>
 
 <!-- ✅ Phase 18: Tab Panel 1 - Pending Time-Off -->
-<div class="tab-panel active" id="tab-timeoff">
+<div class="tab-panel active" id="tab-timeoff" role="tabpanel" aria-labelledby="tab-btn-timeoff" tabindex="0">
     <div class="requests-section">
         <div class="section-header">
             <h2 class="section-title">
@@ -489,7 +521,7 @@
     {
         <div class="empty-state">
             <div class="empty-state-icon">✓</div>
-            <div class="empty-state-title"><loc key="NoTimeOffRequests" /></div>
+            <div class="empty-state-title"><loc key="NoTimeOffRequestsYet" /></div>
             <div class="empty-state-text"><loc key="AllCaughtUp" /></div>
         </div>
     }
@@ -497,7 +529,7 @@
 </div>
 
 <!-- ✅ Phase 18: Tab Panel 2 - Pending Swaps -->
-<div class="tab-panel" id="tab-swaps">
+<div class="tab-panel" id="tab-swaps" role="tabpanel" aria-labelledby="tab-btn-swaps" tabindex="0">
     <div class="requests-section">
         <div class="section-header">
             <h2 class="section-title">
@@ -562,7 +594,7 @@
     {
         <div class="empty-state">
             <div class="empty-state-icon">✓</div>
-            <div class="empty-state-title"><loc key="NoSwapRequests" /></div>
+            <div class="empty-state-title"><loc key="NoSwapRequestsYet" /></div>
             <div class="empty-state-text"><loc key="AllCaughtUp" /></div>
         </div>
     }
@@ -570,7 +602,7 @@
 </div>
 
 <!-- ✅ Phase 18: Tab Panel 3 - Approved Time-Off -->
-<div class="tab-panel" id="tab-approved">
+<div class="tab-panel" id="tab-approved" role="tabpanel" aria-labelledby="tab-btn-approved" tabindex="0">
     <div class="requests-section">
         <div class="section-header">
             <h2 class="section-title">
@@ -691,32 +723,39 @@
 
 @section Scripts {
     <script>
-        // ✅ Phase 18: Tab switching with URL hash support
+        // ✅ Phase 18: Tab switching with URL hash support (WCAG 2.1 compliant)
         document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const tabPanels = document.querySelectorAll('.tab-panel');
+            const tabButtons = document.querySelectorAll('.tab-button[role="tab"]');
+            const tabPanels = document.querySelectorAll('.tab-panel[role="tabpanel"]');
+            const tabList = ['timeoff', 'swaps', 'approved'];
 
-            function showTab(tabName) {
-                // Update buttons
+            function showTab(tabName, focusTab = false) {
+                // Update buttons with ARIA attributes
                 tabButtons.forEach(btn => {
-                    if (btn.dataset.tab === tabName) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
+                    const isActive = btn.dataset.tab === tabName;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    btn.setAttribute('tabindex', isActive ? '0' : '-1');
+
+                    if (isActive && focusTab) {
+                        btn.focus();
                     }
                 });
 
                 // Update panels
                 tabPanels.forEach(panel => {
-                    if (panel.id === 'tab-' + tabName) {
-                        panel.classList.add('active');
-                    } else {
-                        panel.classList.remove('active');
-                    }
+                    const isActive = panel.id === 'tab-' + tabName;
+                    panel.classList.toggle('active', isActive);
+                    // Hide inactive panels from assistive technology
+                    panel.setAttribute('aria-hidden', !isActive);
                 });
 
-                // Update URL hash
-                window.location.hash = tabName;
+                // Update URL hash (without triggering scroll)
+                if (history.replaceState) {
+                    history.replaceState(null, null, '#' + tabName);
+                } else {
+                    window.location.hash = tabName;
+                }
             }
 
             // Handle tab button clicks
@@ -726,16 +765,52 @@
                 });
             });
 
+            // Keyboard navigation for tabs (WCAG 2.1.1)
+            tabButtons.forEach((btn, index) => {
+                btn.addEventListener('keydown', function(e) {
+                    let newIndex = index;
+                    const isRtl = document.documentElement.dir === 'rtl';
+
+                    switch (e.key) {
+                        case 'ArrowRight':
+                            newIndex = isRtl ? index - 1 : index + 1;
+                            break;
+                        case 'ArrowLeft':
+                            newIndex = isRtl ? index + 1 : index - 1;
+                            break;
+                        case 'Home':
+                            newIndex = 0;
+                            break;
+                        case 'End':
+                            newIndex = tabButtons.length - 1;
+                            break;
+                        default:
+                            return; // Don't prevent default for other keys
+                    }
+
+                    e.preventDefault();
+
+                    // Wrap around
+                    if (newIndex < 0) newIndex = tabButtons.length - 1;
+                    if (newIndex >= tabButtons.length) newIndex = 0;
+
+                    showTab(tabList[newIndex], true);
+                });
+            });
+
             // Handle initial hash or default to first tab
             const hash = window.location.hash.substring(1);
-            if (hash && ['timeoff', 'swaps', 'approved'].includes(hash)) {
+            if (hash && tabList.includes(hash)) {
                 showTab(hash);
+            } else {
+                // Ensure first tab is properly initialized
+                showTab('timeoff');
             }
 
             // Handle browser back/forward buttons
             window.addEventListener('hashchange', function() {
                 const hash = window.location.hash.substring(1);
-                if (hash && ['timeoff', 'swaps', 'approved'].includes(hash)) {
+                if (hash && tabList.includes(hash)) {
                     showTab(hash);
                 }
             });

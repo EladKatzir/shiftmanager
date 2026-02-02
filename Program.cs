@@ -15,23 +15,42 @@ using ShiftManager.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// B-022: Structured JSON Logging Configuration
-// - JSON structured format for production observability
-// - Log levels configured per environment (Debug in dev, Info in prod)
+// B-022: Logging Configuration
+// - Clean console output in development for better readability
+// - JSON structured format in production for log aggregation
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
 
-// Add JSON console logging for structured output (useful for log aggregation systems)
-builder.Logging.AddJsonConsole(options =>
+if (builder.Environment.IsDevelopment())
 {
-    options.JsonWriterOptions = new System.Text.Json.JsonWriterOptions
+    // Development: Simple, readable console output
+    builder.Logging.AddSimpleConsole(options =>
     {
-        Indented = false // Compact JSON for log aggregation
-    };
-    options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ"; // ISO 8601 format
-    options.UseUtcTimestamp = true;
-});
+        options.SingleLine = false;
+        options.TimestampFormat = "HH:mm:ss ";
+        options.IncludeScopes = false;
+    });
+    
+    // Reduce noise from EF Core and ASP.NET in development
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+    builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.Extensions.Hosting.Internal.Host", LogLevel.Information);
+}
+else
+{
+    // Production: JSON structured logging for log aggregation systems
+    builder.Logging.AddJsonConsole(options =>
+    {
+        options.JsonWriterOptions = new System.Text.Json.JsonWriterOptions
+        {
+            Indented = false // Compact JSON for log aggregation
+        };
+        options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ"; // ISO 8601 format
+        options.UseUtcTimestamp = true;
+    });
+}
+
+builder.Logging.AddDebug();
 
 
 
@@ -794,7 +813,172 @@ app.MapRazorPages();
 app.MapHealthChecks("/health");  // Liveness probe - is the app alive?
 app.MapHealthChecks("/ready");   // Readiness probe - is the app ready to receive traffic?
 
+// ============================================================
+// STARTUP BANNER - Display application information
+// ============================================================
+DisplayStartupBanner(app);
+
 app.Run();
+
+// ============================================================
+// STARTUP BANNER METHOD
+// ============================================================
+void DisplayStartupBanner(WebApplication app)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    
+    // Get configuration values
+    var emailEnabled = app.Configuration.GetValue<bool>("Email:Enabled");
+    var griffinEnabled = app.Configuration.GetValue<bool>("Griffin:Enabled");
+    var publicSignup = app.Configuration.GetValue<bool>("Features:AllowPublicSignup");
+    var apiEnabled = app.Configuration.GetValue<bool>("Features:Api:Enabled");
+    var env = app.Environment.EnvironmentName;
+    var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
+    
+    // Get URLs - check multiple sources
+    var urlList = new List<string>();
+    
+    // Try to get from server addresses (most reliable after app starts)
+    if (app.Urls.Any())
+    {
+        urlList.AddRange(app.Urls);
+    }
+    else
+    {
+        // Fallback to configuration
+        var configUrls = app.Configuration["ASPNETCORE_URLS"] 
+            ?? app.Configuration["urls"] 
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_URLS")
+            ?? "http://localhost:5000;https://localhost:5001";
+        urlList.AddRange(configUrls.Split(';', StringSplitOptions.RemoveEmptyEntries));
+    }
+    
+    // Colors for console output
+    var originalColor = Console.ForegroundColor;
+    
+    Console.WriteLine();
+    
+    // ASCII Banner - Cyan color
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine(@"   _____ _     _  __ _   __  __                                    ");
+    Console.WriteLine(@"  / ____| |   (_)/ _| | |  \/  |                                   ");
+    Console.WriteLine(@" | (___ | |__  _| |_| |_| \  / | __ _ _ __   __ _  __ _  ___ _ __  ");
+    Console.WriteLine(@"  \___ \| '_ \| |  _| __| |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__| ");
+    Console.WriteLine(@"  ____) | | | | | | | |_| |  | | (_| | | | | (_| | (_| |  __/ |    ");
+    Console.WriteLine(@" |_____/|_| |_|_|_|  \__|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|    ");
+    Console.WriteLine(@"                                                  __/ |           ");
+    Console.WriteLine(@"                                                 |___/            ");
+    Console.ForegroundColor = originalColor;
+    
+    Console.WriteLine();
+    
+    // Box width = 68 characters (including borders)
+    const int boxWidth = 68;
+    const int contentWidth = boxWidth - 4; // Minus "  | " and " |"
+    
+    void WriteBoxLine(string content)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write("  | ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(content.PadRight(contentWidth));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(" |");
+        Console.ForegroundColor = originalColor;
+    }
+    
+    void WriteBoxSeparator(char left = '+', char fill = '-', char right = '+')
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"  {left}{new string(fill, boxWidth - 2)}{right}");
+        Console.ForegroundColor = originalColor;
+    }
+    
+    // Top border
+    WriteBoxSeparator();
+    
+    // Version and Environment line
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.Write("  | ");
+    Console.ForegroundColor = ConsoleColor.White;
+    Console.Write("Version: ");
+    Console.ForegroundColor = ConsoleColor.Yellow;
+    Console.Write(version.PadRight(12));
+    Console.ForegroundColor = ConsoleColor.White;
+    Console.Write("  Environment: ");
+    Console.ForegroundColor = env == "Development" ? ConsoleColor.Green : ConsoleColor.Magenta;
+    Console.Write(env.PadRight(contentWidth - 39));
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.WriteLine(" |");
+    
+    WriteBoxSeparator();
+    
+    // URLs section
+    WriteBoxLine("Listening on:");
+    foreach (var url in urlList)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write("  |   ");
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write("> ");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.Write(url.PadRight(contentWidth - 4));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(" |");
+    }
+    
+    WriteBoxSeparator();
+    
+    // Features section
+    WriteBoxLine("Features:");
+    
+    // Feature rows - simpler fixed-width approach
+    void WriteStatusLine(string line)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write("  | ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(line.PadRight(contentWidth));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(" |");
+    }
+    
+    string FeatureStatus(string name, bool enabled) => 
+        (enabled ? "[*] " : "[ ] ") + name;
+    
+    // Build feature strings
+    var f1 = FeatureStatus("Email", emailEnabled).PadRight(20) + 
+             FeatureStatus("Griffin ADFS", griffinEnabled).PadRight(22) + 
+             FeatureStatus("REST API", apiEnabled);
+    var f2 = FeatureStatus("Public Signup", publicSignup);
+    
+    WriteStatusLine(f1);
+    WriteStatusLine(f2);
+    
+    // Bottom border
+    WriteBoxSeparator();
+    
+    Console.ForegroundColor = originalColor;
+    Console.WriteLine();
+    
+    // Helpful tips
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.Write("  Press ");
+    Console.ForegroundColor = ConsoleColor.White;
+    Console.Write("Ctrl+C");
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.Write(" to shut down. Health check: ");
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine($"{urlList.FirstOrDefault()}/health");
+    Console.ForegroundColor = originalColor;
+    
+    Console.WriteLine();
+    
+    // Log the startup for structured logging as well
+    logger.LogInformation(
+        "ShiftManager started. Version={Version}, Environment={Environment}, URLs={Urls}, Email={EmailEnabled}, Griffin={GriffinEnabled}, API={ApiEnabled}",
+        version, env, string.Join(";", urlList), emailEnabled, griffinEnabled, apiEnabled);
+}
 
 // Make Program accessible to integration tests
 public partial class Program { }

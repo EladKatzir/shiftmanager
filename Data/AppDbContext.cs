@@ -382,6 +382,16 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.Molecule)
+            .WithMany()
+            .HasForeignKey(c => c.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Index for molecule-scoped chore queries
+        modelBuilder.Entity<Chore>()
+            .HasIndex(c => new { c.MoleculeId, c.Date });
+
         // Configure Language Management
         // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)
         modelBuilder.Entity<CompanyLanguageSettings>()

@@ -21,7 +21,7 @@
             <span class="page-icon">🎛️</span>
             <loc key="AdminHub_Title">Admin Hub</loc>
         </h1>
-        <p class="page-subtitle"><loc key="AdminHub_Subtitle">Management & Configuration Center</loc></p>
+        <p class="page-subtitle"><loc key="AdminHub_Subtitle">Operations Center</loc></p>
     </div>
 
     @* Quick Stats *@
@@ -55,49 +55,6 @@
             </div>
         </div>
     </div>
-
-    @* B-035: Company & Scope Section - Grant-protected links *@
-    <require-grant key="EditCompany,AssignRoles" mode="any">
-        <h2 class="section-title">
-            <span class="section-icon">🏢</span>
-            <loc key="Section_CompanyScope">Company & Scope</loc>
-        </h2>
-        <div class="admin-tools-grid">
-            <require-grant key="EditCompany">
-                <a href="/Admin/Companies" class="admin-tool-card">
-                    <div class="tool-icon">🏢</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_Companies">Companies</loc></h3>
-                        <p><loc key="Section_CompaniesDesc">Manage tenants, create/edit companies</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            </require-grant>
-
-            <require-grant key="AssignRoles">
-                <a href="/Admin/Directors" class="admin-tool-card">
-                    <div class="tool-icon">👔</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_Directors">Directors</loc></h3>
-                        <p><loc key="Section_DirectorsDesc">Assign directors to companies</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            </require-grant>
-
-            @if (Model.IsDirector)
-            {
-                <a href="/Director/CompanyFilter" class="admin-tool-card">
-                    <div class="tool-icon">🌐</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_CompanyContext">Company Context</loc></h3>
-                        <p><loc key="Section_CompanyContextDesc">Select active company for operations</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            }
-        </div>
-    </require-grant>
 
     @* People Management *@
     <h2 class="section-title">
@@ -144,24 +101,6 @@
             <div class="tool-content">
                 <h3><loc key="Section_Programs">Programs</loc></h3>
                 <p><loc key="Section_ProgramsDesc">Create weekly schedule templates</loc></p>
-            </div>
-            <div class="tool-arrow">→</div>
-        </a>
-
-        <a href="/Owner/MasterPrograms" class="admin-tool-card">
-            <div class="tool-icon">🎯</div>
-            <div class="tool-content">
-                <h3><loc key="Section_MasterPrograms">Master Programs</loc></h3>
-                <p><loc key="Section_MasterProgramsDesc">Advanced program configuration</loc></p>
-            </div>
-            <div class="tool-arrow">→</div>
-        </a>
-
-        <a href="/Admin/ShiftTypes" class="admin-tool-card">
-            <div class="tool-icon">🕒</div>
-            <div class="tool-content">
-                <h3><loc key="Section_ShiftTypes">Shift Types</loc></h3>
-                <p><loc key="Section_ShiftTypesDesc">Configure shift parameters</loc></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -251,108 +190,7 @@
             </div>
             <div class="tool-arrow">→</div>
         </a>
-
-        @* B-035: Grant-protected System Health link *@
-        <require-grant key="AdminAccess">
-            <a href="/Owner/SystemHealth" class="admin-tool-card">
-                <div class="tool-icon">🏥</div>
-                <div class="tool-content">
-                    <h3><loc key="Section_SystemHealth">System Health</loc></h3>
-                    <p><loc key="Section_SystemHealthDesc">Server status, performance monitoring</loc></p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
-        </require-grant>
     </div>
-
-    @* B-035: Advanced Tools (Grant-protected) *@
-    <require-grant key="AdminAccess">
-        <h2 class="section-title">
-            <span class="section-icon">🔧</span>
-            <loc key="Section_AdvancedTools">Advanced Tools</loc>
-        </h2>
-        <div class="admin-tools-grid">
-            <require-grant key="SystemConfiguration">
-                <a href="/Owner/FeatureFlags" class="admin-tool-card">
-                    <div class="tool-icon">🚩</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_FeatureFlags">Feature Flags</loc></h3>
-                        <p><loc key="Section_FeatureFlagsDesc">Toggle features on/off</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            </require-grant>
-
-            <require-grant key="ConfigureEmailSettings">
-                <a href="/Owner/EmailConfig" class="admin-tool-card">
-                    <div class="tool-icon">📧</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_EmailConfiguration">Email Configuration</loc></h3>
-                        <p><loc key="Section_EmailConfigurationDesc">SMTP settings and email templates</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            </require-grant>
-
-            <a href="/Owner/GriffinConfig" class="admin-tool-card">
-                <div class="tool-icon">🔐</div>
-                <div class="tool-content">
-                    <h3><loc key="Section_GriffinAdfs">Griffin ADFS</loc></h3>
-                    <p><loc key="Section_GriffinAdfsDesc">OAuth authentication configuration</loc></p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
-
-            <a href="/Owner/LanguageManagement" class="admin-tool-card">
-                <div class="tool-icon">🌍</div>
-                <div class="tool-content">
-                    <h3><loc key="Section_LanguageManagement">Language Management</loc></h3>
-                    <p><loc key="Section_LanguageManagementDesc">Localization strings and translations</loc></p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
-
-            <require-grant key="SystemConfiguration">
-                <a href="/Owner/DatabaseConsole" class="admin-tool-card">
-                    <div class="tool-icon">💾</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_DatabaseConsole">Database Console</loc></h3>
-                        <p><loc key="Section_DatabaseConsoleDesc">Direct database operations</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            </require-grant>
-
-            <a href="/Owner/Backup" class="admin-tool-card">
-                <div class="tool-icon">💼</div>
-                <div class="tool-content">
-                    <h3><loc key="Section_Backups">Backups</loc></h3>
-                    <p><loc key="Section_BackupsDesc">Database backup management</loc></p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
-
-            <require-grant key="SystemConfiguration">
-                <a href="/Owner/DataLifecycle" class="admin-tool-card">
-                    <div class="tool-icon">♻️</div>
-                    <div class="tool-content">
-                        <h3><loc key="Section_DataLifecycle">Data Lifecycle</loc></h3>
-                        <p><loc key="Section_DataLifecycleDesc">Retention policies and cleanup</loc></p>
-                    </div>
-                    <div class="tool-arrow">→</div>
-                </a>
-            </require-grant>
-
-            <a href="/Owner/GameConfig" class="admin-tool-card">
-                <div class="tool-icon">🎮</div>
-                <div class="tool-content">
-                    <h3><loc key="Section_GameConfiguration">Game Configuration</loc></h3>
-                    <p><loc key="Section_GameConfigurationDesc">Gamification settings and leaderboards</loc></p>
-                </div>
-                <div class="tool-arrow">→</div>
-            </a>
-        </div>
-    </require-grant>
 
 <style>
 .owner-panel-container {

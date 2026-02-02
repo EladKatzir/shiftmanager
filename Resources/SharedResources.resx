@@ -132,6 +132,12 @@
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>
   </data>
+  <data name="UserMenu_Profile" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="UserMenu_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
   </data>
@@ -315,6 +321,12 @@
   <data name="Edit" xml:space="preserve">
     <value>Edit</value>
   </data>
+  <data name="EditJobType" xml:space="preserve">
+    <value>Edit job type</value>
+  </data>
+  <data name="EditRole" xml:space="preserve">
+    <value>Edit role</value>
+  </data>
   <data name="Add" xml:space="preserve">
     <value>Add</value>
   </data>
@@ -380,6 +392,12 @@
   </data>
   <data name="Hebrew" xml:space="preserve">
     <value>עברית</value>
+  </data>
+  <data name="ToggleLanguage" xml:space="preserve">
+    <value>Toggle Language</value>
+  </data>
+  <data name="ToggleTheme" xml:space="preserve">
+    <value>Toggle Theme</value>
   </data>
 
   
@@ -1325,6 +1343,45 @@
   <data name="NoUnderstaffingIssues" xml:space="preserve">
     <value>No understaffing issues</value>
   </data>
+  <data name="SelectPeriod" xml:space="preserve">
+    <value>Select Period</value>
+  </data>
+  <data name="EmployeeHours" xml:space="preserve">
+    <value>Employee Hours</value>
+  </data>
+  <data name="ShiftCoverage" xml:space="preserve">
+    <value>Shift Coverage</value>
+  </data>
+  <data name="TimeOffRate" xml:space="preserve">
+    <value>Time-Off Rate</value>
+  </data>
+  <data name="TimeOffApproval" xml:space="preserve">
+    <value>Time-Off Approval</value>
+  </data>
+  <data name="SwapRate" xml:space="preserve">
+    <value>Swap Rate</value>
+  </data>
+  <data name="ShiftSwaps" xml:space="preserve">
+    <value>Shift Swaps</value>
+  </data>
+  <data name="PerEmployee" xml:space="preserve">
+    <value>Per Employee</value>
+  </data>
+  <data name="AvgHoursPerWeek" xml:space="preserve">
+    <value>Avg Hours/Week</value>
+  </data>
+  <data name="UnderstaffingReport" xml:space="preserve">
+    <value>Understaffing Report</value>
+  </data>
+  <data name="MostActiveSwappers" xml:space="preserve">
+    <value>Most Active Swappers</value>
+  </data>
+  <data name="SwapStatistics" xml:space="preserve">
+    <value>Swap Statistics</value>
+  </data>
+  <data name="TimeOffStatistics" xml:space="preserve">
+    <value>Time-Off Statistics</value>
+  </data>
   <data name="NoOverstaffingIssues" xml:space="preserve">
     <value>No overstaffing issues</value>
   </data>
@@ -1682,8 +1739,23 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ConfirmDeleteTimeOff" xml:space="preserve">
     <value>Are you sure you want to delete this approved time-off for {0}? This action cannot be undone.</value>
   </data>
+  <data name="ConfirmRoleChange" xml:space="preserve">
+    <value>Change role for {0} from {1} to {2}?</value>
+  </data>
+  <data name="SelectJobType" xml:space="preserve">
+    <value>Select Job Type</value>
+  </data>
+  <data name="Error_InvalidJobTypeSelected" xml:space="preserve">
+    <value>The selected job type is invalid or inactive.</value>
+  </data>
+  <data name="ChangeJobType" xml:space="preserve">
+    <value>Change Job Type</value>
+  </data>
+  <data name="ConfirmJobTypeChange" xml:space="preserve">
+    <value>Change job type for {0} to {1}?</value>
+  </data>
 
-  
+
   <data name="WelcomeToShiftManager" xml:space="preserve">
     <value>Welcome to Shift Manager</value>
   </data>
@@ -3129,6 +3201,111 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Owner_SecurityAudit_Desc" xml:space="preserve">
     <value>View security audit logs</value>
   </data>
+  <data name="Owner_JobTypes" xml:space="preserve">
+    <value>Job Types</value>
+  </data>
+  <data name="Owner_JobTypes_Desc" xml:space="preserve">
+    <value>Manage job types and roles across the organization</value>
+  </data>
+  <data name="Owner_Hierarchy" xml:space="preserve">
+    <value>Hierarchy</value>
+  </data>
+  <data name="Owner_Hierarchy_Desc" xml:space="preserve">
+    <value>Configure organizational structure and reporting lines</value>
+  </data>
+  <data name="Owner_AreaConfig" xml:space="preserve">
+    <value>Area Configuration</value>
+  </data>
+  <data name="Owner_AreaConfig_Desc" xml:space="preserve">
+    <value>Set operating hours for gyms, stores, and locations</value>
+  </data>
+  <data name="Owner_Permissions" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="Owner_Permissions_Desc" xml:space="preserve">
+    <value>Manage user grants and access permissions</value>
+  </data>
+  <data name="Owner_Section_Operations" xml:space="preserve">
+    <value>Operations</value>
+  </data>
+  <data name="Owner_Section_Infrastructure" xml:space="preserve">
+    <value>Infrastructure</value>
+  </data>
+  <data name="Owner_MasterPrograms" xml:space="preserve">
+    <value>Master Programs</value>
+  </data>
+  <data name="Owner_MasterPrograms_Desc" xml:space="preserve">
+    <value>Advanced program configuration</value>
+  </data>
+  <data name="Permissions_TotalGrants" xml:space="preserve">
+    <value>Total Grants</value>
+  </data>
+  <data name="Permissions_UsersWithGrants" xml:space="preserve">
+    <value>Users with Grants</value>
+  </data>
+  <data name="Permissions_AutoGrants" xml:space="preserve">
+    <value>Auto Grants</value>
+  </data>
+  <data name="Permissions_ManualGrants" xml:space="preserve">
+    <value>Manual Grants</value>
+  </data>
+  <data name="Permissions_GrantTypeBreakdown" xml:space="preserve">
+    <value>Grant Type Breakdown</value>
+  </data>
+  <data name="Permissions_RecentGrants" xml:space="preserve">
+    <value>Recent Grants</value>
+  </data>
+  <data name="ViewAllGrants" xml:space="preserve">
+    <value>View All Grants</value>
+  </data>
+  <data name="ViewAllGrants_Desc" xml:space="preserve">
+    <value>Browse and manage all user grants</value>
+  </data>
+  <data name="AssignGrant_Desc" xml:space="preserve">
+    <value>Assign a new grant to a user</value>
+  </data>
+  <data name="ManageRoles_Desc" xml:space="preserve">
+    <value>Configure roles and their permissions</value>
+  </data>
+  <data name="AreaConfig_RestHours" xml:space="preserve">
+    <value>Default Rest Hours</value>
+  </data>
+  <data name="AreaConfig_RestHours_Hint" xml:space="preserve">
+    <value>Minimum hours between shifts (0-24)</value>
+  </data>
+  <data name="AreaConfig_WeeklyCap" xml:space="preserve">
+    <value>Weekly Hours Cap</value>
+  </data>
+  <data name="AreaConfig_WeeklyCap_Hint" xml:space="preserve">
+    <value>Maximum hours per week (0-168)</value>
+  </data>
+  <data name="EditAreaSettings" xml:space="preserve">
+    <value>Edit Area Settings</value>
+  </data>
+  <data name="EditSettings" xml:space="preserve">
+    <value>Edit Settings</value>
+  </data>
+  <data name="Success_AreaSettingsUpdated" xml:space="preserve">
+    <value>Settings updated for {0}</value>
+  </data>
+  <data name="Error_InvalidRestHours" xml:space="preserve">
+    <value>Rest hours must be between 0 and 24</value>
+  </data>
+  <data name="Error_InvalidWeeklyCap" xml:space="preserve">
+    <value>Weekly cap must be between 0 and 168</value>
+  </data>
+  <data name="Error_AreaNotFound" xml:space="preserve">
+    <value>Area not found</value>
+  </data>
+  <data name="Error_InvalidArea" xml:space="preserve">
+    <value>Invalid area selected</value>
+  </data>
+  <data name="NoAreasFound" xml:space="preserve">
+    <value>No areas found. Create areas in Organization settings.</value>
+  </data>
+  <data name="BottomDock_Toggle" xml:space="preserve">
+    <value>Toggle On-Call Panel</value>
+  </data>
   <data name="Owner_Companies" xml:space="preserve">
     <value>Companies</value>
   </data>
@@ -3620,6 +3797,9 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Success_AccountUnlocked" xml:space="preserve">
     <value>Account unlocked for {0}. Failed login attempts have been reset.</value>
+  </data>
+  <data name="Success_JobTypeUpdated" xml:space="preserve">
+    <value>Job type updated for {0} to {1}.</value>
   </data>
   <data name="Error_NoPermissionToUnlock" xml:space="preserve">
     <value>You do not have permission to unlock accounts for users with role {0}.</value>
@@ -4710,7 +4890,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Admin Hub</value>
   </data>
   <data name="AdminHub_Subtitle" xml:space="preserve">
-    <value>Management and Settings Center</value>
+    <value>Operations Center</value>
   </data>
   <data name="CompanyScope" xml:space="preserve">
     <value>Company &amp; Scope</value>
@@ -5137,6 +5317,9 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
 
   <!-- UI Overhaul v3.0 - On-Call Widget -->
+  <data name="Widget_QuickInfo" xml:space="preserve">
+    <value>Quick Info</value>
+  </data>
   <data name="Widget_OnCallNow" xml:space="preserve">
     <value>On-Call Now</value>
   </data>
@@ -6829,6 +7012,90 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Successfully Logged Out</value>
     <comment>A-015 - Message for successful logout</comment>
   </data>
+  <data name="Auth_LoggedOutTitle" xml:space="preserve">
+    <value>Logged Out</value>
+  </data>
+  <data name="Auth_SecurelyLoggedOutMessage" xml:space="preserve">
+    <value>You have been securely logged out of the Shift Manager.</value>
+  </data>
+  <data name="Auth_RedirectingToLogin" xml:space="preserve">
+    <value>Redirecting to login page in 3 seconds...</value>
+  </data>
+  <data name="Auth_GoToLoginNow" xml:space="preserve">
+    <value>Go to Login Now</value>
+  </data>
+  <data name="Auth_LoggingOut" xml:space="preserve">
+    <value>Logging out...</value>
+  </data>
+  <data name="Auth_PleaseWaitLoggingOut" xml:space="preserve">
+    <value>Please wait while we log you out securely.</value>
+  </data>
+  <data name="Auth_HeroTagline" xml:space="preserve">
+    <value>Streamline your team scheduling with intelligent shift management</value>
+  </data>
+  <data name="Auth_WelcomeBack" xml:space="preserve">
+    <value>Welcome back</value>
+  </data>
+  <data name="Auth_SignInToContinue" xml:space="preserve">
+    <value>Sign in to continue to Shift Manager</value>
+  </data>
+  <data name="Auth_OrContinueWith" xml:space="preserve">
+    <value>or continue with email</value>
+  </data>
+  <data name="Auth_EmailPlaceholder" xml:space="preserve">
+    <value>Enter your email</value>
+  </data>
+  <data name="Auth_PasswordPlaceholder" xml:space="preserve">
+    <value>Enter your password</value>
+  </data>
+  <data name="Auth_NamePlaceholder" xml:space="preserve">
+    <value>Enter your full name</value>
+  </data>
+  <data name="Auth_SignupTagline" xml:space="preserve">
+    <value>Join your team and start managing shifts effortlessly</value>
+  </data>
+  <data name="Auth_SignupSubtitle" xml:space="preserve">
+    <value>Request access to your organization's shift management system</value>
+  </data>
+  <data name="Auth_SignupDisabledTitle" xml:space="preserve">
+    <value>Public Registration Unavailable</value>
+  </data>
+  <data name="Auth_SignupDisabledMessage" xml:space="preserve">
+    <value>Please contact your administrator to request access to the system.</value>
+  </data>
+  <data name="Auth_StepAccount" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="Auth_StepOrganization" xml:space="preserve">
+    <value>Organization</value>
+  </data>
+  <data name="Auth_StepRole" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Auth_SelectMolecule" xml:space="preserve">
+    <value>Select Unit</value>
+  </data>
+  <data name="Auth_ChooseMolecule" xml:space="preserve">
+    <value>Choose a unit...</value>
+  </data>
+  <data name="Auth_ChooseCompanyFirst" xml:space="preserve">
+    <value>Select a unit first</value>
+  </data>
+  <data name="Auth_SelectJobType" xml:space="preserve">
+    <value>Job Type (Optional)</value>
+  </data>
+  <data name="Auth_ChooseJobTypeFirst" xml:space="preserve">
+    <value>Select a unit first</value>
+  </data>
+  <data name="Auth_NoCompaniesAvailable" xml:space="preserve">
+    <value>No companies available in this unit</value>
+  </data>
+  <data name="Auth_NoJobTypesAvailable" xml:space="preserve">
+    <value>No job types available</value>
+  </data>
+  <data name="Error_LoadingData" xml:space="preserve">
+    <value>Error loading data</value>
+  </data>
 
   <!-- A-015: Miscellaneous -->
   <data name="Misc_ConfigureShiftTypes" xml:space="preserve">
@@ -7024,6 +7291,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="EditProfile_RecentChanges" xml:space="preserve">
     <value>Recent Profile Changes (Last 30 Days)</value>
     <comment>A-015 - Section header for recent changes</comment>
+  </data>
+  <data name="EditProfile_SkillsCertifications" xml:space="preserve">
+    <value>Skills &amp; Certifications</value>
+  </data>
+  <data name="EditingProfile" xml:space="preserve">
+    <value>Editing profile for</value>
+  </data>
+  <data name="SkillsHint" xml:space="preserve">
+    <value>Enter skills separated by commas</value>
+  </data>
+  <data name="CertificationsHint" xml:space="preserve">
+    <value>Enter certifications separated by commas</value>
   </data>
 
   <!-- A-015: Feature Flags -->

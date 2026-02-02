@@ -46,22 +46,37 @@ public class SignupModel : LocalizedPageModel
     [BindProperty, Required, MinLength(6)]
     public string Password { get; set; } = string.Empty;
 
+    [BindProperty]
+    public int? MoleculeId { get; set; }
+
     [BindProperty, Required]
     public int CompanyId { get; set; }
+
+    [BindProperty]
+    public int? JobTypeId { get; set; }
 
     [BindProperty, Required]
     public UserRole RequestedRole { get; set; } = UserRole.Employee;
 
     public List<Company> AvailableCompanies { get; set; } = new();
+    public List<Molecule> AvailableMolecules { get; set; } = new();
     public string? PendingRequestMessage { get; set; }
+    public bool IsPublicSignupEnabled { get; set; }
 
     public async Task OnGetAsync()
     {
-        // SECURITY FIX: Only load companies if public signup is explicitly enabled
-        var allowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
-        if (allowPublicSignup)
+        // SECURITY FIX: Only load data if public signup is explicitly enabled
+        IsPublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        if (IsPublicSignupEnabled)
         {
-            _logger.LogWarning("Public signup with company list is enabled - this exposes all company names");
+            _logger.LogWarning("Public signup is enabled - this exposes organizational structure");
+            // Load molecules for the cascade - companies will be loaded via API
+            AvailableMolecules = await _db.Molecules
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.DisplayName ?? m.Name)
+                .ToListAsync();
+
+            // Also load companies for backward compatibility / server-side fallback
             AvailableCompanies = await _db.Companies
                 .OrderBy(c => c.Name)
                 .ToListAsync();
@@ -70,15 +85,21 @@ public class SignupModel : LocalizedPageModel
         {
             // Production: signup disabled or requires invite code
             AvailableCompanies = new List<Company>();
+            AvailableMolecules = new List<Molecule>();
         }
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // SECURITY FIX: Only load companies if public signup is explicitly enabled
-        var allowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
-        if (allowPublicSignup)
+        // SECURITY FIX: Only allow if public signup is explicitly enabled
+        IsPublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        if (IsPublicSignupEnabled)
         {
+            AvailableMolecules = await _db.Molecules
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.DisplayName ?? m.Name)
+                .ToListAsync();
+
             AvailableCompanies = await _db.Companies
                 .OrderBy(c => c.Name)
                 .ToListAsync();

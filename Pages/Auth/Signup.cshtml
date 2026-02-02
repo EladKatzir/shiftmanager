@@ -5,88 +5,230 @@
 @using ShiftManager.Models.Support
 @inject IStringLocalizer<SharedResources> Localizer
 @{
-    Layout = "_Layout";
+    Layout = null;
 }
-<div class="card" style="max-width:480px; margin:auto">
-    <h2><loc key="RequestAccess" /></h2>
 
-    @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
-    {
-        <div class="card" style="background:var(--success-soft); color:var(--success); border-color:var(--success); padding:1rem; margin-bottom:1rem">
-            <strong>✓ @Localizer["RequestSubmitted"]</strong>
-            <p style="margin:.5rem 0 0 0">@Model.PendingRequestMessage</p>
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName" dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Localizer["RequestAccess"] - Shift Manager</title>
+    <link rel="stylesheet" href="~/css/tokens.css" />
+    <link rel="stylesheet" href="~/css/auth.css" />
+    <link rel="icon" type="image/svg+xml" href="~/images/shifty-logo.svg" />
+</head>
+<body>
+    <div class="auth-layout">
+        <!-- Hero Panel -->
+        <div class="auth-hero">
+            <!-- Floating decorative elements (hidden from screen readers) -->
+            <span class="auth-hero__float" aria-hidden="true">🗓️</span>
+            <span class="auth-hero__float" aria-hidden="true">⏰</span>
+            <span class="auth-hero__float" aria-hidden="true">👥</span>
+            <span class="auth-hero__float" aria-hidden="true">📊</span>
+            <span class="auth-hero__float" aria-hidden="true">✓</span>
+
+            <div class="auth-hero__content">
+                <img src="~/images/shifty-logo.svg" alt="Shifty Logo" class="auth-hero__logo" />
+                <h1 class="auth-hero__title">Shift Manager</h1>
+                <p class="auth-hero__tagline"><loc key="Auth_SignupTagline" /></p>
+            </div>
         </div>
-    }
 
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="small" style="color:var(--danger); margin-bottom:.75rem">@Model.Error</div>
-    }
+        <!-- Form Panel -->
+        <main class="auth-form-panel" role="main">
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <h1><loc key="RequestAccess" /></h1>
+                    <p><loc key="Auth_SignupSubtitle" /></p>
+                </div>
 
-    <form method="post" asp-page="./Signup">
-        @Html.AntiForgeryToken()
-        <div style="display:grid; gap:.75rem; margin-top:.75rem">
-            <label>
-                @Localizer["Email"]<br />
-                <input class="input" asp-for="Email" type="email" required />
-                <div id="emailSuggestion" style="display: none;
-                     margin-top: 0.25rem;
-                     padding: 0.5rem;
-                     background: var(--primary-bg);
-                     border: 1px solid var(--primary);
-                     border-radius: 6px;
-                     cursor: pointer;
-                     font-size: 0.875rem;
-                     color: var(--primary);"></div>
-            </label>
+                @* Success message for pending request *@
+                @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
+                {
+                    <div class="auth-alert auth-alert--info" style="background: var(--success-soft); border-color: var(--success); color: var(--success);">
+                        <span class="auth-alert__icon">✓</span>
+                        <div class="auth-alert__content">
+                            <div class="auth-alert__title">@Localizer["RequestSubmitted"]</div>
+                            <div>@Model.PendingRequestMessage</div>
+                        </div>
+                    </div>
+                }
 
-            <label>
-                @Localizer["DisplayName"]<br />
-                <input class="input" asp-for="DisplayName" required />
-            </label>
+                @* Error message *@
+                @if (!string.IsNullOrEmpty(Model.Error))
+                {
+                    <div class="auth-alert auth-alert--error">
+                        <span class="auth-alert__icon">❌</span>
+                        <div class="auth-alert__content">@Model.Error</div>
+                    </div>
+                }
 
-            <label>
-                @Localizer["PasswordMinCharacters"]<br />
-                <input class="input" asp-for="Password" type="password" minlength="6" required />
-            </label>
+                @if (!Model.IsPublicSignupEnabled)
+                {
+                    <div class="auth-alert auth-alert--warning">
+                        <span class="auth-alert__icon">🔒</span>
+                        <div class="auth-alert__content">
+                            <div class="auth-alert__title"><loc key="Auth_SignupDisabledTitle" /></div>
+                            <div><loc key="Auth_SignupDisabledMessage" /></div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Progress Steps -->
+                    <div class="auth-steps">
+                        <div class="auth-step is-active" data-step="1">
+                            <span class="auth-step__number">1</span>
+                            <span><loc key="Auth_StepAccount" /></span>
+                        </div>
+                        <div class="auth-step" data-step="2">
+                            <span class="auth-step__number">2</span>
+                            <span><loc key="Auth_StepOrganization" /></span>
+                        </div>
+                        <div class="auth-step" data-step="3">
+                            <span class="auth-step__number">3</span>
+                            <span><loc key="Auth_StepRole" /></span>
+                        </div>
+                    </div>
 
-            <label>
-                @Localizer["Company"]<br />
-                <select class="input" asp-for="CompanyId" required>
-                    <option value=""><loc key="SelectCompany" /></option>
-                    @foreach (var company in Model.AvailableCompanies)
-                    {
-                        <option value="@company.Id">@company.Name</option>
-                    }
-                </select>
-            </label>
+                    <!-- Signup Form -->
+                    <form method="post" asp-page="./Signup" class="auth-form" id="signupForm">
+                        @Html.AntiForgeryToken()
 
-            <label>
-                @Localizer["RequestedRole"]<br />
-                <select class="input" asp-for="RequestedRole" required>
-                    <option value="@((int)UserRole.Employee)"><loc key="Employee" /></option>
-                    <option value="@((int)UserRole.Manager)"><loc key="Manager" /></option>
-                    <option value="@((int)UserRole.Director)"><loc key="Director" /></option>
-                    <option value="@((int)UserRole.Trainee)"><loc key="Trainee" /></option>
-                    <option value="@((int)UserRole.Assigner)"><loc key="Assigner" /></option>
-                </select>
-                <small style="color:var(--text-muted)"><loc key="RequestNeedsApproval" /></small>
-            </label>
+                        <!-- Step 1: Account Details -->
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="Email"><loc key="Email" /></label>
+                            <input type="email"
+                                   id="Email"
+                                   name="Email"
+                                   class="auth-field__input"
+                                   value="@Model.Email"
+                                   placeholder="@Localizer["Auth_EmailPlaceholder"]"
+                                   autocomplete="email"
+                                   required />
+                            <div id="emailSuggestion" class="auth-field__suggestion"></div>
+                        </div>
 
-            <button class="btn btn-primary" type="submit"><loc key="SubmitRequest" /></button>
-        </div>
-    </form>
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="DisplayName"><loc key="DisplayName" /></label>
+                            <input type="text"
+                                   id="DisplayName"
+                                   name="DisplayName"
+                                   class="auth-field__input"
+                                   value="@Model.DisplayName"
+                                   placeholder="@Localizer["Auth_NamePlaceholder"]"
+                                   autocomplete="name"
+                                   required />
+                        </div>
 
-    <div class="small" style="margin-top:1rem; text-align:center">
-        @Localizer["AlreadyHaveAccount"] <a href="/Auth/Login"><loc key="LoginHere" /></a>
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="Password"><loc key="PasswordMinCharacters" /></label>
+                            <input type="password"
+                                   id="Password"
+                                   name="Password"
+                                   class="auth-field__input"
+                                   placeholder="@Localizer["Auth_PasswordPlaceholder"]"
+                                   autocomplete="new-password"
+                                   minlength="6"
+                                   required />
+                        </div>
+
+                        <!-- Step 2: Organization (Cascading Dropdowns) -->
+                        <div class="auth-field" id="moleculeField">
+                            <label class="auth-field__label" for="MoleculeId"><loc key="Auth_SelectMolecule" /></label>
+                            <select id="MoleculeId"
+                                    name="MoleculeId"
+                                    class="auth-field__select"
+                                    required>
+                                <option value=""><loc key="Auth_ChooseMolecule" /></option>
+                                @foreach (var molecule in Model.AvailableMolecules)
+                                {
+                                    <option value="@molecule.Id" data-area-id="@molecule.AreaId"
+                                            selected="@(Model.MoleculeId == molecule.Id)">
+                                        @(molecule.DisplayName ?? molecule.Name)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="auth-field" id="companyField">
+                            <label class="auth-field__label" for="CompanyId"><loc key="Company" /></label>
+                            <select id="CompanyId"
+                                    name="CompanyId"
+                                    class="auth-field__select"
+                                    disabled
+                                    required>
+                                <option value=""><loc key="Auth_ChooseCompanyFirst" /></option>
+                            </select>
+                            <div id="companyLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <div class="auth-field" id="jobTypeField">
+                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
+                            <select id="JobTypeId"
+                                    name="JobTypeId"
+                                    class="auth-field__select"
+                                    disabled>
+                                <option value=""><loc key="Auth_ChooseJobTypeFirst" /></option>
+                            </select>
+                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Role Selection -->
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
+                            <select id="RequestedRole"
+                                    name="RequestedRole"
+                                    class="auth-field__select"
+                                    required>
+                                <option value="@((int)UserRole.Employee)" selected="@(Model.RequestedRole == UserRole.Employee)"><loc key="Employee" /></option>
+                                <option value="@((int)UserRole.Trainee)" selected="@(Model.RequestedRole == UserRole.Trainee)"><loc key="Trainee" /></option>
+                                <option value="@((int)UserRole.Manager)" selected="@(Model.RequestedRole == UserRole.Manager)"><loc key="Manager" /></option>
+                                <option value="@((int)UserRole.Director)" selected="@(Model.RequestedRole == UserRole.Director)"><loc key="Director" /></option>
+                                <option value="@((int)UserRole.Assigner)" selected="@(Model.RequestedRole == UserRole.Assigner)"><loc key="Assigner" /></option>
+                            </select>
+                            <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
+                                <loc key="RequestNeedsApproval" />
+                            </small>
+                        </div>
+
+                        <button type="submit" class="auth-submit">
+                            <loc key="SubmitRequest" />
+                        </button>
+                    </form>
+                }
+
+                <!-- Login Link -->
+                <div class="auth-secondary" style="margin-top: var(--space-6); text-align: center;">
+                    <span style="color: var(--text-muted);">@Localizer["AlreadyHaveAccount"]</span>
+                    <a href="/Auth/Login" style="color: var(--primary); text-decoration: none; font-weight: 500; margin-left: var(--space-1);">
+                        <loc key="LoginHere" />
+                    </a>
+                </div>
+            </div>
+        </main>
     </div>
-</div>
 
-@section Scripts {
     <script>
+        // Apply saved theme
+        (function() {
+            const saved = localStorage.getItem('theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
         // Email domain suggestion
         (function() {
-            const emailInput = document.querySelector('input[name="Email"]');
+            const emailInput = document.getElementById('Email');
             const suggestionDiv = document.getElementById('emailSuggestion');
             const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
 
@@ -94,22 +236,153 @@
                 emailInput.addEventListener('input', function(e) {
                     const value = e.target.value.trim();
 
-                    // Show suggestion when typing without @@
                     if (value.length > 0 && value.indexOf('@@') === -1) {
                         suggestionDiv.textContent = suggestionText.replace('{0}', value);
-                        suggestionDiv.style.display = 'block';
+                        suggestionDiv.classList.add('is-visible');
                     } else {
-                        suggestionDiv.style.display = 'none';
+                        suggestionDiv.classList.remove('is-visible');
                     }
                 });
 
                 suggestionDiv.addEventListener('click', function() {
                     const currentValue = emailInput.value.trim();
                     emailInput.value = currentValue + '@@d360.dom';
-                    suggestionDiv.style.display = 'none';
+                    suggestionDiv.classList.remove('is-visible');
                     emailInput.focus();
                 });
             }
         })();
+
+        // Cascading dropdowns
+        (function() {
+            const moleculeSelect = document.getElementById('MoleculeId');
+            const companySelect = document.getElementById('CompanyId');
+            const jobTypeSelect = document.getElementById('JobTypeId');
+            const companyLoading = document.getElementById('companyLoading');
+            const jobTypeLoading = document.getElementById('jobTypeLoading');
+            const steps = document.querySelectorAll('.auth-step');
+
+            if (!moleculeSelect || !companySelect) return;
+
+            // Update step indicators
+            function updateSteps(currentStep) {
+                steps.forEach((step, index) => {
+                    const stepNum = index + 1;
+                    step.classList.remove('is-active', 'is-complete');
+                    if (stepNum < currentStep) {
+                        step.classList.add('is-complete');
+                    } else if (stepNum === currentStep) {
+                        step.classList.add('is-active');
+                    }
+                });
+            }
+
+            // Track form progress
+            const emailInput = document.getElementById('Email');
+            const displayNameInput = document.getElementById('DisplayName');
+            const passwordInput = document.getElementById('Password');
+
+            function checkAccountProgress() {
+                const hasEmail = emailInput && emailInput.value.includes('@@');
+                const hasName = displayNameInput && displayNameInput.value.length >= 2;
+                const hasPassword = passwordInput && passwordInput.value.length >= 6;
+
+                if (hasEmail && hasName && hasPassword) {
+                    updateSteps(2);
+                } else {
+                    updateSteps(1);
+                }
+            }
+
+            if (emailInput) emailInput.addEventListener('input', checkAccountProgress);
+            if (displayNameInput) displayNameInput.addEventListener('input', checkAccountProgress);
+            if (passwordInput) passwordInput.addEventListener('input', checkAccountProgress);
+
+            // Molecule change -> Load companies and job types
+            moleculeSelect.addEventListener('change', async function() {
+                const moleculeId = this.value;
+
+                // Reset dependent dropdowns
+                companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"]</option>';
+                companySelect.disabled = true;
+
+                if (jobTypeSelect) {
+                    jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>';
+                    jobTypeSelect.disabled = true;
+                }
+
+                if (!moleculeId) {
+                    updateSteps(2);
+                    return;
+                }
+
+                // Fetch companies
+                companyLoading.style.display = 'block';
+                try {
+                    const response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId);
+                    const data = await response.json();
+
+                    if (data.companies && data.companies.length > 0) {
+                        companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"]</option>';
+                        data.companies.forEach(company => {
+                            const option = document.createElement('option');
+                            option.value = company.id;
+                            option.textContent = company.name;
+                            companySelect.appendChild(option);
+                        });
+                        companySelect.disabled = false;
+                    } else {
+                        companySelect.innerHTML = '<option value="">@Localizer["Auth_NoCompaniesAvailable"]</option>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching companies:', error);
+                    companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"]</option>';
+                } finally {
+                    companyLoading.style.display = 'none';
+                }
+
+                // Fetch job types
+                if (jobTypeSelect) {
+                    jobTypeLoading.style.display = 'block';
+                    try {
+                        const response = await fetch('/Api/Signup/GetSignupOptions?handler=JobTypes&moleculeId=' + moleculeId);
+                        const data = await response.json();
+
+                        if (data.jobTypes && data.jobTypes.length > 0) {
+                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_SelectJobType"]</option>';
+                            data.jobTypes.forEach(jobType => {
+                                const option = document.createElement('option');
+                                option.value = jobType.id;
+                                option.textContent = jobType.name;
+                                if (jobType.color) {
+                                    option.style.color = jobType.color;
+                                }
+                                jobTypeSelect.appendChild(option);
+                            });
+                            jobTypeSelect.disabled = false;
+                        } else {
+                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_NoJobTypesAvailable"]</option>';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching job types:', error);
+                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"]</option>';
+                    } finally {
+                        jobTypeLoading.style.display = 'none';
+                    }
+                }
+
+                updateSteps(2);
+            });
+
+            // Company change -> Update step indicator
+            companySelect.addEventListener('change', function() {
+                if (this.value) {
+                    updateSteps(3);
+                } else {
+                    updateSteps(2);
+                }
+            });
+        })();
     </script>
-}
+</body>
+</html>

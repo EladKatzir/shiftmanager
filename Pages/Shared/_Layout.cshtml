@@ -165,21 +165,23 @@
         document.documentElement.classList.add('sidebar-no-transition');
         
         // Remove no-transition class after first paint
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                // Use requestAnimationFrame to ensure we're after first paint
-                requestAnimationFrame(function() {
-                    requestAnimationFrame(function() {
-                        document.documentElement.classList.remove('sidebar-no-transition');
-                    });
-                });
-            });
-        } else {
+        // Remove no-transition class after layout is stable
+        // Use a small delay + RAF to ensure all CSS has been applied
+        var enableTransitions = function() {
             requestAnimationFrame(function() {
                 requestAnimationFrame(function() {
-                    document.documentElement.classList.remove('sidebar-no-transition');
+                    // Additional 50ms delay for complex pages
+                    setTimeout(function() {
+                        document.documentElement.classList.remove('sidebar-no-transition');
+                    }, 50);
                 });
             });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', enableTransitions);
+        } else {
+            enableTransitions();
         }
     })();
     </script>
@@ -252,7 +254,7 @@
     <a href="#main-content" class="skip-link">@(isHebrew ? "דלג לתוכן הראשי" : "Skip to main content")</a>
 
     @* B-015: Brand Loading Animation - Shows during initial page load *@
-    <div class="page-loader" id="pageLoader" role="status" loc-aria-label="Aria_LoadingPage">
+    <div class="page-loader page-loader--pending" id="pageLoader" role="status" loc-aria-label="Aria_LoadingPage">
         <div class="page-loader__brand">
             <div class="page-loader__logo">
                 <img src="~/images/shifty-logo.svg" alt="" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
@@ -264,13 +266,39 @@
         <span class="page-loader__text">@(isHebrew ? "טוען..." : "Loading...")</span>
     </div>
     <script>
-    // B-015: Hide loader when DOM is ready or after 5s timeout
+    // B-015: Smart page loader - shows only for slow page loads (>150ms)
     (function() {
         'use strict';
         var loader = document.getElementById('pageLoader');
         if (!loader) return;
 
+        var isShowing = false;
+        var showTimer = null;
+        var SHOW_DELAY = 150; // Only show loader if page takes longer than this
+
+        var showLoader = function() {
+            if (!isShowing && loader.classList.contains('page-loader--pending')) {
+                loader.classList.remove('page-loader--pending');
+                isShowing = true;
+            }
+        };
+
         var hideLoader = function() {
+            // Cancel any pending show timer
+            if (showTimer) {
+                clearTimeout(showTimer);
+                showTimer = null;
+            }
+
+            // If never shown, just remove it immediately (fast page load)
+            if (!isShowing) {
+                if (loader.parentNode) {
+                    loader.parentNode.removeChild(loader);
+                }
+                return;
+            }
+
+            // If already showing, fade out
             if (!loader.classList.contains('is-hidden')) {
                 loader.classList.add('is-hidden');
                 // Remove from DOM after transition completes
@@ -281,6 +309,9 @@
                 }, 350);
             }
         };
+
+        // Schedule showing the loader after SHOW_DELAY
+        showTimer = setTimeout(showLoader, SHOW_DELAY);
 
         // Hide when DOM is interactive/complete
         if (document.readyState === 'loading') {
@@ -304,16 +335,16 @@
         @* Sidebar Navigation - UI Overhaul v3.0 *@
         <aside class="app-sidebar" id="appSidebar">
             @* Brand Section *@
-            <div class="sidebar-brand">
+            <a href="/Home" class="sidebar-brand">
                 <div class="sidebar-brand__logo">
-                    <img src="~/images/shifty-logo.svg" alt="Shifty" width="32" height="32" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                    <span class="sidebar-brand__logo-fallback" style="display:none; font-size:24px;">📊</span>
+                    <img src="~/images/shifty-logo.svg" alt="Shifty" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <span class="sidebar-brand__logo-fallback" style="display:none; font-size:28px;">📊</span>
                 </div>
                 <div class="sidebar-brand__text">
                     <span class="sidebar-brand__name">SHIFTY</span>
                     <span class="sidebar-brand__tagline"><loc key="ShiftManager" /></span>
                 </div>
-            </div>
+            </a>
 
             @* Context Switcher - Only shown if user has multiple contexts *@
             @await Component.InvokeAsync("ContextSwitcher")
@@ -395,7 +426,8 @@
                     </a>
                     </require-grant>
 
-                    <require-grant key="AdminAccess" mode="any">
+                    @* Admin Hub - Show for Managers/Directors who don't have Owner-level access *@
+                    <require-grant key="AdminAccess" negate="true">
                     <a href="/Admin/Index" class="app-sidebar-nav-item @(currentPath == "/Admin/Index" || currentPath == "/Admin" ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🎛️</span>
                         <span>Admin Hub</span>
@@ -403,7 +435,7 @@
                     </require-grant>
 
                     <require-grant key="ViewSettings">
-                    <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/ShiftTypes") ? "active" : "")">
+                    <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">⚙️</span>
                         <span><loc key="Settings" /></span>
                     </a>
@@ -484,25 +516,36 @@
                 }
             </nav>
 
-            @* On-Call Widget (in sidebar for quick access) *@
-            @if (User?.Identity?.IsAuthenticated == true)
-            {
-                <div class="sidebar-widget-container">
-                    @await Component.InvokeAsync("OnCallWidget", new { showInSidebar = true })
-                </div>
-            }
+            @* On-Call Widget moved to Bottom Dock (Sprint 6) *@
 
             @* Sidebar Footer *@
             <div class="sidebar-footer">
                 @if (User?.Identity?.IsAuthenticated == true)
                 {
-                    <div class="sidebar-user" tabindex="0" role="button" aria-haspopup="menu">
-                        <div class="sidebar-user__avatar">@firstName.Substring(0, 1).ToUpper()</div>
-                        <div class="sidebar-user__info">
-                            <div class="sidebar-user__name">@firstName</div>
-                            <div class="sidebar-user__role">@role</div>
+                    <div class="sidebar-user-container">
+                        <div class="sidebar-user" tabindex="0" role="button" aria-haspopup="menu" aria-expanded="false" id="sidebarUserMenuTrigger">
+                            <div class="sidebar-user__avatar">@firstName.Substring(0, 1).ToUpper()</div>
+                            <div class="sidebar-user__info">
+                                <div class="sidebar-user__name">@firstName</div>
+                                <div class="sidebar-user__role">@role</div>
+                            </div>
+                            <span class="sidebar-user__menu-icon">▼</span>
                         </div>
-                        <span class="sidebar-user__menu-icon">▼</span>
+                        <div class="sidebar-user-menu" role="menu" aria-labelledby="sidebarUserMenuTrigger" id="sidebarUserMenu">
+                            <a href="/My/Profile" class="sidebar-user-menu__item" role="menuitem">
+                                <span class="sidebar-user-menu__icon">👤</span>
+                                <span><loc key="UserMenu_Profile" /></span>
+                            </a>
+                            <a href="/My/Settings" class="sidebar-user-menu__item" role="menuitem">
+                                <span class="sidebar-user-menu__icon">⚙️</span>
+                                <span><loc key="UserMenu_Settings" /></span>
+                            </a>
+                            <div class="sidebar-user-menu__divider"></div>
+                            <a href="/Auth/Logout" class="sidebar-user-menu__item sidebar-user-menu__item--danger" role="menuitem">
+                                <span class="sidebar-user-menu__icon">🚪</span>
+                                <span><loc key="Logout" /></span>
+                            </a>
+                        </div>
                     </div>
 
                     @* Ctrl+K shortcut hint *@
@@ -612,6 +655,25 @@
             <main class="app-content" id="main-content" tabindex="-1">
                 @RenderBody()
             </main>
+
+            @* Bottom Dock Panel *@
+            @if (User?.Identity?.IsAuthenticated == true)
+            {
+                <div class="bottom-dock" id="bottomDock">
+                    <button class="bottom-dock__toggle"
+                            id="bottomDockToggle"
+                            type="button"
+                            aria-expanded="true"
+                            aria-controls="bottomDockContent"
+                            title="@Localizer["BottomDock_Toggle"]">
+                        <span class="bottom-dock__toggle-icon">▼</span>
+                        <loc key="Widget_QuickInfo" />
+                    </button>
+                    <div class="bottom-dock__content" id="bottomDockContent">
+                        @await Component.InvokeAsync("OnCallWidget", new { showInSidebar = false })
+                    </div>
+                </div>
+            }
         </div>
     </div>
 
@@ -783,6 +845,41 @@
                 category.classList.add('is-collapsed');
                 var header = category.querySelector('.nav-category__header');
                 if (header) header.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
+    </script>
+
+    @* Bottom Dock Toggle Script *@
+    <script>
+    (function() {
+        'use strict';
+        var DOCK_COLLAPSED_KEY = 'shifty_bottom_dock_collapsed';
+        var dock = document.getElementById('bottomDock');
+        var dockToggle = document.getElementById('bottomDockToggle');
+
+        if (!dock || !dockToggle) return;
+
+        // Restore collapsed state
+        var savedState = localStorage.getItem(DOCK_COLLAPSED_KEY);
+        if (savedState === 'true') {
+            dock.classList.add('is-collapsed');
+            dockToggle.setAttribute('aria-expanded', 'false');
+        }
+
+        // Toggle handler
+        dockToggle.addEventListener('click', function() {
+            var isCollapsed = dock.classList.toggle('is-collapsed');
+            dockToggle.setAttribute('aria-expanded', !isCollapsed);
+            localStorage.setItem(DOCK_COLLAPSED_KEY, isCollapsed);
+        });
+
+        // Close on Escape when expanded
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !dock.classList.contains('is-collapsed')) {
+                dock.classList.add('is-collapsed');
+                dockToggle.setAttribute('aria-expanded', 'false');
+                localStorage.setItem(DOCK_COLLAPSED_KEY, 'true');
             }
         });
     })();

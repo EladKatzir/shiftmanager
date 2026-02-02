@@ -1,0 +1,563 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.Hierarchy.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_Hierarchy"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Hierarchy"], IsActive = true }
+})
+
+<div class="hierarchy-container">
+    <div class="page-header">
+        <div class="page-header__main">
+            <h1>
+                <span class="page-icon">🏛️</span>
+                <loc key="Owner_Hierarchy" />
+            </h1>
+            <p class="page-subtitle"><loc key="Owner_Hierarchy_Desc" /></p>
+        </div>
+        <div class="page-header__actions">
+            <button class="btn btn-secondary" onclick="toggleAllNodes()">
+                <loc key="ExpandCollapseAll" />
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-bar">
+        <div class="stat-pill">
+            <span class="stat-pill__icon">📁</span>
+            <span class="stat-pill__value">@Model.TotalProjects</span>
+            <span class="stat-pill__label"><loc key="Projects" /></span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-pill__icon">🗂️</span>
+            <span class="stat-pill__value">@Model.TotalAreas</span>
+            <span class="stat-pill__label"><loc key="Areas" /></span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-pill__icon">⚛️</span>
+            <span class="stat-pill__value">@Model.TotalMolecules</span>
+            <span class="stat-pill__label"><loc key="Molecules" /></span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-pill__icon">🏢</span>
+            <span class="stat-pill__value">@Model.TotalCompanies</span>
+            <span class="stat-pill__label"><loc key="Companies" /></span>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+        <a href="/Admin/Organization/Projects" class="quick-link">
+            <span>📁</span> <loc key="ManageProjects" />
+        </a>
+        <a href="/Admin/Organization/Areas" class="quick-link">
+            <span>🗂️</span> <loc key="ManageAreas" />
+        </a>
+        <a href="/Admin/Organization/Molecules" class="quick-link">
+            <span>⚛️</span> <loc key="ManageMolecules" />
+        </a>
+        <a href="/Admin/Companies" class="quick-link">
+            <span>🏢</span> <loc key="ManageCompanies" />
+        </a>
+    </div>
+
+    <!-- Hierarchy Tree -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2><loc key="HierarchyTree" /></h2>
+        </div>
+
+        @if (Model.HierarchyTree.Any())
+        {
+            <div class="hierarchy-tree">
+                @foreach (var project in Model.HierarchyTree)
+                {
+                    <div class="tree-node tree-node--project">
+                        <div class="tree-item" data-level="project">
+                            @if (project.Areas.Any())
+                            {
+                                <button class="tree-toggle expanded" onclick="toggleNode(this)" aria-label="Toggle">
+                                    <span class="tree-toggle__icon">▶</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="tree-spacer"></span>
+                            }
+                            <span class="tree-badge tree-badge--project">P</span>
+                            <span class="tree-label">@project.Name</span>
+                            <span class="tree-count">@project.Areas.Count <loc key="areas" /></span>
+                            @if (!project.IsActive)
+                            {
+                                <span class="status-badge status-badge--inactive"><loc key="Inactive" /></span>
+                            }
+                            <a href="/Admin/Organization/Projects?edit=@project.Id" class="tree-action" title="@Localizer["Edit"]">✏️</a>
+                        </div>
+
+                        @if (project.Areas.Any())
+                        {
+                            <div class="tree-children expanded">
+                                @foreach (var area in project.Areas)
+                                {
+                                    <div class="tree-node tree-node--area">
+                                        <div class="tree-item" data-level="area">
+                                            @if (area.Molecules.Any())
+                                            {
+                                                <button class="tree-toggle" onclick="toggleNode(this)" aria-label="Toggle">
+                                                    <span class="tree-toggle__icon">▶</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="tree-spacer"></span>
+                                            }
+                                            <span class="tree-badge tree-badge--area">A</span>
+                                            <span class="tree-label">@area.Name</span>
+                                            <span class="tree-count">@area.Molecules.Count <loc key="molecules" /></span>
+                                            @if (!area.IsActive)
+                                            {
+                                                <span class="status-badge status-badge--inactive"><loc key="Inactive" /></span>
+                                            }
+                                            <a href="/Admin/Organization/Areas?edit=@area.Id" class="tree-action" title="@Localizer["Edit"]">✏️</a>
+                                        </div>
+
+                                        @if (area.Molecules.Any())
+                                        {
+                                            <div class="tree-children">
+                                                @foreach (var molecule in area.Molecules)
+                                                {
+                                                    <div class="tree-node tree-node--molecule">
+                                                        <div class="tree-item" data-level="molecule">
+                                                            <span class="tree-spacer"></span>
+                                                            <span class="tree-badge tree-badge--molecule">M</span>
+                                                            <span class="tree-label">@molecule.Name</span>
+                                                            <span class="type-badge @IndexModel.GetMoleculeTypeClass(molecule.Type)">
+                                                                @Model.GetMoleculeTypeDisplay(molecule.Type)
+                                                            </span>
+                                                            @if (molecule.CompanyCount > 0)
+                                                            {
+                                                                <span class="tree-count">@molecule.CompanyCount 🏢</span>
+                                                            }
+                                                            @if (!molecule.IsActive)
+                                                            {
+                                                                <span class="status-badge status-badge--inactive"><loc key="Inactive" /></span>
+                                                            }
+                                                            <a href="/Admin/Organization/Molecules?edit=@molecule.Id" class="tree-action" title="@Localizer["Edit"]">✏️</a>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state__icon">🏗️</div>
+                <p><loc key="NoProjectsYet" /></p>
+                <a href="/Admin/Organization/Projects" class="btn btn-primary">
+                    <loc key="CreateFirstProject" />
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+function toggleNode(button) {
+    const treeItem = button.closest('.tree-item');
+    const treeNode = treeItem.closest('.tree-node');
+    const children = treeNode.querySelector(':scope > .tree-children');
+
+    if (children) {
+        const isExpanded = children.classList.contains('expanded');
+        children.classList.toggle('expanded');
+        button.classList.toggle('expanded', !isExpanded);
+    }
+}
+
+function toggleAllNodes() {
+    const allChildren = document.querySelectorAll('.tree-children');
+    const allButtons = document.querySelectorAll('.tree-toggle');
+
+    // Check if most are expanded
+    const expandedCount = document.querySelectorAll('.tree-children.expanded').length;
+    const shouldExpand = expandedCount < allChildren.length / 2;
+
+    allChildren.forEach(child => {
+        child.classList.toggle('expanded', shouldExpand);
+    });
+
+    allButtons.forEach(btn => {
+        btn.classList.toggle('expanded', shouldExpand);
+    });
+}
+
+// Expand first level by default
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.hierarchy-tree > .tree-node > .tree-children').forEach(child => {
+        child.classList.add('expanded');
+    });
+    document.querySelectorAll('.hierarchy-tree > .tree-node > .tree-item > .tree-toggle').forEach(btn => {
+        btn.classList.add('expanded');
+    });
+});
+</script>
+
+<style>
+.hierarchy-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.page-icon {
+    font-size: 2.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+}
+
+.stat-pill__icon {
+    font-size: 1rem;
+}
+
+.stat-pill__value {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-pill__label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.quick-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.quick-link:hover {
+    background: var(--primary);
+    color: var(--primary-contrast);
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    border: 1px solid var(--border);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-color: var(--primary);
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Hierarchy Tree */
+.hierarchy-tree {
+    font-size: 0.9375rem;
+}
+
+.tree-node {
+    position: relative;
+}
+
+.tree-node--project {
+    margin-bottom: 0.5rem;
+}
+
+.tree-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+
+.tree-item:hover {
+    background: var(--surface-soft);
+}
+
+.tree-toggle {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.tree-toggle:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+}
+
+.tree-toggle__icon {
+    font-size: 0.625rem;
+    transition: transform 0.2s;
+}
+
+.tree-toggle.expanded .tree-toggle__icon {
+    transform: rotate(90deg);
+}
+
+.tree-spacer {
+    width: 24px;
+    flex-shrink: 0;
+}
+
+.tree-badge {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.tree-badge--project {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.tree-badge--area {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.tree-badge--molecule {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.tree-label {
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+}
+
+.tree-count {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.type-badge {
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-workforce {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.type-tech {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.type-helper {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.status-badge {
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge--inactive {
+    background: var(--surface-soft);
+    color: var(--text-muted);
+}
+
+.tree-action {
+    opacity: 0;
+    padding: 0.25rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.tree-item:hover .tree-action {
+    opacity: 1;
+}
+
+.tree-action:hover {
+    background: var(--surface-soft);
+}
+
+.tree-children {
+    display: none;
+    margin-left: 2rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border);
+}
+
+.tree-children.expanded {
+    display: block;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-state__icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+@@media (max-width: 768px) {
+    .hierarchy-container {
+        padding: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .stats-bar {
+        flex-wrap: wrap;
+    }
+
+    .tree-children {
+        margin-left: 1rem;
+        padding-left: 0.5rem;
+    }
+}
+</style>

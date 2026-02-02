@@ -56,17 +56,12 @@
         </div>
     </div>
 
-    @* Admin Tools *@
+    @* Operations Section - Organizational Structure *@
+    <h2 class="section-title">
+        <span class="section-icon">🏢</span>
+        <loc key="Owner_Section_Operations">Operations</loc>
+    </h2>
     <div class="admin-tools-grid">
-        <a href="/Owner/FeatureFlags" class="admin-tool-card">
-            <div class="tool-icon">🚩</div>
-            <div class="tool-content">
-                <h3><loc key="Owner_FeatureFlags" /></h3>
-                <p><loc key="Owner_FeatureFlags_Desc" /></p>
-            </div>
-            <div class="tool-arrow">→</div>
-        </a>
-
         <a href="/Admin/Companies" class="admin-tool-card">
             <div class="tool-icon">🏢</div>
             <div class="tool-content">
@@ -85,11 +80,72 @@
             <div class="tool-arrow">→</div>
         </a>
 
-        <a href="/Owner/DatabaseConsole" class="admin-tool-card">
-            <div class="tool-icon">💾</div>
+        <a href="/Admin/Organization/JobTypes" class="admin-tool-card">
+            <div class="tool-icon">💼</div>
             <div class="tool-content">
-                <h3><loc key="Owner_DatabaseConsole" /></h3>
-                <p><loc key="Owner_DatabaseConsole_Desc" /></p>
+                <h3><loc key="Owner_JobTypes" /></h3>
+                <p><loc key="Owner_JobTypes_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Admin/Organization/Hierarchy" class="admin-tool-card">
+            <div class="tool-icon">🏛️</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_Hierarchy" /></h3>
+                <p><loc key="Owner_Hierarchy_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Owner/AreaConfig" class="admin-tool-card">
+            <div class="tool-icon">🏪</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_AreaConfig" /></h3>
+                <p><loc key="Owner_AreaConfig_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Owner/Permissions" class="admin-tool-card">
+            <div class="tool-icon">🔐</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_Permissions" /></h3>
+                <p><loc key="Owner_Permissions_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Owner/MasterPrograms" class="admin-tool-card">
+            <div class="tool-icon">🎯</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_MasterPrograms">Master Programs</loc></h3>
+                <p><loc key="Owner_MasterPrograms_Desc">Advanced program configuration</loc></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
+        <a href="/Admin/AuditLog" class="admin-tool-card">
+            <div class="tool-icon">🔍</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_SecurityAudit" /></h3>
+                <p><loc key="Owner_SecurityAudit_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+    </div>
+
+    @* Infrastructure Section - System Configuration *@
+    <h2 class="section-title">
+        <span class="section-icon">⚙️</span>
+        <loc key="Owner_Section_Infrastructure">Infrastructure</loc>
+    </h2>
+    <div class="admin-tools-grid">
+        <a href="/Owner/FeatureFlags" class="admin-tool-card">
+            <div class="tool-icon">🚩</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_FeatureFlags" /></h3>
+                <p><loc key="Owner_FeatureFlags_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -121,20 +177,20 @@
             <div class="tool-arrow">→</div>
         </a>
 
+        <a href="/Owner/DatabaseConsole" class="admin-tool-card">
+            <div class="tool-icon">💾</div>
+            <div class="tool-content">
+                <h3><loc key="Owner_DatabaseConsole" /></h3>
+                <p><loc key="Owner_DatabaseConsole_Desc" /></p>
+            </div>
+            <div class="tool-arrow">→</div>
+        </a>
+
         <a href="/Owner/Backup" class="admin-tool-card">
             <div class="tool-icon">💼</div>
             <div class="tool-content">
                 <h3><loc key="Owner_Backup" /></h3>
                 <p><loc key="Owner_Backup_Desc" /></p>
-            </div>
-            <div class="tool-arrow">→</div>
-        </a>
-
-        <a href="/Owner/GameConfig" class="admin-tool-card">
-            <div class="tool-icon">🎮</div>
-            <div class="tool-content">
-                <h3><loc key="Owner_GameConfig" /></h3>
-                <p><loc key="Owner_GameConfig_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -148,11 +204,11 @@
             <div class="tool-arrow">→</div>
         </a>
 
-        <a href="/Admin/AuditLog" class="admin-tool-card">
-            <div class="tool-icon">🔍</div>
+        <a href="/Owner/GameConfig" class="admin-tool-card">
+            <div class="tool-icon">🎮</div>
             <div class="tool-content">
-                <h3><loc key="Owner_SecurityAudit" /></h3>
-                <p><loc key="Owner_SecurityAudit_Desc" /></p>
+                <h3><loc key="Owner_GameConfig" /></h3>
+                <p><loc key="Owner_GameConfig_Desc" /></p>
             </div>
             <div class="tool-arrow">→</div>
         </a>
@@ -202,6 +258,19 @@
 .page-subtitle {
     color: var(--muted);
     margin: 0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0 1rem 0;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+
+.section-icon {
+    font-size: 1.5rem;
 }
 
 .stats-grid {

@@ -430,6 +430,117 @@ select.form-field__input {
   border-top: 1px solid var(--border);
 }
 
+/* Dashboard Cards - Enhanced hover effects */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: var(--text-heading);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.card-body {
+  flex: 1;
+}
+
+/* Metric Cards for Dashboard */
+.card--metric {
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.card--metric::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+  transition: transform var(--duration-normal) var(--ease-out);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.card--metric:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card--metric:hover::before {
+  transform: scaleX(1);
+}
+
+/* Status variants for metric cards */
+.card--status-success::before {
+  background: var(--success);
+  transform: scaleX(1);
+}
+
+.card--status-warning::before {
+  background: var(--warning);
+  transform: scaleX(1);
+}
+
+.card--status-danger::before {
+  background: var(--danger);
+  transform: scaleX(1);
+}
+
+/* Home Dashboard Styles */
+.home-dashboard {
+  max-width: 1400px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+}
+
+.dashboard-section {
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-section h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-title);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+}
+
+/* Page Header Enhancement */
+.page-header {
+  margin-bottom: var(--space-6);
+}
+
+.page-header .page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 var(--space-2);
+  line-height: 1.2;
+}
+
+.page-header .page-subtitle {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  margin: 0;
+}
+
 /* ========================================
    4. BADGES
    ======================================== */
@@ -3125,6 +3236,13 @@ picture img {
   background-color: var(--bg, #0F1419);
 }
 
+/* Pending state - loader not yet visible, waiting for show delay */
+.page-loader.page-loader--pending {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Hidden state */
 .page-loader.is-hidden {
   opacity: 0;
@@ -3273,5 +3391,167 @@ picture img {
 @media print {
   .page-loader {
     display: none !important;
+  }
+}
+
+/* ========================================
+   BOTTOM DOCK PANEL (Sprint 6)
+   Widget dock fixed at the bottom of the viewport
+   ======================================== */
+
+.bottom-dock {
+  position: fixed;
+  bottom: 0;
+  right: var(--space-4);
+  z-index: var(--z-fixed);
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.bottom-dock.is-collapsed {
+  transform: translateY(calc(100% - 44px));
+}
+
+.bottom-dock__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: var(--primary-contrast);
+  border: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.bottom-dock__toggle:hover {
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+}
+
+.bottom-dock__toggle:focus-visible {
+  outline: 2px solid var(--primary-contrast);
+  outline-offset: -2px;
+}
+
+.bottom-dock__toggle-icon {
+  display: inline-block;
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.bottom-dock.is-collapsed .bottom-dock__toggle-icon {
+  transform: rotate(180deg);
+}
+
+.bottom-dock__content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 0 var(--radius-lg);
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Remove sidebar-specific styling when widget is in dock */
+.bottom-dock .widget.sidebar-widget {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.bottom-dock .widget__header {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.bottom-dock .widget__body {
+  padding: var(--space-2);
+}
+
+.bottom-dock .oncall-contact {
+  padding: var(--space-3);
+  margin: var(--space-2);
+  background: var(--surface-soft);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.bottom-dock .oncall-contact:hover {
+  background: var(--surface-elevated);
+}
+
+/* Responsive: On mobile, take full width */
+@media (max-width: 640px) {
+  .bottom-dock {
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .bottom-dock__toggle {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .bottom-dock__content {
+    border-radius: 0;
+    max-height: 50vh;
+  }
+}
+
+/* Hide dock when sidebar is wide enough on large screens */
+@media (min-width: 1200px) {
+  .bottom-dock {
+    right: var(--space-6);
+  }
+}
+
+/* RTL support */
+[dir="rtl"] .bottom-dock {
+  right: auto;
+  left: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  [dir="rtl"] .bottom-dock {
+    left: 0;
+    right: 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  [dir="rtl"] .bottom-dock {
+    left: var(--space-6);
+    right: auto;
+  }
+}
+
+/* ========================================
+   29. CALENDAR PAGE BOTTOM PADDING
+   Prevents bottom dock from overlapping content
+   ======================================== */
+
+.app-content:has(.shift-table),
+.app-content:has(.calendar-grid),
+.app-content:has(.week-grid),
+.app-content:has(.day-items-container) {
+  padding-bottom: 100px;
+}
+
+@media (max-width: 640px) {
+  .app-content:has(.shift-table),
+  .app-content:has(.calendar-grid),
+  .app-content:has(.week-grid),
+  .app-content:has(.day-items-container) {
+    padding-bottom: 120px;
   }
 }

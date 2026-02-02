@@ -64,8 +64,11 @@ public class DirectorsModel : PageModel
             .Where(c => companyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id);
 
-        // Project to VM
+        // Project to VM - use safe access to avoid KeyNotFoundException when user/company deleted
         Assignments = directorCompanies
+            .Where(dc => users.ContainsKey(dc.UserId) &&
+                         companies.ContainsKey(dc.CompanyId) &&
+                         users.ContainsKey(dc.GrantedBy))
             .Select(dc => new DirectorAssignmentVM(
                 dc.Id,
                 users[dc.UserId].DisplayName,

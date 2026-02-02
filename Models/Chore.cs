@@ -13,6 +13,12 @@ public class Chore : IBelongsToCompany
     public int CompanyId { get; set; }
 
     /// <summary>
+    /// The molecule this chore belongs to (for scoping).
+    /// Nullable for legacy chores created before molecule scoping was added.
+    /// </summary>
+    public int? MoleculeId { get; set; }
+
+    /// <summary>
     /// The user assigned to this chore
     /// </summary>
     public int UserId { get; set; }
@@ -54,6 +60,7 @@ public class Chore : IBelongsToCompany
 
     // Navigation properties
     public Company? Company { get; set; }
+    public Molecule? Molecule { get; set; }
     public AppUser? User { get; set; }
     public AppUser? Creator { get; set; }
     public AppUser? Canceler { get; set; }

@@ -43,11 +43,72 @@ document.addEventListener('DOMContentLoaded', function() {
     console.warn('Theme toggle button not found');
   }
 
+  // Sidebar User Menu
+  const userMenuTrigger = document.getElementById('sidebarUserMenuTrigger');
+  const userMenu = document.getElementById('sidebarUserMenu');
+
+  if (userMenuTrigger && userMenu) {
+    const toggleUserMenu = (show) => {
+      const isOpen = show !== undefined ? show : !userMenu.classList.contains('is-open');
+      userMenu.classList.toggle('is-open', isOpen);
+      userMenuTrigger.setAttribute('aria-expanded', String(isOpen));
+    };
+
+    // Toggle on click
+    userMenuTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleUserMenu();
+    });
+
+    // Toggle on Enter/Space
+    userMenuTrigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleUserMenu();
+      } else if (e.key === 'Escape') {
+        toggleUserMenu(false);
+      }
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!userMenuTrigger.contains(e.target) && !userMenu.contains(e.target)) {
+        toggleUserMenu(false);
+      }
+    });
+
+    // Close on Escape from within menu
+    userMenu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        toggleUserMenu(false);
+        userMenuTrigger.focus();
+      }
+    });
+
+    // Keyboard navigation within menu
+    userMenu.addEventListener('keydown', (e) => {
+      const items = userMenu.querySelectorAll('.sidebar-user-menu__item');
+      const currentIndex = Array.from(items).indexOf(document.activeElement);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        items[nextIndex].focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        items[prevIndex].focus();
+      }
+    });
+
+    console.log('Sidebar user menu initialized');
+  }
+
   // Easter egg: Shift Swap game (Ctrl+Click on .brand)
   // Using event delegation to catch clicks anywhere within .brand
   document.addEventListener('click', async function(e) {
     // Check if the click (or any parent of the clicked element) is within .brand
-    const brandElement = e.target.closest('.brand');
+    const brandElement = e.target.closest('.brand, .sidebar-brand, .page-loader__brand');
 
     // If not clicking within .brand area, ignore
     if (!brandElement) return;

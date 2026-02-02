@@ -228,6 +228,20 @@
             background: var(--danger-hover);
         }
 
+        .btn:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn:focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         .btn-sm {
             padding: 0.3rem 0.6rem;
             font-size: 0.8125rem;
@@ -236,6 +250,97 @@
         .btn-group {
             display: flex;
             gap: 0.5rem;
+        }
+
+        /* Editable Cell */
+        .editable-cell {
+            position: relative;
+        }
+
+        .cell-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cell-display__value {
+            font-weight: 500;
+        }
+
+        .cell-display__edit-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            transition: all 0.15s ease;
+        }
+
+        .editable-cell:hover .cell-display__edit-btn,
+        .cell-display__edit-btn:focus {
+            opacity: 1;
+            background: var(--surface-soft);
+            border-color: var(--border);
+        }
+
+        .cell-edit {
+            display: none;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .cell-edit.is-active {
+            display: flex;
+        }
+
+        .cell-display.is-hidden {
+            display: none;
+        }
+
+        .cell-edit__select {
+            min-width: 100px;
+            padding: 0.375rem 0.5rem;
+            font-size: 0.8125rem;
+        }
+
+        .cell-edit__btn {
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cell-edit__btn--save {
+            background: var(--success);
+            color: var(--success-text);
+            border: 1px solid var(--success);
+        }
+
+        .cell-edit__btn--save:hover {
+            background: var(--success-hover);
+        }
+
+        .cell-edit__btn--cancel {
+            background: var(--surface-soft);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .cell-edit__btn--cancel:hover {
+            background: var(--surface-elevated);
         }
 
         /* Form Elements */
@@ -380,8 +485,8 @@
     <form method="get">
         <div class="filters-grid">
             <div class="filter-group">
-                <label>@Localizer["Status"]</label>
-                <select class="filter-select" name="FilterStatus" onchange="this.form.submit()">
+                <label for="filterStatus">@Localizer["Status"]</label>
+                <select class="filter-select" name="FilterStatus" id="filterStatus" onchange="this.form.submit()">
                     <option value="0" selected="@(Model.FilterStatus == JoinRequestStatus.Pending)">@Localizer["Pending"]</option>
                     <option value="1" selected="@(Model.FilterStatus == JoinRequestStatus.Approved)">@Localizer["Approved"]</option>
                     <option value="2" selected="@(Model.FilterStatus == JoinRequestStatus.Rejected)">@Localizer["Rejected"]</option>
@@ -389,8 +494,8 @@
             </div>
 
             <div class="filter-group">
-                <label>@Localizer["Company"]</label>
-                <select class="filter-select" name="FilterCompanyId" onchange="this.form.submit()">
+                <label for="filterCompanyId">@Localizer["Company"]</label>
+                <select class="filter-select" name="FilterCompanyId" id="filterCompanyId" onchange="this.form.submit()">
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
@@ -400,8 +505,8 @@
             </div>
 
             <div class="filter-group">
-                <label>@Localizer["Role"]</label>
-                <select class="filter-select" name="FilterRole" onchange="this.form.submit()">
+                <label for="filterRole">@Localizer["Role"]</label>
+                <select class="filter-select" name="FilterRole" id="filterRole" onchange="this.form.submit()">
                     <option value="">@Localizer["AllRoles"]</option>
                     <option value="2" selected="@(Model.FilterRole == UserRole.Employee)">@Localizer["Employee"]</option>
                     <option value="1" selected="@(Model.FilterRole == UserRole.Manager)">@Localizer["Manager"]</option>
@@ -427,13 +532,13 @@
         @if (Model.FilterStatus == JoinRequestStatus.Pending)
         {
             <!-- Batch Approval Bar -->
-            <div class="batch-bar">
+            <div class="batch-bar" role="toolbar" aria-label="@Localizer["BatchActions"]">
                 <div class="batch-bar-left">
-                    <label class="batch-checkbox-label">
-                        <input type="checkbox" id="selectAllRequests" onclick="toggleAllRequests(this)" />
+                    <label class="batch-checkbox-label" for="selectAllRequests">
+                        <input type="checkbox" id="selectAllRequests" onclick="toggleAllRequests(this)" aria-describedby="selectedCount" />
                         <strong>@Localizer["SelectAll"]</strong>
                     </label>
-                    <span id="selectedCount" class="batch-count"></span>
+                    <span id="selectedCount" class="batch-count" aria-live="polite"></span>
                 </div>
                 <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchApprovalForm" style="margin: 0;">
                     @Html.AntiForgeryToken()
@@ -483,13 +588,15 @@
                                 </select>
                             </td>
                             <td>
-                                <div class="btn-group">
+                                <div class="btn-group" role="group" aria-label="@Localizer["Actions"]">
                                     <button class="btn btn-success btn-sm" type="button"
-                                            onclick="approveSingleRequest(@request.Id)">
+                                            onclick="approveSingleRequest(@request.Id)"
+                                            aria-label="@Localizer["Approve"] @request.DisplayName">
                                         ✓
                                     </button>
                                     <button class="btn btn-danger btn-sm" type="button"
-                                            onclick="rejectSingleRequest(@request.Id, '@request.DisplayName')">
+                                            onclick="rejectSingleRequest(@request.Id, '@request.DisplayName')"
+                                            aria-label="@Localizer["Reject"] @request.DisplayName">
                                         ✗
                                     </button>
                                 </div>
@@ -685,19 +792,51 @@
                 </td>
                 <td>@u.Email</td>
                 <td>@u.CompanyName</td>
-                <td>@(u.JobTypeName ?? "-")</td>
+                <td class="editable-cell" data-cell-type="jobtype" data-user-id="@u.Id">
+                    <div class="cell-display">
+                        <span class="cell-display__value">@(u.JobTypeName ?? "-")</span>
+                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["EditJobType"]" aria-label="@Localizer["EditJobType"]">
+                            ⚙️
+                        </button>
+                    </div>
+                    <div class="cell-edit">
+                        <form method="post" asp-page-handler="JobType" style="display:inline; margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <select class="form-input cell-edit__select" name="jobTypeId" data-original-value="@(u.JobTypeId?.ToString() ?? "")">
+                                <option value="" selected="@(!u.JobTypeId.HasValue)">-</option>
+                                @foreach (var jt in Model.AvailableJobTypes)
+                                {
+                                    <option value="@jt.Id" selected="@(u.JobTypeId == jt.Id)">@jt.Name</option>
+                                }
+                            </select>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]">✗</button>
+                        </form>
+                    </div>
+                </td>
                 <td>@(u.DepartmentName ?? "-")</td>
-                <td>
-                    <form method="post" asp-page-handler="Role" style="display:inline; margin: 0;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@u.Id" />
-                    <select class="form-input" name="role" onchange="this.form.submit()" style="min-width: 110px;">
-                    @foreach (var role in Model.AssignableRoles)
-                    {
-                        <option value="@role" selected="@(u.Role == role.ToString())">@Localizer[role.ToString()]</option>
-                    }
-                    </select>
-                    </form>
+                <td class="editable-cell" data-cell-type="role" data-user-id="@u.Id">
+                    <div class="cell-display">
+                        <span class="cell-display__value">@Localizer[u.Role]</span>
+                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["EditRole"]" aria-label="@Localizer["EditRole"]">
+                            ⚙️
+                        </button>
+                    </div>
+                    <div class="cell-edit">
+                        <form method="post" asp-page-handler="Role" style="display:inline; margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <select class="form-input cell-edit__select" name="role" data-original-value="@u.Role">
+                                @foreach (var role in Model.AssignableRoles)
+                                {
+                                    <option value="@role" selected="@(u.Role == role.ToString())">@Localizer[role.ToString()]</option>
+                                }
+                            </select>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]">✗</button>
+                        </form>
+                    </div>
                 </td>
                 <td>
                     @if (u.GrantsCount > 0)
@@ -846,6 +985,16 @@
                 </div>
             }
             <div class="filter-group">
+                <label>@Localizer["JobType"]</label>
+                <select asp-for="NewJobTypeId" class="form-input">
+                    <option value="">-- @Localizer["SelectJobType"] --</option>
+                    @foreach (var jobType in Model.AvailableJobTypes)
+                    {
+                        <option value="@jobType.Id">@jobType.AreaName - @jobType.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
                 <label>@Localizer["Password"]</label>
                 <input class="form-input" asp-for="NewPassword" type="password" minlength="6" required />
             </div>
@@ -939,6 +1088,47 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateSelectedCount();
+        });
+
+        // Editable cell functions
+        function enterEditMode(button) {
+            const cell = button.closest('.editable-cell');
+            const display = cell.querySelector('.cell-display');
+            const edit = cell.querySelector('.cell-edit');
+
+            display.classList.add('is-hidden');
+            edit.classList.add('is-active');
+
+            // Focus the select
+            const select = edit.querySelector('select');
+            if (select) select.focus();
+        }
+
+        function exitEditMode(button) {
+            const cell = button.closest('.editable-cell');
+            const display = cell.querySelector('.cell-display');
+            const edit = cell.querySelector('.cell-edit');
+
+            // Revert select to original value
+            const select = edit.querySelector('select');
+            if (select) {
+                const originalValue = select.getAttribute('data-original-value');
+                select.value = originalValue;
+            }
+
+            display.classList.remove('is-hidden');
+            edit.classList.remove('is-active');
+        }
+
+        // Close edit mode on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const activeEdit = document.querySelector('.cell-edit.is-active');
+                if (activeEdit) {
+                    const cancelBtn = activeEdit.querySelector('.cell-edit__btn--cancel');
+                    if (cancelBtn) cancelBtn.click();
+                }
+            }
         });
     </script>
 }

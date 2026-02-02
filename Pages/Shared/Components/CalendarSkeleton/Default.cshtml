@@ -14,19 +14,19 @@
     @switch (Model.ViewType.ToLower())
     {
         case "month":
-            @await Html.PartialAsync("_MonthSkeleton", Model)
+            @await Html.PartialAsync("~/Pages/Shared/Components/CalendarSkeleton/_MonthSkeleton.cshtml", Model)
             break;
         case "week":
-            @await Html.PartialAsync("_WeekSkeleton", Model)
+            @await Html.PartialAsync("~/Pages/Shared/Components/CalendarSkeleton/_WeekSkeleton.cshtml", Model)
             break;
         case "day":
-            @await Html.PartialAsync("_DaySkeleton", Model)
+            @await Html.PartialAsync("~/Pages/Shared/Components/CalendarSkeleton/_DaySkeleton.cshtml", Model)
             break;
         case "table":
-            @await Html.PartialAsync("_TableSkeleton", Model)
+            @await Html.PartialAsync("~/Pages/Shared/Components/CalendarSkeleton/_TableSkeleton.cshtml", Model)
             break;
         default:
-            @await Html.PartialAsync("_MonthSkeleton", Model)
+            @await Html.PartialAsync("~/Pages/Shared/Components/CalendarSkeleton/_MonthSkeleton.cshtml", Model)
             break;
     }
 

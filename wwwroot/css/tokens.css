@@ -185,31 +185,31 @@
   /* Shift Type Colors (Dark Mode Variants) */
   --shift-morning: #F0C14B;
   --shift-morning-soft: #3D3520;
-  --shift-morning-text: #0F1419;
+  --shift-morning-text: #F0C14B;
 
   --shift-afternoon: #8BA078;
   --shift-afternoon-soft: #2A3325;
-  --shift-afternoon-text: #0F1419;
+  --shift-afternoon-text: #A8C296;
 
   --shift-night: #5B9BD5;
   --shift-night-soft: #1A2D42;
-  --shift-night-text: #0F1419;
+  --shift-night-text: #FFFFFF;
 
   --shift-hakam: #CD8B5A;
   --shift-hakam-soft: #332618;
-  --shift-hakam-text: #0F1419;
+  --shift-hakam-text: #E8B88A;
 
   --shift-br: #6B7B8F;
   --shift-br-soft: #2D3748;
-  --shift-br-text: #0F1419;
+  --shift-br-text: #A0B0C0;
 
   --shift-noon: #D4B63F;
   --shift-noon-soft: #3D3520;
-  --shift-noon-text: #0F1419;
+  --shift-noon-text: #F5D76E;
 
   --shift-lead: #FF8A65;
   --shift-lead-soft: #3D2520;
-  --shift-lead-text: #0F1419;
+  --shift-lead-text: #FFB89E;
 
   /* Focus Ring */
   --focus-ring: 0 0 0 3px var(--primary-soft);
@@ -541,31 +541,31 @@ Verified Contrast Ratios (Dark Mode):
     /* Shift Type Colors (Dark Mode Variants) */
     --shift-morning: #F0C14B;
     --shift-morning-soft: #3D3520;
-    --shift-morning-text: #0F1419;
+    --shift-morning-text: #F0C14B;
 
     --shift-afternoon: #8BA078;
     --shift-afternoon-soft: #2A3325;
-    --shift-afternoon-text: #0F1419;
+    --shift-afternoon-text: #A8C296;
 
     --shift-night: #5B9BD5;
     --shift-night-soft: #1A2D42;
-    --shift-night-text: #0F1419;
+    --shift-night-text: #FFFFFF;
 
     --shift-hakam: #CD8B5A;
     --shift-hakam-soft: #332618;
-    --shift-hakam-text: #0F1419;
+    --shift-hakam-text: #E8B88A;
 
     --shift-br: #6B7B8F;
     --shift-br-soft: #2D3748;
-    --shift-br-text: #0F1419;
+    --shift-br-text: #A0B0C0;
 
     --shift-noon: #D4B63F;
     --shift-noon-soft: #3D3520;
-    --shift-noon-text: #0F1419;
+    --shift-noon-text: #F5D76E;
 
     --shift-lead: #FF8A65;
     --shift-lead-soft: #3D2520;
-    --shift-lead-text: #0F1419;
+    --shift-lead-text: #FFB89E;
 
     /* Focus Ring */
     --focus-ring: 0 0 0 3px var(--primary-soft);

@@ -34,6 +34,7 @@ public class ChoresModel : PageModel
     // Display properties
     public int Year { get; set; }
     public int Month { get; set; }
+    public int? MoleculeId { get; set; }
     public List<Chore> Chores { get; set; } = new();
     public List<AppUser> EligibleAssignees { get; set; } = new();
     public Dictionary<DateOnly, List<Chore>> ChoresByDate { get; set; } = new();
@@ -77,11 +78,12 @@ public class ChoresModel : PageModel
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 
-    public async Task<IActionResult> OnGetAsync(int? year = null, int? month = null)
+    public async Task<IActionResult> OnGetAsync(int? year = null, int? month = null, int? moleculeId = null)
     {
         var today = DateTime.UtcNow;
         Year = year ?? today.Year;
         Month = month ?? today.Month;
+        MoleculeId = moleculeId;
 
         // Validate month/year
         if (Month < 1 || Month > 12)
@@ -89,14 +91,15 @@ public class ChoresModel : PageModel
             Month = today.Month;
         }
 
-        // Get chores for the month
+        // Get chores for the month (optionally filtered by molecule)
         var startDate = new DateOnly(Year, Month, 1);
         var endDate = startDate.AddMonths(1).AddDays(-1);
 
         Chores = await _choreService.GetChoresAsync(
             startDate: startDate,
             endDate: endDate,
-            includeCancel: false);
+            includeCancel: false,
+            moleculeId: MoleculeId);
 
         // Group chores by date for calendar display
         ChoresByDate = Chores

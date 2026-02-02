@@ -4,114 +4,207 @@
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
 @{
-    Layout = "_Layout";
+    Layout = null;
 }
 
-@* ✅ PHASE 18: Show JavaScript alert if user was redirected due to auth requirement *@
-@if (Model.ShowAuthPrompt)
-{
-    <script>
-        window.addEventListener('DOMContentLoaded', function() {
-            alert(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseSignInToContinue"].Value)));
-        });
-    </script>
-}
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName" dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Localizer["Login"] - Shift Manager</title>
+    <link rel="stylesheet" href="~/css/tokens.css" />
+    <link rel="stylesheet" href="~/css/auth.css" />
+    <link rel="icon" type="image/svg+xml" href="~/images/shifty-logo.svg" />
+</head>
+<body>
+    <div class="auth-layout">
+        <!-- Hero Panel -->
+        <div class="auth-hero">
+            <!-- Floating decorative elements (hidden from screen readers) -->
+            <span class="auth-hero__float" aria-hidden="true">🗓️</span>
+            <span class="auth-hero__float" aria-hidden="true">⏰</span>
+            <span class="auth-hero__float" aria-hidden="true">👥</span>
+            <span class="auth-hero__float" aria-hidden="true">📊</span>
+            <span class="auth-hero__float" aria-hidden="true">✓</span>
 
-@* Griffin ADFS login option (always visible) *@
-<div style="max-width:420px; margin:auto">
-    <div class="card mb-4">
-        <div class="card-body text-center">
-            <h5 class="card-title"><loc key="LoginWithADFS" /></h5>
-            <p class="text-muted"><loc key="LoginWithADFS_Description" /></p>
-            <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-shield-alt"></i> @Localizer["LoginWithADFS"]
+            <div class="auth-hero__content">
+                <img src="~/images/shifty-logo.svg" alt="Shifty Logo" class="auth-hero__logo" />
+                <h1 class="auth-hero__title">Shift Manager</h1>
+                <p class="auth-hero__tagline"><loc key="Auth_HeroTagline" /></p>
+            </div>
+        </div>
+
+        <!-- Form Panel -->
+        <main class="auth-form-panel" role="main">
+            <!-- Auth Controls (Language + Theme Toggle) -->
+            <div class="auth-controls">
+                <button class="auth-control-btn" id="authLanguageToggle" aria-label="@Localizer["ToggleLanguage"]" title="@Localizer["ToggleLanguage"]">
+                    <span class="auth-control-icon">🌐</span>
+                    <span class="auth-control-text">@(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "he" ? "En" : "עב")</span>
                 </button>
-            </form>
-        </div>
+                <button class="auth-control-btn" id="authThemeToggle" aria-label="@Localizer["ToggleTheme"]" title="@Localizer["ToggleTheme"]">
+                    <span class="auth-control-icon">🌓</span>
+                </button>
+            </div>
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <h1><loc key="Auth_WelcomeBack" /></h1>
+                    <p><loc key="Auth_SignInToContinue" /></p>
+                </div>
+
+                @* Show JavaScript alert if user was redirected due to auth requirement *@
+                @if (Model.ShowAuthPrompt)
+                {
+                    <div class="auth-alert auth-alert--info">
+                        <span class="auth-alert__icon">ℹ️</span>
+                        <div class="auth-alert__content">@Localizer["PleaseSignInToContinue"]</div>
+                    </div>
+                }
+
+                @* Account lockout alert *@
+                @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
+                {
+                    <div class="auth-alert auth-alert--error">
+                        <span class="auth-alert__icon">🔒</span>
+                        <div class="auth-alert__content">
+                            <div class="auth-alert__title">@Localizer["Login_AccountLocked_Title"]</div>
+                            <div id="lockoutMessage">@Localizer["Login_AccountLocked_Message", Model.LockoutMinutesRemaining.Value]</div>
+                        </div>
+                    </div>
+                }
+                @* Warning after 3+ failed attempts *@
+                else if (Model.ShowLockoutWarning && !Model.IsAccountLocked)
+                {
+                    <div class="auth-alert auth-alert--warning">
+                        <span class="auth-alert__icon">⚠️</span>
+                        <div class="auth-alert__content">@Localizer["Login_FailedAttempts_Warning"]</div>
+                    </div>
+                }
+
+                @* Error message *@
+                @if (!string.IsNullOrEmpty(Model.Error))
+                {
+                    <div class="auth-alert auth-alert--error">
+                        <span class="auth-alert__icon">❌</span>
+                        <div class="auth-alert__content">@Model.Error</div>
+                    </div>
+                }
+
+                <!-- ADFS Login Button -->
+                <div class="auth-adfs">
+                    <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
+                        <button type="submit" class="auth-adfs__btn">
+                            <span class="auth-adfs__icon">🛡️</span>
+                            <span><loc key="LoginWithADFS" /></span>
+                        </button>
+                    </form>
+
+                    @if (Model.ShowGriffinUnavailableMessage)
+                    {
+                        <div class="auth-adfs__warning">
+                            <span>⚠️</span>
+                            <span>@Localizer["LoginWithADFS_Unavailable"]</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Divider -->
+                <div class="auth-divider">
+                    <span><loc key="Auth_OrContinueWith" /></span>
+                </div>
+
+                <!-- Login Form -->
+                <form method="post" asp-page="./Login" class="auth-form">
+                    @Html.AntiForgeryToken()
+
+                    <div class="auth-field">
+                        <label class="auth-field__label" for="Email"><loc key="Email" /></label>
+                        <input type="email"
+                               id="Email"
+                               name="Email"
+                               class="auth-field__input"
+                               value="@Model.Email"
+                               placeholder="@Localizer["Auth_EmailPlaceholder"]"
+                               autocomplete="email"
+                               required />
+                        <div id="emailSuggestion" class="auth-field__suggestion"></div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="auth-field__label" for="Password"><loc key="Password" /></label>
+                        <input type="password"
+                               id="Password"
+                               name="Password"
+                               class="auth-field__input"
+                               placeholder="@Localizer["Auth_PasswordPlaceholder"]"
+                               autocomplete="current-password"
+                               required />
+                    </div>
+
+                    <div class="auth-forgot">
+                        <a href="/Auth/ForgotPassword" class="auth-forgot__link">
+                            @Localizer["ForgotPassword"]?
+                        </a>
+                    </div>
+
+                    <button type="submit" class="auth-submit" @(Model.IsAccountLocked ? "disabled" : "")>
+                        <loc key="Login" />
+                    </button>
+                </form>
+
+                <!-- Signup Link -->
+                <div class="auth-secondary">
+                    <a href="/Auth/Signup" class="auth-secondary__link">
+                        <loc key="RequestAccess" />
+                    </a>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div class="text-center mb-3">
-        <span class="text-muted">— OR —</span>
-    </div>
-
-    @if (Model.ShowGriffinUnavailableMessage)
-    {
-        <div class="alert alert-warning" role="alert">
-            <i class="fas fa-exclamation-triangle"></i>
-            @Localizer["LoginWithADFS_Unavailable"]
-        </div>
-    }
-</div>
-
-<div class="card" style="max-width:420px; margin:auto">
-    <h2><loc key="Login" /></h2>
-
-    @* Account lockout countdown timer (when account is locked) *@
-    @if (Model.IsAccountLocked && Model.LockoutMinutesRemaining.HasValue)
-    {
-        <div class="alert alert-danger" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger);">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <span style="font-size: 1.25rem;">🔒</span>
-                <strong>@Localizer["Login_AccountLocked_Title"]</strong>
-            </div>
-            <div id="lockoutMessage">
-                @Localizer["Login_AccountLocked_Message", Model.LockoutMinutesRemaining.Value]
-            </div>
-        </div>
-    }
-    @* Warning after 3+ failed attempts (but not locked yet) *@
-    else if (Model.ShowLockoutWarning && !Model.IsAccountLocked)
-    {
-        <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; padding: 1rem; border-radius: 6px; background: var(--warning-soft); border: 1px solid var(--warning); color: var(--warning);">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 1.25rem;">⚠️</span>
-                <div>@Localizer["Login_FailedAttempts_Warning"]</div>
-            </div>
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="small" style="color:var(--danger)">@Model.Error</div>
-    }
-   <form method="post" asp-page="./Login">
-    @Html.AntiForgeryToken()
-    <div style="display:grid; gap:.75rem; margin-top:.75rem">
-        <label><loc key="Email" /><br /><input class="input" asp-for="Email" />
-        <div id="emailSuggestion" style="display: none;
-             margin-top: 0.25rem;
-             padding: 0.5rem;
-             background: var(--primary-bg);
-             border: 1px solid var(--primary);
-             border-radius: 6px;
-             cursor: pointer;
-             font-size: 0.875rem;
-             color: var(--primary);"></div>
-        </label>
-        <label><loc key="Password" /><br /><input class="input" asp-for="Password" type="password" /></label>
-
-        <div style="text-align: right; margin-top: -0.5rem;">
-            <a href="/Auth/ForgotPassword" style="font-size: 0.875rem; color: var(--primary);">
-                @Localizer["ForgotPassword"]?
-            </a>
-        </div>
-
-        <button class="btn btn-primary" type="submit"><loc key="Login" /></button>
-
-        @* ✅ SUB-PHASE 18.14 REVISED: Request access button below login *@
-        <a href="/Auth/Signup" class="btn btn-secondary" style="margin-top: 0.5rem; text-align: center; width: 100%; display: block;">
-            @Localizer["RequestAccess"]
-        </a>
-    </div>
-</form>
-</div>
-
-@section Scripts {
     <script>
+        // Apply saved theme
+        (function() {
+            const saved = localStorage.getItem('theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
+        // Theme Toggle
+        (function() {
+            const themeToggle = document.getElementById('authThemeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+        })();
+
+        // Language Toggle
+        (function() {
+            const langToggle = document.getElementById('authLanguageToggle');
+            if (langToggle) {
+                langToggle.addEventListener('click', function() {
+                    const currentLang = document.documentElement.lang;
+                    const newLang = currentLang.startsWith('he') ? 'en-US' : 'he-IL';
+                    const expires = new Date();
+                    expires.setFullYear(expires.getFullYear() + 1);
+                    document.cookie = `.AspNetCore.Culture=c=${newLang}|uic=${newLang}; expires=${expires.toUTCString()}; path=/`;
+                    window.location.reload();
+                });
+            }
+        })();
+
         // Email domain suggestion
         (function() {
-            const emailInput = document.querySelector('input[name="Email"]');
+            const emailInput = document.getElementById('Email');
             const suggestionDiv = document.getElementById('emailSuggestion');
             const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
 
@@ -119,19 +212,18 @@
                 emailInput.addEventListener('input', function(e) {
                     const value = e.target.value.trim();
 
-                    // Show suggestion when typing without @@
                     if (value.length > 0 && value.indexOf('@@') === -1) {
                         suggestionDiv.textContent = suggestionText.replace('{0}', value);
-                        suggestionDiv.style.display = 'block';
+                        suggestionDiv.classList.add('is-visible');
                     } else {
-                        suggestionDiv.style.display = 'none';
+                        suggestionDiv.classList.remove('is-visible');
                     }
                 });
 
                 suggestionDiv.addEventListener('click', function() {
                     const currentValue = emailInput.value.trim();
                     emailInput.value = currentValue + '@@d360.dom';
-                    suggestionDiv.style.display = 'none';
+                    suggestionDiv.classList.remove('is-visible');
                     emailInput.focus();
                 });
             }
@@ -146,19 +238,22 @@
             @:    if (!lockoutMessageEl) return;
             @:
             @:    let minutesRemaining = @Model.LockoutMinutesRemaining.Value;
-            @:    const initialText = lockoutMessageEl.textContent;
             @:    const isHebrew = document.documentElement.lang.startsWith('he');
             @:
             @:    const updateCountdown = () => {
             @:        if (minutesRemaining <= 0) {
             @:            const retryMessage = isHebrew ? 'ניתן לנסות להתחבר שוב כעת.' : 'You may try logging in again now.';
             @:            lockoutMessageEl.textContent = retryMessage;
-            @:            lockoutMessageEl.parentElement.style.background = 'var(--success-soft)';
-            @:            lockoutMessageEl.parentElement.style.borderColor = 'var(--success)';
-            @:            lockoutMessageEl.parentElement.style.color = 'var(--success)';
+            @:            const alertEl = lockoutMessageEl.closest('.auth-alert');
+            @:            if (alertEl) {
+            @:                alertEl.classList.remove('auth-alert--error');
+            @:                alertEl.classList.add('auth-alert--info');
+            @:            }
             @:            return;
             @:        }
-            @:        const messageTemplate = isHebrew ? 'החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.' : 'Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.';
+            @:        const messageTemplate = isHebrew
+            @:            ? 'החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.'
+            @:            : 'Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.';
             @:        lockoutMessageEl.textContent = messageTemplate.replace('{0}', Math.ceil(minutesRemaining));
             @:    };
             @:
@@ -175,4 +270,5 @@
             @:})();
         }
     </script>
-}
+</body>
+</html>
