@@ -11,7 +11,20 @@
     let GRID_SIZE = 6;
     const ICONS = ['⏰', '📅', '🧹', '☕', '📦', '🔔'];
     const POINTS_PER_TILE = 10;
-    const ANIMATION_DURATION = 300;
+    const BASE_ANIMATION_DURATION = 300;
+
+    /**
+     * B-001-EXT: Get animation duration respecting reduced motion preference
+     */
+    function getAnimationDuration() {
+        if (window.ReducedMotion && window.ReducedMotion.isEnabled()) {
+            return 50; // Minimal duration for reduced motion (some delay still needed for state changes)
+        }
+        return BASE_ANIMATION_DURATION;
+    }
+
+    // Dynamic animation duration (will be updated based on preference)
+    let ANIMATION_DURATION = BASE_ANIMATION_DURATION;
 
     // ✅ Dynamic configuration loaded from API
     let gameConfig = null;
@@ -146,10 +159,15 @@
 
     /**
      * ✅ PHASE 19: Initialize and open the game (with async localization loading)
+     * B-001-EXT: Respects prefers-reduced-motion preference
      */
     async function openGame() {
         // Don't open if already open
         if (modalElement) return;
+
+        // B-001-EXT: Update animation duration based on reduced motion preference
+        ANIMATION_DURATION = getAnimationDuration();
+        console.log('[ShiftSwapGame] Animation duration:', ANIMATION_DURATION, 'ms (reduced motion:', window.ReducedMotion && window.ReducedMotion.isEnabled(), ')');
 
         // Load configuration and localization
         const configLoaded = await loadGameConfiguration();
@@ -408,6 +426,7 @@
 
     /**
      * ✅ PHASE 19: Show toast notification
+     * B-001-EXT: Respects prefers-reduced-motion preference
      */
     function showToast(message, type = 'info') {
         const toast = document.createElement('div');
@@ -415,11 +434,16 @@
         toast.textContent = message;
         document.body.appendChild(toast);
 
-        setTimeout(() => toast.classList.add('show'), 10);
+        // B-001-EXT: Check reduced motion preference
+        const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+        const animationDelay = reducedMotion ? 0 : 10;
+        const animationTime = reducedMotion ? 0 : 300;
+
+        setTimeout(() => toast.classList.add('show'), animationDelay);
 
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
+            setTimeout(() => toast.remove(), animationTime);
         }, 3000);
     }
 

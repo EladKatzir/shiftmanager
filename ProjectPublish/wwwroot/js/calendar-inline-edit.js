@@ -327,7 +327,7 @@ async function deleteItem(itemType, itemId) {
 }
 
 /**
- * Show a toast notification
+ * Show a toast notification (B-001-EXT: Respects prefers-reduced-motion)
  * @param {string} message - Message to display
  * @param {string} type - 'success' or 'error'
  */
@@ -335,6 +335,10 @@ function showToast(message, type = 'success') {
     // Remove any existing toasts
     const existingToasts = document.querySelectorAll('.toast');
     existingToasts.forEach(toast => toast.remove());
+
+    // Check for reduced motion preference
+    const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+    const animationTime = reducedMotion ? 0 : 300;
 
     // Create new toast
     const toast = document.createElement('div');
@@ -344,13 +348,17 @@ function showToast(message, type = 'success') {
     // Add to document
     document.body.appendChild(toast);
 
-    // Trigger animation
-    setTimeout(() => toast.classList.add('show'), 10);
+    // Trigger animation (skip delay if reduced motion)
+    if (reducedMotion) {
+        toast.classList.add('show');
+    } else {
+        setTimeout(() => toast.classList.add('show'), 10);
+    }
 
     // Remove after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => toast.remove(), animationTime);
     }, 3000);
 }
 

@@ -43,11 +43,72 @@ document.addEventListener('DOMContentLoaded', function() {
     console.warn('Theme toggle button not found');
   }
 
+  // Sidebar User Menu
+  const userMenuTrigger = document.getElementById('sidebarUserMenuTrigger');
+  const userMenu = document.getElementById('sidebarUserMenu');
+
+  if (userMenuTrigger && userMenu) {
+    const toggleUserMenu = (show) => {
+      const isOpen = show !== undefined ? show : !userMenu.classList.contains('is-open');
+      userMenu.classList.toggle('is-open', isOpen);
+      userMenuTrigger.setAttribute('aria-expanded', String(isOpen));
+    };
+
+    // Toggle on click
+    userMenuTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleUserMenu();
+    });
+
+    // Toggle on Enter/Space
+    userMenuTrigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleUserMenu();
+      } else if (e.key === 'Escape') {
+        toggleUserMenu(false);
+      }
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!userMenuTrigger.contains(e.target) && !userMenu.contains(e.target)) {
+        toggleUserMenu(false);
+      }
+    });
+
+    // Close on Escape from within menu
+    userMenu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        toggleUserMenu(false);
+        userMenuTrigger.focus();
+      }
+    });
+
+    // Keyboard navigation within menu
+    userMenu.addEventListener('keydown', (e) => {
+      const items = userMenu.querySelectorAll('.sidebar-user-menu__item');
+      const currentIndex = Array.from(items).indexOf(document.activeElement);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        items[nextIndex].focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        items[prevIndex].focus();
+      }
+    });
+
+    console.log('Sidebar user menu initialized');
+  }
+
   // Easter egg: Shift Swap game (Ctrl+Click on .brand)
   // Using event delegation to catch clicks anywhere within .brand
   document.addEventListener('click', async function(e) {
     // Check if the click (or any parent of the clicked element) is within .brand
-    const brandElement = e.target.closest('.brand');
+    const brandElement = e.target.closest('.brand, .sidebar-brand, .page-loader__brand');
 
     // If not clicking within .brand area, ignore
     if (!brandElement) return;
@@ -174,11 +235,37 @@ async function adjustStaffing(url, payload, onOk, onError) {
   }
 }
 
-// Toast notification system
+// Toast notification system (B-052: Delegate to standardized Toast API)
+// This function is kept for backward compatibility with existing code
+// The actual implementation is in toast-notifications.js which provides:
+// - Queue management (max 1 visible at a time)
+// - 5 second auto-dismiss
+// - Consistent styling via CSS components
+// - RTL support
+// - Screen reader announcements
 function showToast(message, type = 'info') {
+  // Delegate to the new Toast API if available
+  if (window.Toast) {
+    const typeMap = {
+      'success': 'success',
+      'info': 'info',
+      'warning': 'warning',
+      'error': 'error',
+      'danger': 'error'
+    };
+    const mappedType = typeMap[type] || 'success';
+    window.Toast.show(message, mappedType);
+    return;
+  }
+
+  // Fallback for edge cases where Toast API isn't loaded yet
+  console.warn('[showToast] Toast API not available, using fallback');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
+
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+
   toast.style.cssText = `
     position: fixed;
     top: 20px;
@@ -188,8 +275,8 @@ function showToast(message, type = 'info') {
     color: white;
     font-weight: 500;
     z-index: 1000;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
+    transform: translateX(${reducedMotion ? '0' : '400px'});
+    transition: ${reducedMotion ? 'none' : 'transform 0.3s ease'};
     max-width: 300px;
     word-wrap: break-word;
     ${type === 'error' ? 'background: #dc3545;' : 'background: #2e7d32;'}
@@ -197,18 +284,25 @@ function showToast(message, type = 'info') {
 
   document.body.appendChild(toast);
 
-  // Slide in
-  setTimeout(() => {
-    toast.style.transform = 'translateX(0)';
-  }, 10);
-
-  // Slide out and remove
-  setTimeout(() => {
-    toast.style.transform = 'translateX(400px)';
+  if (!reducedMotion) {
     setTimeout(() => {
-      document.body.removeChild(toast);
-    }, 300);
-  }, 3000);
+      toast.style.transform = 'translateX(0)';
+    }, 10);
+  }
+
+  const displayTime = 5000; // B-052: 5 seconds
+  const animationTime = reducedMotion ? 0 : 300;
+
+  setTimeout(() => {
+    if (!reducedMotion) {
+      toast.style.transform = 'translateX(400px)';
+    }
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, animationTime);
+  }, displayTime);
 }
 
 // Add keyboard shortcuts for calendar navigation
@@ -461,12 +555,36 @@ function populateShiftTypes(types) {
     return;
   }
 
-  filteredTypes.forEach(type => {
+  filteredTypes.forEach((type, index) => {
     const option = document.createElement('div');
     option.className = 'shift-type-option';
     option.dataset.typeId = type.id;
     option.dataset.typeKey = type.key;
     option.onclick = () => selectShiftType(option);
+    // B-037: Make shift type options keyboard navigable
+    option.setAttribute('tabindex', '0');
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', 'false');
+
+    // B-037: Handle keyboard selection
+    option.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectShiftType(option);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = option.nextElementSibling;
+        if (next && next.classList.contains('shift-type-option')) {
+          next.focus();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = option.previousElementSibling;
+        if (prev && prev.classList.contains('shift-type-option')) {
+          prev.focus();
+        }
+      }
+    };
 
     const companyLabel = type.companyName && selectedCompanyId === null
       ? `<div class="shift-type-company">${type.companyName}</div>`
@@ -480,6 +598,10 @@ function populateShiftTypes(types) {
 
     grid.appendChild(option);
   });
+
+  // B-037: Set up listbox role on grid
+  grid.setAttribute('role', 'listbox');
+  grid.setAttribute('aria-label', window.AppLocalizer?.ShiftType || 'Shift Type');
 }
 
 function filterShiftTypesByCompany() {
@@ -491,10 +613,12 @@ function selectShiftType(option) {
   // Remove selection from all options
   document.querySelectorAll('.shift-type-option').forEach(opt => {
     opt.classList.remove('selected');
+    opt.setAttribute('aria-selected', 'false'); // B-037
   });
 
   // Select clicked option
   option.classList.add('selected');
+  option.setAttribute('aria-selected', 'true'); // B-037
 }
 
 function adjustStaffingCount(delta) {
@@ -583,44 +707,7 @@ async function createShift() {
   }
 }
 
-// Enhanced toast with success styling
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 500;
-    z-index: 10001;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-    max-width: 300px;
-    word-wrap: break-word;
-    ${type === 'error' ? 'background: #dc3545;' : type === 'success' ? 'background: #28a745;' : 'background: #2e7d32;'}
-  `;
-
-  document.body.appendChild(toast);
-
-  // Slide in
-  setTimeout(() => {
-    toast.style.transform = 'translateX(0)';
-  }, 10);
-
-  // Slide out and remove
-  setTimeout(() => {
-    toast.style.transform = 'translateX(400px)';
-    setTimeout(() => {
-      if (document.body.contains(toast)) {
-        document.body.removeChild(toast);
-      }
-    }, 300);
-  }, 4000);
-}
+// B-052: Removed duplicate showToast function - using standardized Toast API from toast-notifications.js
 
 window.adjustStaffing = adjustStaffing;
 window.openShiftModal = openShiftModal;
@@ -640,6 +727,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showAccessDeniedPopup() {
+  // Check for reduced motion preference (B-001-EXT)
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+
   // Create popup overlay
   const overlay = document.createElement('div');
   overlay.style.cssText = `
@@ -653,7 +743,7 @@ function showAccessDeniedPopup() {
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease;
+    ${reducedMotion ? '' : 'animation: fadeIn 0.3s ease;'}
   `;
 
   // Create popup content
@@ -666,7 +756,7 @@ function showAccessDeniedPopup() {
     max-width: 400px;
     text-align: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.3s ease;
+    ${reducedMotion ? '' : 'animation: slideIn 0.3s ease;'}
   `;
 
   popup.innerHTML = `
@@ -704,10 +794,15 @@ function showAccessDeniedPopup() {
   `;
   document.head.appendChild(style);
 
-  // Close popup handlers
+  // Close popup handlers (B-001-EXT: Respects prefers-reduced-motion)
   function closePopup() {
-    overlay.style.animation = 'fadeIn 0.3s ease reverse';
-    popup.style.animation = 'slideIn 0.3s ease reverse';
+    const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+    const animationTime = reducedMotion ? 0 : 300;
+
+    if (!reducedMotion) {
+      overlay.style.animation = 'fadeIn 0.3s ease reverse';
+      popup.style.animation = 'slideIn 0.3s ease reverse';
+    }
     setTimeout(() => {
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -715,7 +810,7 @@ function showAccessDeniedPopup() {
       if (document.head.contains(style)) {
         document.head.removeChild(style);
       }
-    }, 300);
+    }, animationTime);
   }
 
   document.getElementById('closeAccessDenied').addEventListener('click', closePopup);
@@ -1022,10 +1117,14 @@ function navigateCommandPalette(direction) {
 
 function updateSelectedItem() {
   const items = document.querySelectorAll('.command-palette-item');
+  // B-001-EXT: Respect reduced motion preference for scroll behavior
+  const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
+  const scrollBehavior = reducedMotion ? 'auto' : 'smooth';
+
   items.forEach((item, index) => {
     if (index === commandPaletteState.selectedIndex) {
       item.classList.add('selected');
-      item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      item.scrollIntoView({ block: 'nearest', behavior: scrollBehavior });
     } else {
       item.classList.remove('selected');
     }

@@ -1,15 +1,15 @@
 ﻿================================================================================
                   SHIFTMANAGER DEPLOYMENT GUIDE
-                        Version 2.7.28
+                        Version 2.8.2
 ================================================================================
 
 Complete deployment manual for ShiftManager in air-gapped Windows Server 2022
 environments. This guide covers all deployment scenarios from quick testing
 to production Windows Service setup.
 
-Version:        2.7.28
-Release Date:   2026-01-25
-Package Size:   118 MB
+Version:        2.8.2
+Release Date:   2026-02-02
+Package Size:   124 MB
 Target OS:      Windows Server 2022 / Windows 10+ (64-bit)
 
 ================================================================================
@@ -140,9 +140,9 @@ SECTION 4.1: CONSOLE APPLICATION DEPLOYMENT
 For production use without Windows Service:
 
 Step 1: Extract Package
-  1. Copy ShiftManager-v2.7.28-win-x64.zip to target server
+  1. Copy ShiftManager-v2.8.2-win-x64.zip to target server
   2. Extract to installation folder (e.g., C:\ShiftManager)
-  3. Verify 515 files extracted
+  3. Verify 457 files extracted
 
 Step 2: Configure Application
   1. Open appsettings.json
@@ -646,12 +646,12 @@ Included Documentation:
 VERSION INFORMATION
 ================================================================================
 
-Guide Version:    2.7.28
-Release Date:     2026-01-25
-Package Size:     118 MB
-Git Commit:       19de158
+Guide Version:    2.8.2
+Release Date:     2026-02-02
+Package Size:     124 MB
+Git Commit:       eea77fb
 
-This guide covers deployment for ShiftManager v2.7.28.
+This guide covers deployment for ShiftManager v2.8.2.
 
 ================================================================================
 END OF DEPLOYMENT GUIDE

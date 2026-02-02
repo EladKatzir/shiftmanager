@@ -1,125 +1,54 @@
 /* ========================================
-   Design System - Color Tokens
+   ShiftManager - Site Styles
+   Version: 3.0 (UI Overhaul)
+   Theme: "Warm Command" - Shifty Design System
    ======================================== */
 
+/* ========================================
+   Import Modular CSS Files
+   ======================================== */
+@import url('tokens.css');
+@import url('components.css');
+@import url('navigation.css');
+@import url('calendar.css');
+@import url('calendar-skeleton.css');
+@import url('widgets.css');
+@import url('icons.css');
+@import url('print.css');
+
+/* ========================================
+   Legacy Token Compatibility Layer
+   These map old token names to new ones for backwards compatibility
+   ======================================== */
 :root {
-  /* Background & Surfaces */
-  --bg: #f5f7fb;
-  --surface: #ffffff;
-  --surface-soft: #f0f2f8;
-  --surface-elevated: #ffffff;
-  --surface-strong: #0f172a;
-
-  /* Text Colors */
-  --text: #111318;
-  --muted: #6b7280;
-
-  /* Brand & Interactive */
-  --primary: #2563eb;
-  --primary-rgb: 37, 99, 235;
-  --primary-soft: #e0ecff;
-
-  /* Status Colors */
-  --danger: #dc2626;
-  --danger-text: #ffffff;
-  --success: #16a34a;
-  --success-text: #ffffff;
-  --warning: #f59e0b;
-  --warning-text: #ffffff;
-
-  /* UI Elements */
-  --focus: #ff9800;
-  --border: #e2e8f0;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-  /* RGB values for transparency effects */
-  --surface-rgb: 255, 255, 255;
-  --text-rgb: 17, 19, 24;
-
-  /* Spacing Scale (8px base) */
-  --space-xs: 0.5rem;     /* 8px */
-  --space-sm: 0.75rem;    /* 12px */
-  --space-md: 1rem;       /* 16px */
-  --space-lg: 1.5rem;     /* 24px */
-  --space-xl: 2rem;       /* 32px */
-  --space-2xl: 2.5rem;    /* 40px */
-  --space-3xl: 3rem;      /* 48px */
-
-  /* Radius Scale */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-full: 9999px;
-
-  /* Enhanced Shadows for v2 */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* Backwards compatibility aliases */
+  --muted: var(--text-muted);
+  --surface-elevated: var(--surface);
+  --surface-strong: var(--text);
+  
+  /* Legacy spacing aliases */
+  --space-xs: var(--space-2);
+  --space-sm: var(--space-3);
+  --space-md: var(--space-4);
+  --space-lg: var(--space-6);
+  --space-xl: var(--space-8);
+  --space-2xl: var(--space-10);
+  --space-3xl: var(--space-12);
+  
+  /* Legacy shadow aliases */
+  --shadow-soft: var(--shadow-sm);
+  --shadow-elevated: var(--shadow-lg);
   --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.3);
-
-  /* Animation Tokens */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.2s ease;
-  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --transition-elastic: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-  /* Z-Index Scale */
-  --z-dropdown: 1000;
-  --z-sticky: 1020;
-  --z-modal: 1050;
-  --z-tooltip: 1070;
-}
-
-:root[data-theme="dark"] {
-  /* Background & Surfaces */
-  --bg: #020617;
-  --surface: #0b1120;
-  --surface-soft: #0f1629;
-  --surface-elevated: #0f1629;
-  --surface-strong: #1e293b;
-
-  /* Text Colors */
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-
-  /* Brand & Interactive */
-  --primary: #60a5fa;
-  --primary-rgb: 96, 165, 250;
-  --primary-soft: #1d2736;
-
-  /* Status Colors */
-  --danger: #f87171;
-  --danger-text: #1a1a1a;
-  --success: #4ade80;
-  --success-text: #1a1a1a;
-  --warning: #facc15;
-  --warning-text: #1a1a1a;
-
-  /* UI Elements */
-  --focus: #ffd54f;
-  --border: #1f2937;
-
-  /* Shadows (more subtle in dark mode) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-
-  /* RGB values for transparency effects */
-  --surface-rgb: 11, 17, 32;
-  --text-rgb: 229, 231, 235;
-
-  /* Enhanced Shadows for v2 (darker in dark mode) */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.5);
+  
+  /* Legacy transition aliases */
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-base: var(--duration-normal) var(--ease-out);
+  --transition-smooth: var(--duration-slow) var(--ease-in-out);
+  --transition-bounce: var(--duration-slower) var(--ease-bounce);
+  --transition-elastic: 0.6s var(--ease-bounce);
+  
+  /* Legacy focus color */
+  --focus: var(--accent);
 }
 
 /* ========================================
@@ -198,6 +127,8 @@ body {
 }
 a { color: var(--primary); text-decoration: none; }
 a:hover, button.linklike:hover { text-decoration: underline; }
+/* A-013: Focus visible style for links */
+a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
 
 .topbar {
   display: flex; align-items: center; gap: 1rem;
@@ -536,7 +467,7 @@ th { text-align: left; color: var(--text) !important; }
   padding: 1.5rem;
   max-width: 1400px;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
 }
 
 /* Action Buttons (theme toggle, language, etc) */
@@ -1558,6 +1489,12 @@ th { text-align: left; color: var(--text) !important; }
   color: var(--text);
 }
 
+/* A-013: Focus visible style for modal close buttons */
+.modal-close:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -2521,6 +2458,7 @@ input, select, textarea, .input, input[type="text"], input[type="date"], input[t
 input:focus, select:focus, textarea:focus, .input:focus {
   border-color: var(--primary) !important;
   outline: none !important;
+  box-shadow: var(--focus-ring) !important; /* A-013: Added focus ring for WCAG 2.4.7 Focus Visible */
 }
 
 input::placeholder, textarea::placeholder {
@@ -6143,4 +6081,666 @@ code {
 
 .availability-cube:hover .cube-tooltip {
     display: block;
+}
+
+/* ========================================
+   A-016: DARK MODE POLISH
+   Comprehensive dark mode styles to ensure:
+   - No invisible text in dark mode
+   - No contrast failures
+   - All components styled properly
+   - Smooth transitions between modes
+   - Images/icons visible in both modes
+   ======================================== */
+
+/* ----------------------------------------
+   Smooth Theme Transition
+   ---------------------------------------- */
+:root,
+:root[data-theme="dark"],
+:root[data-theme="light"] {
+  /* Transition all color-related properties */
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* ----------------------------------------
+   Dark Mode: Shift Badge Colors
+   Override hardcoded light-mode colors
+   ---------------------------------------- */
+:root[data-theme="dark"] .shift-badge {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:root[data-theme="dark"] .shift-badge.morning {
+  background: rgba(240, 193, 75, 0.25);
+  color: #F0C14B;
+  border-color: rgba(240, 193, 75, 0.4);
+}
+
+:root[data-theme="dark"] .shift-badge.middle {
+  background: rgba(139, 160, 120, 0.25);
+  color: #8BA078;
+  border-color: rgba(139, 160, 120, 0.4);
+}
+
+:root[data-theme="dark"] .shift-badge.noon {
+  background: rgba(212, 182, 63, 0.25);
+  color: #D4B63F;
+  border-color: rgba(212, 182, 63, 0.4);
+}
+
+:root[data-theme="dark"] .shift-badge.night {
+  background: rgba(91, 155, 213, 0.25);
+  color: #5B9BD5;
+  border-color: rgba(91, 155, 213, 0.4);
+}
+
+/* ----------------------------------------
+   Dark Mode: Staffing Badge Colors
+   ---------------------------------------- */
+:root[data-theme="dark"] .staffing-badge.ok {
+  background: rgba(82, 183, 136, 0.2);
+  color: var(--success);
+  border-color: rgba(82, 183, 136, 0.4);
+}
+
+:root[data-theme="dark"] .staffing-badge.warn {
+  background: rgba(252, 129, 129, 0.2);
+  color: var(--danger);
+  border-color: rgba(252, 129, 129, 0.4);
+}
+
+/* ----------------------------------------
+   Dark Mode: Alert/Notification Colors
+   ---------------------------------------- */
+:root[data-theme="dark"] .alert-danger {
+  background-color: rgba(252, 129, 129, 0.15);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+:root[data-theme="dark"] .alert-success {
+  background-color: rgba(82, 183, 136, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+:root[data-theme="dark"] .alert-info {
+  background-color: rgba(91, 155, 213, 0.15);
+  border-color: var(--info);
+  color: var(--info);
+}
+
+:root[data-theme="dark"] .alert-warning {
+  background-color: rgba(244, 211, 94, 0.15);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+/* ----------------------------------------
+   Dark Mode: Tooltip Name Colors
+   ---------------------------------------- */
+:root[data-theme="dark"] .tooltip-name.morning {
+  background: rgba(240, 193, 75, 0.3);
+  color: #F0C14B;
+}
+
+:root[data-theme="dark"] .tooltip-name.middle {
+  background: rgba(139, 160, 120, 0.3);
+  color: #8BA078;
+}
+
+:root[data-theme="dark"] .tooltip-name.noon {
+  background: rgba(212, 182, 63, 0.3);
+  color: #D4B63F;
+}
+
+:root[data-theme="dark"] .tooltip-name.night {
+  background: rgba(91, 155, 213, 0.3);
+  color: #5B9BD5;
+}
+
+/* ----------------------------------------
+   Dark Mode: Badge Status Colors
+   ---------------------------------------- */
+:root[data-theme="dark"] .badge.ok {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* ----------------------------------------
+   Dark Mode: Background Utility Classes
+   ---------------------------------------- */
+:root[data-theme="dark"] .bg-info {
+  background-color: var(--info) !important;
+  color: var(--info-text) !important;
+}
+
+:root[data-theme="dark"] .text-info {
+  color: var(--info) !important;
+}
+
+/* ----------------------------------------
+   Dark Mode: Close Button Invert
+   ---------------------------------------- */
+:root[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* ----------------------------------------
+   Dark Mode: Availability Cube Colors
+   ---------------------------------------- */
+:root[data-theme="dark"] .availability-cube.free {
+  background-color: rgba(82, 183, 136, 0.8);
+}
+
+:root[data-theme="dark"] .availability-cube.busy {
+  background-color: rgba(252, 129, 129, 0.8);
+}
+
+:root[data-theme="dark"] .availability-cube.partial {
+  background-color: rgba(244, 211, 94, 0.8);
+  color: var(--bg);
+}
+
+/* ----------------------------------------
+   Dark Mode: Gradient Adjustments
+   ---------------------------------------- */
+:root[data-theme="dark"] .calendar-header::before {
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+}
+
+:root[data-theme="dark"] .weekday-header {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+:root[data-theme="dark"] .week-day::before {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
+:root[data-theme="dark"] .add-shift-btn {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+:root[data-theme="dark"] .add-shift-btn:hover {
+  background: linear-gradient(135deg, var(--accent), var(--primary));
+}
+
+:root[data-theme="dark"] .btn-modal.primary {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+/* ----------------------------------------
+   Dark Mode: Pagination Active State
+   ---------------------------------------- */
+:root[data-theme="dark"] .page-item.active .page-link {
+  color: var(--primary-contrast);
+}
+
+/* ----------------------------------------
+   Dark Mode: Employee Topbar
+   ---------------------------------------- */
+:root[data-theme="dark"] .employee-topbar {
+  background: linear-gradient(135deg, var(--surface-soft) 0%, var(--surface) 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+:root[data-theme="dark"] .employee-topbar .brand-title {
+  color: var(--text);
+}
+
+/* ----------------------------------------
+   Dark Mode: Calendar Cell Past Date
+   ---------------------------------------- */
+:root[data-theme="dark"] .calendar-cell.past-date::before {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 12px,
+    rgba(255, 255, 255, 0.03) 12px,
+    rgba(255, 255, 255, 0.03) 24px
+  );
+}
+
+/* ----------------------------------------
+   Dark Mode: Form Input Placeholders
+   ---------------------------------------- */
+:root[data-theme="dark"] .form-input::placeholder,
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ----------------------------------------
+   Dark Mode: Select Dropdown Arrow
+   ---------------------------------------- */
+:root[data-theme="dark"] select.form-field__input,
+:root[data-theme="dark"] .pagination__per-page select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* ----------------------------------------
+   Dark Mode: Icon Color Adjustments
+   ---------------------------------------- */
+:root[data-theme="dark"] .help-icon {
+  filter: grayscale(0.5) brightness(1.2);
+}
+
+:root[data-theme="dark"] .empty-state__icon {
+  opacity: 0.6;
+}
+
+/* ----------------------------------------
+   Dark Mode: Box Shadow Adjustments
+   ---------------------------------------- */
+:root[data-theme="dark"] .calendar-header {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .calendar-grid {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .modal-content {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ----------------------------------------
+   Dark Mode: Link and Text Contrast Fix
+   ---------------------------------------- */
+:root[data-theme="dark"] a {
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] a:hover {
+  color: var(--primary-hover);
+}
+
+/* ----------------------------------------
+   Dark Mode: Table Header
+   ---------------------------------------- */
+:root[data-theme="dark"] th {
+  background-color: var(--surface-soft);
+}
+
+/* ----------------------------------------
+   Dark Mode: Quick Add Section
+   ---------------------------------------- */
+:root[data-theme="dark"] .counter-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ----------------------------------------
+   Prefers Color Scheme Support
+   For browsers that don't support manual toggle
+   ---------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shift-badge.morning {
+    background: rgba(240, 193, 75, 0.25);
+    color: #F0C14B;
+    border-color: rgba(240, 193, 75, 0.4);
+  }
+
+  :root:not([data-theme="light"]) .shift-badge.middle {
+    background: rgba(139, 160, 120, 0.25);
+    color: #8BA078;
+    border-color: rgba(139, 160, 120, 0.4);
+  }
+
+  :root:not([data-theme="light"]) .shift-badge.noon {
+    background: rgba(212, 182, 63, 0.25);
+    color: #D4B63F;
+    border-color: rgba(212, 182, 63, 0.4);
+  }
+
+  :root:not([data-theme="light"]) .shift-badge.night {
+    background: rgba(91, 155, 213, 0.25);
+    color: #5B9BD5;
+    border-color: rgba(91, 155, 213, 0.4);
+  }
+
+  :root:not([data-theme="light"]) .staffing-badge.ok {
+    background: rgba(82, 183, 136, 0.2);
+    color: var(--success);
+    border-color: rgba(82, 183, 136, 0.4);
+  }
+
+  :root:not([data-theme="light"]) .staffing-badge.warn {
+    background: rgba(252, 129, 129, 0.2);
+    color: var(--danger);
+    border-color: rgba(252, 129, 129, 0.4);
+  }
+}
+
+/* ----------------------------------------
+   Dark Mode: Tooltip Colors (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .tooltip-shift-type {
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] .tooltip-shift-name {
+  color: var(--warning);
+}
+
+:root[data-theme="dark"] .tooltip-hours,
+:root[data-theme="dark"] .tooltip-section-title,
+:root[data-theme="dark"] .tooltip-stat-label {
+  color: var(--text-muted);
+}
+
+/* ----------------------------------------
+   Dark Mode: Tooltip Name Badges (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .tooltip-name.morning {
+  background: rgba(240, 193, 75, 0.35);
+  color: #F0C14B;
+}
+
+:root[data-theme="dark"] .tooltip-name.middle {
+  background: rgba(174, 213, 129, 0.35);
+  color: #C5E1A5;
+}
+
+:root[data-theme="dark"] .tooltip-name.noon {
+  background: rgba(255, 183, 77, 0.35);
+  color: #FFB74D;
+}
+
+:root[data-theme="dark"] .tooltip-name.night {
+  background: rgba(92, 107, 192, 0.35);
+  color: #9FA8DA;
+}
+
+/* ----------------------------------------
+   Dark Mode: Availability Cubes (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .availability-cube.free {
+  background-color: var(--success);
+  color: var(--success-text);
+}
+
+:root[data-theme="dark"] .availability-cube.busy {
+  background-color: var(--danger);
+  color: var(--danger-text);
+}
+
+:root[data-theme="dark"] .availability-cube.partial {
+  background-color: var(--warning);
+  color: var(--warning-text);
+}
+
+/* ----------------------------------------
+   Dark Mode: Metric Colors (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] [data-ui-version="v2"] .metric-item.metric-pending .metric-value {
+  color: var(--warning);
+}
+
+:root[data-theme="dark"] [data-ui-version="v2"] .metric-item.metric-coverage .metric-value {
+  color: var(--success);
+}
+
+/* ----------------------------------------
+   Dark Mode: Info Color Token (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .bg-info {
+  background-color: var(--info) !important;
+  color: var(--info-text) !important;
+}
+
+:root[data-theme="dark"] .text-info {
+  color: var(--info) !important;
+}
+
+/* ----------------------------------------
+   Dark Mode: Button Success Hover (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .btn-success:hover {
+  background-color: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
+/* ----------------------------------------
+   Dark Mode: Employee Topbar (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .employee-topbar {
+  background: linear-gradient(135deg, var(--surface-soft) 0%, var(--surface) 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .employee-topbar .brand-title {
+  color: var(--text);
+}
+
+/* ----------------------------------------
+   Dark Mode: Shift Badge Base Override (A-016)
+   Ensure dark text on bright backgrounds in light mode
+   doesn't become invisible in dark mode
+   ---------------------------------------- */
+:root[data-theme="dark"] .shift-badge {
+  color: var(--text);
+}
+
+/* ----------------------------------------
+   Dark Mode: User Menu Hover (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .user-menu:hover {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .user-menu:hover .user-name,
+:root[data-theme="dark"] .user-menu:hover .user-role {
+  color: var(--text);
+}
+
+/* ----------------------------------------
+   Dark Mode: Dropdown Menu Hover (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .dropdown .menu a:hover {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+/* ----------------------------------------
+   Dark Mode: Counter Button Hover (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .counter-btn:hover {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  border-color: var(--primary);
+}
+
+/* ----------------------------------------
+   Dark Mode: Name Badge (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .name-badge {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.4);
+}
+
+:root[data-theme="dark"] .name-badge.empty {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+/* ----------------------------------------
+   prefers-color-scheme: Dark Mode Auto (A-016)
+   Mirror manual dark mode overrides for system preference
+   ---------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tooltip-shift-type {
+    color: var(--primary);
+  }
+
+  :root:not([data-theme="light"]) .tooltip-shift-name {
+    color: var(--warning);
+  }
+
+  :root:not([data-theme="light"]) .tooltip-hours,
+  :root:not([data-theme="light"]) .tooltip-section-title,
+  :root:not([data-theme="light"]) .tooltip-stat-label {
+    color: var(--text-muted);
+  }
+
+  :root:not([data-theme="light"]) .tooltip-name.morning {
+    background: rgba(240, 193, 75, 0.35);
+    color: #F0C14B;
+  }
+
+  :root:not([data-theme="light"]) .tooltip-name.middle {
+    background: rgba(174, 213, 129, 0.35);
+    color: #C5E1A5;
+  }
+
+  :root:not([data-theme="light"]) .tooltip-name.noon {
+    background: rgba(255, 183, 77, 0.35);
+    color: #FFB74D;
+  }
+
+  :root:not([data-theme="light"]) .tooltip-name.night {
+    background: rgba(92, 107, 192, 0.35);
+    color: #9FA8DA;
+  }
+
+  :root:not([data-theme="light"]) .availability-cube.free {
+    background-color: var(--success);
+    color: var(--success-text);
+  }
+
+  :root:not([data-theme="light"]) .availability-cube.busy {
+    background-color: var(--danger);
+    color: var(--danger-text);
+  }
+
+  :root:not([data-theme="light"]) .availability-cube.partial {
+    background-color: var(--warning);
+    color: var(--warning-text);
+  }
+
+  :root:not([data-theme="light"]) [data-ui-version="v2"] .metric-item.metric-pending .metric-value {
+    color: var(--warning);
+  }
+
+  :root:not([data-theme="light"]) [data-ui-version="v2"] .metric-item.metric-coverage .metric-value {
+    color: var(--success);
+  }
+
+  :root:not([data-theme="light"]) .btn-success:hover {
+    background-color: var(--success-hover);
+    border-color: var(--success-hover);
+  }
+
+  :root:not([data-theme="light"]) .employee-topbar {
+    background: linear-gradient(135deg, var(--surface-soft) 0%, var(--surface) 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  :root:not([data-theme="light"]) .employee-topbar .brand-title {
+    color: var(--text);
+  }
+
+  :root:not([data-theme="light"]) .user-menu:hover {
+    background: var(--surface-soft);
+  }
+
+  :root:not([data-theme="light"]) .user-menu:hover .user-name,
+  :root:not([data-theme="light"]) .user-menu:hover .user-role {
+    color: var(--text);
+  }
+
+  :root:not([data-theme="light"]) .dropdown .menu a:hover {
+    background: var(--primary);
+    color: var(--primary-contrast);
+  }
+
+  :root:not([data-theme="light"]) .counter-btn:hover {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-color: var(--primary);
+  }
+
+  :root:not([data-theme="light"]) .name-badge {
+    background: var(--primary);
+    color: var(--primary-contrast);
+  }
+
+  :root:not([data-theme="light"]) .name-badge.empty {
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    border-color: var(--border);
+  }
+
+  /* SVG Icons - use lighter colors for dark backgrounds */
+  :root:not([data-theme="light"]) .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  }
+
+  :root:not([data-theme="light"]) .btn-close {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23E8EDF5'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+  }
+
+  :root:not([data-theme="light"]) .form-control.valid,
+  :root:not([data-theme="light"]) .form-select.valid {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2352B788' viewBox='0 0 16 16'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+  }
+
+  :root:not([data-theme="light"]) .form-control.invalid,
+  :root:not([data-theme="light"]) .form-select.invalid {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FC8181' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  }
+
+  :root:not([data-theme="light"]) .form-control.warning,
+  :root:not([data-theme="light"]) .form-select.warning {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23F4D35E' viewBox='0 0 16 16'%3E%3Cpath d='M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z'/%3E%3C/svg%3E");
+  }
+}
+
+/* ----------------------------------------
+   Dark Mode: Form Select & Close Button SVG Icons (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+:root[data-theme="dark"] .btn-close {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23E8EDF5'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+}
+
+/* ----------------------------------------
+   Dark Mode: Form Validation SVG Icons (A-016)
+   ---------------------------------------- */
+:root[data-theme="dark"] .form-control.valid,
+:root[data-theme="dark"] .form-select.valid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2352B788' viewBox='0 0 16 16'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+}
+
+:root[data-theme="dark"] .form-control.invalid,
+:root[data-theme="dark"] .form-select.invalid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FC8181' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+}
+
+:root[data-theme="dark"] .form-control.warning,
+:root[data-theme="dark"] .form-select.warning {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23F4D35E' viewBox='0 0 16 16'%3E%3Cpath d='M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z'/%3E%3C/svg%3E");
+}
+
+/* ----------------------------------------
+   Reduced Motion: Disable theme transitions
+   ---------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
+    transition: none;
+  }
 }
