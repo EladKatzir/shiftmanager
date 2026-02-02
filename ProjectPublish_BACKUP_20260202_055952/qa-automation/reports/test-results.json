@@ -1,0 +1,4872 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\playwright.config.js",
+    "rootDir": "C:/Users/katzi/Downloads/ShiftManager/qa-automation/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\global-setup.js",
+    "globalTeardown": "C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\global-teardown.js",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "reports/playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/test-results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/katzi/Downloads/ShiftManager/qa-automation/reports/test-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/katzi/Downloads/ShiftManager/qa-automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "account-lockout.spec.js",
+      "file": "account-lockout.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Account Lockout Protection",
+          "file": "account-lockout.spec.js",
+          "line": 18,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Failed Login Attempt Tracking",
+              "file": "account-lockout.spec.js",
+              "line": 23,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should increment failed login attempts for existing user",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-9c7cf4ccf018fe3f2ce0",
+                  "file": "account-lockout.spec.js",
+                  "line": 24,
+                  "column": 5
+                },
+                {
+                  "title": "should not reveal user existence for non-existent accounts",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-0bb95c9bf34c95338ced",
+                  "file": "account-lockout.spec.js",
+                  "line": 52,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Account Lockout After Multiple Failures",
+              "file": "account-lockout.spec.js",
+              "line": 80,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should lock account after 10 failed attempts",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\tests\\account-lockout.spec.js",
+                            "line": 81,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-bb0df4c580d932199482",
+                  "file": "account-lockout.spec.js",
+                  "line": 81,
+                  "column": 10
+                },
+                {
+                  "title": "should show lockout countdown message",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-c00ca9cb3fe52d77734f",
+                  "file": "account-lockout.spec.js",
+                  "line": 128,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Lockout Duration",
+              "file": "account-lockout.spec.js",
+              "line": 149,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should implement 3-minute lockout period",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-cd7f068105dc9515cc60",
+                  "file": "account-lockout.spec.js",
+                  "line": 150,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Rate Limiting Integration",
+              "file": "account-lockout.spec.js",
+              "line": 172,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should respect rate limiting (10 attempts per 15 minutes)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-313a375e2e55c6c3882b",
+                  "file": "account-lockout.spec.js",
+                  "line": 173,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Successful Login Resets Counter",
+              "file": "account-lockout.spec.js",
+              "line": 209,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should reset failed attempts counter on successful login",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-1e3b35b9491fc8dd8ed2",
+                  "file": "account-lockout.spec.js",
+                  "line": 210,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Security Best Practices",
+              "file": "account-lockout.spec.js",
+              "line": 251,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should not expose timing differences between valid and invalid emails",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-93ccdfee18eeff1ffd74",
+                  "file": "account-lockout.spec.js",
+                  "line": 252,
+                  "column": 5
+                },
+                {
+                  "title": "should log failed login attempts for security monitoring",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "2a3985ffcab05ede06e1-9ef711e3fb4b853e9895",
+                  "file": "account-lockout.spec.js",
+                  "line": 288,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "air-gapped-simulation.spec.js",
+      "file": "air-gapped-simulation.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Air-Gapped Environment Simulation",
+          "file": "air-gapped-simulation.spec.js",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P8-01: Block external requests and verify functionality",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1142a39f2602bf903c52-c82b70af48f1eb68c595",
+              "file": "air-gapped-simulation.spec.js",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "P8-02: CSS loads from local paths only",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1142a39f2602bf903c52-ddaa769b6e28e9a671b9",
+              "file": "air-gapped-simulation.spec.js",
+              "line": 50,
+              "column": 3
+            },
+            {
+              "title": "P8-03: JavaScript loads from local paths only",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\tests\\air-gapped-simulation.spec.js",
+                        "line": 71,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1142a39f2602bf903c52-4b27e5c5396a244e5c11",
+              "file": "air-gapped-simulation.spec.js",
+              "line": 71,
+              "column": 8
+            },
+            {
+              "title": "P8-04: Font loading fails gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1142a39f2602bf903c52-1f2cd6c6e5b043796a06",
+              "file": "air-gapped-simulation.spec.js",
+              "line": 93,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "auth.spec.js",
+      "file": "auth.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Authentication",
+          "file": "auth.spec.js",
+          "line": 11,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Login Page",
+              "file": "auth.spec.js",
+              "line": 12,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "P1-01a: should display login page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-63ef3dddd15940b4edb6",
+                  "file": "auth.spec.js",
+                  "line": 13,
+                  "column": 5
+                },
+                {
+                  "title": "P1-01b: should show error for invalid credentials",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-90b6a1e47d8afb7a3310",
+                  "file": "auth.spec.js",
+                  "line": 22,
+                  "column": 5
+                },
+                {
+                  "title": "P1-01c: should login successfully as Owner",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-ee2c03ae2efc9da375bd",
+                  "file": "auth.spec.js",
+                  "line": 40,
+                  "column": 5
+                },
+                {
+                  "title": "P1-01d: should enforce rate limiting",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-329a7583a54a14ba4bdd",
+                  "file": "auth.spec.js",
+                  "line": 57,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Logout",
+              "file": "auth.spec.js",
+              "line": 79,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "P1-02: should logout successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-62a563f406da2870d4ab",
+                  "file": "auth.spec.js",
+                  "line": 91,
+                  "column": 5
+                },
+                {
+                  "title": "P1-02: should clear session on logout",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-306880e29804da4fb3eb",
+                  "file": "auth.spec.js",
+                  "line": 105,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Authorization",
+          "file": "auth.spec.js",
+          "line": 121,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Access Control",
+              "file": "auth.spec.js",
+              "line": 122,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should redirect unauthenticated user to login",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-662a742301b66dbb9446",
+                  "file": "auth.spec.js",
+                  "line": 123,
+                  "column": 5
+                },
+                {
+                  "title": "should show access denied for unauthorized role",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d5ed79a6b333c2ba7209-e7b26ab893fe7de4b88d",
+                  "file": "auth.spec.js",
+                  "line": 131,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Session Management",
+          "file": "auth.spec.js",
+          "line": 151,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should handle session timeout gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d5ed79a6b333c2ba7209-8cccc269a9bf97d836ba",
+              "file": "auth.spec.js",
+              "line": 152,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "companies-crud.spec.js",
+      "file": "companies-crud.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Companies CRUD - Owner Role",
+          "file": "companies-crud.spec.js",
+          "line": 22,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Create Company",
+              "file": "companies-crud.spec.js",
+              "line": 102,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-01: Create company with valid data",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-24b5f475cb337e0b362b",
+                  "file": "companies-crud.spec.js",
+                  "line": 103,
+                  "column": 9
+                },
+                {
+                  "title": "P2-02: Create company with minimum required fields",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-97dd09b0c04316ad043d",
+                  "file": "companies-crud.spec.js",
+                  "line": 136,
+                  "column": 9
+                },
+                {
+                  "title": "P2-03: Validation - empty company name rejected",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-af4960490cb14bb21911",
+                  "file": "companies-crud.spec.js",
+                  "line": 160,
+                  "column": 9
+                },
+                {
+                  "title": "P2-04: Validation - duplicate slug rejected",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-6c9665eeff55ceb89592",
+                  "file": "companies-crud.spec.js",
+                  "line": 181,
+                  "column": 9
+                },
+                {
+                  "title": "P2-05: Validation - invalid slug format rejected",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-a42698fbfbeec29abcd6",
+                  "file": "companies-crud.spec.js",
+                  "line": 222,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Read/List Companies",
+              "file": "companies-crud.spec.js",
+              "line": 252,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-06: Companies list is displayed",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-01e5d9ab80c29e3c37bf",
+                  "file": "companies-crud.spec.js",
+                  "line": 253,
+                  "column": 9
+                },
+                {
+                  "title": "P2-07: Company details are displayed correctly",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-c0045bb08ef805c71b6b",
+                  "file": "companies-crud.spec.js",
+                  "line": 266,
+                  "column": 9
+                },
+                {
+                  "title": "P2-08: Empty state displayed when no companies",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-7a510beff7094167b3a4",
+                  "file": "companies-crud.spec.js",
+                  "line": 283,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Update/Rename Company",
+              "file": "companies-crud.spec.js",
+              "line": 297,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-09: Rename company modal opens",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-a78afbfbd79101b11616",
+                  "file": "companies-crud.spec.js",
+                  "line": 298,
+                  "column": 9
+                },
+                {
+                  "title": "P2-10: Rename company successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-4ced304f9ad5b96a54f8",
+                  "file": "companies-crud.spec.js",
+                  "line": 318,
+                  "column": 9
+                },
+                {
+                  "title": "P2-11: Rename modal cancel works",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-621f91b397fd0d7e7037",
+                  "file": "companies-crud.spec.js",
+                  "line": 361,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Delete Company",
+              "file": "companies-crud.spec.js",
+              "line": 386,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-12: Delete company with confirmation",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-2f11b6dd465b97cb7d63",
+                  "file": "companies-crud.spec.js",
+                  "line": 387,
+                  "column": 9
+                },
+                {
+                  "title": "P2-13: Delete confirmation can be cancelled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-03f8d995c644dba9aac5",
+                  "file": "companies-crud.spec.js",
+                  "line": 433,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Security - Input Validation",
+              "file": "companies-crud.spec.js",
+              "line": 462,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-14: XSS attempts in company name are handled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-bb689f788cff149ad4e6",
+                  "file": "companies-crud.spec.js",
+                  "line": 463,
+                  "column": 9
+                },
+                {
+                  "title": "P2-15: SQL injection attempts in company name are handled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-dbfbd7fdbd25c5f97740",
+                  "file": "companies-crud.spec.js",
+                  "line": 504,
+                  "column": 9
+                },
+                {
+                  "title": "P2-16: Very long company name handled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-79170e6f97dd7fe0892d",
+                  "file": "companies-crud.spec.js",
+                  "line": 528,
+                  "column": 9
+                },
+                {
+                  "title": "P2-17: Path traversal attempts in company slug are rejected",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-55dd3c38de2d0279384f",
+                  "file": "companies-crud.spec.js",
+                  "line": 551,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Director Assignment",
+              "file": "companies-crud.spec.js",
+              "line": 574,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-18: Director dropdown is available",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-463c0e04cc22f757a71d",
+                  "file": "companies-crud.spec.js",
+                  "line": 575,
+                  "column": 9
+                },
+                {
+                  "title": "P2-19: Manager fields become optional when director selected",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-bc834588f69befdfa5f8",
+                  "file": "companies-crud.spec.js",
+                  "line": 583,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Form State",
+              "file": "companies-crud.spec.js",
+              "line": 610,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P2-20: Form clears after successful submission",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-241a4d7e13ee8fd83f99",
+                  "file": "companies-crud.spec.js",
+                  "line": 611,
+                  "column": 9
+                },
+                {
+                  "title": "P2-21: Form preserves values on validation error",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b3bfa1a1be10f2c15aed-7aa9321256a8e14bb047",
+                  "file": "companies-crud.spec.js",
+                  "line": 627,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Companies Access Control",
+          "file": "companies-crud.spec.js",
+          "line": 669,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P2-22: Unauthenticated user redirected to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b3bfa1a1be10f2c15aed-0c7dacc1d2306f0439c8",
+              "file": "companies-crud.spec.js",
+              "line": 670,
+              "column": 5
+            },
+            {
+              "title": "P2-23: Page requires admin policy",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b3bfa1a1be10f2c15aed-54505316db18070860ad",
+              "file": "companies-crud.spec.js",
+              "line": 678,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "multi-tenancy-isolation-network.spec.js",
+      "file": "multi-tenancy-isolation-network.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Multi-Tenancy Isolation - Network Level",
+          "file": "multi-tenancy-isolation-network.spec.js",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P6-01: API responses contain only tenant-scoped data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1dea01cec2870df76d5b-bcdb515918ecacfb77a7",
+              "file": "multi-tenancy-isolation-network.spec.js",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "P6-02: SQL injection attempts do not bypass tenant filters",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1dea01cec2870df76d5b-450c3dc92e456df9ef1b",
+              "file": "multi-tenancy-isolation-network.spec.js",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "P6-03: XSS attempts are sanitized in responses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1dea01cec2870df76d5b-d3fb79dda6dcd35045dc",
+              "file": "multi-tenancy-isolation-network.spec.js",
+              "line": 84,
+              "column": 3
+            },
+            {
+              "title": "P6-04: Network request headers contain proper authentication",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1dea01cec2870df76d5b-a2c20003508184236735",
+              "file": "multi-tenancy-isolation-network.spec.js",
+              "line": 141,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "multi-tenancy-isolation-ui.spec.js",
+      "file": "multi-tenancy-isolation-ui.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Multi-Tenancy Isolation - UI Level",
+          "file": "multi-tenancy-isolation-ui.spec.js",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P5-01: Owner can see all companies",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3d4c207e3f70e94f5d97-9d9e6cbf873c9aec8e9b",
+              "file": "multi-tenancy-isolation-ui.spec.js",
+              "line": 82,
+              "column": 3
+            },
+            {
+              "title": "P5-02: Company selection isolates data view",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3d4c207e3f70e94f5d97-f7387e7d4550992dc502",
+              "file": "multi-tenancy-isolation-ui.spec.js",
+              "line": 93,
+              "column": 3
+            },
+            {
+              "title": "P5-03: Direct URL manipulation cannot access other tenant data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3d4c207e3f70e94f5d97-e11c0a4d2c6f6a0dd38c",
+              "file": "multi-tenancy-isolation-ui.spec.js",
+              "line": 126,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "network-performance.spec.js",
+      "file": "network-performance.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Network Performance & Efficiency",
+          "file": "network-performance.spec.js",
+          "line": 15,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P9-01: Measure request count - Admin/Index",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-eb5c92f3743883940e04",
+              "file": "network-performance.spec.js",
+              "line": 30,
+              "column": 3
+            },
+            {
+              "title": "P9-02: Measure request count - Calendar/Table",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-0cca717353207b7ea06e",
+              "file": "network-performance.spec.js",
+              "line": 73,
+              "column": 3
+            },
+            {
+              "title": "P9-03: Detect duplicate requests",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-9139b8860e9a5d1b38f2",
+              "file": "network-performance.spec.js",
+              "line": 117,
+              "column": 3
+            },
+            {
+              "title": "P9-04: Detect unexpected polling",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-ae5f742f04efac13e445",
+              "file": "network-performance.spec.js",
+              "line": 163,
+              "column": 3
+            },
+            {
+              "title": "P9-05: Identify slow endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-9d2a727c80e0db1a967d",
+              "file": "network-performance.spec.js",
+              "line": 206,
+              "column": 3
+            },
+            {
+              "title": "P9-06: Detect 4xx/5xx errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-01adca98a00ae845a691",
+              "file": "network-performance.spec.js",
+              "line": 254,
+              "column": 3
+            },
+            {
+              "title": "P9-07: Measure full workflow - Create Company",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "de6f28d5a9f54f4a8708-9c57aea581a79bf4f3e7",
+              "file": "network-performance.spec.js",
+              "line": 292,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "session-expiry-warning.spec.js",
+      "file": "session-expiry-warning.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Session Expiry Warning System",
+          "file": "session-expiry-warning.spec.js",
+          "line": 20,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Session Status API",
+              "file": "session-expiry-warning.spec.js",
+              "line": 21,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have /Api/SessionStatus endpoint",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-968a3a6f39308a3acb1e",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 22,
+                  "column": 5
+                },
+                {
+                  "title": "should return 401 when not authenticated",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-ecbd8023803d304f2a7b",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 52,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Session Management Script Loading",
+              "file": "session-expiry-warning.spec.js",
+              "line": 63,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load session-check.js script",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-3b26b87f78745b2ca487",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 64,
+                  "column": 5
+                },
+                {
+                  "title": "should expose sessionManager global object",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-fe4929529f37cfa5d7ed",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 75,
+                  "column": 5
+                },
+                {
+                  "title": "should provide sessionManager.check() method",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-1c4a0bb93d011bf44924",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 90,
+                  "column": 5
+                },
+                {
+                  "title": "should provide sessionManager.extend() method",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-a1d676883ffadc97d0de",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 103,
+                  "column": 5
+                },
+                {
+                  "title": "should provide sessionManager.getState() method",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-6debe4f56147dffc5148",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 116,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Session Polling Behavior",
+              "file": "session-expiry-warning.spec.js",
+              "line": 135,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should make initial session check on page load",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-89af72d28d2153601149",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 136,
+                  "column": 5
+                },
+                {
+                  "title": "should not poll on login/signup pages",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-9fefe3bc6d06750a0d54",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 158,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Session Warning Display",
+              "file": "session-expiry-warning.spec.js",
+              "line": 176,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show warning notification when session approaching expiry",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-3d4d510163bd02c21f78",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 177,
+                  "column": 5
+                },
+                {
+                  "title": "should show expired notification when session expired",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-4241229a379fb660cdd5",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 233,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Session Extension",
+              "file": "session-expiry-warning.spec.js",
+              "line": 285,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should extend session when requested",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-31b69343ce9947648a32",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 286,
+                  "column": 5
+                },
+                {
+                  "title": "should update session state after extension",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-f9d43137c25d075a9f2d",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 309,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Adaptive Polling",
+              "file": "session-expiry-warning.spec.js",
+              "line": 343,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should use different polling intervals based on session state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-28a83b1df1e048b08318",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 344,
+                  "column": 5
+                },
+                {
+                  "title": "should check session state immediately on page load",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-f7a826d2bad8bbe450ae",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 368,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Tab Visibility Optimization",
+              "file": "session-expiry-warning.spec.js",
+              "line": 382,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should pause polling when tab hidden",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-bf8fd7b0472346d9b927",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 383,
+                  "column": 5
+                },
+                {
+                  "title": "should resume polling when tab visible again",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-aff721ed5f0358af13b1",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 406,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Bilingual Support",
+              "file": "session-expiry-warning.spec.js",
+              "line": 429,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show messages in English by default",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-65ace583e2815acb9d7d",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 430,
+                  "column": 5
+                },
+                {
+                  "title": "should show messages in Hebrew when language is Hebrew",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-a7b2a116304b48af06ed",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 446,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Security and Edge Cases",
+              "file": "session-expiry-warning.spec.js",
+              "line": 504,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should not redirect to login on auth pages",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-78b00b5401c72457de9b",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 505,
+                  "column": 5
+                },
+                {
+                  "title": "should handle network errors gracefully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-d910c5a86b060f56ca01",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 517,
+                  "column": 5
+                },
+                {
+                  "title": "should include CSRF protection headers in requests",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\katzi\\Downloads\\ShiftManager\\qa-automation\\tests\\session-expiry-warning.spec.js",
+                            "line": 540,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-5549fc270cd5c30e5015",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 540,
+                  "column": 10
+                }
+              ]
+            },
+            {
+              "title": "Performance and Optimization",
+              "file": "session-expiry-warning.spec.js",
+              "line": 561,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should not make excessive requests",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-24ceaeae31761efd8fb9",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 562,
+                  "column": 5
+                },
+                {
+                  "title": "should use credentials: same-origin for requests",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "0ccef26e4181ffdd9ce4-853b4c7bd39d2c00fb77",
+                  "file": "session-expiry-warning.spec.js",
+                  "line": 587,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "session-resilience.spec.js",
+      "file": "session-resilience.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Session Management & Resilience",
+          "file": "session-resilience.spec.js",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P7-01: Session timeout redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "59541aeddca90b3fcba9-2d22d3f9e5d23916f112",
+              "file": "session-resilience.spec.js",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "P7-02: Page refresh preserves authentication",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "59541aeddca90b3fcba9-2b3d0a962d2621badab7",
+              "file": "session-resilience.spec.js",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "P7-03: Browser back button after form submit shows correct state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "59541aeddca90b3fcba9-8098fbf3a5d615d75451",
+              "file": "session-resilience.spec.js",
+              "line": 35,
+              "column": 3
+            },
+            {
+              "title": "P7-04: Concurrent sessions from same user work independently",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "59541aeddca90b3fcba9-dd6be76fa10bd27c899f",
+              "file": "session-resilience.spec.js",
+              "line": 88,
+              "column": 3
+            },
+            {
+              "title": "P7-05: Network interruption shows graceful error",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "59541aeddca90b3fcba9-7e82bdaca8a8307dd9cd",
+              "file": "session-resilience.spec.js",
+              "line": 113,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "shift-assignment-workflow.spec.js",
+      "file": "shift-assignment-workflow.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Shift Assignment Workflow - End-to-End",
+          "file": "shift-assignment-workflow.spec.js",
+          "line": 26,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Complete workflow: Blueprint → Program → Shift → Assignment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cfce0651848635c9d861-436f50bde576290b228f",
+              "file": "shift-assignment-workflow.spec.js",
+              "line": 40,
+              "column": 5
+            },
+            {
+              "title": "Data integrity: Deleting blueprint prevents new program creation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cfce0651848635c9d861-4650381bda4a579622af",
+              "file": "shift-assignment-workflow.spec.js",
+              "line": 324,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "Shift Assignment Workflow - Edge Cases",
+          "file": "shift-assignment-workflow.spec.js",
+          "line": 476,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Blueprint without start/end time validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cfce0651848635c9d861-6ab128f71bd890cd5ad7",
+              "file": "shift-assignment-workflow.spec.js",
+              "line": 481,
+              "column": 5
+            },
+            {
+              "title": "Program creation without selected days",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "cfce0651848635c9d861-de09b1bb41ca25f97e3f",
+              "file": "shift-assignment-workflow.spec.js",
+              "line": 515,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-calendar.spec.js",
+      "file": "ui-overhaul-calendar.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Calendar Views",
+          "file": "ui-overhaul-calendar.spec.js",
+          "line": 7,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Month Calendar",
+              "file": "ui-overhaul-calendar.spec.js",
+              "line": 9,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-CAL-01: Month calendar displays correctly",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-ea688f8897c18cc05355",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 17,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-02: Scope switcher present above calendar",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-c93d84f71ca3271cc1fe",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 23,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-03: Scope switcher \"Mine Only\" filters calendar",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-0f9c4d61506409a18739",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 27,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-04: Month navigation works",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-163b0ef10a1c411903ac",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 40,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-05: Calendar cells show shift badges",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-9247bf33f26ad3fa93dc",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 59,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-06: Shift type colors follow design tokens",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-f69af54a8306cfebd37d",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 72,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-A11Y-01: Calendar passes accessibility audit",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-e85f04410879169dd0d2",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 87,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-A11Y-02: Calendar cells are keyboard navigable",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-6e4e85559d7e5c92a246",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 100,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Week Calendar",
+              "file": "ui-overhaul-calendar.spec.js",
+              "line": 117,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-CAL-WEEK-01: Week view displays 7 day columns",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-1a04ed68b6814dede607",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 125,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-WEEK-02: Week navigation works",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-cc49b5f7165bf2b95f87",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 132,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Day Calendar",
+              "file": "ui-overhaul-calendar.spec.js",
+              "line": 148,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-CAL-DAY-01: Day view shows time slots",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-015e1177666d57fa3316",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 156,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Calendar Empty States",
+              "file": "ui-overhaul-calendar.spec.js",
+              "line": 165,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-CAL-EMPTY-01: Empty state shown when no shifts",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-32ad4504aa62aba8e712",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 171,
+                  "column": 9
+                },
+                {
+                  "title": "UI-CAL-EMPTY-02: Empty state has localized message",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b477b1386cb0a0a087a3-fab2f0cbcc026d8f0f9c",
+                  "file": "ui-overhaul-calendar.spec.js",
+                  "line": 185,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-integration.spec.js",
+      "file": "ui-overhaul-integration.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Integration Journey",
+          "file": "ui-overhaul-integration.spec.js",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "INTEGRATION-01: Complete user journey - Owner",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4853c709cebc97c04ee6-660925debb3ad3fa3fcd",
+              "file": "ui-overhaul-integration.spec.js",
+              "line": 18,
+              "column": 5
+            },
+            {
+              "title": "INTEGRATION-02: Air-gapped environment simulation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4853c709cebc97c04ee6-b9b862f668841c418bae",
+              "file": "ui-overhaul-integration.spec.js",
+              "line": 86,
+              "column": 5
+            },
+            {
+              "title": "INTEGRATION-03: No console errors throughout journey",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4853c709cebc97c04ee6-4630646e383397ed6bc5",
+              "file": "ui-overhaul-integration.spec.js",
+              "line": 111,
+              "column": 5
+            },
+            {
+              "title": "INTEGRATION-04: Page load performance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4853c709cebc97c04ee6-863a832e9601ff614289",
+              "file": "ui-overhaul-integration.spec.js",
+              "line": 142,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-layout.spec.js",
+      "file": "ui-overhaul-layout.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Authenticated Layout",
+          "file": "ui-overhaul-layout.spec.js",
+          "line": 15,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Owner View",
+              "file": "ui-overhaul-layout.spec.js",
+              "line": 17,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-LAYOUT-01: Sidebar is visible after login",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-8ffcc85341dd32142c0b",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 24,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-02: SHIFTY logo displayed in sidebar/header",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-512ac98a1589b5d913cd",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 28,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-03: Sidebar has expected categories for Owner",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-72a61088b07f2c8acfb2",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 32,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-04: Sidebar categories are collapsible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-213a847f7238b9be8f90",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 40,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-05: Icons render correctly",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-65d7f2da498aeac62c85",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 60,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-06: CSS tokens defined in authenticated view",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-246419c57ac97aba3c06",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 64,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-07: No raw localization keys visible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-e43ce8a78c22ee98e51c",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 71,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-A11Y-01: Authenticated layout passes WCAG AA",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-15420c5bee1e40172015",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 82,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-A11Y-02: Sidebar has proper ARIA landmarks",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-fe8c9030caedef332220",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 96,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-A11Y-03: Skip link present for keyboard users",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-d04dbef63a8cde011c12",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 109,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Employee View (Restricted)",
+              "file": "ui-overhaul-layout.spec.js",
+              "line": 124,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-LAYOUT-RBAC-01: Employee sees limited sidebar categories",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-1e460fc997ad4dd98af1",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 136,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LAYOUT-RBAC-02: Context switcher hidden for single-context users",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "17b1c4f8d61ff4da8f4e-d4ac883896fe695e716a",
+                  "file": "ui-overhaul-layout.spec.js",
+                  "line": 145,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-localization.spec.js",
+      "file": "ui-overhaul-localization.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Localization",
+          "file": "ui-overhaul-localization.spec.js",
+          "line": 6,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "English (Default)",
+              "file": "ui-overhaul-localization.spec.js",
+              "line": 8,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-L10N-01: Login page text is in English",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-f9e2ff2071bd98745089",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 16,
+                  "column": 9
+                },
+                {
+                  "title": "UI-L10N-02: No raw localization keys on login page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-192783b734514df40d75",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 22,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Hebrew (RTL)",
+              "file": "ui-overhaul-localization.spec.js",
+              "line": 28,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-L10N-HE-01: Page switches to Hebrew",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-faee2a7ddc7003935b16",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 40,
+                  "column": 9
+                },
+                {
+                  "title": "UI-L10N-HE-02: Hebrew text appears on login",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-2ddbc08d7ff9d254b318",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 54,
+                  "column": 9
+                },
+                {
+                  "title": "UI-L10N-HE-03: Layout mirrors for RTL",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-c59e2f9d43d69ab5ff9b",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 65,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Localization API",
+              "file": "ui-overhaul-localization.spec.js",
+              "line": 86,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-L10N-API-01: API returns localized strings",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-e5da4a693d94ab8f32b8",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 88,
+                  "column": 9
+                },
+                {
+                  "title": "UI-L10N-API-02: API respects culture header",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-887e6e0a705591a33e9b",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 100,
+                  "column": 9
+                },
+                {
+                  "title": "UI-L10N-API-03: API handles empty keys gracefully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-f7238a0d8059ae2266aa",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 113,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Authenticated Pages Localization",
+              "file": "ui-overhaul-localization.spec.js",
+              "line": 124,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-L10N-AUTH-01: Sidebar labels are localized",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-cda49e08250f31d72582",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 130,
+                  "column": 9
+                },
+                {
+                  "title": "UI-L10N-AUTH-02: Calendar headers are localized",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "b324d68a7da18aa8dc91-84300f8edc23a5fd1009",
+                  "file": "ui-overhaul-localization.spec.js",
+                  "line": 141,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-login.spec.js",
+      "file": "ui-overhaul-login.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Login Page",
+          "file": "ui-overhaul-login.spec.js",
+          "line": 6,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Visual Design",
+              "file": "ui-overhaul-login.spec.js",
+              "line": 13,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-LOGIN-01: Login page displays SHIFTY branding",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-2a915e7b4747505f8ee7",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 15,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-02: Sidebar is hidden on login page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-d7bb13be3768c37173ad",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 20,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-03: CSS design tokens are properly defined",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-c0b4bd02759019bcfc26",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 25,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-04: Icons load properly (no broken images)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-e20b6b780789872fbf6f",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 32,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-05: No console errors on login page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-9a93b9f7c3c59986dc43",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 36,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Accessibility",
+              "file": "ui-overhaul-login.spec.js",
+              "line": 57,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-LOGIN-A11Y-01: Login page passes WCAG AA audit",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-8014aa83177a9ee79a22",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 59,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-A11Y-02: Form inputs have proper labels",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-fb9beccd78d02c4645fd",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 71,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-A11Y-03: Submit button is keyboard accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-292723823174121f8882",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 85,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Air-Gapped Compatibility",
+              "file": "ui-overhaul-login.spec.js",
+              "line": 100,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-LOGIN-AG-01: No external network requests",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-f6ba2691321c7aec7ce6",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 102,
+                  "column": 9
+                },
+                {
+                  "title": "UI-LOGIN-AG-02: Lucide icons load from local bundle",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "d8e7335efc28bfe7b7c8-454551f45e133bb7f8a6",
+                  "file": "ui-overhaul-login.spec.js",
+                  "line": 125,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-responsive.spec.js",
+      "file": "ui-overhaul-responsive.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Responsive Design",
+          "file": "ui-overhaul-responsive.spec.js",
+          "line": 16,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Mobile View",
+              "file": "ui-overhaul-responsive.spec.js",
+              "line": 18,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-RESP-MOB-01: Login page works on mobile",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-54b9a972b9bb09aa6d96",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 20,
+                  "column": 9
+                },
+                {
+                  "title": "UI-RESP-MOB-02: Sidebar collapsed on mobile",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-9bd1c5538dc3dce2e1ec",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 40,
+                  "column": 9
+                },
+                {
+                  "title": "UI-RESP-MOB-03: Mobile sidebar opens on hamburger click",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-dc66467d28cd1783b9d5",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 62,
+                  "column": 9
+                },
+                {
+                  "title": "UI-RESP-MOB-04: Calendar adapts to mobile width",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-66ff9b7f4a5caeb52776",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 79,
+                  "column": 9
+                },
+                {
+                  "title": "UI-RESP-MOB-A11Y-01: Mobile view passes accessibility",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-61b1ed77f3799f169e43",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 94,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Tablet View",
+              "file": "ui-overhaul-responsive.spec.js",
+              "line": 106,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-RESP-TAB-01: Layout adapts for tablet",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-c33bd7d1f82e09e35470",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 108,
+                  "column": 9
+                },
+                {
+                  "title": "UI-RESP-TAB-02: Calendar shows full week on tablet",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-8e0c6eafe785c1d5e8c0",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 120,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Desktop Wide View",
+              "file": "ui-overhaul-responsive.spec.js",
+              "line": 134,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-RESP-DESK-01: Layout uses wide viewport",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-6495da12a3bee839582c",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 136,
+                  "column": 9
+                },
+                {
+                  "title": "UI-RESP-DESK-02: No wasted space on wide screens",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "97a4f2336b944c1fbb89-5395619fe5a8f5d49627",
+                  "file": "ui-overhaul-responsive.spec.js",
+                  "line": 151,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-theme.spec.js",
+      "file": "ui-overhaul-theme.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Theme System",
+          "file": "ui-overhaul-theme.spec.js",
+          "line": 6,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Light Mode (Default)",
+              "file": "ui-overhaul-theme.spec.js",
+              "line": 8,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-THEME-01: Light mode is default",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-c5fb2e239e9397abbfe5",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 15,
+                  "column": 9
+                },
+                {
+                  "title": "UI-THEME-02: Light mode colors match design tokens",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-215c39263605dcc325ce",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 25,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Dark Mode",
+              "file": "ui-overhaul-theme.spec.js",
+              "line": 35,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-THEME-DARK-01: Dark mode toggle exists",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-c5cd0e5f4ebc8f6fb7da",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 42,
+                  "column": 9
+                },
+                {
+                  "title": "UI-THEME-DARK-02: Dark mode can be activated",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-1df6233e0274e0e54f81",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 49,
+                  "column": 9
+                },
+                {
+                  "title": "UI-THEME-DARK-03: Dark mode colors change appropriately",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-1b597ab6556a15c4c090",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 65,
+                  "column": 9
+                },
+                {
+                  "title": "UI-THEME-DARK-04: Theme preference persists",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-fe01907d8d54d7241597",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 79,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "High Contrast Mode",
+              "file": "ui-overhaul-theme.spec.js",
+              "line": 103,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-THEME-HC-01: Respects prefers-contrast media query",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "7718e4e5cec7e1e7e1d7-ed6b59305df14cd005ce",
+                  "file": "ui-overhaul-theme.spec.js",
+                  "line": 105,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui-overhaul-widgets.spec.js",
+      "file": "ui-overhaul-widgets.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI Overhaul: Widget System",
+          "file": "ui-overhaul-widgets.spec.js",
+          "line": 7,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "On-Call Widget",
+              "file": "ui-overhaul-widgets.spec.js",
+              "line": 9,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-WIDGET-01: On-Call widget present in sidebar",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-ae2fa5ac5c9ab196ea50",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 16,
+                  "column": 9
+                },
+                {
+                  "title": "UI-WIDGET-02: On-Call widget shows contact info",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-cfb24d0aeaad5360c66d",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 24,
+                  "column": 9
+                },
+                {
+                  "title": "UI-WIDGET-03: On-Call widget is collapsible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-f7807216fcaedf146e20",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 39,
+                  "column": 9
+                },
+                {
+                  "title": "UI-WIDGET-04: Widget state persists (localStorage)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-0a87979a2717a71da8f9",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 61,
+                  "column": 9
+                },
+                {
+                  "title": "UI-WIDGET-A11Y-01: Widget passes accessibility",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-879298882cda2e349958",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 86,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Grant-Based Widget Visibility",
+              "file": "ui-overhaul-widgets.spec.js",
+              "line": 100,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "UI-WIDGET-GRANT-01: Owner sees all widgets",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-644a54fdf2f423a9d481",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 102,
+                  "column": 9
+                },
+                {
+                  "title": "UI-WIDGET-GRANT-02: Employee sees limited widgets",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "f5f839e931f2f0284c01-d46e851b9a92abf82d62",
+                  "file": "ui-overhaul-widgets.spec.js",
+                  "line": 113,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "users-crud-rbac.spec.js",
+      "file": "users-crud-rbac.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Users Module - RBAC Authorization Matrix",
+          "file": "users-crud-rbac.spec.js",
+          "line": 72,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Owner Role - Full Access",
+              "file": "users-crud-rbac.spec.js",
+              "line": 74,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-01: Owner can access Users management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-f288ee457227256390d6",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 80,
+                  "column": 9
+                },
+                {
+                  "title": "P3-02: Owner can see all companies in company filter",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-4a21f41057dceaf3770f",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 90,
+                  "column": 9
+                },
+                {
+                  "title": "P3-03: Owner can see company selection for new user creation",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-33a696efac2e88c0bcb4",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 103,
+                  "column": 9
+                },
+                {
+                  "title": "P3-04: Owner can create user with valid data",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-a3f918420ec964020d35",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 115,
+                  "column": 9
+                },
+                {
+                  "title": "P3-05: Owner can delete user from any company",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-ef488a824038cb4b5d38",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 152,
+                  "column": 9
+                },
+                {
+                  "title": "P3-06: Owner can assign any role to a user",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-6387a4ef8718e6db624d",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 193,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Director Role - Limited Multi-Company Access",
+              "file": "users-crud-rbac.spec.js",
+              "line": 213,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-07: Director can access Users management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-3f176b73970f6a924514",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 219,
+                  "column": 9
+                },
+                {
+                  "title": "P3-08: Director sees only users from assigned companies",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-59b11e6a9ed4d926b50c",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 226,
+                  "column": 9
+                },
+                {
+                  "title": "P3-09: Director cannot see company selection for new users",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-ebdb3e6f0a83cc2dbf0d",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 243,
+                  "column": 9
+                },
+                {
+                  "title": "P3-10: Director cannot assign Owner role",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-381a2d24589c893c68f6",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 254,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Manager Role - Single Company Access",
+              "file": "users-crud-rbac.spec.js",
+              "line": 269,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-11: Manager can access Users management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-d08c395cf28b2fee116d",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 275,
+                  "column": 9
+                },
+                {
+                  "title": "P3-12: Manager sees only users from their company",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-88211fe17de9b1541040",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 282,
+                  "column": 9
+                },
+                {
+                  "title": "P3-13: Manager cannot assign Director or Owner roles",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-55a9851e4b189c1ea4e3",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 297,
+                  "column": 9
+                },
+                {
+                  "title": "P3-14: Manager can create Employee users",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-75ccef67bfd49a5605bf",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 314,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Employee Role - No Access",
+              "file": "users-crud-rbac.spec.js",
+              "line": 352,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-15: Employee cannot access Users management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-563ec529717ea022634d",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 358,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Trainee Role - No Access",
+              "file": "users-crud-rbac.spec.js",
+              "line": 372,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-16: Trainee cannot access Users management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-25ff8e547c42ae7919a4",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 378,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Assigner Role - No Access",
+              "file": "users-crud-rbac.spec.js",
+              "line": 392,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-17: Assigner cannot access Users management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-ef84d79c41b2aea2b3cb",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 398,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Backend Authorization - API Security",
+              "file": "users-crud-rbac.spec.js",
+              "line": 412,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-18: Unauthenticated request to Users page is rejected",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-7d1000333a1233a0e7ea",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 413,
+                  "column": 9
+                },
+                {
+                  "title": "P3-19: Backend rejects unauthorized user creation via direct POST",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-788740a7638b92aebcb2",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 421,
+                  "column": 9
+                },
+                {
+                  "title": "P3-20: Backend rejects unauthorized user deletion via direct POST",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-18c031b10acf87f763b7",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 450,
+                  "column": 9
+                },
+                {
+                  "title": "P3-21: Backend rejects role escalation attempt",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-2eb4857879ae5b47750f",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 469,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Cross-Company Access Control",
+              "file": "users-crud-rbac.spec.js",
+              "line": 528,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-22: Manager cannot modify users from other companies",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-9a65a8e69ce74613c5b9",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 529,
+                  "column": 9
+                },
+                {
+                  "title": "P3-23: Owner can filter users by company",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-ed37f423988703a18954",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 546,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Input Validation Security",
+              "file": "users-crud-rbac.spec.js",
+              "line": 582,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-24: XSS attempts in user display name are handled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-dfaf1b97f1ea4f69d653",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 588,
+                  "column": 9
+                },
+                {
+                  "title": "P3-25: SQL injection attempts in email are handled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-5105f5265eee8298f5b8",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 624,
+                  "column": 9
+                },
+                {
+                  "title": "P3-26: Very long display name is handled",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-3894d5c525eb9dc26257",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 661,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Join Requests - RBAC",
+              "file": "users-crud-rbac.spec.js",
+              "line": 692,
+              "column": 10,
+              "specs": [
+                {
+                  "title": "P3-27: Owner can see join requests section",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-bef6796ec36a106c0f67",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 698,
+                  "column": 9
+                },
+                {
+                  "title": "P3-28: Join requests table displays expected columns",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "1c4dd2529e9261d7cca8-e0d397a306e987153d9a",
+                  "file": "users-crud-rbac.spec.js",
+                  "line": 706,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Users CRUD Operations",
+          "file": "users-crud-rbac.spec.js",
+          "line": 724,
+          "column": 6,
+          "specs": [
+            {
+              "title": "P3-29: Users table displays expected columns",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1c4dd2529e9261d7cca8-3ab27a3b4310a8ad0608",
+              "file": "users-crud-rbac.spec.js",
+              "line": 730,
+              "column": 5
+            },
+            {
+              "title": "P3-30: User role can be changed via dropdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1c4dd2529e9261d7cca8-1816ad9326416fd1740a",
+              "file": "users-crud-rbac.spec.js",
+              "line": 748,
+              "column": 5
+            },
+            {
+              "title": "P3-31: User status can be toggled",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1c4dd2529e9261d7cca8-6e41815e6c1c256c5976",
+              "file": "users-crud-rbac.spec.js",
+              "line": 790,
+              "column": 5
+            },
+            {
+              "title": "P3-32: Password reset form exists and works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1c4dd2529e9261d7cca8-97543e8171c6b3806dbd",
+              "file": "users-crud-rbac.spec.js",
+              "line": 824,
+              "column": 5
+            },
+            {
+              "title": "P3-33: Export CSV functionality exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1c4dd2529e9261d7cca8-c26d79f95c7fe7f5c142",
+              "file": "users-crud-rbac.spec.js",
+              "line": 861,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-02-01T12:27:52.922Z",
+    "duration": 173.74399999999991,
+    "expected": 0,
+    "skipped": 197,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
