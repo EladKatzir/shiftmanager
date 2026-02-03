@@ -8,14 +8,14 @@
     <div class="owner-company-selector" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;">
         <form method="post" action="/Owner/SelectCompany" style="display: flex; align-items: center; gap: 0.5rem;">
             @Html.AntiForgeryToken()
-            <label style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
                 <span style="font-size: 1.25rem;">🏢</span>
                 <span><loc key="OwnerSelector_ManagingCompany" /></span>
             </label>
 
             <select name="companyId"
                     onchange="this.form.submit()"
-                    style="flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--text-primary); font-size: 0.9rem;">
+                    style="flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--text); font-size: 0.9rem;">
                 @foreach (var company in Model.Companies)
                 {
                     var isHome = company.Id == Model.HomeCompanyId;
