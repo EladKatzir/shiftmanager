@@ -111,6 +111,11 @@ public class AppDbContext : DbContext
     public DbSet<ClientError> ClientErrors => Set<ClientError>();
     public DbSet<PerformanceMetric> PerformanceMetrics => Set<PerformanceMetric>();
 
+    // ========================================
+    // Announcements Feed (tenant-scoped)
+    // ========================================
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var dateConverter = new ValueConverter<DateOnly, string>(
@@ -559,6 +564,10 @@ public class AppDbContext : DbContext
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<MasterProgram>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Announcements Feed: Query filter for tenant scoping
+            modelBuilder.Entity<Announcement>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
