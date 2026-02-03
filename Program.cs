@@ -144,6 +144,13 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director), nameof(UserRole.Assigner)));
     options.AddPolicy("CanEditOnDuty",
         policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director)));
+
+    // Announcements management policy
+    options.AddPolicy("CanManageAnnouncements", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole(nameof(UserRole.Owner)) ||
+            context.User.IsInRole(nameof(UserRole.Director)) ||
+            context.User.HasClaim("Grant", "ManageAnnouncements")));
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
