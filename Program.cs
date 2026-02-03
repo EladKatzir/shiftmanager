@@ -204,6 +204,7 @@ builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018:
 // B-018: Concurrent Edit Conflict Detection
 builder.Services.AddScoped<IConcurrencyService, ConcurrencyService>();
 builder.Services.AddScoped<IWidgetService, WidgetService>();
+builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
