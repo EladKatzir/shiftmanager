@@ -7512,4 +7512,12 @@ Are you absolutely sure you want to delete this user?</value>
     <value>{0} hour(s) ago</value>
     <comment>B-017 - Relative time: hours ago</comment>
   </data>
+  <data name="Dashboard_Announcements" xml:space="preserve">
+    <value>Announcements</value>
+    <comment>Dashboard section title for announcements feed</comment>
+  </data>
+  <data name="Dashboard_NoAnnouncements" xml:space="preserve">
+    <value>No announcements</value>
+    <comment>Empty state message when there are no announcements</comment>
+  </data>
 </root>

@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages;
@@ -11,10 +13,12 @@ namespace ShiftManager.Pages;
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
+    private readonly IAnnouncementService _announcementService;
 
-    public IndexModel(AppDbContext db)
+    public IndexModel(AppDbContext db, IAnnouncementService announcementService)
     {
         _db = db;
+        _announcementService = announcementService;
     }
 
     // Dashboard metrics
@@ -27,6 +31,7 @@ public class IndexModel : PageModel
     public string UserName { get; set; } = string.Empty;
     public DateTime? NextShiftDate { get; set; }
     public string NextShiftType { get; set; } = string.Empty;
+    public List<Announcement> RecentAnnouncements { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -129,5 +134,8 @@ public class IndexModel : PageModel
         UnreadNotificationsCount = await _db.UserNotifications
             .Where(n => n.UserId == userId && !n.IsRead)
             .CountAsync();
+
+        // Load recent announcements
+        RecentAnnouncements = await _announcementService.GetActiveAnnouncementsAsync(userId);
     }
 }

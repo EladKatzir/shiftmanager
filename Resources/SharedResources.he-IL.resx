@@ -7020,4 +7020,12 @@
     <value>לפני {0} שעות</value>
     <comment>B-017 - Relative time: hours ago</comment>
   </data>
+  <data name="Dashboard_Announcements" xml:space="preserve">
+    <value>הודעות</value>
+    <comment>Dashboard section title for announcements feed</comment>
+  </data>
+  <data name="Dashboard_NoAnnouncements" xml:space="preserve">
+    <value>אין הודעות</value>
+    <comment>Empty state message when there are no announcements</comment>
+  </data>
 </root>

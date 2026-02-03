@@ -15,7 +15,7 @@
         {
             @* Admin View: Team-wide metrics *@
             <div class="stat-card stat-card-1">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon"><i data-lucide="calendar"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UpcomingShiftsCount</div>
                     <div class="stat-label"><loc key="Dashboard_UpcomingShifts" /></div>
@@ -24,7 +24,7 @@
             </div>
 
             <div class="stat-card stat-card-2">
-                <div class="stat-icon">📝</div>
+                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.PendingRequestsCount</div>
                     <div class="stat-label"><loc key="Dashboard_PendingRequests" /></div>
@@ -33,7 +33,7 @@
             </div>
 
             <div class="stat-card stat-card-3">
-                <div class="stat-icon">👥</div>
+                <div class="stat-icon"><i data-lucide="users"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.TeamMembersCount</div>
                     <div class="stat-label"><loc key="Dashboard_TeamMembers" /></div>
@@ -42,7 +42,7 @@
             </div>
 
             <div class="stat-card stat-card-4">
-                <div class="stat-icon">🔔</div>
+                <div class="stat-icon"><i data-lucide="bell"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UnreadNotificationsCount</div>
                     <div class="stat-label"><loc key="Dashboard_Notifications" /></div>
@@ -54,7 +54,7 @@
         {
             @* Employee View: Personal metrics *@
             <div class="stat-card stat-card-1">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon"><i data-lucide="calendar"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UpcomingShiftsCount</div>
                     <div class="stat-label"><loc key="Dashboard_UpcomingShifts" /></div>
@@ -63,7 +63,7 @@
             </div>
 
             <div class="stat-card stat-card-2">
-                <div class="stat-icon">📝</div>
+                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.PendingRequestsCount</div>
                     <div class="stat-label"><loc key="Dashboard_MyPendingRequests" /></div>
@@ -72,7 +72,7 @@
             </div>
 
             <div class="stat-card stat-card-3">
-                <div class="stat-icon">👥</div>
+                <div class="stat-icon"><i data-lucide="users"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.TeamMembersCount</div>
                     <div class="stat-label"><loc key="Dashboard_TeamMembers" /></div>
@@ -81,7 +81,7 @@
             </div>
 
             <div class="stat-card stat-card-4">
-                <div class="stat-icon">🔔</div>
+                <div class="stat-icon"><i data-lucide="bell"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UnreadNotificationsCount</div>
                     <div class="stat-label"><loc key="Dashboard_Notifications" /></div>
@@ -95,7 +95,7 @@
     @if (!Model.IsAdmin && Model.NextShiftDate.HasValue)
     {
         <div class="next-shift-highlight">
-            <div class="next-shift-icon">⭐</div>
+            <div class="next-shift-icon"><i data-lucide="star"></i></div>
             <div class="next-shift-content">
                 <div class="next-shift-label"><loc key="Dashboard_NextShift" /></div>
                 <div class="next-shift-details">
@@ -109,13 +109,46 @@
     else if (!Model.IsAdmin && !Model.NextShiftDate.HasValue)
     {
         <div class="next-shift-highlight next-shift-empty">
-            <div class="next-shift-icon">📭</div>
+            <div class="next-shift-icon"><i data-lucide="inbox"></i></div>
             <div class="next-shift-content">
                 <div class="next-shift-label"><loc key="Dashboard_NextShift" /></div>
                 <div class="next-shift-details"><loc key="Dashboard_NoShiftsScheduled" /></div>
             </div>
         </div>
     }
+
+    @* Announcements Feed *@
+    <div class="dashboard-section">
+        <h2 class="dashboard-section-title"><loc key="Dashboard_Announcements" /></h2>
+        <div class="card announcements-card">
+            <div class="card-body">
+                @if (Model.RecentAnnouncements.Any())
+                {
+                    @foreach (var announcement in Model.RecentAnnouncements.Take(5))
+                    {
+                        <div class="announcement-item @(announcement.IsPinned ? "pinned" : "")">
+                            @if (announcement.IsPinned)
+                            {
+                                <i data-lucide="pin" class="pin-icon"></i>
+                            }
+                            <div class="announcement-title">@announcement.Title</div>
+                            <div class="announcement-meta">
+                                @announcement.Creator?.DisplayName • @announcement.CreatedAt.ToLocalTime().ToString("MMM d")
+                            </div>
+                            <div class="announcement-content">@announcement.Content</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i data-lucide="megaphone"></i>
+                        <p><loc key="Dashboard_NoAnnouncements" /></p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 
     @* Quick Actions Grid *@
     <div class="dashboard-section">
@@ -125,22 +158,22 @@
             {
                 @* Admin Quick Actions *@
                 <a href="/Calendar/Month" class="quick-action-card">
-                    <div class="quick-action-icon">📅</div>
+                    <div class="quick-action-icon"><i data-lucide="calendar"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_ViewCalendar" /></div>
                 </a>
 
                 <a href="/Requests/Index" class="quick-action-card">
-                    <div class="quick-action-icon">📝</div>
+                    <div class="quick-action-icon"><i data-lucide="clipboard-list"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_ManageRequests" /></div>
                 </a>
 
                 <a href="@(Model.UserRole == ShiftManager.Models.Support.UserRole.Manager ? "/MyTeam/Index" : "/Admin/Users")" class="quick-action-card">
-                    <div class="quick-action-icon">👥</div>
+                    <div class="quick-action-icon"><i data-lucide="users"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_ViewTeam" /></div>
                 </a>
 
                 <a href="/Admin/Analytics" class="quick-action-card">
-                    <div class="quick-action-icon">📊</div>
+                    <div class="quick-action-icon"><i data-lucide="bar-chart-3"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_ViewAnalytics" /></div>
                 </a>
             }
@@ -148,22 +181,22 @@
             {
                 @* Employee Quick Actions *@
                 <a href="/Calendar/Month" class="quick-action-card">
-                    <div class="quick-action-icon">📅</div>
+                    <div class="quick-action-icon"><i data-lucide="calendar"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_ViewSchedule" /></div>
                 </a>
 
                 <a href="/My/Requests" class="quick-action-card">
-                    <div class="quick-action-icon">📝</div>
+                    <div class="quick-action-icon"><i data-lucide="clipboard-list"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_SubmitRequest" /></div>
                 </a>
 
                 <a href="/MyTeam/Index" class="quick-action-card">
-                    <div class="quick-action-icon">👥</div>
+                    <div class="quick-action-icon"><i data-lucide="users"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_ViewTeam" /></div>
                 </a>
 
                 <a href="/My/Profile" class="quick-action-card">
-                    <div class="quick-action-icon">👤</div>
+                    <div class="quick-action-icon"><i data-lucide="user"></i></div>
                     <div class="quick-action-label"><loc key="Dashboard_MyProfile" /></div>
                 </a>
             }
