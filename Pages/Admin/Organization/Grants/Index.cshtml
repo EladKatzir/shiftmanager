@@ -16,30 +16,30 @@
 @section Styles {
     <style>
         .page-header { margin-bottom: 2rem; }
-        .page-title { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; }
-        .page-subtitle { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
         .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
         .alert-success { background: var(--success); color: var(--success-text); }
         .alert-error { background: var(--danger); color: var(--danger-text); }
         .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
-        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
         .filters-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: end; }
         .filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
-        .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
-        .form-select { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text-primary); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; min-width: 150px; }
+        .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .form-select { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; min-width: 150px; }
         .view-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-        .view-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-primary); }
+        .view-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text); }
         .view-tab.active { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th, .data-table td { padding: 0.875rem; text-align: left; }
         .data-table thead tr { border-bottom: 2px solid var(--border); }
-        .data-table th { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .data-table th { font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .data-table tbody tr { border-bottom: 1px solid var(--border); }
         .data-table tbody tr:hover { background: var(--surface-soft); }
         .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
         .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
         .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); }
-        .btn-ghost { background: transparent; color: var(--text-primary); border-color: transparent; }
+        .btn-ghost { background: transparent; color: var(--text); border-color: transparent; }
         .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; }
         .badge-auto { background: var(--primary-soft); color: var(--primary); }
         .badge-manual { background: var(--success-soft); color: var(--success); }
@@ -187,6 +187,6 @@
 
 <div class="section-card">
     <h3 class="section-header"><loc key="AssignNewGrant" /></h3>
-    <p style="color: var(--text-secondary); margin-bottom: 1rem;"><loc key="SelectUserToAssignGrant" /></p>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;"><loc key="SelectUserToAssignGrant" /></p>
     <a href="/Admin/Organization/Grants/Assign" class="btn btn-primary"><loc key="AssignGrant" /></a>
 </div>
