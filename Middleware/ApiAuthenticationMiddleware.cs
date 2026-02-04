@@ -244,6 +244,12 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // Schedule Export API - used by schedule export feature for PDF/Excel/CSV generation
+        if (path.StartsWithSegments("/Api/ScheduleExport", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 
