@@ -50,6 +50,12 @@ public class OnDutyTypeConfig
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// If true, only officers (rank >= SegenMishne) can be assigned this duty type.
+    /// Used for Katzin duties.
+    /// </summary>
+    public bool RequiresOfficerRank { get; set; } = false;
+
+    /// <summary>
     /// Created timestamp
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
