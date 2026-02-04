@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
@@ -21,7 +23,8 @@ public class OnDutyServiceEligibilityTests : IDisposable
             .Options;
 
         _db = new AppDbContext(options);
-        _service = new OnDutyService(_db, null!, null!, NullLogger<OnDutyService>.Instance);
+        var mockConfiguration = new Mock<IConfiguration>();
+        _service = new OnDutyService(_db, null!, null!, NullLogger<OnDutyService>.Instance, mockConfiguration.Object);
 
         // Seed test users with explicit Email values
         _db.Users.AddRange(

@@ -60,17 +60,20 @@ public class OnDutyService : IOnDutyService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDirectorService _directorService;
     private readonly ILogger<OnDutyService> _logger;
+    private readonly IConfiguration _configuration;
 
     public OnDutyService(
         AppDbContext db,
         IHttpContextAccessor httpContextAccessor,
         IDirectorService directorService,
-        ILogger<OnDutyService> logger)
+        ILogger<OnDutyService> logger,
+        IConfiguration configuration)
     {
         _db = db;
         _httpContextAccessor = httpContextAccessor;
         _directorService = directorService;
         _logger = logger;
+        _configuration = configuration;
     }
 
     private int GetCurrentUserId()
@@ -247,17 +250,21 @@ public class OnDutyService : IOnDutyService
                 return (false, "You do not have permission to create on-duty assignments.", null);
             }
 
-            // Check if duty type requires officer rank
-            var requiresOfficer = await RequiresOfficerForDutyTypeAsync(type);
-            if (requiresOfficer)
+            // Check if duty type requires officer rank (only enforce when feature flag is enabled)
+            var enforceRankEligibility = _configuration.GetValue<bool>("Features:EnforceRankEligibility", false);
+            if (enforceRankEligibility)
             {
-                var isEligible = await IsUserEligibleForDutyAsync(assigneeId, type, requireOfficer: true);
-                if (!isEligible)
+                var requiresOfficer = await RequiresOfficerForDutyTypeAsync(type);
+                if (requiresOfficer)
                 {
-                    _logger.LogWarning(
-                        "User {UserId} is not eligible for duty type {DutyType} - officer rank required",
-                        assigneeId, type);
-                    return (false, "OFFICER_RANK_REQUIRED", null);
+                    var isEligible = await IsUserEligibleForDutyAsync(assigneeId, type, requireOfficer: true);
+                    if (!isEligible)
+                    {
+                        _logger.LogWarning(
+                            "User {UserId} is not eligible for duty type {DutyType} - officer rank required",
+                            assigneeId, type);
+                        return (false, "OFFICER_RANK_REQUIRED", null);
+                    }
                 }
             }
 
