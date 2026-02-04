@@ -228,6 +228,9 @@ builder.Services.AddScoped<ILanguageManagementService, LanguageManagementService
 builder.Services.AddScoped<IShiftProgramService, ShiftProgramService>();
 builder.Services.AddScoped<IMasterProgramService, MasterProgramService>();
 
+// Schedule Export Service
+builder.Services.AddScoped<IScheduleExportService, ScheduleExportService>();
+
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();
 
