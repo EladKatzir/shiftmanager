@@ -29,6 +29,13 @@ public class AppUser : IBelongsToCompany
     public string? Skills { get; set; }             // JSON array, e.g., ["Grill", "Prep", "Cleaning"]
     public string? Certifications { get; set; }     // JSON array, e.g., ["Food Safety", "First Aid"]
 
+    // Military Rank (for eligibility checks)
+    /// <summary>
+    /// User's military rank. Used for duty eligibility (e.g., Katzin requires officer rank).
+    /// Defaults to Turai (lowest enlisted rank) for backward compatibility.
+    /// </summary>
+    public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;
+
     // Profile Enhancements - Emergency Contact
     public string? EmergencyContactName { get; set; }
     public string? EmergencyContactPhone { get; set; }
