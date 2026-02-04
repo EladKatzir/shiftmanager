@@ -22,6 +22,16 @@ public interface IOnDutyService
     Task<(bool HasConflict, DateOnly? StartDate, DateOnly? EndDate, TimeOffType? Type)> GetVacationConflictDetailsAsync(int userId, DateOnly date);
     Task<bool> CanUserManageOnDutyAsync(int userId);
     Task<List<AppUser>> GetEligibleAssigneesAsync();
+
+    /// <summary>
+    /// Get users eligible for a specific duty type, optionally requiring officer rank.
+    /// </summary>
+    Task<List<AppUser>> GetEligibleUsersForDutyAsync(OnDutyType dutyType, bool requireOfficer = false);
+
+    /// <summary>
+    /// Check if a specific user is eligible for a duty type.
+    /// </summary>
+    Task<bool> IsUserEligibleForDutyAsync(int userId, OnDutyType dutyType, bool requireOfficer = false);
 }
 
 /// <summary>
@@ -443,5 +453,43 @@ public class OnDutyService : IOnDutyService
             .Include(o => o.Creator)
             .Include(o => o.Canceler)
             .FirstOrDefaultAsync(o => o.Id == onDutyId);
+    }
+
+    /// <summary>
+    /// Get users eligible for a specific duty type, optionally requiring officer rank.
+    /// </summary>
+    public async Task<List<AppUser>> GetEligibleUsersForDutyAsync(OnDutyType dutyType, bool requireOfficer = false)
+    {
+        var query = _db.Users
+            .IgnoreQueryFilters() // OnDuty is cross-company
+            .Where(u => u.IsActive);
+
+        if (requireOfficer)
+        {
+            // Officers have rank >= 9 (SegenMishne)
+            query = query.Where(u => (int)u.Rank >= 9);
+        }
+
+        return await query
+            .OrderBy(u => u.DisplayName)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Check if a specific user is eligible for a duty type.
+    /// </summary>
+    public async Task<bool> IsUserEligibleForDutyAsync(int userId, OnDutyType dutyType, bool requireOfficer = false)
+    {
+        var user = await _db.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null || !user.IsActive)
+            return false;
+
+        if (requireOfficer && !user.Rank.IsOfficer())
+            return false;
+
+        return true;
     }
 }
