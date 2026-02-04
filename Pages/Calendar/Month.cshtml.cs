@@ -53,6 +53,18 @@ public class MonthModel : PageModel
     public (DateOnly MonthYear, string Label) Previous { get; set; }
     public (DateOnly MonthYear, string Label) Next { get; set; }
     public List<List<DayVM>> Weeks { get; set; } = new();
+
+    /// <summary>
+    /// Start date of the calendar grid (first visible date, may be in previous month)
+    /// Used for schedule export functionality
+    /// </summary>
+    public DateOnly StartDate { get; set; }
+
+    /// <summary>
+    /// End date of the calendar grid (last visible date, may be in next month)
+    /// Used for schedule export functionality
+    /// </summary>
+    public DateOnly EndDate { get; set; }
     public bool ShowMyItemsOnly { get; set; }
     public int CurrentUserId { get; set; }
 
@@ -182,6 +194,10 @@ public class MonthModel : PageModel
         int delta = (int)start.DayOfWeek; // Days from Sunday (Sunday = 0)
         var gridStart = start.AddDays(-delta);
         var dates = Enumerable.Range(0, 42).Select(i => gridStart.AddDays(i)).ToList();
+
+        // Set start and end dates for export functionality
+        StartDate = dates.First();
+        EndDate = dates.Last();
 
         // ✅ A-018: Load calendar items using scope-filtered company IDs
         var shifts = await LoadShiftsAsync(companyIds, dates, currentUserId);

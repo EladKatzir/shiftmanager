@@ -27,12 +27,39 @@
 <div class="calendar-header">
     <div class="header-main">
         <h2>
-            <span class="calendar-icon">📅</span>
+            <span class="calendar-icon"><i data-lucide="calendar"></i></span>
             @Model.CurrentMonth.ToString("MMMM yyyy")
         </h2>
         @* ✅ PHASE 20: Show My Items toggle *@
         <div class="calendar-controls">
             @await Component.InvokeAsync("ShowMyItemsToggle")
+
+            @* Export dropdown *@
+            <div class="export-dropdown no-print" id="exportDropdown">
+                <button type="button" class="btn btn-secondary" id="exportBtn" aria-haspopup="true" aria-expanded="false">
+                    <i data-lucide="download"></i>
+                    <span><loc key="Export" /></span>
+                </button>
+                <div class="dropdown-menu" id="exportMenu" role="menu">
+                    <button type="button" class="dropdown-item" data-format="pdf" role="menuitem">
+                        <i data-lucide="file-text"></i>
+                        <span>PDF</span>
+                    </button>
+                    <button type="button" class="dropdown-item" data-format="excel" role="menuitem">
+                        <i data-lucide="file-spreadsheet"></i>
+                        <span>Excel</span>
+                    </button>
+                    <button type="button" class="dropdown-item" data-format="csv" role="menuitem">
+                        <i data-lucide="file"></i>
+                        <span>CSV</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button type="button" class="dropdown-item" id="printBtn" role="menuitem">
+                        <i data-lucide="printer"></i>
+                        <span><loc key="Action_Print" /></span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -43,7 +70,7 @@
             <span class="nav-text">@Model.Previous.Label</span>
         </a>
         <a class="btn btn-primary" href="/Calendar/Month">
-            <span class="nav-icon">📅</span>
+            <span class="nav-icon"><i data-lucide="calendar-check"></i></span>
             <span class="nav-text"><loc key="Today" /></span>
         </a>
         <a class="btn btn-ghost" href="/Calendar/Month?year=@Model.Next.MonthYear.Year&month=@Model.Next.MonthYear.Month">
@@ -57,7 +84,7 @@
     {
         <div class="calendar-metrics">
             <div class="metric-item metric-shifts">
-                <span class="metric-icon">📅</span>
+                <span class="metric-icon"><i data-lucide="calendar"></i></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.VisibleShiftCount</span>
                     <span class="metric-label"><loc key="Calendar_Shifts" /></span>
@@ -67,7 +94,7 @@
             @if (Model.VisibleChoreCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">🧹</span>
+                    <span class="metric-icon"><i data-lucide="brush"></i></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleChoreCount</span>
                         <span class="metric-label"><loc key="Calendar_Chores" /></span>
@@ -78,7 +105,7 @@
             @if (Model.VisibleOnDutyCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">🎯</span>
+                    <span class="metric-icon"><i data-lucide="target"></i></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleOnDutyCount</span>
                         <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
@@ -89,7 +116,7 @@
             @if (Model.PendingItemsCount > 0)
             {
                 <div class="metric-item metric-pending">
-                    <span class="metric-icon">⏳</span>
+                    <span class="metric-icon"><i data-lucide="clock"></i></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.PendingItemsCount</span>
                         <span class="metric-label"><loc key="Calendar_Pending" /></span>
@@ -99,7 +126,7 @@
 
             <require-grant key="ViewAnalytics">
             <div class="metric-item metric-coverage">
-                <span class="metric-icon">✅</span>
+                <span class="metric-icon"><i data-lucide="check-circle"></i></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.CoveragePercent%</span>
                     <span class="metric-label"><loc key="Calendar_Coverage" /></span>
@@ -126,19 +153,19 @@
     <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
     <require-grant key="ViewShifts">
     <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
-        <span>📊</span>
+        <i data-lucide="bar-chart-3" class="btn-icon"></i>
         <loc key="Calendar_ManageShifts" />
     </a>
     </require-grant>
     <require-grant key="ViewChores">
     <a class="btn btn-secondary btn-sm" href="/Public/Chores">
-        <span>🧹</span>
+        <i data-lucide="brush" class="btn-icon"></i>
         <loc key="Calendar_ManageChores" />
     </a>
     </require-grant>
     <require-grant key="ViewDuties">
     <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
-        <span>🛡️</span>
+        <i data-lucide="shield" class="btn-icon"></i>
         <loc key="Calendar_ManageOnDuty" />
     </a>
     </require-grant>
@@ -451,6 +478,123 @@
 @* ✅ PHASE 20: JavaScript for show more/less functionality *@
 @section Scripts {
     <script>
+        // Export dropdown functionality
+        (function() {
+            'use strict';
+
+            var exportBtn = document.getElementById('exportBtn');
+            var exportMenu = document.getElementById('exportMenu');
+            var printBtn = document.getElementById('printBtn');
+
+            if (!exportBtn || !exportMenu) return;
+
+            // Toggle dropdown menu visibility
+            exportBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var isExpanded = exportMenu.classList.toggle('show');
+                exportBtn.setAttribute('aria-expanded', isExpanded);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#exportDropdown')) {
+                    exportMenu.classList.remove('show');
+                    exportBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Close on escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && exportMenu.classList.contains('show')) {
+                    exportMenu.classList.remove('show');
+                    exportBtn.setAttribute('aria-expanded', 'false');
+                    exportBtn.focus();
+                }
+            });
+
+            // Print button handler
+            if (printBtn) {
+                printBtn.addEventListener('click', function() {
+                    exportMenu.classList.remove('show');
+                    exportBtn.setAttribute('aria-expanded', 'false');
+                    window.print();
+                });
+            }
+
+            // Export handlers
+            var formatMap = { pdf: 0, excel: 1, csv: 2 };
+            var startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
+            var endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
+
+            document.querySelectorAll('[data-format]').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    var format = this.dataset.format;
+
+                    var request = {
+                        format: formatMap[format],
+                        period: 1, // Month
+                        startDate: startDate,
+                        endDate: endDate,
+                        includeEmployeeNames: true,
+                        includeChores: true,
+                        includeOnDuty: true
+                    };
+
+                    try {
+                        // Show loading state
+                        btn.disabled = true;
+                        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>Loading...</span>';
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                        var response = await fetch('/Api/ScheduleExport', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify(request)
+                        });
+
+                        if (response.ok) {
+                            var blob = await response.blob();
+                            var url = URL.createObjectURL(blob);
+                            var a = document.createElement('a');
+                            a.href = url;
+                            var ext = format === 'excel' ? 'xlsx' : format;
+                            a.download = 'schedule-' + startDate + '.' + ext;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+
+                            // Show success toast if available
+                            if (window.showToast) {
+                                window.showToast('Export downloaded successfully', 'success');
+                            }
+                        } else {
+                            console.error('Export failed:', response.statusText);
+                            if (window.showToast) {
+                                window.showToast('Export failed: ' + response.statusText, 'error');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Export failed:', error);
+                        if (window.showToast) {
+                            window.showToast('Export failed: ' + error.message, 'error');
+                        }
+                    } finally {
+                        // Restore button state
+                        btn.disabled = false;
+                        var iconName = format === 'pdf' ? 'file-text' : (format === 'excel' ? 'file-spreadsheet' : 'file');
+                        btn.innerHTML = '<i data-lucide="' + iconName + '"></i> <span>' + format.toUpperCase() + '</span>';
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                        // Close dropdown
+                        exportMenu.classList.remove('show');
+                        exportBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+        })();
+
         // Clone assignee options from template to all dropdowns (performance optimization)
         document.addEventListener('DOMContentLoaded', function() {
             const template = document.getElementById('assignee-options-template');
@@ -541,6 +685,102 @@
 @* ✅ PHASE 20: Page-specific styles *@
 @section Styles {
     <style>
+        /* Export Dropdown Styles */
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-dropdown .btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-dropdown .btn i {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .export-dropdown .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.25rem;
+            z-index: 1000;
+            min-width: 160px;
+            padding: 0.5rem 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        [dir="rtl"] .export-dropdown .dropdown-menu {
+            right: auto;
+            left: 0;
+        }
+
+        .export-dropdown .dropdown-menu.show {
+            display: block;
+        }
+
+        .export-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.875rem;
+            transition: background-color 0.15s ease;
+        }
+
+        [dir="rtl"] .export-dropdown .dropdown-item {
+            text-align: right;
+        }
+
+        .export-dropdown .dropdown-item:hover {
+            background: var(--surface-soft);
+        }
+
+        .export-dropdown .dropdown-item:focus {
+            background: var(--surface-soft);
+            outline: none;
+        }
+
+        .export-dropdown .dropdown-item i {
+            width: 1rem;
+            height: 1rem;
+            flex-shrink: 0;
+        }
+
+        .export-dropdown .dropdown-divider {
+            height: 1px;
+            margin: 0.5rem 0;
+            background: var(--border);
+        }
+
+        .export-dropdown .dropdown-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Spin animation for loading state */
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         /* ✅ PHASE 20: Calendar item cards */
         .calendar-item {
             position: relative;
