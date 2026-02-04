@@ -20,17 +20,20 @@ public class EditProfileModel : PageModel
     private readonly IProfileService _profileService;
     private readonly IAvatarService _avatarService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IAuditLogService _auditLogService;
 
     public EditProfileModel(
         AppDbContext db,
         IProfileService profileService,
         IAvatarService avatarService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IAuditLogService auditLogService)
     {
         _db = db;
         _profileService = profileService;
         _avatarService = avatarService;
         _tenantResolver = tenantResolver;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -436,6 +439,16 @@ public class EditProfileModel : PageModel
                     ChangedBy = editorUserId
                 };
                 _db.ProfileChangeAudits.Add(change);
+
+                // Log to main audit log for compliance tracking
+                await _auditLogService.LogUserActionAsync(
+                    userId: editorUserId,
+                    action: "UserRankChanged",
+                    entityType: "User",
+                    entityId: targetUser.Id,
+                    description: $"Changed military rank for {targetUser.DisplayName} ({targetUser.Email})",
+                    details: $"{{\"oldRank\": \"{oldRank}\", \"newRank\": \"{Rank}\", \"oldRankDisplay\": \"{oldRank.GetDisplayName(language)}\", \"newRankDisplay\": \"{Rank.GetDisplayName(language)}\"}}"
+                );
             }
         }
 
