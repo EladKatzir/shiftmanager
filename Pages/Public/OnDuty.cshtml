@@ -455,24 +455,6 @@
                 <input type="date" name="OnDutyDate" id="onDutyDate" class="form-input" required />
             </div>
             <div class="form-group">
-                <label class="form-label" id="onDutyAssigneeLabel"><loc key="Assignee" /></label>
-                <input type="hidden" name="AssigneeId" id="selectedOnDutyAssigneeId" required />
-                <div class="custom-select-container">
-                    <div class="custom-select-trigger" id="onDutyAssigneeTrigger" onclick="toggleOnDutyAssigneeDropdown()" role="combobox" aria-labelledby="onDutyAssigneeLabel" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
-                        <span id="selectedOnDutyAssigneeName"><loc key="SelectAssignee" /></span>
-                        <span class="dropdown-arrow" aria-hidden="true">▼</span>
-                    </div>
-                    <div class="custom-dropdown" id="onDutyAssigneeDropdown" style="display: none;" role="listbox" aria-labelledby="onDutyAssigneeLabel">
-                        @foreach (var user in Model.EligibleAssignees)
-                        {
-                            <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" onclick="selectOnDutyAssignee(@user.Id, '@user.DisplayName')" role="option">
-                                @user.DisplayName (@user.Email)
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
                 <label class="form-label" for="onDutyType"><loc key="Type" /></label>
                 <select name="OnDutyType" id="onDutyType" class="form-select" required>
                     <option value=""><loc key="SelectType" /></option>
@@ -483,9 +465,43 @@
                     @foreach (var customType in Model.CustomOnDutyTypes)
                     {
                         var displayName = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("he") ? customType.NameHe : customType.NameEn;
-                        <option value="@customType.TypeValue">@customType.Icon @displayName</option>
+                        <option value="@customType.TypeValue" data-requires-officer="@customType.RequiresOfficerRank.ToString().ToLower()">@customType.Icon @displayName</option>
                     }
                 </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" id="onDutyAssigneeLabel"><loc key="Assignee" /></label>
+                <input type="hidden" name="AssigneeId" id="selectedOnDutyAssigneeId" required />
+                <div class="custom-select-container">
+                    <div class="custom-select-trigger" id="onDutyAssigneeTrigger" onclick="toggleOnDutyAssigneeDropdown()" role="combobox" aria-labelledby="onDutyAssigneeLabel" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
+                        <span id="selectedOnDutyAssigneeName"><loc key="SelectAssignee" /></span>
+                        <span class="dropdown-arrow" aria-hidden="true">▼</span>
+                    </div>
+                    <div class="custom-dropdown" id="onDutyAssigneeDropdown" style="display: none;" role="listbox" aria-labelledby="onDutyAssigneeLabel">
+                        <div class="dropdown-loading" id="onDutyAssigneeLoading" style="display: none; padding: 0.75rem; text-align: center; color: var(--muted);">
+                            @Localizer["Loading"]...
+                        </div>
+                        <div id="onDutyAssigneeOptions">
+                            @foreach (var user in Model.EligibleAssignees)
+                            {
+                                var userRank = user.Rank;
+                                var rankAbbrev = userRank.GetAbbreviation();
+                                var rankClass = userRank.GetBadgeClass();
+                                <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" data-rank="@((int)userRank)" data-rank-abbrev="@rankAbbrev" onclick="selectOnDutyAssignee(@user.Id, '@user.DisplayName', '@rankAbbrev')" role="option">
+                                    <span class="rank-badge rank-badge--compact @rankClass" title="@userRank.GetDisplayName()">@rankAbbrev</span>
+                                    @user.DisplayName
+                                    <span style="color: var(--muted); font-size: 0.85em;">(@user.Email)</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="dropdown-empty" id="onDutyAssigneeEmpty" style="display: none; padding: 0.75rem; text-align: center; color: var(--muted);">
+                            <loc key="NoEligibleAssignees" />
+                        </div>
+                    </div>
+                </div>
+                <div id="officerRequiredHint" class="form-hint" style="display: none; margin-top: 0.25rem; font-size: 0.85em; color: var(--warning);">
+                    <loc key="OnDutyRequiresOfficer" />
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label"><loc key="Notes" /> (@Localizer["Optional"])</label>
@@ -653,10 +669,89 @@ function toggleOnDutyAssigneeDropdown() {
     }
 }
 
-function selectOnDutyAssignee(id, name) {
+function selectOnDutyAssignee(id, name, rankAbbrev) {
     document.getElementById('selectedOnDutyAssigneeId').value = id;
-    document.getElementById('selectedOnDutyAssigneeName').textContent = name;
+    // Display name with rank abbreviation if provided
+    const displayText = rankAbbrev ? `[${rankAbbrev}] ${name}` : name;
+    document.getElementById('selectedOnDutyAssigneeName').textContent = displayText;
     document.getElementById('onDutyAssigneeDropdown').style.display = 'none';
+}
+
+// Fetch and update eligible assignees based on selected duty type
+async function updateEligibleAssignees(dutyType) {
+    const optionsContainer = document.getElementById('onDutyAssigneeOptions');
+    const loadingIndicator = document.getElementById('onDutyAssigneeLoading');
+    const emptyIndicator = document.getElementById('onDutyAssigneeEmpty');
+    const officerHint = document.getElementById('officerRequiredHint');
+
+    // Reset selection when duty type changes
+    document.getElementById('selectedOnDutyAssigneeId').value = '';
+    document.getElementById('selectedOnDutyAssigneeName').textContent = '@Localizer["SelectAssignee"]';
+
+    // Show loading state
+    loadingIndicator.style.display = 'block';
+    optionsContainer.style.display = 'none';
+    emptyIndicator.style.display = 'none';
+    officerHint.style.display = 'none';
+
+    try {
+        const url = dutyType ? `/Api/OnDuty/GetEligibleUsers?dutyType=${dutyType}` : '/Api/OnDuty/GetEligibleUsers';
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error('Error fetching eligible users:', data.message);
+            loadingIndicator.style.display = 'none';
+            emptyIndicator.style.display = 'block';
+            return;
+        }
+
+        // Show officer requirement hint if needed
+        if (data.requiresOfficer) {
+            officerHint.style.display = 'block';
+        }
+
+        // Clear existing options
+        optionsContainer.innerHTML = '';
+
+        // Add new options
+        if (data.users && data.users.length > 0) {
+            data.users.forEach(user => {
+                const option = document.createElement('div');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-id', user.id);
+                option.setAttribute('data-name', user.displayName);
+                option.setAttribute('data-rank', user.rank);
+                option.setAttribute('data-rank-abbrev', user.rankAbbreviation);
+                option.setAttribute('role', 'option');
+                option.onclick = function() {
+                    selectOnDutyAssignee(user.id, user.displayName, user.rankAbbreviation);
+                };
+
+                // Build option HTML with rank badge
+                option.innerHTML = `
+                    <span class="rank-badge rank-badge--compact ${user.rankBadgeClass}" title="${user.rankDisplayName}">${user.rankAbbreviation}</span>
+                    ${user.displayName}
+                    <span style="color: var(--muted); font-size: 0.85em;">(${user.email})</span>
+                `;
+
+                optionsContainer.appendChild(option);
+            });
+
+            loadingIndicator.style.display = 'none';
+            optionsContainer.style.display = 'block';
+
+            // Re-apply busy indicators after updating
+            updateOnDutyBusyIndicators();
+        } else {
+            loadingIndicator.style.display = 'none';
+            emptyIndicator.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error fetching eligible users:', error);
+        loadingIndicator.style.display = 'none';
+        emptyIndicator.style.display = 'block';
+    }
 }
 
 function updateOnDutyBusyIndicators() {
@@ -699,6 +794,20 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.addEventListener('change', updateOnDutyBusyIndicators);
     }
 
+    // Listen for duty type changes to update eligible assignees
+    const dutyTypeSelect = document.getElementById('onDutyType');
+    if (dutyTypeSelect) {
+        dutyTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            if (selectedType) {
+                updateEligibleAssignees(selectedType);
+            } else {
+                // Reset to show all users when no type selected
+                updateEligibleAssignees(null);
+            }
+        });
+    }
+
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         const container = document.getElementById('onDutyAssigneeTrigger')?.parentElement;
@@ -719,7 +828,8 @@ document.addEventListener('DOMContentLoaded', function() {
             onSelect: function(option) {
                 const id = option.getAttribute('data-id');
                 const name = option.getAttribute('data-name');
-                selectOnDutyAssignee(id, name);
+                const rankAbbrev = option.getAttribute('data-rank-abbrev');
+                selectOnDutyAssignee(id, name, rankAbbrev);
             },
             onClose: function() {
                 assigneeDropdown.style.display = 'none';

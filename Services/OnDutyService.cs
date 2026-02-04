@@ -32,6 +32,11 @@ public interface IOnDutyService
     /// Check if a specific user is eligible for a duty type.
     /// </summary>
     Task<bool> IsUserEligibleForDutyAsync(int userId, OnDutyType dutyType, bool requireOfficer = false);
+
+    /// <summary>
+    /// Check if a duty type requires officer rank.
+    /// </summary>
+    Task<bool> RequiresOfficerForDutyTypeAsync(OnDutyType type);
 }
 
 /// <summary>
@@ -492,7 +497,7 @@ public class OnDutyService : IOnDutyService
     /// <summary>
     /// Check if a duty type requires officer rank.
     /// </summary>
-    private async Task<bool> RequiresOfficerForDutyTypeAsync(OnDutyType type)
+    public async Task<bool> RequiresOfficerForDutyTypeAsync(OnDutyType type)
     {
         // Built-in Lead type (Katzin) requires officer
         if (type == OnDutyType.Lead)

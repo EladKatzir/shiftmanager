@@ -7552,4 +7552,12 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Settings saved successfully!</value>
     <comment>Success message after saving settings</comment>
   </data>
+  <data name="NoEligibleAssignees" xml:space="preserve">
+    <value>No eligible assignees available</value>
+    <comment>Shown when no users are eligible for the selected duty type</comment>
+  </data>
+  <data name="OnDutyRequiresOfficer" xml:space="preserve">
+    <value>This duty type requires officer rank (Second Lieutenant or higher)</value>
+    <comment>Hint shown when duty type requires officer rank</comment>
+  </data>
 </root>

@@ -7060,4 +7060,12 @@
     <value>ההגדרות נשמרו בהצלחה!</value>
     <comment>Success message after saving settings</comment>
   </data>
+  <data name="NoEligibleAssignees" xml:space="preserve">
+    <value>אין מועמדים זמינים</value>
+    <comment>Shown when no users are eligible for the selected duty type</comment>
+  </data>
+  <data name="OnDutyRequiresOfficer" xml:space="preserve">
+    <value>סוג תורנות זה דורש דרגת קצין (סגן משנה ומעלה)</value>
+    <comment>Hint shown when duty type requires officer rank</comment>
+  </data>
 </root>
