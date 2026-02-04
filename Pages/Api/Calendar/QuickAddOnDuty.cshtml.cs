@@ -180,6 +180,19 @@ public class QuickAddOnDutyModel : PageModel
                         };
                     }
                 }
+                // Check if it's an officer rank requirement error
+                else if (result.Message == "OFFICER_RANK_REQUIRED")
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        error = "OFFICER_RANK_REQUIRED",
+                        message = "This duty type requires an officer rank. The selected user does not have the required rank."
+                    })
+                    {
+                        StatusCode = 403 // Forbidden
+                    };
+                }
                 else
                 {
                     return new JsonResult(new { success = false, message = result.Message })

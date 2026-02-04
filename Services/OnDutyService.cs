@@ -242,6 +242,20 @@ public class OnDutyService : IOnDutyService
                 return (false, "You do not have permission to create on-duty assignments.", null);
             }
 
+            // Check if duty type requires officer rank
+            var requiresOfficer = await RequiresOfficerForDutyTypeAsync(type);
+            if (requiresOfficer)
+            {
+                var isEligible = await IsUserEligibleForDutyAsync(assigneeId, type, requireOfficer: true);
+                if (!isEligible)
+                {
+                    _logger.LogWarning(
+                        "User {UserId} is not eligible for duty type {DutyType} - officer rank required",
+                        assigneeId, type);
+                    return (false, "OFFICER_RANK_REQUIRED", null);
+                }
+            }
+
             // Get assignee (must use IgnoreQueryFilters for cross-company access)
             var assignee = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == assigneeId);
             if (assignee == null)
@@ -473,6 +487,22 @@ public class OnDutyService : IOnDutyService
         return await query
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Check if a duty type requires officer rank.
+    /// </summary>
+    private async Task<bool> RequiresOfficerForDutyTypeAsync(OnDutyType type)
+    {
+        // Built-in Lead type (Katzin) requires officer
+        if (type == OnDutyType.Lead)
+            return true;
+
+        // Check custom types
+        var customConfig = await _db.OnDutyTypeConfigs
+            .FirstOrDefaultAsync(c => c.TypeValue == (int)type && c.IsActive);
+
+        return customConfig?.RequiresOfficerRank ?? false;
     }
 
     /// <summary>
