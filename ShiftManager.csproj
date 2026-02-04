@@ -39,5 +39,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <!-- Schedule Export & Print feature -->
+    <PackageReference Include="QuestPDF" Version="2024.10.0" />
+    <PackageReference Include="ClosedXML" Version="0.102.2" />
   </ItemGroup>
 </Project>
