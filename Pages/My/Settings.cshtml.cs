@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -62,6 +64,12 @@ public class SettingsModel : PageModel
     public List<int> SelectedOnDutyRoleTypes { get; set; } = new();
 
     public List<OnDutyTypeOption> AvailableOnDutyTypes { get; set; } = new();
+
+    // Military Rank
+    [BindProperty]
+    public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;
+
+    public List<SelectListItem> RankOptions { get; set; } = new();
 
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
@@ -122,6 +130,26 @@ public class SettingsModel : PageModel
             .ToListAsync();
 
         SelectedOnDutyRoleTypes = existingSubscriptions;
+
+        // Load user's military rank
+        var user = await _db.Users.FindAsync(userId);
+        if (user != null)
+        {
+            Rank = user.Rank;
+        }
+
+        // Populate rank options
+        PopulateRankOptions();
+    }
+
+    private void PopulateRankOptions()
+    {
+        var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+        var language = currentCulture.StartsWith("he") ? "he" : "en";
+
+        RankOptions = Enum.GetValues<MilitaryRank>()
+            .Select(r => new SelectListItem(r.GetDisplayName(language), ((int)r).ToString()))
+            .ToList();
     }
 
     private async Task LoadAvailableOnDutyTypesAsync()
@@ -209,10 +237,23 @@ public class SettingsModel : PageModel
             // Phase 6 Extension: Update OnDuty Role Subscriptions
             await UpdateOnDutyRoleSubscriptionsAsync(userId, companyId);
 
+            // Update user's military rank
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.Rank = Rank;
+                user.ProfileLastUpdated = DateTime.UtcNow;
+                user.ProfileLastUpdatedBy = userId;
+            }
+
             await _db.SaveChangesAsync();
 
-            SuccessMessage = "Settings saved successfully!";
+            SuccessMessage = _localizer["SettingsSavedSuccess"];
             HasExistingPreference = true;
+
+            // Repopulate options for page display
+            await LoadAvailableOnDutyTypesAsync();
+            PopulateRankOptions();
 
             return Page();
         }

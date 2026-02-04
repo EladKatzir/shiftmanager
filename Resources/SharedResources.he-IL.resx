@@ -7028,4 +7028,30 @@
     <value>אין הודעות</value>
     <comment>Empty state message when there are no announcements</comment>
   </data>
+
+  <!-- Military Rank Feature -->
+  <data name="Profile_Rank" xml:space="preserve">
+    <value>דרגה צבאית</value>
+    <comment>Label for military rank field in user profile</comment>
+  </data>
+  <data name="Profile_Rank_InfoTitle" xml:space="preserve">
+    <value>למה זה נדרש?</value>
+    <comment>Info banner title for rank section</comment>
+  </data>
+  <data name="Profile_Rank_InfoDesc" xml:space="preserve">
+    <value>הדרגה הצבאית שלך משמשת לקביעת זכאות לתפקידי תורנות מסוימים הדורשים דרגת קצין.</value>
+    <comment>Info banner description for rank section</comment>
+  </data>
+  <data name="Profile_Rank_Help" xml:space="preserve">
+    <value>בחר את הדרגה הצבאית הנוכחית שלך</value>
+    <comment>Help text for rank dropdown</comment>
+  </data>
+  <data name="OnDuty_Error_OfficerRankRequired" xml:space="preserve">
+    <value>תפקיד תורנות זה דורש דרגת קצין (סגן משנה ומעלה)</value>
+    <comment>Error message when user without officer rank tries to be assigned to officer-only duty</comment>
+  </data>
+  <data name="SettingsSavedSuccess" xml:space="preserve">
+    <value>ההגדרות נשמרו בהצלחה!</value>
+    <comment>Success message after saving settings</comment>
+  </data>
 </root>

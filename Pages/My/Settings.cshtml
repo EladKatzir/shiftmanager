@@ -370,6 +370,32 @@
 
 <!-- Settings Form -->
 <form method="post">
+    <!-- Military Rank -->
+    <div class="card">
+        <h2 class="card-title">
+            <span class="card-title-icon">🎖️</span>
+            <span><loc key="Profile_Rank" /></span>
+        </h2>
+
+        <!-- Info Banner -->
+        <div class="info-banner">
+            <span class="info-banner-icon">ℹ️</span>
+            <div>
+                <strong><loc key="Profile_Rank_InfoTitle" /></strong>
+                <p style="margin: 0.25rem 0 0 0;"><loc key="Profile_Rank_InfoDesc" /></p>
+            </div>
+        </div>
+
+        <!-- Rank Selection -->
+        <div class="form-group">
+            <label class="form-label" asp-for="Rank">
+                <loc key="Profile_Rank" />
+            </label>
+            <select asp-for="Rank" class="form-input" asp-items="Model.RankOptions" style="max-width: 300px;"></select>
+            <div class="form-help-text"><loc key="Profile_Rank_Help" /></div>
+        </div>
+    </div>
+
     <!-- Daily Digest Notifications -->
     <div class="card">
         <h2 class="card-title">
