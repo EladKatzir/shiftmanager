@@ -199,6 +199,12 @@
                     }
 
                     <div class="form-group">
+                        <label class="form-label">@Localizer["Profile_Rank"]</label>
+                        <select asp-for="Rank" class="form-input" asp-items="Model.RankOptions"></select>
+                        <span class="form-hint">@Localizer["Profile_Rank_Help"]</span>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label"><loc key="Label_JobTitle" /></label>
                         <input type="text" asp-for="JobTitle" class="form-input" loc-placeholder="Placeholder_JobTitle" />
                     </div>

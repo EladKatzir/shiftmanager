@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -92,6 +93,12 @@ public class EditProfileModel : PageModel
 
     [BindProperty]
     public int? DepartmentId { get; set; }
+
+    // Military Rank
+    [BindProperty]
+    public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;
+
+    public List<SelectListItem> RankOptions { get; set; } = new();
 
     public string? AvatarUrl { get; set; }
     public string? InitialsForAvatar { get; set; }
@@ -406,6 +413,32 @@ public class EditProfileModel : PageModel
         // Update v3.0 organizational fields directly (not in ProfileUpdateDto)
         targetUser.JobTypeId = JobTypeId;
         targetUser.DepartmentId = DepartmentId;
+
+        // Update military rank (validate enum value first)
+        if (Enum.IsDefined(typeof(MilitaryRank), Rank))
+        {
+            var oldRank = targetUser.Rank;
+            targetUser.Rank = Rank;
+
+            // Log rank change if it actually changed
+            if (oldRank != Rank)
+            {
+                var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+                var language = currentCulture.StartsWith("he") ? "he" : "en";
+                var change = new ProfileChangeAudit
+                {
+                    CompanyId = targetUser.CompanyId,
+                    TargetUserId = targetUser.Id,
+                    FieldName = "Rank",
+                    OldValue = oldRank.GetDisplayName(language),
+                    NewValue = Rank.GetDisplayName(language),
+                    Timestamp = DateTime.UtcNow,
+                    ChangedBy = editorUserId
+                };
+                _db.ProfileChangeAudits.Add(change);
+            }
+        }
+
         await _db.SaveChangesAsync();
 
         SuccessMessage = "Profile updated successfully!";
@@ -470,6 +503,7 @@ public class EditProfileModel : PageModel
         IsActive = user.IsActive;
         JobTypeId = user.JobTypeId;
         DepartmentId = user.DepartmentId;
+        Rank = user.Rank;
 
         // Parse skills and certifications
         var skillsList = ParseJsonArray(user.Skills);
@@ -480,6 +514,9 @@ public class EditProfileModel : PageModel
         // Avatar
         AvatarUrl = _avatarService.GetAvatarUrl(user.Id, user.AvatarFileName, thumbnail: false);
         InitialsForAvatar = _avatarService.GetDefaultAvatarInitials(user.DisplayName);
+
+        // Populate rank dropdown options
+        PopulateRankOptions();
     }
 
     private async Task LoadRecentChangesAsync()
@@ -572,5 +609,15 @@ public class EditProfileModel : PageModel
                    .Select(s => s.Trim())
                    .Where(s => !string.IsNullOrWhiteSpace(s))
                    .ToList();
+    }
+
+    private void PopulateRankOptions()
+    {
+        var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+        var language = currentCulture.StartsWith("he") ? "he" : "en";
+
+        RankOptions = Enum.GetValues<MilitaryRank>()
+            .Select(r => new SelectListItem(r.GetDisplayName(language), ((int)r).ToString()))
+            .ToList();
     }
 }
