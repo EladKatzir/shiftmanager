@@ -3758,6 +3758,12 @@
   <data name="Error_UserNotFound" xml:space="preserve">
     <value>משתמש לא נמצא</value>
   </data>
+  <data name="Error_InvalidRank" xml:space="preserve">
+    <value>דרגה צבאית לא חוקית נבחרה</value>
+  </data>
+  <data name="Error_SavingSettings" xml:space="preserve">
+    <value>שגיאה בשמירת ההגדרות. אנא נסה שוב.</value>
+  </data>
   <data name="Error_LoadingRequests" xml:space="preserve">
     <value>אירעה שגיאה בטעינת הבקשות. אנא נסה שוב.</value>
   </data>

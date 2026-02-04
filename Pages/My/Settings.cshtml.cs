@@ -190,7 +190,21 @@ public class SettingsModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         var userId = GetCurrentUserId();
+        if (userId == 0)
+        {
+            return RedirectToPage("/Auth/Login");
+        }
+
         var companyId = _tenantResolver.GetCurrentTenantId();
+
+        // Validate enum value
+        if (!Enum.IsDefined(typeof(MilitaryRank), Rank))
+        {
+            ErrorMessage = _localizer["Error_InvalidRank"];
+            PopulateRankOptions();
+            await LoadAvailableOnDutyTypesAsync();
+            return Page();
+        }
 
         try
         {
@@ -239,12 +253,17 @@ public class SettingsModel : PageModel
 
             // Update user's military rank
             var user = await _db.Users.FindAsync(userId);
-            if (user != null)
+            if (user == null)
             {
-                user.Rank = Rank;
-                user.ProfileLastUpdated = DateTime.UtcNow;
-                user.ProfileLastUpdatedBy = userId;
+                ErrorMessage = _localizer["Error_UserNotFound"];
+                PopulateRankOptions();
+                await LoadAvailableOnDutyTypesAsync();
+                return Page();
             }
+
+            user.Rank = Rank;
+            user.ProfileLastUpdated = DateTime.UtcNow;
+            user.ProfileLastUpdatedBy = userId;
 
             await _db.SaveChangesAsync();
 
@@ -257,10 +276,11 @@ public class SettingsModel : PageModel
 
             return Page();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ErrorMessage = $"Error saving settings: {ex.Message}";
-            await OnGetAsync(); // Reload current values
+            ErrorMessage = _localizer["Error_SavingSettings"];
+            PopulateRankOptions();
+            await LoadAvailableOnDutyTypesAsync();
             return Page();
         }
     }
