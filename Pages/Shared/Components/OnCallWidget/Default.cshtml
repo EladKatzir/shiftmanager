@@ -1,8 +1,22 @@
 @model ShiftManager.ViewComponents.OnCallWidgetViewModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.Models.Support
 @inject IStringLocalizer<SharedResources> Localizer
 @addTagHelper *, ShiftManager
+
+@functions {
+    /// <summary>
+    /// Gets the CSS class for the rank badge based on the rank type.
+    /// Officers (rank >= 9) get "officer" class, NCOs (3-8) get "nco" class, enlisted get "enlisted" class.
+    /// </summary>
+    private string GetRankBadgeClass(MilitaryRank rank)
+    {
+        if (rank.IsOfficer()) return "officer";
+        if (rank.IsNCO()) return "nco";
+        return "enlisted";
+    }
+}
 
 <div class="widget oncall-widget @(Model.IsCollapsed ? "is-collapsed" : "") @(Model.ShowInSidebar ? "sidebar-widget" : "")"
      id="onCallWidget"
@@ -24,13 +38,19 @@
         {
             @foreach (var contact in Model.Contacts)
             {
+                var rankAbbrev = contact.Rank.GetAbbreviation();
+                var rankClass = GetRankBadgeClass(contact.Rank);
+                var rankTitle = contact.Rank.GetDisplayName();
                 <div class="oncall-contact" data-user-id="@contact.UserId" data-contact-type="@contact.ContactType">
                     <div class="oncall-contact__avatar">
                         @contact.AvatarInitial
                     </div>
                     <div class="oncall-contact__info">
                         <div class="oncall-contact__role">@contact.Role</div>
-                        <div class="oncall-contact__name">@contact.Name</div>
+                        <div class="oncall-contact__name">
+                            @contact.Name
+                            <span class="rank-badge rank-badge--compact oncall-contact__rank @rankClass" title="@rankTitle">@rankAbbrev</span>
+                        </div>
                         @if (!string.IsNullOrEmpty(contact.PhoneNumber))
                         {
                             <div class="oncall-contact__phone">

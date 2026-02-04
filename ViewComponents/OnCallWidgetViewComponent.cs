@@ -3,6 +3,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using ShiftManager.Models.Support;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -137,7 +138,8 @@ public class OnCallWidgetViewComponent : ViewComponent
                 {
                     UserId = u.Id,
                     DisplayName = u.DisplayName,
-                    Phone = u.Phone
+                    Phone = u.Phone,
+                    Rank = u.Rank
                 }
             )
             .FirstOrDefaultAsync();
@@ -151,7 +153,8 @@ public class OnCallWidgetViewComponent : ViewComponent
             Role = "Hakam",
             PhoneNumber = hakamData.Phone ?? "",
             AvatarInitial = GetInitial(hakamData.DisplayName),
-            ContactType = OnCallContactType.Hakam
+            ContactType = OnCallContactType.Hakam,
+            Rank = hakamData.Rank
         };
     }
 
@@ -198,6 +201,7 @@ public class OnCallWidgetViewComponent : ViewComponent
                     UserId = u.Id,
                     DisplayName = u.DisplayName,
                     Phone = u.Phone,
+                    Rank = u.Rank,
                     x.ShiftTypeId
                 }
             )
@@ -214,7 +218,8 @@ public class OnCallWidgetViewComponent : ViewComponent
                 PhoneNumber = shift.Phone ?? "",
                 AvatarInitial = GetInitial(shift.DisplayName),
                 ContactType = OnCallContactType.CompanyOnCall,
-                CompanyName = company.Name
+                CompanyName = company.Name,
+                Rank = shift.Rank
             });
         }
 
@@ -268,6 +273,7 @@ public class OnCallContact
     public string AvatarInitial { get; set; } = "";
     public OnCallContactType ContactType { get; set; }
     public string? CompanyName { get; set; }
+    public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;
 }
 
 public enum OnCallContactType

@@ -7,6 +7,19 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IStringLocalizer<SharedResources> Localizer
 @inject IAuthorizationService AuthorizationService
+
+@functions {
+    /// <summary>
+    /// Gets the CSS class for the rank badge based on the rank type.
+    /// Officers (rank >= 9) get "officer" class, NCOs (3-8) get "nco" class, enlisted get "enlisted" class.
+    /// </summary>
+    private string GetRankBadgeClass(MilitaryRank rank)
+    {
+        if (rank.IsOfficer()) return "officer";
+        if (rank.IsNCO()) return "nco";
+        return "enlisted";
+    }
+}
 @{
     Layout = "_Layout";
     var firstDay = new DateOnly(Model.Year, Model.Month, 1);
@@ -349,9 +362,15 @@
                         {
                             var typeClass = onDuty.Type == OnDutyType.Hakam ? "hakam" : "lead";
                             var typeLabel = onDuty.Type == OnDutyType.Hakam ? Localizer["OnDutyHakam"] : Localizer["OnDutyLead"];
+                            var userRank = onDuty.User?.Rank ?? MilitaryRank.Turai;
+                            var rankAbbrev = userRank.GetAbbreviation();
+                            var rankClass = GetRankBadgeClass(userRank);
                             <div class="onduty-item @typeClass" onclick="event.stopPropagation(); showOnDutyDetails(@onDuty.Id, '@typeLabel', '@onDuty.User?.DisplayName', '@date.ToString("yyyy-MM-dd")', '@(onDuty.Notes?.Replace("'", "\\'").Trim() ?? "")', @((int)onDuty.Type))">
                                 <div class="onduty-item-text">
-                                    <span class="onduty-assignee">@onDuty.User?.DisplayName</span>
+                                    <span class="onduty-assignee">
+                                        @onDuty.User?.DisplayName
+                                        <span class="rank-badge rank-badge--compact @rankClass" title="@userRank.GetDisplayName()">@rankAbbrev</span>
+                                    </span>
                                     <span class="onduty-type">@typeLabel</span>
                                 </div>
                             </div>
@@ -394,9 +413,15 @@
                     {
                         var typeClass = onDuty.Type == OnDutyType.Hakam ? "hakam" : "lead";
                         var typeLabel = onDuty.Type == OnDutyType.Hakam ? Localizer["OnDutyHakam"] : Localizer["OnDutyLead"];
+                        var userRank = onDuty.User?.Rank ?? MilitaryRank.Turai;
+                        var rankAbbrev = userRank.GetAbbreviation();
+                        var rankClass = GetRankBadgeClass(userRank);
                         <tr>
                             <td>@onDuty.Date.ToString("yyyy-MM-dd")</td>
-                            <td>@onDuty.User?.DisplayName</td>
+                            <td>
+                                @onDuty.User?.DisplayName
+                                <span class="rank-badge @rankClass" title="@userRank.GetDisplayName()">@rankAbbrev</span>
+                            </td>
                             <td><span class="type-badge @typeClass">@typeLabel</span></td>
                             <td>@(onDuty.Notes ?? "-")</td>
                             <td>@onDuty.Creator?.DisplayName</td>
