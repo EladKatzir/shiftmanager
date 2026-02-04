@@ -8,6 +8,16 @@ public static class MilitaryRankExtensions
 
     public static bool IsEnlisted(this MilitaryRank rank) => (int)rank < 3;
 
+    /// <summary>
+    /// Returns CSS class name for rank badge styling.
+    /// </summary>
+    public static string GetBadgeClass(this MilitaryRank rank)
+    {
+        if (rank.IsOfficer()) return "officer";
+        if (rank.IsNCO()) return "nco";
+        return "enlisted";
+    }
+
     public static string GetDisplayName(this MilitaryRank rank, string language = "he")
     {
         return language == "he" ? GetHebrewName(rank) : GetEnglishName(rank);

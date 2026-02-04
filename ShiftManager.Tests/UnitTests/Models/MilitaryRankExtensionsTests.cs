@@ -54,4 +54,16 @@ public class MilitaryRankExtensionsTests
     {
         rank.GetAbbreviation().Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData(MilitaryRank.Turai, "enlisted")]
+    [InlineData(MilitaryRank.RavTurai, "enlisted")]
+    [InlineData(MilitaryRank.Samal, "nco")]
+    [InlineData(MilitaryRank.RavNagad, "nco")]
+    [InlineData(MilitaryRank.SegenMishne, "officer")]
+    [InlineData(MilitaryRank.RavAluf, "officer")]
+    public void GetBadgeClass_ReturnsCorrectCssClass(MilitaryRank rank, string expected)
+    {
+        rank.GetBadgeClass().Should().Be(expected);
+    }
 }
