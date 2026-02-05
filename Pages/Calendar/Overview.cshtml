@@ -1,0 +1,687 @@
+@page
+@model ShiftManager.Pages.Calendar.OverviewModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["OverviewCalendar"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendars"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["OverviewCalendar"], IsActive = true }
+})
+
+<div class="overview-calendar" data-ui-version="v2">
+    @* Toolbar *@
+    <div class="overview-calendar__toolbar">
+        <div class="overview-calendar__toolbar-row">
+            @* Company indicator (read-only, company-scoped) *@
+            <div class="overview-calendar__company-badge">
+                <span class="badge badge-primary">
+                    @Model.CompanyName
+                </span>
+                <span class="overview-calendar__company-hint">@Localizer["CompanyScope"]</span>
+            </div>
+
+            @* View mode selector *@
+            <div class="overview-calendar__selector">
+                <label for="viewModeSelect">@Localizer["ViewMode"]</label>
+                <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
+                    <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
+                    <option value="2weeks" selected="@(Model.ViewMode == "2weeks")">@Localizer["TwoWeeks"]</option>
+                    <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
+                </select>
+            </div>
+
+            @* Users filter selector *@
+            <div class="overview-calendar__selector">
+                <label for="usersFilter">@Localizer["UsersFilter"]</label>
+                <select id="usersFilter" class="form-select" onchange="updateCalendarFilters()">
+                    <option value="active" selected="@(Model.UsersFilter == "active" || string.IsNullOrEmpty(Model.UsersFilter))">@Localizer["ActiveUsers"]</option>
+                    <option value="inactive" selected="@(Model.UsersFilter == "inactive")">@Localizer["InactiveUsers"]</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overview-calendar__toolbar-row">
+            @* Date navigation *@
+            <div class="overview-calendar__date-nav">
+                <a href="?Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&UsersFilter=@Model.UsersFilter&JustMine=@Model.JustMine"
+                   class="btn btn-ghost overview-calendar__nav-btn"
+                   title="@Localizer["Previous"]">
+                    <span class="nav-icon">&larr;</span>
+                    <span class="nav-text">@Localizer["Previous"]</span>
+                </a>
+
+                <div class="overview-calendar__date-display">
+                    <input type="date"
+                           id="datePickerInput"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           onchange="navigateToDate(this.value)"
+                           class="overview-calendar__date-picker" />
+                    <span class="overview-calendar__date-label">
+                        @Model.StartDate.ToString("MMM dd") - @Model.EndDate.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
+
+                <a href="?Start=@Model.NextStart&ViewMode=@Model.ViewMode&UsersFilter=@Model.UsersFilter&JustMine=@Model.JustMine"
+                   class="btn btn-ghost overview-calendar__nav-btn"
+                   title="@Localizer["Next"]">
+                    <span class="nav-text">@Localizer["Next"]</span>
+                    <span class="nav-icon">&rarr;</span>
+                </a>
+            </div>
+
+            @* Action buttons *@
+            <div class="overview-calendar__actions">
+                <button type="button" class="btn btn-secondary" onclick="window.print()" title="@Localizer["Print"]">
+                    <span class="btn-icon">&#128438;</span>
+                    <span class="btn-text">@Localizer["Print"]</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="overview-calendar__toolbar-row">
+            @* Toggle buttons *@
+            <div class="overview-calendar__toggles">
+                @* Just Mine filter *@
+                <div class="overview-calendar__toggle-group">
+                    <a href="?Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&UsersFilter=@Model.UsersFilter&JustMine=@(!Model.JustMine)"
+                       class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
+                        @Localizer["JustMine"]
+                    </a>
+                </div>
+
+                @* Legend *@
+                <div class="overview-calendar__legend">
+                    <span class="legend-item legend-item--vacation" title="@Localizer["Vacation"]">
+                        <span class="legend-dot"></span>@Localizer["Vacation"]
+                    </span>
+                    <span class="legend-item legend-item--shift" title="@Localizer["Shift"]">
+                        <span class="legend-dot"></span>@Localizer["Shift"]
+                    </span>
+                    <span class="legend-item legend-item--chore" title="@Localizer["Chore"]">
+                        <span class="legend-dot"></span>@Localizer["Chore"]
+                    </span>
+                    <span class="legend-item legend-item--duty" title="@Localizer["OnDuty"]">
+                        <span class="legend-dot"></span>@Localizer["OnDuty"]
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Calendar Table *@
+    @if (Model.CalendarData.Rows.Any())
+    {
+        <div class="overview-calendar__table-wrapper">
+            @await Component.InvokeAsync("ExcelCalendarTable", Model.CalendarData)
+        </div>
+
+        @* Note editing modal *@
+        @if (Model.CanEditNotes)
+        {
+            <div id="noteModal" class="modal" role="dialog" aria-labelledby="noteModalTitle" aria-modal="true" hidden>
+                <div class="modal__backdrop" onclick="closeNoteModal()"></div>
+                <div class="modal__content modal__content--small">
+                    <div class="modal__header">
+                        <h3 id="noteModalTitle" class="modal__title">@Localizer["EditNote"]</h3>
+                        <button type="button" class="modal__close" onclick="closeNoteModal()" aria-label="@Localizer["Close"]">
+                            &times;
+                        </button>
+                    </div>
+                    <div class="modal__body">
+                        <input type="hidden" id="noteUserId" />
+                        <input type="hidden" id="noteDate" />
+                        <div class="modal__user-info">
+                            <strong id="noteUserName"></strong>
+                            <span id="noteDateDisplay"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="noteText">@Localizer["Note"]</label>
+                            <textarea id="noteText" class="form-control" rows="4" placeholder="@Localizer["AddNoteHint"]"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal__footer">
+                        <button type="button" class="btn btn-ghost" onclick="closeNoteModal()">@Localizer["Cancel"]</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteNote()" id="deleteNoteBtn" hidden>@Localizer["Delete"]</button>
+                        <button type="button" class="btn btn-primary" onclick="saveNote()">@Localizer["Save"]</button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="overview-calendar__empty">
+            <div class="overview-calendar__empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <h3 class="overview-calendar__empty-title">@Localizer["NoUsersFound"]</h3>
+            <p class="overview-calendar__empty-message">
+                @Localizer["Calendar_Empty_NoUsersMessage"]
+            </p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Update calendar with new filter selections
+        function updateCalendarFilters() {
+            const viewMode = document.getElementById('viewModeSelect').value;
+            const usersFilter = document.getElementById('usersFilter').value;
+
+            const params = new URLSearchParams(window.location.search);
+            params.set('ViewMode', viewMode);
+            params.set('UsersFilter', usersFilter);
+
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // Navigate to a specific date
+        function navigateToDate(dateStr) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('Start', dateStr);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        @if (Model.CanEditNotes)
+        {
+            <text>
+        // Note editing functionality
+        let currentUserId = null;
+        let currentDate = null;
+
+        // Open note modal for a cell
+        function openNoteModal(userId, date, userName, existingNote) {
+            currentUserId = userId;
+            currentDate = date;
+
+            document.getElementById('noteUserId').value = userId;
+            document.getElementById('noteDate').value = date;
+            document.getElementById('noteUserName').textContent = userName;
+            document.getElementById('noteDateDisplay').textContent = new Date(date).toLocaleDateString();
+            document.getElementById('noteText').value = existingNote || '';
+            document.getElementById('deleteNoteBtn').hidden = !existingNote;
+
+            const modal = document.getElementById('noteModal');
+            modal.hidden = false;
+            document.getElementById('noteText').focus();
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').hidden = true;
+            currentUserId = null;
+            currentDate = null;
+        }
+
+        async function saveNote() {
+            const userId = parseInt(document.getElementById('noteUserId').value);
+            const date = document.getElementById('noteDate').value;
+            const note = document.getElementById('noteText').value;
+
+            try {
+                const response = await fetch('/Calendar/Overview?handler=SaveNote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ userId, date, note })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    closeNoteModal();
+                    location.reload(); // Refresh to show updated note
+                } else {
+                    alert('@Localizer["SaveNoteFailed"]: ' + (result.error || '@Localizer["UnknownError"]'));
+                }
+            } catch (err) {
+                console.error('Error saving note:', err);
+                alert('@Localizer["SaveNoteFailed"]');
+            }
+        }
+
+        async function deleteNote() {
+            if (!confirm('@Localizer["DeleteNoteConfirm"]')) return;
+
+            // Save with empty note to delete
+            document.getElementById('noteText').value = '';
+            await saveNote();
+        }
+
+        // Handle click on calendar cells for note editing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for cells in overview calendar
+            document.querySelectorAll('.excel-calendar-cell').forEach(cell => {
+                const canEdit = @(Model.CanEditNotes.ToString().ToLower());
+                if (canEdit) {
+                    cell.addEventListener('dblclick', function() {
+                        const row = this.closest('tr');
+                        const rowId = row?.dataset.rowId;
+                        if (!rowId?.startsWith('user-')) return;
+
+                        const userId = parseInt(rowId.replace('user-', ''));
+                        const date = this.dataset.date;
+                        const userName = row.querySelector('.excel-calendar-row-label')?.textContent || '';
+                        const existingNote = this.querySelector('.excel-calendar-note')?.textContent || '';
+
+                        openNoteModal(userId, date, userName, existingNote);
+                    });
+
+                    // Add visual hint for editable
+                    cell.classList.add('excel-calendar-cell--editable');
+                }
+            });
+        });
+
+        // Handle Escape key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeNoteModal();
+            }
+        });
+            </text>
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            // Left arrow - previous period
+            if (e.key === 'ArrowLeft' && e.altKey) {
+                document.querySelector('.overview-calendar__nav-btn:first-child')?.click();
+            }
+            // Right arrow - next period
+            if (e.key === 'ArrowRight' && e.altKey) {
+                document.querySelector('.overview-calendar__nav-btn:last-child')?.click();
+            }
+            // P key - print
+            if (e.key === 'p' && e.ctrlKey) {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        /* Overview Calendar Layout */
+        .overview-calendar {
+            padding: 1rem;
+        }
+
+        .overview-calendar__toolbar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .overview-calendar__toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .overview-calendar__toolbar-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Company Badge */
+        .overview-calendar__company-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .overview-calendar__company-hint {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        /* Selectors */
+        .overview-calendar__selector {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 150px;
+        }
+
+        .overview-calendar__selector label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .overview-calendar__selector .form-select {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            min-height: 38px;
+        }
+
+        /* Date Navigation */
+        .overview-calendar__date-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .overview-calendar__nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            min-height: 38px;
+        }
+
+        .overview-calendar__date-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .overview-calendar__date-picker {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .overview-calendar__date-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            background: var(--surface-soft);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Actions */
+        .overview-calendar__actions {
+            margin-left: auto;
+        }
+
+        .overview-calendar__actions .btn-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Toggles */
+        .overview-calendar__toggles {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .overview-calendar__toggle-group {
+            display: flex;
+            background: var(--surface-soft);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .overview-calendar__toggle-group .btn {
+            border-radius: 6px;
+            border: none;
+            min-height: 36px;
+        }
+
+        /* Legend */
+        .overview-calendar__legend {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-left: auto;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .legend-item--vacation .legend-dot { background: #10B981; }
+        .legend-item--shift .legend-dot { background: #3B82F6; }
+        .legend-item--chore .legend-dot { background: #F59E0B; }
+        .legend-item--duty .legend-dot { background: #8B5CF6; }
+
+        /* Table Wrapper */
+        .overview-calendar__table-wrapper {
+            overflow-x: auto;
+        }
+
+        /* Empty State */
+        .overview-calendar__empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+        }
+
+        .overview-calendar__empty-icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .overview-calendar__empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .overview-calendar__empty-message {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal[hidden] {
+            display: none;
+        }
+
+        .modal__backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal__content {
+            position: relative;
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .modal__content--small {
+            width: 400px;
+        }
+
+        .modal__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal__title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal__close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--muted);
+            line-height: 1;
+        }
+
+        .modal__close:hover {
+            color: var(--text);
+        }
+
+        .modal__body {
+            padding: 1.5rem;
+        }
+
+        .modal__user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--surface-soft);
+            border-radius: 6px;
+        }
+
+        .modal__footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Editable cell hint */
+        .excel-calendar-cell--editable {
+            cursor: pointer;
+        }
+
+        .excel-calendar-cell--editable:hover {
+            background: var(--surface-soft);
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .overview-calendar__toolbar-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .overview-calendar__selector {
+                width: 100%;
+            }
+
+            .overview-calendar__date-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .overview-calendar__actions {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .overview-calendar__actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .overview-calendar__toggles {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .overview-calendar__legend {
+                margin-left: 0;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .overview-calendar__nav-btn .nav-text {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .overview-calendar {
+                padding: 0.5rem;
+            }
+
+            .overview-calendar__toolbar {
+                padding: 0.75rem;
+            }
+
+            .overview-calendar__date-label {
+                font-size: 0.85rem;
+                padding: 0.375rem 0.75rem;
+            }
+        }
+
+        /* Print styles */
+        @@media print {
+            .overview-calendar__toolbar {
+                display: none;
+            }
+
+            .overview-calendar {
+                padding: 0;
+            }
+
+            .modal {
+                display: none !important;
+            }
+        }
+    </style>
+}

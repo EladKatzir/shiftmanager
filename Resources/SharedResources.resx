@@ -7672,4 +7672,54 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Backup</value>
     <comment>Label for backup assignment in on-call calendar</comment>
   </data>
+
+  <!-- Overview Calendar Feature -->
+  <data name="OverviewCalendar" xml:space="preserve">
+    <value>Overview Calendar</value>
+    <comment>Title for overview calendar page</comment>
+  </data>
+  <data name="UsersFilter" xml:space="preserve">
+    <value>Users</value>
+    <comment>Label for user filter dropdown in overview calendar</comment>
+  </data>
+  <data name="ActiveUsers" xml:space="preserve">
+    <value>Active Users</value>
+    <comment>Option to show only active users</comment>
+  </data>
+  <data name="InactiveUsers" xml:space="preserve">
+    <value>Inactive Users</value>
+    <comment>Option to show only inactive users</comment>
+  </data>
+  <data name="AddNote" xml:space="preserve">
+    <value>Add Note</value>
+    <comment>Button label to add a note to a calendar cell</comment>
+  </data>
+  <data name="EditNote" xml:space="preserve">
+    <value>Edit Note</value>
+    <comment>Modal title for editing a note</comment>
+  </data>
+  <data name="AddNoteHint" xml:space="preserve">
+    <value>Enter a note for this user on this date...</value>
+    <comment>Placeholder text for note input</comment>
+  </data>
+  <data name="SaveNoteFailed" xml:space="preserve">
+    <value>Failed to save note</value>
+    <comment>Error message when note save fails</comment>
+  </data>
+  <data name="DeleteNoteConfirm" xml:space="preserve">
+    <value>Are you sure you want to delete this note?</value>
+    <comment>Confirmation message for deleting a note</comment>
+  </data>
+  <data name="Calendar_Empty_NoUsersMessage" xml:space="preserve">
+    <value>No users are found in your company for the selected filter. Try changing the user filter.</value>
+    <comment>Message shown when overview calendar has no users</comment>
+  </data>
+  <data name="NoAssignments" xml:space="preserve">
+    <value>No Assignments</value>
+    <comment>Label for cells with no assignments</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+    <comment>Generic error message</comment>
+  </data>
 </root>

@@ -1,0 +1,487 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Data;
+using ShiftManager.Models;
+using ShiftManager.Resources;
+using ShiftManager.Services;
+using ShiftManager.ViewComponents;
+using ShiftManager.Models.Support;
+using System.Security.Claims;
+
+namespace ShiftManager.Pages.Calendar;
+
+/// <summary>
+/// Excel-style Overview Calendar page - View-only aggregation of all user data.
+/// Company-scoped: shows users in current company as rows, days as columns.
+/// Each cell shows aggregated status (vacations, shifts, chores, on-duty) plus notes.
+/// </summary>
+[Authorize]
+public class OverviewModel : PageModel
+{
+    private readonly AppDbContext _db;
+    private readonly IUserDayNoteService _noteService;
+    private readonly IGrantService _grantService;
+    private readonly ICompanyContext _companyContext;
+    private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ILogger<OverviewModel> _logger;
+
+    public OverviewModel(
+        AppDbContext db,
+        IUserDayNoteService noteService,
+        IGrantService grantService,
+        ICompanyContext companyContext,
+        IStringLocalizer<SharedResources> localizer,
+        ILogger<OverviewModel> logger)
+    {
+        _db = db;
+        _noteService = noteService;
+        _grantService = grantService;
+        _companyContext = companyContext;
+        _localizer = localizer;
+        _logger = logger;
+    }
+
+    // Query parameters
+    [BindProperty(SupportsGet = true)]
+    public string? Start { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string ViewMode { get; set; } = "week"; // week, 2weeks, month
+
+    [BindProperty(SupportsGet = true)]
+    public string? UsersFilter { get; set; } // all, active, inactive, or specific group
+
+    [BindProperty(SupportsGet = true)]
+    public bool JustMine { get; set; }
+
+    // Page properties
+    public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
+    public bool CanEditNotes { get; set; }
+    public List<AppUser> Users { get; set; } = new();
+    public int CurrentUserId { get; set; }
+    public int CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+
+    // Navigation
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public string PreviousStart { get; set; } = string.Empty;
+    public string NextStart { get; set; } = string.Empty;
+
+    public async Task<IActionResult> OnGetAsync()
+    {
+        // Get current user ID
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            return RedirectToPage("/Error");
+        }
+        CurrentUserId = currentUserId;
+
+        // Get user's company (this calendar is company-scoped, not cross-company)
+        var companyId = _companyContext.CompanyId;
+        if (!companyId.HasValue)
+        {
+            _logger.LogWarning("User {UserId} has no company context", currentUserId);
+            return RedirectToPage("/Error");
+        }
+        CompanyId = companyId.Value;
+
+        // Load company details
+        var company = await _db.Companies
+            .FirstOrDefaultAsync(c => c.Id == companyId.Value);
+
+        if (company == null)
+        {
+            _logger.LogWarning("Company {CompanyId} not found", companyId.Value);
+            return RedirectToPage("/Error");
+        }
+        CompanyName = company.DisplayName ?? company.Name ?? $"Company #{company.Id}";
+
+        // Calculate date range
+        CalculateDateRange();
+
+        // Check note editing permission
+        CanEditNotes = await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+
+        // Load users in this company
+        await LoadUsersAsync();
+
+        // Build calendar data
+        await BuildOverviewCalendarAsync();
+
+        _logger.LogInformation(
+            "Overview calendar loaded for User {UserId}, Company {CompanyId}, ViewMode {ViewMode}",
+            currentUserId, CompanyId, ViewMode);
+
+        return Page();
+    }
+
+    private void CalculateDateRange()
+    {
+        // Parse start date or default to start of current week
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsedDate))
+        {
+            StartDate = parsedDate;
+        }
+        else
+        {
+            // Default to Sunday of current week
+            StartDate = GetStartOfWeek(today);
+        }
+
+        // Calculate end date based on view mode
+        EndDate = ViewMode switch
+        {
+            "2weeks" => StartDate.AddDays(13),
+            "month" => StartDate.AddDays(DateTime.DaysInMonth(StartDate.Year, StartDate.Month) - 1),
+            _ => StartDate.AddDays(6) // week
+        };
+
+        // Calculate navigation dates
+        var daysToMove = ViewMode switch
+        {
+            "2weeks" => 14,
+            "month" => DateTime.DaysInMonth(StartDate.Year, StartDate.Month),
+            _ => 7
+        };
+
+        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd");
+        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd");
+    }
+
+    private static DateOnly GetStartOfWeek(DateOnly date)
+    {
+        int daysFromSunday = (int)date.DayOfWeek;
+        return date.AddDays(-daysFromSunday);
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        var query = _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.CompanyId == CompanyId);
+
+        // Apply user filter
+        query = UsersFilter switch
+        {
+            "inactive" => query.Where(u => !u.IsActive),
+            "active" or null or "" => query.Where(u => u.IsActive), // Default to active users
+            _ => query.Where(u => u.IsActive) // Default for unknown values
+        };
+
+        Users = await query
+            .OrderBy(u => u.DisplayName)
+            .ToListAsync();
+
+        // If "Just Mine" is enabled, filter to just current user
+        if (JustMine)
+        {
+            Users = Users.Where(u => u.Id == CurrentUserId).ToList();
+        }
+    }
+
+    private async Task BuildOverviewCalendarAsync()
+    {
+        // Load all aggregated data for the date range
+        var vacations = await LoadVacationsAsync();
+        var shifts = await LoadShiftsAsync();
+        var chores = await LoadChoresAsync();
+        var onDuties = await LoadOnDutiesAsync();
+        var notes = await _noteService.GetNotesForCompanyAsync(CompanyId, StartDate, EndDate);
+
+        // Build rows - one per user
+        var rows = new List<ExcelCalendarRow>();
+        foreach (var user in Users)
+        {
+            var row = new ExcelCalendarRow
+            {
+                Id = $"user-{user.Id}",
+                Label = user.DisplayName
+            };
+
+            // Build cells for each date
+            row.Cells = BuildCellsForUser(user.Id, vacations, shifts, chores, onDuties, notes);
+            rows.Add(row);
+        }
+
+        CalendarData = new ExcelCalendarTableViewModel
+        {
+            StartDate = StartDate,
+            EndDate = EndDate,
+            ViewMode = ViewMode,
+            IsReadOnly = true, // Overview is always read-only for assignments
+            CalendarType = "overview",
+            Rows = rows
+        };
+    }
+
+    private async Task<Dictionary<(int UserId, DateOnly Date), bool>> LoadVacationsAsync()
+    {
+        // Get approved time-off requests for users in date range
+        var userIds = Users.Select(u => u.Id).ToList();
+
+        var timeOffRequests = await _db.TimeOffRequests
+            .Where(t => userIds.Contains(t.UserId) &&
+                        t.StartDate <= EndDate &&
+                        t.EndDate >= StartDate &&
+                        t.Status == RequestStatus.Approved)
+            .ToListAsync();
+
+        // Expand time-off requests to per-day records
+        var result = new Dictionary<(int UserId, DateOnly Date), bool>();
+        foreach (var timeOff in timeOffRequests)
+        {
+            for (var date = timeOff.StartDate; date <= timeOff.EndDate; date = date.AddDays(1))
+            {
+                if (date >= StartDate && date <= EndDate)
+                {
+                    result[(timeOff.UserId, date)] = true;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<Dictionary<(int UserId, DateOnly Date), List<string>>> LoadShiftsAsync()
+    {
+        var userIds = Users.Select(u => u.Id).ToList();
+
+        var assignments = await _db.ShiftAssignments
+            .Include(sa => sa.ShiftInstance)
+                .ThenInclude(si => si.ShiftType)
+            .Where(sa => ((sa.UserId.HasValue && userIds.Contains(sa.UserId.Value)) ||
+                         (sa.TraineeUserId.HasValue && userIds.Contains(sa.TraineeUserId.Value))) &&
+                        sa.ShiftInstance.WorkDate >= StartDate &&
+                        sa.ShiftInstance.WorkDate <= EndDate)
+            .ToListAsync();
+
+        var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
+        foreach (var assignment in assignments)
+        {
+            var date = assignment.ShiftInstance.WorkDate;
+            var shiftName = assignment.ShiftInstance.ShiftType?.Name ?? _localizer["Shift"].Value;
+
+            // Add for primary user if assigned
+            if (assignment.UserId.HasValue && userIds.Contains(assignment.UserId.Value))
+            {
+                var key = (assignment.UserId.Value, date);
+                if (!result.ContainsKey(key))
+                {
+                    result[key] = new List<string>();
+                }
+                result[key].Add(shiftName);
+            }
+
+            // Also add for trainee if applicable
+            if (assignment.TraineeUserId.HasValue && userIds.Contains(assignment.TraineeUserId.Value))
+            {
+                var traineeKey = (assignment.TraineeUserId.Value, date);
+                if (!result.ContainsKey(traineeKey))
+                {
+                    result[traineeKey] = new List<string>();
+                }
+                result[traineeKey].Add($"{shiftName} ({_localizer["Trainee"].Value})");
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<Dictionary<(int UserId, DateOnly Date), List<string>>> LoadChoresAsync()
+    {
+        var userIds = Users.Select(u => u.Id).ToList();
+
+        var chores = await _db.Chores
+            .Include(c => c.ChoreType)
+            .Where(c => userIds.Contains(c.UserId) &&
+                        c.Date >= StartDate &&
+                        c.Date <= EndDate &&
+                        c.CanceledAt == null)
+            .ToListAsync();
+
+        var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
+        foreach (var chore in chores)
+        {
+            var key = (chore.UserId, chore.Date);
+            if (!result.ContainsKey(key))
+            {
+                result[key] = new List<string>();
+            }
+            result[key].Add(chore.ChoreType?.DisplayName ?? chore.Title);
+        }
+
+        return result;
+    }
+
+    private async Task<Dictionary<(int UserId, DateOnly Date), List<string>>> LoadOnDutiesAsync()
+    {
+        var userIds = Users.Select(u => u.Id).ToList();
+
+        var onDuties = await _db.OnDuties
+            .Where(od => userIds.Contains(od.UserId) &&
+                        od.Date >= StartDate &&
+                        od.Date <= EndDate &&
+                        od.CanceledAt == null)
+            .ToListAsync();
+
+        var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
+        foreach (var onDuty in onDuties)
+        {
+            var key = (onDuty.UserId, onDuty.Date);
+            if (!result.ContainsKey(key))
+            {
+                result[key] = new List<string>();
+            }
+            result[key].Add(onDuty.Type.ToString());
+        }
+
+        return result;
+    }
+
+    private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
+        int userId,
+        Dictionary<(int UserId, DateOnly Date), bool> vacations,
+        Dictionary<(int UserId, DateOnly Date), List<string>> shifts,
+        Dictionary<(int UserId, DateOnly Date), List<string>> chores,
+        Dictionary<(int UserId, DateOnly Date), List<string>> onDuties,
+        Dictionary<(int UserId, DateOnly Date), string> notes)
+    {
+        var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
+
+        for (var date = StartDate; date <= EndDate; date = date.AddDays(1))
+        {
+            var cell = new ExcelCalendarCell();
+            var key = (userId, date);
+            var assignments = new List<ExcelCalendarAssignment>();
+
+            // Add shifts as assignments
+            if (shifts.TryGetValue(key, out var shiftList))
+            {
+                foreach (var shift in shiftList)
+                {
+                    assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0, // Not editable
+                        Name = shift,
+                        Role = "shift"
+                    });
+                }
+            }
+
+            // Add chores as assignments
+            if (chores.TryGetValue(key, out var choreList))
+            {
+                foreach (var chore in choreList)
+                {
+                    assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0,
+                        Name = chore,
+                        Role = "chore"
+                    });
+                }
+            }
+
+            // Add on-duties as assignments
+            if (onDuties.TryGetValue(key, out var dutyList))
+            {
+                foreach (var duty in dutyList)
+                {
+                    assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0,
+                        Name = duty,
+                        Role = "duty"
+                    });
+                }
+            }
+
+            cell.Assignments = assignments;
+
+            // Add overlay data (vacation indicator)
+            if (vacations.TryGetValue(key, out var hasVacation) && hasVacation)
+            {
+                cell.Overlay = new ExcelCalendarOverlay
+                {
+                    HasVacation = true
+                };
+            }
+
+            // Add note
+            if (notes.TryGetValue(key, out var note))
+            {
+                cell.Note = note;
+            }
+
+            cells[date] = cell;
+        }
+
+        return cells;
+    }
+
+    // API endpoint for saving notes (AJAX)
+    public async Task<IActionResult> OnPostSaveNoteAsync([FromBody] SaveNoteRequest request)
+    {
+        // Validate user has permission
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            return new JsonResult(new { success = false, error = "Unauthorized" }) { StatusCode = 401 };
+        }
+
+        var canEdit = await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+        if (!canEdit)
+        {
+            return new JsonResult(new { success = false, error = "Forbidden" }) { StatusCode = 403 };
+        }
+
+        // Validate company context
+        var companyId = _companyContext.CompanyId;
+        if (!companyId.HasValue)
+        {
+            return new JsonResult(new { success = false, error = "No company context" }) { StatusCode = 400 };
+        }
+
+        // Validate target user is in the same company
+        var targetUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
+        if (targetUser == null || targetUser.CompanyId != companyId.Value)
+        {
+            return new JsonResult(new { success = false, error = "User not found in company" }) { StatusCode = 400 };
+        }
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Note))
+            {
+                // Delete note if empty
+                await _noteService.DeleteNoteAsync(request.UserId, request.Date, companyId.Value);
+            }
+            else
+            {
+                // Save note
+                await _noteService.SetNoteAsync(request.UserId, request.Date, companyId.Value, request.Note, currentUserId);
+            }
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving note for user {UserId} on {Date}", request.UserId, request.Date);
+            return new JsonResult(new { success = false, error = "Failed to save note" }) { StatusCode = 500 };
+        }
+    }
+
+    public class SaveNoteRequest
+    {
+        public int UserId { get; set; }
+        public DateOnly Date { get; set; }
+        public string Note { get; set; } = string.Empty;
+    }
+}

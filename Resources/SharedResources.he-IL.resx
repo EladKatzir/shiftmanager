@@ -7179,4 +7179,54 @@
     <value>מגבה</value>
     <comment>Label for backup assignment in on-call calendar</comment>
   </data>
+
+  <!-- Overview Calendar Feature -->
+  <data name="OverviewCalendar" xml:space="preserve">
+    <value>לוח סקירה</value>
+    <comment>Title for overview calendar page</comment>
+  </data>
+  <data name="UsersFilter" xml:space="preserve">
+    <value>משתמשים</value>
+    <comment>Label for user filter dropdown in overview calendar</comment>
+  </data>
+  <data name="ActiveUsers" xml:space="preserve">
+    <value>משתמשים פעילים</value>
+    <comment>Option to show only active users</comment>
+  </data>
+  <data name="InactiveUsers" xml:space="preserve">
+    <value>משתמשים לא פעילים</value>
+    <comment>Option to show only inactive users</comment>
+  </data>
+  <data name="AddNote" xml:space="preserve">
+    <value>הוסף הערה</value>
+    <comment>Button label to add a note to a calendar cell</comment>
+  </data>
+  <data name="EditNote" xml:space="preserve">
+    <value>ערוך הערה</value>
+    <comment>Modal title for editing a note</comment>
+  </data>
+  <data name="AddNoteHint" xml:space="preserve">
+    <value>הכנס הערה עבור המשתמש בתאריך זה...</value>
+    <comment>Placeholder text for note input</comment>
+  </data>
+  <data name="SaveNoteFailed" xml:space="preserve">
+    <value>שמירת ההערה נכשלה</value>
+    <comment>Error message when note save fails</comment>
+  </data>
+  <data name="DeleteNoteConfirm" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק הערה זו?</value>
+    <comment>Confirmation message for deleting a note</comment>
+  </data>
+  <data name="Calendar_Empty_NoUsersMessage" xml:space="preserve">
+    <value>לא נמצאו משתמשים בפלוגה שלך עבור הסינון הנבחר. נסה לשנות את סינון המשתמשים.</value>
+    <comment>Message shown when overview calendar has no users</comment>
+  </data>
+  <data name="NoAssignments" xml:space="preserve">
+    <value>אין שיבוצים</value>
+    <comment>Label for cells with no assignments</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>שגיאה לא ידועה</value>
+    <comment>Generic error message</comment>
+  </data>
 </root>
