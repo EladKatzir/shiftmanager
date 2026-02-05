@@ -238,6 +238,9 @@ builder.Services.AddHostedService<DailyNotificationJob>();
 builder.Services.AddScoped<TeamCalendarService>();
 builder.Services.AddScoped<TeamCalendarEventAggregator>();
 
+// Excel Calendars Services
+builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
+
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.ShiftApiService>();
