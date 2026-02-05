@@ -7145,4 +7145,18 @@
     <value>גרור לשינוי סדר</value>
     <comment>Tooltip for drag handle on calendar groups</comment>
   </data>
+
+  <!-- Chores Calendar Feature -->
+  <data name="ChoreType" xml:space="preserve">
+    <value>סוג תורנות</value>
+    <comment>Label for chore type filter dropdown</comment>
+  </data>
+  <data name="Calendar_Empty_NoChores" xml:space="preserve">
+    <value>לא נמצאו תורנויות</value>
+    <comment>Title shown when calendar has no chores</comment>
+  </data>
+  <data name="Calendar_Empty_NoChoresMessage" xml:space="preserve">
+    <value>אין תורנויות מתוכננות לתקופה זו. השתמש בבורר המולקולה כדי לראות תורנויות במולקולה אחרת.</value>
+    <comment>Message shown when calendar has no chores</comment>
+  </data>
 </root>
