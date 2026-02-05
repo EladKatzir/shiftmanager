@@ -24,7 +24,9 @@ public class ChoreTypeService : IChoreTypeService
 
     public async Task<ChoreType?> GetByIdAsync(int id)
     {
-        return await _db.ChoreTypes.FindAsync(id);
+        return await _db.ChoreTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ct => ct.Id == id);
     }
 
     public async Task<ChoreType> CreateAsync(int moleculeId, string name, string displayName, string? color, int userId)
@@ -50,7 +52,9 @@ public class ChoreTypeService : IChoreTypeService
 
     public async Task<ChoreType> UpdateAsync(int id, string displayName, string? color, int sortOrder)
     {
-        var choreType = await _db.ChoreTypes.FindAsync(id);
+        var choreType = await _db.ChoreTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ct => ct.Id == id);
         if (choreType == null)
             throw new ArgumentException("ChoreType not found", nameof(id));
 
@@ -64,7 +68,9 @@ public class ChoreTypeService : IChoreTypeService
 
     public async Task<bool> DeactivateAsync(int id)
     {
-        var choreType = await _db.ChoreTypes.FindAsync(id);
+        var choreType = await _db.ChoreTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ct => ct.Id == id);
         if (choreType == null)
             return false;
 
