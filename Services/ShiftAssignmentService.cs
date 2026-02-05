@@ -51,31 +51,35 @@ public class ShiftAssignmentService : IShiftAssignmentService
         if (shiftType == null)
             return new List<EligibleUserDto>();
 
-        // Start with users in the same company
-        var usersQuery = _db.Users
-            .Where(u => u.IsActive && u.CompanyId == shiftType.CompanyId);
-
-        // Filter by JobType if specified
-        var effectiveJobTypeId = jobTypeId ?? shiftType.JobTypeId;
-        if (effectiveJobTypeId.HasValue)
-        {
-            usersQuery = usersQuery.Where(u => u.JobTypeId == effectiveJobTypeId.Value);
-        }
-
-        // Filter by ShiftGrouping if specified
+        // Determine effective grouping and job type
         var effectiveGroupingId = shiftGroupingId ?? shiftType.ShiftGroupingId;
+        var effectiveJobTypeId = jobTypeId ?? shiftType.JobTypeId;
+
+        // Start with active users - filter by company scope
+        IQueryable<AppUser> usersQuery;
+
         if (effectiveGroupingId.HasValue)
         {
-            // Get company IDs in this grouping
+            // If ShiftGrouping is specified, include users from ALL companies in the grouping
             var groupingCompanyIds = await _db.ShiftGroupingCompanies
                 .Where(sgc => sgc.ShiftGroupingId == effectiveGroupingId.Value)
                 .Select(sgc => sgc.CompanyId)
                 .ToListAsync();
 
-            if (groupingCompanyIds.Any())
-            {
-                usersQuery = usersQuery.Where(u => groupingCompanyIds.Contains(u.CompanyId));
-            }
+            usersQuery = _db.Users
+                .Where(u => u.IsActive && groupingCompanyIds.Contains(u.CompanyId));
+        }
+        else
+        {
+            // No grouping - fall back to users in the same company as the ShiftType
+            usersQuery = _db.Users
+                .Where(u => u.IsActive && u.CompanyId == shiftType.CompanyId);
+        }
+
+        // Filter by JobType if specified
+        if (effectiveJobTypeId.HasValue)
+        {
+            usersQuery = usersQuery.Where(u => u.JobTypeId == effectiveJobTypeId.Value);
         }
 
         var users = await usersQuery
