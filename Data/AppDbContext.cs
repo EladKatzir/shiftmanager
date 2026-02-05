@@ -35,6 +35,7 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
     public DbSet<Chore> Chores => Set<Chore>();
+    public DbSet<ChoreType> ChoreTypes => Set<ChoreType>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -396,6 +397,21 @@ public class AppDbContext : DbContext
         // Index for molecule-scoped chore queries
         modelBuilder.Entity<Chore>()
             .HasIndex(c => new { c.MoleculeId, c.Date });
+
+        // Configure ChoreType (Excel Calendars feature)
+        modelBuilder.Entity<ChoreType>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Molecule)
+                .WithMany()
+                .HasForeignKey(e => e.MoleculeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.MoleculeId, e.Name }).IsUnique();
+        });
 
         // Configure Language Management
         // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)
