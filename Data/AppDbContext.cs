@@ -396,6 +396,13 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.MoleculeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Chore → ChoreType relationship (for calendar categorization)
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.ChoreType)
+            .WithMany(ct => ct.Chores)
+            .HasForeignKey(c => c.ChoreTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Index for molecule-scoped chore queries
         modelBuilder.Entity<Chore>()
             .HasIndex(c => new { c.MoleculeId, c.Date });
@@ -883,6 +890,19 @@ public class AppDbContext : DbContext
             .WithMany(m => m.ShiftGroupings)
             .HasForeignKey(sg => sg.MoleculeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ShiftGrouping → JobType relationship (for per-Molecule/JobType groupings)
+        modelBuilder.Entity<ShiftGrouping>()
+            .HasOne(sg => sg.JobType)
+            .WithMany()
+            .HasForeignKey(sg => sg.JobTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Unique index for ShiftGrouping (Molecule, JobType, Name) when JobType is set
+        modelBuilder.Entity<ShiftGrouping>()
+            .HasIndex(sg => new { sg.MoleculeId, sg.JobTypeId, sg.Name })
+            .IsUnique()
+            .HasFilter("[JobTypeId] IS NOT NULL");
 
         // ShiftGroupingCompany: Composite primary key
         modelBuilder.Entity<ShiftGroupingCompany>()

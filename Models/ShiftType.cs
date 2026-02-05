@@ -69,6 +69,7 @@ public class ShiftType : IBelongsToCompany
 
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; } // if End <= Start => wraps to next day
+    public string? RowColor { get; set; }  // Hex color for calendar row e.g. "#F0C14B"
 
     /// <summary>
     /// Returns true if this is the special "Offline" shift type that can overlap with other shifts.
