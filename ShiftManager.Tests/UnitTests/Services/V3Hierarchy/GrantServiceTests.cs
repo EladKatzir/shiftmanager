@@ -875,7 +875,7 @@ public class AssignerRoleTests : IDisposable
 
 /// <summary>
 /// Tests for V3 Audit - Grant Type Seed Count
-/// Verifies that all 107 grant types are properly seeded.
+/// Verifies that all grant types are properly seeded.
 /// </summary>
 public class GrantTypeSeedTests
 {
@@ -885,8 +885,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - The plan calls for 107 grants (59 original + 48 new)
-        grantTypes.Should().HaveCount(107, "Should have exactly 107 grant types as per spec");
+        // Assert - 110 grants (107 original + 3 calendar grants)
+        grantTypes.Should().HaveCount(110, "Should have exactly 110 grant types");
     }
 
     [Fact]
