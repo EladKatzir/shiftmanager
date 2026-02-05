@@ -7652,4 +7652,24 @@ Are you absolutely sure you want to delete this user?</value>
     <value>No chores are scheduled for this period. Use the molecule selector to view chores in a different molecule.</value>
     <comment>Message shown when calendar has no chores</comment>
   </data>
+  <data name="Calendar_Empty_NoOnDuty" xml:space="preserve">
+    <value>No Day Shifts Found</value>
+    <comment>Title shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="Calendar_Empty_NoOnDutyMessage" xml:space="preserve">
+    <value>No day shift assignments are scheduled for this period. Use the filters to adjust the view or contact your manager to assign shifts.</value>
+    <comment>Message shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="AllAreas" xml:space="preserve">
+    <value>All Areas</value>
+    <comment>Option to show all areas in area selector</comment>
+  </data>
+  <data name="Primary" xml:space="preserve">
+    <value>Primary</value>
+    <comment>Label for primary assignment in on-call calendar</comment>
+  </data>
+  <data name="Backup" xml:space="preserve">
+    <value>Backup</value>
+    <comment>Label for backup assignment in on-call calendar</comment>
+  </data>
 </root>

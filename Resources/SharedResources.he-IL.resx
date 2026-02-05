@@ -7159,4 +7159,24 @@
     <value>אין תורנויות מתוכננות לתקופה זו. השתמש בבורר המולקולה כדי לראות תורנויות במולקולה אחרת.</value>
     <comment>Message shown when calendar has no chores</comment>
   </data>
+  <data name="Calendar_Empty_NoOnDuty" xml:space="preserve">
+    <value>לא נמצאו משמרות יומיות</value>
+    <comment>Title shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="Calendar_Empty_NoOnDutyMessage" xml:space="preserve">
+    <value>אין משמרות יומיות מתוכננות לתקופה זו. השתמש בסינון כדי להתאים את התצוגה או פנה למנהל שלך לשיבוץ משמרות.</value>
+    <comment>Message shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="AllAreas" xml:space="preserve">
+    <value>כל האזורים</value>
+    <comment>Option to show all areas in area selector</comment>
+  </data>
+  <data name="Primary" xml:space="preserve">
+    <value>ראשי</value>
+    <comment>Label for primary assignment in on-call calendar</comment>
+  </data>
+  <data name="Backup" xml:space="preserve">
+    <value>מגבה</value>
+    <comment>Label for backup assignment in on-call calendar</comment>
+  </data>
 </root>
