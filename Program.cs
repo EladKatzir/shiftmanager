@@ -241,6 +241,7 @@ builder.Services.AddScoped<TeamCalendarEventAggregator>();
 // Excel Calendars Services
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
+builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
 
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
