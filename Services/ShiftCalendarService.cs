@@ -81,7 +81,9 @@ public class ShiftCalendarService : IShiftCalendarService
     {
         // ShiftType doesn't have DefaultStaffingRequired, so we return a constant default
         // The actual capacity is typically set via ShiftInstance.StaffingRequired or ShiftCapacityOverride
-        var shiftType = await _db.ShiftTypes.FindAsync(shiftTypeId);
+        var shiftType = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(st => st.Id == shiftTypeId);
         if (shiftType == null)
             return DEFAULT_STAFFING_REQUIRED;
 
@@ -148,6 +150,19 @@ public class ShiftCalendarService : IShiftCalendarService
         if (shiftInstance == null)
             return new AssignmentResult(false, "Shift instance not found", new());
 
+        var user = await _db.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            return new AssignmentResult(false, "User not found", new());
+
+        var userCompany = await _db.Companies
+            .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+
+        if (userCompany?.MoleculeId != shiftInstance.ShiftType.MoleculeId)
+            return new AssignmentResult(false, "User does not belong to this molecule", new());
+
         // Check for rest violations (warning only, never blocks)
         var warnings = await CheckRestViolationsAsync(userId, shiftInstance.WorkDate, shiftInstance.ShiftTypeId);
 
@@ -192,7 +207,9 @@ public class ShiftCalendarService : IShiftCalendarService
     {
         var warnings = new List<RestViolationWarning>();
 
-        var targetShiftType = await _db.ShiftTypes.FindAsync(shiftTypeId);
+        var targetShiftType = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(st => st.Id == shiftTypeId);
         if (targetShiftType == null)
             return warnings;
 
@@ -288,16 +305,20 @@ public class ShiftCalendarService : IShiftCalendarService
                 && sa.ShiftInstance.WorkDate <= end)
             .ToListAsync();
 
+        // Build lookup dictionaries for O(1) access
+        var choreLookup = chores.ToLookup(c => (c.UserId, c.Date));
+        var onDutyLookup = onDuties.ToLookup(od => (od.UserId, od.Date));
+        var shiftLookup = shifts.ToLookup(s => (s.UserId!.Value, s.ShiftInstance.WorkDate));
+
         // Build overlay data for each user-date combination
         foreach (var userId in userIds)
         {
             for (var date = start; date <= end; date = date.AddDays(1))
             {
                 var hasVacation = timeOffRequests.Any(t => t.UserId == userId && t.StartDate <= date && t.EndDate >= date);
-                var hasChore = chores.Any(c => c.UserId == userId && c.Date == date);
-                var hasOnDuty = onDuties.Any(od => od.UserId == userId && od.Date == date);
-                var otherShifts = shifts
-                    .Where(s => s.UserId == userId && s.ShiftInstance.WorkDate == date)
+                var hasChore = choreLookup[(userId, date)].Any();
+                var hasOnDuty = onDutyLookup[(userId, date)].Any();
+                var otherShifts = shiftLookup[(userId, date)]
                     .Select(s => s.ShiftInstance.ShiftType.Name)
                     .ToList();
 
