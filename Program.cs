@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Reflection;
 using ShiftManager.Middleware;
 using ShiftManager.Authorization;
+using ShiftManager.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -242,6 +243,10 @@ builder.Services.AddScoped<TeamCalendarEventAggregator>();
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
+
+// SignalR for real-time calendar updates
+builder.Services.AddSignalR();
+builder.Services.AddScoped<ICalendarNotificationService, CalendarNotificationService>();
 
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
@@ -767,7 +772,7 @@ app.Use(async (context, next) =>
         "style-src 'self' 'unsafe-inline'; " +  // Allow inline styles
         "img-src 'self' data:; " +               // Allow inline images for avatars
         "font-src 'self'; " +
-        "connect-src 'self'; " +
+        "connect-src 'self' ws: wss:; " +
         "frame-ancestors 'none'";                // Redundant with X-Frame-Options but recommended
 
     // Remove potentially revealing server headers
@@ -824,6 +829,9 @@ app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>(); // API key-based rate limiting
 app.MapControllers(); // Map API controllers
 app.MapRazorPages();
+
+// SignalR hub for real-time calendar updates
+app.MapHub<CalendarHub>("/hubs/calendar");
 
 // Health check endpoints for container orchestration
 app.MapHealthChecks("/health");  // Liveness probe - is the app alive?
