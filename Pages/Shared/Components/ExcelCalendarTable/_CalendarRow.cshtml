@@ -1,0 +1,74 @@
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@model dynamic
+
+@{
+    ShiftManager.ViewComponents.ExcelCalendarRow row = Model.Row;
+    List<DateOnly> days = Model.Days;
+    DateOnly today = Model.Today;
+    bool isReadOnly = Model.IsReadOnly;
+    bool isCollapsed = Model.IsCollapsed;
+
+    var style = row.Color != null ? $"--row-color: {row.Color}" : "";
+    var hiddenStyle = isCollapsed ? "display: none;" : "";
+}
+
+<tr data-row-id="@row.Id" style="@style @hiddenStyle">
+    <td class="excel-calendar__row-label">@row.Label</td>
+    @foreach (var day in days)
+    {
+        var cell = row.Cells.GetValueOrDefault(day);
+        var isTodayCell = day == today;
+
+        <td class="excel-calendar__cell @(isTodayCell ? "excel-calendar__cell--today" : "") @(isReadOnly ? "excel-calendar__cell--readonly" : "")"
+            data-row-id="@row.Id"
+            data-date="@day.ToString("yyyy-MM-dd")"
+            role="gridcell"
+            tabindex="0">
+
+            @if (!isReadOnly)
+            {
+                <button type="button" class="excel-calendar__add-btn" aria-label="@Localizer["AddAssignment"]">+</button>
+            }
+
+            <div class="excel-calendar__cell-content">
+                @if (cell?.Assignments?.Any() == true)
+                {
+                    foreach (var assignment in cell.Assignments)
+                    {
+                        <div class="excel-calendar__assignment" data-assignment-id="@assignment.Id">
+                            <span class="excel-calendar__assignment-name">@assignment.Name</span>
+                            @if (assignment.IsTrainee)
+                            {
+                                <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]">🎓</span>
+                            }
+                        </div>
+                    }
+                }
+                else if (!string.IsNullOrEmpty(cell?.Note))
+                {
+                    <span class="excel-calendar__note">@cell.Note</span>
+                }
+
+                @if (cell?.Overlay != null)
+                {
+                    <div class="excel-calendar__badges">
+                        @if (cell.Overlay.HasVacation)
+                        {
+                            <span class="excel-calendar__badge excel-calendar__badge--vacation" title="@Localizer["Vacation"]">🏖️</span>
+                        }
+                        @if (cell.Overlay.HasChore)
+                        {
+                            <span class="excel-calendar__badge excel-calendar__badge--chore" title="@Localizer["Chore"]">🧹</span>
+                        }
+                        @if (cell.Overlay.HasOnDuty)
+                        {
+                            <span class="excel-calendar__badge excel-calendar__badge--onduty" title="@Localizer["OnDuty"]">📞</span>
+                        }
+                    </div>
+                }
+            </div>
+        </td>
+    }
+</tr>
