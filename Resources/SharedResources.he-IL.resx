@@ -7068,17 +7068,23 @@
     <value>סוג תורנות זה דורש דרגת קצין (סגן משנה ומעלה)</value>
     <comment>Hint shown when duty type requires officer rank</comment>
   </data>
-  <!-- Grant Type Localizations - Calendar Management (Excel Calendars Feature) -->
-  <data name="Grant_ManageChoreTypes" xml:space="preserve">
-    <value>ניהול סוגי תורנויות</value>
-  </data>
-  <data name="Grant_ManageChoreTypes_Desc" xml:space="preserve">
-    <value>יצירה, עריכה ומחיקה של הגדרות סוגי תורנויות</value>
-  </data>
+  <!-- Grant Type Localizations - Calendar Grants -->
   <data name="Grant_ManageShiftCapacity" xml:space="preserve">
     <value>ניהול קיבולת משמרות</value>
   </data>
   <data name="Grant_ManageShiftCapacity_Desc" xml:space="preserve">
     <value>שינוי מכסת משמרות עבור ימים מסוימים</value>
+  </data>
+  <data name="Grant_WriteOverviewNotes" xml:space="preserve">
+    <value>הערות לוח תקציר</value>
+  </data>
+  <data name="Grant_WriteOverviewNotes_Desc" xml:space="preserve">
+    <value>הוספת הערות חופשיות ללוח תקציר החברה</value>
+  </data>
+  <data name="Grant_ManageOnDutyTypes" xml:space="preserve">
+    <value>ניהול סוגי כוננויות</value>
+  </data>
+  <data name="Grant_ManageOnDutyTypes_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של סוגי כוננויות</value>
   </data>
 </root>
