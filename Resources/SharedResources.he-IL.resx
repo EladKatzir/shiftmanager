@@ -7229,4 +7229,34 @@
     <value>שגיאה לא ידועה</value>
     <comment>Generic error message</comment>
   </data>
+
+  <!-- Calendar Landing Page -->
+  <data name="CalendarsSubtitle" xml:space="preserve">
+    <value>ניהול משמרות, תורנויות וכוננויות</value>
+    <comment>Subtitle on calendar landing page</comment>
+  </data>
+  <data name="ShiftsCalendarDesc" xml:space="preserve">
+    <value>ניהול ותכנון משמרות עבודה</value>
+    <comment>Description for shifts calendar card</comment>
+  </data>
+  <data name="ChoresCalendarDesc" xml:space="preserve">
+    <value>ניהול תורנויות ומטלות</value>
+    <comment>Description for chores calendar card</comment>
+  </data>
+  <data name="OnCallCalendar" xml:space="preserve">
+    <value>לוח כוננויות</value>
+    <comment>Title for on-call calendar</comment>
+  </data>
+  <data name="OnCallCalendarDesc" xml:space="preserve">
+    <value>ניהול כוננויות וזמינות</value>
+    <comment>Description for on-call calendar card</comment>
+  </data>
+  <data name="OverviewCalendarDesc" xml:space="preserve">
+    <value>סקירה כללית של כל השיבוצים</value>
+    <comment>Description for overview calendar card</comment>
+  </data>
+  <data name="ViewCalendar" xml:space="preserve">
+    <value>צפה בלוח</value>
+    <comment>Button text on calendar card</comment>
+  </data>
 </root>

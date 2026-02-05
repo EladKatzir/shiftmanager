@@ -7722,4 +7722,34 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Unknown error</value>
     <comment>Generic error message</comment>
   </data>
+
+  <!-- Calendar Landing Page -->
+  <data name="CalendarsSubtitle" xml:space="preserve">
+    <value>Manage shifts, chores, and on-call duties</value>
+    <comment>Subtitle on calendar landing page</comment>
+  </data>
+  <data name="ShiftsCalendarDesc" xml:space="preserve">
+    <value>Manage and plan work shift assignments</value>
+    <comment>Description for shifts calendar card</comment>
+  </data>
+  <data name="ChoresCalendarDesc" xml:space="preserve">
+    <value>Manage chore duties and tasks</value>
+    <comment>Description for chores calendar card</comment>
+  </data>
+  <data name="OnCallCalendar" xml:space="preserve">
+    <value>On-Call Calendar</value>
+    <comment>Title for on-call calendar</comment>
+  </data>
+  <data name="OnCallCalendarDesc" xml:space="preserve">
+    <value>Manage on-call duties and availability</value>
+    <comment>Description for on-call calendar card</comment>
+  </data>
+  <data name="OverviewCalendarDesc" xml:space="preserve">
+    <value>Company-wide view of all assignments</value>
+    <comment>Description for overview calendar card</comment>
+  </data>
+  <data name="ViewCalendar" xml:space="preserve">
+    <value>View Calendar</value>
+    <comment>Button text on calendar card</comment>
+  </data>
 </root>

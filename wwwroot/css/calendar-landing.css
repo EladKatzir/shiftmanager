@@ -1,0 +1,475 @@
+/* ========================================
+   Calendar Landing Page - Premium Cards
+   ShiftManager Design System v3.0
+   ======================================== */
+
+/* ========================================
+   1. LANDING PAGE CONTAINER
+   ======================================== */
+
+.calendar-landing {
+    padding: var(--space-6) var(--space-4);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.calendar-landing__header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.calendar-landing__title {
+    font-size: var(--text-display);
+    font-weight: var(--font-bold);
+    color: var(--text);
+    margin: 0 0 var(--space-3) 0;
+}
+
+.calendar-landing__subtitle {
+    font-size: var(--text-body);
+    color: var(--text-muted);
+    margin: 0;
+    max-width: 500px;
+    margin-inline: auto;
+    line-height: var(--leading-relaxed);
+}
+
+/* ========================================
+   2. CARD GRID
+   ======================================== */
+
+.calendar-landing__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+/* ========================================
+   3. CALENDAR CARD BASE
+   ======================================== */
+
+.calendar-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-xl);
+    text-decoration: none;
+    color: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    transition: 
+        transform var(--duration-normal) var(--ease-out),
+        box-shadow var(--duration-normal) var(--ease-out);
+    box-shadow: var(--shadow-md);
+    min-height: 280px;
+}
+
+.calendar-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%);
+    pointer-events: none;
+}
+
+.calendar-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-xl);
+}
+
+.calendar-card:focus-visible {
+    outline: 3px solid var(--primary-contrast);
+    outline-offset: 3px;
+}
+
+/* ========================================
+   4. CARD ICON
+   ======================================== */
+
+.calendar-card__icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-5);
+    transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.calendar-card:hover .calendar-card__icon-wrapper {
+    transform: scale(1.1);
+}
+
+.calendar-card__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+/* ========================================
+   5. CARD CONTENT
+   ======================================== */
+
+.calendar-card__title {
+    font-size: var(--text-title);
+    font-weight: var(--font-bold);
+    margin: 0 0 var(--space-3) 0;
+    color: inherit;
+}
+
+.calendar-card__description {
+    font-size: var(--text-small);
+    margin: 0 0 var(--space-5) 0;
+    opacity: 0.9;
+    line-height: var(--leading-relaxed);
+    max-width: 280px;
+    flex-grow: 1;
+}
+
+.calendar-card__action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-small);
+    font-weight: var(--font-semibold);
+    padding: var(--space-3) var(--space-5);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    transition: background var(--duration-fast) var(--ease-out);
+}
+
+.calendar-card:hover .calendar-card__action {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.calendar-card__arrow {
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+
+[dir="rtl"] .calendar-card__arrow {
+    transform: rotate(180deg);
+}
+
+.calendar-card:hover .calendar-card__arrow {
+    transform: translateX(4px);
+}
+
+[dir="rtl"] .calendar-card:hover .calendar-card__arrow {
+    transform: translateX(-4px) rotate(180deg);
+}
+
+/* ========================================
+   6. CARD COLOR VARIANTS
+   ======================================== */
+
+/* Shifts Calendar - Navy to Sky Blue */
+.calendar-card--shifts {
+    background: linear-gradient(135deg, var(--shift-night) 0%, var(--accent) 100%);
+}
+
+/* Chores Calendar - Olive to Sand */
+.calendar-card--chores {
+    background: linear-gradient(135deg, var(--camo-olive) 0%, var(--camo-sand) 100%);
+}
+
+/* On-Call Calendar - Brown to Sand */
+.calendar-card--oncall {
+    background: linear-gradient(135deg, var(--shift-hakam) 0%, var(--camo-sand) 100%);
+}
+
+/* Overview Calendar - Slate to Light */
+.calendar-card--overview {
+    background: linear-gradient(135deg, var(--camo-slate) 0%, var(--surface-soft) 100%);
+    color: var(--text);
+}
+
+.calendar-card--overview .calendar-card__action {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.calendar-card--overview:hover .calendar-card__action {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   7. DARK MODE ADJUSTMENTS
+   ======================================== */
+
+:root[data-theme="dark"] .calendar-card--shifts {
+    background: linear-gradient(135deg, var(--shift-night) 0%, var(--accent) 100%);
+}
+
+:root[data-theme="dark"] .calendar-card--chores {
+    background: linear-gradient(135deg, var(--camo-olive) 0%, var(--camo-sand) 100%);
+}
+
+:root[data-theme="dark"] .calendar-card--oncall {
+    background: linear-gradient(135deg, var(--shift-hakam) 0%, var(--camo-sand) 100%);
+}
+
+:root[data-theme="dark"] .calendar-card--overview {
+    background: linear-gradient(135deg, var(--camo-slate) 0%, var(--surface-strong) 100%);
+    color: var(--text);
+}
+
+/* Prefers dark mode media query */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .calendar-card--overview {
+        background: linear-gradient(135deg, var(--camo-slate) 0%, var(--surface-strong) 100%);
+        color: var(--text);
+    }
+}
+
+/* ========================================
+   8. RESPONSIVE DESIGN
+   ======================================== */
+
+/* Tablet landscape and small desktop */
+@media (max-width: 1024px) {
+    .calendar-landing {
+        padding: var(--space-5) var(--space-4);
+    }
+
+    .calendar-landing__grid {
+        gap: var(--space-5);
+    }
+
+    .calendar-card {
+        padding: var(--space-6) var(--space-5);
+        min-height: 260px;
+    }
+
+    .calendar-card__icon-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+
+    .calendar-card__icon {
+        font-size: 2rem;
+    }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+    .calendar-landing__header {
+        margin-bottom: var(--space-6);
+    }
+
+    .calendar-landing__title {
+        font-size: var(--text-title);
+    }
+
+    .calendar-landing__grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+
+    .calendar-card {
+        flex-direction: row;
+        text-align: start;
+        padding: var(--space-5);
+        min-height: auto;
+        gap: var(--space-4);
+    }
+
+    .calendar-card__icon-wrapper {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .calendar-card__icon {
+        font-size: 1.75rem;
+    }
+
+    .calendar-card__title {
+        font-size: var(--text-heading);
+        margin-bottom: var(--space-2);
+    }
+
+    .calendar-card__description {
+        font-size: var(--text-small);
+        margin-bottom: var(--space-3);
+        max-width: none;
+    }
+
+    .calendar-card__action {
+        align-self: flex-start;
+        padding: var(--space-2) var(--space-4);
+    }
+
+    /* Reorganize content flow on mobile */
+    .calendar-card__content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+/* Mobile portrait */
+@media (max-width: 480px) {
+    .calendar-landing {
+        padding: var(--space-4) var(--space-3);
+    }
+
+    .calendar-landing__title {
+        font-size: var(--text-heading);
+    }
+
+    .calendar-landing__subtitle {
+        font-size: var(--text-small);
+    }
+
+    .calendar-card {
+        padding: var(--space-4);
+    }
+
+    .calendar-card__icon-wrapper {
+        width: 52px;
+        height: 52px;
+    }
+
+    .calendar-card__icon {
+        font-size: 1.5rem;
+    }
+
+    .calendar-card__title {
+        font-size: var(--text-body);
+    }
+
+    .calendar-card__description {
+        font-size: var(--text-tiny);
+    }
+
+    .calendar-card__action {
+        font-size: var(--text-tiny);
+        padding: var(--space-2) var(--space-3);
+    }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+    .calendar-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .calendar-card__icon-wrapper {
+        margin-bottom: var(--space-3);
+    }
+
+    .calendar-card__action {
+        align-self: center;
+    }
+}
+
+/* ========================================
+   9. TOUCH TARGET ENFORCEMENT
+   ======================================== */
+
+@media (pointer: coarse) {
+    .calendar-card {
+        min-height: auto;
+        padding: var(--space-5);
+    }
+
+    .calendar-card__action {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* ========================================
+   10. REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .calendar-card,
+    .calendar-card__icon-wrapper,
+    .calendar-card__action,
+    .calendar-card__arrow {
+        transition: none;
+    }
+
+    .calendar-card:hover {
+        transform: none;
+    }
+
+    .calendar-card:hover .calendar-card__icon-wrapper {
+        transform: none;
+    }
+
+    .calendar-card:hover .calendar-card__arrow {
+        transform: none;
+    }
+
+    [dir="rtl"] .calendar-card:hover .calendar-card__arrow {
+        transform: rotate(180deg);
+    }
+}
+
+/* ========================================
+   11. PRINT STYLES
+   ======================================== */
+
+@media print {
+    .calendar-landing {
+        padding: 0;
+    }
+
+    .calendar-landing__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .calendar-card {
+        box-shadow: none;
+        border: 2px solid #000;
+        page-break-inside: avoid;
+        color: #000 !important;
+        background: #fff !important;
+    }
+
+    .calendar-card::before {
+        display: none;
+    }
+
+    .calendar-card__icon-wrapper {
+        border: 2px solid currentColor;
+        background: transparent;
+    }
+}
+
+/* ========================================
+   12. HIGH CONTRAST MODE
+   ======================================== */
+
+@media (forced-colors: active) {
+    .calendar-card {
+        border: 2px solid CanvasText;
+        background: Canvas !important;
+        color: CanvasText !important;
+    }
+
+    .calendar-card:focus-visible {
+        outline: 3px solid Highlight;
+        outline-offset: 3px;
+    }
+
+    .calendar-card__icon-wrapper {
+        border: 2px solid CanvasText;
+        background: transparent;
+    }
+
+    .calendar-card__action {
+        border: 1px solid CanvasText;
+        background: transparent;
+    }
+}
