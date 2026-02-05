@@ -37,6 +37,7 @@ public class AppDbContext : DbContext
     public DbSet<Chore> Chores => Set<Chore>();
     public DbSet<ChoreType> ChoreTypes => Set<ChoreType>();
     public DbSet<ShiftCapacityOverride> ShiftCapacityOverrides => Set<ShiftCapacityOverride>();
+    public DbSet<UserDayNote> UserDayNotes => Set<UserDayNote>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -425,6 +426,17 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Configure UserDayNote (Excel Calendars feature)
+        modelBuilder.Entity<UserDayNote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.Date, e.CompanyId }).IsUnique();
+            entity.Property(e => e.Note).HasMaxLength(500);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Configure Language Management
         // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)
         modelBuilder.Entity<CompanyLanguageSettings>()
@@ -596,6 +608,10 @@ public class AppDbContext : DbContext
 
             // Announcements Feed: Query filter for tenant scoping
             modelBuilder.Entity<Announcement>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Excel Calendars: Query filter for UserDayNote tenant scoping
+            modelBuilder.Entity<UserDayNote>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
