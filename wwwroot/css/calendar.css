@@ -2158,3 +2158,283 @@
     break-inside: avoid;
   }
 }
+
+/* ========================================
+   EXCEL CALENDAR TABLE STYLES
+   ======================================== */
+
+.excel-calendar {
+    overflow: auto;
+    max-height: calc(100vh - 200px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.excel-calendar__table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 100%;
+    font-size: var(--text-small);
+}
+
+/* Sticky header */
+.excel-calendar__header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: var(--primary);
+    color: var(--primary-contrast);
+}
+
+.excel-calendar__header th {
+    padding: var(--space-3);
+    font-weight: var(--font-semibold);
+    text-align: center;
+    border-bottom: 2px solid var(--border-strong);
+    white-space: nowrap;
+}
+
+.excel-calendar__header-day {
+    min-width: 100px;
+}
+
+.excel-calendar__header-day--today {
+    border-inline-start: 3px solid var(--accent);
+}
+
+.excel-calendar__header-day--weekend {
+    background: var(--primary-hover);
+}
+
+/* Date display in header */
+.excel-calendar__day-name {
+    display: block;
+    font-weight: var(--font-semibold);
+}
+
+.excel-calendar__day-date {
+    display: block;
+    font-size: var(--text-tiny);
+    opacity: 0.9;
+}
+
+/* Sticky first column */
+.excel-calendar__row-label {
+    position: sticky;
+    left: 0;
+    z-index: calc(var(--z-sticky) - 1);
+    background: var(--surface);
+    font-weight: var(--font-medium);
+    padding: var(--space-3);
+    border-inline-end: 1px solid var(--border);
+    min-width: 150px;
+    white-space: nowrap;
+}
+
+/* Corner cell (sticky both ways) */
+.excel-calendar__corner {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: calc(var(--z-sticky) + 1);
+    background: var(--primary);
+}
+
+/* Data cells */
+.excel-calendar__cell {
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    vertical-align: top;
+    min-height: 60px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.excel-calendar__cell:hover {
+    background: var(--surface-soft);
+}
+
+.excel-calendar__cell--today {
+    border-inline-start: 3px solid var(--primary);
+}
+
+.excel-calendar__cell--readonly {
+    cursor: default;
+}
+
+.excel-calendar__cell--readonly:hover {
+    background: transparent;
+}
+
+/* Cell content */
+.excel-calendar__cell-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.excel-calendar__assignment {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: var(--accent-soft);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-tiny);
+}
+
+.excel-calendar__assignment-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* FYI badges */
+.excel-calendar__badges {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+}
+
+.excel-calendar__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+}
+
+.excel-calendar__badge--vacation {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
+.excel-calendar__badge--chore {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.excel-calendar__badge--onduty {
+    background: var(--camo-sand-soft);
+    color: var(--shift-hakam);
+}
+
+.excel-calendar__badge--shift {
+    background: var(--surface-soft);
+    color: var(--text-muted);
+}
+
+/* Empty state */
+.excel-calendar__empty {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: var(--space-2);
+}
+
+/* Add button on hover */
+.excel-calendar__add-btn {
+    position: absolute;
+    top: var(--space-1);
+    left: var(--space-1);
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.excel-calendar__cell:hover .excel-calendar__add-btn {
+    opacity: 1;
+}
+
+/* Group header rows */
+.excel-calendar__group-header {
+    background: var(--surface-soft);
+}
+
+.excel-calendar__group-header td {
+    padding: var(--space-2) var(--space-3);
+    font-weight: var(--font-semibold);
+    border-top: 2px solid var(--border-strong);
+}
+
+.excel-calendar__group-toggle {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.excel-calendar__group-chevron {
+    transition: transform var(--transition-fast);
+}
+
+.excel-calendar__group-chevron--collapsed {
+    transform: rotate(-90deg);
+}
+
+[dir="rtl"] .excel-calendar__group-chevron--collapsed {
+    transform: rotate(90deg);
+}
+
+.excel-calendar__group-grip {
+    cursor: grab;
+    color: var(--text-muted);
+}
+
+/* Read-only mode banner */
+.excel-calendar__readonly-banner {
+    background: var(--warning-soft);
+    color: var(--warning);
+    padding: var(--space-2) var(--space-4);
+    text-align: center;
+    font-size: var(--text-small);
+    border-bottom: 1px solid var(--warning);
+}
+
+/* Compact mode for month view */
+.excel-calendar--compact .excel-calendar__cell {
+    padding: var(--space-1);
+    min-height: 40px;
+}
+
+.excel-calendar--compact .excel-calendar__assignment {
+    padding: 2px var(--space-1);
+}
+
+.excel-calendar--compact .excel-calendar__header-day {
+    min-width: 60px;
+}
+
+/* Toolbar */
+.excel-calendar-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    flex-wrap: wrap;
+}
+
+.excel-calendar-toolbar__group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.excel-calendar-toolbar__separator {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+}
