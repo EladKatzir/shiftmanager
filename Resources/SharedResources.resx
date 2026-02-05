@@ -5247,6 +5247,20 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Create and edit Katzin on-call programs</value>
   </data>
 
+  <!-- Grant Type Localizations - Calendar Management (Excel Calendars Feature) -->
+  <data name="Grant_ManageChoreTypes" xml:space="preserve">
+    <value>Manage Chore Types</value>
+  </data>
+  <data name="Grant_ManageChoreTypes_Desc" xml:space="preserve">
+    <value>Create, edit, and delete chore type definitions</value>
+  </data>
+  <data name="Grant_ManageShiftCapacity" xml:space="preserve">
+    <value>Manage Shift Capacity</value>
+  </data>
+  <data name="Grant_ManageShiftCapacity_Desc" xml:space="preserve">
+    <value>Override shift capacity limits for specific days</value>
+  </data>
+
   <!-- UI Overhaul v3.0 - Navigation -->
   <data name="Nav_MyShifty" xml:space="preserve">
     <value>My Shifty</value>

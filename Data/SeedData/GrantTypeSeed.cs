@@ -234,6 +234,13 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ManageKatzinBlueprints", NameKey = "Grant_ManageKatzinBlueprints", DescriptionKey = "Grant_ManageKatzinBlueprints_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ManageKatzinPrograms", NameKey = "Grant_ManageKatzinPrograms", DescriptionKey = "Grant_ManageKatzinPrograms_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
+        // ============================================
+        // CALENDAR MANAGEMENT GRANTS - Excel Calendars Feature
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageChoreTypes", NameKey = "Grant_ManageChoreTypes", DescriptionKey = "Grant_ManageChoreTypes_Desc", Category = GrantCategory.Chore, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageShiftCapacity", NameKey = "Grant_ManageShiftCapacity", DescriptionKey = "Grant_ManageShiftCapacity_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+
         return grants;
     }
 }
