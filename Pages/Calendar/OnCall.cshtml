@@ -152,7 +152,57 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            const areaId = @(Model.AreaId ?? 0);
+            if (areaId > 0) {
+                CalendarRealtime.initialize({
+                    calendarType: 'oncall',
+                    scope: {
+                        areaId: areaId
+                    },
+                    onRefresh: refreshCalendarData,
+                    handlers: {
+                        onOnCallChanged: handleOnCallChanged
+                    }
+                });
+            }
+        });
+
+        // Refresh calendar data via AJAX
+        async function refreshCalendarData() {
+            const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
+            const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
+            const areaId = @(Model.AreaId ?? 0);
+
+            if (areaId <= 0) return;
+
+            try {
+                const response = await fetch(
+                    `/Api/Calendar/GetOnCallData?areaId=${areaId}&startDate=${startDate}&endDate=${endDate}`,
+                    { credentials: 'same-origin' }
+                );
+
+                if (!response.ok) throw new Error('Failed to refresh');
+
+                const result = await response.json();
+                if (result.success) {
+                    // Full page refresh for now
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Shadow refresh failed:', error);
+            }
+        }
+
+        // Handle real-time on-call change
+        function handleOnCallChanged(evt) {
+            refreshCalendarData();
+        }
+
         // Update calendar with new filter selections
         function updateCalendarFilters() {
             const areaSelect = document.getElementById('areaSelect');

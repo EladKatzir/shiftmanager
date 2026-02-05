@@ -166,7 +166,93 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            CalendarRealtime.initialize({
+                calendarType: 'shifts',
+                scope: {
+                    moleculeId: @Model.MoleculeId,
+                    jobTypeId: @Model.JobTypeId
+                },
+                onRefresh: refreshCalendarData,
+                handlers: {
+                    onAssignmentChanged: handleAssignmentChanged,
+                    onCapacityChanged: handleCapacityChanged
+                }
+            });
+        });
+
+        // Refresh calendar data via AJAX
+        async function refreshCalendarData() {
+            const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
+            const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
+            const moleculeId = @Model.MoleculeId;
+            const jobTypeId = @Model.JobTypeId;
+
+            try {
+                const response = await fetch(
+                    `/Api/Calendar/GetShiftsData?moleculeId=${moleculeId}&jobTypeId=${jobTypeId}&startDate=${startDate}&endDate=${endDate}`,
+                    { credentials: 'same-origin' }
+                );
+
+                if (!response.ok) throw new Error('Failed to refresh');
+
+                const result = await response.json();
+                if (result.success) {
+                    updateCalendarCells(result.data);
+                }
+            } catch (error) {
+                console.error('Shadow refresh failed:', error);
+            }
+        }
+
+        // Update calendar cells with new data
+        function updateCalendarCells(data) {
+            const cellsById = new Map(data.cells.map(c => [c.shiftInstanceId, c]));
+
+            document.querySelectorAll('.excel-cell[data-shift-instance-id]').forEach(cell => {
+                const instanceId = parseInt(cell.dataset.shiftInstanceId);
+                const cellData = cellsById.get(instanceId);
+                if (cellData) {
+                    updateSingleCell(cell, cellData);
+                }
+            });
+        }
+
+        // Update a single cell's content
+        function updateSingleCell(cell, cellData) {
+            // Update assignment count badge
+            const badge = cell.querySelector('.excel-cell__count');
+            if (badge) {
+                badge.textContent = `${cellData.assignedCount}/${cellData.capacity}`;
+                badge.classList.toggle('excel-cell__count--full', cellData.assignedCount >= cellData.capacity);
+            }
+
+            // Update assignment list
+            const assignmentList = cell.querySelector('.excel-cell__assignments');
+            if (assignmentList) {
+                assignmentList.innerHTML = cellData.assignments
+                    .map(a => `<span class="excel-cell__assignee" data-user-id="${a.userId}">${a.userName}</span>`)
+                    .join('');
+            }
+        }
+
+        // Handle real-time assignment change
+        function handleAssignmentChanged(evt) {
+            const cell = document.querySelector(`[data-shift-instance-id="${evt.shiftInstanceId}"]`);
+            if (cell) {
+                refreshCalendarData(); // Full refresh for now
+            }
+        }
+
+        // Handle real-time capacity change
+        function handleCapacityChanged(evt) {
+            refreshCalendarData(); // Full refresh for now
+        }
+
         // Update calendar with new filter selections
         function updateCalendarFilters() {
             const moleculeId = document.getElementById('moleculeSelect').value;

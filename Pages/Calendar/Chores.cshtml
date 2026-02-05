@@ -148,7 +148,52 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            CalendarRealtime.initialize({
+                calendarType: 'chores',
+                scope: {
+                    moleculeId: @Model.MoleculeId
+                },
+                onRefresh: refreshCalendarData,
+                handlers: {
+                    onChoreChanged: handleChoreChanged
+                }
+            });
+        });
+
+        // Refresh calendar data via AJAX
+        async function refreshCalendarData() {
+            const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
+            const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
+            const moleculeId = @Model.MoleculeId;
+
+            try {
+                const response = await fetch(
+                    `/Api/Calendar/GetChoresData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`,
+                    { credentials: 'same-origin' }
+                );
+
+                if (!response.ok) throw new Error('Failed to refresh');
+
+                const result = await response.json();
+                if (result.success) {
+                    // Full page refresh for now - cell update logic can be added later
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Shadow refresh failed:', error);
+            }
+        }
+
+        // Handle real-time chore change
+        function handleChoreChanged(evt) {
+            refreshCalendarData();
+        }
+
         // Update calendar with new filter selections
         function updateCalendarFilters() {
             const moleculeId = document.getElementById('moleculeSelect').value;
