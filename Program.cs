@@ -828,6 +828,60 @@ app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>(); // API key-based rate limiting
 app.MapControllers(); // Map API controllers
+
+// ============================================================
+// EXCEL CALENDAR REDIRECTS (when feature flags enabled)
+// Redirects old calendar URLs to new Excel-style calendars
+// Uses middleware to redirect before Razor Pages handles request
+// ============================================================
+app.Use(async (context, next) =>
+{
+    var config = context.RequestServices.GetRequiredService<IConfiguration>();
+    var excelCalendarsEnabled = config.GetValue<bool>("Features:ExcelCalendars");
+
+    if (excelCalendarsEnabled)
+    {
+        var path = context.Request.Path.Value?.ToLowerInvariant();
+        string? redirectTo = null;
+
+        // Shifts calendar redirects
+        if (config.GetValue<bool>("Features:ExcelCalendarShifts"))
+        {
+            if (path == "/calendar/month" || path == "/calendar/week" ||
+                path == "/calendar/day" || path == "/calendar/table")
+            {
+                redirectTo = "/Calendar/Shifts" + context.Request.QueryString;
+            }
+        }
+
+        // Chores calendar redirects
+        if (config.GetValue<bool>("Features:ExcelCalendarChores"))
+        {
+            if (path == "/chores/calendar" || path == "/public/chores")
+            {
+                redirectTo = "/Calendar/Chores" + context.Request.QueryString;
+            }
+        }
+
+        // On-Call calendar redirects
+        if (config.GetValue<bool>("Features:ExcelCalendarOnCall"))
+        {
+            if (path == "/public/onduty")
+            {
+                redirectTo = "/Calendar/OnCall" + context.Request.QueryString;
+            }
+        }
+
+        if (redirectTo != null)
+        {
+            context.Response.Redirect(redirectTo, permanent: false);
+            return;
+        }
+    }
+
+    await next();
+});
+
 app.MapRazorPages();
 
 // SignalR hub for real-time calendar updates
