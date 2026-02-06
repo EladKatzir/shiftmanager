@@ -26,6 +26,7 @@ public class UsersModel : LocalizedPageModel
     private readonly IAuditLogService _auditLogService;
     private readonly IMailService _mailService;
     private readonly INotificationService _notificationService;
+    private readonly IGrantService _grantService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -36,7 +37,8 @@ public class UsersModel : LocalizedPageModel
         ITraineeService traineeService,
         IAuditLogService auditLogService,
         IMailService mailService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IGrantService grantService)
         : base(localizer)
     {
         _db = db;
@@ -47,6 +49,7 @@ public class UsersModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _mailService = mailService;
         _notificationService = notificationService;
+        _grantService = grantService;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? DepartmentName, int GrantsCount);
@@ -162,10 +165,8 @@ public class UsersModel : LocalizedPageModel
             return;
         }
 
-        var role = currentUser.Role;
-
-        // Determine if user is Owner for cross-company visibility
-        IsOwner = role == UserRole.Owner;
+        // ✅ Grant-based: Determine Owner status via AdminAccess grant
+        IsOwner = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
 
         // Load all companies for Owner user management
         if (IsOwner)
@@ -176,28 +177,13 @@ public class UsersModel : LocalizedPageModel
                 .ToListAsync();
         }
 
-        // Determine accessible company IDs based on role
-        List<int> accessibleCompanyIds;
+        // ✅ Grant-based: Determine accessible company IDs via ManageJoinRequests grant scope
+        var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
 
-        if (role == UserRole.Owner)
+        // Fall back to user's own company if no grants found
+        if (!accessibleCompanyIds.Any())
         {
-            // Owner: all companies (using IgnoreQueryFilters for cross-tenant visibility)
-            accessibleCompanyIds = await _db.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
-        }
-        else if (role == UserRole.Director)
-        {
-            // Director: companies they direct
-            accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
-        }
-        else if (role == UserRole.Manager)
-        {
-            // Manager: their company only
             accessibleCompanyIds = new List<int> { currentUser.CompanyId };
-        }
-        else
-        {
-            // Employee: no access (shouldn't reach here due to authorization, but just in case)
-            accessibleCompanyIds = new List<int>();
         }
 
         // Load join requests with filters and scoping
@@ -483,11 +469,25 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Determine target company - Owner can select any company
+        // ✅ Grant-based: Determine target company using EditCompanyUsers grant scope
         int targetCompanyId;
-        var currentUserRole = Enum.Parse<UserRole>(User.FindFirst("Role")?.Value ?? "Employee");
-        if (currentUserRole == UserRole.Owner && NewUserCompanyId.HasValue)
+        var userIdClaimForCompany = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaimForCompany, out var currentUserIdForCompany))
         {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+            return RedirectToPage();
+        }
+
+        if (NewUserCompanyId.HasValue)
+        {
+            // User selected a company - verify they have EditCompanyUsers grant for it
+            var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserIdForCompany, "EditCompanyUsers", NewUserCompanyId.Value);
+            if (!hasEditGrant)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                return RedirectToPage();
+            }
+
             // Verify company exists
             var company = await _db.Companies
                 .IgnoreQueryFilters()
@@ -533,6 +533,13 @@ public class UsersModel : LocalizedPageModel
         };
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
+
+        // ✅ Onboarding: Assign role template grants
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(targetRole);
+        var grantScope = GrantScope.Company(targetCompanyId);
+        var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserIdForCompany);
+        _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to new user {UserId}",
+            grantsAssigned, roleTemplateKey, newUser.Id);
 
         // ✅ P0-4/P0-5 FIX: If creating a Director, also create DirectorCompany mapping
         if (targetRole == UserRole.Director)
@@ -958,23 +965,18 @@ public class UsersModel : LocalizedPageModel
                 return Page();
             }
 
-            var currentUser = await _db.Users.FindAsync(currentUserId);
-
-            // Owner can delete any user; others must match company
-            if (currentUser!.Role != UserRole.Owner)
+            // ✅ Grant-based: Check if user has EditCompanyUsers grant for target user's company
+            var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", user.CompanyId);
+            if (!hasEditGrant)
             {
-                var companyId = _companyContext.GetCompanyIdOrThrow();
-                if (user.CompanyId != companyId)
-                {
-                    _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} from different company",
-                        currentUserId, id);
-                    Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
-                    await OnGetAsync();
-                    return Page();
-                }
+                _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                    currentUserId, id, user.CompanyId);
+                Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
+                await OnGetAsync();
+                return Page();
             }
 
-            // Check if current user has permission to delete this user based on role hierarchy
+            // Check if current user has permission to delete this user based on role hierarchy (legacy check)
             if (!CanModifyUser(user.Role))
             {
                 _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} with higher role {TargetRole}",
@@ -1076,21 +1078,8 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Verify user has permission to approve this request
-        var hasPermission = false;
-        if (currentUser!.Role == UserRole.Owner)
-        {
-            hasPermission = true;
-        }
-        else if (currentUser.Role == UserRole.Director)
-        {
-            var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
-            hasPermission = directorCompanyIds.Contains(joinRequest.CompanyId);
-        }
-        else if (currentUser.Role == UserRole.Manager)
-        {
-            hasPermission = currentUser.CompanyId == joinRequest.CompanyId;
-        }
+        // ✅ Grant-based: Verify user has permission to approve this request
+        var hasPermission = await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
 
         if (!hasPermission)
         {
@@ -1142,6 +1131,13 @@ public class UsersModel : LocalizedPageModel
         // Link the created user to the join request
         joinRequest.CreatedUserId = newUser.Id;
         await _db.SaveChangesAsync();
+
+        // ✅ Onboarding: Assign role template grants
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole);
+        var grantScope = GrantScope.Company(joinRequest.CompanyId);
+        var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
+        _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
+            grantsAssigned, roleTemplateKey, newUser.Id);
 
         // Send account approval email notification
         _ = _mailService.SendAccountApprovedEmailAsync(
@@ -1200,21 +1196,8 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Verify user has permission to reject this request
-        var hasPermission = false;
-        if (currentUser!.Role == UserRole.Owner)
-        {
-            hasPermission = true;
-        }
-        else if (currentUser.Role == UserRole.Director)
-        {
-            var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
-            hasPermission = directorCompanyIds.Contains(joinRequest.CompanyId);
-        }
-        else if (currentUser.Role == UserRole.Manager)
-        {
-            hasPermission = currentUser.CompanyId == joinRequest.CompanyId;
-        }
+        // ✅ Grant-based: Verify user has permission to reject this request
+        var hasPermission = await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
 
         if (!hasPermission)
         {
@@ -1298,21 +1281,9 @@ public class UsersModel : LocalizedPageModel
                     currentUserId, string.Join(", ", invalidIds));
             }
 
-            // Get accessible company IDs for permission check
-            List<int> accessibleCompanyIds;
-            if (currentUser!.Role == UserRole.Owner)
-            {
-                accessibleCompanyIds = await _db.Companies.Select(c => c.Id).ToListAsync();
-            }
-            else if (currentUser.Role == UserRole.Director)
-            {
-                accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
-            }
-            else if (currentUser.Role == UserRole.Manager)
-            {
-                accessibleCompanyIds = new List<int> { currentUser.CompanyId };
-            }
-            else
+            // ✅ Grant-based: Get accessible company IDs for permission check
+            var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
+            if (!accessibleCompanyIds.Any())
             {
                 TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveRequests"];
                 return RedirectToPage();
@@ -1383,9 +1354,14 @@ public class UsersModel : LocalizedPageModel
                 // Link the created user to the join request
                 joinRequest.CreatedUserId = newUser.Id;
 
+                // ✅ Onboarding: Assign role template grants
+                var roleTemplateKey = MapUserRoleToRoleTemplateKey(assignedRole);
+                var grantScope = GrantScope.Company(joinRequest.CompanyId);
+                var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
+
                 _logger.LogInformation(
-                    "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} for company {CompanyId}",
-                    joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, joinRequest.CompanyId);
+                    "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} for company {CompanyId}. Assigned {GrantsCount} grants.",
+                    joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, joinRequest.CompanyId, grantsAssigned);
 
                 // Log to audit log
                 await _auditLogService.LogUserActionAsync(
@@ -1428,8 +1404,27 @@ public class UsersModel : LocalizedPageModel
     }
 
     /// <summary>
-    /// Check if current user has permission to modify a user with the specified role.
-    /// Uses the same role hierarchy as CanAssignRole.
+    /// Check if current user has permission to modify a user with the specified role in the target company.
+    /// ✅ Grant-based: Uses EditCompanyUsers grant with company scope instead of role hierarchy.
+    /// </summary>
+    private async Task<bool> CanModifyUserAsync(int currentUserId, int targetUserId, int targetCompanyId)
+    {
+        // Check if current user has EditCompanyUsers grant for the target user's company
+        var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", targetCompanyId);
+
+        if (!hasEditGrant)
+            return false;
+
+        // Additional check: prevent self-modification through this method
+        if (currentUserId == targetUserId)
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Legacy synchronous check - kept for backward compatibility during migration.
+    /// Prefer CanModifyUserAsync for new code.
     /// </summary>
     private bool CanModifyUser(UserRole targetUserRole)
     {
@@ -1484,26 +1479,13 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
-            var role = currentUser.Role;
+            // ✅ Grant-based: Determine accessible company IDs via ManageJoinRequests grant scope
+            var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
 
-            // Determine accessible company IDs based on role (same as OnGetAsync)
-            List<int> accessibleCompanyIds;
-
-            if (role == UserRole.Owner)
-            {
-                accessibleCompanyIds = await _db.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
-            }
-            else if (role == UserRole.Director)
-            {
-                accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
-            }
-            else if (role == UserRole.Manager)
+            // Fall back to user's own company if no grants found
+            if (!accessibleCompanyIds.Any())
             {
                 accessibleCompanyIds = new List<int> { currentUser.CompanyId };
-            }
-            else
-            {
-                accessibleCompanyIds = new List<int>();
             }
 
             // Load ALL users (without pagination) respecting filters
@@ -1578,5 +1560,23 @@ public class UsersModel : LocalizedPageModel
         }
 
         return field;
+    }
+
+    /// <summary>
+    /// Maps UserRole enum to the corresponding RoleTemplate key.
+    /// Used for grant assignment during onboarding.
+    /// </summary>
+    private static string MapUserRoleToRoleTemplateKey(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.Owner => "Owner",
+            UserRole.Director => "BRDirector",
+            UserRole.Manager => "MoleculeAdmin",
+            UserRole.Employee => "Employee",
+            UserRole.Trainee => "Employee",
+            UserRole.Assigner => "Assigner",
+            _ => "Employee"
+        };
     }
 }

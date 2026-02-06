@@ -1,0 +1,644 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data;
+using ShiftManager.Models;
+using ShiftManager.Models.Support;
+using ShiftManager.Services;
+using System.Text.Json;
+
+namespace ShiftManager.Pages.Owner.Hub;
+
+/// <summary>
+/// Grant Management UI - Unified page for managing grant types, role templates, and user grants.
+/// Supports CanGive delegation with depth limiting.
+/// </summary>
+[Authorize(Policy = "Grant:AdminAccess")]
+public class GrantsModel : PageModel
+{
+    private readonly AppDbContext _db;
+    private readonly IGrantService _grantService;
+    private readonly ILogger<GrantsModel> _logger;
+
+    public GrantsModel(AppDbContext db, IGrantService grantService, ILogger<GrantsModel> logger)
+    {
+        _db = db;
+        _grantService = grantService;
+        _logger = logger;
+    }
+
+    // Stats
+    public int TotalGrantTypes { get; set; }
+    public int TotalRoleTemplates { get; set; }
+    public int TotalGrants { get; set; }
+    public int UsersWithGrants { get; set; }
+
+    // Grant Types by Category
+    public Dictionary<GrantCategory, List<GrantTypeViewModel>> GrantTypesByCategory { get; set; } = new();
+
+    // Role Templates
+    public List<RoleTemplateViewModel> RoleTemplates { get; set; } = new();
+
+    // All Grant Types (for role template editor)
+    public List<GrantTypeViewModel> AllGrantTypes { get; set; } = new();
+
+    // Hierarchy data for scope selection
+    public List<ProjectViewModel> Projects { get; set; } = new();
+
+    public async Task OnGetAsync()
+    {
+        try
+        {
+            // Load stats
+            TotalGrantTypes = await _db.GrantTypes.CountAsync(gt => gt.IsActive);
+            TotalRoleTemplates = await _db.RoleTemplates.CountAsync(rt => rt.IsActive);
+            TotalGrants = await _db.Grants.IgnoreQueryFilters().CountAsync();
+            UsersWithGrants = await _db.Grants.IgnoreQueryFilters().Select(g => g.UserId).Distinct().CountAsync();
+
+            // Load grant types by category
+            var grantTypes = await _db.GrantTypes
+                .Where(gt => gt.IsActive)
+                .OrderBy(gt => gt.Category)
+                .ThenBy(gt => gt.Key)
+                .Select(gt => new GrantTypeViewModel
+                {
+                    Id = gt.Id,
+                    Key = gt.Key,
+                    NameKey = gt.NameKey,
+                    DescriptionKey = gt.DescriptionKey,
+                    Category = gt.Category,
+                    DefaultScope = gt.DefaultScope,
+                    IsSystem = gt.IsSystem,
+                    UsageCount = gt.Grants.Count
+                })
+                .ToListAsync();
+
+            // Group by category
+            GrantTypesByCategory = grantTypes
+                .GroupBy(gt => gt.Category)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            AllGrantTypes = grantTypes;
+
+            // Load role templates with their grants
+            RoleTemplates = await _db.RoleTemplates
+                .Where(rt => rt.IsActive)
+                .OrderBy(rt => rt.SortOrder)
+                .Select(rt => new RoleTemplateViewModel
+                {
+                    Id = rt.Id,
+                    Key = rt.Key,
+                    NameKey = rt.NameKey,
+                    DescriptionKey = rt.DescriptionKey,
+                    ScopeLevel = rt.ScopeLevel,
+                    IsSystem = rt.IsSystem,
+                    GrantCount = rt.AutoGrants.Count,
+                    Grants = rt.AutoGrants.Select(ag => new RoleTemplateGrantViewModel
+                    {
+                        Id = ag.Id,
+                        GrantTypeId = ag.GrantTypeId,
+                        GrantTypeKey = ag.GrantType.Key,
+                        GrantTypeNameKey = ag.GrantType.NameKey,
+                        CanOwn = ag.CanOwn,
+                        CanGive = ag.CanGive,
+                        ScopeMode = ag.ScopeMode
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            // Load hierarchy for scope selection (projects -> areas -> molecules -> companies)
+            Projects = await _db.Projects
+                .IgnoreQueryFilters()
+                .OrderBy(p => p.Name)
+                .Select(p => new ProjectViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Areas = p.Areas.OrderBy(a => a.Name).Select(a => new AreaViewModel
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Molecules = a.Molecules.OrderBy(m => m.Name).Select(m => new MoleculeViewModel
+                        {
+                            Id = m.Id,
+                            Name = m.Name,
+                            Companies = m.Companies.OrderBy(c => c.Name).Select(c => new CompanyViewModel
+                            {
+                                Id = c.Id,
+                                Name = c.Name
+                            }).ToList()
+                        }).ToList()
+                    }).ToList()
+                })
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading grant management data");
+        }
+    }
+
+    // === AJAX Handlers ===
+
+    /// <summary>
+    /// Search users for grant assignment
+    /// </summary>
+    public async Task<IActionResult> OnGetSearchUsersAsync(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        {
+            return new JsonResult(new List<object>());
+        }
+
+        var users = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.IsActive &&
+                (u.DisplayName.Contains(query) || u.Email.Contains(query)))
+            .OrderBy(u => u.DisplayName)
+            .Take(20)
+            .Select(u => new
+            {
+                u.Id,
+                u.DisplayName,
+                u.Email,
+                u.CompanyId
+            })
+            .ToListAsync();
+
+        // Get company names for the users
+        var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        var companies = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => companyIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+        var result = users.Select(u => new
+        {
+            u.Id,
+            u.DisplayName,
+            u.Email,
+            CompanyName = companies.GetValueOrDefault(u.CompanyId)
+        }).ToList();
+
+        return new JsonResult(result);
+    }
+
+    /// <summary>
+    /// Get user's current grants
+    /// </summary>
+    public async Task<IActionResult> OnGetUserGrantsAsync(int userId)
+    {
+        var grants = await _db.Grants
+            .IgnoreQueryFilters()
+            .Include(g => g.GrantType)
+            .Include(g => g.GrantedByUser)
+            .Include(g => g.Project)
+            .Include(g => g.Area)
+            .Include(g => g.Molecule)
+            .Include(g => g.Company)
+            .Include(g => g.Department)
+            .Where(g => g.UserId == userId)
+            .OrderBy(g => g.GrantType.Category)
+            .ThenBy(g => g.GrantType.Key)
+            .Select(g => new
+            {
+                g.Id,
+                g.GrantTypeId,
+                GrantTypeKey = g.GrantType.Key,
+                GrantTypeNameKey = g.GrantType.NameKey,
+                Category = g.GrantType.Category.ToString(),
+                g.CanOwn,
+                g.CanGive,
+                g.IsAutoGrant,
+                g.GrantedAt,
+                GrantedByName = g.GrantedByUser != null ? g.GrantedByUser.DisplayName : null,
+                g.Notes,
+                Scope = new
+                {
+                    ProjectId = g.ProjectId,
+                    ProjectName = g.Project != null ? g.Project.Name : null,
+                    AreaId = g.AreaId,
+                    AreaName = g.Area != null ? g.Area.Name : null,
+                    MoleculeId = g.MoleculeId,
+                    MoleculeName = g.Molecule != null ? g.Molecule.Name : null,
+                    CompanyId = g.CompanyId,
+                    CompanyName = g.Company != null ? g.Company.Name : null,
+                    DepartmentId = g.DepartmentId,
+                    DepartmentName = g.Department != null ? g.Department.Name : null
+                }
+            })
+            .ToListAsync();
+
+        return new JsonResult(grants);
+    }
+
+    /// <summary>
+    /// Assign a grant to a user
+    /// </summary>
+    public async Task<IActionResult> OnPostAssignGrantAsync([FromBody] AssignGrantRequest request)
+    {
+        try
+        {
+            // Get current user ID
+            var currentUserIdClaim = User.FindFirst("UserId")?.Value;
+            int? grantedByUserId = null;
+            if (currentUserIdClaim != null && int.TryParse(currentUserIdClaim, out var parsedUserId))
+            {
+                grantedByUserId = parsedUserId;
+            }
+
+            // Create scope
+            var scope = new GrantScope(
+                ProjectId: request.ProjectId,
+                AreaId: request.AreaId,
+                MoleculeId: request.MoleculeId,
+                DepartmentId: request.DepartmentId,
+                CompanyId: request.CompanyId
+            );
+
+            // Check if user can grant (has CanGive for this grant type)
+            if (grantedByUserId.HasValue)
+            {
+                var canGrant = await _grantService.CanUserGrantAsync(grantedByUserId.Value, request.GrantTypeId, scope);
+                // For now, allow Owner-level users to bypass this check
+                var hasAdminAccess = await _grantService.HasGrantAsync(grantedByUserId.Value, "AdminAccess");
+                if (!canGrant && !hasAdminAccess)
+                {
+                    return new JsonResult(new { success = false, error = "You don't have permission to grant this type at this scope" });
+                }
+            }
+
+            // Create the grant
+            var grant = await _grantService.GrantAsync(
+                request.UserId,
+                request.GrantTypeId,
+                scope,
+                grantedByUserId,
+                request.Notes);
+
+            if (grant == null)
+            {
+                return new JsonResult(new { success = false, error = "Failed to create grant" });
+            }
+
+            // Update CanGive if specified
+            if (request.CanGive)
+            {
+                grant.CanGive = true;
+                await _db.SaveChangesAsync();
+            }
+
+            _logger.LogInformation("Grant assigned: UserId={UserId}, GrantTypeId={GrantTypeId}, GrantedBy={GrantedBy}",
+                request.UserId, request.GrantTypeId, grantedByUserId);
+
+            return new JsonResult(new { success = true, grantId = grant.Id });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return new JsonResult(new { success = false, error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning grant");
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Revoke a grant from a user
+    /// </summary>
+    public async Task<IActionResult> OnPostRevokeGrantAsync([FromBody] RevokeGrantRequest request)
+    {
+        try
+        {
+            var grant = await _db.Grants.FindAsync(request.GrantId);
+            if (grant == null)
+            {
+                return new JsonResult(new { success = false, error = "Grant not found" });
+            }
+
+            var result = await _grantService.RevokeAsync(request.GrantId);
+
+            if (!result)
+            {
+                return new JsonResult(new { success = false, error = "Failed to revoke grant" });
+            }
+
+            _logger.LogInformation("Grant revoked: GrantId={GrantId}, UserId={UserId}", request.GrantId, grant.UserId);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error revoking grant");
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Update CanGive on an existing grant
+    /// </summary>
+    public async Task<IActionResult> OnPostUpdateGrantDelegationAsync([FromBody] UpdateDelegationRequest request)
+    {
+        try
+        {
+            var grant = await _db.Grants.FindAsync(request.GrantId);
+            if (grant == null)
+            {
+                return new JsonResult(new { success = false, error = "Grant not found" });
+            }
+
+            grant.CanGive = request.CanGive;
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Grant delegation updated: GrantId={GrantId}, CanGive={CanGive}", request.GrantId, request.CanGive);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating grant delegation");
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Get role template details with grants
+    /// </summary>
+    public async Task<IActionResult> OnGetRoleTemplateAsync(int templateId)
+    {
+        var template = await _db.RoleTemplates
+            .Include(rt => rt.AutoGrants)
+            .ThenInclude(ag => ag.GrantType)
+            .FirstOrDefaultAsync(rt => rt.Id == templateId);
+
+        if (template == null)
+        {
+            return new JsonResult(new { success = false, error = "Template not found" });
+        }
+
+        var result = new
+        {
+            template.Id,
+            template.Key,
+            template.NameKey,
+            template.DescriptionKey,
+            ScopeLevel = template.ScopeLevel.ToString(),
+            template.IsSystem,
+            Grants = template.AutoGrants.Select(ag => new
+            {
+                ag.Id,
+                ag.GrantTypeId,
+                ag.GrantType.Key,
+                ag.GrantType.NameKey,
+                Category = ag.GrantType.Category.ToString(),
+                ag.CanOwn,
+                ag.CanGive,
+                ScopeMode = ag.ScopeMode.ToString()
+            }).ToList()
+        };
+
+        return new JsonResult(result);
+    }
+
+    /// <summary>
+    /// Add a grant to a role template
+    /// </summary>
+    public async Task<IActionResult> OnPostAddRoleTemplateGrantAsync([FromBody] AddRoleTemplateGrantRequest request)
+    {
+        try
+        {
+            // Check if already exists
+            var exists = await _db.RoleTemplateGrants
+                .AnyAsync(rtg => rtg.RoleTemplateId == request.RoleTemplateId && rtg.GrantTypeId == request.GrantTypeId);
+
+            if (exists)
+            {
+                return new JsonResult(new { success = false, error = "Grant already exists on this role template" });
+            }
+
+            var grant = new RoleTemplateGrant
+            {
+                RoleTemplateId = request.RoleTemplateId,
+                GrantTypeId = request.GrantTypeId,
+                CanOwn = request.CanOwn,
+                CanGive = request.CanGive,
+                ScopeMode = request.ScopeMode,
+                IsOverride = true // Manual addition
+            };
+
+            _db.RoleTemplateGrants.Add(grant);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Role template grant added: TemplateId={TemplateId}, GrantTypeId={GrantTypeId}",
+                request.RoleTemplateId, request.GrantTypeId);
+
+            return new JsonResult(new { success = true, grantId = grant.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding role template grant");
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Update a role template grant
+    /// </summary>
+    public async Task<IActionResult> OnPostUpdateRoleTemplateGrantAsync([FromBody] UpdateRoleTemplateGrantRequest request)
+    {
+        try
+        {
+            var grant = await _db.RoleTemplateGrants.FindAsync(request.GrantId);
+            if (grant == null)
+            {
+                return new JsonResult(new { success = false, error = "Grant not found" });
+            }
+
+            grant.CanOwn = request.CanOwn;
+            grant.CanGive = request.CanGive;
+            grant.ScopeMode = request.ScopeMode;
+            grant.IsOverride = true;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Role template grant updated: GrantId={GrantId}", request.GrantId);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating role template grant");
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Remove a grant from a role template
+    /// </summary>
+    public async Task<IActionResult> OnPostRemoveRoleTemplateGrantAsync([FromBody] RemoveRoleTemplateGrantRequest request)
+    {
+        try
+        {
+            var grant = await _db.RoleTemplateGrants.FindAsync(request.GrantId);
+            if (grant == null)
+            {
+                return new JsonResult(new { success = false, error = "Grant not found" });
+            }
+
+            _db.RoleTemplateGrants.Remove(grant);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Role template grant removed: GrantId={GrantId}", request.GrantId);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing role template grant");
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Get which role templates include a specific grant type
+    /// </summary>
+    public async Task<IActionResult> OnGetGrantTypeUsageAsync(int grantTypeId)
+    {
+        var roleTemplates = await _db.RoleTemplateGrants
+            .Include(rtg => rtg.RoleTemplate)
+            .Where(rtg => rtg.GrantTypeId == grantTypeId)
+            .Select(rtg => new
+            {
+                rtg.RoleTemplate.Id,
+                rtg.RoleTemplate.Key,
+                rtg.RoleTemplate.NameKey,
+                rtg.CanOwn,
+                rtg.CanGive,
+                ScopeMode = rtg.ScopeMode.ToString()
+            })
+            .ToListAsync();
+
+        var userCount = await _db.Grants
+            .IgnoreQueryFilters()
+            .Where(g => g.GrantTypeId == grantTypeId)
+            .Select(g => g.UserId)
+            .Distinct()
+            .CountAsync();
+
+        return new JsonResult(new { roleTemplates, userCount });
+    }
+
+    // === View Models ===
+
+    public class GrantTypeViewModel
+    {
+        public int Id { get; set; }
+        public string Key { get; set; } = string.Empty;
+        public string NameKey { get; set; } = string.Empty;
+        public string DescriptionKey { get; set; } = string.Empty;
+        public GrantCategory Category { get; set; }
+        public GrantScopeLevel DefaultScope { get; set; }
+        public bool IsSystem { get; set; }
+        public int UsageCount { get; set; }
+    }
+
+    public class RoleTemplateViewModel
+    {
+        public int Id { get; set; }
+        public string Key { get; set; } = string.Empty;
+        public string NameKey { get; set; } = string.Empty;
+        public string DescriptionKey { get; set; } = string.Empty;
+        public RoleScopeLevel ScopeLevel { get; set; }
+        public bool IsSystem { get; set; }
+        public int GrantCount { get; set; }
+        public List<RoleTemplateGrantViewModel> Grants { get; set; } = new();
+    }
+
+    public class RoleTemplateGrantViewModel
+    {
+        public int Id { get; set; }
+        public int GrantTypeId { get; set; }
+        public string GrantTypeKey { get; set; } = string.Empty;
+        public string GrantTypeNameKey { get; set; } = string.Empty;
+        public bool CanOwn { get; set; }
+        public bool CanGive { get; set; }
+        public GrantScopeMode ScopeMode { get; set; }
+    }
+
+    public class ProjectViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public List<AreaViewModel> Areas { get; set; } = new();
+    }
+
+    public class AreaViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public List<MoleculeViewModel> Molecules { get; set; } = new();
+    }
+
+    public class MoleculeViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public List<CompanyViewModel> Companies { get; set; } = new();
+    }
+
+    public class CompanyViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    // === Request Models ===
+
+    public class AssignGrantRequest
+    {
+        public int UserId { get; set; }
+        public int GrantTypeId { get; set; }
+        public int? ProjectId { get; set; }
+        public int? AreaId { get; set; }
+        public int? MoleculeId { get; set; }
+        public int? DepartmentId { get; set; }
+        public int? CompanyId { get; set; }
+        public bool CanGive { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public class RevokeGrantRequest
+    {
+        public int GrantId { get; set; }
+    }
+
+    public class UpdateDelegationRequest
+    {
+        public int GrantId { get; set; }
+        public bool CanGive { get; set; }
+    }
+
+    public class AddRoleTemplateGrantRequest
+    {
+        public int RoleTemplateId { get; set; }
+        public int GrantTypeId { get; set; }
+        public bool CanOwn { get; set; }
+        public bool CanGive { get; set; }
+        public GrantScopeMode ScopeMode { get; set; }
+    }
+
+    public class UpdateRoleTemplateGrantRequest
+    {
+        public int GrantId { get; set; }
+        public bool CanOwn { get; set; }
+        public bool CanGive { get; set; }
+        public GrantScopeMode ScopeMode { get; set; }
+    }
+
+    public class RemoveRoleTemplateGrantRequest
+    {
+        public int GrantId { get; set; }
+    }
+}

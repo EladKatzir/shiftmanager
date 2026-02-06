@@ -11,11 +11,7 @@
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
     var role = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
-    // Note: Roles are still used for backward compatibility in the layout
-    // but actual authorization is enforced via grant-based policies on pages
-    var isAdmin = User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director");
-    var isDirector = User.IsInRole("Owner") || User.IsInRole("Director");
-    var isOwner = User.IsInRole("Owner");
+    // ✅ All authorization now uses grant-based <require-grant> tag helpers
     var firstName = name.Split(' ').FirstOrDefault() ?? name;
     var currentCulture = CultureInfo.CurrentUICulture.Name;
     var isHebrew = currentCulture.StartsWith("he");
@@ -352,35 +348,34 @@
 
             @* Navigation *@
             <nav class="app-sidebar-nav">
-                @if (isAdmin)
-                {
-                    @* ✅ PHASE 20: My Calendar Section *@
+                <require-grant key="AccessAdminNavigation">
+                    @* ✅ PHASE 20: My Calendar Section (Admin Navigation) *@
                     <div class="nav-section-header"><loc key="Calendar_MyCalendar" /></div>
 
-                    @if (isOwner)
-                    {
-                        @* Owner uses old home page *@
+                    @* Home link varies by grant level *@
+                    <require-grant key="AdminAccess">
+                        @* Owner (AdminAccess) uses old home page *@
                         <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Home") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">🏠</span>
                             <span><loc key="Home" /></span>
                         </a>
-                    }
-                    else if (User.IsInRole("Director"))
-                    {
-                        @* Directors use Director Hub as home *@
-                        <a href="/Director/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director") || currentPath == "/" ? "active" : "")">
-                            <span class="app-sidebar-nav-icon">👔</span>
-                            <span>Director Hub</span>
-                        </a>
-                    }
-                    else
-                    {
-                        @* Managers use new redesigned home *@
-                        <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
-                            <span class="app-sidebar-nav-icon">🏠</span>
-                            <span><loc key="Home" /></span>
-                        </a>
-                    }
+                    </require-grant>
+                    <require-grant key="AdminAccess" negate="true">
+                        <require-grant key="DirectorHubAccess">
+                            @* Directors use Director Hub as home *@
+                            <a href="/Director/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director") || currentPath == "/" ? "active" : "")">
+                                <span class="app-sidebar-nav-icon">👔</span>
+                                <span>Director Hub</span>
+                            </a>
+                        </require-grant>
+                        <require-grant key="DirectorHubAccess" negate="true">
+                            @* Managers use new redesigned home *@
+                            <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
+                                <span class="app-sidebar-nav-icon">🏠</span>
+                                <span><loc key="Home" /></span>
+                            </a>
+                        </require-grant>
+                    </require-grant>
                     <a href="/Calendar/Month" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📅</span>
                         <span><loc key="Schedule" /></span>
@@ -402,23 +397,21 @@
                     </a>
                     </require-grant>
 
-                    @* Phase 8.2.2: Show different People links based on role *@
-                    @if (User.IsInRole("Manager"))
-                    {
-                        @* Managers see "My Team" (their own team) *@
-                        <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
-                            <span class="app-sidebar-nav-icon">👥</span>
-                            <span><loc key="MyTeam" /></span>
-                        </a>
-                    }
-                    else
-                    {
-                        @* Owners and Directors see "People" (all users) *@
+                    @* Phase 8.2.2: Show different People links based on grants *@
+                    <require-grant key="ViewAllUsers">
+                        @* Users with ViewAllUsers grant see "People" (all users) *@
                         <a href="/Admin/Users" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Users") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">👥</span>
                             <span><loc key="People" /></span>
                         </a>
-                    }
+                    </require-grant>
+                    <require-grant key="ViewAllUsers" negate="true">
+                        @* Users without ViewAllUsers grant see "My Team" *@
+                        <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon">👥</span>
+                            <span><loc key="MyTeam" /></span>
+                        </a>
+                    </require-grant>
 
                     <require-grant key="EditCompany">
                     <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
@@ -445,7 +438,7 @@
                     @* Owner Administration Panel - Grant protected *@
                     <require-grant key="AdminAccess">
                     <div class="nav-section-header">🔧 <loc key="Owner_AdminPanel" /></div>
-                    <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
+                    <a href="/Owner/Hub" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🔧</span>
                         <span><loc key="Owner_AdminPanel" /></span>
                     </a>
@@ -474,9 +467,8 @@
                         <span><loc key="Calendar_OnDutyManagement" /></span>
                     </a>
                     </require-grant>
-                }
-                else
-                {
+                </require-grant>
+                <require-grant key="AccessAdminNavigation" negate="true">
                     @* Employee/Trainee Navigation *@
                     <a href="/" class="app-sidebar-nav-item @(currentPath == "/" || currentPath.StartsWith("/Index") || currentPath.StartsWith("/My/Index") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">🏠</span>
@@ -514,7 +506,7 @@
                         <span class="app-sidebar-nav-icon">⚙️</span>
                         <span><loc key="My_Settings" /></span>
                     </a>
-                }
+                </require-grant>
             </nav>
 
             @* On-Call Widget moved to Bottom Dock (Sprint 6) *@
@@ -639,18 +631,20 @@
                 </div>
             }
 
-            @* Employee Welcome (Optional - can be moved to Home page) *@
-            @if (!isAdmin && currentPath.StartsWith("/Home"))
-            {
-                <div class="employee-welcome" style="background: var(--surface-soft); padding: 2rem 1.5rem; border-bottom: 1px solid var(--border);">
-                    <div class="welcome-content">
-                        <h2 class="text-display" style="margin: 0 0 0.5rem 0;">
-                            @Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]
-                        </h2>
-                        <p class="text-subtle" style="margin: 0;"><loc key="ScheduleSubtitle" /></p>
+            @* Employee Welcome (Optional - for non-admin users on Home page) *@
+            <require-grant key="AccessAdminNavigation" negate="true">
+                @if (currentPath.StartsWith("/Home"))
+                {
+                    <div class="employee-welcome" style="background: var(--surface-soft); padding: 2rem 1.5rem; border-bottom: 1px solid var(--border);">
+                        <div class="welcome-content">
+                            <h2 class="text-display" style="margin: 0 0 0.5rem 0;">
+                                @Localizer[DateTime.Now.Hour < 12 ? "GoodMorning" : DateTime.Now.Hour < 18 ? "GoodAfternoon" : "GoodEvening", firstName]
+                            </h2>
+                            <p class="text-subtle" style="margin: 0;"><loc key="ScheduleSubtitle" /></p>
+                        </div>
                     </div>
-                </div>
-            }
+                }
+            </require-grant>
 
             @* Main Content *@
             <main class="app-content" id="main-content" tabindex="-1">

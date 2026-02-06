@@ -1,0 +1,121 @@
+@model ShiftManager.ViewComponents.HierarchyNodeViewModel
+@using ShiftManager.Models.Support
+@using ShiftManager.ViewComponents
+
+@{
+    var molecule = Model.Molecule!;
+    var hasChildren = molecule.Companies.Any() || molecule.Departments.Any();
+    var moleculeTypeClass = molecule.Type switch
+    {
+        MoleculeType.Workforce => "htree-node__type--workforce",
+        MoleculeType.Tech => "htree-node__type--tech",
+        MoleculeType.Helper => "htree-node__type--helper",
+        _ => ""
+    };
+    var moleculeTypeLabel = molecule.Type switch
+    {
+        MoleculeType.Workforce => "Workforce",
+        MoleculeType.Tech => "Tech",
+        MoleculeType.Helper => "Helper",
+        _ => molecule.Type.ToString()
+    };
+}
+
+<div class="htree-node htree-node--molecule @(Model.ExpandedByDefault && hasChildren ? "htree-node--expanded" : "htree-node--collapsed")"
+     data-entity-type="molecule"
+     data-entity-id="@molecule.Id"
+     data-molecule-type="@molecule.Type.ToString().ToLower()"
+     role="treeitem"
+     aria-expanded="@(Model.ExpandedByDefault && hasChildren ? "true" : "false")">
+    <div class="htree-node__content">
+        @if (Model.CanReorder)
+        {
+            <span class="htree-node__drag-handle" title="Drag to reorder"></span>
+        }
+        @if (hasChildren)
+        {
+            <button type="button" class="htree-node__toggle" aria-label="Toggle">
+                <span class="htree-node__toggle-icon">&#9654;</span>
+            </button>
+        }
+        else
+        {
+            <span class="htree-node__toggle-spacer"></span>
+        }
+        <span class="htree-node__badge htree-node__badge--molecule">M</span>
+        <span class="htree-node__label">@molecule.Name</span>
+        <span class="htree-node__type @moleculeTypeClass">@moleculeTypeLabel</span>
+        @if (molecule.Companies.Count > 0)
+        {
+            <span class="htree-node__count">@molecule.Companies.Count companies</span>
+        }
+        @if (molecule.Departments.Count > 0)
+        {
+            <span class="htree-node__count">@molecule.Departments.Count departments</span>
+        }
+        @if (!molecule.IsActive)
+        {
+            <span class="htree-node__status htree-node__status--inactive">Inactive</span>
+        }
+        @if (Model.CanEdit || Model.CanDelete || Model.CanAddChild)
+        {
+            <button type="button" class="htree-node__menu" title="Actions">&#8942;</button>
+        }
+    </div>
+
+    @if (hasChildren)
+    {
+        <div class="htree-children" data-sortable="@Model.CanReorder.ToString().ToLower()" data-level="company-department" role="group">
+            @foreach (var company in molecule.Companies)
+            {
+                <div class="htree-node htree-node--company"
+                     data-entity-type="company"
+                     data-entity-id="@company.Id"
+                     role="treeitem">
+                    <div class="htree-node__content">
+                        @if (Model.CanReorder)
+                        {
+                            <span class="htree-node__drag-handle" title="Drag to reorder"></span>
+                        }
+                        <span class="htree-node__toggle-spacer"></span>
+                        <span class="htree-node__badge htree-node__badge--company">C</span>
+                        <span class="htree-node__label">@company.Name</span>
+                        @if (!string.IsNullOrEmpty(company.Slug))
+                        {
+                            <span class="htree-node__count">/@company.Slug</span>
+                        }
+                        @if (Model.CanEdit || Model.CanDelete)
+                        {
+                            <button type="button" class="htree-node__menu" title="Actions">&#8942;</button>
+                        }
+                    </div>
+                </div>
+            }
+            @foreach (var department in molecule.Departments)
+            {
+                <div class="htree-node htree-node--department"
+                     data-entity-type="department"
+                     data-entity-id="@department.Id"
+                     role="treeitem">
+                    <div class="htree-node__content">
+                        @if (Model.CanReorder)
+                        {
+                            <span class="htree-node__drag-handle" title="Drag to reorder"></span>
+                        }
+                        <span class="htree-node__toggle-spacer"></span>
+                        <span class="htree-node__badge htree-node__badge--department">D</span>
+                        <span class="htree-node__label">@department.Name</span>
+                        @if (!department.IsActive)
+                        {
+                            <span class="htree-node__status htree-node__status--inactive">Inactive</span>
+                        }
+                        @if (Model.CanEdit || Model.CanDelete)
+                        {
+                            <button type="button" class="htree-node__menu" title="Actions">&#8942;</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

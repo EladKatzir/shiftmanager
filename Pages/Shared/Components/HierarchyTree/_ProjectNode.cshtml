@@ -1,0 +1,59 @@
+@model ShiftManager.ViewComponents.HierarchyNodeViewModel
+@using ShiftManager.Models.Support
+@using ShiftManager.ViewComponents
+
+@{
+    var project = Model.Project!;
+}
+
+<div class="htree-node htree-node--project @(Model.ExpandedByDefault ? "htree-node--expanded" : "htree-node--collapsed")"
+     data-entity-type="project"
+     data-entity-id="@project.Id"
+     role="treeitem"
+     aria-expanded="@(Model.ExpandedByDefault ? "true" : "false")">
+    <div class="htree-node__content">
+        @if (Model.CanReorder)
+        {
+            <span class="htree-node__drag-handle" title="Drag to reorder"></span>
+        }
+        @if (project.Areas.Any())
+        {
+            <button type="button" class="htree-node__toggle" aria-label="Toggle">
+                <span class="htree-node__toggle-icon">&#9654;</span>
+            </button>
+        }
+        else
+        {
+            <span class="htree-node__toggle-spacer"></span>
+        }
+        <span class="htree-node__badge htree-node__badge--project">P</span>
+        <span class="htree-node__label">@project.Name</span>
+        <span class="htree-node__count">@project.Areas.Count areas</span>
+        @if (!project.IsActive)
+        {
+            <span class="htree-node__status htree-node__status--inactive">Inactive</span>
+        }
+        @if (Model.CanEdit || Model.CanDelete || Model.CanAddChild)
+        {
+            <button type="button" class="htree-node__menu" title="Actions">&#8942;</button>
+        }
+    </div>
+
+    @if (project.Areas.Any())
+    {
+        <div class="htree-children" data-sortable="@Model.CanReorder.ToString().ToLower()" data-level="area" role="group">
+            @foreach (var area in project.Areas)
+            {
+                @await Html.PartialAsync("Components/HierarchyTree/_AreaNode", new HierarchyNodeViewModel
+                {
+                    Area = area,
+                    CanEdit = Model.CanEdit,
+                    CanReorder = Model.CanReorder,
+                    CanDelete = Model.CanDelete,
+                    CanAddChild = Model.CanAddChild,
+                    ExpandedByDefault = Model.ExpandedByDefault
+                })
+            }
+        </div>
+    }
+</div>

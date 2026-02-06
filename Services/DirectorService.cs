@@ -9,11 +9,19 @@ public class DirectorService : IDirectorService
 {
     private readonly AppDbContext _db;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IGrantService _grantService;
 
-    public DirectorService(AppDbContext db, IHttpContextAccessor httpContextAccessor)
+    // Grant keys used by this service
+    private const string DirectorHubAccessGrant = "DirectorHubAccess";
+    private const string ManagerHomeAccessGrant = "ManagerHomeAccess";
+    private const string AssignRolesGrant = "AssignRoles";
+    private const string AdminAccessGrant = "AdminAccess";
+
+    public DirectorService(AppDbContext db, IHttpContextAccessor httpContextAccessor, IGrantService grantService)
     {
         _db = db;
         _httpContextAccessor = httpContextAccessor;
+        _grantService = grantService;
     }
 
     private ClaimsPrincipal? CurrentUser => _httpContextAccessor.HttpContext?.User;
@@ -34,23 +42,23 @@ public class DirectorService : IDirectorService
 
     public bool IsDirector()
     {
-        return (CurrentUser?.IsInRole(nameof(UserRole.Owner)) ?? false)
-            || (CurrentUser?.IsInRole(nameof(UserRole.Director)) ?? false);
+        if (CurrentUserId == null)
+            return false;
+
+        // Check if user has DirectorHubAccess grant
+        // Note: We use GetAwaiter().GetResult() here because the interface is sync
+        // TODO: Consider making interface async in future refactor
+        return _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)
+            .GetAwaiter().GetResult();
     }
 
     public async Task<bool> IsDirectorOfAsync(int companyId)
     {
-        if (!IsDirector() || CurrentUserId == null)
+        if (CurrentUserId == null)
             return false;
 
-        // Owner has access to all companies
-        if (CurrentUser?.IsInRole(nameof(UserRole.Owner)) ?? false)
-            return true;
-
-        return await _db.DirectorCompanies
-            .AnyAsync(dc => dc.UserId == CurrentUserId.Value
-                         && dc.CompanyId == companyId
-                         && !dc.IsDeleted);
+        // Check if user has DirectorHubAccess grant for the specified company
+        return await _grantService.HasGrantForCompanyAsync(CurrentUserId.Value, DirectorHubAccessGrant, companyId);
     }
 
     public async Task<List<int>> GetDirectorCompanyIdsAsync()
@@ -63,10 +71,8 @@ public class DirectorService : IDirectorService
 
     public async Task<List<int>> GetDirectorCompanyIdsAsync(int userId)
     {
-        return await _db.DirectorCompanies
-            .Where(dc => dc.UserId == userId && !dc.IsDeleted)
-            .Select(dc => dc.CompanyId)
-            .ToListAsync();
+        // Use grant scope resolution to get accessible company IDs
+        return await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, DirectorHubAccessGrant);
     }
 
     public async Task<bool> CanManageCompanyAsync(int companyId)
@@ -74,24 +80,13 @@ public class DirectorService : IDirectorService
         if (CurrentUserId == null)
             return false;
 
-        // Owner can manage any company
-        if (CurrentUser?.IsInRole(nameof(UserRole.Owner)) ?? false)
+        // Check if user has DirectorHubAccess grant for this company (Directors)
+        if (await _grantService.HasGrantForCompanyAsync(CurrentUserId.Value, DirectorHubAccessGrant, companyId))
             return true;
 
-        // Check if user is Director of this company
-        if (IsDirector())
-        {
-            var isDirectorOf = await IsDirectorOfAsync(companyId);
-            if (isDirectorOf)
-                return true;
-        }
-
-        // Check if user is Manager of this company
-        if (CurrentUser?.IsInRole(nameof(UserRole.Manager)) ?? false)
-        {
-            var user = await _db.Users.FindAsync(CurrentUserId.Value);
-            return user?.CompanyId == companyId;
-        }
+        // Check if user has ManagerHomeAccess grant for this company (Managers)
+        if (await _grantService.HasGrantForCompanyAsync(CurrentUserId.Value, ManagerHomeAccessGrant, companyId))
+            return true;
 
         return false;
     }
@@ -114,30 +109,55 @@ public class DirectorService : IDirectorService
 
     public bool CanAssignRole(UserRole targetRole)
     {
-        if (CurrentUser == null)
+        if (CurrentUserId == null)
             return false;
 
-        // Owner can assign any role
-        if (CurrentUser.IsInRole(nameof(UserRole.Owner)))
-            return true;
+        // Check if user has AssignRoles grant
+        var hasAssignRolesGrant = _grantService.HasGrantAsync(CurrentUserId.Value, AssignRolesGrant)
+            .GetAwaiter().GetResult();
 
-        // Director can assign Employee, Manager, Director, Trainee (but NOT Owner)
-        if (CurrentUser.IsInRole(nameof(UserRole.Director)))
+        if (!hasAssignRolesGrant)
+            return false;
+
+        // Get the user's grants to determine their scope/level
+        // Users can only assign roles at or below their permission level
+
+        // Check if user has AdminAccess (project-level, full admin permissions)
+        // AdminAccess at project scope = Owner-level, can assign any role
+        var hasAdminAccess = _grantService.HasGrantAsync(CurrentUserId.Value, AdminAccessGrant)
+            .GetAwaiter().GetResult();
+
+        if (hasAdminAccess)
         {
+            // Admin can assign any role including Owner
+            return true;
+        }
+
+        // Check if user has DirectorHubAccess (director-level permissions)
+        var hasDirectorAccess = _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)
+            .GetAwaiter().GetResult();
+
+        if (hasDirectorAccess)
+        {
+            // Directors can assign Employee, Manager, Director, Trainee (but NOT Owner)
             return targetRole == UserRole.Employee
                 || targetRole == UserRole.Manager
                 || targetRole == UserRole.Director
                 || targetRole == UserRole.Trainee;
         }
 
-        // Manager can assign Employee and Trainee
-        if (CurrentUser.IsInRole(nameof(UserRole.Manager)))
+        // Check if user has ManagerHomeAccess (manager-level permissions)
+        var hasManagerAccess = _grantService.HasGrantAsync(CurrentUserId.Value, ManagerHomeAccessGrant)
+            .GetAwaiter().GetResult();
+
+        if (hasManagerAccess)
         {
+            // Managers can assign Employee and Trainee only
             return targetRole == UserRole.Employee
                 || targetRole == UserRole.Trainee;
         }
 
-        // Employee cannot assign any role
+        // User has AssignRoles but no elevated access - cannot assign any roles
         return false;
     }
 }

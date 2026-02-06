@@ -59,6 +59,7 @@ public class OnDutyService : IOnDutyService
     private readonly AppDbContext _db;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDirectorService _directorService;
+    private readonly IGrantService _grantService;
     private readonly ILogger<OnDutyService> _logger;
     private readonly IConfiguration _configuration;
 
@@ -66,12 +67,14 @@ public class OnDutyService : IOnDutyService
         AppDbContext db,
         IHttpContextAccessor httpContextAccessor,
         IDirectorService directorService,
+        IGrantService grantService,
         ILogger<OnDutyService> logger,
         IConfiguration configuration)
     {
         _db = db;
         _httpContextAccessor = httpContextAccessor;
         _directorService = directorService;
+        _grantService = grantService;
         _logger = logger;
         _configuration = configuration;
     }
@@ -92,65 +95,47 @@ public class OnDutyService : IOnDutyService
     }
 
     /// <summary>
-    /// Check if current user can manage on-duty assignments (Manager+, NOT Assigner)
-    /// Assigner role can only manage Chores, not OnDuty
+    /// Check if current user can manage on-duty assignments.
+    /// ✅ Grant-based: Uses AssignHakamDuties or AssignKatzinDuties grants instead of role checks.
+    /// Note: Assigner role does not receive these grants by default.
     /// </summary>
     public async Task<bool> CanUserManageOnDutyAsync(int userId)
     {
-        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
-        if (user == null) return false;
-
-        // Only Manager, Director, and Owner can manage OnDuty
-        // Assigner role is explicitly excluded
-        return user.Role == UserRole.Owner ||
-               user.Role == UserRole.Director ||
-               user.Role == UserRole.Manager;
+        // Check if user has any duty assignment grant
+        var hasHakamGrant = await _grantService.HasGrantAsync(userId, "AssignHakamDuties");
+        var hasKatzinGrant = await _grantService.HasGrantAsync(userId, "AssignKatzinDuties");
+        return hasHakamGrant || hasKatzinGrant;
     }
 
     /// <summary>
-    /// Get list of users eligible for on-duty assignment (all active users across all companies)
-    /// Directors can be assigned OnDuty (unlike Chores)
+    /// Get list of users eligible for on-duty assignment.
+    /// ✅ Grant-based: Uses AssignHakamDuties/AssignKatzinDuties grant scopes to determine visible users.
+    /// Directors can be assigned OnDuty (unlike Chores).
     /// </summary>
     public async Task<List<AppUser>> GetEligibleAssigneesAsync()
     {
-        var currentUser = await GetCurrentUserAsync();
-        if (currentUser == null)
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId <= 0)
         {
             return new List<AppUser>();
         }
 
-        // Check if current user can manage OnDuty
-        if (!await CanUserManageOnDutyAsync(currentUser.Id))
+        // Get accessible company IDs based on duty assignment grant scopes
+        var hakamCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "AssignHakamDuties");
+        var katzinCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "AssignKatzinDuties");
+
+        // Combine accessible company IDs from both grants
+        var accessibleCompanyIds = hakamCompanyIds.Union(katzinCompanyIds).Distinct().ToList();
+
+        if (!accessibleCompanyIds.Any())
         {
+            // No grant = no access
             return new List<AppUser>();
         }
 
-        IQueryable<AppUser> query;
-
-        if (currentUser.Role == UserRole.Owner)
-        {
-            // Owner sees all active users across all companies
-            query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive);
-        }
-        else if (currentUser.Role == UserRole.Director)
-        {
-            // Directors see users in companies they manage
-            var companyIds = await _directorService.GetDirectorCompanyIdsAsync();
-            query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
-        }
-        else if (currentUser.Role == UserRole.Manager)
-        {
-            // Managers see users in their own company only
-            query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive && u.CompanyId == currentUser.CompanyId);
-        }
-        else
-        {
-            // Employees, Trainees, and Assigners cannot create OnDuty
-            return new List<AppUser>();
-        }
+        // Query users in accessible companies
+        var query = _db.Users.IgnoreQueryFilters()
+            .Where(u => u.IsActive && accessibleCompanyIds.Contains(u.CompanyId));
 
         return await query
             .OrderBy(u => u.DisplayName)
@@ -248,6 +233,15 @@ public class OnDutyService : IOnDutyService
             if (!await CanUserManageOnDutyAsync(currentUserId))
             {
                 return (false, "You do not have permission to create on-duty assignments.", null);
+            }
+
+            // ✅ Grant-based: Validate user has the SPECIFIC grant for this duty type
+            var requiredGrant = type == OnDutyType.Lead ? "AssignKatzinDuties" : "AssignHakamDuties";
+            var hasTypeSpecificGrant = await _grantService.HasGrantAsync(currentUserId, requiredGrant);
+            if (!hasTypeSpecificGrant)
+            {
+                var dutyTypeName = type == OnDutyType.Lead ? "Katzin" : "Hakam";
+                return (false, $"You do not have permission to assign {dutyTypeName} duties.", null);
             }
 
             // Check if duty type requires officer rank (only enforce when feature flag is enabled)
@@ -371,26 +365,22 @@ public class OnDutyService : IOnDutyService
                 return (false, "On-duty assignment is already canceled.");
             }
 
-            // Check permissions
-            if (!await CanUserManageOnDutyAsync(currentUserId))
+            // ✅ Grant-based: Check if user has AssignHakamDuties or AssignKatzinDuties grant for the assignee's company
+            if (onDuty.User != null)
             {
-                return (false, "You do not have permission to cancel on-duty assignments.");
-            }
-
-            // For Directors, check if they can manage the assignee's company
-            if (currentUser.Role == UserRole.Director && onDuty.User != null)
-            {
-                if (!await _directorService.CanManageCompanyAsync(onDuty.User.CompanyId))
+                var hasHakamGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignHakamDuties", onDuty.User.CompanyId);
+                var hasKatzinGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignKatzinDuties", onDuty.User.CompanyId);
+                if (!hasHakamGrant && !hasKatzinGrant)
                 {
                     return (false, "You do not have permission to cancel this on-duty assignment.");
                 }
             }
-            // For Managers, check if assignee is in their company
-            else if (currentUser.Role == UserRole.Manager && onDuty.User != null)
+            else
             {
-                if (onDuty.User.CompanyId != currentUser.CompanyId)
+                // If no user is assigned, just check if they have the general grant
+                if (!await CanUserManageOnDutyAsync(currentUserId))
                 {
-                    return (false, "You do not have permission to cancel this on-duty assignment.");
+                    return (false, "You do not have permission to cancel on-duty assignments.");
                 }
             }
 

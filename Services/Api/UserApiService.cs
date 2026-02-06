@@ -3,6 +3,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Models.Support;
+using ShiftManager.Services;
 
 namespace ShiftManager.Services.Api;
 
@@ -14,11 +15,13 @@ public class UserApiService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<UserApiService> _logger;
+    private readonly IGrantService _grantService;
 
-    public UserApiService(AppDbContext context, ILogger<UserApiService> logger)
+    public UserApiService(AppDbContext context, ILogger<UserApiService> logger, IGrantService grantService)
     {
         _context = context;
         _logger = logger;
+        _grantService = grantService;
     }
 
     /// <summary>
@@ -163,10 +166,32 @@ public class UserApiService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("User created via API: {Email} (CompanyId: {CompanyId}, UserId: {UserId})",
-            email, companyId, user.Id);
+        // Assign role template grants for the new user
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(roleEnum);
+        var scope = GrantScope.Company(companyId);
+        var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(user.Id, roleTemplateKey, scope);
+
+        _logger.LogInformation("User created via API: {Email} (CompanyId: {CompanyId}, UserId: {UserId}, GrantsAssigned: {GrantsCount})",
+            email, companyId, user.Id, grantsAssigned);
 
         return (UserDto.FromEntity(user, includeFullDetails: true), null);
+    }
+
+    /// <summary>
+    /// Maps UserRole enum to the corresponding RoleTemplate key.
+    /// </summary>
+    private static string MapUserRoleToRoleTemplateKey(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.Owner => "Owner",
+            UserRole.Director => "BRDirector",
+            UserRole.Manager => "MoleculeAdmin",
+            UserRole.Employee => "Employee",
+            UserRole.Trainee => "Employee",
+            UserRole.Assigner => "Assigner",
+            _ => "Employee"
+        };
     }
 
     /// <summary>

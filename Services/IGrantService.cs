@@ -17,6 +17,10 @@ public interface IGrantService
     Task<GrantType?> GetGrantTypeByKeyAsync(string key);
     Task<List<GrantType>> GetAllGrantTypesAsync();
 
+    // Scope resolution - determines which entities a user can access based on their grants
+    Task<List<int>> GetAccessibleCompanyIdsForGrantAsync(int userId, string grantKey);
+    Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId);
+
     // Grant management
     Task<Grant?> GrantAsync(int userId, int grantTypeId, GrantScope scope, int? grantedByUserId = null, string? notes = null);
     Task<bool> RevokeAsync(int grantId, int? revokedByUserId = null);
@@ -26,6 +30,29 @@ public interface IGrantService
     // Auto-grants from roles
     Task ApplyAutoGrantsAsync(int userId, int roleTemplateId, GrantScope roleScope);
     Task RemoveAutoGrantsAsync(int userId, int roleTemplateId);
+
+    // Role template grant assignment for onboarding
+    Task<int> AssignRoleTemplateGrantsAsync(int userId, string roleTemplateKey, GrantScope scope, int? grantedByUserId = null);
+    Task<GrantVerificationResult> VerifyUserGrantsAsync(int userId);
+    Task<List<GrantVerificationResult>> VerifyAllUserGrantsAsync();
+    Task<int> RepairUserGrantsAsync(int userId, int? repairedByUserId = null);
+    Task<int> RepairAllUserGrantsAsync(int? repairedByUserId = null);
+}
+
+/// <summary>
+/// Result of grant verification for a user.
+/// </summary>
+public class GrantVerificationResult
+{
+    public int UserId { get; set; }
+    public string UserDisplayName { get; set; } = string.Empty;
+    public string UserEmail { get; set; } = string.Empty;
+    public string UserRole { get; set; } = string.Empty;
+    public List<string> ExpectedGrants { get; set; } = new();
+    public List<string> ActualGrants { get; set; } = new();
+    public List<string> MissingGrants { get; set; } = new();
+    public List<string> ExtraGrants { get; set; } = new();
+    public bool IsCompliant => MissingGrants.Count == 0;
 }
 
 /// <summary>

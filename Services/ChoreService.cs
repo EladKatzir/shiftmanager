@@ -29,6 +29,7 @@ public class ChoreService : IChoreService
     private readonly ITenantResolver _tenantResolver;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDirectorService _directorService;
+    private readonly IGrantService _grantService;
     private readonly ILogger<ChoreService> _logger;
 
     public ChoreService(
@@ -36,12 +37,14 @@ public class ChoreService : IChoreService
         ITenantResolver tenantResolver,
         IHttpContextAccessor httpContextAccessor,
         IDirectorService directorService,
+        IGrantService grantService,
         ILogger<ChoreService> logger)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _httpContextAccessor = httpContextAccessor;
         _directorService = directorService;
+        _grantService = grantService;
         _logger = logger;
     }
 
@@ -58,97 +61,58 @@ public class ChoreService : IChoreService
     }
 
     /// <summary>
-    /// Check if current user can manage chores (Manager+, Assigner)
+    /// Check if current user can manage chores.
+    /// ✅ Grant-based: Uses AssignChores grant instead of role checks.
     /// </summary>
     public async Task<bool> CanUserManageChoresAsync(int userId)
     {
-        var user = await _db.Users.FindAsync(userId);
-        if (user == null) return false;
-
-        return user.Role == UserRole.Owner ||
-               user.Role == UserRole.Director ||
-               user.Role == UserRole.Manager ||
-               user.Role == UserRole.Assigner;
+        // Check if user has the AssignChores grant
+        return await _grantService.HasGrantAsync(userId, "AssignChores");
     }
 
     /// <summary>
-    /// Check if manager can assign chore to a specific assignee
-    /// - Manager can assign to employees and other managers in their company
-    /// - Directors cannot be assigned chores
-    /// - Directors can assign across companies they manage
-    /// - Assigner can only assign within their own company
+    /// Check if manager can assign chore to a specific assignee.
+    /// ✅ Grant-based: Uses AssignChores grant with company scope instead of role checks.
+    /// Business rule: Directors cannot be assigned chores (enforced separately).
     /// </summary>
     public async Task<bool> CanUserManageChoreForAssigneeAsync(int managerId, int assigneeId)
     {
-        var manager = await _db.Users.FindAsync(managerId);
         var assignee = await _db.Users.FindAsync(assigneeId);
 
-        if (manager == null || assignee == null) return false;
+        if (assignee == null) return false;
 
-        // Directors cannot be assigned chores
+        // Directors cannot be assigned chores (business rule, not grant-based)
         if (assignee.Role == UserRole.Director) return false;
 
-        // Owner can assign to anyone
-        if (manager.Role == UserRole.Owner) return true;
-
-        // Director can assign within companies they manage
-        if (manager.Role == UserRole.Director)
-        {
-            return await _directorService.CanManageCompanyAsync(assignee.CompanyId);
-        }
-
-        // Manager and Assigner can only assign within their own company
-        if (manager.Role == UserRole.Manager || manager.Role == UserRole.Assigner)
-        {
-            return manager.CompanyId == assignee.CompanyId;
-        }
-
-        return false;
+        // Check if manager has AssignChores grant for the assignee's company
+        return await _grantService.HasGrantForCompanyAsync(managerId, "AssignChores", assignee.CompanyId);
     }
 
     /// <summary>
-    /// Get list of users eligible for chore assignment (excludes Directors, includes current user's scope)
-    /// </summary>
-    /// <summary>
-    /// Phase 8.1: Fixed to show all active users in dropdown (Director filter removed)
-    /// Business rule "Directors cannot be assigned chores" is enforced at assignment time in CanUserManageChoreForAssigneeAsync
+    /// Get list of users eligible for chore assignment.
+    /// ✅ Grant-based: Uses AssignChores grant scope to determine visible users.
+    /// Business rule "Directors cannot be assigned chores" is enforced at assignment time in CanUserManageChoreForAssigneeAsync.
     /// </summary>
     public async Task<List<AppUser>> GetEligibleAssigneesAsync()
     {
-        var currentUser = await GetCurrentUserAsync();
-        if (currentUser == null)
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId <= 0)
         {
             return new List<AppUser>();
         }
 
-        IQueryable<AppUser> query;
+        // Get accessible company IDs based on AssignChores grant scope
+        var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "AssignChores");
 
-        if (currentUser.Role == UserRole.Owner)
+        if (!accessibleCompanyIds.Any())
         {
-            // Owner sees all active users across all companies
-            // Use IgnoreQueryFilters to bypass multi-tenant scoping
-            query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive);
-        }
-        else if (currentUser.Role == UserRole.Director)
-        {
-            // Directors see users in companies they manage
-            var companyIds = await _directorService.GetDirectorCompanyIdsAsync();
-            query = _db.Users.IgnoreQueryFilters()
-                .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
-        }
-        else if (currentUser.Role == UserRole.Manager || currentUser.Role == UserRole.Assigner)
-        {
-            // Managers and Assigners see users in their own company only
-            // Note: AppUser doesn't have query filter, so we must explicitly filter by CompanyId
-            query = _db.Users
-                .Where(u => u.IsActive && u.CompanyId == currentUser.CompanyId);
-        }
-        else
-        {
-            // Employees and Trainees cannot create chores
+            // No grant = no access
             return new List<AppUser>();
         }
+
+        // Query users in accessible companies
+        var query = _db.Users.IgnoreQueryFilters()
+            .Where(u => u.IsActive && accessibleCompanyIds.Contains(u.CompanyId));
 
         return await query
             .OrderBy(u => u.DisplayName)
@@ -377,7 +341,9 @@ public class ChoreService : IChoreService
                 return (false, "User not authenticated.");
             }
 
+            // IgnoreQueryFilters() allows cross-company chore management for users with appropriate grants
             var chore = await _db.Chores
+                .IgnoreQueryFilters()
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == choreId);
 
@@ -392,27 +358,11 @@ public class ChoreService : IChoreService
                 return (false, "Chore is already canceled.");
             }
 
-            // Check permissions
-            if (!await CanUserManageChoresAsync(currentUserId))
+            // ✅ Grant-based: Check if user has AssignChores grant for the chore's company
+            var hasGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignChores", chore.CompanyId);
+            if (!hasGrant)
             {
-                return (false, "You do not have permission to cancel chores.");
-            }
-
-            // For Directors, check if they can manage the company
-            if (currentUser.Role == UserRole.Director)
-            {
-                if (!await _directorService.CanManageCompanyAsync(chore.CompanyId))
-                {
-                    return (false, "You do not have permission to cancel this chore.");
-                }
-            }
-            // For Managers, check if chore is in their company
-            else if (currentUser.Role == UserRole.Manager)
-            {
-                if (chore.CompanyId != currentUser.CompanyId)
-                {
-                    return (false, "You do not have permission to cancel this chore.");
-                }
+                return (false, "You do not have permission to cancel this chore.");
             }
 
             // Cancel the chore

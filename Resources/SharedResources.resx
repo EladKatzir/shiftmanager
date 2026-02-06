@@ -610,6 +610,15 @@
   <data name="Role" xml:space="preserve">
     <value>Role</value>
   </data>
+  <data name="JobType" xml:space="preserve">
+    <value>Job Type</value>
+  </data>
+  <data name="AllRoles" xml:space="preserve">
+    <value>All Roles</value>
+  </data>
+  <data name="AllJobTypes" xml:space="preserve">
+    <value>All Job Types</value>
+  </data>
   <data name="ResetPassword" xml:space="preserve">
     <value>Reset Password</value>
   </data>
@@ -3205,7 +3214,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Job Types</value>
   </data>
   <data name="Owner_JobTypes_Desc" xml:space="preserve">
-    <value>Manage job types and roles across the organization</value>
+    <value>Manage job types for shift assignment eligibility</value>
   </data>
   <data name="Owner_Hierarchy" xml:space="preserve">
     <value>Hierarchy</value>

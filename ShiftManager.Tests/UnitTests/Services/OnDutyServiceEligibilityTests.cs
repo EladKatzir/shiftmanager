@@ -24,7 +24,8 @@ public class OnDutyServiceEligibilityTests : IDisposable
 
         _db = new AppDbContext(options);
         var mockConfiguration = new Mock<IConfiguration>();
-        _service = new OnDutyService(_db, null!, null!, NullLogger<OnDutyService>.Instance, mockConfiguration.Object);
+        var mockGrantService = new Mock<IGrantService>();
+        _service = new OnDutyService(_db, null!, null!, mockGrantService.Object, NullLogger<OnDutyService>.Instance, mockConfiguration.Object);
 
         // Seed test users with explicit Email values
         _db.Users.AddRange(

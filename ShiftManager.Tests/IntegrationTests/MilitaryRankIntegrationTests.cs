@@ -25,6 +25,7 @@ public class MilitaryRankIntegrationTests : IDisposable
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IDirectorService> _mockDirectorService;
+    private readonly Mock<IGrantService> _mockGrantService;
 
     // Test user IDs
     private const int ManagerUserId = 1;
@@ -42,6 +43,11 @@ public class MilitaryRankIntegrationTests : IDisposable
         _mockConfiguration = new Mock<IConfiguration>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDirectorService = new Mock<IDirectorService>();
+        _mockGrantService = new Mock<IGrantService>();
+
+        // Setup default grant behavior for Manager user
+        _mockGrantService.Setup(g => g.HasGrantAsync(ManagerUserId, It.IsAny<string>())).ReturnsAsync(true);
+        _mockGrantService.Setup(g => g.HasGrantForCompanyAsync(ManagerUserId, It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(true);
 
         SeedTestData().Wait();
     }
@@ -140,6 +146,7 @@ public class MilitaryRankIntegrationTests : IDisposable
             _db,
             _mockHttpContextAccessor.Object,
             _mockDirectorService.Object,
+            _mockGrantService.Object,
             NullLogger<OnDutyService>.Instance,
             _mockConfiguration.Object);
     }

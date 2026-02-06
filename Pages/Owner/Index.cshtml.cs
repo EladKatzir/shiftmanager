@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
@@ -7,8 +8,9 @@ using ShiftManager.Services;
 namespace ShiftManager.Pages.Owner;
 
 /// <summary>
-/// Owner Administration Panel - Main Dashboard
-/// Provides overview and quick access to developer/owner tools
+/// Owner Administration Panel - Legacy Dashboard
+/// DEPRECATED: Redirects to new Owner Hub (/Owner/Hub)
+/// Kept for backward compatibility with bookmarks and external links
 /// </summary>
 [Authorize(Policy = "Grant:AdminAccess")]
 public class IndexModel : PageModel
@@ -36,8 +38,17 @@ public class IndexModel : PageModel
     // Recent Activity
     public List<ActivityItem> RecentActivities { get; set; } = new();
 
-    public async Task OnGetAsync()
+    public IActionResult OnGet()
     {
+        // Redirect to new Owner Hub
+        // Use 302 (temporary) redirect to allow reverting if needed
+        return RedirectToPage("/Owner/Hub/Index");
+    }
+
+    public async Task OnGetLegacyAsync()
+    {
+        // Legacy endpoint for accessing the old dashboard directly
+        // Access via /Owner/Index?handler=Legacy
         try
         {
             // Calculate stats

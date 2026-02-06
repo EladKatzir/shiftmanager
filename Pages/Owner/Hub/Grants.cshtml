@@ -1,0 +1,1640 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.GrantsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.Support
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Grants_Title"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = Localizer["Grants_Title"], IsActive = true }
+})
+
+<div class="grants-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F510;</span>
+            <loc key="Grants_Title">Grant Management</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="Grants_Subtitle">Manage permissions, role templates, and user grants</loc></p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F4CB;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalGrantTypes</div>
+                <div class="stat-label"><loc key="Grants_GrantTypes">Grant Types</loc></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F464;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalRoleTemplates</div>
+                <div class="stat-label"><loc key="Grants_RoleTemplates">Role Templates</loc></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F511;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalGrants</div>
+                <div class="stat-label"><loc key="Grants_TotalGrants">Total Grants</loc></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F465;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.UsersWithGrants</div>
+                <div class="stat-label"><loc key="Grants_UsersWithGrants">Users with Grants</loc></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="grant-types">
+            <span class="tab-icon">&#x1F4CB;</span>
+            <loc key="Grants_Tab_GrantTypes">Grant Types</loc>
+        </button>
+        <button class="tab-btn" data-tab="role-templates">
+            <span class="tab-icon">&#x1F464;</span>
+            <loc key="Grants_Tab_RoleTemplates">Role Templates</loc>
+        </button>
+        <button class="tab-btn" data-tab="user-grants">
+            <span class="tab-icon">&#x1F465;</span>
+            <loc key="Grants_Tab_UserGrants">User Grants</loc>
+        </button>
+    </div>
+
+    <!-- Tab Panels -->
+    <div class="tab-panels">
+        <!-- Grant Types Browser Panel -->
+        <div class="tab-panel active" id="grant-types">
+            <div class="panel-header">
+                <h2><loc key="Grants_GrantTypesBrowser">Grant Types Browser</loc></h2>
+                <div class="search-box">
+                    <input type="text" id="grant-type-search" placeholder="@Localizer["Search"]..." class="search-input" />
+                </div>
+            </div>
+
+            <div class="category-filter">
+                <button class="filter-btn active" data-category="all"><loc key="All">All</loc></button>
+                @foreach (GrantCategory category in Enum.GetValues(typeof(GrantCategory)))
+                {
+                    if (Model.GrantTypesByCategory.ContainsKey(category))
+                    {
+                        <button class="filter-btn" data-category="@category">@category (@Model.GrantTypesByCategory[category].Count)</button>
+                    }
+                }
+            </div>
+
+            <div class="grant-types-grid" id="grant-types-list">
+                @foreach (var categoryGroup in Model.GrantTypesByCategory.OrderBy(g => g.Key))
+                {
+                    <div class="category-section" data-category="@categoryGroup.Key">
+                        <h3 class="category-header">
+                            <span class="category-icon">@GetCategoryIcon(categoryGroup.Key)</span>
+                            @categoryGroup.Key
+                            <span class="category-count">(@categoryGroup.Value.Count)</span>
+                        </h3>
+                        <div class="grant-type-cards">
+                            @foreach (var gt in categoryGroup.Value)
+                            {
+                                <div class="grant-type-card" data-id="@gt.Id" data-key="@gt.Key.ToLower()" data-name="@Localizer[gt.NameKey].ToString().ToLower()">
+                                    <div class="grant-type-header">
+                                        <span class="grant-type-name">@Localizer[gt.NameKey]</span>
+                                        @if (gt.IsSystem)
+                                        {
+                                            <span class="badge badge-system"><loc key="System">System</loc></span>
+                                        }
+                                    </div>
+                                    <div class="grant-type-key">@gt.Key</div>
+                                    <div class="grant-type-meta">
+                                        <span class="scope-badge">@gt.DefaultScope</span>
+                                        <span class="usage-count" title="@Localizer["UsedBy"]">@gt.UsageCount <loc key="grants">grants</loc></span>
+                                    </div>
+                                    <button class="btn-view-usage" onclick="showGrantTypeUsage(@gt.Id, '@gt.Key')">
+                                        <loc key="ViewUsage">View Usage</loc>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Role Templates Editor Panel -->
+        <div class="tab-panel" id="role-templates">
+            <div class="panel-header">
+                <h2><loc key="Grants_RoleTemplateEditor">Role Template Editor</loc></h2>
+            </div>
+
+            <div class="role-templates-layout">
+                <div class="role-templates-list">
+                    @foreach (var rt in Model.RoleTemplates)
+                    {
+                        <div class="role-template-card" data-id="@rt.Id" onclick="selectRoleTemplate(@rt.Id)">
+                            <div class="role-template-header">
+                                <span class="role-name">@Localizer[rt.NameKey]</span>
+                                @if (rt.IsSystem)
+                                {
+                                    <span class="badge badge-system"><loc key="System">System</loc></span>
+                                }
+                            </div>
+                            <div class="role-template-meta">
+                                <span class="scope-level">@rt.ScopeLevel</span>
+                                <span class="grant-count">@rt.GrantCount <loc key="grants">grants</loc></span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="role-template-editor" id="role-template-editor">
+                    <div class="editor-placeholder">
+                        <span class="placeholder-icon">&#x1F449;</span>
+                        <p><loc key="SelectRoleTemplate">Select a role template to view and edit its grants</loc></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Grants Panel -->
+        <div class="tab-panel" id="user-grants">
+            <div class="panel-header">
+                <h2><loc key="Grants_UserGrantAssignment">User Grant Assignment</loc></h2>
+            </div>
+
+            <div class="user-grants-layout">
+                <!-- User Search -->
+                <div class="user-search-section">
+                    <label><loc key="SearchUser">Search User</loc></label>
+                    <div class="user-search-wrapper">
+                        <input type="text" id="user-search" placeholder="@Localizer["TypeToSearch"]..." class="search-input" />
+                        <div class="user-search-results" id="user-search-results"></div>
+                    </div>
+                </div>
+
+                <!-- Selected User Grants -->
+                <div class="user-grants-section" id="user-grants-section" style="display: none;">
+                    <div class="selected-user-header">
+                        <div class="user-info">
+                            <span class="user-name" id="selected-user-name"></span>
+                            <span class="user-email" id="selected-user-email"></span>
+                        </div>
+                        <button class="btn btn-primary" onclick="showAddGrantModal()">
+                            <span>+</span> <loc key="AddGrant">Add Grant</loc>
+                        </button>
+                    </div>
+
+                    <div class="user-grants-list" id="user-grants-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grant Type Usage Modal -->
+<div class="modal" id="grant-usage-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><loc key="GrantTypeUsage">Grant Type Usage</loc></h3>
+            <button class="modal-close" onclick="closeModal('grant-usage-modal')">&times;</button>
+        </div>
+        <div class="modal-body" id="grant-usage-content">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Add Grant Modal -->
+<div class="modal" id="add-grant-modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><loc key="AssignNewGrant">Assign New Grant</loc></h3>
+            <button class="modal-close" onclick="closeModal('add-grant-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="add-grant-form">
+                <input type="hidden" id="grant-user-id" />
+
+                <div class="form-group">
+                    <label><loc key="GrantType">Grant Type</loc></label>
+                    <select id="grant-type-select" class="form-control" required>
+                        <option value="">-- <loc key="SelectGrantType">Select Grant Type</loc> --</option>
+                        @foreach (var categoryGroup in Model.GrantTypesByCategory.OrderBy(g => g.Key))
+                        {
+                            <optgroup label="@categoryGroup.Key">
+                                @foreach (var gt in categoryGroup.Value)
+                                {
+                                    <option value="@gt.Id" data-scope="@gt.DefaultScope">@Localizer[gt.NameKey] (@gt.Key)</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><loc key="Scope">Scope</loc></label>
+                    <div class="scope-selector">
+                        <select id="scope-project" class="form-control">
+                            <option value="">-- <loc key="AllProjects">All Projects</loc> --</option>
+                            @foreach (var project in Model.Projects)
+                            {
+                                <option value="@project.Id">@project.Name</option>
+                            }
+                        </select>
+                        <select id="scope-area" class="form-control" disabled>
+                            <option value="">-- <loc key="SelectArea">Select Area</loc> --</option>
+                        </select>
+                        <select id="scope-molecule" class="form-control" disabled>
+                            <option value="">-- <loc key="SelectMolecule">Select Molecule</loc> --</option>
+                        </select>
+                        <select id="scope-company" class="form-control" disabled>
+                            <option value="">-- <loc key="SelectCompany">Select Company</loc> --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="grant-can-give" />
+                        <span><loc key="CanGive">Can Give (Allow delegation)</loc></span>
+                    </label>
+                    <p class="help-text"><loc key="CanGiveHelp">If enabled, this user can grant this permission to others within their scope.</loc></p>
+                </div>
+
+                <div class="form-group">
+                    <label><loc key="Notes">Notes</loc></label>
+                    <textarea id="grant-notes" class="form-control" rows="2" placeholder="@Localizer["OptionalNotes"]..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('add-grant-modal')"><loc key="Cancel">Cancel</loc></button>
+            <button class="btn btn-primary" onclick="submitAddGrant()"><loc key="AssignGrant">Assign Grant</loc></button>
+        </div>
+    </div>
+</div>
+
+<!-- Role Template Grant Editor Modal -->
+<div class="modal" id="role-grant-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="role-grant-modal-title"><loc key="EditRoleTemplateGrant">Edit Role Template Grant</loc></h3>
+            <button class="modal-close" onclick="closeModal('role-grant-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="role-grant-form">
+                <input type="hidden" id="role-grant-id" />
+                <input type="hidden" id="role-template-id" />
+
+                <div class="form-group" id="role-grant-type-group">
+                    <label><loc key="GrantType">Grant Type</loc></label>
+                    <select id="role-grant-type-select" class="form-control">
+                        @foreach (var categoryGroup in Model.GrantTypesByCategory.OrderBy(g => g.Key))
+                        {
+                            <optgroup label="@categoryGroup.Key">
+                                @foreach (var gt in categoryGroup.Value)
+                                {
+                                    <option value="@gt.Id">@Localizer[gt.NameKey] (@gt.Key)</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="role-grant-can-own" checked />
+                        <span><loc key="CanOwn">Can Own (Can perform action)</loc></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="role-grant-can-give" />
+                        <span><loc key="CanGive">Can Give (Can delegate)</loc></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label><loc key="ScopeMode">Scope Mode</loc></label>
+                    <select id="role-grant-scope-mode" class="form-control">
+                        <option value="0">Same as Role</option>
+                        <option value="1">Expand to Molecule</option>
+                        <option value="2">Expand to Area</option>
+                        <option value="3">Custom</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" id="btn-remove-role-grant" onclick="removeRoleTemplateGrant()" style="margin-right: auto;">
+                <loc key="Remove">Remove</loc>
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('role-grant-modal')"><loc key="Cancel">Cancel</loc></button>
+            <button class="btn btn-primary" onclick="submitRoleTemplateGrant()"><loc key="Save">Save</loc></button>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.grants-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.page-icon {
+    font-size: 2.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Tabs */
+.tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+    background: var(--surface-soft);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-icon {
+    font-size: 1.125rem;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* Panel Header */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.search-input {
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    min-width: 250px;
+    background: var(--surface);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Category Filter */
+.category-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Grant Types Grid */
+.category-section {
+    margin-bottom: 2rem;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.category-icon {
+    font-size: 1.25rem;
+}
+
+.category-count {
+    color: var(--text-muted);
+    font-weight: normal;
+    font-size: 0.875rem;
+}
+
+.grant-type-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.grant-type-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    transition: all 0.2s;
+}
+
+.grant-type-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.grant-type-card.hidden {
+    display: none;
+}
+
+.grant-type-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.grant-type-name {
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.grant-type-key {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.grant-type-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.scope-badge {
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.usage-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.btn-view-usage {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-view-usage:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Badge */
+.badge {
+    display: inline-flex;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-system {
+    background: var(--info-soft, #e0f2fe);
+    color: var(--info, #0284c7);
+}
+
+.badge-auto {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.badge-manual {
+    background: var(--success-soft, #dcfce7);
+    color: var(--success, #16a34a);
+}
+
+.badge-can-give {
+    background: var(--warning-soft, #fef3c7);
+    color: var(--warning, #d97706);
+}
+
+/* Role Templates Layout */
+.role-templates-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+    min-height: 500px;
+}
+
+.role-templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.role-template-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-template-card:hover {
+    border-color: var(--primary);
+}
+
+.role-template-card.selected {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.role-template-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.role-name {
+    font-weight: 600;
+}
+
+.role-template-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.role-template-editor {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    min-height: 400px;
+}
+
+.editor-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.placeholder-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* User Grants Layout */
+.user-grants-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.user-search-section {
+    max-width: 500px;
+}
+
+.user-search-section label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.user-search-wrapper {
+    position: relative;
+}
+
+.user-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.user-search-results.visible {
+    display: block;
+}
+
+.user-result-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-result-item:last-child {
+    border-bottom: none;
+}
+
+.user-result-item:hover {
+    background: var(--surface-soft);
+}
+
+.user-result-name {
+    font-weight: 500;
+}
+
+.user-result-email {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.user-result-company {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Selected User Section */
+.selected-user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.user-email {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.user-grants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.user-grant-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.user-grant-item .grant-info {
+    flex: 1;
+}
+
+.user-grant-item .grant-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.user-grant-item .grant-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.user-grant-item .grant-scope {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.user-grant-item .grant-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toggle-delegation {
+    padding: 0.375rem 0.75rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.toggle-delegation.active {
+    background: var(--warning-soft);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.btn-revoke {
+    padding: 0.375rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.btn-revoke:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.visible {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content.modal-lg {
+    max-width: 700px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Form */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: var(--surface);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.help-text {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.scope-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark, #4338ca);
+}
+
+.btn-secondary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: var(--surface-soft);
+}
+
+.btn-danger {
+    background: var(--danger, #dc2626);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: var(--danger-dark, #b91c1c);
+}
+
+/* Role Template Editor Content */
+.role-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.role-editor-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.role-editor-grants {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.role-grant-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-soft);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-grant-item:hover {
+    background: var(--primary-soft);
+}
+
+.role-grant-info {
+    flex: 1;
+}
+
+.role-grant-name {
+    font-weight: 500;
+}
+
+.role-grant-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+/* Responsive */
+@@media (max-width: 1024px) {
+    .role-templates-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .role-templates-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .role-template-card {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@@media (max-width: 768px) {
+    .grants-container {
+        padding: 1rem;
+    }
+
+    .tabs-nav {
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .scope-selector {
+        grid-template-columns: 1fr;
+    }
+
+    .grant-type-cards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+}
+
+@section Scripts {
+<script>
+// Hierarchy data for scope selection
+const hierarchyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Projects.Select(p => new {
+    p.Id,
+    p.Name,
+    Areas = p.Areas.Select(a => new {
+        a.Id,
+        a.Name,
+        Molecules = a.Molecules.Select(m => new {
+            m.Id,
+            m.Name,
+            Companies = m.Companies.Select(c => new { c.Id, c.Name })
+        })
+    })
+})));
+
+// State
+let selectedUserId = null;
+let selectedRoleTemplateId = null;
+let isEditingRoleGrant = false;
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+});
+
+// Grant type search
+document.getElementById('grant-type-search').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.grant-type-card').forEach(card => {
+        const key = card.dataset.key;
+        const name = card.dataset.name;
+        if (key.includes(query) || name.includes(query)) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+});
+
+// Category filter
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const category = btn.dataset.category;
+        document.querySelectorAll('.category-section').forEach(section => {
+            if (category === 'all' || section.dataset.category === category) {
+                section.style.display = '';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+    });
+});
+
+// User search
+let searchTimeout;
+document.getElementById('user-search').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    const query = e.target.value;
+    if (query.length < 2) {
+        document.getElementById('user-search-results').classList.remove('visible');
+        return;
+    }
+    searchTimeout = setTimeout(async () => {
+        const response = await fetch(`?handler=SearchUsers&query=${encodeURIComponent(query)}`);
+        const users = await response.json();
+        const resultsDiv = document.getElementById('user-search-results');
+        if (users.length > 0) {
+            resultsDiv.innerHTML = users.map(u => `
+                <div class="user-result-item" onclick="selectUser(${u.id}, '${escapeHtml(u.displayName)}', '${escapeHtml(u.email)}')">
+                    <div class="user-result-name">${escapeHtml(u.displayName)}</div>
+                    <div class="user-result-email">${escapeHtml(u.email)}</div>
+                    ${u.companyName ? `<div class="user-result-company">${escapeHtml(u.companyName)}</div>` : ''}
+                </div>
+            `).join('');
+            resultsDiv.classList.add('visible');
+        } else {
+            resultsDiv.innerHTML = '<div class="user-result-item">@Localizer["NoResultsFound"]</div>';
+            resultsDiv.classList.add('visible');
+        }
+    }, 300);
+});
+
+// Close search results when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.user-search-wrapper')) {
+        document.getElementById('user-search-results').classList.remove('visible');
+    }
+});
+
+// Select user
+async function selectUser(userId, displayName, email) {
+    selectedUserId = userId;
+    document.getElementById('selected-user-name').textContent = displayName;
+    document.getElementById('selected-user-email').textContent = email;
+    document.getElementById('user-search').value = displayName;
+    document.getElementById('user-search-results').classList.remove('visible');
+    document.getElementById('user-grants-section').style.display = 'block';
+    document.getElementById('grant-user-id').value = userId;
+    await loadUserGrants(userId);
+}
+
+// Load user grants
+async function loadUserGrants(userId) {
+    const response = await fetch(`?handler=UserGrants&userId=${userId}`);
+    const grants = await response.json();
+    const listDiv = document.getElementById('user-grants-list');
+
+    if (grants.length === 0) {
+        listDiv.innerHTML = '<p class="empty-state">@Localizer["NoGrantsFound"]</p>';
+        return;
+    }
+
+    listDiv.innerHTML = grants.map(g => {
+        const scopeParts = [];
+        if (g.scope.projectName) scopeParts.push(g.scope.projectName);
+        if (g.scope.areaName) scopeParts.push(g.scope.areaName);
+        if (g.scope.moleculeName) scopeParts.push(g.scope.moleculeName);
+        if (g.scope.companyName) scopeParts.push(g.scope.companyName);
+        const scopeStr = scopeParts.length > 0 ? scopeParts.join(' > ') : '@Localizer["Self"]';
+
+        return `
+            <div class="user-grant-item">
+                <div class="grant-info">
+                    <div class="grant-name">${g.grantTypeKey}</div>
+                    <div class="grant-scope">${escapeHtml(scopeStr)}</div>
+                    <div class="grant-meta">
+                        <span class="badge badge-${g.category.toLowerCase()}">${g.category}</span>
+                        ${g.isAutoGrant ? '<span class="badge badge-auto">@Localizer["Auto"]</span>' : '<span class="badge badge-manual">@Localizer["Manual"]</span>'}
+                        ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
+                        ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
+                        ${g.grantedByName ? `<span>@Localizer["GrantedBy"]: ${escapeHtml(g.grantedByName)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="grant-actions">
+                    ${!g.isAutoGrant ? `
+                        <button class="toggle-delegation ${g.canGive ? 'active' : ''}" onclick="toggleDelegation(${g.id}, ${!g.canGive})">
+                            ${g.canGive ? '@Localizer["DisableCanGive"]' : '@Localizer["EnableCanGive"]'}
+                        </button>
+                        <button class="btn-revoke" onclick="revokeGrant(${g.id})">@Localizer["Revoke"]</button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Toggle delegation
+async function toggleDelegation(grantId, canGive) {
+    const response = await fetch('?handler=UpdateGrantDelegation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+        body: JSON.stringify({ grantId, canGive })
+    });
+    const result = await response.json();
+    if (result.success) {
+        await loadUserGrants(selectedUserId);
+    } else {
+        alert(result.error);
+    }
+}
+
+// Revoke grant
+async function revokeGrant(grantId) {
+    if (!confirm('@Localizer["ConfirmRevokeGrant"]')) return;
+    const response = await fetch('?handler=RevokeGrant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+        body: JSON.stringify({ grantId })
+    });
+    const result = await response.json();
+    if (result.success) {
+        await loadUserGrants(selectedUserId);
+    } else {
+        alert(result.error);
+    }
+}
+
+// Show add grant modal
+function showAddGrantModal() {
+    document.getElementById('add-grant-form').reset();
+    document.getElementById('scope-area').disabled = true;
+    document.getElementById('scope-molecule').disabled = true;
+    document.getElementById('scope-company').disabled = true;
+    openModal('add-grant-modal');
+}
+
+// Scope cascade
+document.getElementById('scope-project').addEventListener('change', (e) => {
+    const projectId = e.target.value;
+    const areaSelect = document.getElementById('scope-area');
+    const moleculeSelect = document.getElementById('scope-molecule');
+    const companySelect = document.getElementById('scope-company');
+
+    areaSelect.innerHTML = '<option value="">-- @Localizer["SelectArea"] --</option>';
+    moleculeSelect.innerHTML = '<option value="">-- @Localizer["SelectMolecule"] --</option>';
+    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"] --</option>';
+
+    if (projectId) {
+        const project = hierarchyData.find(p => p.id == projectId);
+        if (project && project.areas) {
+            project.areas.forEach(a => {
+                areaSelect.innerHTML += `<option value="${a.id}">${escapeHtml(a.name)}</option>`;
+            });
+            areaSelect.disabled = false;
+        }
+    } else {
+        areaSelect.disabled = true;
+    }
+    moleculeSelect.disabled = true;
+    companySelect.disabled = true;
+});
+
+document.getElementById('scope-area').addEventListener('change', (e) => {
+    const areaId = e.target.value;
+    const projectId = document.getElementById('scope-project').value;
+    const moleculeSelect = document.getElementById('scope-molecule');
+    const companySelect = document.getElementById('scope-company');
+
+    moleculeSelect.innerHTML = '<option value="">-- @Localizer["SelectMolecule"] --</option>';
+    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"] --</option>';
+
+    if (areaId && projectId) {
+        const project = hierarchyData.find(p => p.id == projectId);
+        const area = project?.areas?.find(a => a.id == areaId);
+        if (area && area.molecules) {
+            area.molecules.forEach(m => {
+                moleculeSelect.innerHTML += `<option value="${m.id}">${escapeHtml(m.name)}</option>`;
+            });
+            moleculeSelect.disabled = false;
+        }
+    } else {
+        moleculeSelect.disabled = true;
+    }
+    companySelect.disabled = true;
+});
+
+document.getElementById('scope-molecule').addEventListener('change', (e) => {
+    const moleculeId = e.target.value;
+    const projectId = document.getElementById('scope-project').value;
+    const areaId = document.getElementById('scope-area').value;
+    const companySelect = document.getElementById('scope-company');
+
+    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"] --</option>';
+
+    if (moleculeId && areaId && projectId) {
+        const project = hierarchyData.find(p => p.id == projectId);
+        const area = project?.areas?.find(a => a.id == areaId);
+        const molecule = area?.molecules?.find(m => m.id == moleculeId);
+        if (molecule && molecule.companies) {
+            molecule.companies.forEach(c => {
+                companySelect.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+            });
+            companySelect.disabled = false;
+        }
+    } else {
+        companySelect.disabled = true;
+    }
+});
+
+// Submit add grant
+async function submitAddGrant() {
+    const data = {
+        userId: parseInt(document.getElementById('grant-user-id').value),
+        grantTypeId: parseInt(document.getElementById('grant-type-select').value),
+        projectId: document.getElementById('scope-project').value ? parseInt(document.getElementById('scope-project').value) : null,
+        areaId: document.getElementById('scope-area').value ? parseInt(document.getElementById('scope-area').value) : null,
+        moleculeId: document.getElementById('scope-molecule').value ? parseInt(document.getElementById('scope-molecule').value) : null,
+        companyId: document.getElementById('scope-company').value ? parseInt(document.getElementById('scope-company').value) : null,
+        canGive: document.getElementById('grant-can-give').checked,
+        notes: document.getElementById('grant-notes').value || null
+    };
+
+    if (!data.grantTypeId) {
+        alert('@Localizer["PleaseSelectGrantType"]');
+        return;
+    }
+
+    const response = await fetch('?handler=AssignGrant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+        body: JSON.stringify(data)
+    });
+    const result = await response.json();
+    if (result.success) {
+        closeModal('add-grant-modal');
+        await loadUserGrants(selectedUserId);
+    } else {
+        alert(result.error);
+    }
+}
+
+// Grant type usage
+async function showGrantTypeUsage(grantTypeId, grantKey) {
+    const response = await fetch(`?handler=GrantTypeUsage&grantTypeId=${grantTypeId}`);
+    const data = await response.json();
+    const contentDiv = document.getElementById('grant-usage-content');
+
+    let html = `<h4>${grantKey}</h4>`;
+    html += `<p><strong>@Localizer["AssignedToUsers"]:</strong> ${data.userCount}</p>`;
+
+    if (data.roleTemplates.length > 0) {
+        html += '<h5>@Localizer["IncludedInRoleTemplates"]:</h5><ul>';
+        data.roleTemplates.forEach(rt => {
+            html += `<li><strong>${rt.key}</strong> - CanOwn: ${rt.canOwn ? 'Yes' : 'No'}, CanGive: ${rt.canGive ? 'Yes' : 'No'}, Scope: ${rt.scopeMode}</li>`;
+        });
+        html += '</ul>';
+    } else {
+        html += '<p>@Localizer["NotIncludedInAnyRoleTemplate"]</p>';
+    }
+
+    contentDiv.innerHTML = html;
+    openModal('grant-usage-modal');
+}
+
+// Role template selection
+async function selectRoleTemplate(templateId) {
+    selectedRoleTemplateId = templateId;
+    document.querySelectorAll('.role-template-card').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`.role-template-card[data-id="${templateId}"]`).classList.add('selected');
+
+    const response = await fetch(`?handler=RoleTemplate&templateId=${templateId}`);
+    const template = await response.json();
+    const editorDiv = document.getElementById('role-template-editor');
+
+    let html = `
+        <div class="role-editor-header">
+            <h3 class="role-editor-title">${template.key}</h3>
+            <button class="btn btn-primary" onclick="showAddRoleGrantModal()">+ @Localizer["AddGrant"]</button>
+        </div>
+        <div class="role-editor-grants">
+    `;
+
+    if (template.grants.length === 0) {
+        html += '<p class="empty-state">@Localizer["NoGrantsInTemplate"]</p>';
+    } else {
+        template.grants.forEach(g => {
+            html += `
+                <div class="role-grant-item" onclick="editRoleTemplateGrant(${g.id}, ${g.grantTypeId}, ${g.canOwn}, ${g.canGive}, '${g.scopeMode}')">
+                    <div class="role-grant-info">
+                        <div class="role-grant-name">${g.key}</div>
+                        <div class="role-grant-meta">
+                            <span class="badge">${g.category}</span>
+                            ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
+                            ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
+                            <span class="scope-badge">${g.scopeMode}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    html += '</div>';
+    editorDiv.innerHTML = html;
+}
+
+// Show add role grant modal
+function showAddRoleGrantModal() {
+    isEditingRoleGrant = false;
+    document.getElementById('role-grant-modal-title').textContent = '@Localizer["AddGrantToRoleTemplate"]';
+    document.getElementById('role-grant-type-group').style.display = 'block';
+    document.getElementById('btn-remove-role-grant').style.display = 'none';
+    document.getElementById('role-grant-form').reset();
+    document.getElementById('role-grant-can-own').checked = true;
+    document.getElementById('role-template-id').value = selectedRoleTemplateId;
+    openModal('role-grant-modal');
+}
+
+// Edit role template grant
+function editRoleTemplateGrant(grantId, grantTypeId, canOwn, canGive, scopeMode) {
+    isEditingRoleGrant = true;
+    document.getElementById('role-grant-modal-title').textContent = '@Localizer["EditRoleTemplateGrant"]';
+    document.getElementById('role-grant-type-group').style.display = 'none';
+    document.getElementById('btn-remove-role-grant').style.display = 'block';
+    document.getElementById('role-grant-id').value = grantId;
+    document.getElementById('role-grant-type-select').value = grantTypeId;
+    document.getElementById('role-grant-can-own').checked = canOwn;
+    document.getElementById('role-grant-can-give').checked = canGive;
+    document.getElementById('role-grant-scope-mode').value = scopeModeToInt(scopeMode);
+    openModal('role-grant-modal');
+}
+
+function scopeModeToInt(mode) {
+    const modes = { 'SameAsRole': 0, 'ExpandToMolecule': 1, 'ExpandToArea': 2, 'Custom': 3 };
+    return modes[mode] ?? 0;
+}
+
+// Submit role template grant
+async function submitRoleTemplateGrant() {
+    if (isEditingRoleGrant) {
+        const data = {
+            grantId: parseInt(document.getElementById('role-grant-id').value),
+            canOwn: document.getElementById('role-grant-can-own').checked,
+            canGive: document.getElementById('role-grant-can-give').checked,
+            scopeMode: parseInt(document.getElementById('role-grant-scope-mode').value)
+        };
+        const response = await fetch('?handler=UpdateRoleTemplateGrant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            closeModal('role-grant-modal');
+            await selectRoleTemplate(selectedRoleTemplateId);
+        } else {
+            alert(result.error);
+        }
+    } else {
+        const data = {
+            roleTemplateId: parseInt(document.getElementById('role-template-id').value),
+            grantTypeId: parseInt(document.getElementById('role-grant-type-select').value),
+            canOwn: document.getElementById('role-grant-can-own').checked,
+            canGive: document.getElementById('role-grant-can-give').checked,
+            scopeMode: parseInt(document.getElementById('role-grant-scope-mode').value)
+        };
+        const response = await fetch('?handler=AddRoleTemplateGrant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            closeModal('role-grant-modal');
+            await selectRoleTemplate(selectedRoleTemplateId);
+        } else {
+            alert(result.error);
+        }
+    }
+}
+
+// Remove role template grant
+async function removeRoleTemplateGrant() {
+    if (!confirm('@Localizer["ConfirmRemoveGrant"]')) return;
+    const grantId = parseInt(document.getElementById('role-grant-id').value);
+    const response = await fetch('?handler=RemoveRoleTemplateGrant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+        body: JSON.stringify({ grantId })
+    });
+    const result = await response.json();
+    if (result.success) {
+        closeModal('role-grant-modal');
+        await selectRoleTemplate(selectedRoleTemplateId);
+    } else {
+        alert(result.error);
+    }
+}
+
+// Modal helpers
+function openModal(id) {
+    document.getElementById(id).classList.add('visible');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('visible');
+}
+
+// Utility functions
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getAntiForgeryToken() {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+}
+</script>
+}
+
+@functions {
+    string GetCategoryIcon(GrantCategory category)
+    {
+        return category switch
+        {
+            GrantCategory.Shift => "&#x1F4C5;",
+            GrantCategory.Duty => "&#x1F6E1;",
+            GrantCategory.Chore => "&#x1F9F9;",
+            GrantCategory.Vacation => "&#x1F3D6;",
+            GrantCategory.Swap => "&#x1F500;",
+            GrantCategory.UserManagement => "&#x1F465;",
+            GrantCategory.GrantManagement => "&#x1F511;",
+            GrantCategory.Hierarchy => "&#x1F3D7;",
+            GrantCategory.Settings => "&#x2699;",
+            GrantCategory.Analytics => "&#x1F4CA;",
+            GrantCategory.Email => "&#x1F4E7;",
+            GrantCategory.System => "&#x1F5A5;",
+            _ => "&#x1F4CB;"
+        };
+    }
+}

@@ -14,7 +14,14 @@ public class DirectorServiceTests : IDisposable
 {
     private readonly AppDbContext _db;
     private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
+    private readonly Mock<IGrantService> _grantServiceMock;
     private readonly DirectorService _service;
+
+    // Grant keys used in tests (must match DirectorService constants)
+    private const string DirectorHubAccessGrant = "DirectorHubAccess";
+    private const string ManagerHomeAccessGrant = "ManagerHomeAccess";
+    private const string AssignRolesGrant = "AssignRoles";
+    private const string AdminAccessGrant = "AdminAccess";
 
     public DirectorServiceTests()
     {
@@ -25,7 +32,8 @@ public class DirectorServiceTests : IDisposable
         _db = new AppDbContext(options);
 
         _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-        _service = new DirectorService(_db, _httpContextAccessorMock.Object);
+        _grantServiceMock = new Mock<IGrantService>();
+        _service = new DirectorService(_db, _httpContextAccessorMock.Object, _grantServiceMock.Object);
     }
 
     private void SetupUser(int userId, UserRole role)
@@ -40,6 +48,44 @@ public class DirectorServiceTests : IDisposable
 
         var httpContext = new DefaultHttpContext { User = principal };
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
+
+        // Setup grant service based on role
+        SetupGrantsForRole(userId, role);
+    }
+
+    private void SetupGrantsForRole(int userId, UserRole role)
+    {
+        // Reset all grants to false by default
+        _grantServiceMock.Setup(g => g.HasGrantAsync(userId, It.IsAny<string>())).ReturnsAsync(false);
+        _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(userId, It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(false);
+        _grantServiceMock.Setup(g => g.GetAccessibleCompanyIdsForGrantAsync(userId, It.IsAny<string>())).ReturnsAsync(new List<int>());
+
+        switch (role)
+        {
+            case UserRole.Owner:
+                // Owner has all grants for all companies including AdminAccess
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, AdminAccessGrant)).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, DirectorHubAccessGrant)).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, ManagerHomeAccessGrant)).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, AssignRolesGrant)).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(userId, DirectorHubAccessGrant, It.IsAny<int>())).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(userId, ManagerHomeAccessGrant, It.IsAny<int>())).ReturnsAsync(true);
+                break;
+
+            case UserRole.Director:
+                // Director has director grants
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, DirectorHubAccessGrant)).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, AssignRolesGrant)).ReturnsAsync(true);
+                break;
+
+            case UserRole.Manager:
+                // Manager has manager grants
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, ManagerHomeAccessGrant)).ReturnsAsync(true);
+                _grantServiceMock.Setup(g => g.HasGrantAsync(userId, AssignRolesGrant)).ReturnsAsync(true);
+                break;
+
+            // Employee has no elevated grants
+        }
     }
 
     [Fact]
@@ -104,68 +150,38 @@ public class DirectorServiceTests : IDisposable
         var result = await _service.IsDirectorOfAsync(companyId: 999);
 
         // Assert
-        result.Should().BeTrue("Owner has access to all companies");
+        result.Should().BeTrue("Owner has access to all companies via DirectorHubAccess grant");
     }
 
     [Fact]
-    public async Task IsDirectorOfAsync_ReturnsTrue_ForDirectorWithAssignment()
+    public async Task IsDirectorOfAsync_ReturnsTrue_ForDirectorWithGrant()
     {
         // Arrange
-        var company = new Company { Id = 1, Name = "Test Co" };
-        var director = new AppUser { Id = 10, CompanyId = 1, Role = UserRole.Director, Email = "director@test", DisplayName = "Test Director", IsActive = true };
-        var directorAssignment = new DirectorCompany
-        {
-            Id = 1,
-            UserId = 10,
-            CompanyId = 1,
-            GrantedBy = 1,
-            GrantedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        _db.Companies.Add(company);
-        _db.Users.Add(director);
-        _db.DirectorCompanies.Add(directorAssignment);
-        await _db.SaveChangesAsync();
-
         SetupUser(10, UserRole.Director);
+        // Simulate director having DirectorHubAccess grant for company 1
+        _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(10, DirectorHubAccessGrant, 1)).ReturnsAsync(true);
 
         // Act
         var result = await _service.IsDirectorOfAsync(companyId: 1);
 
         // Assert
-        result.Should().BeTrue("Director has assignment to company 1");
+        result.Should().BeTrue("Director has DirectorHubAccess grant for company 1");
     }
 
     [Fact]
-    public async Task IsDirectorOfAsync_ReturnsFalse_ForDirectorWithoutAssignment()
+    public async Task IsDirectorOfAsync_ReturnsFalse_ForDirectorWithoutGrant()
     {
         // Arrange
-        var company1 = new Company { Id = 1, Name = "Company A" };
-        var company2 = new Company { Id = 2, Name = "Company B" };
-        var director = new AppUser { Id = 10, CompanyId = 1, Role = UserRole.Director, Email = "director@test", DisplayName = "Test Director", IsActive = true };
-        var directorAssignment = new DirectorCompany
-        {
-            Id = 1,
-            UserId = 10,
-            CompanyId = 1,  // Assigned to company 1 only
-            GrantedBy = 1,
-            GrantedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        _db.Companies.AddRange(company1, company2);
-        _db.Users.Add(director);
-        _db.DirectorCompanies.Add(directorAssignment);
-        await _db.SaveChangesAsync();
-
         SetupUser(10, UserRole.Director);
+        // Director has grant for company 1 but NOT company 2
+        _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(10, DirectorHubAccessGrant, 1)).ReturnsAsync(true);
+        _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(10, DirectorHubAccessGrant, 2)).ReturnsAsync(false);
 
         // Act - Try to access company 2
         var result = await _service.IsDirectorOfAsync(companyId: 2);
 
         // Assert
-        result.Should().BeFalse("Director is NOT assigned to company 2");
+        result.Should().BeFalse("Director does NOT have DirectorHubAccess grant for company 2");
     }
 
     [Fact]
@@ -178,7 +194,7 @@ public class DirectorServiceTests : IDisposable
         var result = await _service.IsDirectorOfAsync(companyId: 1);
 
         // Assert
-        result.Should().BeFalse("Manager role does not have Director permissions");
+        result.Should().BeFalse("Manager does not have DirectorHubAccess grant by default");
     }
 
     [Fact]
@@ -249,18 +265,13 @@ public class DirectorServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetDirectorCompanyIdsAsync_ReturnsAssignedCompanies()
+    public async Task GetDirectorCompanyIdsAsync_ReturnsAccessibleCompanies()
     {
         // Arrange
-        var director = new AppUser { Id = 10, CompanyId = 1, Role = UserRole.Director, Email = "director@test", DisplayName = "Test Director", IsActive = true };
-        var assignment1 = new DirectorCompany { Id = 1, UserId = 10, CompanyId = 1, GrantedBy = 1, GrantedAt = DateTime.UtcNow, IsDeleted = false };
-        var assignment2 = new DirectorCompany { Id = 2, UserId = 10, CompanyId = 2, GrantedBy = 1, GrantedAt = DateTime.UtcNow, IsDeleted = false };
-
-        _db.Users.Add(director);
-        _db.DirectorCompanies.AddRange(assignment1, assignment2);
-        await _db.SaveChangesAsync();
-
         SetupUser(10, UserRole.Director);
+        // Setup grant service to return accessible companies
+        _grantServiceMock.Setup(g => g.GetAccessibleCompanyIdsForGrantAsync(10, DirectorHubAccessGrant))
+            .ReturnsAsync(new List<int> { 1, 2 });
 
         // Act
         var companyIds = await _service.GetDirectorCompanyIdsAsync();
@@ -271,26 +282,19 @@ public class DirectorServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetDirectorCompanyIdsAsync_ExcludesDeletedAssignments()
+    public async Task GetDirectorCompanyIdsAsync_ReturnsEmptyWhenNoGrants()
     {
         // Arrange
-        var director = new AppUser { Id = 10, CompanyId = 1, Role = UserRole.Director, Email = "director@test", DisplayName = "Test Director", IsActive = true };
-        var activeAssignment = new DirectorCompany { Id = 1, UserId = 10, CompanyId = 1, GrantedBy = 1, GrantedAt = DateTime.UtcNow, IsDeleted = false };
-        var deletedAssignment = new DirectorCompany { Id = 2, UserId = 10, CompanyId = 2, GrantedBy = 1, GrantedAt = DateTime.UtcNow, IsDeleted = true, DeletedAt = DateTime.UtcNow };
-
-        _db.Users.Add(director);
-        _db.DirectorCompanies.AddRange(activeAssignment, deletedAssignment);
-        await _db.SaveChangesAsync();
-
         SetupUser(10, UserRole.Director);
+        // Grant service returns empty list (no DirectorHubAccess grants)
+        _grantServiceMock.Setup(g => g.GetAccessibleCompanyIdsForGrantAsync(10, DirectorHubAccessGrant))
+            .ReturnsAsync(new List<int>());
 
         // Act
         var companyIds = await _service.GetDirectorCompanyIdsAsync();
 
         // Assert
-        companyIds.Should().HaveCount(1);
-        companyIds.Should().Contain(1);
-        companyIds.Should().NotContain(2, "Deleted assignments should be excluded");
+        companyIds.Should().BeEmpty("No DirectorHubAccess grants means no accessible companies");
     }
 
     public void Dispose()

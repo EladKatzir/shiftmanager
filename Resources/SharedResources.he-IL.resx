@@ -606,6 +606,15 @@
   <data name="Role" xml:space="preserve">
     <value>תפקיד</value>
   </data>
+  <data name="JobType" xml:space="preserve">
+    <value>סוג עבודה</value>
+  </data>
+  <data name="AllRoles" xml:space="preserve">
+    <value>כל התפקידים</value>
+  </data>
+  <data name="AllJobTypes" xml:space="preserve">
+    <value>כל סוגי העבודה</value>
+  </data>
   <data name="ResetPassword" xml:space="preserve">
     <value>איפוס סיסמה</value>
   </data>
@@ -3030,7 +3039,7 @@
     <value>סוגי תפקידים</value>
   </data>
   <data name="Owner_JobTypes_Desc" xml:space="preserve">
-    <value>ניהול סוגי תפקידים ותפקידים בארגון</value>
+    <value>ניהול סוגי עבודה לזכאות שיבוץ משמרות</value>
   </data>
   <data name="Owner_Hierarchy" xml:space="preserve">
     <value>היררכיה</value>

@@ -1,0 +1,1196 @@
+@model ShiftManager.ViewComponents.HierarchyTreeViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.Models.Support
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* Hierarchy Tree Component - Interactive tree with drag-drop reordering *@
+<div class="hierarchy-tree-component"
+     data-mode="@Model.Mode"
+     data-can-edit="@Model.CanEdit.ToString().ToLower()"
+     data-can-reorder="@Model.CanReorder.ToString().ToLower()"
+     data-can-delete="@Model.CanDelete.ToString().ToLower()"
+     data-can-add-child="@Model.CanAddChild.ToString().ToLower()"
+     data-expanded-default="@Model.ExpandedByDefault.ToString().ToLower()">
+
+    @* Toolbar *@
+    <div class="htree-toolbar">
+        <button type="button" class="htree-toolbar__btn" onclick="HierarchyTree.expandAll()" title="@Localizer["ExpandAll"]">
+            <span class="htree-icon">+</span>
+        </button>
+        <button type="button" class="htree-toolbar__btn" onclick="HierarchyTree.collapseAll()" title="@Localizer["CollapseAll"]">
+            <span class="htree-icon">-</span>
+        </button>
+        @if (Model.CanAddChild)
+        {
+            <button type="button" class="htree-toolbar__btn htree-toolbar__btn--primary" onclick="HierarchyTree.addProject()" title="@Localizer["AddProject"]">
+                <span class="htree-icon">+</span> <loc key="Project" />
+            </button>
+        }
+    </div>
+
+    @* Tree Container *@
+    <div class="htree-container" role="tree" aria-label="@Localizer["HierarchyTree"]">
+        @if (Model.Tree.Any())
+        {
+            <div class="htree-level htree-level--projects" data-level="project" data-sortable="@Model.CanReorder.ToString().ToLower()">
+                @foreach (var project in Model.Tree)
+                {
+                    @await Html.PartialAsync("Components/HierarchyTree/_ProjectNode", new HierarchyNodeViewModel
+                    {
+                        Project = project,
+                        CanEdit = Model.CanEdit,
+                        CanReorder = Model.CanReorder,
+                        CanDelete = Model.CanDelete,
+                        CanAddChild = Model.CanAddChild,
+                        ExpandedByDefault = Model.ExpandedByDefault
+                    })
+                }
+            </div>
+        }
+        else
+        {
+            <div class="htree-empty">
+                <div class="htree-empty__icon">🏗️</div>
+                <p><loc key="NoProjectsYet" /></p>
+                @if (Model.CanAddChild)
+                {
+                    <button type="button" class="btn btn-primary" onclick="HierarchyTree.addProject()">
+                        <loc key="CreateFirstProject" />
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    @* Context Menu (hidden by default) *@
+    <div class="htree-context-menu" id="htree-context-menu" role="menu" aria-hidden="true">
+        @if (Model.CanEdit)
+        {
+            <button type="button" class="htree-context-menu__item" data-action="edit" role="menuitem">
+                <span class="htree-icon">✏️</span> <loc key="Edit" />
+            </button>
+        }
+        @if (Model.CanAddChild)
+        {
+            <button type="button" class="htree-context-menu__item" data-action="add-child" role="menuitem">
+                <span class="htree-icon">+</span> <loc key="AddChild" />
+            </button>
+        }
+        @if (Model.CanReorder)
+        {
+            <button type="button" class="htree-context-menu__item" data-action="move-to" role="menuitem">
+                <span class="htree-icon">↗️</span> <loc key="MoveTo" />
+            </button>
+        }
+        @if (Model.CanDelete)
+        {
+            <hr class="htree-context-menu__divider" />
+            <button type="button" class="htree-context-menu__item htree-context-menu__item--danger" data-action="delete" role="menuitem">
+                <span class="htree-icon">🗑️</span> <loc key="Delete" />
+            </button>
+        }
+    </div>
+
+    @* Inline Edit Input (hidden by default) *@
+    <div class="htree-inline-edit" id="htree-inline-edit" style="display: none;">
+        <input type="text" class="htree-inline-edit__input" maxlength="100" />
+        <div class="htree-inline-edit__actions">
+            <button type="button" class="htree-inline-edit__btn htree-inline-edit__btn--save" title="@Localizer["Save"]">✓</button>
+            <button type="button" class="htree-inline-edit__btn htree-inline-edit__btn--cancel" title="@Localizer["Cancel"]">✕</button>
+        </div>
+    </div>
+
+    @* Move Dialog (hidden by default) *@
+    <div class="htree-modal" id="htree-move-modal" style="display: none;">
+        <div class="htree-modal__backdrop"></div>
+        <div class="htree-modal__content">
+            <div class="htree-modal__header">
+                <h3><loc key="MoveTo" /></h3>
+                <button type="button" class="htree-modal__close" onclick="HierarchyTree.closeMoveModal()">&times;</button>
+            </div>
+            <div class="htree-modal__body">
+                <p><loc key="SelectDestination" /></p>
+                <div class="htree-move-targets" id="htree-move-targets"></div>
+            </div>
+            <div class="htree-modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="HierarchyTree.closeMoveModal()">
+                    <loc key="Cancel" />
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* SortableJS CDN *@
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+(function() {
+    'use strict';
+
+    // HierarchyTree namespace
+    window.HierarchyTree = window.HierarchyTree || {};
+
+    const container = document.querySelector('.hierarchy-tree-component');
+    if (!container) return;
+
+    const config = {
+        mode: container.dataset.mode,
+        canEdit: container.dataset.canEdit === 'true',
+        canReorder: container.dataset.canReorder === 'true',
+        canDelete: container.dataset.canDelete === 'true',
+        canAddChild: container.dataset.canAddChild === 'true',
+        expandedDefault: container.dataset.expandedDefault === 'true'
+    };
+
+    let contextMenuTarget = null;
+    let inlineEditTarget = null;
+    let sortableInstances = [];
+
+    // Initialize
+    function init() {
+        setupExpandCollapse();
+        setupContextMenu();
+        setupInlineEdit();
+        setupDragDrop();
+        setupNodeSelection();
+
+        // Apply default expansion state
+        if (config.expandedDefault) {
+            HierarchyTree.expandAll();
+        }
+    }
+
+    // Expand/Collapse functionality
+    function setupExpandCollapse() {
+        container.addEventListener('click', function(e) {
+            const toggle = e.target.closest('.htree-node__toggle');
+            if (toggle) {
+                e.preventDefault();
+                e.stopPropagation();
+                const node = toggle.closest('.htree-node');
+                toggleNode(node);
+            }
+        });
+    }
+
+    function toggleNode(node) {
+        const children = node.querySelector(':scope > .htree-children');
+        if (!children) return;
+
+        const isExpanded = node.classList.contains('htree-node--expanded');
+        node.classList.toggle('htree-node--expanded', !isExpanded);
+        node.classList.toggle('htree-node--collapsed', isExpanded);
+    }
+
+    HierarchyTree.expandAll = function() {
+        container.querySelectorAll('.htree-node').forEach(node => {
+            if (node.querySelector(':scope > .htree-children')) {
+                node.classList.add('htree-node--expanded');
+                node.classList.remove('htree-node--collapsed');
+            }
+        });
+    };
+
+    HierarchyTree.collapseAll = function() {
+        container.querySelectorAll('.htree-node').forEach(node => {
+            if (node.querySelector(':scope > .htree-children')) {
+                node.classList.remove('htree-node--expanded');
+                node.classList.add('htree-node--collapsed');
+            }
+        });
+    };
+
+    // Node Selection
+    function setupNodeSelection() {
+        container.addEventListener('click', function(e) {
+            const nodeContent = e.target.closest('.htree-node__content');
+            if (nodeContent && !e.target.closest('.htree-node__toggle') && !e.target.closest('.htree-node__menu')) {
+                // Single click - select
+                selectNode(nodeContent.closest('.htree-node'));
+            }
+        });
+
+        container.addEventListener('dblclick', function(e) {
+            const nodeContent = e.target.closest('.htree-node__content');
+            if (nodeContent && config.canEdit) {
+                e.preventDefault();
+                const node = nodeContent.closest('.htree-node');
+                startInlineEdit(node);
+            }
+        });
+    }
+
+    function selectNode(node) {
+        // Deselect all
+        container.querySelectorAll('.htree-node--selected').forEach(n => {
+            n.classList.remove('htree-node--selected');
+        });
+        // Select this one
+        if (node) {
+            node.classList.add('htree-node--selected');
+        }
+    }
+
+    // Context Menu
+    function setupContextMenu() {
+        const contextMenu = document.getElementById('htree-context-menu');
+        if (!contextMenu) return;
+
+        // Show context menu on right-click or menu button click
+        container.addEventListener('contextmenu', function(e) {
+            const nodeContent = e.target.closest('.htree-node__content');
+            if (nodeContent) {
+                e.preventDefault();
+                showContextMenu(e.pageX, e.pageY, nodeContent.closest('.htree-node'));
+            }
+        });
+
+        container.addEventListener('click', function(e) {
+            const menuBtn = e.target.closest('.htree-node__menu');
+            if (menuBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const rect = menuBtn.getBoundingClientRect();
+                showContextMenu(rect.right, rect.bottom, menuBtn.closest('.htree-node'));
+            }
+        });
+
+        // Context menu item clicks
+        contextMenu.addEventListener('click', function(e) {
+            const item = e.target.closest('.htree-context-menu__item');
+            if (item && contextMenuTarget) {
+                const action = item.dataset.action;
+                executeContextAction(action, contextMenuTarget);
+                hideContextMenu();
+            }
+        });
+
+        // Hide context menu on click outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.htree-context-menu') && !e.target.closest('.htree-node__menu')) {
+                hideContextMenu();
+            }
+        });
+
+        // Hide on escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideContextMenu();
+                cancelInlineEdit();
+                HierarchyTree.closeMoveModal();
+            }
+        });
+    }
+
+    function showContextMenu(x, y, node) {
+        const contextMenu = document.getElementById('htree-context-menu');
+        contextMenuTarget = node;
+        selectNode(node);
+
+        // Position the menu
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        contextMenu.style.display = 'block';
+        contextMenu.setAttribute('aria-hidden', 'false');
+
+        // Adjust if off-screen
+        const rect = contextMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            contextMenu.style.left = (window.innerWidth - rect.width - 10) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+            contextMenu.style.top = (window.innerHeight - rect.height - 10) + 'px';
+        }
+    }
+
+    function hideContextMenu() {
+        const contextMenu = document.getElementById('htree-context-menu');
+        if (contextMenu) {
+            contextMenu.style.display = 'none';
+            contextMenu.setAttribute('aria-hidden', 'true');
+        }
+        contextMenuTarget = null;
+    }
+
+    function executeContextAction(action, node) {
+        const entityType = node.dataset.entityType;
+        const entityId = parseInt(node.dataset.entityId);
+
+        switch (action) {
+            case 'edit':
+                startInlineEdit(node);
+                break;
+            case 'add-child':
+                addChildToNode(node);
+                break;
+            case 'move-to':
+                showMoveModal(node);
+                break;
+            case 'delete':
+                deleteNode(node);
+                break;
+        }
+    }
+
+    // Inline Edit
+    function setupInlineEdit() {
+        const inlineEdit = document.getElementById('htree-inline-edit');
+        if (!inlineEdit) return;
+
+        const input = inlineEdit.querySelector('.htree-inline-edit__input');
+        const saveBtn = inlineEdit.querySelector('.htree-inline-edit__btn--save');
+        const cancelBtn = inlineEdit.querySelector('.htree-inline-edit__btn--cancel');
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                saveInlineEdit();
+            } else if (e.key === 'Escape') {
+                cancelInlineEdit();
+            }
+        });
+
+        saveBtn.addEventListener('click', saveInlineEdit);
+        cancelBtn.addEventListener('click', cancelInlineEdit);
+    }
+
+    function startInlineEdit(node) {
+        if (!config.canEdit) return;
+
+        const inlineEdit = document.getElementById('htree-inline-edit');
+        const input = inlineEdit.querySelector('.htree-inline-edit__input');
+        const label = node.querySelector('.htree-node__label');
+
+        if (!label) return;
+
+        inlineEditTarget = node;
+        input.value = label.textContent.trim();
+
+        // Position the inline edit
+        const rect = label.getBoundingClientRect();
+        inlineEdit.style.left = rect.left + 'px';
+        inlineEdit.style.top = rect.top + 'px';
+        inlineEdit.style.width = Math.max(rect.width, 150) + 'px';
+        inlineEdit.style.display = 'flex';
+
+        input.focus();
+        input.select();
+    }
+
+    function saveInlineEdit() {
+        if (!inlineEditTarget) return;
+
+        const inlineEdit = document.getElementById('htree-inline-edit');
+        const input = inlineEdit.querySelector('.htree-inline-edit__input');
+        const newName = input.value.trim();
+
+        if (!newName) {
+            alert('@Localizer["NameRequired"]');
+            return;
+        }
+
+        const entityType = inlineEditTarget.dataset.entityType;
+        const entityId = parseInt(inlineEditTarget.dataset.entityId);
+
+        // Call API to save
+        saveEntityName(entityType, entityId, newName)
+            .then(result => {
+                if (result.success) {
+                    // Update the label
+                    const label = inlineEditTarget.querySelector('.htree-node__label');
+                    if (label) {
+                        label.textContent = newName;
+                    }
+                    cancelInlineEdit();
+                } else {
+                    alert(result.message || '@Localizer["ErrorSaving"]');
+                }
+            })
+            .catch(err => {
+                console.error('Error saving:', err);
+                alert('@Localizer["ErrorSaving"]');
+            });
+    }
+
+    function cancelInlineEdit() {
+        const inlineEdit = document.getElementById('htree-inline-edit');
+        if (inlineEdit) {
+            inlineEdit.style.display = 'none';
+        }
+        inlineEditTarget = null;
+    }
+
+    // Drag & Drop with SortableJS
+    function setupDragDrop() {
+        if (!config.canReorder || typeof Sortable === 'undefined') return;
+
+        // Setup sortable for each level
+        const levels = container.querySelectorAll('.htree-level[data-sortable="true"]');
+        levels.forEach(level => {
+            const entityLevel = level.dataset.level;
+            const sortable = new Sortable(level, {
+                group: entityLevel,
+                animation: 150,
+                handle: '.htree-node__drag-handle',
+                ghostClass: 'htree-node--ghost',
+                chosenClass: 'htree-node--chosen',
+                dragClass: 'htree-node--dragging',
+                onEnd: function(evt) {
+                    handleReorder(evt, entityLevel);
+                }
+            });
+            sortableInstances.push(sortable);
+        });
+
+        // Setup sortable for child containers
+        const childContainers = container.querySelectorAll('.htree-children[data-sortable="true"]');
+        childContainers.forEach(childContainer => {
+            const entityLevel = childContainer.dataset.level;
+            const sortable = new Sortable(childContainer, {
+                group: entityLevel,
+                animation: 150,
+                handle: '.htree-node__drag-handle',
+                ghostClass: 'htree-node--ghost',
+                chosenClass: 'htree-node--chosen',
+                dragClass: 'htree-node--dragging',
+                onEnd: function(evt) {
+                    handleReorder(evt, entityLevel);
+                }
+            });
+            sortableInstances.push(sortable);
+        });
+    }
+
+    function handleReorder(evt, entityLevel) {
+        const node = evt.item;
+        const entityType = node.dataset.entityType;
+        const entityId = parseInt(node.dataset.entityId);
+        const newIndex = evt.newIndex;
+        const parentId = getParentId(evt.to);
+
+        // Get all sibling IDs in new order
+        const siblingIds = Array.from(evt.to.children)
+            .filter(child => child.classList.contains('htree-node'))
+            .map(child => parseInt(child.dataset.entityId));
+
+        // Call API to save order
+        saveReorder(entityType, siblingIds, parentId)
+            .then(result => {
+                if (!result.success) {
+                    // Revert the change
+                    if (evt.oldIndex !== evt.newIndex) {
+                        evt.from.insertBefore(node, evt.from.children[evt.oldIndex]);
+                    }
+                    alert(result.message || '@Localizer["ErrorReordering"]');
+                }
+            })
+            .catch(err => {
+                console.error('Error reordering:', err);
+                alert('@Localizer["ErrorReordering"]');
+            });
+    }
+
+    function getParentId(container) {
+        const parentNode = container.closest('.htree-node');
+        if (parentNode) {
+            return parseInt(parentNode.dataset.entityId);
+        }
+        return null;
+    }
+
+    // Add Child
+    function addChildToNode(node) {
+        const entityType = node.dataset.entityType;
+        const entityId = parseInt(node.dataset.entityId);
+
+        // Determine child type
+        let childType;
+        switch (entityType) {
+            case 'project':
+                childType = 'area';
+                break;
+            case 'area':
+                childType = 'molecule';
+                break;
+            case 'molecule':
+                childType = 'company'; // or department based on molecule type
+                break;
+            default:
+                return;
+        }
+
+        const name = prompt('@Localizer["EnterName"]');
+        if (!name) return;
+
+        createEntity(childType, name, entityId)
+            .then(result => {
+                if (result.success) {
+                    // Reload the page to show new entity
+                    window.location.reload();
+                } else {
+                    alert(result.message || '@Localizer["ErrorCreating"]');
+                }
+            })
+            .catch(err => {
+                console.error('Error creating:', err);
+                alert('@Localizer["ErrorCreating"]');
+            });
+    }
+
+    HierarchyTree.addProject = function() {
+        const name = prompt('@Localizer["EnterProjectName"]');
+        if (!name) return;
+
+        createEntity('project', name, null)
+            .then(result => {
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert(result.message || '@Localizer["ErrorCreating"]');
+                }
+            })
+            .catch(err => {
+                console.error('Error creating:', err);
+                alert('@Localizer["ErrorCreating"]');
+            });
+    };
+
+    // Delete
+    function deleteNode(node) {
+        const entityType = node.dataset.entityType;
+        const entityId = parseInt(node.dataset.entityId);
+        const name = node.querySelector('.htree-node__label')?.textContent || entityType;
+
+        const confirmMsg = '@Localizer["ConfirmDelete"]'.replace('{name}', name);
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        deleteEntity(entityType, entityId)
+            .then(result => {
+                if (result.success) {
+                    node.remove();
+                } else {
+                    alert(result.message || '@Localizer["ErrorDeleting"]');
+                }
+            })
+            .catch(err => {
+                console.error('Error deleting:', err);
+                alert('@Localizer["ErrorDeleting"]');
+            });
+    }
+
+    // Move Modal
+    function showMoveModal(node) {
+        const modal = document.getElementById('htree-move-modal');
+        const targetsContainer = document.getElementById('htree-move-targets');
+        if (!modal || !targetsContainer) return;
+
+        const entityType = node.dataset.entityType;
+        const entityId = parseInt(node.dataset.entityId);
+
+        // Get valid move targets
+        getMoveTargets(entityType, entityId)
+            .then(targets => {
+                targetsContainer.innerHTML = '';
+                if (targets.length === 0) {
+                    targetsContainer.innerHTML = '<p>@Localizer["NoMoveTargets"]</p>';
+                } else {
+                    targets.forEach(target => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'htree-move-target';
+                        btn.textContent = target.name;
+                        btn.onclick = function() {
+                            moveEntity(entityType, entityId, target.id)
+                                .then(result => {
+                                    if (result.success) {
+                                        window.location.reload();
+                                    } else {
+                                        alert(result.message || '@Localizer["ErrorMoving"]');
+                                    }
+                                });
+                        };
+                        targetsContainer.appendChild(btn);
+                    });
+                }
+                modal.style.display = 'flex';
+            });
+    }
+
+    HierarchyTree.closeMoveModal = function() {
+        const modal = document.getElementById('htree-move-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    // API Calls
+    async function saveEntityName(entityType, entityId, name) {
+        const response = await fetch('/Api/Hierarchy/Rename', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entityType, entityId, name })
+        });
+        return await response.json();
+    }
+
+    async function saveReorder(entityType, orderedIds, parentId) {
+        const response = await fetch('/Api/Hierarchy/Reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entityType, orderedIds, parentId })
+        });
+        return await response.json();
+    }
+
+    async function createEntity(entityType, name, parentId) {
+        const response = await fetch('/Api/Hierarchy/Create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entityType, name, parentId })
+        });
+        return await response.json();
+    }
+
+    async function deleteEntity(entityType, entityId) {
+        const response = await fetch('/Api/Hierarchy/Delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entityType, entityId })
+        });
+        return await response.json();
+    }
+
+    async function moveEntity(entityType, entityId, newParentId) {
+        const response = await fetch('/Api/Hierarchy/Move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entityType, entityId, newParentId })
+        });
+        return await response.json();
+    }
+
+    async function getMoveTargets(entityType, entityId) {
+        const response = await fetch(`/Api/Hierarchy/MoveTargets?entityType=${entityType}&entityId=${entityId}`);
+        const result = await response.json();
+        return result.targets || [];
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+
+<style>
+/* Hierarchy Tree Component Styles */
+.hierarchy-tree-component {
+    --htree-indent: 1.5rem;
+    --htree-node-height: 2.25rem;
+    position: relative;
+}
+
+/* Toolbar */
+.htree-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: var(--surface-soft, #f8f9fa);
+    border-radius: 8px;
+}
+
+.htree-toolbar__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #dee2e6);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.htree-toolbar__btn:hover {
+    background: var(--primary-soft, #e7f1ff);
+    border-color: var(--primary, #0d6efd);
+}
+
+.htree-toolbar__btn--primary {
+    background: var(--primary, #0d6efd);
+    color: var(--primary-contrast, #fff);
+    border-color: var(--primary, #0d6efd);
+}
+
+.htree-toolbar__btn--primary:hover {
+    background: var(--primary-dark, #0b5ed7);
+}
+
+/* Tree Container */
+.htree-container {
+    font-size: 0.9375rem;
+}
+
+.htree-level {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Tree Node */
+.htree-node {
+    position: relative;
+}
+
+.htree-node__content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--htree-node-height);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.htree-node__content:hover {
+    background: var(--surface-soft, #f8f9fa);
+}
+
+.htree-node--selected > .htree-node__content {
+    background: var(--primary-soft, #e7f1ff);
+}
+
+/* Drag Handle */
+.htree-node__drag-handle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+}
+
+.htree-node__content:hover .htree-node__drag-handle {
+    opacity: 1;
+}
+
+.htree-node__drag-handle::before {
+    content: '⋮⋮';
+    font-size: 0.75rem;
+    letter-spacing: -2px;
+}
+
+/* Toggle Button */
+.htree-node__toggle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-soft, #f8f9fa);
+    border: 1px solid var(--border, #dee2e6);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.htree-node__toggle:hover {
+    background: var(--surface, #fff);
+    border-color: var(--primary, #0d6efd);
+}
+
+.htree-node__toggle-icon {
+    font-size: 0.625rem;
+    transition: transform 0.2s;
+}
+
+.htree-node--expanded > .htree-node__content .htree-node__toggle-icon {
+    transform: rotate(90deg);
+}
+
+.htree-node__toggle-spacer {
+    width: 20px;
+    flex-shrink: 0;
+}
+
+/* Badge */
+.htree-node__badge {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.htree-node__badge--project {
+    background: var(--primary-soft, #e7f1ff);
+    color: var(--primary, #0d6efd);
+}
+
+.htree-node__badge--area {
+    background: var(--success-soft, #d1e7dd);
+    color: var(--success, #198754);
+}
+
+.htree-node__badge--molecule {
+    background: var(--accent-soft, #fff3cd);
+    color: var(--accent, #856404);
+}
+
+.htree-node__badge--company {
+    background: var(--info-soft, #cff4fc);
+    color: var(--info, #0dcaf0);
+}
+
+.htree-node__badge--department {
+    background: var(--secondary-soft, #e2e3e5);
+    color: var(--secondary, #6c757d);
+}
+
+/* Label */
+.htree-node__label {
+    flex: 1;
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Count */
+.htree-node__count {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+}
+
+/* Type Badge */
+.htree-node__type {
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.htree-node__type--workforce {
+    background: var(--primary-soft, #e7f1ff);
+    color: var(--primary, #0d6efd);
+}
+
+.htree-node__type--tech {
+    background: var(--accent-soft, #fff3cd);
+    color: var(--accent, #856404);
+}
+
+.htree-node__type--helper {
+    background: var(--warning-soft, #fff3cd);
+    color: var(--warning, #ffc107);
+}
+
+/* Status */
+.htree-node__status {
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.htree-node__status--inactive {
+    background: var(--surface-soft, #f8f9fa);
+    color: var(--text-muted, #6c757d);
+}
+
+/* Menu Button */
+.htree-node__menu {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.15s;
+}
+
+.htree-node__content:hover .htree-node__menu {
+    opacity: 1;
+}
+
+.htree-node__menu:hover {
+    background: var(--surface-soft, #f8f9fa);
+}
+
+/* Children Container */
+.htree-children {
+    margin-left: var(--htree-indent);
+    padding-left: calc(var(--htree-indent) / 2);
+    border-left: 1px solid var(--border, #dee2e6);
+    display: none;
+}
+
+.htree-node--expanded > .htree-children {
+    display: block;
+}
+
+/* Drag States */
+.htree-node--ghost {
+    opacity: 0.4;
+}
+
+.htree-node--chosen {
+    background: var(--primary-soft, #e7f1ff);
+}
+
+.htree-node--dragging {
+    opacity: 0.8;
+}
+
+/* Context Menu */
+.htree-context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 0.5rem 0;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #dee2e6);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.htree-context-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.htree-context-menu__item:hover {
+    background: var(--surface-soft, #f8f9fa);
+}
+
+.htree-context-menu__item--danger {
+    color: var(--danger, #dc3545);
+}
+
+.htree-context-menu__item--danger:hover {
+    background: var(--danger-soft, #f8d7da);
+}
+
+.htree-context-menu__divider {
+    margin: 0.5rem 0;
+    border: none;
+    border-top: 1px solid var(--border, #dee2e6);
+}
+
+/* Inline Edit */
+.htree-inline-edit {
+    position: fixed;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: var(--surface, #fff);
+    border: 2px solid var(--primary, #0d6efd);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.htree-inline-edit__input {
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    border: none;
+    outline: none;
+    font-size: 0.9375rem;
+}
+
+.htree-inline-edit__actions {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.htree-inline-edit__btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-soft, #f8f9fa);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.htree-inline-edit__btn--save {
+    color: var(--success, #198754);
+}
+
+.htree-inline-edit__btn--cancel {
+    color: var(--danger, #dc3545);
+}
+
+/* Move Modal */
+.htree-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.htree-modal__backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.htree-modal__content {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    background: var(--surface, #fff);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.htree-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border, #dee2e6);
+}
+
+.htree-modal__header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.htree-modal__close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.htree-modal__close:hover {
+    opacity: 1;
+}
+
+.htree-modal__body {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.htree-modal__footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border, #dee2e6);
+    text-align: right;
+}
+
+.htree-move-targets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.htree-move-target {
+    padding: 0.75rem 1rem;
+    background: var(--surface-soft, #f8f9fa);
+    border: 1px solid var(--border, #dee2e6);
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.htree-move-target:hover {
+    background: var(--primary-soft, #e7f1ff);
+    border-color: var(--primary, #0d6efd);
+}
+
+/* Empty State */
+.htree-empty {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.htree-empty__icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.htree-empty p {
+    color: var(--text-muted, #6c757d);
+    margin-bottom: 1.5rem;
+}
+
+/* Icon */
+.htree-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    text-align: center;
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+    .hierarchy-tree-component {
+        --htree-indent: 1rem;
+    }
+
+    .htree-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .htree-node__menu {
+        opacity: 1;
+    }
+}
+</style>

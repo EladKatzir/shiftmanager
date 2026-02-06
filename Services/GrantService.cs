@@ -154,10 +154,95 @@ public class GrantService : IGrantService
             .ToListAsync();
     }
 
+    // Scope resolution
+    public async Task<List<int>> GetAccessibleCompanyIdsForGrantAsync(int userId, string grantKey)
+    {
+        var grantType = await GetGrantTypeByKeyAsync(grantKey);
+        if (grantType == null)
+            return new List<int>();
+
+        // Get user's hierarchy context for Self scope resolution
+        var userContext = await _hierarchyService.GetUserHierarchyContextAsync(userId);
+
+        // Get all grants for this user and grant type
+        var grants = await _db.Grants
+            .Where(g => g.UserId == userId && g.GrantTypeId == grantType.Id && g.CanOwn)
+            .ToListAsync();
+
+        if (!grants.Any())
+            return new List<int>();
+
+        var companyIds = new HashSet<int>();
+
+        foreach (var grant in grants)
+        {
+            // Project scope - all companies in project
+            if (grant.ProjectId.HasValue)
+            {
+                var projectCompanyIds = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.Molecule.Area.ProjectId == grant.ProjectId.Value)
+                    .Select(c => c.Id)
+                    .ToListAsync();
+                foreach (var id in projectCompanyIds)
+                    companyIds.Add(id);
+                continue;
+            }
+
+            // Area scope - all companies in area
+            if (grant.AreaId.HasValue)
+            {
+                var areaCompanyIds = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.Molecule.AreaId == grant.AreaId.Value)
+                    .Select(c => c.Id)
+                    .ToListAsync();
+                foreach (var id in areaCompanyIds)
+                    companyIds.Add(id);
+                continue;
+            }
+
+            // Molecule scope - all companies in molecule
+            if (grant.MoleculeId.HasValue)
+            {
+                var moleculeCompanyIds = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.MoleculeId == grant.MoleculeId.Value)
+                    .Select(c => c.Id)
+                    .ToListAsync();
+                foreach (var id in moleculeCompanyIds)
+                    companyIds.Add(id);
+                continue;
+            }
+
+            // Company scope - just that company
+            if (grant.CompanyId.HasValue)
+            {
+                companyIds.Add(grant.CompanyId.Value);
+                continue;
+            }
+
+            // Self scope (no scope defined) - user's own company
+            if (userContext != null)
+            {
+                companyIds.Add(userContext.Path.Company.Id);
+            }
+        }
+
+        return companyIds.ToList();
+    }
+
+    public async Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId)
+    {
+        var accessibleCompanyIds = await GetAccessibleCompanyIdsForGrantAsync(userId, grantKey);
+        return accessibleCompanyIds.Contains(targetCompanyId);
+    }
+
     // Grant management
     public async Task<Grant?> GrantAsync(int userId, int grantTypeId, GrantScope scope, int? grantedByUserId = null, string? notes = null)
     {
-        var user = await _db.Users.FindAsync(userId);
+        // Use IgnoreQueryFilters to allow granting to users in any company
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return null;
 
@@ -419,5 +504,189 @@ public class GrantService : IGrantService
 
         // Self-scoped grant (no scope defined) - cannot grant to others
         return false;
+    }
+
+    /// <summary>
+    /// Assigns grants to a user based on a role template key.
+    /// This is the primary method for onboarding users with the correct grants.
+    /// </summary>
+    public async Task<int> AssignRoleTemplateGrantsAsync(int userId, string roleTemplateKey, GrantScope scope, int? grantedByUserId = null)
+    {
+        var roleTemplate = await _db.RoleTemplates
+            .Include(rt => rt.AutoGrants)
+            .ThenInclude(ag => ag.GrantType)
+            .FirstOrDefaultAsync(rt => rt.Key == roleTemplateKey && rt.IsActive);
+
+        if (roleTemplate == null)
+            return 0;
+
+        var grantsAssigned = 0;
+
+        foreach (var autoGrant in roleTemplate.AutoGrants)
+        {
+            // Determine effective scope based on ScopeMode
+            var effectiveScope = DetermineEffectiveScope(autoGrant.ScopeMode, scope);
+
+            // Check if grant already exists
+            var existing = await _db.Grants.FirstOrDefaultAsync(g =>
+                g.UserId == userId && g.GrantTypeId == autoGrant.GrantTypeId &&
+                g.ProjectId == effectiveScope.ProjectId && g.AreaId == effectiveScope.AreaId &&
+                g.MoleculeId == effectiveScope.MoleculeId && g.DepartmentId == effectiveScope.DepartmentId &&
+                g.CompanyId == effectiveScope.CompanyId && g.JobTypeId == effectiveScope.JobTypeId);
+
+            if (existing == null)
+            {
+                var grant = new Grant
+                {
+                    UserId = userId,
+                    GrantTypeId = autoGrant.GrantTypeId,
+                    ProjectId = effectiveScope.ProjectId,
+                    AreaId = effectiveScope.AreaId,
+                    MoleculeId = effectiveScope.MoleculeId,
+                    DepartmentId = effectiveScope.DepartmentId,
+                    CompanyId = effectiveScope.CompanyId,
+                    JobTypeId = effectiveScope.JobTypeId,
+                    CanOwn = autoGrant.CanOwn,
+                    CanGive = autoGrant.CanGive,
+                    GrantedByUserId = grantedByUserId,
+                    GrantedAt = DateTime.UtcNow,
+                    IsAutoGrant = true,
+                    Notes = $"Onboarding grant from role template: {roleTemplate.Key}"
+                };
+
+                _db.Grants.Add(grant);
+                grantsAssigned++;
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        return grantsAssigned;
+    }
+
+    /// <summary>
+    /// Verifies a user's grants against their expected grants from role template.
+    /// </summary>
+    public async Task<GrantVerificationResult> VerifyUserGrantsAsync(int userId)
+    {
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            return new GrantVerificationResult
+            {
+                UserId = userId,
+                UserDisplayName = "Not Found",
+                MissingGrants = new List<string> { "User not found" }
+            };
+        }
+
+        var result = new GrantVerificationResult
+        {
+            UserId = userId,
+            UserDisplayName = user.DisplayName,
+            UserEmail = user.Email,
+            UserRole = user.Role.ToString()
+        };
+
+        // Get role template for user's role
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(user.Role);
+        var roleTemplate = await _db.RoleTemplates
+            .Include(rt => rt.AutoGrants)
+            .ThenInclude(ag => ag.GrantType)
+            .FirstOrDefaultAsync(rt => rt.Key == roleTemplateKey && rt.IsActive);
+
+        if (roleTemplate != null)
+        {
+            result.ExpectedGrants = roleTemplate.AutoGrants
+                .Select(ag => ag.GrantType.Key)
+                .OrderBy(k => k)
+                .ToList();
+        }
+
+        // Get user's actual grants
+        var actualGrants = await _db.Grants
+            .Include(g => g.GrantType)
+            .Where(g => g.UserId == userId)
+            .ToListAsync();
+
+        result.ActualGrants = actualGrants
+            .Select(g => g.GrantType.Key)
+            .Distinct()
+            .OrderBy(k => k)
+            .ToList();
+
+        // Calculate missing and extra
+        result.MissingGrants = result.ExpectedGrants.Except(result.ActualGrants).OrderBy(k => k).ToList();
+        result.ExtraGrants = result.ActualGrants.Except(result.ExpectedGrants).OrderBy(k => k).ToList();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Verifies grants for all users in the system.
+    /// </summary>
+    public async Task<List<GrantVerificationResult>> VerifyAllUserGrantsAsync()
+    {
+        var users = await _db.Users.IgnoreQueryFilters()
+            .Where(u => u.IsActive)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        var results = new List<GrantVerificationResult>();
+        foreach (var userId in users)
+        {
+            results.Add(await VerifyUserGrantsAsync(userId));
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Repairs a user's grants by adding any missing grants from their role template.
+    /// </summary>
+    public async Task<int> RepairUserGrantsAsync(int userId, int? repairedByUserId = null)
+    {
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+            return 0;
+
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(user.Role);
+        var scope = GrantScope.Company(user.CompanyId);
+
+        return await AssignRoleTemplateGrantsAsync(userId, roleTemplateKey, scope, repairedByUserId);
+    }
+
+    /// <summary>
+    /// Repairs grants for all users in the system.
+    /// </summary>
+    public async Task<int> RepairAllUserGrantsAsync(int? repairedByUserId = null)
+    {
+        var users = await _db.Users.IgnoreQueryFilters()
+            .Where(u => u.IsActive)
+            .ToListAsync();
+
+        var totalRepaired = 0;
+        foreach (var user in users)
+        {
+            totalRepaired += await RepairUserGrantsAsync(user.Id, repairedByUserId);
+        }
+
+        return totalRepaired;
+    }
+
+    /// <summary>
+    /// Maps UserRole enum to the corresponding RoleTemplate key.
+    /// </summary>
+    private static string MapUserRoleToRoleTemplateKey(Models.Support.UserRole role)
+    {
+        return role switch
+        {
+            Models.Support.UserRole.Owner => "Owner",
+            Models.Support.UserRole.Director => "BRDirector", // Directors typically get BR Director template
+            Models.Support.UserRole.Manager => "MoleculeAdmin", // Managers get molecule admin template
+            Models.Support.UserRole.Employee => "Employee",
+            Models.Support.UserRole.Trainee => "Employee", // Trainees get employee-level grants
+            Models.Support.UserRole.Assigner => "Assigner",
+            _ => "Employee"
+        };
     }
 }

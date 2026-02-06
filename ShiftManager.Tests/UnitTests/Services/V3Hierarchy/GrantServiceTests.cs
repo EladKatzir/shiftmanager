@@ -885,8 +885,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - The plan calls for 107 grants (59 original + 48 new)
-        grantTypes.Should().HaveCount(107, "Should have exactly 107 grant types as per spec");
+        // Assert - 114 grants: 107 original + 4 navigation grants + 3 join request grants (ManageJoinRequests, ViewCompanyUsers, EditCompanyUsers)
+        grantTypes.Should().HaveCount(114, "Should have exactly 114 grant types including navigation and join request grants");
     }
 
     [Fact]
@@ -983,5 +983,258 @@ public class GrantTypeSeedTests
         // Assert - Katzin duty grants
         keys.Should().Contain("ManageKatzinBlueprints");
         keys.Should().Contain("ManageKatzinPrograms");
+    }
+
+    [Fact]
+    public void GrantTypeSeed_HasJoinRequestGrants()
+    {
+        // Arrange & Act
+        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
+        var keys = grantTypes.Select(gt => gt.Key).ToList();
+
+        // Assert - Join request grants
+        keys.Should().Contain("ManageJoinRequests");
+        keys.Should().Contain("ViewCompanyUsers");
+        keys.Should().Contain("EditCompanyUsers");
+    }
+}
+
+/// <summary>
+/// Tests for Scope Resolution in GrantService
+/// Verifies GetAccessibleCompanyIdsForGrantAsync and HasGrantForCompanyAsync methods.
+/// </summary>
+public class GrantScopeResolutionTests : IDisposable
+{
+    private readonly AppDbContext _db;
+    private readonly GrantService _grantService;
+    private readonly Mock<IHierarchyService> _hierarchyServiceMock;
+
+    // Test data
+    private Project _project = null!;
+    private Area _area = null!;
+    private Molecule _molecule = null!;
+    private Company _company1 = null!;
+    private Company _company2 = null!;
+    private AppUser _testUser = null!;
+    private GrantType _manageJoinRequestsGrant = null!;
+
+    public GrantScopeResolutionTests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _db = new AppDbContext(options);
+        _hierarchyServiceMock = new Mock<IHierarchyService>();
+        _grantService = new GrantService(_db, _hierarchyServiceMock.Object);
+
+        SetupTestData().GetAwaiter().GetResult();
+    }
+
+    private async Task SetupTestData()
+    {
+        // Create hierarchy: Project > Area > Molecule > Companies
+        _project = new Project { Name = "Test Project" };
+        _db.Projects.Add(_project);
+        await _db.SaveChangesAsync();
+
+        _area = new Area { ProjectId = _project.Id, Name = "Test Area" };
+        _db.Areas.Add(_area);
+        await _db.SaveChangesAsync();
+
+        _molecule = new Molecule { AreaId = _area.Id, Name = "Test Molecule", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(_molecule);
+        await _db.SaveChangesAsync();
+
+        _company1 = new Company { MoleculeId = _molecule.Id, Name = "Company 1" };
+        _company2 = new Company { MoleculeId = _molecule.Id, Name = "Company 2" };
+        _db.Companies.AddRange(_company1, _company2);
+        await _db.SaveChangesAsync();
+
+        // Create test user
+        _testUser = new AppUser
+        {
+            CompanyId = _company1.Id,
+            Email = "test@test.com",
+            DisplayName = "Test User",
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(_testUser);
+        await _db.SaveChangesAsync();
+
+        // Create ManageJoinRequests grant type
+        _manageJoinRequestsGrant = new GrantType
+        {
+            Key = "ManageJoinRequests",
+            NameKey = "Grant_ManageJoinRequests",
+            DescriptionKey = "Grant_ManageJoinRequests_Desc",
+            Category = GrantCategory.UserManagement,
+            DefaultScope = GrantScopeLevel.Company,
+            IsSystem = true,
+            IsActive = true
+        };
+        _db.GrantTypes.Add(_manageJoinRequestsGrant);
+        await _db.SaveChangesAsync();
+
+        // Setup hierarchy service mock
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(_testUser.Id))
+            .ReturnsAsync(new UserHierarchyContext(
+                _testUser.Id,
+                new HierarchyPath(_project, _area, _molecule, _company1, null),
+                JobType: null,
+                IsWorkforce: true,
+                IsTech: false
+            ));
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+    }
+
+    [Fact]
+    public async Task GetAccessibleCompanyIdsForGrantAsync_WithCompanyScope_ReturnsOnlyThatCompany()
+    {
+        // Arrange - Grant with Company scope
+        var grant = new Grant
+        {
+            UserId = _testUser.Id,
+            GrantTypeId = _manageJoinRequestsGrant.Id,
+            CompanyId = _company1.Id,
+            CanOwn = true
+        };
+        _db.Grants.Add(grant);
+        await _db.SaveChangesAsync();
+
+        // Act
+        var result = await _grantService.GetAccessibleCompanyIdsForGrantAsync(_testUser.Id, "ManageJoinRequests");
+
+        // Assert
+        result.Should().HaveCount(1);
+        result.Should().Contain(_company1.Id);
+        result.Should().NotContain(_company2.Id);
+    }
+
+    [Fact]
+    public async Task GetAccessibleCompanyIdsForGrantAsync_WithMoleculeScope_ReturnsAllCompaniesInMolecule()
+    {
+        // Arrange - Grant with Molecule scope
+        var grant = new Grant
+        {
+            UserId = _testUser.Id,
+            GrantTypeId = _manageJoinRequestsGrant.Id,
+            MoleculeId = _molecule.Id,
+            CanOwn = true
+        };
+        _db.Grants.Add(grant);
+        await _db.SaveChangesAsync();
+
+        // Act
+        var result = await _grantService.GetAccessibleCompanyIdsForGrantAsync(_testUser.Id, "ManageJoinRequests");
+
+        // Assert
+        result.Should().HaveCount(2);
+        result.Should().Contain(_company1.Id);
+        result.Should().Contain(_company2.Id);
+    }
+
+    [Fact]
+    public async Task GetAccessibleCompanyIdsForGrantAsync_WithSelfScope_ReturnsUserCompany()
+    {
+        // Arrange - Grant with Self scope (no scope fields set)
+        var grant = new Grant
+        {
+            UserId = _testUser.Id,
+            GrantTypeId = _manageJoinRequestsGrant.Id,
+            CanOwn = true
+            // No CompanyId, MoleculeId, etc. = Self scope
+        };
+        _db.Grants.Add(grant);
+        await _db.SaveChangesAsync();
+
+        // Act
+        var result = await _grantService.GetAccessibleCompanyIdsForGrantAsync(_testUser.Id, "ManageJoinRequests");
+
+        // Assert
+        result.Should().HaveCount(1);
+        result.Should().Contain(_company1.Id);
+    }
+
+    [Fact]
+    public async Task GetAccessibleCompanyIdsForGrantAsync_WithNoGrant_ReturnsEmptyList()
+    {
+        // Arrange - No grant
+
+        // Act
+        var result = await _grantService.GetAccessibleCompanyIdsForGrantAsync(_testUser.Id, "ManageJoinRequests");
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task HasGrantForCompanyAsync_WithMatchingScope_ReturnsTrue()
+    {
+        // Arrange - Grant with Company scope
+        var grant = new Grant
+        {
+            UserId = _testUser.Id,
+            GrantTypeId = _manageJoinRequestsGrant.Id,
+            CompanyId = _company1.Id,
+            CanOwn = true
+        };
+        _db.Grants.Add(grant);
+        await _db.SaveChangesAsync();
+
+        // Act
+        var result = await _grantService.HasGrantForCompanyAsync(_testUser.Id, "ManageJoinRequests", _company1.Id);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HasGrantForCompanyAsync_WithNonMatchingScope_ReturnsFalse()
+    {
+        // Arrange - Grant only for Company1
+        var grant = new Grant
+        {
+            UserId = _testUser.Id,
+            GrantTypeId = _manageJoinRequestsGrant.Id,
+            CompanyId = _company1.Id,
+            CanOwn = true
+        };
+        _db.Grants.Add(grant);
+        await _db.SaveChangesAsync();
+
+        // Act - Check for Company2
+        var result = await _grantService.HasGrantForCompanyAsync(_testUser.Id, "ManageJoinRequests", _company2.Id);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HasGrantForCompanyAsync_WithMoleculeScope_ReturnsTrueForAnyCompanyInMolecule()
+    {
+        // Arrange - Grant with Molecule scope
+        var grant = new Grant
+        {
+            UserId = _testUser.Id,
+            GrantTypeId = _manageJoinRequestsGrant.Id,
+            MoleculeId = _molecule.Id,
+            CanOwn = true
+        };
+        _db.Grants.Add(grant);
+        await _db.SaveChangesAsync();
+
+        // Act - Check for both companies
+        var result1 = await _grantService.HasGrantForCompanyAsync(_testUser.Id, "ManageJoinRequests", _company1.Id);
+        var result2 = await _grantService.HasGrantForCompanyAsync(_testUser.Id, "ManageJoinRequests", _company2.Id);
+
+        // Assert
+        result1.Should().BeTrue();
+        result2.Should().BeTrue();
     }
 }

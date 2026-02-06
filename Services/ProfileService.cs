@@ -26,6 +26,7 @@ public class ProfileService : IProfileService
 {
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IGrantService _grantService;
     private readonly ILogger<ProfileService> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
@@ -58,23 +59,25 @@ public class ProfileService : IProfileService
     public ProfileService(
         AppDbContext db,
         ITenantResolver tenantResolver,
+        IGrantService grantService,
         ILogger<ProfileService> logger,
         IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _tenantResolver = tenantResolver;
+        _grantService = grantService;
         _logger = logger;
         _localizer = localizer;
     }
 
     public async Task<bool> CanEditFieldAsync(int editorUserId, int targetUserId, string fieldName)
     {
-        var editor = await _db.Users.FindAsync(editorUserId);
-        if (editor == null) return false;
+        var target = await _db.Users.FindAsync(targetUserId);
+        if (target == null) return false;
 
-        // Owner, Directors, and Managers can edit all fields
-        // Owner = 0, Manager = 1, Director = 3, so we need special handling
-        if (editor.Role == UserRole.Owner || editor.Role == UserRole.Director || editor.Role == UserRole.Manager)
+        // ✅ Grant-based: Check if editor has EditCompanyUsers grant for target's company
+        var hasEditGrant = await _grantService.HasGrantForCompanyAsync(editorUserId, "EditCompanyUsers", target.CompanyId);
+        if (hasEditGrant)
         {
             return true;
         }
@@ -108,17 +111,18 @@ public class ProfileService : IProfileService
                 return (false, _localizer["TargetUserNotFound"]);
             }
 
-            // Verify same company (Owner can edit across all companies)
+            // ✅ Grant-based: Check if editor has EditCompanyUsers grant for target's company
             var companyId = _tenantResolver.GetCurrentTenantId();
-            if (editor.Role != UserRole.Owner && (editor.CompanyId != companyId || targetUser.CompanyId != companyId))
+            var hasEditGrant = await _grantService.HasGrantForCompanyAsync(editorUserId, "EditCompanyUsers", targetUser.CompanyId);
+
+            // Verify editor has permission to edit target's company
+            if (!hasEditGrant && editorUserId != targetUserId)
             {
                 return (false, _localizer["UnauthorizedAccess"]);
             }
 
-            // Owner, Director, and Manager have full permissions
-            var hasManagerPermissions = editor.Role == UserRole.Owner ||
-                                       editor.Role == UserRole.Director ||
-                                       editor.Role == UserRole.Manager;
+            // Editor has manager permissions if they have the EditCompanyUsers grant
+            var hasManagerPermissions = hasEditGrant;
             var isEditingSelf = editorUserId == targetUserId;
 
             // Track changes for audit log

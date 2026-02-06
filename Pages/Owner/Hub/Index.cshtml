@@ -1,0 +1,441 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["OwnerHub_Title"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], IsActive = true }
+})
+
+<div class="owner-hub-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F3DB;</span>
+            <loc key="OwnerHub_Title">Owner Hub</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="OwnerHub_Subtitle">System-wide administration dashboard</loc></p>
+    </div>
+
+    @* Dashboard Cards Grid *@
+    <div class="hub-cards-grid">
+        @* Hierarchy Card *@
+        <a href="/Admin/Organization/Hierarchy" class="hub-card hub-card-hierarchy">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x1F3D7;</div>
+                <h2><loc key="OwnerHub_Hierarchy">Hierarchy</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalProjects</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Projects">projects</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalAreas</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Areas">areas</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalMolecules</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Molecules">molecules</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalCompanies</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Companies">companies</loc></span>
+                </div>
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ManageHierarchy">Manage hierarchy</loc> &rarr;</span>
+            </div>
+        </a>
+
+        @* People Card *@
+        <a href="/Admin/Users" class="hub-card hub-card-people">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x1F465;</div>
+                <h2><loc key="OwnerHub_People">People</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalUsers</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_TotalUsers">total users</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.ActiveUsers</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_ActiveUsers">active</loc></span>
+                </div>
+                @if (Model.PendingJoinRequests > 0)
+                {
+                    <div class="hub-stat hub-stat-alert">
+                        <span class="hub-stat-value">@Model.PendingJoinRequests</span>
+                        <span class="hub-stat-label"><loc key="OwnerHub_Pending">pending</loc></span>
+                    </div>
+                }
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ManageUsers">Manage users</loc> &rarr;</span>
+            </div>
+        </a>
+
+        @* Grants Card *@
+        <a href="/Owner/Hub/Grants" class="hub-card hub-card-grants">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x1F510;</div>
+                <h2><loc key="OwnerHub_Grants">Grants</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalGrantTypes</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_GrantTypes">grant types</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalRoleTemplates</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_RoleTemplates">role templates</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalGrantAssignments</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Assignments">assignments</loc></span>
+                </div>
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ManageGrants">Manage permissions</loc> &rarr;</span>
+            </div>
+        </a>
+
+        @* Scheduling Card *@
+        <a href="/Owner/Programs" class="hub-card hub-card-scheduling">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x1F4C5;</div>
+                <h2><loc key="OwnerHub_Scheduling">Scheduling</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalPrograms</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Programs">programs</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalBlueprints</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Blueprints">blueprints</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalShiftGroupings</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Groupings">groupings</loc></span>
+                </div>
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ManageScheduling">Manage scheduling</loc> &rarr;</span>
+            </div>
+        </a>
+
+        @* Settings Card *@
+        <a href="/Owner/FeatureFlags" class="hub-card hub-card-settings">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x2699;</div>
+                <h2><loc key="OwnerHub_Settings">Settings</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    @if (Model.EmailConfigured)
+                    {
+                        <span class="hub-stat-check">&#x2713;</span>
+                    }
+                    else
+                    {
+                        <span class="hub-stat-x">&#x2717;</span>
+                    }
+                    <span class="hub-stat-label"><loc key="OwnerHub_Email">Email</loc></span>
+                </div>
+                <div class="hub-stat">
+                    @if (Model.AdfsConfigured)
+                    {
+                        <span class="hub-stat-check">&#x2713;</span>
+                    }
+                    else
+                    {
+                        <span class="hub-stat-x">&#x2717;</span>
+                    }
+                    <span class="hub-stat-label"><loc key="OwnerHub_ADFS">ADFS</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.FeatureFlagsEnabled</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_Flags">flags on</loc></span>
+                </div>
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ManageSettings">Manage settings</loc> &rarr;</span>
+            </div>
+        </a>
+
+        @* Analytics Card *@
+        <a href="/Admin/Analytics" class="hub-card hub-card-analytics">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x1F4CA;</div>
+                <h2><loc key="OwnerHub_Analytics">Analytics</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalAuditLogs</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_TotalLogs">total logs</loc></span>
+                </div>
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.RecentAuditLogs</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_RecentLogs">this week</loc></span>
+                </div>
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ViewReports">View reports</loc> &rarr;</span>
+            </div>
+        </a>
+    </div>
+
+    @* Quick Links Section *@
+    <div class="hub-quick-links">
+        <h3><loc key="OwnerHub_QuickLinks">Quick Links</loc></h3>
+        <div class="quick-links-grid">
+            <a href="/Owner/Index?handler=Legacy" class="quick-link">
+                <span class="quick-link-icon">&#x1F527;</span>
+                <span><loc key="OwnerHub_LegacyPanel">Legacy Owner Panel</loc></span>
+            </a>
+            <a href="/Owner/SystemHealth" class="quick-link">
+                <span class="quick-link-icon">&#x1F3E5;</span>
+                <span><loc key="OwnerHub_SystemHealth">System Health</loc></span>
+            </a>
+            <a href="/Owner/DatabaseConsole" class="quick-link">
+                <span class="quick-link-icon">&#x1F4BE;</span>
+                <span><loc key="OwnerHub_Database">Database Console</loc></span>
+            </a>
+            <a href="/Admin/AuditLog" class="quick-link">
+                <span class="quick-link-icon">&#x1F50D;</span>
+                <span><loc key="OwnerHub_AuditLog">Audit Log</loc></span>
+            </a>
+            <a href="/Owner/Backup" class="quick-link">
+                <span class="quick-link-icon">&#x1F4BC;</span>
+                <span><loc key="OwnerHub_Backup">Backup</loc></span>
+            </a>
+            <a href="/Owner/LanguageManagement" class="quick-link">
+                <span class="quick-link-icon">&#x1F310;</span>
+                <span><loc key="OwnerHub_Languages">Languages</loc></span>
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.owner-hub-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.page-icon {
+    font-size: 2.5rem;
+}
+
+.page-subtitle {
+    color: var(--muted);
+    margin: 0;
+}
+
+/* Hub Cards Grid - 3 columns on desktop, responsive */
+.hub-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@@media (max-width: 1200px) {
+    .hub-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@@media (max-width: 768px) {
+    .hub-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Hub Card Base Styles */
+.hub-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.hub-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.hub-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+}
+
+.hub-card:hover::before {
+    opacity: 1;
+}
+
+.hub-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.hub-card-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.hub-card-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.hub-card-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.hub-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 60px;
+}
+
+.hub-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.hub-stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: lowercase;
+}
+
+.hub-stat-alert .hub-stat-value {
+    color: var(--warning, #f59e0b);
+}
+
+.hub-stat-check {
+    font-size: 1.25rem;
+    color: var(--success, #22c55e);
+    font-weight: bold;
+}
+
+.hub-stat-x {
+    font-size: 1.25rem;
+    color: var(--muted);
+    font-weight: bold;
+}
+
+.hub-card-actions {
+    margin-top: auto;
+}
+
+.hub-action-link {
+    font-size: 0.875rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Card Color Accents */
+.hub-card-hierarchy:hover::before { background: #6366f1; }
+.hub-card-people:hover::before { background: #10b981; }
+.hub-card-grants:hover::before { background: #f59e0b; }
+.hub-card-scheduling:hover::before { background: #3b82f6; }
+.hub-card-settings:hover::before { background: #8b5cf6; }
+.hub-card-analytics:hover::before { background: #ec4899; }
+
+/* Quick Links Section */
+.hub-quick-links {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.hub-quick-links h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.quick-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+}
+
+.quick-link:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.quick-link-icon {
+    font-size: 1.25rem;
+}
+</style>
+}
