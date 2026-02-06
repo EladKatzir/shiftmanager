@@ -17,6 +17,7 @@ public class FeedbackModel : PageModel
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly INotificationService _notificationService;
+    private readonly IGrantService _grantService;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<FeedbackModel> _logger;
 
@@ -24,12 +25,14 @@ public class FeedbackModel : PageModel
         AppDbContext db,
         ITenantResolver tenantResolver,
         INotificationService notificationService,
+        IGrantService grantService,
         IWebHostEnvironment env,
         ILogger<FeedbackModel> logger)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _notificationService = notificationService;
+        _grantService = grantService;
         _env = env;
         _logger = logger;
     }
@@ -54,9 +57,15 @@ public class FeedbackModel : PageModel
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 
+    private async Task<bool> CheckIsOwnerAsync(int userId)
+    {
+        return await _grantService.HasGrantAsync(userId, "AdminAccess");
+    }
+
     public async Task OnGetAsync()
     {
-        IsOwner = User.IsInRole("Owner");
+        var userId = GetCurrentUserId();
+        IsOwner = await CheckIsOwnerAsync(userId);
 
         if (IsOwner)
         {
@@ -133,7 +142,8 @@ public class FeedbackModel : PageModel
 
     public async Task<IActionResult> OnPostMarkToWorkOnAsync(int feedbackId)
     {
-        if (!User.IsInRole("Owner"))
+        var userId = GetCurrentUserId();
+        if (!await CheckIsOwnerAsync(userId))
         {
             return Forbid();
         }
@@ -150,7 +160,7 @@ public class FeedbackModel : PageModel
 
             feedback.Status = FeedbackStatus.ToWorkOn;
             feedback.StatusUpdatedAt = DateTime.UtcNow;
-            feedback.StatusUpdatedBy = GetCurrentUserId();
+            feedback.StatusUpdatedBy = userId;
 
             await _db.SaveChangesAsync();
 
@@ -169,7 +179,8 @@ public class FeedbackModel : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int feedbackId)
     {
-        if (!User.IsInRole("Owner"))
+        var userId = GetCurrentUserId();
+        if (!await CheckIsOwnerAsync(userId))
         {
             return Forbid();
         }

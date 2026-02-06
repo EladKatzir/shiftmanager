@@ -113,8 +113,8 @@ public class ScopeSwitcherModel : PageModel
 
         // Get user's hierarchy context
         var userContext = await _hierarchyService.GetUserHierarchyContextAsync(userId);
-        var isOwner = User.IsInRole("Owner");
-        var isDirector = User.IsInRole("Director");
+        var isOwner = await _grantService.HasGrantAsync(userId, "AdminAccess");
+        var isDirector = await _grantService.HasGrantAsync(userId, "DirectorHubAccess");
 
         // Always add "mine" scope - users can always see their own data
         scopes.Add(new ScopeDto
@@ -226,8 +226,8 @@ public class ScopeSwitcherModel : PageModel
 
     private async Task<HierarchyResponse> GetFullHierarchyAsync(int userId)
     {
-        var isOwner = User.IsInRole("Owner");
-        var isDirector = User.IsInRole("Director");
+        var isOwner = await _grantService.HasGrantAsync(userId, "AdminAccess");
+        var isDirector = await _grantService.HasGrantAsync(userId, "DirectorHubAccess");
 
         // Get all projects (visible based on grants)
         var projects = new List<ProjectHierarchyDto>();

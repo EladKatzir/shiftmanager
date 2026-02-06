@@ -11,11 +11,13 @@ namespace ShiftManager.Pages.My;
 public class ApiKeysModel : PageModel
 {
     private readonly IApiKeyService _apiKeyService;
+    private readonly IGrantService _grantService;
     private readonly ILogger<ApiKeysModel> _logger;
 
-    public ApiKeysModel(IApiKeyService apiKeyService, ILogger<ApiKeysModel> logger)
+    public ApiKeysModel(IApiKeyService apiKeyService, IGrantService grantService, ILogger<ApiKeysModel> logger)
     {
         _apiKeyService = apiKeyService;
+        _grantService = grantService;
         _logger = logger;
     }
 
@@ -29,8 +31,8 @@ public class ApiKeysModel : PageModel
     public List<ApiKey> AllKeys { get; set; } = new();
     public List<ApiKeyRequest> AllCompanyRequests { get; set; } = new();
 
-    public bool IsAdmin => User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director");
-    public bool IsOwner => User.IsInRole("Owner");
+    public bool IsAdmin { get; set; }
+    public bool IsOwner { get; set; }
 
     [TempData]
     public string? Message { get; set; }
@@ -41,10 +43,24 @@ public class ApiKeysModel : PageModel
     [TempData]
     public string? GeneratedApiKey { get; set; }
 
+    private async Task<bool> CheckIsAdminAsync(int userId)
+    {
+        return await _grantService.HasGrantAsync(userId, "AccessAdminNavigation");
+    }
+
+    private async Task<bool> CheckIsOwnerAsync(int userId)
+    {
+        return await _grantService.HasGrantAsync(userId, "AdminAccess");
+    }
+
     public async Task OnGetAsync()
     {
         var companyId = int.Parse(User.FindFirstValue("CompanyId")!);
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        // Grant-based access checks
+        IsAdmin = await CheckIsAdminAsync(userId);
+        IsOwner = await CheckIsOwnerAsync(userId);
 
         // Load user's own keys and requests
         ActiveKeys = await _apiKeyService.ListUserKeysAsync(companyId, userId);
@@ -140,13 +156,13 @@ public class ApiKeysModel : PageModel
         int rateLimitPerMinute = 100,
         int? expiresInDays = null)
     {
-        if (!IsAdmin)
+        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        if (!await CheckIsAdminAsync(reviewerId))
         {
             Error = "Unauthorized";
             return RedirectToPage();
         }
-
-        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         DateTime? expiresAt = expiresInDays.HasValue
             ? DateTime.UtcNow.AddDays(expiresInDays.Value)
@@ -175,13 +191,13 @@ public class ApiKeysModel : PageModel
 
     public async Task<IActionResult> OnPostRejectAsync(int requestId, string reviewNotes)
     {
-        if (!IsAdmin)
+        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        if (!await CheckIsAdminAsync(reviewerId))
         {
             Error = "Unauthorized";
             return RedirectToPage();
         }
-
-        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var (request, error) = await _apiKeyService.RejectRequestAsync(requestId, reviewerId, reviewNotes);
 
@@ -199,13 +215,13 @@ public class ApiKeysModel : PageModel
 
     public async Task<IActionResult> OnPostRevokeAdminAsync(int keyId, string? reason)
     {
-        if (!IsAdmin)
+        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        if (!await CheckIsAdminAsync(reviewerId))
         {
             Error = "Unauthorized";
             return RedirectToPage();
         }
-
-        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var (key, error) = await _apiKeyService.RevokeApiKeyAsync(keyId, reviewerId, reason ?? "Revoked by administrator");
 

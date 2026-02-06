@@ -18,17 +18,20 @@ public class ProfileModel : PageModel
     private readonly IProfileService _profileService;
     private readonly IAvatarService _avatarService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IGrantService _grantService;
 
     public ProfileModel(
         AppDbContext db,
         IProfileService profileService,
         IAvatarService avatarService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IGrantService grantService)
     {
         _db = db;
         _profileService = profileService;
         _avatarService = avatarService;
         _tenantResolver = tenantResolver;
+        _grantService = grantService;
     }
 
     [BindProperty]
@@ -82,6 +85,9 @@ public class ProfileModel : PageModel
     public List<string> SkillsList { get; set; } = new();
     public List<string> CertificationsList { get; set; } = new();
 
+    // Grant-based access flag (set in OnGetAsync)
+    public bool CanEditProfessionalInfo { get; set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
@@ -96,6 +102,9 @@ public class ProfileModel : PageModel
         {
             return RedirectToPage("/Auth/Login");
         }
+
+        // Grant-based check for professional info editing (Owner-level access)
+        CanEditProfessionalInfo = await _grantService.HasGrantAsync(userId, "AdminAccess");
 
         LoadUserData(user);
 
@@ -201,7 +210,7 @@ public class ProfileModel : PageModel
         }
 
         // Check if user is Owner (can edit Department, JobTitle, HireDate)
-        var isOwner = User.IsInRole("Owner");
+        var isOwner = await _grantService.HasGrantAsync(userId, "AdminAccess");
 
         // Validate HireDate for Owner
         if (isOwner && HireDate.HasValue && HireDate.Value > DateOnly.FromDateTime(DateTime.Today))
