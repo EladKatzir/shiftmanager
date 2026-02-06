@@ -28,6 +28,7 @@ public class WeekModel : PageModel
     private readonly IUserPreferenceService _userPreferenceService;
     private readonly IChoreService _choreService;
     private readonly IScopeFilterService _scopeFilterService;
+    private readonly IGrantService _grantService;
 
     public WeekModel(
         AppDbContext db,
@@ -37,7 +38,8 @@ public class WeekModel : PageModel
         IDirectorService directorService,
         IUserPreferenceService userPreferenceService,
         IChoreService choreService,
-        IScopeFilterService scopeFilterService)
+        IScopeFilterService scopeFilterService,
+        IGrantService grantService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -47,6 +49,7 @@ public class WeekModel : PageModel
         _userPreferenceService = userPreferenceService;
         _choreService = choreService;
         _scopeFilterService = scopeFilterService;
+        _grantService = grantService;
     }
 
     public DateOnly CurrentWeekStart { get; set; }
@@ -67,6 +70,9 @@ public class WeekModel : PageModel
     public int TotalItemCount { get; set; }
     public int PendingItemsCount { get; set; }
     public double CoveragePercent { get; set; }
+
+    // Grant-based access flag (set in OnGetAsync)
+    public bool HasAdminAccess { get; set; }
 
     public class DayVM
     {
@@ -102,6 +108,9 @@ public class WeekModel : PageModel
             return;
         }
         CurrentUserId = currentUserId;
+
+        // Grant-based access check (never use User.IsInRole)
+        HasAdminAccess = await _grantService.HasGrantAsync(currentUserId, "AccessAdminNavigation");
 
         // ✅ A-018: Get scope from URL/cookie and resolve company IDs for filtering
         var (scopeType, scopeId) = _scopeFilterService.GetCurrentScope("shifts");
@@ -171,8 +180,8 @@ public class WeekModel : PageModel
         // ✅ PHASE 7: Calculate header metrics after Days population
         CalculateHeaderMetrics();
 
-        // ✅ PHASE 20: Load dropdown data for quick-add (managers only)
-        if (User.IsInRole("Manager") || User.IsInRole("Director") || User.IsInRole("Owner"))
+        // ✅ PHASE 20: Load dropdown data for quick-add (users with AccessAdminNavigation grant)
+        if (HasAdminAccess)
         {
             EligibleAssignees = await _choreService.GetEligibleAssigneesAsync();
 
@@ -397,8 +406,8 @@ public class WeekModel : PageModel
                        filled < total;
             });
 
-        // Coverage % (admin only)
-        if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+        // Coverage % (users with AccessAdminNavigation grant only)
+        if (HasAdminAccess)
         {
             var shiftsWithStaffing = allItems
                 .Where(i => i.Type == CalendarItemType.Shift && !string.IsNullOrEmpty(i.StaffingInfo))

@@ -51,31 +51,40 @@ public class ShiftAssignmentService : IShiftAssignmentService
         if (shiftType == null)
             return new List<EligibleUserDto>();
 
-        // Start with users in the same company
+        // Determine which companies to include
+        var effectiveGroupingId = shiftGroupingId ?? shiftType.ShiftGroupingId;
+        List<int> companyIds;
+
+        if (effectiveGroupingId.HasValue)
+        {
+            // ShiftGrouping specified: get all companies in the grouping (cross-company query)
+            companyIds = await _db.ShiftGroupingCompanies
+                .Where(sgc => sgc.ShiftGroupingId == effectiveGroupingId.Value)
+                .Select(sgc => sgc.CompanyId)
+                .ToListAsync();
+
+            // Fall back to shift type's company if grouping has no companies
+            if (!companyIds.Any())
+            {
+                companyIds = new List<int> { shiftType.CompanyId };
+            }
+        }
+        else
+        {
+            // No grouping: use only the shift type's company
+            companyIds = new List<int> { shiftType.CompanyId };
+        }
+
+        // Start with active users from the determined companies
         var usersQuery = _db.Users
-            .Where(u => u.IsActive && u.CompanyId == shiftType.CompanyId);
+            .IgnoreQueryFilters()
+            .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
 
         // Filter by JobType if specified
         var effectiveJobTypeId = jobTypeId ?? shiftType.JobTypeId;
         if (effectiveJobTypeId.HasValue)
         {
             usersQuery = usersQuery.Where(u => u.JobTypeId == effectiveJobTypeId.Value);
-        }
-
-        // Filter by ShiftGrouping if specified
-        var effectiveGroupingId = shiftGroupingId ?? shiftType.ShiftGroupingId;
-        if (effectiveGroupingId.HasValue)
-        {
-            // Get company IDs in this grouping
-            var groupingCompanyIds = await _db.ShiftGroupingCompanies
-                .Where(sgc => sgc.ShiftGroupingId == effectiveGroupingId.Value)
-                .Select(sgc => sgc.CompanyId)
-                .ToListAsync();
-
-            if (groupingCompanyIds.Any())
-            {
-                usersQuery = usersQuery.Where(u => groupingCompanyIds.Contains(u.CompanyId));
-            }
         }
 
         var users = await usersQuery
@@ -90,10 +99,10 @@ public class ShiftAssignmentService : IShiftAssignmentService
             .ToListAsync();
 
         // Get company names
-        var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        var userCompanyIds = users.Select(u => u.CompanyId).Distinct().ToList();
         var companyNames = await _db.Companies
             .IgnoreQueryFilters()
-            .Where(c => companyIds.Contains(c.Id))
+            .Where(c => userCompanyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.Name);
 
         // Get assignment counts for this week

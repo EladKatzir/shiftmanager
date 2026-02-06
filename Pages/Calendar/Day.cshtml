@@ -200,7 +200,7 @@
                         }
                     </div>
                 </div>
-                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                @if (Model.HasAdminAccess)
                 {
                     <div class="item-actions">
                         @* ✅ PHASE 20: Delete button for chores and on-duty *@
@@ -256,7 +256,7 @@
                         <loc key="Calendar_Empty_Action_ViewAll" />
                     </a>
                 }
-                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                @if (Model.HasAdminAccess)
                 {
                     <a href="/Calendar/Table" class="btn btn-primary">
                         <loc key="Calendar_Empty_Action_CreateShift" />
@@ -273,7 +273,7 @@
     }
 
     @* ✅ PHASE 20: Quick-add form (managers only) *@
-    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+    @if (Model.HasAdminAccess)
     {
         <div class="day-quick-add-section">
             <h3><loc key="Calendar_QuickActions" /></h3>

@@ -83,7 +83,11 @@ public class HierarchyService : IHierarchyService
     // User hierarchy context
     public async Task<UserHierarchyContext?> GetUserHierarchyContextAsync(int userId)
     {
+        // IMPORTANT: Use IgnoreQueryFilters to bypass tenant filtering.
+        // This is needed because Owners/Directors may be viewing a different company
+        // but still need their own user record to determine their hierarchy context.
         var user = await _db.Users
+            .IgnoreQueryFilters()
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == userId);

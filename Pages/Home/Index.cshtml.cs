@@ -18,11 +18,13 @@ namespace ShiftManager.Pages.Home
     {
         private readonly AppDbContext _context;
         private readonly ICompanyContext _companyContext;
+        private readonly IGrantService _grantService;
 
-        public IndexModel(AppDbContext context, ICompanyContext companyContext)
+        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService)
         {
             _context = context;
             _companyContext = companyContext;
+            _grantService = grantService;
         }
 
         // Common properties (all users)
@@ -62,15 +64,17 @@ namespace ShiftManager.Pages.Home
         public async Task OnGetAsync()
         {
             UserName = User.FindFirst(ClaimTypes.Name)?.Value ?? "";
-            IsAdmin = User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director");
-            IsDirector = User.IsInRole("Owner") || User.IsInRole("Director");
-            IsOwner = User.IsInRole("Owner");
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 return;
             }
+
+            // Grant-based access checks (never use User.IsInRole)
+            IsAdmin = await _grantService.HasGrantAsync(userId, "AccessAdminNavigation");
+            IsDirector = await _grantService.HasGrantAsync(userId, "DirectorHubAccess");
+            IsOwner = await _grantService.HasGrantAsync(userId, "AdminAccess");
 
             var companyId = _companyContext.GetCompanyIdOrThrow();
 

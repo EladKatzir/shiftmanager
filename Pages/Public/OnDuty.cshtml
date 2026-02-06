@@ -304,16 +304,18 @@
                 </div>
             }
 
-            @if (!User.IsInRole("Owner") && !User.IsInRole("Manager") && !User.IsInRole("Director") && Model.MyOnDutyCount > 0)
-            {
-                <div class="metric-item metric-coverage">
-                    <span class="metric-icon">👤</span>
-                    <div class="metric-content">
-                        <span class="metric-value">@Model.MyOnDutyCount</span>
-                        <span class="metric-label"><loc key="Calendar_MyItems" /></span>
+            <require-grant key="AccessAdminNavigation" negate="true">
+                @if (Model.MyOnDutyCount > 0)
+                {
+                    <div class="metric-item metric-coverage">
+                        <span class="metric-icon">👤</span>
+                        <div class="metric-content">
+                            <span class="metric-value">@Model.MyOnDutyCount</span>
+                            <span class="metric-label"><loc key="Calendar_MyItems" /></span>
+                        </div>
                     </div>
-                </div>
-            }
+                }
+            </require-grant>
         </div>
     </div>
 

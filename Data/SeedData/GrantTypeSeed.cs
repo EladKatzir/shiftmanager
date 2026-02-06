@@ -234,6 +234,23 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ManageKatzinBlueprints", NameKey = "Grant_ManageKatzinBlueprints", DescriptionKey = "Grant_ManageKatzinBlueprints_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ManageKatzinPrograms", NameKey = "Grant_ManageKatzinPrograms", DescriptionKey = "Grant_ManageKatzinPrograms_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
+        // ============================================
+        // NAVIGATION GRANTS (Category.System) - Controls navigation visibility
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "AccessAdminNavigation", NameKey = "Grant_AccessAdminNavigation", DescriptionKey = "Grant_AccessAdminNavigation_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "DirectorHubAccess", NameKey = "Grant_DirectorHubAccess", DescriptionKey = "Grant_DirectorHubAccess_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManagerHomeAccess", NameKey = "Grant_ManagerHomeAccess", DescriptionKey = "Grant_ManagerHomeAccess_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewCompanyCalendar", NameKey = "Grant_ViewCompanyCalendar", DescriptionKey = "Grant_ViewCompanyCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+
+        // ============================================
+        // JOIN REQUEST GRANTS (Category.UserManagement)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageJoinRequests", NameKey = "Grant_ManageJoinRequests", DescriptionKey = "Grant_ManageJoinRequests_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewCompanyUsers", NameKey = "Grant_ViewCompanyUsers", DescriptionKey = "Grant_ViewCompanyUsers_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "EditCompanyUsers", NameKey = "Grant_EditCompanyUsers", DescriptionKey = "Grant_EditCompanyUsers_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+
         return grants;
     }
 }

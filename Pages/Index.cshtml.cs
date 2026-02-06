@@ -14,11 +14,13 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly IAnnouncementService _announcementService;
+    private readonly IGrantService _grantService;
 
-    public IndexModel(AppDbContext db, IAnnouncementService announcementService)
+    public IndexModel(AppDbContext db, IAnnouncementService announcementService, IGrantService grantService)
     {
         _db = db;
         _announcementService = announcementService;
+        _grantService = grantService;
     }
 
     // Dashboard metrics
@@ -53,10 +55,11 @@ public class IndexModel : PageModel
             return;
         }
 
-        UserRole = user.Role;
+        UserRole = user.Role; // For display purposes only
         UserName = user.DisplayName;
-        IsAdmin = user.Role == UserRole.Owner || user.Role == UserRole.Manager ||
-                  user.Role == UserRole.Director || user.Role == UserRole.Assigner;
+
+        // Grant-based access check (never use user.Role for authorization)
+        IsAdmin = await _grantService.HasGrantAsync(userId, "AccessAdminNavigation");
 
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
         var weekFromNow = now.AddDays(7);

@@ -186,7 +186,7 @@
                     <loc key="Calendar_Empty_Action_ViewAll" />
                 </a>
             }
-            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+            @if (Model.HasAdminAccess)
             {
                 <a href="/Calendar/Table" class="btn btn-primary">
                     <loc key="Calendar_Empty_Action_CreateShift" />
@@ -246,7 +246,7 @@
                             <span class="item-icon">@item.Icon</span>
                             <span class="item-title">@item.Title</span>
                             @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
-                            @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                            @if (Model.HasAdminAccess)
                             {
                                 @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
                                 {
@@ -296,7 +296,7 @@
                                     <span class="item-icon">@item.Icon</span>
                                     <span class="item-title">@item.Title</span>
                                     @* ✅ PHASE 20: Delete button for chores and on-duty (managers only) *@
-                                    @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                                    @if (Model.HasAdminAccess)
                                     {
                                         @if (item.Type == CalendarItemType.Chore || item.Type == CalendarItemType.OnDuty)
                                         {
@@ -329,7 +329,7 @@
                 }
 
                 @* ✅ PHASE 20: Quick-add form (managers only) *@
-                @if (User.IsInRole("Owner") || User.IsInRole("Manager") || User.IsInRole("Director"))
+                @if (Model.HasAdminAccess)
                 {
                     <div class="quick-add-container">
                         <button class="btn-quick-add" onclick="toggleQuickAdd('chore', '@day.Date.ToString("yyyy-MM-dd")')">

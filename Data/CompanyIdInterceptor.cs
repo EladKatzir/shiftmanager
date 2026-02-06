@@ -60,7 +60,13 @@ public class CompanyIdInterceptor : SaveChangesInterceptor
 
         if (tenantResolver == null)
         {
-            if (!enforceCompanyScope)
+            if (enforceCompanyScope)
+            {
+                _logger.LogWarning(
+                    "CompanyId interceptor: ITenantResolver not available but EnforceCompanyScope is enabled. " +
+                    "Entity may not be properly company-scoped.");
+            }
+            else
             {
                 _logger.LogWarning(
                     "CompanyId interceptor: ITenantResolver not available. " +

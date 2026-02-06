@@ -6,7 +6,6 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    var isOwner = User.IsInRole("Owner");
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
@@ -465,7 +464,7 @@
     <div class="card">
         <h2 class="card-title"><loc key="ProfessionalInformation" /></h2>
 
-        @if (!isOwner)
+        @if (!Model.CanEditProfessionalInfo)
         {
             <div class="info-banner">
                 <span class="info-banner-icon">ℹ️</span>
@@ -476,12 +475,12 @@
         <div class="form-group">
             <label class="form-label">
                 @Localizer["Department"]
-                @if (!isOwner)
+                @if (!Model.CanEditProfessionalInfo)
                 {
                     <span class="locked-icon">🔒</span>
                 }
             </label>
-            @if (isOwner)
+            @if (Model.CanEditProfessionalInfo)
             {
                 <input type="text" asp-for="Department" class="form-input" placeholder="@Localizer["Department"]" />
             }
@@ -494,12 +493,12 @@
         <div class="form-group">
             <label class="form-label">
                 @Localizer["JobTitle"]
-                @if (!isOwner)
+                @if (!Model.CanEditProfessionalInfo)
                 {
                     <span class="locked-icon">🔒</span>
                 }
             </label>
-            @if (isOwner)
+            @if (Model.CanEditProfessionalInfo)
             {
                 <input type="text" asp-for="JobTitle" class="form-input" placeholder="@Localizer["JobTitle"]" />
             }
@@ -512,12 +511,12 @@
         <div class="form-group">
             <label class="form-label">
                 @Localizer["HireDate"]
-                @if (!isOwner)
+                @if (!Model.CanEditProfessionalInfo)
                 {
                     <span class="locked-icon">🔒</span>
                 }
             </label>
-            @if (isOwner)
+            @if (Model.CanEditProfessionalInfo)
             {
                 <input type="date" asp-for="HireDate" class="form-input" />
             }

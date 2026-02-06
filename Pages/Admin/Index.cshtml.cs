@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Services;
+using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
 
 /// <summary>
 /// Admin Hub - Central dashboard for management and configuration.
 /// ✅ P2-1: Unified entry point for all administrative tasks.
-/// Visible to Manager, Director, and Owner with role-based sections.
+/// Visible to users with AccessAdminNavigation grant.
 /// </summary>
 [Authorize(Policy = "IsManagerOrAdmin")]
 public class IndexModel : PageModel
@@ -17,21 +18,24 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly IDirectorService? _directorService;
+    private readonly IGrantService _grantService;
 
     public IndexModel(
         AppDbContext db,
         ITenantResolver tenantResolver,
+        IGrantService grantService,
         IDirectorService? directorService = null)
     {
         _db = db;
         _tenantResolver = tenantResolver;
+        _grantService = grantService;
         _directorService = directorService;
     }
 
-    // Role checks for stats calculation
-    public bool IsOwner => User.IsInRole("Owner");
-    public bool IsDirector => User.IsInRole("Director");
-    public bool IsManager => User.IsInRole("Manager");
+    // Grant-based access flags (set in OnGetAsync)
+    public bool IsOwner { get; set; }
+    public bool IsDirector { get; set; }
+    public bool IsManager { get; set; }
 
     // Stats
     public int TotalUsers { get; set; }
@@ -41,6 +45,18 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        // Get user ID for grant checks
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return;
+        }
+
+        // Grant-based access checks (never use User.IsInRole)
+        IsOwner = await _grantService.HasGrantAsync(userId, "AdminAccess");
+        IsDirector = await _grantService.HasGrantAsync(userId, "DirectorHubAccess");
+        IsManager = await _grantService.HasGrantAsync(userId, "AccessAdminNavigation") && !IsDirector && !IsOwner;
+
         try
         {
             if (IsOwner)
