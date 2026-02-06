@@ -7259,4 +7259,28 @@
     <value>צפה בלוח</value>
     <comment>Button text on calendar card</comment>
   </data>
+  <data name="Grant_AccessAdminNavigation" xml:space="preserve">
+    <value>גישה לניווט ניהולי</value>
+  </data>
+  <data name="Grant_AccessAdminNavigation_Desc" xml:space="preserve">
+    <value>גישה לתפריט הניווט הניהולי ולתכונות ניהול</value>
+  </data>
+  <data name="Grant_DirectorHubAccess" xml:space="preserve">
+    <value>גישה למרכז מנהלים</value>
+  </data>
+  <data name="Grant_DirectorHubAccess_Desc" xml:space="preserve">
+    <value>גישה למרכז המנהלים לניהול חוצה חברות</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess" xml:space="preserve">
+    <value>גישה לדף הבית של מנהל</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess_Desc" xml:space="preserve">
+    <value>גישה ללוח הבקרה של מנהל</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar" xml:space="preserve">
+    <value>צפייה בלוח שנה חברתי</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar_Desc" xml:space="preserve">
+    <value>צפייה בסקירה הכללית של לוח השנה החברתי</value>
+  </data>
 </root>

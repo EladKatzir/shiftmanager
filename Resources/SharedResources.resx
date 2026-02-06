@@ -7752,4 +7752,28 @@ Are you absolutely sure you want to delete this user?</value>
     <value>View Calendar</value>
     <comment>Button text on calendar card</comment>
   </data>
+  <data name="Grant_AccessAdminNavigation" xml:space="preserve">
+    <value>Access Admin Navigation</value>
+  </data>
+  <data name="Grant_AccessAdminNavigation_Desc" xml:space="preserve">
+    <value>Access the administrative navigation menu and management features</value>
+  </data>
+  <data name="Grant_DirectorHubAccess" xml:space="preserve">
+    <value>Director Hub Access</value>
+  </data>
+  <data name="Grant_DirectorHubAccess_Desc" xml:space="preserve">
+    <value>Access the Director Hub for cross-company management</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess" xml:space="preserve">
+    <value>Manager Home Access</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess_Desc" xml:space="preserve">
+    <value>Access the manager home dashboard</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar" xml:space="preserve">
+    <value>View Company Calendar</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar_Desc" xml:space="preserve">
+    <value>View the company-wide calendar overview</value>
+  </data>
 </root>

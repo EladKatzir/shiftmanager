@@ -885,8 +885,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 110 grants (107 original + 3 calendar grants)
-        grantTypes.Should().HaveCount(110, "Should have exactly 110 grant types");
+        // Assert - 114 grants (107 original + 3 calendar grants + 4 navigation grants)
+        grantTypes.Should().HaveCount(114, "Should have exactly 114 grant types");
     }
 
     [Fact]

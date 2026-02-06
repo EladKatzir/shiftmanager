@@ -242,6 +242,16 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "WriteOverviewNotes", NameKey = "Grant_WriteOverviewNotes", DescriptionKey = "Grant_WriteOverviewNotes_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ManageOnDutyTypes", NameKey = "Grant_ManageOnDutyTypes", DescriptionKey = "Grant_ManageOnDutyTypes_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
+        // ============================================
+        // NAVIGATION GRANTS (Category.System)
+        // Controls access to navigation sections and special pages
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "AccessAdminNavigation", NameKey = "Grant_AccessAdminNavigation", DescriptionKey = "Grant_AccessAdminNavigation_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "DirectorHubAccess", NameKey = "Grant_DirectorHubAccess", DescriptionKey = "Grant_DirectorHubAccess_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManagerHomeAccess", NameKey = "Grant_ManagerHomeAccess", DescriptionKey = "Grant_ManagerHomeAccess_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewCompanyCalendar", NameKey = "Grant_ViewCompanyCalendar", DescriptionKey = "Grant_ViewCompanyCalendar_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+
         return grants;
     }
 }

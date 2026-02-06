@@ -200,6 +200,46 @@ public static class RoleTemplateSeed
         // Owner (Role 11) - Full system access
         grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 57, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AdminAccess
         grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 58, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // SystemConfiguration
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 111, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+
+        // ============================================
+        // NAVIGATION GRANTS - Added to roles that need admin navigation
+        // AccessAdminNavigation (111), DirectorHubAccess (112), ManagerHomeAccess (113), ViewCompanyCalendar (114)
+        // ============================================
+
+        // BRDirector (Role 2) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // AlhutLead (Role 3) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // TextLead (Role 4) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // AlhutDirector (Role 5) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // TextDirector (Role 6) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // MoleculeAdmin (Role 7) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // Assigner (Role 8) - Chore-only role, uses employee navigation with chore access
+
+        // DepartmentLead (Role 9) - Admin navigation + Manager home
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
+
+        // AreaAdmin (Role 10) - Admin navigation + Director Hub access
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 111, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 112, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // DirectorHubAccess
 
         return grants;
     }
