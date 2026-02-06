@@ -1,22 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.My;
 
 [Authorize]
-public class NotificationCenterModel : PageModel
+public class NotificationCenterModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<NotificationCenterModel> _logger;
 
-    public NotificationCenterModel(AppDbContext db, ILogger<NotificationCenterModel> logger)
+    public NotificationCenterModel(AppDbContext db, ILogger<NotificationCenterModel> logger, IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -25,7 +27,7 @@ public class NotificationCenterModel : PageModel
     public List<NotificationViewModel> Notifications { get; set; } = new();
     public int UnreadCount { get; set; }
     public string? Message { get; set; }
-    public string? Error { get; set; }
+    public new string? Error { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -36,7 +38,7 @@ public class NotificationCenterModel : PageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = "Authentication error. Please log in again.";
+                Error = _localizer["Notification_Error_AuthenticationError"];
                 return;
             }
             _logger.LogInformation("Loading notifications for user {UserId}", userId);
@@ -66,7 +68,7 @@ public class NotificationCenterModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading notifications");
-            Error = "An error occurred while loading notifications. Please try again.";
+            Error = _localizer["Notification_Error_LoadingFailed"];
         }
     }
 
@@ -91,13 +93,13 @@ public class NotificationCenterModel : PageModel
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation("Marked notification {NotificationId} as read for user {UserId}", id, userId);
-                Message = "Notification marked as read.";
+                Message = _localizer["Notification_MarkedAsRead"];
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking notification {NotificationId} as read", id);
-            Error = "An error occurred while updating the notification.";
+            Error = _localizer["Notification_Error_UpdateFailed"];
         }
 
         return RedirectToPage();
@@ -129,13 +131,13 @@ public class NotificationCenterModel : PageModel
 
                 await _db.SaveChangesAsync();
                 _logger.LogInformation("Marked {Count} notifications as read for user {UserId}", unreadNotifications.Count, userId);
-                Message = $"Marked {unreadNotifications.Count} notifications as read.";
+                Message = _localizer["Notification_MarkedAllAsRead", unreadNotifications.Count];
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking all notifications as read");
-            Error = "An error occurred while updating notifications.";
+            Error = _localizer["Notification_Error_MarkAllFailed"];
         }
 
         return RedirectToPage();
@@ -161,13 +163,13 @@ public class NotificationCenterModel : PageModel
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation("Deleted notification {NotificationId} for user {UserId}", id, userId);
-                Message = "Notification deleted.";
+                Message = _localizer["Notification_Deleted"];
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting notification {NotificationId}", id);
-            Error = "An error occurred while deleting the notification.";
+            Error = _localizer["Notification_Error_DeleteFailed"];
         }
 
         return RedirectToPage();

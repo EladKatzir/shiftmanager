@@ -364,7 +364,7 @@
             const nameHe = document.getElementById('editNameHe').value;
 
             if (!nameEn || !nameHe) {
-                alert('Both English and Hebrew names are required');
+                alert('@Localizer["Error_BothNamesRequired"]');
                 return;
             }
 
@@ -384,11 +384,11 @@
                     closeEditNameModal();
                     location.reload(); // Refresh to show updated names
                 } else {
-                    alert('Error: ' + (result.error || 'Failed to update'));
+                    alert('@Localizer["Error_Prefix"]' + (result.error || '@Localizer["Error_FailedToUpdate"]'));
                 }
             } catch (err) {
                 console.error('Failed to save shift name', err);
-                alert('Failed to save shift name');
+                alert('@Localizer["Error_FailedToSaveShiftName"]');
             }
         }
 
@@ -417,7 +417,7 @@
             const endTime = document.getElementById('editEndTime').value;
 
             if (!startTime || !endTime) {
-                alert('Both start and end times are required');
+                alert('@Localizer["Error_BothTimesRequired"]');
                 return;
             }
 
@@ -437,11 +437,11 @@
                     closeEditTimeModal();
                     location.reload(); // Refresh to show updated times
                 } else {
-                    alert('Error: ' + (result.error || 'Failed to update'));
+                    alert('@Localizer["Error_Prefix"]' + (result.error || '@Localizer["Error_FailedToUpdate"]'));
                 }
             } catch (err) {
                 console.error('Failed to save shift times', err);
-                alert('Failed to save shift times');
+                alert('@Localizer["Error_FailedToSaveShiftTimes"]');
             }
         }
 
@@ -623,7 +623,7 @@
                 // Update UI to show submitting state
                 modal.setAttribute('data-modal-state', 'submitting');
                 confirmButton.disabled = true;
-                confirmButton.textContent = 'Deleting...';
+                confirmButton.textContent = '@Localizer["Deleting"]';
 
                 // Verify we have the anti-forgery token
                 if (!cachedAntiForgeryToken) {
@@ -672,7 +672,7 @@
 
                 // Re-enable button
                 confirmButton.disabled = false;
-                confirmButton.textContent = 'Confirm Delete';
+                confirmButton.textContent = '@Localizer["ConfirmDelete"]';
             }
         }
     </script>

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using IO = System.IO;
@@ -12,7 +14,7 @@ using IO = System.IO;
 namespace ShiftManager.Pages.Public;
 
 [Authorize]
-public class FeedbackModel : PageModel
+public class FeedbackModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
@@ -27,7 +29,8 @@ public class FeedbackModel : PageModel
         INotificationService notificationService,
         IGrantService grantService,
         IWebHostEnvironment env,
-        ILogger<FeedbackModel> logger)
+        ILogger<FeedbackModel> logger,
+        IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -83,7 +86,7 @@ public class FeedbackModel : PageModel
         // Validation
         if (string.IsNullOrWhiteSpace(FeedbackContent))
         {
-            ErrorMessage = "Feedback content is required.";
+            ErrorMessage = _localizer["Feedback_Error_ContentRequired"];
             await OnGetAsync();
             return Page();
         }
@@ -122,7 +125,7 @@ public class FeedbackModel : PageModel
             // Send notification to owner
             await NotifyOwnerAsync(feedback);
 
-            Message = "Feedback submitted successfully. Thank you!";
+            Message = _localizer["Feedback_Success_Submitted"];
 
             // Clear form
             FeedbackContent = string.Empty;
@@ -134,7 +137,7 @@ public class FeedbackModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting feedback");
-            ErrorMessage = "Error submitting feedback. Please try again.";
+            ErrorMessage = _localizer["Feedback_Error_SubmitFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -153,7 +156,7 @@ public class FeedbackModel : PageModel
             var feedback = await _db.Feedbacks.FindAsync(feedbackId);
             if (feedback == null)
             {
-                ErrorMessage = "Feedback not found.";
+                ErrorMessage = _localizer["Feedback_Error_NotFound"];
                 await OnGetAsync();
                 return Page();
             }
@@ -164,14 +167,14 @@ public class FeedbackModel : PageModel
 
             await _db.SaveChangesAsync();
 
-            Message = "Feedback marked as 'To Work On'.";
+            Message = _localizer["Feedback_Success_MarkedToWorkOn"];
             await OnGetAsync();
             return Page();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking feedback as to work on");
-            ErrorMessage = "Error updating feedback status.";
+            ErrorMessage = _localizer["Feedback_Error_StatusUpdateFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -190,7 +193,7 @@ public class FeedbackModel : PageModel
             var feedback = await _db.Feedbacks.FindAsync(feedbackId);
             if (feedback == null)
             {
-                ErrorMessage = "Feedback not found.";
+                ErrorMessage = _localizer["Feedback_Error_NotFound"];
                 await OnGetAsync();
                 return Page();
             }
@@ -204,14 +207,14 @@ public class FeedbackModel : PageModel
             _db.Feedbacks.Remove(feedback);
             await _db.SaveChangesAsync();
 
-            Message = "Feedback deleted successfully.";
+            Message = _localizer["Feedback_Success_Deleted"];
             await OnGetAsync();
             return Page();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting feedback");
-            ErrorMessage = "Error deleting feedback.";
+            ErrorMessage = _localizer["Feedback_Error_DeleteFailed"];
             await OnGetAsync();
             return Page();
         }
@@ -225,13 +228,13 @@ public class FeedbackModel : PageModel
             const long maxFileSize = 5 * 1024 * 1024; // 5 MB
             if (file.Length > maxFileSize)
             {
-                return (false, null, "Image size exceeds 5 MB limit.");
+                return (false, null, _localizer["Feedback_Error_ImageTooLarge"]);
             }
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
             {
-                return (false, null, "Only JPEG and PNG files are allowed.");
+                return (false, null, _localizer["Feedback_Error_InvalidImageFormat"]);
             }
 
             // Create feedback directory
@@ -257,7 +260,7 @@ public class FeedbackModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving feedback image");
-            return (false, null, "Error saving image. Please try again.");
+            return (false, null, _localizer["Feedback_Error_ImageSaveFailed"]);
         }
     }
 
@@ -297,13 +300,15 @@ public class FeedbackModel : PageModel
             }
 
             var submitter = await _db.Users.FindAsync(feedback.SubmittedBy);
-            var typeLabel = feedback.Type == FeedbackType.Error ? "Error" : "Suggestion";
+            var typeLabel = feedback.Type == FeedbackType.Error
+                ? _localizer["Feedback_TypeLabel_Error"]
+                : _localizer["Feedback_TypeLabel_Suggestion"];
             var snippet = feedback.Content.Length > 100
                 ? feedback.Content.Substring(0, 100) + "..."
                 : feedback.Content;
 
-            var title = "New Feedback Submitted";
-            var message = $"{typeLabel} from {submitter?.DisplayName ?? "Unknown"}: {snippet}";
+            var title = _localizer["Feedback_Notification_Title"].Value;
+            var message = _localizer["Feedback_Notification_Message", typeLabel, submitter?.DisplayName ?? _localizer["Common_Unknown"], snippet].Value;
 
             await _notificationService.CreateNotificationAsync(
                 owner.Id,

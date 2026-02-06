@@ -2,20 +2,23 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "Grant:AssignRoles")]
-public class DirectorsModel : PageModel
+public class DirectorsModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<DirectorsModel> _logger;
 
-    public DirectorsModel(AppDbContext db, ILogger<DirectorsModel> logger)
+    public DirectorsModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ILogger<DirectorsModel> logger)
+        : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -29,9 +32,6 @@ public class DirectorsModel : PageModel
 
     [BindProperty] public int DirectorUserId { get; set; }
     [BindProperty] public int CompanyId { get; set; }
-
-    public string? Error { get; set; }
-    public string? Success { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -102,14 +102,14 @@ public class DirectorsModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
 
         // Validate inputs
         if (DirectorUserId == 0 || CompanyId == 0)
         {
-            TempData["ErrorMessage"] = "Please select both a director and a company.";
+            TempData["ErrorMessage"] = _localizer["Error_SelectDirectorAndCompany"].Value;
             return RedirectToPage();
         }
 
@@ -117,7 +117,7 @@ public class DirectorsModel : PageModel
         var director = await _db.Users.FindAsync(DirectorUserId);
         if (director == null || director.Role != UserRole.Director)
         {
-            TempData["ErrorMessage"] = "Selected user is not a Director.";
+            TempData["ErrorMessage"] = _localizer["Error_SelectedUserNotDirector"].Value;
             return RedirectToPage();
         }
 
@@ -125,7 +125,7 @@ public class DirectorsModel : PageModel
         var company = await _db.Companies.FindAsync(CompanyId);
         if (company == null)
         {
-            TempData["ErrorMessage"] = "Company not found.";
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -135,7 +135,7 @@ public class DirectorsModel : PageModel
 
         if (existingAssignment != null)
         {
-            TempData["ErrorMessage"] = $"{director.DisplayName} is already assigned to {company.Name}.";
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_DirectorAlreadyAssigned"].Value, director.DisplayName, company.Name);
             return RedirectToPage();
         }
 
@@ -154,7 +154,7 @@ public class DirectorsModel : PageModel
         _logger.LogInformation("Assigned Director {DirectorEmail} to Company {CompanyName} by {GrantedBy}",
             director.Email, company.Name, currentUserId);
 
-        TempData["SuccessMessage"] = $"Successfully assigned {director.DisplayName} as Director of {company.Name}.";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorAssignedToCompany"].Value, director.DisplayName, company.Name);
         return RedirectToPage();
     }
 
@@ -167,7 +167,7 @@ public class DirectorsModel : PageModel
 
         if (assignment == null)
         {
-            TempData["ErrorMessage"] = "Assignment not found.";
+            TempData["ErrorMessage"] = _localizer["Error_AssignmentNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -179,7 +179,7 @@ public class DirectorsModel : PageModel
         _logger.LogInformation("Revoked Director access for {DirectorEmail} from Company {CompanyName}",
             assignment.User!.Email, assignment.Company!.Name);
 
-        TempData["SuccessMessage"] = $"Revoked Director access for {assignment.User.DisplayName} from {assignment.Company.Name}.";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorAccessRevoked"].Value, assignment.User.DisplayName, assignment.Company.Name);
         return RedirectToPage();
     }
 
@@ -190,7 +190,7 @@ public class DirectorsModel : PageModel
 
         if (assignment == null)
         {
-            TempData["ErrorMessage"] = "Assignment not found.";
+            TempData["ErrorMessage"] = _localizer["Error_AssignmentNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -200,7 +200,7 @@ public class DirectorsModel : PageModel
             .FirstOrDefaultAsync(c => c.Id == newCompanyId);
         if (company == null)
         {
-            TempData["ErrorMessage"] = "Company not found.";
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -211,7 +211,7 @@ public class DirectorsModel : PageModel
                                        !dc.IsDeleted);
         if (existingAssignment != null)
         {
-            TempData["ErrorMessage"] = "Director is already assigned to that company.";
+            TempData["ErrorMessage"] = _localizer["Error_DirectorAlreadyAssignedToCompany"].Value;
             return RedirectToPage();
         }
 
@@ -236,7 +236,7 @@ public class DirectorsModel : PageModel
         _logger.LogInformation("Reassigned Director {UserId} from Company {OldCompanyId} to {NewCompanyId}",
             assignment.UserId, assignment.CompanyId, newCompanyId);
 
-        TempData["SuccessMessage"] = $"Director reassigned to {company.Name}.";
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorReassigned"].Value, company.Name);
         return RedirectToPage();
     }
 }

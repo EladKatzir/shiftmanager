@@ -7077,4 +7077,1015 @@
     <value>סוג תורנות זה דורש דרגת קצין (סגן משנה ומעלה)</value>
     <comment>Hint shown when duty type requires officer rank</comment>
   </data>
+  <data name="Areas" xml:space="preserve">
+    <value>אזורים</value>
+  </data>
+  <data name="Molecules" xml:space="preserve">
+    <value>מולקולות</value>
+  </data>
+  <data name="JobTypes" xml:space="preserve">
+    <value>סוגי תפקידים</value>
+  </data>
+  <data name="Grants" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="Error_PleaseFillAllFields" xml:space="preserve">
+    <value>נא למלא את כל השדות</value>
+  </data>
+  <data name="Error_FailedToUpdateShiftMetadata" xml:space="preserve">
+    <value>עדכון נתוני המשמרת נכשל. נסה שנית.</value>
+  </data>
+  <data name="Error_FailedToCreateShiftRow" xml:space="preserve">
+    <value>יצירת שורת משמרת נכשלה. נסה שנית.</value>
+  </data>
+  <data name="Error_FailedToUpdateShiftSlots" xml:space="preserve">
+    <value>עדכון תאי משמרת נכשל. נסה שנית.</value>
+  </data>
+  <data name="Error_FailedToAssignUser" xml:space="preserve">
+    <value>שיבוץ משתמש נכשל. נסה שנית.</value>
+  </data>
+  <data name="Error_FailedToResetShift" xml:space="preserve">
+    <value>איפוס משמרת נכשל. נסה שנית.</value>
+  </data>
+  <data name="Error_Prefix" xml:space="preserve">
+    <value>שגיאה:</value>
+  </data>
+  <data name="Success_ExportDownloaded" xml:space="preserve">
+    <value>הייצוא הורד בהצלחה</value>
+  </data>
+  <data name="Error_ExportFailed" xml:space="preserve">
+    <value>הייצוא נכשל:</value>
+  </data>
+  <data name="Error_FailedToCopyPassword" xml:space="preserve">
+    <value>העתקת סיסמה נכשלה. נא לבחור ולהעתיק ידנית.</value>
+  </data>
+  <data name="FileSelected" xml:space="preserve">
+    <value>נבחר</value>
+  </data>
+  <data name="Error_PleaseUploadValidImage" xml:space="preserve">
+    <value>נא להעלות קובץ תמונה תקין (JPEG או PNG)</value>
+  </data>
+  <data name="Error_FailedToUpdate" xml:space="preserve">
+    <value>העדכון נכשל</value>
+  </data>
+  <data name="Error_FailedToSaveShiftName" xml:space="preserve">
+    <value>שמירת שם משמרת נכשלה</value>
+  </data>
+  <data name="Error_BothTimesRequired" xml:space="preserve">
+    <value>נדרשים שעת התחלה ושעת סיום</value>
+  </data>
+  <data name="Error_FailedToSaveShiftTimes" xml:space="preserve">
+    <value>שמירת זמני משמרת נכשלה</value>
+  </data>
+  <data name="Deleting" xml:space="preserve">
+    <value>מוחק...</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>אישור מחיקה</value>
+  </data>
+  <data name="Program_Prefix" xml:space="preserve">
+    <value>תוכנית:</value>
+  </data>
+  <data name="MasterProgram_Prefix" xml:space="preserve">
+    <value>תוכנית-אב:</value>
+  </data>
+  <data name="MasterProgram_WillApplyPrefix" xml:space="preserve">
+    <value>יחיל</value>
+  </data>
+  <data name="MasterProgram_WillApplySuffix" xml:space="preserve">
+    <value>תוכניות על טווח התאריכים</value>
+  </data>
+  <data name="Warning_CSSLoadingIssue" xml:space="preserve">
+    <value>בעיית טעינת CSS - לחץ Ctrl+F5 לרענון. אם הבעיה נמשכת, הפעל UNBLOCK_FILES.bat</value>
+  </data>
+  <data name="Error_OperationFailed" xml:space="preserve">
+    <value>הפעולה נכשלה</value>
+  </data>
+  <data name="Error_FailedToDeleteShift" xml:space="preserve">
+    <value>מחיקת משמרת נכשלה. נסה שנית.</value>
+  </data>
+  <data name="Profile_Error_DisplayNameRequired" xml:space="preserve">
+    <value>שם תצוגה הוא שדה חובה.</value>
+  </data>
+  <data name="Profile_Error_DisplayNameTooLong" xml:space="preserve">
+    <value>שם תצוגה לא יעלה על 200 תווים.</value>
+  </data>
+  <data name="Profile_Error_PreferredNameTooLong" xml:space="preserve">
+    <value>שם מועדף לא יעלה על 100 תווים.</value>
+  </data>
+  <data name="Profile_Error_PhoneTooLong" xml:space="preserve">
+    <value>מספר טלפון לא יעלה על 50 תווים.</value>
+  </data>
+  <data name="Profile_Error_CityTooLong" xml:space="preserve">
+    <value>עיר לא תעלה על 100 תווים.</value>
+  </data>
+  <data name="Profile_Error_SkillsTooLong" xml:space="preserve">
+    <value>כישורים לא יעלו על 5000 תווים.</value>
+  </data>
+  <data name="Profile_Error_CertificationsTooLong" xml:space="preserve">
+    <value>הסמכות לא יעלו על 5000 תווים.</value>
+  </data>
+  <data name="Profile_Error_EmergencyContactNameTooLong" xml:space="preserve">
+    <value>שם איש קשר חירום לא יעלה על 200 תווים.</value>
+  </data>
+  <data name="Profile_Error_EmergencyContactPhoneTooLong" xml:space="preserve">
+    <value>טלפון איש קשר חירום לא יעלה על 50 תווים.</value>
+  </data>
+  <data name="Profile_Error_EmergencyContactRelationTooLong" xml:space="preserve">
+    <value>קרבה לאיש קשר חירום לא תעלה על 100 תווים.</value>
+  </data>
+  <data name="Profile_Error_HireDateFuture" xml:space="preserve">
+    <value>תאריך גיוס לא יכול להיות בעתיד.</value>
+  </data>
+  <data name="Profile_Error_DepartmentTooLong" xml:space="preserve">
+    <value>שם מחלקה ארוך מדי (מקסימום 100 תווים).</value>
+  </data>
+  <data name="Profile_Error_JobTitleTooLong" xml:space="preserve">
+    <value>תפקיד ארוך מדי (מקסימום 100 תווים).</value>
+  </data>
+  <data name="Profile_Success_UpdatedWithProfessionalInfo" xml:space="preserve">
+    <value>הפרופיל עודכן בהצלחה! המידע המקצועי עודכן.</value>
+  </data>
+  <data name="Profile_Success_Updated" xml:space="preserve">
+    <value>הפרופיל עודכן בהצלחה!</value>
+  </data>
+  <data name="Profile_Success_AvatarDeleted" xml:space="preserve">
+    <value>תמונת הפרופיל נמחקה בהצלחה!</value>
+  </data>
+  <data name="Profile_Error_AvatarDeleteFailed" xml:space="preserve">
+    <value>מחיקת תמונת הפרופיל נכשלה.</value>
+  </data>
+  <data name="Notification_Error_AuthenticationError" xml:space="preserve">
+    <value>שגיאת אימות. נא להתחבר מחדש.</value>
+  </data>
+  <data name="Notification_Error_LoadingFailed" xml:space="preserve">
+    <value>אירעה שגיאה בטעינת ההתראות. נסה שנית.</value>
+  </data>
+  <data name="Notification_MarkedAsRead" xml:space="preserve">
+    <value>ההתראה סומנה כנקראה.</value>
+  </data>
+  <data name="Notification_Error_UpdateFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעדכון ההתראה.</value>
+  </data>
+  <data name="Notification_MarkedAllAsRead" xml:space="preserve">
+    <value>{0} התראות סומנו כנקראו.</value>
+  </data>
+  <data name="Notification_Error_MarkAllFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעדכון ההתראות.</value>
+  </data>
+  <data name="Notification_Deleted" xml:space="preserve">
+    <value>ההתראה נמחקה.</value>
+  </data>
+  <data name="Notification_Error_DeleteFailed" xml:space="preserve">
+    <value>אירעה שגיאה במחיקת ההתראה.</value>
+  </data>
+  <data name="ApiKey_Error_SelectScope" xml:space="preserve">
+    <value>נא לבחור לפחות תחום אחד</value>
+  </data>
+  <data name="ApiKey_Success_Submitted" xml:space="preserve">
+    <value>בקשת מפתח API נשלחה בהצלחה. מנהל יבחן את הבקשה.</value>
+  </data>
+  <data name="ApiKey_Success_Revoked" xml:space="preserve">
+    <value>מפתח API בוטל בהצלחה</value>
+  </data>
+  <data name="ApiKey_Success_Refreshed" xml:space="preserve">
+    <value>מפתח API רוענן בהצלחה. שמור את המפתח החדש - הוא לא יוצג שוב!</value>
+  </data>
+  <data name="ApiKey_Error_Unauthorized" xml:space="preserve">
+    <value>אין הרשאה</value>
+  </data>
+  <data name="ApiKey_Success_Approved" xml:space="preserve">
+    <value>בקשת מפתח API אושרה. שמור את המפתח - הוא לא יוצג שוב!</value>
+  </data>
+  <data name="ApiKey_Success_Rejected" xml:space="preserve">
+    <value>בקשת מפתח API נדחתה</value>
+  </data>
+  <data name="ApiKey_Success_AdminRevoked" xml:space="preserve">
+    <value>מפתח API בוטל</value>
+  </data>
+  <data name="Chore_Error_FillRequiredFields" xml:space="preserve">
+    <value>נא למלא את כל שדות החובה.</value>
+  </data>
+  <data name="Chore_Error_TitleRequired" xml:space="preserve">
+    <value>שם תורנות הוא שדה חובה.</value>
+  </data>
+  <data name="Chore_Error_TitleTooLong" xml:space="preserve">
+    <value>שם תורנות לא יעלה על 200 תווים.</value>
+  </data>
+  <data name="Chore_Error_NotesTooLong" xml:space="preserve">
+    <value>הערות תורנות לא יעלו על 1000 תווים.</value>
+  </data>
+  <data name="Chore_Error_InvalidAssignee" xml:space="preserve">
+    <value>משובץ לא תקין.</value>
+  </data>
+  <data name="Chore_Error_DateTooFarFuture" xml:space="preserve">
+    <value>לא ניתן ליצור תורנויות יותר משנתיים בעתיד.</value>
+  </data>
+  <data name="Chore_Error_DateInPast" xml:space="preserve">
+    <value>לא ניתן ליצור תורנויות בעבר.</value>
+  </data>
+  <data name="Chore_Error_NoPermissionCreate" xml:space="preserve">
+    <value>אין לך הרשאה ליצור תורנויות.</value>
+  </data>
+  <data name="Chore_Error_CannotAssignToUser" xml:space="preserve">
+    <value>לא ניתן לשבץ תורנויות למשתמש זה.</value>
+  </data>
+  <data name="Chore_Error_ShiftConflictReplace" xml:space="preserve">
+    <value>למשתמש זה יש משמרת בתאריך זה. האם ברצונך להחליף את המשמרת בתורנות?</value>
+  </data>
+  <data name="Chore_Error_ShiftConflict" xml:space="preserve">
+    <value>למשתמש זה יש משמרת בתאריך זה.</value>
+  </data>
+  <data name="Chore_Success_Created" xml:space="preserve">
+    <value>תורנות נוצרה בהצלחה.</value>
+  </data>
+  <data name="Chore_Error_CreatingFailed" xml:space="preserve">
+    <value>אירעה שגיאה ביצירת התורנות.</value>
+  </data>
+  <data name="Chore_Error_InvalidRequest" xml:space="preserve">
+    <value>בקשה לא תקינה.</value>
+  </data>
+  <data name="Chore_Error_NoPermissionReplaceShifts" xml:space="preserve">
+    <value>אין לך הרשאה להחליף משמרות בתורנויות.</value>
+  </data>
+  <data name="Chore_Success_ShiftReplaced" xml:space="preserve">
+    <value>המשמרת הוחלפה בתורנות בהצלחה.</value>
+  </data>
+  <data name="Chore_Error_ReplacingShiftFailed" xml:space="preserve">
+    <value>אירעה שגיאה בהחלפת המשמרת.</value>
+  </data>
+  <data name="Chore_Error_InvalidId" xml:space="preserve">
+    <value>מזהה תורנות לא תקין.</value>
+  </data>
+  <data name="Chore_Error_NoPermissionCancel" xml:space="preserve">
+    <value>אין לך הרשאה לבטל תורנויות.</value>
+  </data>
+  <data name="Chore_Error_NotFound" xml:space="preserve">
+    <value>תורנות לא נמצאה.</value>
+  </data>
+  <data name="Chore_Success_Canceled" xml:space="preserve">
+    <value>תורנות בוטלה בהצלחה.</value>
+  </data>
+  <data name="Chore_Error_CancelingFailed" xml:space="preserve">
+    <value>אירעה שגיאה בביטול התורנות.</value>
+  </data>
+  <data name="OnDuty_Error_FillRequiredFields" xml:space="preserve">
+    <value>נא למלא את כל שדות החובה.</value>
+  </data>
+  <data name="OnDuty_Error_InvalidAssignee" xml:space="preserve">
+    <value>משובץ לא תקין.</value>
+  </data>
+  <data name="OnDuty_Error_NotesTooLong" xml:space="preserve">
+    <value>הערות לא יעלו על 1000 תווים.</value>
+  </data>
+  <data name="OnDuty_Error_DateTooFarFuture" xml:space="preserve">
+    <value>לא ניתן ליצור שיבוצי תורנות יותר משנתיים בעתיד.</value>
+  </data>
+  <data name="OnDuty_Error_DateInPast" xml:space="preserve">
+    <value>לא ניתן ליצור שיבוצי תורנות בעבר.</value>
+  </data>
+  <data name="OnDuty_Error_NoPermissionCreate" xml:space="preserve">
+    <value>אין לך הרשאה ליצור שיבוצי תורנות.</value>
+  </data>
+  <data name="OnDuty_Error_VacationConflict" xml:space="preserve">
+    <value>לא ניתן לשבץ תורנות: למשתמש זה יש חופשה מאושרת בתאריך זה.</value>
+  </data>
+  <data name="OnDuty_Success_Created" xml:space="preserve">
+    <value>שיבוץ תורנות נוצר בהצלחה.</value>
+  </data>
+  <data name="OnDuty_Error_CreatingFailed" xml:space="preserve">
+    <value>אירעה שגיאה ביצירת שיבוץ התורנות.</value>
+  </data>
+  <data name="OnDuty_Error_InvalidId" xml:space="preserve">
+    <value>מזהה תורנות לא תקין.</value>
+  </data>
+  <data name="OnDuty_Error_NoPermissionCancel" xml:space="preserve">
+    <value>אין לך הרשאה לבטל שיבוצי תורנות.</value>
+  </data>
+  <data name="OnDuty_Error_NotFound" xml:space="preserve">
+    <value>שיבוץ תורנות לא נמצא.</value>
+  </data>
+  <data name="OnDuty_Success_Canceled" xml:space="preserve">
+    <value>שיבוץ תורנות בוטל בהצלחה.</value>
+  </data>
+  <data name="OnDuty_Error_CancelingFailed" xml:space="preserve">
+    <value>אירעה שגיאה בביטול שיבוץ התורנות.</value>
+  </data>
+  <data name="Feedback_Error_ContentRequired" xml:space="preserve">
+    <value>תוכן המשוב הוא שדה חובה.</value>
+  </data>
+  <data name="Feedback_Success_Submitted" xml:space="preserve">
+    <value>המשוב נשלח בהצלחה. תודה!</value>
+  </data>
+  <data name="Feedback_Error_SubmitFailed" xml:space="preserve">
+    <value>שגיאה בשליחת משוב. נסה שנית.</value>
+  </data>
+  <data name="Feedback_Error_NotFound" xml:space="preserve">
+    <value>משוב לא נמצא.</value>
+  </data>
+  <data name="Feedback_Success_MarkedToWorkOn" xml:space="preserve">
+    <value>המשוב סומן כלטיפול.</value>
+  </data>
+  <data name="Feedback_Error_StatusUpdateFailed" xml:space="preserve">
+    <value>שגיאה בעדכון סטטוס המשוב.</value>
+  </data>
+  <data name="Feedback_Success_Deleted" xml:space="preserve">
+    <value>המשוב נמחק בהצלחה.</value>
+  </data>
+  <data name="Feedback_Error_DeleteFailed" xml:space="preserve">
+    <value>שגיאה במחיקת משוב.</value>
+  </data>
+  <data name="Feedback_Error_ImageTooLarge" xml:space="preserve">
+    <value>גודל התמונה חורג ממגבלת 5 MB.</value>
+  </data>
+  <data name="Feedback_Error_InvalidImageFormat" xml:space="preserve">
+    <value>רק קבצי JPEG ו-PNG מותרים.</value>
+  </data>
+  <data name="Feedback_Error_ImageSaveFailed" xml:space="preserve">
+    <value>שגיאה בשמירת תמונה. נסה שנית.</value>
+  </data>
+  <data name="Feedback_TypeLabel_Error" xml:space="preserve">
+    <value>שגיאה</value>
+  </data>
+  <data name="Feedback_TypeLabel_Suggestion" xml:space="preserve">
+    <value>הצעה</value>
+  </data>
+  <data name="Feedback_Notification_Title" xml:space="preserve">
+    <value>משוב חדש נשלח</value>
+  </data>
+  <data name="Feedback_Notification_Message" xml:space="preserve">
+    <value>{0} מ-{1}: {2}</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>לא ידוע</value>
+  </data>
+  <data name="Error_InvalidUserClaim" xml:space="preserve">
+    <value>פרטי משתמש לא תקינים. נא להתחבר מחדש.</value>
+  </data>
+  <data name="Error_SelectDirectorAndCompany" xml:space="preserve">
+    <value>נא לבחור גם מנהל וגם חברה.</value>
+  </data>
+  <data name="Error_SelectedUserNotDirector" xml:space="preserve">
+    <value>המשתמש שנבחר אינו מנהל.</value>
+  </data>
+  <data name="Error_DirectorAlreadyAssigned" xml:space="preserve">
+    <value>המנהל כבר משובץ.</value>
+  </data>
+  <data name="Success_DirectorAssignedToCompany" xml:space="preserve">
+    <value>המנהל שובץ לחברה בהצלחה.</value>
+  </data>
+  <data name="Error_AssignmentNotFound" xml:space="preserve">
+    <value>שיבוץ לא נמצא.</value>
+  </data>
+  <data name="Success_DirectorAccessRevoked" xml:space="preserve">
+    <value>הרשאת מנהל בוטלה.</value>
+  </data>
+  <data name="Error_DirectorAlreadyAssignedToCompany" xml:space="preserve">
+    <value>המנהל כבר משובץ לחברה זו.</value>
+  </data>
+  <data name="Success_DirectorReassigned" xml:space="preserve">
+    <value>המנהל שובץ מחדש בהצלחה.</value>
+  </data>
+  <data name="Error_LoadingAuditLogs" xml:space="preserve">
+    <value>שגיאה בטעינת יומני ביקורת. נסה שנית.</value>
+  </data>
+  <data name="Error_ExportingAuditLogs" xml:space="preserve">
+    <value>שגיאה בייצוא יומני ביקורת. נסה שנית.</value>
+  </data>
+  <data name="Error_LoadingAnalyticsData" xml:space="preserve">
+    <value>שגיאה בטעינת נתוני אנליטיקה. נסה שנית.</value>
+  </data>
+  <data name="Error_ExportingReport" xml:space="preserve">
+    <value>שגיאה בייצוא דוח. נסה שנית.</value>
+  </data>
+  <data name="Error_DangerousContentDetected" xml:space="preserve">
+    <value>הקלט מכיל תווים לא תקינים או תוכן שעלול להיות מסוכן.</value>
+  </data>
+  <data name="Error_InvalidUserId" xml:space="preserve">
+    <value>מזהה משתמש לא תקין.</value>
+  </data>
+  <data name="Error_EmailAndDisplayNameRequired" xml:space="preserve">
+    <value>אימייל ושם תצוגה הם שדות חובה.</value>
+  </data>
+  <data name="Error_EmailTooLong" xml:space="preserve">
+    <value>אימייל לא יעלה על 255 תווים.</value>
+  </data>
+  <data name="Error_DisplayNameTooLong" xml:space="preserve">
+    <value>שם תצוגה לא יעלה על 200 תווים.</value>
+  </data>
+  <data name="Error_PreferredNameTooLong" xml:space="preserve">
+    <value>שם מועדף לא יעלה על 100 תווים.</value>
+  </data>
+  <data name="Error_PhoneTooLong" xml:space="preserve">
+    <value>מספר טלפון לא יעלה על 50 תווים.</value>
+  </data>
+  <data name="Error_CityTooLong" xml:space="preserve">
+    <value>עיר לא תעלה על 100 תווים.</value>
+  </data>
+  <data name="Error_DepartmentTooLong" xml:space="preserve">
+    <value>מחלקה לא תעלה על 100 תווים.</value>
+  </data>
+  <data name="Error_JobTitleTooLong" xml:space="preserve">
+    <value>תפקיד לא יעלה על 100 תווים.</value>
+  </data>
+  <data name="Error_SkillsTooLong" xml:space="preserve">
+    <value>כישורים לא יעלו על 5000 תווים.</value>
+  </data>
+  <data name="Error_CertificationsTooLong" xml:space="preserve">
+    <value>הסמכות לא יעלו על 5000 תווים.</value>
+  </data>
+  <data name="Error_EmergencyContactNameTooLong" xml:space="preserve">
+    <value>שם איש קשר חירום לא יעלה על 200 תווים.</value>
+  </data>
+  <data name="Error_EmergencyContactPhoneTooLong" xml:space="preserve">
+    <value>טלפון איש קשר חירום לא יעלה על 50 תווים.</value>
+  </data>
+  <data name="Error_EmergencyContactRelationTooLong" xml:space="preserve">
+    <value>קרבה לאיש קשר חירום לא תעלה על 100 תווים.</value>
+  </data>
+  <data name="Success_ProfileUpdated" xml:space="preserve">
+    <value>הפרופיל עודכן בהצלחה!</value>
+  </data>
+  <data name="Success_AvatarDeleted" xml:space="preserve">
+    <value>תמונת הפרופיל נמחקה בהצלחה!</value>
+  </data>
+  <data name="Error_FailedToDeleteAvatar" xml:space="preserve">
+    <value>מחיקת תמונת הפרופיל נכשלה.</value>
+  </data>
+  <data name="Success_ViewAsModeEntered" xml:space="preserve">
+    <value>מציג כמנהל. ההרשאות והנתונים שלך מוגבלים לחברה זו.</value>
+  </data>
+  <data name="Error_UnableToEnterViewAsMode" xml:space="preserve">
+    <value>לא ניתן להיכנס למצב צפייה כמנהל. ייתכן שאין לך גישה לחברה זו.</value>
+  </data>
+  <data name="Success_ViewAsModeExited" xml:space="preserve">
+    <value>יצאת ממצב צפייה כמנהל. הרשאות מנהל מלאות שוחזרו.</value>
+  </data>
+  <data name="Success_CompanyFilterUpdated" xml:space="preserve">
+    <value>סינון חברה עודכן בהצלחה.</value>
+  </data>
+  <data name="Success_CompanyFilterCleared" xml:space="preserve">
+    <value>סינון חברה נוקה. מציג את כל החברות.</value>
+  </data>
+  <data name="Error_SelectUser" xml:space="preserve">
+    <value>נא לבחור משתמש.</value>
+  </data>
+  <data name="Error_SelectedUserNotFound" xml:space="preserve">
+    <value>המשתמש שנבחר לא נמצא.</value>
+  </data>
+  <data name="Error_CannotAssignCrossCompany" xml:space="preserve">
+    <value>לא ניתן לשבץ משתמש מחברה אחרת למשמרת זו.</value>
+  </data>
+  <data name="Error_CannotOverAssign" xml:space="preserve">
+    <value>לא ניתן לשבץ מעבר לנדרש. הגדל את הדרישה תחילה.</value>
+  </data>
+  <data name="Error_FailedToAssignTrainee" xml:space="preserve">
+    <value>שיבוץ חניך נכשל. נא לבדוק כללי אימות.</value>
+  </data>
+  <data name="Success_TraineeAssigned" xml:space="preserve">
+    <value>חניך שובץ בהצלחה.</value>
+  </data>
+  <data name="Error_FailedToRemoveTrainee" xml:space="preserve">
+    <value>הסרת חניך נכשלה.</value>
+  </data>
+  <data name="Success_TraineeRemoved" xml:space="preserve">
+    <value>חניך הוסר בהצלחה.</value>
+  </data>
+  <data name="Error_MissingCompanyIdOrCulture" xml:space="preserve">
+    <value>חסר מזהה חברה או פרמטר שפה.</value>
+  </data>
+  <data name="Error_InvalidCulture" xml:space="preserve">
+    <value>שפה לא תקינה. חייב להיות en-US או he-IL.</value>
+  </data>
+  <data name="Error_CanOnlyEditCurrentCompanyTranslations" xml:space="preserve">
+    <value>ניתן לערוך תרגומים רק עבור החברה הנבחרת כעת.</value>
+  </data>
+  <data name="Success_GriffinConfigSaved" xml:space="preserve">
+    <value>תצורת Griffin ADFS נשמרה בהצלחה.</value>
+  </data>
+  <data name="Error_FailedToSaveGriffinConfig" xml:space="preserve">
+    <value>שמירת התצורה נכשלה. נסה שנית.</value>
+  </data>
+  <data name="Error_FailedToLoadGriffinConfig" xml:space="preserve">
+    <value>טעינת התצורה השמורה לבדיקה נכשלה.</value>
+  </data>
+  <data name="Error_GriffinBaseUrlRequired" xml:space="preserve">
+    <value>כתובת URL בסיסית נדרשת כאשר Griffin מופעל.</value>
+  </data>
+  <data name="Error_GriffinBaseUrlInvalid" xml:space="preserve">
+    <value>כתובת URL בסיסית חייבת להיות כתובת HTTP או HTTPS תקינה.</value>
+  </data>
+  <data name="Error_GriffinTokenConsumerUrlRequired" xml:space="preserve">
+    <value>כתובת Token Consumer נדרשת כאשר Griffin מופעל.</value>
+  </data>
+  <data name="Error_GriffinTokenConsumerUrlInvalid" xml:space="preserve">
+    <value>כתובת Token Consumer חייבת להיות כתובת HTTP או HTTPS תקינה.</value>
+  </data>
+  <data name="Error_GriffinTimeoutOutOfRange" xml:space="preserve">
+    <value>זמן המתנה חייב להיות בין 1 ל-60 שניות.</value>
+  </data>
+  <data name="Info_FeatureFlagChangesRequireRestart" xml:space="preserve">
+    <value>שינויי דגלי תכונה דורשים הפעלה מחדש של האפליקציה.</value>
+  </data>
+  <data name="Error_SavingFeatureFlags" xml:space="preserve">
+    <value>שגיאה בשמירת דגלי תכונה.</value>
+  </data>
+  <data name="Error_SelectValidShiftAssignment" xml:space="preserve">
+    <value>נא לבחור שיבוץ משמרת תקין.</value>
+  </data>
+  <data name="Error_SelectValidSwapUser" xml:space="preserve">
+    <value>נא לבחור משתמש תקין להחלפה.</value>
+  </data>
+  <data name="Error_CannotSwapWithSelf" xml:space="preserve">
+    <value>לא ניתן להחליף משמרת עם עצמך.</value>
+  </data>
+  <data name="Error_ShiftAssignmentNotFound" xml:space="preserve">
+    <value>שיבוץ משמרת לא נמצא.</value>
+  </data>
+  <data name="Error_CanOnlySwapOwnShifts" xml:space="preserve">
+    <value>ניתן להחליף רק משמרות שלך.</value>
+  </data>
+  <data name="Error_InvalidSwapTargetUser" xml:space="preserve">
+    <value>המשתמש שנבחר אינו תקין או אינו בחברה שלך.</value>
+  </data>
+  <data name="Error_MissingAuthToken" xml:space="preserve">
+    <value>אסימון אימות חסר.</value>
+  </data>
+  <data name="Error_GriffinNotEnabled" xml:space="preserve">
+    <value>אימות Griffin ADFS אינו מופעל.</value>
+  </data>
+  <data name="Error_AuthenticationFailed" xml:space="preserve">
+    <value>האימות נכשל. נסה שנית.</value>
+  </data>
+  <data name="Info_AccountPendingApproval" xml:space="preserve">
+    <value>החשבון שלך ממתין לאישור מנהל.</value>
+  </data>
+  <data name="Error_PasswordTooShort" xml:space="preserve">
+    <value>סיסמה חייבת להכיל לפחות 6 תווים.</value>
+  </data>
+  <data name="Error_PasswordTooLong" xml:space="preserve">
+    <value>סיסמה לא תעלה על 128 תווים.</value>
+  </data>
+  <data name="Error_UserLacksPermission" xml:space="preserve">
+    <value>אין לך הרשאות מספיקות לביצוע פעולה זו.</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>פעולות</value>
+  </data>
+  <data name="ActiveApiKeys" xml:space="preserve">
+    <value>מפתחות API פעילים</value>
+  </data>
+  <data name="AdminApiKeyManagementDescription" xml:space="preserve">
+    <value>בדוק ואשר בקשות מפתח API מכל המשתמשים בחברה שלך</value>
+  </data>
+  <data name="AdminApiKeySaveWarning" xml:space="preserve">
+    <value>חשוב: העתק מפתח זה ושלח אותו למבקש בצורה מאובטחת. הוא לא יוצג שוב!</value>
+  </data>
+  <data name="AdminPanel" xml:space="preserve">
+    <value>לוח ניהול</value>
+  </data>
+  <data name="AllApiKeyRequests" xml:space="preserve">
+    <value>כל בקשות מפתח API</value>
+  </data>
+  <data name="AllCompanyApiKeys" xml:space="preserve">
+    <value>כל מפתחות API בחברה</value>
+  </data>
+  <data name="AllRequests" xml:space="preserve">
+    <value>כל הבקשות</value>
+  </data>
+  <data name="ApiKey" xml:space="preserve">
+    <value>מפתח API</value>
+  </data>
+  <data name="ApiKeyDescriptionPlaceholder" xml:space="preserve">
+    <value>תאר מדוע אתה צריך מפתח API זה ואיך הוא ישמש</value>
+  </data>
+  <data name="ApiKeyGenerated" xml:space="preserve">
+    <value>מפתח API נוצר בהצלחה!</value>
+  </data>
+  <data name="ApiKeyManagement" xml:space="preserve">
+    <value>ניהול מפתחות API</value>
+  </data>
+  <data name="ApiKeySaveWarning" xml:space="preserve">
+    <value>שמור מפתח API זה עכשיו - לא תוכל לראות אותו שוב!</value>
+  </data>
+  <data name="ApiKeys" xml:space="preserve">
+    <value>מפתחות API</value>
+  </data>
+  <data name="ApproveAndGenerateKey" xml:space="preserve">
+    <value>אשר וצור מפתח</value>
+  </data>
+  <data name="ApproveApiKeyRequest" xml:space="preserve">
+    <value>אשר בקשת מפתח API</value>
+  </data>
+  <data name="ApprovedScopes" xml:space="preserve">
+    <value>תחומים מאושרים</value>
+  </data>
+  <data name="ApprovedScopesHelp" xml:space="preserve">
+    <value>ניתן לשנות את התחומים המבוקשים לפני אישור. רשימה מופרדת בפסיקים.</value>
+  </data>
+  <data name="ConfirmDeleteShiftType" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק סוג משמרת זה? לא ניתן לבטל פעולה זו.</value>
+  </data>
+  <data name="ConfirmRevoke" xml:space="preserve">
+    <value>אישור ביטול</value>
+  </data>
+  <data name="ConfirmRevokeKey" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לבטל מפתח API זה? לא ניתן לבטל פעולה זו.</value>
+  </data>
+  <data name="CopyToClipboard" xml:space="preserve">
+    <value>העתק ללוח</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>נוצר</value>
+  </data>
+  <data name="Expires" xml:space="preserve">
+    <value>פג תוקף</value>
+  </data>
+  <data name="ExpiresInDays" xml:space="preserve">
+    <value>פג תוקף בתוך ימים</value>
+  </data>
+  <data name="Grant_AssignDeltaShifts" xml:space="preserve">
+    <value>שיבוץ משמרות דלתא</value>
+  </data>
+  <data name="Grant_AssignDeltaShifts_Desc" xml:space="preserve">
+    <value>שיבוץ משתמשים למשמרות טכנאי דלתא</value>
+  </data>
+  <data name="Grant_AssignHanavaShifts" xml:space="preserve">
+    <value>שיבוץ משמרות הנבה</value>
+  </data>
+  <data name="Grant_AssignHanavaShifts_Desc" xml:space="preserve">
+    <value>שיבוץ משתמשים למשמרות טכנאי הנבה</value>
+  </data>
+  <data name="Grant_AssignMoviltechShifts" xml:space="preserve">
+    <value>שיבוץ משמרות מובילטק</value>
+  </data>
+  <data name="Grant_AssignMoviltechShifts_Desc" xml:space="preserve">
+    <value>שיבוץ משתמשים למשמרות טכנאי מובילטק</value>
+  </data>
+  <data name="Grant_AssignNOCChores" xml:space="preserve">
+    <value>שיבוץ תורנויות NOC</value>
+  </data>
+  <data name="Grant_AssignNOCChores_Desc" xml:space="preserve">
+    <value>שיבוץ משתמשים לתורנויות NOC</value>
+  </data>
+  <data name="Grant_AssignShiklutChores" xml:space="preserve">
+    <value>שיבוץ תורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_AssignShiklutChores_Desc" xml:space="preserve">
+    <value>שיבוץ משתמשים לתורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_AssignYekevShifts" xml:space="preserve">
+    <value>שיבוץ משמרות יקב</value>
+  </data>
+  <data name="Grant_AssignYekevShifts_Desc" xml:space="preserve">
+    <value>שיבוץ משתמשים למשמרות טכנאי יקב</value>
+  </data>
+  <data name="Grant_CanBeAssignedAlhutShifts" xml:space="preserve">
+    <value>זכאי למשמרות אלחוט</value>
+  </data>
+  <data name="Grant_CanBeAssignedAlhutShifts_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות אלחוט</value>
+  </data>
+  <data name="Grant_CanBeAssignedBRShifts" xml:space="preserve">
+    <value>זכאי למשמרות ב"ר</value>
+  </data>
+  <data name="Grant_CanBeAssignedBRShifts_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות ב"ר</value>
+  </data>
+  <data name="Grant_CanBeAssignedDelta" xml:space="preserve">
+    <value>זכאי למשמרות דלתא</value>
+  </data>
+  <data name="Grant_CanBeAssignedDelta_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות טכנאי דלתא</value>
+  </data>
+  <data name="Grant_CanBeAssignedHakamShifts" xml:space="preserve">
+    <value>זכאי לתורנות חק"ם</value>
+  </data>
+  <data name="Grant_CanBeAssignedHakamShifts_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ לתורנויות חק"ם</value>
+  </data>
+  <data name="Grant_CanBeAssignedHanava" xml:space="preserve">
+    <value>זכאי למשמרות הנבה</value>
+  </data>
+  <data name="Grant_CanBeAssignedHanava_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות טכנאי הנבה</value>
+  </data>
+  <data name="Grant_CanBeAssignedMoviltech" xml:space="preserve">
+    <value>זכאי למשמרות מובילטק</value>
+  </data>
+  <data name="Grant_CanBeAssignedMoviltech_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות טכנאי מובילטק</value>
+  </data>
+  <data name="Grant_CanBeAssignedNOC" xml:space="preserve">
+    <value>זכאי לתורנויות NOC</value>
+  </data>
+  <data name="Grant_CanBeAssignedNOC_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ לתורנויות NOC</value>
+  </data>
+  <data name="Grant_CanBeAssignedShiklut" xml:space="preserve">
+    <value>זכאי לתורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_CanBeAssignedShiklut_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ לתורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_CanBeAssignedTextShifts" xml:space="preserve">
+    <value>זכאי למשמרות טקסט</value>
+  </data>
+  <data name="Grant_CanBeAssignedTextShifts_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות טקסט</value>
+  </data>
+  <data name="Grant_CanBeAssignedYekev" xml:space="preserve">
+    <value>זכאי למשמרות יקב</value>
+  </data>
+  <data name="Grant_CanBeAssignedYekev_Desc" xml:space="preserve">
+    <value>המשתמש יכול להיות משובץ למשמרות טכנאי יקב</value>
+  </data>
+  <data name="Grant_ManageAlhutBlueprints" xml:space="preserve">
+    <value>ניהול תבניות אלחוט</value>
+  </data>
+  <data name="Grant_ManageAlhutBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות אלחוט</value>
+  </data>
+  <data name="Grant_ManageAlhutPrograms" xml:space="preserve">
+    <value>ניהול תוכניות אלחוט</value>
+  </data>
+  <data name="Grant_ManageAlhutPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות אלחוט</value>
+  </data>
+  <data name="Grant_ManageBRBlueprints" xml:space="preserve">
+    <value>ניהול תבניות ב"ר</value>
+  </data>
+  <data name="Grant_ManageBRBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות ב"ר</value>
+  </data>
+  <data name="Grant_ManageBRPrograms" xml:space="preserve">
+    <value>ניהול תוכניות ב"ר</value>
+  </data>
+  <data name="Grant_ManageBRPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות ב"ר</value>
+  </data>
+  <data name="Grant_ManageDeltaBlueprints" xml:space="preserve">
+    <value>ניהול תבניות דלתא</value>
+  </data>
+  <data name="Grant_ManageDeltaBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות טכנאי דלתא</value>
+  </data>
+  <data name="Grant_ManageDeltaPrograms" xml:space="preserve">
+    <value>ניהול תוכניות דלתא</value>
+  </data>
+  <data name="Grant_ManageDeltaPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות טכנאי דלתא</value>
+  </data>
+  <data name="Grant_ManageHakamBlueprints" xml:space="preserve">
+    <value>ניהול תבניות חק"ם</value>
+  </data>
+  <data name="Grant_ManageHakamBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות תורנויות חק"ם</value>
+  </data>
+  <data name="Grant_ManageHakamPrograms" xml:space="preserve">
+    <value>ניהול תוכניות חק"ם</value>
+  </data>
+  <data name="Grant_ManageHakamPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות תורנויות חק"ם</value>
+  </data>
+  <data name="Grant_ManageHanavaBlueprints" xml:space="preserve">
+    <value>ניהול תבניות הנבה</value>
+  </data>
+  <data name="Grant_ManageHanavaBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות טכנאי הנבה</value>
+  </data>
+  <data name="Grant_ManageHanavaPrograms" xml:space="preserve">
+    <value>ניהול תוכניות הנבה</value>
+  </data>
+  <data name="Grant_ManageHanavaPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות טכנאי הנבה</value>
+  </data>
+  <data name="Grant_ManageKatzinBlueprints" xml:space="preserve">
+    <value>ניהול תבניות קצין</value>
+  </data>
+  <data name="Grant_ManageKatzinBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות תורנויות קצין</value>
+  </data>
+  <data name="Grant_ManageKatzinPrograms" xml:space="preserve">
+    <value>ניהול תוכניות קצין</value>
+  </data>
+  <data name="Grant_ManageKatzinPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות תורנויות קצין</value>
+  </data>
+  <data name="Grant_ManageMoviltechBlueprints" xml:space="preserve">
+    <value>ניהול תבניות מובילטק</value>
+  </data>
+  <data name="Grant_ManageMoviltechBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות טכנאי מובילטק</value>
+  </data>
+  <data name="Grant_ManageMoviltechPrograms" xml:space="preserve">
+    <value>ניהול תוכניות מובילטק</value>
+  </data>
+  <data name="Grant_ManageMoviltechPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות טכנאי מובילטק</value>
+  </data>
+  <data name="Grant_ManageNOCBlueprints" xml:space="preserve">
+    <value>ניהול תבניות NOC</value>
+  </data>
+  <data name="Grant_ManageNOCBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות תורנויות NOC</value>
+  </data>
+  <data name="Grant_ManageNOCPrograms" xml:space="preserve">
+    <value>ניהול תוכניות NOC</value>
+  </data>
+  <data name="Grant_ManageNOCPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות תורנויות NOC</value>
+  </data>
+  <data name="Grant_ManageShiklutBlueprints" xml:space="preserve">
+    <value>ניהול תבניות שיקלוט</value>
+  </data>
+  <data name="Grant_ManageShiklutBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות תורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_ManageShiklutPrograms" xml:space="preserve">
+    <value>ניהול תוכניות שיקלוט</value>
+  </data>
+  <data name="Grant_ManageShiklutPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות תורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_ManageTextBlueprints" xml:space="preserve">
+    <value>ניהול תבניות טקסט</value>
+  </data>
+  <data name="Grant_ManageTextBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות טקסט</value>
+  </data>
+  <data name="Grant_ManageTextPrograms" xml:space="preserve">
+    <value>ניהול תוכניות טקסט</value>
+  </data>
+  <data name="Grant_ManageTextPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות טקסט</value>
+  </data>
+  <data name="Grant_ManageYekevBlueprints" xml:space="preserve">
+    <value>ניהול תבניות יקב</value>
+  </data>
+  <data name="Grant_ManageYekevBlueprints_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תבניות משמרות טכנאי יקב</value>
+  </data>
+  <data name="Grant_ManageYekevPrograms" xml:space="preserve">
+    <value>ניהול תוכניות יקב</value>
+  </data>
+  <data name="Grant_ManageYekevPrograms_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של תוכניות משמרות טכנאי יקב</value>
+  </data>
+  <data name="Grant_ViewAlhutShiftCalendar" xml:space="preserve">
+    <value>צפייה בלוח אלחוט</value>
+  </data>
+  <data name="Grant_ViewAlhutShiftCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות אלחוט לאזורים משובצים</value>
+  </data>
+  <data name="Grant_ViewBRShiftCalendar" xml:space="preserve">
+    <value>צפייה בלוח ב"ר</value>
+  </data>
+  <data name="Grant_ViewBRShiftCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות ב"ר לאזורים משובצים</value>
+  </data>
+  <data name="Grant_ViewDeltaCalendar" xml:space="preserve">
+    <value>צפייה בלוח דלתא</value>
+  </data>
+  <data name="Grant_ViewDeltaCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות טכנאי דלתא</value>
+  </data>
+  <data name="Grant_ViewHakamShiftCalendar" xml:space="preserve">
+    <value>צפייה בלוח חק"ם</value>
+  </data>
+  <data name="Grant_ViewHakamShiftCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח תורנויות חק"ם</value>
+  </data>
+  <data name="Grant_ViewHanavaCalendar" xml:space="preserve">
+    <value>צפייה בלוח הנבה</value>
+  </data>
+  <data name="Grant_ViewHanavaCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות טכנאי הנבה</value>
+  </data>
+  <data name="Grant_ViewMoviltechCalendar" xml:space="preserve">
+    <value>צפייה בלוח מובילטק</value>
+  </data>
+  <data name="Grant_ViewMoviltechCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות טכנאי מובילטק</value>
+  </data>
+  <data name="Grant_ViewNOCCalendar" xml:space="preserve">
+    <value>צפייה בלוח NOC</value>
+  </data>
+  <data name="Grant_ViewNOCCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח תורנויות NOC</value>
+  </data>
+  <data name="Grant_ViewShiklutCalendar" xml:space="preserve">
+    <value>צפייה בלוח שיקלוט</value>
+  </data>
+  <data name="Grant_ViewShiklutCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח תורנויות שיקלוט</value>
+  </data>
+  <data name="Grant_ViewTextShiftCalendar" xml:space="preserve">
+    <value>צפייה בלוח טקסט</value>
+  </data>
+  <data name="Grant_ViewTextShiftCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות טקסט לאזורים משובצים</value>
+  </data>
+  <data name="Grant_ViewYekevCalendar" xml:space="preserve">
+    <value>צפייה בלוח יקב</value>
+  </data>
+  <data name="Grant_ViewYekevCalendar_Desc" xml:space="preserve">
+    <value>צפייה בלוח משמרות טכנאי יקב</value>
+  </data>
+  <data name="KeyName" xml:space="preserve">
+    <value>שם מפתח</value>
+  </data>
+  <data name="KeyNamePlaceholder" xml:space="preserve">
+    <value>לדוגמה, אינטגרציית ייצור</value>
+  </data>
+  <data name="LastUsed" xml:space="preserve">
+    <value>שימוש אחרון</value>
+  </data>
+  <data name="MyApiKeys" xml:space="preserve">
+    <value>מפתחות API שלי</value>
+  </data>
+  <data name="NeverExpires" xml:space="preserve">
+    <value>ללא תפוגה</value>
+  </data>
+  <data name="NoActiveApiKeys" xml:space="preserve">
+    <value>לא נמצאו מפתחות API פעילים</value>
+  </data>
+  <data name="NoPendingRequests" xml:space="preserve">
+    <value>אין בקשות ממתינות</value>
+  </data>
+  <data name="NoRequestHistory" xml:space="preserve">
+    <value>אין היסטוריית בקשות</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>הערות</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>אופציונלי</value>
+  </data>
+  <data name="Owner" xml:space="preserve">
+    <value>בעלים</value>
+  </data>
+  <data name="PendingRequestsReview" xml:space="preserve">
+    <value>בקשות ממתינות - נדרשת בדיקה</value>
+  </data>
+  <data name="RateLimit" xml:space="preserve">
+    <value>מגבלת קצב</value>
+  </data>
+  <data name="RateLimitPerMinute" xml:space="preserve">
+    <value>מגבלת קצב (לדקה)</value>
+  </data>
+  <data name="RejectApiKeyRequest" xml:space="preserve">
+    <value>דחה בקשת מפתח API</value>
+  </data>
+  <data name="RejectRequest" xml:space="preserve">
+    <value>דחה בקשה</value>
+  </data>
+  <data name="RejectionReason" xml:space="preserve">
+    <value>סיבת דחייה</value>
+  </data>
+  <data name="RejectionReasonPlaceholder" xml:space="preserve">
+    <value>הסבר מדוע בקשה זו נדחית...</value>
+  </data>
+  <data name="RequestHistory" xml:space="preserve">
+    <value>היסטוריית בקשות</value>
+  </data>
+  <data name="RequestNewApiKey" xml:space="preserve">
+    <value>בקש מפתח API חדש</value>
+  </data>
+  <data name="RequestedBy" xml:space="preserve">
+    <value>התבקש על ידי</value>
+  </data>
+  <data name="RequestedDate" xml:space="preserve">
+    <value>תאריך בקשה</value>
+  </data>
+  <data name="RequestedScopes" xml:space="preserve">
+    <value>תחומים מבוקשים</value>
+  </data>
+  <data name="ReviewNotes" xml:space="preserve">
+    <value>הערות בדיקה</value>
+  </data>
+  <data name="ReviewNotesPlaceholder" xml:space="preserve">
+    <value>הוסף הערות לגבי אישור זה...</value>
+  </data>
+  <data name="ReviewedBy" xml:space="preserve">
+    <value>נבדק על ידי</value>
+  </data>
+  <data name="ReviewedDate" xml:space="preserve">
+    <value>תאריך בדיקה</value>
+  </data>
+  <data name="RevocationReason" xml:space="preserve">
+    <value>סיבת ביטול</value>
+  </data>
+  <data name="RevocationReasonPlaceholder" xml:space="preserve">
+    <value>מדוע מפתח זה מבוטל?</value>
+  </data>
+  <data name="RevokeApiKey" xml:space="preserve">
+    <value>בטל מפתח API</value>
+  </data>
+  <data name="RevokeConfirmation" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לבטל מפתח API זה?</value>
+  </data>
+  <data name="Scopes" xml:space="preserve">
+    <value>תחומים</value>
+  </data>
 </root>

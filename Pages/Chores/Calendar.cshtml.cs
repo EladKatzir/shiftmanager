@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -9,7 +11,7 @@ using System.Text.Json;
 namespace ShiftManager.Pages.Chores;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class CalendarModel : PageModel
+public class CalendarModel : LocalizedPageModel
 {
     private readonly IChoreService _choreService;
     private readonly INotificationService _notificationService;
@@ -20,7 +22,8 @@ public class CalendarModel : PageModel
         IChoreService choreService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
-        ILogger<CalendarModel> logger)
+        ILogger<CalendarModel> logger,
+        IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _choreService = choreService;
         _notificationService = notificationService;
@@ -120,48 +123,48 @@ public class CalendarModel : PageModel
             // ✅ SECURITY FIX: Input validation
             if (!ModelState.IsValid)
             {
-                ErrorMessage = "Please fill in all required fields.";
+                ErrorMessage = _localizer["Chore_Error_FillRequiredFields"];
                 return await OnGetAsync();
             }
 
             if (string.IsNullOrWhiteSpace(ChoreTitle))
             {
-                ErrorMessage = "Chore title is required.";
+                ErrorMessage = _localizer["Chore_Error_TitleRequired"];
                 return await OnGetAsync();
             }
 
             // Validate title length (prevent DoS and database errors)
             if (ChoreTitle.Length > 200)
             {
-                ErrorMessage = "Chore title must not exceed 200 characters.";
+                ErrorMessage = _localizer["Chore_Error_TitleTooLong"];
                 return await OnGetAsync();
             }
 
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(ChoreNotes) && ChoreNotes.Length > 1000)
             {
-                ErrorMessage = "Chore notes must not exceed 1000 characters.";
+                ErrorMessage = _localizer["Chore_Error_NotesTooLong"];
                 return await OnGetAsync();
             }
 
             // Validate assignee ID
             if (AssigneeId <= 0)
             {
-                ErrorMessage = "Invalid assignee.";
+                ErrorMessage = _localizer["Chore_Error_InvalidAssignee"];
                 return await OnGetAsync();
             }
 
             // Validate date (prevent far future dates)
             if (ChoreDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
             {
-                ErrorMessage = "Cannot create chores more than 2 years in the future.";
+                ErrorMessage = _localizer["Chore_Error_DateTooFarFuture"];
                 return await OnGetAsync();
             }
 
             // Validate date (prevent past dates)
             if (ChoreDate < DateOnly.FromDateTime(DateTime.Today))
             {
-                ErrorMessage = "Cannot create chores in the past.";
+                ErrorMessage = _localizer["Chore_Error_DateInPast"];
                 return await OnGetAsync();
             }
 
@@ -169,14 +172,14 @@ public class CalendarModel : PageModel
             var currentUserId = GetCurrentUserId();
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
-                ErrorMessage = "You do not have permission to create chores.";
+                ErrorMessage = _localizer["Chore_Error_NoPermissionCreate"];
                 return await OnGetAsync();
             }
 
             // Check if assignee is valid
             if (!await _choreService.CanUserManageChoreForAssigneeAsync(currentUserId, AssigneeId))
             {
-                ErrorMessage = "You cannot assign chores to this user.";
+                ErrorMessage = _localizer["Chore_Error_CannotAssignToUser"];
                 return await OnGetAsync();
             }
 
@@ -202,11 +205,11 @@ public class CalendarModel : PageModel
                         TempData["ConflictDate"] = ChoreDate.ToString("yyyy-MM-dd");
                         TempData["ConflictTitle"] = ChoreTitle;
                         TempData["ConflictNotes"] = ChoreNotes;
-                        ErrorMessage = "This user has a shift on this date. Do you want to replace the shift with this chore?";
+                        ErrorMessage = _localizer["Chore_Error_ShiftConflictReplace"];
                     }
                     else
                     {
-                        ErrorMessage = "This user has a shift on this date.";
+                        ErrorMessage = _localizer["Chore_Error_ShiftConflict"];
                     }
                 }
                 else
@@ -230,13 +233,13 @@ public class CalendarModel : PageModel
                 description: $"Created chore '{ChoreTitle}' for user {AssigneeId} on {ChoreDate:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { ChoreId = result.Chore.Id, AssigneeId, ChoreDate, ChoreTitle, ChoreNotes }));
 
-            Message = $"Chore '{ChoreTitle}' created successfully.";
+            Message = _localizer["Chore_Success_Created", ChoreTitle];
             return RedirectToPage(new { year = ChoreDate.Year, month = ChoreDate.Month, message = Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating chore");
-            ErrorMessage = "An error occurred while creating the chore.";
+            ErrorMessage = _localizer["Chore_Error_CreatingFailed"];
             return await OnGetAsync();
         }
     }
@@ -248,21 +251,21 @@ public class CalendarModel : PageModel
             // ✅ SECURITY FIX: Input validation
             if (ShiftAssignmentId <= 0 || string.IsNullOrWhiteSpace(ChoreTitle))
             {
-                ErrorMessage = "Invalid request.";
+                ErrorMessage = _localizer["Chore_Error_InvalidRequest"];
                 return await OnGetAsync();
             }
 
             // Validate title length
             if (ChoreTitle.Length > 200)
             {
-                ErrorMessage = "Chore title must not exceed 200 characters.";
+                ErrorMessage = _localizer["Chore_Error_TitleTooLong"];
                 return await OnGetAsync();
             }
 
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(ChoreNotes) && ChoreNotes.Length > 1000)
             {
-                ErrorMessage = "Chore notes must not exceed 1000 characters.";
+                ErrorMessage = _localizer["Chore_Error_NotesTooLong"];
                 return await OnGetAsync();
             }
 
@@ -270,7 +273,7 @@ public class CalendarModel : PageModel
             var currentUserId = GetCurrentUserId();
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
-                ErrorMessage = "You do not have permission to replace shifts with chores.";
+                ErrorMessage = _localizer["Chore_Error_NoPermissionReplaceShifts"];
                 return await OnGetAsync();
             }
 
@@ -302,13 +305,13 @@ public class CalendarModel : PageModel
                 description: $"Replaced shift {ShiftAssignmentId} with chore '{ChoreTitle}' for user {chore.UserId} on {chore.Date:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { ChoreId = chore.Id, ShiftAssignmentId, ChoreTitle, ChoreNotes }));
 
-            Message = $"Shift replaced with chore '{ChoreTitle}' successfully.";
+            Message = _localizer["Chore_Success_ShiftReplaced", ChoreTitle];
             return RedirectToPage(new { year = chore.Date.Year, month = chore.Date.Month, message = Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error replacing shift with chore");
-            ErrorMessage = "An error occurred while replacing the shift.";
+            ErrorMessage = _localizer["Chore_Error_ReplacingShiftFailed"];
             return await OnGetAsync();
         }
     }
@@ -323,7 +326,7 @@ public class CalendarModel : PageModel
 
             if (!int.TryParse(choreIdString, out var choreId) || choreId <= 0)
             {
-                ErrorMessage = "Invalid chore ID.";
+                ErrorMessage = _localizer["Chore_Error_InvalidId"];
                 return await OnGetAsync();
             }
 
@@ -335,7 +338,7 @@ public class CalendarModel : PageModel
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to cancel chore {ChoreId} without permission", currentUserId, ChoreId);
-                ErrorMessage = "You do not have permission to cancel chores.";
+                ErrorMessage = _localizer["Chore_Error_NoPermissionCancel"];
                 return await OnGetAsync();
             }
 
@@ -343,7 +346,7 @@ public class CalendarModel : PageModel
             var chore = await _choreService.GetChoreByIdAsync(ChoreId);
             if (chore == null)
             {
-                ErrorMessage = "Chore not found.";
+                ErrorMessage = _localizer["Chore_Error_NotFound"];
                 return await OnGetAsync();
             }
 
@@ -369,13 +372,13 @@ public class CalendarModel : PageModel
                 description: $"Canceled chore '{chore.Title}' for user {chore.UserId} on {chore.Date:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { ChoreId, ChoreTitle = chore.Title, UserId = chore.UserId, ChoreDate = chore.Date }));
 
-            Message = $"Chore '{chore.Title}' canceled successfully.";
+            Message = _localizer["Chore_Success_Canceled", chore.Title];
             return RedirectToPage(new { year = chore.Date.Year, month = chore.Date.Month, message = Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error canceling chore");
-            ErrorMessage = "An error occurred while canceling the chore.";
+            ErrorMessage = _localizer["Chore_Error_CancelingFailed"];
             return await OnGetAsync();
         }
     }

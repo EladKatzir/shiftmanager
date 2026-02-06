@@ -4,14 +4,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner;
 
 [Authorize(Policy = "Grant:AdminAccess")]
-public class GriffinConfigModel : PageModel
+public class GriffinConfigModel : LocalizedPageModel
 {
     private readonly IGriffinConfigService _griffinConfigService;
     private readonly IGriffinApiLogService _griffinApiLogService;
@@ -40,10 +42,12 @@ public class GriffinConfigModel : PageModel
     public SelectList RoleOptions { get; set; } = null!;
 
     public GriffinConfigModel(
+        IStringLocalizer<SharedResources> localizer,
         IGriffinConfigService griffinConfigService,
         IGriffinApiLogService griffinApiLogService,
         IAuditLogService auditLogService,
         ILogger<GriffinConfigModel> logger)
+        : base(localizer)
     {
         _griffinConfigService = griffinConfigService;
         _griffinApiLogService = griffinApiLogService;
@@ -83,7 +87,7 @@ public class GriffinConfigModel : PageModel
                 TimeoutSeconds,
                 userName);
 
-            SuccessMessage = "Griffin ADFS configuration saved successfully.";
+            SuccessMessage = _localizer["Success_GriffinConfigSaved"].Value;
 
             // Audit log
             await _auditLogService.LogUserActionAsync(
@@ -99,7 +103,7 @@ public class GriffinConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save Griffin configuration");
-            ErrorMessage = "Failed to save configuration. Please try again.";
+            ErrorMessage = _localizer["Error_FailedToSaveGriffinConfig"].Value;
         }
 
         return Page();
@@ -140,7 +144,7 @@ public class GriffinConfigModel : PageModel
 
             if (savedConfig == null || string.IsNullOrWhiteSpace(savedConfig.BaseUrl))
             {
-                ErrorMessage = "Failed to load saved configuration for testing.";
+                ErrorMessage = _localizer["Error_FailedToLoadGriffinConfig"].Value;
                 return Page();
             }
 
@@ -214,22 +218,22 @@ public class GriffinConfigModel : PageModel
         if (Enabled)
         {
             if (string.IsNullOrWhiteSpace(BaseUrl))
-                return "Base URL is required when Griffin is enabled.";
+                return _localizer["Error_GriffinBaseUrlRequired"].Value;
 
             if (!Uri.TryCreate(BaseUrl, UriKind.Absolute, out var baseUri) ||
                 (baseUri.Scheme != "http" && baseUri.Scheme != "https"))
-                return "Base URL must be a valid HTTP or HTTPS URL.";
+                return _localizer["Error_GriffinBaseUrlInvalid"].Value;
 
             if (string.IsNullOrWhiteSpace(TokenConsumerUrl))
-                return "Token Consumer URL is required when Griffin is enabled.";
+                return _localizer["Error_GriffinTokenConsumerUrlRequired"].Value;
 
             if (!Uri.TryCreate(TokenConsumerUrl, UriKind.Absolute, out var callbackUri) ||
                 (callbackUri.Scheme != "http" && callbackUri.Scheme != "https"))
-                return "Token Consumer URL must be a valid HTTP or HTTPS URL.";
+                return _localizer["Error_GriffinTokenConsumerUrlInvalid"].Value;
         }
 
         if (TimeoutSeconds < 1 || TimeoutSeconds > 60)
-            return "Timeout must be between 1 and 60 seconds.";
+            return _localizer["Error_GriffinTimeoutOutOfRange"].Value;
 
         return null;
     }

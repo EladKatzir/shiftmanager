@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -12,7 +14,7 @@ using System.Text.Json;
 namespace ShiftManager.Pages.Public;
 
 [Authorize(Policy = "CanViewOnDuty")]
-public class OnDutyModel : PageModel
+public class OnDutyModel : LocalizedPageModel
 {
     private readonly IOnDutyService _onDutyService;
     private readonly INotificationService _notificationService;
@@ -28,7 +30,8 @@ public class OnDutyModel : PageModel
         IAuditLogService auditLogService,
         IBusyUserService busyUserService,
         ILogger<OnDutyModel> logger,
-        AppDbContext db)
+        AppDbContext db,
+        IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _onDutyService = onDutyService;
         _notificationService = notificationService;
@@ -147,35 +150,35 @@ public class OnDutyModel : PageModel
             // Input validation
             if (!ModelState.IsValid)
             {
-                ErrorMessage = "Please fill in all required fields.";
+                ErrorMessage = _localizer["OnDuty_Error_FillRequiredFields"];
                 return await OnGetAsync();
             }
 
             // Validate assignee ID
             if (AssigneeId <= 0)
             {
-                ErrorMessage = "Invalid assignee.";
+                ErrorMessage = _localizer["OnDuty_Error_InvalidAssignee"];
                 return await OnGetAsync();
             }
 
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(OnDutyNotes) && OnDutyNotes.Length > 1000)
             {
-                ErrorMessage = "Notes must not exceed 1000 characters.";
+                ErrorMessage = _localizer["OnDuty_Error_NotesTooLong"];
                 return await OnGetAsync();
             }
 
             // Validate date (prevent far future dates)
             if (OnDutyDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
             {
-                ErrorMessage = "Cannot create on-duty assignments more than 2 years in the future.";
+                ErrorMessage = _localizer["OnDuty_Error_DateTooFarFuture"];
                 return await OnGetAsync();
             }
 
             // Validate date (prevent past dates)
             if (OnDutyDate < DateOnly.FromDateTime(DateTime.Today))
             {
-                ErrorMessage = "Cannot create on-duty assignments in the past.";
+                ErrorMessage = _localizer["OnDuty_Error_DateInPast"];
                 return await OnGetAsync();
             }
 
@@ -183,7 +186,7 @@ public class OnDutyModel : PageModel
             var currentUserId = GetCurrentUserId();
             if (!await _onDutyService.CanUserManageOnDutyAsync(currentUserId))
             {
-                ErrorMessage = "You do not have permission to create on-duty assignments.";
+                ErrorMessage = _localizer["OnDuty_Error_NoPermissionCreate"];
                 return await OnGetAsync();
             }
 
@@ -199,7 +202,7 @@ public class OnDutyModel : PageModel
                 // Check if it's a vacation conflict
                 if (result.Message == "VACATION_CONFLICT")
                 {
-                    ErrorMessage = "Cannot assign on-duty: This user has an approved vacation on this date.";
+                    ErrorMessage = _localizer["OnDuty_Error_VacationConflict"];
                 }
                 else
                 {
@@ -222,13 +225,13 @@ public class OnDutyModel : PageModel
                 description: $"Created on-duty {OnDutyType} for user {AssigneeId} on {OnDutyDate:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { OnDutyId = result.OnDuty.Id, AssigneeId, OnDutyDate, OnDutyType, OnDutyNotes }));
 
-            Message = $"On-duty assignment created successfully.";
+            Message = _localizer["OnDuty_Success_Created"];
             return RedirectToPage(new { year = OnDutyDate.Year, month = OnDutyDate.Month, message = Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating on-duty assignment");
-            ErrorMessage = "An error occurred while creating the on-duty assignment.";
+            ErrorMessage = _localizer["OnDuty_Error_CreatingFailed"];
             return await OnGetAsync();
         }
     }
@@ -242,7 +245,7 @@ public class OnDutyModel : PageModel
 
             if (!int.TryParse(onDutyIdString, out var onDutyId) || onDutyId <= 0)
             {
-                ErrorMessage = "Invalid on-duty ID.";
+                ErrorMessage = _localizer["OnDuty_Error_InvalidId"];
                 return await OnGetAsync();
             }
 
@@ -253,7 +256,7 @@ public class OnDutyModel : PageModel
             if (!await _onDutyService.CanUserManageOnDutyAsync(currentUserId))
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to cancel on-duty {OnDutyId} without permission", currentUserId, OnDutyId);
-                ErrorMessage = "You do not have permission to cancel on-duty assignments.";
+                ErrorMessage = _localizer["OnDuty_Error_NoPermissionCancel"];
                 return await OnGetAsync();
             }
 
@@ -261,7 +264,7 @@ public class OnDutyModel : PageModel
             var onDuty = await _onDutyService.GetOnDutyByIdAsync(OnDutyId);
             if (onDuty == null)
             {
-                ErrorMessage = "On-duty assignment not found.";
+                ErrorMessage = _localizer["OnDuty_Error_NotFound"];
                 return await OnGetAsync();
             }
 
@@ -287,13 +290,13 @@ public class OnDutyModel : PageModel
                 description: $"Canceled on-duty {onDuty.Type} for user {onDuty.UserId} on {onDuty.Date:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { OnDutyId, OnDutyType = onDuty.Type, UserId = onDuty.UserId, OnDutyDate = onDuty.Date }));
 
-            Message = $"On-duty assignment canceled successfully.";
+            Message = _localizer["OnDuty_Success_Canceled"];
             return RedirectToPage(new { year = onDuty.Date.Year, month = onDuty.Date.Month, message = Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error canceling on-duty assignment");
-            ErrorMessage = "An error occurred while canceling the on-duty assignment.";
+            ErrorMessage = _localizer["OnDuty_Error_CancelingFailed"];
             return await OnGetAsync();
         }
     }

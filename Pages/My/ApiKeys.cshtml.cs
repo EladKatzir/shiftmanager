@@ -1,20 +1,22 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models.Api;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.My;
 
 [Authorize]
-public class ApiKeysModel : PageModel
+public class ApiKeysModel : LocalizedPageModel
 {
     private readonly IApiKeyService _apiKeyService;
     private readonly IGrantService _grantService;
     private readonly ILogger<ApiKeysModel> _logger;
 
-    public ApiKeysModel(IApiKeyService apiKeyService, IGrantService grantService, ILogger<ApiKeysModel> logger)
+    public ApiKeysModel(IApiKeyService apiKeyService, IGrantService grantService, ILogger<ApiKeysModel> logger, IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _apiKeyService = apiKeyService;
         _grantService = grantService;
@@ -38,7 +40,7 @@ public class ApiKeysModel : PageModel
     public string? Message { get; set; }
 
     [TempData]
-    public string? Error { get; set; }
+    public new string? Error { get; set; }
 
     [TempData]
     public string? GeneratedApiKey { get; set; }
@@ -86,7 +88,7 @@ public class ApiKeysModel : PageModel
         // Validate scopes
         if (scopes == null || scopes.Length == 0)
         {
-            Error = "Please select at least one scope";
+            Error = _localizer["ApiKey_Error_SelectScope"];
             return RedirectToPage();
         }
 
@@ -105,7 +107,7 @@ public class ApiKeysModel : PageModel
         }
         else
         {
-            Message = "API key request submitted successfully. An administrator will review your request.";
+            Message = _localizer["ApiKey_Success_Submitted"];
         }
 
         return RedirectToPage();
@@ -123,7 +125,7 @@ public class ApiKeysModel : PageModel
         }
         else
         {
-            Message = $"API key '{key!.Name}' has been revoked successfully";
+            Message = _localizer["ApiKey_Success_Revoked", key!.Name];
         }
 
         return RedirectToPage();
@@ -142,7 +144,7 @@ public class ApiKeysModel : PageModel
         else
         {
             GeneratedApiKey = newApiKey;
-            Message = "API key refreshed successfully. Save the new key - it won't be shown again!";
+            Message = _localizer["ApiKey_Success_Refreshed"];
         }
 
         return RedirectToPage();
@@ -160,7 +162,7 @@ public class ApiKeysModel : PageModel
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
-            Error = "Unauthorized";
+            Error = _localizer["ApiKey_Error_Unauthorized"];
             return RedirectToPage();
         }
 
@@ -183,7 +185,7 @@ public class ApiKeysModel : PageModel
         else
         {
             GeneratedApiKey = apiKey;
-            Message = $"API key request approved for '{request!.RequestedByUser?.DisplayName}'. Make sure to save the key - it won't be shown again!";
+            Message = _localizer["ApiKey_Success_Approved", request!.RequestedByUser?.DisplayName ?? ""];
         }
 
         return RedirectToPage();
@@ -195,7 +197,7 @@ public class ApiKeysModel : PageModel
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
-            Error = "Unauthorized";
+            Error = _localizer["ApiKey_Error_Unauthorized"];
             return RedirectToPage();
         }
 
@@ -207,7 +209,7 @@ public class ApiKeysModel : PageModel
         }
         else
         {
-            Message = $"API key request rejected for '{request!.RequestedByUser?.DisplayName}'";
+            Message = _localizer["ApiKey_Success_Rejected", request!.RequestedByUser?.DisplayName ?? ""];
         }
 
         return RedirectToPage();
@@ -219,7 +221,7 @@ public class ApiKeysModel : PageModel
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
-            Error = "Unauthorized";
+            Error = _localizer["ApiKey_Error_Unauthorized"];
             return RedirectToPage();
         }
 
@@ -231,7 +233,7 @@ public class ApiKeysModel : PageModel
         }
         else
         {
-            Message = $"API key '{key!.Name}' has been revoked";
+            Message = _localizer["ApiKey_Success_AdminRevoked", key!.Name];
         }
 
         return RedirectToPage();

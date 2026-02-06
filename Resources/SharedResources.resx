@@ -7569,4 +7569,556 @@ Are you absolutely sure you want to delete this user?</value>
     <value>This duty type requires officer rank (Second Lieutenant or higher)</value>
     <comment>Hint shown when duty type requires officer rank</comment>
   </data>
+  <data name="Areas" xml:space="preserve">
+    <value>Areas</value>
+  </data>
+  <data name="Molecules" xml:space="preserve">
+    <value>Molecules</value>
+  </data>
+  <data name="JobTypes" xml:space="preserve">
+    <value>Job Types</value>
+  </data>
+  <data name="Grants" xml:space="preserve">
+    <value>Grants</value>
+  </data>
+  <data name="Error_PleaseFillAllFields" xml:space="preserve">
+    <value>Please fill in all fields</value>
+  </data>
+  <data name="Error_FailedToUpdateShiftMetadata" xml:space="preserve">
+    <value>Failed to update shift metadata. Please try again.</value>
+  </data>
+  <data name="Error_FailedToCreateShiftRow" xml:space="preserve">
+    <value>Failed to create shift row. Please try again.</value>
+  </data>
+  <data name="Error_FailedToUpdateShiftSlots" xml:space="preserve">
+    <value>Failed to update shift slots. Please try again.</value>
+  </data>
+  <data name="Error_FailedToAssignUser" xml:space="preserve">
+    <value>Failed to assign user. Please try again.</value>
+  </data>
+  <data name="Error_FailedToResetShift" xml:space="preserve">
+    <value>Failed to reset shift. Please try again.</value>
+  </data>
+  <data name="Error_Prefix" xml:space="preserve">
+    <value>Error: </value>
+  </data>
+  <data name="Success_ExportDownloaded" xml:space="preserve">
+    <value>Export downloaded successfully</value>
+  </data>
+  <data name="Error_ExportFailed" xml:space="preserve">
+    <value>Export failed: </value>
+  </data>
+  <data name="Error_FailedToCopyPassword" xml:space="preserve">
+    <value>Failed to copy password. Please select and copy manually.</value>
+  </data>
+  <data name="FileSelected" xml:space="preserve">
+    <value>selected</value>
+  </data>
+  <data name="Error_PleaseUploadValidImage" xml:space="preserve">
+    <value>Please upload a valid image file (JPEG or PNG)</value>
+  </data>
+  <data name="Error_FailedToUpdate" xml:space="preserve">
+    <value>Failed to update</value>
+  </data>
+  <data name="Error_FailedToSaveShiftName" xml:space="preserve">
+    <value>Failed to save shift name</value>
+  </data>
+  <data name="Error_BothTimesRequired" xml:space="preserve">
+    <value>Both start and end times are required</value>
+  </data>
+  <data name="Error_FailedToSaveShiftTimes" xml:space="preserve">
+    <value>Failed to save shift times</value>
+  </data>
+  <data name="Deleting" xml:space="preserve">
+    <value>Deleting...</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Confirm Delete</value>
+  </data>
+  <data name="Program_Prefix" xml:space="preserve">
+    <value>Program: </value>
+  </data>
+  <data name="MasterProgram_Prefix" xml:space="preserve">
+    <value>Master Program: </value>
+  </data>
+  <data name="MasterProgram_WillApplyPrefix" xml:space="preserve">
+    <value>Will apply </value>
+  </data>
+  <data name="MasterProgram_WillApplySuffix" xml:space="preserve">
+    <value>programs to the date range</value>
+  </data>
+  <data name="Warning_CSSLoadingIssue" xml:space="preserve">
+    <value>CSS Loading Issue - Press Ctrl+F5 to refresh. If issue persists, run UNBLOCK_FILES.bat</value>
+  </data>
+  <data name="Error_OperationFailed" xml:space="preserve">
+    <value>Operation failed</value>
+  </data>
+  <data name="Error_FailedToDeleteShift" xml:space="preserve">
+    <value>Failed to delete shift. Please try again.</value>
+  </data>
+  <data name="Profile_Error_DisplayNameRequired" xml:space="preserve">
+    <value>Display name is required.</value>
+  </data>
+  <data name="Profile_Error_DisplayNameTooLong" xml:space="preserve">
+    <value>Display name must not exceed 200 characters.</value>
+  </data>
+  <data name="Profile_Error_PreferredNameTooLong" xml:space="preserve">
+    <value>Preferred name must not exceed 100 characters.</value>
+  </data>
+  <data name="Profile_Error_PhoneTooLong" xml:space="preserve">
+    <value>Phone must not exceed 50 characters.</value>
+  </data>
+  <data name="Profile_Error_CityTooLong" xml:space="preserve">
+    <value>City must not exceed 100 characters.</value>
+  </data>
+  <data name="Profile_Error_SkillsTooLong" xml:space="preserve">
+    <value>Skills must not exceed 5000 characters.</value>
+  </data>
+  <data name="Profile_Error_CertificationsTooLong" xml:space="preserve">
+    <value>Certifications must not exceed 5000 characters.</value>
+  </data>
+  <data name="Profile_Error_EmergencyContactNameTooLong" xml:space="preserve">
+    <value>Emergency contact name must not exceed 200 characters.</value>
+  </data>
+  <data name="Profile_Error_EmergencyContactPhoneTooLong" xml:space="preserve">
+    <value>Emergency contact phone must not exceed 50 characters.</value>
+  </data>
+  <data name="Profile_Error_EmergencyContactRelationTooLong" xml:space="preserve">
+    <value>Emergency contact relation must not exceed 100 characters.</value>
+  </data>
+  <data name="Profile_Error_HireDateFuture" xml:space="preserve">
+    <value>Hire date cannot be in the future.</value>
+  </data>
+  <data name="Profile_Error_DepartmentTooLong" xml:space="preserve">
+    <value>Department name too long (max 100 characters).</value>
+  </data>
+  <data name="Profile_Error_JobTitleTooLong" xml:space="preserve">
+    <value>Job title too long (max 100 characters).</value>
+  </data>
+  <data name="Profile_Success_UpdatedWithProfessionalInfo" xml:space="preserve">
+    <value>Profile updated successfully! Professional information has been updated.</value>
+  </data>
+  <data name="Profile_Success_Updated" xml:space="preserve">
+    <value>Profile updated successfully!</value>
+  </data>
+  <data name="Profile_Success_AvatarDeleted" xml:space="preserve">
+    <value>Avatar deleted successfully!</value>
+  </data>
+  <data name="Profile_Error_AvatarDeleteFailed" xml:space="preserve">
+    <value>Failed to delete avatar.</value>
+  </data>
+  <data name="Notification_Error_AuthenticationError" xml:space="preserve">
+    <value>Authentication error. Please log in again.</value>
+  </data>
+  <data name="Notification_Error_LoadingFailed" xml:space="preserve">
+    <value>An error occurred while loading notifications. Please try again.</value>
+  </data>
+  <data name="Notification_MarkedAsRead" xml:space="preserve">
+    <value>Notification marked as read.</value>
+  </data>
+  <data name="Notification_Error_UpdateFailed" xml:space="preserve">
+    <value>An error occurred while updating the notification.</value>
+  </data>
+  <data name="Notification_MarkedAllAsRead" xml:space="preserve">
+    <value>Marked {0} notifications as read.</value>
+  </data>
+  <data name="Notification_Error_MarkAllFailed" xml:space="preserve">
+    <value>An error occurred while updating notifications.</value>
+  </data>
+  <data name="Notification_Deleted" xml:space="preserve">
+    <value>Notification deleted.</value>
+  </data>
+  <data name="Notification_Error_DeleteFailed" xml:space="preserve">
+    <value>An error occurred while deleting the notification.</value>
+  </data>
+  <data name="ApiKey_Error_SelectScope" xml:space="preserve">
+    <value>Please select at least one scope</value>
+  </data>
+  <data name="ApiKey_Success_Submitted" xml:space="preserve">
+    <value>API key request submitted successfully. An administrator will review your request.</value>
+  </data>
+  <data name="ApiKey_Success_Revoked" xml:space="preserve">
+    <value>API key revoked successfully</value>
+  </data>
+  <data name="ApiKey_Success_Refreshed" xml:space="preserve">
+    <value>API key refreshed successfully. Save the new key - it won't be shown again!</value>
+  </data>
+  <data name="ApiKey_Error_Unauthorized" xml:space="preserve">
+    <value>Unauthorized</value>
+  </data>
+  <data name="ApiKey_Success_Approved" xml:space="preserve">
+    <value>API key request approved. Make sure to save the key - it won't be shown again!</value>
+  </data>
+  <data name="ApiKey_Success_Rejected" xml:space="preserve">
+    <value>API key request rejected</value>
+  </data>
+  <data name="ApiKey_Success_AdminRevoked" xml:space="preserve">
+    <value>API key has been revoked</value>
+  </data>
+  <data name="Chore_Error_FillRequiredFields" xml:space="preserve">
+    <value>Please fill in all required fields.</value>
+  </data>
+  <data name="Chore_Error_TitleRequired" xml:space="preserve">
+    <value>Chore title is required.</value>
+  </data>
+  <data name="Chore_Error_TitleTooLong" xml:space="preserve">
+    <value>Chore title must not exceed 200 characters.</value>
+  </data>
+  <data name="Chore_Error_NotesTooLong" xml:space="preserve">
+    <value>Chore notes must not exceed 1000 characters.</value>
+  </data>
+  <data name="Chore_Error_InvalidAssignee" xml:space="preserve">
+    <value>Invalid assignee.</value>
+  </data>
+  <data name="Chore_Error_DateTooFarFuture" xml:space="preserve">
+    <value>Cannot create chores more than 2 years in the future.</value>
+  </data>
+  <data name="Chore_Error_DateInPast" xml:space="preserve">
+    <value>Cannot create chores in the past.</value>
+  </data>
+  <data name="Chore_Error_NoPermissionCreate" xml:space="preserve">
+    <value>You do not have permission to create chores.</value>
+  </data>
+  <data name="Chore_Error_CannotAssignToUser" xml:space="preserve">
+    <value>You cannot assign chores to this user.</value>
+  </data>
+  <data name="Chore_Error_ShiftConflictReplace" xml:space="preserve">
+    <value>This user has a shift on this date. Do you want to replace the shift with this chore?</value>
+  </data>
+  <data name="Chore_Error_ShiftConflict" xml:space="preserve">
+    <value>This user has a shift on this date.</value>
+  </data>
+  <data name="Chore_Success_Created" xml:space="preserve">
+    <value>Chore created successfully.</value>
+  </data>
+  <data name="Chore_Error_CreatingFailed" xml:space="preserve">
+    <value>An error occurred while creating the chore.</value>
+  </data>
+  <data name="Chore_Error_InvalidRequest" xml:space="preserve">
+    <value>Invalid request.</value>
+  </data>
+  <data name="Chore_Error_NoPermissionReplaceShifts" xml:space="preserve">
+    <value>You do not have permission to replace shifts with chores.</value>
+  </data>
+  <data name="Chore_Success_ShiftReplaced" xml:space="preserve">
+    <value>Shift replaced with chore successfully.</value>
+  </data>
+  <data name="Chore_Error_ReplacingShiftFailed" xml:space="preserve">
+    <value>An error occurred while replacing the shift.</value>
+  </data>
+  <data name="Chore_Error_InvalidId" xml:space="preserve">
+    <value>Invalid chore ID.</value>
+  </data>
+  <data name="Chore_Error_NoPermissionCancel" xml:space="preserve">
+    <value>You do not have permission to cancel chores.</value>
+  </data>
+  <data name="Chore_Error_NotFound" xml:space="preserve">
+    <value>Chore not found.</value>
+  </data>
+  <data name="Chore_Success_Canceled" xml:space="preserve">
+    <value>Chore canceled successfully.</value>
+  </data>
+  <data name="Chore_Error_CancelingFailed" xml:space="preserve">
+    <value>An error occurred while canceling the chore.</value>
+  </data>
+  <data name="OnDuty_Error_FillRequiredFields" xml:space="preserve">
+    <value>Please fill in all required fields.</value>
+  </data>
+  <data name="OnDuty_Error_InvalidAssignee" xml:space="preserve">
+    <value>Invalid assignee.</value>
+  </data>
+  <data name="OnDuty_Error_NotesTooLong" xml:space="preserve">
+    <value>Notes must not exceed 1000 characters.</value>
+  </data>
+  <data name="OnDuty_Error_DateTooFarFuture" xml:space="preserve">
+    <value>Cannot create on-duty assignments more than 2 years in the future.</value>
+  </data>
+  <data name="OnDuty_Error_DateInPast" xml:space="preserve">
+    <value>Cannot create on-duty assignments in the past.</value>
+  </data>
+  <data name="OnDuty_Error_NoPermissionCreate" xml:space="preserve">
+    <value>You do not have permission to create on-duty assignments.</value>
+  </data>
+  <data name="OnDuty_Error_VacationConflict" xml:space="preserve">
+    <value>Cannot assign on-duty: This user has an approved vacation on this date.</value>
+  </data>
+  <data name="OnDuty_Success_Created" xml:space="preserve">
+    <value>On-duty assignment created successfully.</value>
+  </data>
+  <data name="OnDuty_Error_CreatingFailed" xml:space="preserve">
+    <value>An error occurred while creating the on-duty assignment.</value>
+  </data>
+  <data name="OnDuty_Error_InvalidId" xml:space="preserve">
+    <value>Invalid on-duty ID.</value>
+  </data>
+  <data name="OnDuty_Error_NoPermissionCancel" xml:space="preserve">
+    <value>You do not have permission to cancel on-duty assignments.</value>
+  </data>
+  <data name="OnDuty_Error_NotFound" xml:space="preserve">
+    <value>On-duty assignment not found.</value>
+  </data>
+  <data name="OnDuty_Success_Canceled" xml:space="preserve">
+    <value>On-duty assignment canceled successfully.</value>
+  </data>
+  <data name="OnDuty_Error_CancelingFailed" xml:space="preserve">
+    <value>An error occurred while canceling the on-duty assignment.</value>
+  </data>
+  <data name="Feedback_Error_ContentRequired" xml:space="preserve">
+    <value>Feedback content is required.</value>
+  </data>
+  <data name="Feedback_Success_Submitted" xml:space="preserve">
+    <value>Feedback submitted successfully. Thank you!</value>
+  </data>
+  <data name="Feedback_Error_SubmitFailed" xml:space="preserve">
+    <value>Error submitting feedback. Please try again.</value>
+  </data>
+  <data name="Feedback_Error_NotFound" xml:space="preserve">
+    <value>Feedback not found.</value>
+  </data>
+  <data name="Feedback_Success_MarkedToWorkOn" xml:space="preserve">
+    <value>Feedback marked as To Work On.</value>
+  </data>
+  <data name="Feedback_Error_StatusUpdateFailed" xml:space="preserve">
+    <value>Error updating feedback status.</value>
+  </data>
+  <data name="Feedback_Success_Deleted" xml:space="preserve">
+    <value>Feedback deleted successfully.</value>
+  </data>
+  <data name="Feedback_Error_DeleteFailed" xml:space="preserve">
+    <value>Error deleting feedback.</value>
+  </data>
+  <data name="Feedback_Error_ImageTooLarge" xml:space="preserve">
+    <value>Image size exceeds 5 MB limit.</value>
+  </data>
+  <data name="Feedback_Error_InvalidImageFormat" xml:space="preserve">
+    <value>Only JPEG and PNG files are allowed.</value>
+  </data>
+  <data name="Feedback_Error_ImageSaveFailed" xml:space="preserve">
+    <value>Error saving image. Please try again.</value>
+  </data>
+  <data name="Feedback_TypeLabel_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Feedback_TypeLabel_Suggestion" xml:space="preserve">
+    <value>Suggestion</value>
+  </data>
+  <data name="Feedback_Notification_Title" xml:space="preserve">
+    <value>New Feedback Submitted</value>
+  </data>
+  <data name="Feedback_Notification_Message" xml:space="preserve">
+    <value>{0} from {1}: {2}</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Error_InvalidUserClaim" xml:space="preserve">
+    <value>Invalid user claim. Please log in again.</value>
+  </data>
+  <data name="Error_SelectDirectorAndCompany" xml:space="preserve">
+    <value>Please select both a director and a company.</value>
+  </data>
+  <data name="Error_SelectedUserNotDirector" xml:space="preserve">
+    <value>Selected user is not a Director.</value>
+  </data>
+  <data name="Error_DirectorAlreadyAssigned" xml:space="preserve">
+    <value>Director is already assigned.</value>
+  </data>
+  <data name="Success_DirectorAssignedToCompany" xml:space="preserve">
+    <value>Director assigned to company successfully.</value>
+  </data>
+  <data name="Error_AssignmentNotFound" xml:space="preserve">
+    <value>Assignment not found.</value>
+  </data>
+  <data name="Success_DirectorAccessRevoked" xml:space="preserve">
+    <value>Director access revoked.</value>
+  </data>
+  <data name="Error_DirectorAlreadyAssignedToCompany" xml:space="preserve">
+    <value>Director is already assigned to that company.</value>
+  </data>
+  <data name="Success_DirectorReassigned" xml:space="preserve">
+    <value>Director reassigned successfully.</value>
+  </data>
+  <data name="Error_LoadingAuditLogs" xml:space="preserve">
+    <value>Error loading audit logs. Please try again.</value>
+  </data>
+  <data name="Error_ExportingAuditLogs" xml:space="preserve">
+    <value>Error exporting audit logs. Please try again.</value>
+  </data>
+  <data name="Error_LoadingAnalyticsData" xml:space="preserve">
+    <value>Error loading analytics data. Please try again.</value>
+  </data>
+  <data name="Error_ExportingReport" xml:space="preserve">
+    <value>Error exporting report. Please try again.</value>
+  </data>
+  <data name="Error_DangerousContentDetected" xml:space="preserve">
+    <value>Input contains invalid characters or potentially dangerous content.</value>
+  </data>
+  <data name="Error_InvalidUserId" xml:space="preserve">
+    <value>Invalid user ID.</value>
+  </data>
+  <data name="Error_EmailAndDisplayNameRequired" xml:space="preserve">
+    <value>Email and Display Name are required.</value>
+  </data>
+  <data name="Error_EmailTooLong" xml:space="preserve">
+    <value>Email must not exceed 255 characters.</value>
+  </data>
+  <data name="Error_DisplayNameTooLong" xml:space="preserve">
+    <value>Display name must not exceed 200 characters.</value>
+  </data>
+  <data name="Error_PreferredNameTooLong" xml:space="preserve">
+    <value>Preferred name must not exceed 100 characters.</value>
+  </data>
+  <data name="Error_PhoneTooLong" xml:space="preserve">
+    <value>Phone must not exceed 50 characters.</value>
+  </data>
+  <data name="Error_CityTooLong" xml:space="preserve">
+    <value>City must not exceed 100 characters.</value>
+  </data>
+  <data name="Error_DepartmentTooLong" xml:space="preserve">
+    <value>Department must not exceed 100 characters.</value>
+  </data>
+  <data name="Error_JobTitleTooLong" xml:space="preserve">
+    <value>Job title must not exceed 100 characters.</value>
+  </data>
+  <data name="Error_SkillsTooLong" xml:space="preserve">
+    <value>Skills must not exceed 5000 characters.</value>
+  </data>
+  <data name="Error_CertificationsTooLong" xml:space="preserve">
+    <value>Certifications must not exceed 5000 characters.</value>
+  </data>
+  <data name="Error_EmergencyContactNameTooLong" xml:space="preserve">
+    <value>Emergency contact name must not exceed 200 characters.</value>
+  </data>
+  <data name="Error_EmergencyContactPhoneTooLong" xml:space="preserve">
+    <value>Emergency contact phone must not exceed 50 characters.</value>
+  </data>
+  <data name="Error_EmergencyContactRelationTooLong" xml:space="preserve">
+    <value>Emergency contact relation must not exceed 100 characters.</value>
+  </data>
+  <data name="Success_ProfileUpdated" xml:space="preserve">
+    <value>Profile updated successfully!</value>
+  </data>
+  <data name="Success_AvatarDeleted" xml:space="preserve">
+    <value>Avatar deleted successfully!</value>
+  </data>
+  <data name="Error_FailedToDeleteAvatar" xml:space="preserve">
+    <value>Failed to delete avatar.</value>
+  </data>
+  <data name="Success_ViewAsModeEntered" xml:space="preserve">
+    <value>Now viewing as Manager. Your permissions and visible data are limited to this company.</value>
+  </data>
+  <data name="Error_UnableToEnterViewAsMode" xml:space="preserve">
+    <value>Unable to enter View as Manager mode. You may not have access to this company.</value>
+  </data>
+  <data name="Success_ViewAsModeExited" xml:space="preserve">
+    <value>Exited View as Manager mode. Full Director permissions restored.</value>
+  </data>
+  <data name="Success_CompanyFilterUpdated" xml:space="preserve">
+    <value>Company filter updated successfully.</value>
+  </data>
+  <data name="Success_CompanyFilterCleared" xml:space="preserve">
+    <value>Company filter cleared. Showing all companies.</value>
+  </data>
+  <data name="Error_SelectUser" xml:space="preserve">
+    <value>Select a user.</value>
+  </data>
+  <data name="Error_SelectedUserNotFound" xml:space="preserve">
+    <value>Selected user not found.</value>
+  </data>
+  <data name="Error_CannotAssignCrossCompany" xml:space="preserve">
+    <value>Cannot assign user from a different company to this shift.</value>
+  </data>
+  <data name="Error_CannotOverAssign" xml:space="preserve">
+    <value>Cannot over-assign. Increase required first.</value>
+  </data>
+  <data name="Error_FailedToAssignTrainee" xml:space="preserve">
+    <value>Failed to assign trainee. Please check validation rules.</value>
+  </data>
+  <data name="Success_TraineeAssigned" xml:space="preserve">
+    <value>Trainee assigned successfully.</value>
+  </data>
+  <data name="Error_FailedToRemoveTrainee" xml:space="preserve">
+    <value>Failed to remove trainee.</value>
+  </data>
+  <data name="Success_TraineeRemoved" xml:space="preserve">
+    <value>Trainee removed successfully.</value>
+  </data>
+  <data name="Error_MissingCompanyIdOrCulture" xml:space="preserve">
+    <value>Missing company ID or culture parameter.</value>
+  </data>
+  <data name="Error_InvalidCulture" xml:space="preserve">
+    <value>Invalid culture. Must be en-US or he-IL.</value>
+  </data>
+  <data name="Error_CanOnlyEditCurrentCompanyTranslations" xml:space="preserve">
+    <value>You can only edit translations for the currently selected company.</value>
+  </data>
+  <data name="Success_GriffinConfigSaved" xml:space="preserve">
+    <value>Griffin ADFS configuration saved successfully.</value>
+  </data>
+  <data name="Error_FailedToSaveGriffinConfig" xml:space="preserve">
+    <value>Failed to save configuration. Please try again.</value>
+  </data>
+  <data name="Error_FailedToLoadGriffinConfig" xml:space="preserve">
+    <value>Failed to load saved configuration for testing.</value>
+  </data>
+  <data name="Error_GriffinBaseUrlRequired" xml:space="preserve">
+    <value>Base URL is required when Griffin is enabled.</value>
+  </data>
+  <data name="Error_GriffinBaseUrlInvalid" xml:space="preserve">
+    <value>Base URL must be a valid HTTP or HTTPS URL.</value>
+  </data>
+  <data name="Error_GriffinTokenConsumerUrlRequired" xml:space="preserve">
+    <value>Token Consumer URL is required when Griffin is enabled.</value>
+  </data>
+  <data name="Error_GriffinTokenConsumerUrlInvalid" xml:space="preserve">
+    <value>Token Consumer URL must be a valid HTTP or HTTPS URL.</value>
+  </data>
+  <data name="Error_GriffinTimeoutOutOfRange" xml:space="preserve">
+    <value>Timeout must be between 1 and 60 seconds.</value>
+  </data>
+  <data name="Info_FeatureFlagChangesRequireRestart" xml:space="preserve">
+    <value>Feature flag changes require application restart to take effect.</value>
+  </data>
+  <data name="Error_SavingFeatureFlags" xml:space="preserve">
+    <value>Error saving feature flags.</value>
+  </data>
+  <data name="Error_SelectValidShiftAssignment" xml:space="preserve">
+    <value>Please select a valid shift assignment.</value>
+  </data>
+  <data name="Error_SelectValidSwapUser" xml:space="preserve">
+    <value>Please select a valid user to swap with.</value>
+  </data>
+  <data name="Error_CannotSwapWithSelf" xml:space="preserve">
+    <value>Cannot swap shift with yourself.</value>
+  </data>
+  <data name="Error_ShiftAssignmentNotFound" xml:space="preserve">
+    <value>Shift assignment not found.</value>
+  </data>
+  <data name="Error_CanOnlySwapOwnShifts" xml:space="preserve">
+    <value>You can only swap your own shifts.</value>
+  </data>
+  <data name="Error_InvalidSwapTargetUser" xml:space="preserve">
+    <value>Selected user is not valid or not in your company.</value>
+  </data>
+  <data name="Error_MissingAuthToken" xml:space="preserve">
+    <value>Missing authentication token.</value>
+  </data>
+  <data name="Error_GriffinNotEnabled" xml:space="preserve">
+    <value>Griffin ADFS authentication is not enabled.</value>
+  </data>
+  <data name="Error_AuthenticationFailed" xml:space="preserve">
+    <value>Authentication failed. Please try again.</value>
+  </data>
+  <data name="Info_AccountPendingApproval" xml:space="preserve">
+    <value>Your account is pending administrator approval.</value>
+  </data>
+  <data name="Error_PasswordTooShort" xml:space="preserve">
+    <value>Password must be at least 6 characters.</value>
+  </data>
+  <data name="Error_PasswordTooLong" xml:space="preserve">
+    <value>Password must not exceed 128 characters.</value>
+  </data>
+  <data name="Error_UserLacksPermission" xml:space="preserve">
+    <value>You do not have sufficient permissions to perform this action.</value>
+  </data>
 </root>

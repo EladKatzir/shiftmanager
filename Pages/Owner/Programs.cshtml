@@ -284,7 +284,7 @@
                 const programName = this.dataset.programName;
 
                 document.getElementById('generateProgramId').value = programId;
-                document.getElementById('generateProgramName').textContent = 'Program: ' + programName;
+                document.getElementById('generateProgramName').textContent = '@Localizer["Program_Prefix"]' + programName;
 
                 document.getElementById('generateModal').style.display = 'block';
             });

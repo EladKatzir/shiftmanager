@@ -215,7 +215,7 @@ async function adjustStaffing(url, payload, onOk, onError) {
       }, 300);
 
       // Show toast notification instead of alert
-      showToast(data.message || 'Operation failed', 'error');
+      showToast(data.message || (window.AppLocalizer?.Error_OperationFailed || 'Operation failed'), 'error');
       onError && onError(data);
     }
   } catch (e) {
@@ -226,7 +226,7 @@ async function adjustStaffing(url, payload, onOk, onError) {
       button.style.background = '';
       button.style.color = '';
     }, 300);
-    showToast('Network error - please try again', 'error');
+    showToast(window.AppLocalizer?.Error_NetworkError || 'Network error - please try again', 'error');
   } finally {
     // Reset button state
     button.disabled = false;
@@ -865,11 +865,11 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
             // Reload page to show updated state
             location.reload();
         } else {
-            alert('Error: ' + result.error);
+            alert((window.AppLocalizer?.Error_Prefix || 'Error: ') + result.error);
         }
     } catch (error) {
         console.error('Error deleting shift instance:', error);
-        alert('Failed to delete shift. Please try again.');
+        alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
     }
 }
 
@@ -1218,3 +1218,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// ============= LOCALIZATION BRIDGE =============
+// This file cannot use Razor's @Localizer since it's a standalone .js file.
+// All user-facing strings reference window.AppLocalizer.KeyName with English fallbacks.
+// The window.AppLocalizer object is populated server-side in _LocalizationScript.cshtml
+// (rendered in _Layout.cshtml), which uses @Localizer to emit localized values as JSON.
+// To add a new localized string: 1) Add the key to _LocalizationScript.cshtml,
+// 2) Add the resource to SharedResources.resx, 3) Reference as window.AppLocalizer?.KeyName || 'fallback'.

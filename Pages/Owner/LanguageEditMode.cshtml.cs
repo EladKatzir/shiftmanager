@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner;
@@ -10,14 +12,16 @@ namespace ShiftManager.Pages.Owner;
 /// Sets cookies and redirects to home page for in-app translation editing.
 /// </summary>
 [Authorize(Policy = "Grant:AdminAccess")]
-public class LanguageEditModeModel : PageModel
+public class LanguageEditModeModel : LocalizedPageModel
 {
     private readonly IOwnerCompanySelectorService _ownerCompanySelector;
     private readonly ILogger<LanguageEditModeModel> _logger;
 
     public LanguageEditModeModel(
+        IStringLocalizer<SharedResources> localizer,
         IOwnerCompanySelectorService ownerCompanySelector,
         ILogger<LanguageEditModeModel> logger)
+        : base(localizer)
     {
         _ownerCompanySelector = ownerCompanySelector;
         _logger = logger;
@@ -28,7 +32,7 @@ public class LanguageEditModeModel : PageModel
         // Validate parameters
         if (!companyId.HasValue || string.IsNullOrWhiteSpace(culture))
         {
-            TempData["Error"] = "Missing company ID or culture parameter.";
+            TempData["Error"] = _localizer["Error_MissingCompanyIdOrCulture"].Value;
             return RedirectToPage("/Owner/LanguageManagement");
         }
 
@@ -36,7 +40,7 @@ public class LanguageEditModeModel : PageModel
         var allowedCultures = new[] { "en-US", "he-IL" };
         if (!allowedCultures.Contains(culture))
         {
-            TempData["Error"] = $"Invalid culture '{culture}'. Must be 'en-US' or 'he-IL'.";
+            TempData["Error"] = string.Format(_localizer["Error_InvalidCulture"].Value, culture);
             return RedirectToPage("/Owner/LanguageManagement");
         }
 
@@ -46,7 +50,7 @@ public class LanguageEditModeModel : PageModel
         {
             _logger.LogWarning("Owner attempted to enter edit mode for CompanyId={CompanyId} but has CompanyId={SelectedCompanyId} selected",
                 companyId.Value, selectedCompanyId);
-            TempData["Error"] = "You can only edit translations for the currently selected company.";
+            TempData["Error"] = _localizer["Error_CanOnlyEditCurrentCompanyTranslations"].Value;
             return RedirectToPage("/Owner/LanguageManagement");
         }
 

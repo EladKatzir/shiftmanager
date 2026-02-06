@@ -4,26 +4,29 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Auth;
 
 [AllowAnonymous]
-public class GriffinCallbackModel : PageModel
+public class GriffinCallbackModel : LocalizedPageModel
 {
     private readonly IGriffinService _griffinService;
     private readonly IGriffinConfigService _griffinConfigService;
     private readonly ISecurityLogger _securityLogger;
     private readonly ILogger<GriffinCallbackModel> _logger;
 
-    public string? Error { get; set; }
     public string? PendingMessage { get; set; }
 
     public GriffinCallbackModel(
+        IStringLocalizer<SharedResources> localizer,
         IGriffinService griffinService,
         IGriffinConfigService griffinConfigService,
         ISecurityLogger securityLogger,
         ILogger<GriffinCallbackModel> logger)
+        : base(localizer)
     {
         _griffinService = griffinService;
         _griffinConfigService = griffinConfigService;
@@ -36,7 +39,7 @@ public class GriffinCallbackModel : PageModel
         // 1. Validate token parameter
         if (string.IsNullOrEmpty(token))
         {
-            Error = "Missing authentication token.";
+            Error = _localizer["Error_MissingAuthToken"].Value;
             _logger.LogWarning("Griffin callback invoked without token parameter");
             return Page();
         }
@@ -45,7 +48,7 @@ public class GriffinCallbackModel : PageModel
         var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
         if (griffinConfig?.Enabled != true)
         {
-            Error = "Griffin ADFS authentication is not enabled.";
+            Error = _localizer["Error_GriffinNotEnabled"].Value;
             _logger.LogWarning("Griffin callback invoked but Griffin is disabled");
             return Page();
         }
@@ -61,7 +64,7 @@ public class GriffinCallbackModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Griffin authentication failed in callback");
-            Error = "Authentication failed. Please try again.";
+            Error = _localizer["Error_AuthenticationFailed"].Value;
             _securityLogger.LogAuthenticationFailure("Griffin ADFS", ipAddress, ex.Message);
             return Page();
         }
@@ -74,12 +77,12 @@ public class GriffinCallbackModel : PageModel
 
             if (claims != null)
             {
-                PendingMessage = "Your account is pending administrator approval.";
+                PendingMessage = _localizer["Info_AccountPendingApproval"].Value;
                 _logger.LogInformation("Griffin user {Email} pending approval", claims.UPN);
                 return Page();
             }
 
-            Error = "Authentication failed. Please try again.";
+            Error = _localizer["Error_AuthenticationFailed"].Value;
             _securityLogger.LogAuthenticationFailure("Griffin ADFS", ipAddress, "Invalid token or user not found");
             return Page();
         }

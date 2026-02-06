@@ -77,6 +77,12 @@
         "ViewMyRequests": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewMyRequests"].Value)),
         "ViewTeamMembers": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewTeamMembers"].Value)),
         "UpdateMyInformation": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["UpdateMyInformation"].Value)),
-        "ViewNotifications": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewNotifications"].Value))
+        "ViewNotifications": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["ViewNotifications"].Value)),
+
+        // site.js - Error/status messages
+        "Error_OperationFailed": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_OperationFailed"].Value)),
+        "Error_NetworkError": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_NetworkError"].Value)),
+        "Error_Prefix": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_Prefix"].Value)),
+        "Error_FailedToDeleteShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_FailedToDeleteShift"].Value))
     };
 </script>

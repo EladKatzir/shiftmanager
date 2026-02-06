@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using System.Text.Json;
 
 namespace ShiftManager.Pages.Owner;
@@ -10,14 +12,16 @@ namespace ShiftManager.Pages.Owner;
 /// Feature Flags Management - Toggle system features on/off
 /// </summary>
 [Authorize(Policy = "Grant:SystemConfiguration")]
-public class FeatureFlagsModel : PageModel
+public class FeatureFlagsModel : LocalizedPageModel
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<FeatureFlagsModel> _logger;
 
     public FeatureFlagsModel(
+        IStringLocalizer<SharedResources> localizer,
         IConfiguration configuration,
         ILogger<FeatureFlagsModel> logger)
+        : base(localizer)
     {
         _configuration = configuration;
         _logger = logger;
@@ -45,8 +49,7 @@ public class FeatureFlagsModel : PageModel
         {
             // Note: Modifying appsettings.json at runtime is not recommended for production
             // In production, use environment variables, Azure App Configuration, or similar
-            Message = "Feature flag changes require application restart to take effect. " +
-                     "Consider using environment variables or external configuration for production.";
+            Message = _localizer["Info_FeatureFlagChangesRequireRestart"].Value;
 
             _logger.LogInformation("Feature flags updated: EnforceCompanyScope={EnforceCompanyScope}, " +
                 "EnableDirectorRole={EnableDirectorRole}, AllowPublicSignup={AllowPublicSignup}, " +
@@ -64,7 +67,7 @@ public class FeatureFlagsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving feature flags");
-            Message = "Error saving feature flags.";
+            Message = _localizer["Error_SavingFeatureFlags"].Value;
             LoadFeatureFlags();
             return Page();
         }

@@ -98,21 +98,21 @@ public class CompaniesModel : LocalizedPageModel
         if (ContainsDangerousContent(CompanyName))
         {
             _logger.LogWarning("XSS attempt detected in company name: {CompanyName}", CompanyName);
-            Error = "Company name contains invalid characters or potentially dangerous content";
+            Error = _localizer["Error_DangerousContentDetected"].Value;
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(CompanyDisplayName) && ContainsDangerousContent(CompanyDisplayName))
         {
             _logger.LogWarning("XSS attempt detected in company display name: {DisplayName}", CompanyDisplayName);
-            Error = "Company display name contains invalid characters or potentially dangerous content";
+            Error = _localizer["Error_DangerousContentDetected"].Value;
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(ManagerDisplayName) && ContainsDangerousContent(ManagerDisplayName))
         {
             _logger.LogWarning("XSS attempt detected in manager display name: {DisplayName}", ManagerDisplayName);
-            Error = "Manager display name contains invalid characters or potentially dangerous content";
+            Error = _localizer["Error_DangerousContentDetected"].Value;
             return Page();
         }
 
@@ -319,7 +319,7 @@ public class CompaniesModel : LocalizedPageModel
         if (ContainsDangerousContent(NewCompanyName))
         {
             _logger.LogWarning("XSS attempt detected in company rename: {CompanyName}", NewCompanyName);
-            TempData["ErrorMessage"] = "Company name contains invalid characters or potentially dangerous content";
+            TempData["ErrorMessage"] = _localizer["Error_DangerousContentDetected"].Value;
             return RedirectToPage();
         }
 

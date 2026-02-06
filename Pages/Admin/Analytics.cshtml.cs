@@ -2,16 +2,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models.Analytics;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Text;
 
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class AnalyticsModel : PageModel
+public class AnalyticsModel : LocalizedPageModel
 {
     private readonly IAnalyticsService _analyticsService;
     private readonly ITenantResolver _tenantResolver;
@@ -19,10 +21,12 @@ public class AnalyticsModel : PageModel
     private readonly ILogger<AnalyticsModel> _logger;
 
     public AnalyticsModel(
+        IStringLocalizer<SharedResources> localizer,
         IAnalyticsService analyticsService,
         ITenantResolver tenantResolver,
         AppDbContext db,
         ILogger<AnalyticsModel> logger)
+        : base(localizer)
     {
         _analyticsService = analyticsService;
         _tenantResolver = tenantResolver;
@@ -129,7 +133,7 @@ public class AnalyticsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading analytics data");
-            TempData["Error"] = "Error loading analytics data. Please try again.";
+            TempData["Error"] = _localizer["Error_LoadingAnalyticsData"].Value;
         }
     }
 
@@ -210,7 +214,7 @@ public class AnalyticsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting analytics report");
-            TempData["Error"] = "Error exporting report. Please try again.";
+            TempData["Error"] = _localizer["Error_ExportingReport"].Value;
             return RedirectToPage();
         }
     }

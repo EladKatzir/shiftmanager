@@ -242,8 +242,8 @@
                 const programCount = this.dataset.programCount;
 
                 document.getElementById('generateMasterProgramId').value = masterId;
-                document.getElementById('generateMasterProgramName').textContent = 'Master Program: ' + masterName;
-                document.getElementById('generateMasterProgramCount').textContent = '✨ Will apply ' + programCount + ' programs to the date range';
+                document.getElementById('generateMasterProgramName').textContent = '@Localizer["MasterProgram_Prefix"]' + masterName;
+                document.getElementById('generateMasterProgramCount').textContent = '@Localizer["MasterProgram_WillApplyPrefix"]' + programCount + ' @Localizer["MasterProgram_WillApplySuffix"]';
 
                 document.getElementById('generateMasterModal').style.display = 'block';
             });

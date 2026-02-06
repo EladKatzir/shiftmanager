@@ -2,21 +2,24 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Requests.Swaps;
 
 [Authorize]
-public class CreateModel : PageModel
+public class CreateModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
 
-    public CreateModel(AppDbContext db, ICompanyContext companyContext)
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext)
+        : base(localizer)
     {
         _db = db;
         _companyContext = companyContext;
@@ -78,14 +81,14 @@ public class CreateModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (!SelectedAssignmentId.HasValue || SelectedAssignmentId.Value <= 0)
         {
-            ModelState.AddModelError("", "Please select a valid shift assignment.");
+            ModelState.AddModelError("", _localizer["Error_SelectValidShiftAssignment"].Value);
             await OnGetAsync();
             return Page();
         }
 
         if (!ToUserId.HasValue || ToUserId.Value <= 0)
         {
-            ModelState.AddModelError("", "Please select a valid user to swap with.");
+            ModelState.AddModelError("", _localizer["Error_SelectValidSwapUser"].Value);
             await OnGetAsync();
             return Page();
         }
@@ -93,7 +96,7 @@ public class CreateModel : PageModel
         // Prevent swapping with yourself
         if (ToUserId.Value == userId)
         {
-            ModelState.AddModelError("", "Cannot swap shift with yourself.");
+            ModelState.AddModelError("", _localizer["Error_CannotSwapWithSelf"].Value);
             await OnGetAsync();
             return Page();
         }
@@ -105,14 +108,14 @@ public class CreateModel : PageModel
 
         if (assignment == null)
         {
-            ModelState.AddModelError("", "Shift assignment not found.");
+            ModelState.AddModelError("", _localizer["Error_ShiftAssignmentNotFound"].Value);
             await OnGetAsync();
             return Page();
         }
 
         if (assignment.UserId != userId)
         {
-            ModelState.AddModelError("", "You can only swap your own shifts.");
+            ModelState.AddModelError("", _localizer["Error_CanOnlySwapOwnShifts"].Value);
             await OnGetAsync();
             return Page();
         }
@@ -123,7 +126,7 @@ public class CreateModel : PageModel
 
         if (toUser == null || !toUser.IsActive || toUser.CompanyId != companyId)
         {
-            ModelState.AddModelError("", "Selected user is not valid or not in your company.");
+            ModelState.AddModelError("", _localizer["Error_InvalidSwapTargetUser"].Value);
             await OnGetAsync();
             return Page();
         }

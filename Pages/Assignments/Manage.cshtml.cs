@@ -2,16 +2,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
-using Microsoft.Extensions.Logging;
 
 namespace ShiftManager.Pages.Assignments;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class ManageModel : PageModel
+public class ManageModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IConflictChecker _checker;
@@ -22,7 +24,8 @@ public class ManageModel : PageModel
     private readonly ITraineeService _traineeService;
     private readonly IBusyUserService _busyUserService;
 
-    public ManageModel(AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService)
+    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService)
+        : base(localizer)
     {
         _db = db;
         _checker = checker;
@@ -49,7 +52,6 @@ public class ManageModel : PageModel
     public List<AppUser> Trainees { get; set; } = new();
     public HashSet<int> UsersOnTimeOff { get; set; } = new();
     public Dictionary<int, BusyStatus> BusyUsers { get; set; } = new();
-    public string? Error { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -177,13 +179,13 @@ public class ManageModel : PageModel
         await OnGetAsync(); // reload context for Instance
         _logger.LogInformation("Attempt add user {UserId} to shiftInstance {InstanceId}", SelectedUserId, Instance.Id);
 
-        if (SelectedUserId is null) { Error = "Select a user."; return Page(); }
+        if (SelectedUserId is null) { Error = _localizer["Error_SelectUser"].Value; return Page(); }
 
         // Validate user belongs to the shift's company
         var selectedUser = await _db.Users.FindAsync(SelectedUserId.Value);
         if (selectedUser == null)
         {
-            Error = "Selected user not found.";
+            Error = _localizer["Error_SelectedUserNotFound"].Value;
             return Page();
         }
 
@@ -191,7 +193,7 @@ public class ManageModel : PageModel
         {
             _logger.LogWarning("Attempted cross-company assignment: User {UserId} (Company {UserCompanyId}) to Shift (Company {ShiftCompanyId})",
                 SelectedUserId.Value, selectedUser.CompanyId, Instance.CompanyId);
-            Error = "Cannot assign user from a different company to this shift.";
+            Error = _localizer["Error_CannotAssignCrossCompany"].Value;
             return Page();
         }
 
@@ -200,7 +202,7 @@ public class ManageModel : PageModel
             .CountAsync(a => a.ShiftInstanceId == Instance.Id);
         if (assigned >= Instance.StaffingRequired)
         {
-            Error = "Cannot over-assign. Increase required first.";
+            Error = _localizer["Error_CannotOverAssign"].Value;
             return Page();
         }
 
@@ -286,7 +288,7 @@ public class ManageModel : PageModel
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
         }
 
@@ -294,11 +296,11 @@ public class ManageModel : PageModel
 
         if (!success)
         {
-            TempData["ErrorMessage"] = "Failed to assign trainee. Please check validation rules.";
+            TempData["ErrorMessage"] = _localizer["Error_FailedToAssignTrainee"].Value;
         }
         else
         {
-            TempData["SuccessMessage"] = "Trainee assigned successfully.";
+            TempData["SuccessMessage"] = _localizer["Success_TraineeAssigned"].Value;
         }
 
         return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
@@ -310,7 +312,7 @@ public class ManageModel : PageModel
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
         }
 
@@ -318,11 +320,11 @@ public class ManageModel : PageModel
 
         if (!success)
         {
-            TempData["ErrorMessage"] = "Failed to remove trainee.";
+            TempData["ErrorMessage"] = _localizer["Error_FailedToRemoveTrainee"].Value;
         }
         else
         {
-            TempData["SuccessMessage"] = "Trainee removed successfully.";
+            TempData["SuccessMessage"] = _localizer["Success_TraineeRemoved"].Value;
         }
 
         return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });

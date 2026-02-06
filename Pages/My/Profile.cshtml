@@ -626,7 +626,7 @@
                         const label = fileInput.closest('.avatar-controls').querySelector('.avatar-label');
                         if (label) {
                             const originalText = label.textContent;
-                            label.textContent = '✓ ' + file.name + ' selected';
+                            label.textContent = '✓ ' + file.name + ' @Localizer["FileSelected"]';
                             label.style.color = 'var(--success)';
 
                             setTimeout(() => {
@@ -635,7 +635,7 @@
                             }, 3000);
                         }
                     } else {
-                        alert('Please upload a valid image file (JPEG or PNG)');
+                        alert('@Localizer["Error_PleaseUploadValidImage"]');
                     }
                 }
             }
@@ -647,7 +647,7 @@
                     const label = this.closest('.avatar-controls').querySelector('.avatar-label');
                     if (label) {
                         const originalText = label.textContent;
-                        label.textContent = '✓ ' + file.name + ' selected';
+                        label.textContent = '✓ ' + file.name + ' @Localizer["FileSelected"]';
                         label.style.color = 'var(--success)';
 
                         setTimeout(() => {

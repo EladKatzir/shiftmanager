@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Dto;
+using ShiftManager.Pages;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -12,7 +14,7 @@ using System.Text.Json;
 namespace ShiftManager.Pages.My;
 
 [Authorize]
-public class ProfileModel : PageModel
+public class ProfileModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IProfileService _profileService;
@@ -25,7 +27,8 @@ public class ProfileModel : PageModel
         IProfileService profileService,
         IAvatarService avatarService,
         ITenantResolver tenantResolver,
-        IGrantService grantService)
+        IGrantService grantService,
+        IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _db = db;
         _profileService = profileService;
@@ -129,70 +132,70 @@ public class ProfileModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (string.IsNullOrWhiteSpace(DisplayName))
         {
-            ErrorMessage = "Display name is required.";
+            ErrorMessage = _localizer["Profile_Error_DisplayNameRequired"];
             LoadUserData(user);
             return Page();
         }
 
         if (DisplayName.Length > 200)
         {
-            ErrorMessage = "Display name must not exceed 200 characters.";
+            ErrorMessage = _localizer["Profile_Error_DisplayNameTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(PreferredName) && PreferredName.Length > 100)
         {
-            ErrorMessage = "Preferred name must not exceed 100 characters.";
+            ErrorMessage = _localizer["Profile_Error_PreferredNameTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length > 50)
         {
-            ErrorMessage = "Phone must not exceed 50 characters.";
+            ErrorMessage = _localizer["Profile_Error_PhoneTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(City) && City.Length > 100)
         {
-            ErrorMessage = "City must not exceed 100 characters.";
+            ErrorMessage = _localizer["Profile_Error_CityTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Skills) && Skills.Length > 5000)
         {
-            ErrorMessage = "Skills must not exceed 5000 characters.";
+            ErrorMessage = _localizer["Profile_Error_SkillsTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Certifications) && Certifications.Length > 5000)
         {
-            ErrorMessage = "Certifications must not exceed 5000 characters.";
+            ErrorMessage = _localizer["Profile_Error_CertificationsTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactName) && EmergencyContactName.Length > 200)
         {
-            ErrorMessage = "Emergency contact name must not exceed 200 characters.";
+            ErrorMessage = _localizer["Profile_Error_EmergencyContactNameTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactPhone) && EmergencyContactPhone.Length > 50)
         {
-            ErrorMessage = "Emergency contact phone must not exceed 50 characters.";
+            ErrorMessage = _localizer["Profile_Error_EmergencyContactPhoneTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactRelation) && EmergencyContactRelation.Length > 100)
         {
-            ErrorMessage = "Emergency contact relation must not exceed 100 characters.";
+            ErrorMessage = _localizer["Profile_Error_EmergencyContactRelationTooLong"];
             LoadUserData(user);
             return Page();
         }
@@ -215,7 +218,7 @@ public class ProfileModel : PageModel
         // Validate HireDate for Owner
         if (isOwner && HireDate.HasValue && HireDate.Value > DateOnly.FromDateTime(DateTime.Today))
         {
-            ErrorMessage = "Hire date cannot be in the future.";
+            ErrorMessage = _localizer["Profile_Error_HireDateFuture"];
             LoadUserData(user);
             return Page();
         }
@@ -223,14 +226,14 @@ public class ProfileModel : PageModel
         // Validate Department and JobTitle length
         if (isOwner && Department != null && Department.Length > 100)
         {
-            ErrorMessage = "Department name too long (max 100 characters).";
+            ErrorMessage = _localizer["Profile_Error_DepartmentTooLong"];
             LoadUserData(user);
             return Page();
         }
 
         if (isOwner && JobTitle != null && JobTitle.Length > 100)
         {
-            ErrorMessage = "Job title too long (max 100 characters).";
+            ErrorMessage = _localizer["Profile_Error_JobTitleTooLong"];
             LoadUserData(user);
             return Page();
         }
@@ -268,8 +271,8 @@ public class ProfileModel : PageModel
         }
 
         SuccessMessage = isOwner && (Department != user.LegacyDepartment || JobTitle != user.JobTitle || HireDate != user.HireDate)
-            ? "Profile updated successfully! Professional information has been updated."
-            : "Profile updated successfully!";
+            ? _localizer["Profile_Success_UpdatedWithProfessionalInfo"]
+            : _localizer["Profile_Success_Updated"];
 
         // Reload user data
         user = await _db.Users.FindAsync(userId);
@@ -290,11 +293,11 @@ public class ProfileModel : PageModel
 
         if (success)
         {
-            SuccessMessage = "Avatar deleted successfully!";
+            SuccessMessage = _localizer["Profile_Success_AvatarDeleted"];
         }
         else
         {
-            ErrorMessage = "Failed to delete avatar.";
+            ErrorMessage = _localizer["Profile_Error_AvatarDeleteFailed"];
         }
 
         var user = await _db.Users.FindAsync(userId);

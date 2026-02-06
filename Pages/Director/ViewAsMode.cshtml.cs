@@ -2,23 +2,27 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Director;
 
 [Authorize(Policy = "IsDirector")]
-public class ViewAsModeModel : PageModel
+public class ViewAsModeModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IDirectorService _directorService;
     private readonly IViewAsModeService _viewAsModeService;
 
     public ViewAsModeModel(
+        IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IDirectorService directorService,
         IViewAsModeService viewAsModeService)
+        : base(localizer)
     {
         _db = db;
         _directorService = directorService;
@@ -50,12 +54,12 @@ public class ViewAsModeModel : PageModel
 
         if (success)
         {
-            TempData["SuccessMessage"] = "Now viewing as Manager. Your permissions and visible data are limited to this company.";
+            TempData["SuccessMessage"] = _localizer["Success_ViewAsModeEntered"].Value;
             return RedirectToPage("/Calendar/Month");
         }
         else
         {
-            TempData["ErrorMessage"] = "Unable to enter View as Manager mode. You may not have access to this company.";
+            TempData["ErrorMessage"] = _localizer["Error_UnableToEnterViewAsMode"].Value;
             return RedirectToPage();
         }
     }
@@ -63,7 +67,7 @@ public class ViewAsModeModel : PageModel
     public async Task<IActionResult> OnPostExitAsync()
     {
         await _viewAsModeService.ExitViewAsModeAsync();
-        TempData["SuccessMessage"] = "Exited View as Manager mode. Full Director permissions restored.";
+        TempData["SuccessMessage"] = _localizer["Success_ViewAsModeExited"].Value;
         return RedirectToPage();
     }
 }

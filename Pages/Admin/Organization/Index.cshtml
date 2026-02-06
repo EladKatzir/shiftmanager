@@ -457,7 +457,7 @@
                         }
                         <span class="tree-icon tree-icon-project">P</span>
                         <span class="tree-label">@Html.Encode(project.DisplayName)</span>
-                        <span class="tree-meta">(@project.AreaCount <loc key="areas" />)</span>
+                        <span class="tree-meta">(@project.AreaCount <loc key="Areas" />)</span>
                         @if (!project.IsActive)
                         {
                             <span class="badge badge-inactive"><loc key="Inactive" /></span>
@@ -482,7 +482,7 @@
                                         }
                                         <span class="tree-icon tree-icon-area">A</span>
                                         <span class="tree-label">@Html.Encode(area.DisplayName)</span>
-                                        <span class="tree-meta">(@area.MoleculeCount <loc key="molecules" />, @area.JobTypeCount <loc key="jobTypes" />)</span>
+                                        <span class="tree-meta">(@area.MoleculeCount <loc key="Molecules" />, @area.JobTypeCount <loc key="JobTypes" />)</span>
                                         @if (!area.IsActive)
                                         {
                                             <span class="badge badge-inactive"><loc key="Inactive" /></span>
@@ -527,7 +527,7 @@
                                                                         <span class="tree-spacer"></span>
                                                                         <span class="tree-icon tree-icon-company">C</span>
                                                                         <span class="tree-label">@Html.Encode(company.DisplayName ?? company.Name)</span>
-                                                                        <span class="tree-meta">(@company.UserCount <loc key="users" />)</span>
+                                                                        <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                                                                     </div>
                                                                 </div>
                                                             }
@@ -538,7 +538,7 @@
                                                                         <span class="tree-spacer"></span>
                                                                         <span class="tree-icon tree-icon-department">D</span>
                                                                         <span class="tree-label">@Html.Encode(dept.DisplayName)</span>
-                                                                        <span class="tree-meta">(@dept.UserCount <loc key="users" />)</span>
+                                                                        <span class="tree-meta">(@dept.UserCount <loc key="Users" />)</span>
                                                                         @if (!dept.IsActive)
                                                                         {
                                                                             <span class="badge badge-inactive"><loc key="Inactive" /></span>
@@ -589,7 +589,7 @@
                             <span class="tree-spacer"></span>
                             <span class="tree-icon tree-icon-company">C</span>
                             <span class="tree-label">@Html.Encode(company.DisplayName ?? company.Name)</span>
-                            <span class="tree-meta">(@company.UserCount <loc key="users" />)</span>
+                            <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                             <span class="badge badge-inactive"><loc key="NeedsAssignment" /></span>
                         </div>
                     </div>

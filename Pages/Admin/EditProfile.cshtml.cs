@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Dto;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -14,7 +16,7 @@ using System.Text.Json;
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class EditProfileModel : PageModel
+public class EditProfileModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IProfileService _profileService;
@@ -23,11 +25,13 @@ public class EditProfileModel : PageModel
     private readonly IAuditLogService _auditLogService;
 
     public EditProfileModel(
+        IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IProfileService profileService,
         IAvatarService avatarService,
         ITenantResolver tenantResolver,
         IAuditLogService auditLogService)
+        : base(localizer)
     {
         _db = db;
         _profileService = profileService;
@@ -124,7 +128,7 @@ public class EditProfileModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (UserId <= 0)
         {
-            return BadRequest("Invalid user ID");
+            return BadRequest(_localizer["Error_InvalidUserId"].Value);
         }
 
         var user = await _db.Users
@@ -155,13 +159,13 @@ public class EditProfileModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (UserId <= 0)
         {
-            return BadRequest("Invalid user ID");
+            return BadRequest(_localizer["Error_InvalidUserId"].Value);
         }
 
         // Validate required fields
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName))
         {
-            ErrorMessage = "Email and Display Name are required.";
+            ErrorMessage = _localizer["Error_EmailAndDisplayNameRequired"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -175,7 +179,7 @@ public class EditProfileModel : PageModel
         // Length validation to prevent DoS and database errors
         if (Email.Length > 255)
         {
-            ErrorMessage = "Email must not exceed 255 characters.";
+            ErrorMessage = _localizer["Error_EmailTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -188,7 +192,7 @@ public class EditProfileModel : PageModel
 
         if (DisplayName.Length > 200)
         {
-            ErrorMessage = "Display name must not exceed 200 characters.";
+            ErrorMessage = _localizer["Error_DisplayNameTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -201,7 +205,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(PreferredName) && PreferredName.Length > 100)
         {
-            ErrorMessage = "Preferred name must not exceed 100 characters.";
+            ErrorMessage = _localizer["Error_PreferredNameTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -214,7 +218,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length > 50)
         {
-            ErrorMessage = "Phone must not exceed 50 characters.";
+            ErrorMessage = _localizer["Error_PhoneTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -227,7 +231,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(City) && City.Length > 100)
         {
-            ErrorMessage = "City must not exceed 100 characters.";
+            ErrorMessage = _localizer["Error_CityTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -240,7 +244,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(Department) && Department.Length > 100)
         {
-            ErrorMessage = "Department must not exceed 100 characters.";
+            ErrorMessage = _localizer["Error_DepartmentTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -253,7 +257,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(JobTitle) && JobTitle.Length > 100)
         {
-            ErrorMessage = "Job title must not exceed 100 characters.";
+            ErrorMessage = _localizer["Error_JobTitleTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -266,7 +270,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(Skills) && Skills.Length > 5000)
         {
-            ErrorMessage = "Skills must not exceed 5000 characters.";
+            ErrorMessage = _localizer["Error_SkillsTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -279,7 +283,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(Certifications) && Certifications.Length > 5000)
         {
-            ErrorMessage = "Certifications must not exceed 5000 characters.";
+            ErrorMessage = _localizer["Error_CertificationsTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -292,7 +296,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactName) && EmergencyContactName.Length > 200)
         {
-            ErrorMessage = "Emergency contact name must not exceed 200 characters.";
+            ErrorMessage = _localizer["Error_EmergencyContactNameTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -305,7 +309,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactPhone) && EmergencyContactPhone.Length > 50)
         {
-            ErrorMessage = "Emergency contact phone must not exceed 50 characters.";
+            ErrorMessage = _localizer["Error_EmergencyContactPhoneTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -318,7 +322,7 @@ public class EditProfileModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactRelation) && EmergencyContactRelation.Length > 100)
         {
-            ErrorMessage = "Emergency contact relation must not exceed 100 characters.";
+            ErrorMessage = _localizer["Error_EmergencyContactRelationTooLong"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -332,7 +336,7 @@ public class EditProfileModel : PageModel
         // Basic email format validation
         if (!Email.Contains('@') || Email.Length < 3)
         {
-            ErrorMessage = "Invalid email format.";
+            ErrorMessage = _localizer["Error_InvalidEmailFormat"].Value;
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
@@ -347,7 +351,7 @@ public class EditProfileModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var editorUserId))
         {
-            return BadRequest("Invalid user claim");
+            return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
         }
         var targetUser = await _db.Users.FindAsync(UserId);
 
@@ -454,7 +458,7 @@ public class EditProfileModel : PageModel
 
         await _db.SaveChangesAsync();
 
-        SuccessMessage = "Profile updated successfully!";
+        SuccessMessage = _localizer["Success_ProfileUpdated"].Value;
 
         // Reload user data
         targetUser = await _db.Users
@@ -473,18 +477,18 @@ public class EditProfileModel : PageModel
         // ✅ SECURITY FIX: Input validation
         if (UserId <= 0)
         {
-            return BadRequest("Invalid user ID");
+            return BadRequest(_localizer["Error_InvalidUserId"].Value);
         }
 
         var success = await _avatarService.DeleteAvatarAsync(UserId);
 
         if (success)
         {
-            SuccessMessage = "Avatar deleted successfully!";
+            SuccessMessage = _localizer["Success_AvatarDeleted"].Value;
         }
         else
         {
-            ErrorMessage = "Failed to delete avatar.";
+            ErrorMessage = _localizer["Error_FailedToDeleteAvatar"].Value;
         }
 
         var user = await _db.Users

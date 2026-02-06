@@ -2,23 +2,27 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Director;
 
 [Authorize(Policy = "IsDirector")]
-public class CompanyFilterModel : PageModel
+public class CompanyFilterModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IDirectorService _directorService;
     private readonly ICompanyFilterService _filterService;
 
     public CompanyFilterModel(
+        IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IDirectorService directorService,
         ICompanyFilterService filterService)
+        : base(localizer)
     {
         _db = db;
         _directorService = directorService;
@@ -44,14 +48,14 @@ public class CompanyFilterModel : PageModel
     public async Task<IActionResult> OnPostSetFilterAsync()
     {
         await _filterService.SetSelectedCompanyIdsAsync(CompanyIds);
-        TempData["SuccessMessage"] = "Company filter updated successfully.";
+        TempData["SuccessMessage"] = _localizer["Success_CompanyFilterUpdated"].Value;
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostClearFilterAsync()
     {
         await _filterService.ClearFilterAsync();
-        TempData["SuccessMessage"] = "Company filter cleared. Showing all companies.";
+        TempData["SuccessMessage"] = _localizer["Success_CompanyFilterCleared"].Value;
         return RedirectToPage();
     }
 }

@@ -433,13 +433,13 @@
                 // Show all
                 hiddenItems.classList.add('is-visible');
                 button.classList.add('expanded');
-                btnText.textContent = '<loc key="Calendar_ShowLess" />';
+                btnText.textContent = '@Localizer["Calendar_ShowLess"]';
             } else {
                 // Hide extra items
                 hiddenItems.classList.remove('is-visible');
                 button.classList.remove('expanded');
                 const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
-                btnText.textContent = `+${hiddenCount} <loc key="Calendar_MoreItems" />`;
+                btnText.textContent = `+${hiddenCount} @Localizer["Calendar_MoreItems"]`;
             }
         }
     </script>

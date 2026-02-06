@@ -2,21 +2,24 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Linq;
 
 namespace ShiftManager.Pages.Admin;
 
 [Authorize(Policy = "IsManagerOrAdmin")]
-public class AuditLogModel : PageModel
+public class AuditLogModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<AuditLogModel> _logger;
 
-    public AuditLogModel(AppDbContext db, ITenantResolver tenantResolver, ILogger<AuditLogModel> logger)
+    public AuditLogModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ITenantResolver tenantResolver, ILogger<AuditLogModel> logger)
+        : base(localizer)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -136,7 +139,7 @@ public class AuditLogModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading audit logs");
-            TempData["Error"] = "Error loading audit logs. Please try again.";
+            TempData["Error"] = _localizer["Error_LoadingAuditLogs"].Value;
         }
     }
 
@@ -203,7 +206,7 @@ public class AuditLogModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting audit logs to CSV");
-            TempData["Error"] = "Error exporting audit logs. Please try again.";
+            TempData["Error"] = _localizer["Error_ExportingAuditLogs"].Value;
             return RedirectToPage();
         }
     }

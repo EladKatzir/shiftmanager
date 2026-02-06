@@ -834,13 +834,13 @@ public class UsersModel : LocalizedPageModel
 
         if (newPassword.Length < 6)
         {
-            TempData["ErrorMessage"] = "Password must be at least 6 characters.";
+            TempData["ErrorMessage"] = _localizer["Error_PasswordTooShort"].Value;
             return RedirectToPage();
         }
 
         if (newPassword.Length > 128)
         {
-            TempData["ErrorMessage"] = "Password must not exceed 128 characters.";
+            TempData["ErrorMessage"] = _localizer["Error_PasswordTooLong"].Value;
             return RedirectToPage();
         }
 
@@ -1063,7 +1063,7 @@ public class UsersModel : LocalizedPageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
         var currentUser = await _db.Users.FindAsync(currentUserId);
@@ -1103,7 +1103,7 @@ public class UsersModel : LocalizedPageModel
         // Validate permission to assign the requested role
         if (!_directorService.CanAssignRole(joinRequest.RequestedRole))
         {
-            TempData["ErrorMessage"] = $"You do not have permission to assign the {joinRequest.RequestedRole} role.";
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"].Value, joinRequest.RequestedRole);
             return RedirectToPage();
         }
 
@@ -1181,7 +1181,7 @@ public class UsersModel : LocalizedPageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
         var currentUser = await _db.Users.FindAsync(currentUserId);
@@ -1233,7 +1233,7 @@ public class UsersModel : LocalizedPageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            TempData["ErrorMessage"] = "Invalid user claim. Please log in again.";
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
         var currentUser = await _db.Users.FindAsync(currentUserId);

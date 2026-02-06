@@ -543,7 +543,7 @@
                     try {
                         // Show loading state
                         btn.disabled = true;
-                        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>Loading...</span>';
+                        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>@Localizer["Loading"]</span>';
                         if (typeof lucide !== 'undefined') lucide.createIcons();
 
                         var response = await fetch('/Api/ScheduleExport', {
@@ -567,18 +567,18 @@
 
                             // Show success toast if available
                             if (window.showToast) {
-                                window.showToast('Export downloaded successfully', 'success');
+                                window.showToast('@Localizer["Success_ExportDownloaded"]', 'success');
                             }
                         } else {
                             console.error('Export failed:', response.statusText);
                             if (window.showToast) {
-                                window.showToast('Export failed: ' + response.statusText, 'error');
+                                window.showToast('@Localizer["Error_ExportFailed"]' + response.statusText, 'error');
                             }
                         }
                     } catch (error) {
                         console.error('Export failed:', error);
                         if (window.showToast) {
-                            window.showToast('Export failed: ' + error.message, 'error');
+                            window.showToast('@Localizer["Error_ExportFailed"]' + error.message, 'error');
                         }
                     } finally {
                         // Restore button state
@@ -628,13 +628,13 @@
                 // Show all
                 hiddenItems.classList.add('is-visible');
                 button.classList.add('expanded');
-                btnText.textContent = '<loc key="Calendar_ShowLess" />';
+                btnText.textContent = '@Localizer["Calendar_ShowLess"]';
             } else {
                 // Hide extra items
                 hiddenItems.classList.remove('is-visible');
                 button.classList.remove('expanded');
                 const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
-                btnText.textContent = `+${hiddenCount} <loc key="Calendar_MoreItems" />`;
+                btnText.textContent = `+${hiddenCount} @Localizer["Calendar_MoreItems"]`;
             }
         }
 
