@@ -310,7 +310,7 @@
                     {
                         @foreach (var chore in choresForDay.Take(2))
                         {
-                            <div class="chore-item" onclick="event.stopPropagation(); showChoreDetails(@chore.Id, '@chore.Title.Replace("'", "\\'").Trim()', '@chore.User?.DisplayName', '@date.ToString("yyyy-MM-dd")', '@(chore.Notes?.Replace("'", "\\'").Trim() ?? "")')">
+                            <div class="chore-item" data-chore-id="@chore.Id" data-title="@chore.Title.Trim()" data-assignee="@chore.User?.DisplayName" data-date="@date.ToString("yyyy-MM-dd")" data-notes="@(chore.Notes?.Trim() ?? "")">
                                 <div class="chore-item-text">
                                     <span class="chore-assignee">@chore.User?.DisplayName</span>
                                     <span class="chore-title">@chore.Title</span>
@@ -362,7 +362,7 @@
                             <td>
                                 @if (canEdit)
                                 {
-                                    <button class="delete-btn" onclick="confirmDelete(@chore.Id, '@chore.Title.Replace("'", "\\'").Trim()')">
+                                    <button class="delete-btn" data-delete-id="@chore.Id" data-delete-title="@chore.Title.Trim()">
                                         🗑️
                                     </button>
                                 }
@@ -411,7 +411,7 @@
                     <div class="custom-dropdown" id="assigneeDropdown" style="display: none;" role="listbox" aria-labelledby="assigneeLabel">
                         @foreach (var user in Model.EligibleAssignees)
                         {
-                            <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" onclick="selectAssignee(@user.Id, '@user.DisplayName')" role="option">
+                            <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" role="option">
                                 @user.DisplayName (@user.Email)
                             </div>
                         }
@@ -521,6 +521,39 @@ const busyUsersByDate = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Mode
 
 const canEdit = @canEdit.ToString().ToLower();
 let currentDetailsChoreId = null;
+
+// XSS-safe event delegation: read user data from data-* attributes instead of inline JS
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.chore-item[data-chore-id]').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showChoreDetails(
+                parseInt(this.dataset.choreId),
+                this.dataset.title,
+                this.dataset.assignee,
+                this.dataset.date,
+                this.dataset.notes
+            );
+        });
+    });
+
+    document.querySelectorAll('.delete-btn[data-delete-id]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            confirmDelete(parseInt(this.dataset.deleteId), this.dataset.deleteTitle);
+        });
+    });
+
+    var assigneeDropdownEl = document.getElementById('assigneeDropdown');
+    if (assigneeDropdownEl) {
+        assigneeDropdownEl.addEventListener('click', function(e) {
+            var option = e.target.closest('.dropdown-option');
+            if (option) {
+                selectAssignee(parseInt(option.dataset.id), option.dataset.name);
+            }
+        });
+    }
+});
 
 function handleCellClick(date, hasChore) {
     if (canEdit) {

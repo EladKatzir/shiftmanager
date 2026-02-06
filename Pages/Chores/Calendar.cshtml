@@ -299,7 +299,7 @@
                     {
                         @foreach (var chore in choresForDay.Take(2))
                         {
-                            <div class="chore-item" onclick="event.stopPropagation(); showChoreDetails(@chore.Id, '@chore.Title.Replace("'", "\\'").Trim()', '@chore.User?.DisplayName', '@date.ToString("yyyy-MM-dd")', '@(chore.Notes?.Replace("'", "\\'").Trim() ?? "")')">
+                            <div class="chore-item" data-chore-id="@chore.Id" data-title="@chore.Title.Trim()" data-assignee="@chore.User?.DisplayName" data-date="@date.ToString("yyyy-MM-dd")" data-notes="@(chore.Notes?.Trim() ?? "")">
                                 <div class="chore-item-text">
                                     <span class="chore-assignee">@chore.User?.DisplayName</span>
                                     <span class="chore-title">@chore.Title</span>
@@ -349,7 +349,7 @@
                             <td>@(chore.Notes ?? "-")</td>
                             <td>@chore.Creator?.DisplayName</td>
                             <td>
-                                <button class="delete-btn" onclick="confirmDelete(@chore.Id, '@chore.Title.Replace("'", "\\'").Trim()')">
+                                <button class="delete-btn" data-delete-id="@chore.Id" data-delete-title="@chore.Title.Trim()">
                                     🗑️
                                 </button>
                             </td>
@@ -474,6 +474,29 @@
 
 <script>
 let currentDetailsChoreId = null;
+
+// XSS-safe event delegation: read user data from data-* attributes instead of inline JS
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.chore-item[data-chore-id]').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showChoreDetails(
+                parseInt(this.dataset.choreId),
+                this.dataset.title,
+                this.dataset.assignee,
+                this.dataset.date,
+                this.dataset.notes
+            );
+        });
+    });
+
+    document.querySelectorAll('.delete-btn[data-delete-id]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            confirmDelete(parseInt(this.dataset.deleteId), this.dataset.deleteTitle);
+        });
+    });
+});
 
 function openCreateModal(date) {
     document.getElementById('choreDate').value = date;

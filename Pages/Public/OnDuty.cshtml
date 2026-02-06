@@ -355,7 +355,7 @@
                             var userRank = onDuty.User?.Rank ?? MilitaryRank.Turai;
                             var rankAbbrev = userRank.GetAbbreviation();
                             var rankClass = userRank.GetBadgeClass();
-                            <div class="onduty-item @typeClass" onclick="event.stopPropagation(); showOnDutyDetails(@onDuty.Id, '@typeLabel', '@onDuty.User?.DisplayName', '@date.ToString("yyyy-MM-dd")', '@(onDuty.Notes?.Replace("'", "\\'").Trim() ?? "")', @((int)onDuty.Type))">
+                            <div class="onduty-item @typeClass" data-onduty-id="@onDuty.Id" data-type-label="@typeLabel" data-assignee="@onDuty.User?.DisplayName" data-date="@date.ToString("yyyy-MM-dd")" data-notes="@(onDuty.Notes?.Trim() ?? "")" data-type-enum="@((int)onDuty.Type)">
                                 <div class="onduty-item-text">
                                     <span class="onduty-assignee">
                                         @onDuty.User?.DisplayName
@@ -418,7 +418,7 @@
                             <td>
                                 @if (canEdit)
                                 {
-                                    <button class="delete-btn" onclick="confirmDelete(@onDuty.Id, '@typeLabel - @onDuty.User?.DisplayName')">
+                                    <button class="delete-btn" data-delete-id="@onDuty.Id" data-delete-title="@typeLabel - @onDuty.User?.DisplayName">
                                         🗑️
                                     </button>
                                 }
@@ -489,7 +489,7 @@
                                 var userRank = user.Rank;
                                 var rankAbbrev = userRank.GetAbbreviation();
                                 var rankClass = userRank.GetBadgeClass();
-                                <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" data-rank="@((int)userRank)" data-rank-abbrev="@rankAbbrev" onclick="selectOnDutyAssignee(@user.Id, '@user.DisplayName', '@rankAbbrev')" role="option">
+                                <div class="dropdown-option" data-id="@user.Id" data-name="@user.DisplayName" data-rank="@((int)userRank)" data-rank-abbrev="@rankAbbrev" role="option">
                                     <span class="rank-badge rank-badge--compact @rankClass" title="@userRank.GetDisplayName()">@rankAbbrev</span>
                                     @user.DisplayName
                                     <span style="color: var(--muted); font-size: 0.85em;">(@user.Email)</span>
@@ -730,12 +730,17 @@ async function updateEligibleAssignees(dutyType) {
                     selectOnDutyAssignee(user.id, user.displayName, user.rankAbbreviation);
                 };
 
-                // Build option HTML with rank badge
-                option.innerHTML = `
-                    <span class="rank-badge rank-badge--compact ${user.rankBadgeClass}" title="${user.rankDisplayName}">${user.rankAbbreviation}</span>
-                    ${user.displayName}
-                    <span style="color: var(--muted); font-size: 0.85em;">(${user.email})</span>
-                `;
+                // Build option content safely (no innerHTML with user data)
+                var badge = document.createElement('span');
+                badge.className = 'rank-badge rank-badge--compact ' + (user.rankBadgeClass || '');
+                badge.title = user.rankDisplayName || '';
+                badge.textContent = user.rankAbbreviation || '';
+                option.appendChild(badge);
+                option.appendChild(document.createTextNode(' ' + user.displayName + ' '));
+                var emailSpan = document.createElement('span');
+                emailSpan.style.cssText = 'color: var(--muted); font-size: 0.85em;';
+                emailSpan.textContent = '(' + user.email + ')';
+                option.appendChild(emailSpan);
 
                 optionsContainer.appendChild(option);
             });
@@ -791,6 +796,38 @@ function updateOnDutyBusyIndicators() {
 
 // Listen for date changes to update busy indicators
 document.addEventListener('DOMContentLoaded', function() {
+    // XSS-safe event delegation: read user data from data-* attributes instead of inline JS
+    document.querySelectorAll('.onduty-item[data-onduty-id]').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showOnDutyDetails(
+                parseInt(this.dataset.ondutyId),
+                this.dataset.typeLabel,
+                this.dataset.assignee,
+                this.dataset.date,
+                this.dataset.notes,
+                parseInt(this.dataset.typeEnum)
+            );
+        });
+    });
+
+    document.querySelectorAll('.delete-btn[data-delete-id]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            confirmDelete(parseInt(this.dataset.deleteId), this.dataset.deleteTitle);
+        });
+    });
+
+    var assigneeOptionsContainer = document.getElementById('onDutyAssigneeOptions');
+    if (assigneeOptionsContainer) {
+        assigneeOptionsContainer.addEventListener('click', function(e) {
+            var option = e.target.closest('.dropdown-option');
+            if (option) {
+                selectOnDutyAssignee(parseInt(option.dataset.id), option.dataset.name, option.dataset.rankAbbrev);
+            }
+        });
+    }
+
     const dateInput = document.getElementById('onDutyDate');
     if (dateInput) {
         dateInput.addEventListener('change', updateOnDutyBusyIndicators);

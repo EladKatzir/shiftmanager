@@ -94,20 +94,21 @@ public class CompanyIdInterceptor : SaveChangesInterceptor
             {
                 if (!hasTenant || companyId == 0)
                 {
-                    // Warn mode: Log when data lacks CompanyId
-                    if (!enforceCompanyScope)
+                    if (enforceCompanyScope)
                     {
+                        // Hard block: Prevent orphaned entities that would be invisible to all tenant queries
+                        throw new InvalidOperationException(
+                            $"CompanyId interceptor: Entity {entityType} cannot be saved — CompanyId cannot be determined " +
+                            "and EnforceCompanyScope is enabled. This would create an orphaned record invisible to all tenant-scoped queries.");
+                    }
+                    else
+                    {
+                        // Warn mode: Log when data lacks CompanyId
                         _logger.LogWarning(
                             "CompanyId interceptor: Entity {EntityType} (Id: {EntityId}) is being saved with CompanyId=0. " +
                             "Tenant context not available. EnforceCompanyScope is disabled, allowing this operation.",
                             entityType,
                             entry.Entity.GetType().GetProperty("Id")?.GetValue(entry.Entity) ?? "N/A");
-                    }
-                    else
-                    {
-                        _logger.LogError(
-                            "CompanyId interceptor: Entity {EntityType} cannot be saved - CompanyId cannot be determined and EnforceCompanyScope is enabled.",
-                            entityType);
                     }
                 }
                 else
