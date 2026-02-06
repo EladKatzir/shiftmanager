@@ -19,6 +19,11 @@ public class Chore : IBelongsToCompany
     public int? MoleculeId { get; set; }
 
     /// <summary>
+    /// The type of chore (for calendar categorization).
+    /// </summary>
+    public int? ChoreTypeId { get; set; }
+
+    /// <summary>
     /// The user assigned to this chore
     /// </summary>
     public int UserId { get; set; }
@@ -61,6 +66,7 @@ public class Chore : IBelongsToCompany
     // Navigation properties
     public Company? Company { get; set; }
     public Molecule? Molecule { get; set; }
+    public ChoreType? ChoreType { get; set; }
     public AppUser? User { get; set; }
     public AppUser? Creator { get; set; }
     public AppUser? Canceler { get; set; }

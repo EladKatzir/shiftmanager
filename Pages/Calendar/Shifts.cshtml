@@ -1,0 +1,536 @@
+@page
+@model ShiftManager.Pages.Calendar.ShiftsModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["ShiftsCalendar"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendars"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["ShiftsCalendar"], IsActive = true }
+})
+
+<div class="shifts-calendar" data-ui-version="v2">
+    @* Toolbar *@
+    <div class="shifts-calendar__toolbar">
+        <div class="shifts-calendar__toolbar-row">
+            @* Molecule selector *@
+            <div class="shifts-calendar__selector">
+                <label for="moleculeSelect">@Localizer["Molecule"]</label>
+                <select id="moleculeSelect" class="form-select" onchange="updateCalendarFilters()">
+                    @foreach (var molecule in Model.AvailableMolecules)
+                    {
+                        var isSelected = molecule.Id == Model.MoleculeId;
+                        <option value="@molecule.Id" selected="@isSelected">@molecule.DisplayName</option>
+                    }
+                </select>
+            </div>
+
+            @* JobType selector *@
+            <div class="shifts-calendar__selector">
+                <label for="jobTypeSelect">@Localizer["JobType"]</label>
+                <select id="jobTypeSelect" class="form-select" onchange="updateCalendarFilters()">
+                    @foreach (var jobType in Model.AvailableJobTypes)
+                    {
+                        var isSelected = jobType.Id == Model.JobTypeId;
+                        <option value="@jobType.Id" selected="@isSelected">@jobType.DisplayName</option>
+                    }
+                </select>
+            </div>
+
+            @* View mode selector *@
+            <div class="shifts-calendar__selector">
+                <label for="viewModeSelect">@Localizer["ViewMode"]</label>
+                <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
+                    <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
+                    <option value="2weeks" selected="@(Model.ViewMode == "2weeks")">@Localizer["TwoWeeks"]</option>
+                    <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="shifts-calendar__toolbar-row">
+            @* Date navigation *@
+            <div class="shifts-calendar__date-nav">
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode"
+                   class="btn btn-ghost shifts-calendar__nav-btn"
+                   title="@Localizer["Previous"]">
+                    <span class="nav-icon">&larr;</span>
+                    <span class="nav-text">@Localizer["Previous"]</span>
+                </a>
+
+                <div class="shifts-calendar__date-display">
+                    <input type="date"
+                           id="datePickerInput"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           onchange="navigateToDate(this.value)"
+                           class="shifts-calendar__date-picker" />
+                    <span class="shifts-calendar__date-label">
+                        @Model.StartDate.ToString("MMM dd") - @Model.EndDate.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
+
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode"
+                   class="btn btn-ghost shifts-calendar__nav-btn"
+                   title="@Localizer["Next"]">
+                    <span class="nav-text">@Localizer["Next"]</span>
+                    <span class="nav-icon">&rarr;</span>
+                </a>
+            </div>
+
+            @* Action buttons *@
+            <div class="shifts-calendar__actions">
+                <button type="button" class="btn btn-secondary" onclick="window.print()" title="@Localizer["Print"]">
+                    <span class="btn-icon">&#128438;</span>
+                    <span class="btn-text">@Localizer["Print"]</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="shifts-calendar__toolbar-row">
+            @* Mode toggles *@
+            <div class="shifts-calendar__toggles">
+                @* Shift/User mode toggle *@
+                <div class="shifts-calendar__toggle-group">
+                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift"
+                       class="btn @(Model.Mode == "shift" ? "btn-primary" : "btn-ghost")">
+                        @Localizer["ByShift"]
+                    </a>
+                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user"
+                       class="btn @(Model.Mode == "user" ? "btn-primary" : "btn-ghost")">
+                        @Localizer["ByUser"]
+                    </a>
+                </div>
+
+                @* Capacity mode toggle (edit permission required) *@
+                @if (Model.CanEdit)
+                {
+                    <div class="shifts-calendar__toggle-group">
+                        <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)"
+                           class="btn @(Model.CapacityMode ? "btn-primary" : "btn-ghost")">
+                            @Localizer["CapacityMode"]
+                        </a>
+                    </div>
+                }
+
+                @* Filter and Just Mine buttons *@
+                <div class="shifts-calendar__toggle-group">
+                    <button type="button" class="btn btn-ghost" onclick="openFilterModal()">
+                        <span class="btn-icon">&#128269;</span>
+                        @Localizer["Filter"]
+                    </button>
+                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)"
+                       class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
+                        @Localizer["JustMine"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Calendar Table *@
+    @if (Model.CalendarData.Rows.Any())
+    {
+        @await Component.InvokeAsync("ExcelCalendarTable", Model.CalendarData)
+    }
+    else
+    {
+        <div class="shifts-calendar__empty">
+            <div class="shifts-calendar__empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <h3 class="shifts-calendar__empty-title">@Localizer["Calendar_Empty_NoShifts"]</h3>
+            <p class="shifts-calendar__empty-message">
+                @if (Model.AvailableJobTypes.Any())
+                {
+                    @Localizer["Calendar_Empty_SelectJobType"]
+                }
+                else
+                {
+                    @Localizer["Calendar_Empty_NoJobTypes"]
+                }
+            </p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
+    <script>
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            CalendarRealtime.initialize({
+                calendarType: 'shifts',
+                scope: {
+                    moleculeId: @Model.MoleculeId,
+                    jobTypeId: @Model.JobTypeId
+                },
+                onRefresh: refreshCalendarData,
+                handlers: {
+                    onAssignmentChanged: handleAssignmentChanged,
+                    onCapacityChanged: handleCapacityChanged
+                }
+            });
+        });
+
+        // Refresh calendar data via AJAX
+        async function refreshCalendarData() {
+            const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
+            const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
+            const moleculeId = @Model.MoleculeId;
+            const jobTypeId = @Model.JobTypeId;
+
+            try {
+                const response = await fetch(
+                    `/Api/Calendar/GetShiftsData?moleculeId=${moleculeId}&jobTypeId=${jobTypeId}&startDate=${startDate}&endDate=${endDate}`,
+                    { credentials: 'same-origin' }
+                );
+
+                if (!response.ok) throw new Error('Failed to refresh');
+
+                const result = await response.json();
+                if (result.success) {
+                    updateCalendarCells(result.data);
+                }
+            } catch (error) {
+                console.error('Shadow refresh failed:', error);
+            }
+        }
+
+        // Update calendar cells with new data
+        function updateCalendarCells(data) {
+            const cellsById = new Map(data.cells.map(c => [c.shiftInstanceId, c]));
+
+            document.querySelectorAll('.excel-cell[data-shift-instance-id]').forEach(cell => {
+                const instanceId = parseInt(cell.dataset.shiftInstanceId);
+                const cellData = cellsById.get(instanceId);
+                if (cellData) {
+                    updateSingleCell(cell, cellData);
+                }
+            });
+        }
+
+        // Update a single cell's content
+        function updateSingleCell(cell, cellData) {
+            // Update assignment count badge
+            const badge = cell.querySelector('.excel-cell__count');
+            if (badge) {
+                badge.textContent = `${cellData.assignedCount}/${cellData.capacity}`;
+                badge.classList.toggle('excel-cell__count--full', cellData.assignedCount >= cellData.capacity);
+            }
+
+            // Update assignment list
+            const assignmentList = cell.querySelector('.excel-cell__assignments');
+            if (assignmentList) {
+                assignmentList.innerHTML = cellData.assignments
+                    .map(a => `<span class="excel-cell__assignee" data-user-id="${a.userId}">${a.userName}</span>`)
+                    .join('');
+            }
+        }
+
+        // Handle real-time assignment change
+        function handleAssignmentChanged(evt) {
+            const cell = document.querySelector(`[data-shift-instance-id="${evt.shiftInstanceId}"]`);
+            if (cell) {
+                refreshCalendarData(); // Full refresh for now
+            }
+        }
+
+        // Handle real-time capacity change
+        function handleCapacityChanged(evt) {
+            refreshCalendarData(); // Full refresh for now
+        }
+
+        // Update calendar with new filter selections
+        function updateCalendarFilters() {
+            const moleculeId = document.getElementById('moleculeSelect').value;
+            const jobTypeId = document.getElementById('jobTypeSelect').value;
+            const viewMode = document.getElementById('viewModeSelect').value;
+
+            const params = new URLSearchParams(window.location.search);
+            params.set('MoleculeId', moleculeId);
+            params.set('JobTypeId', jobTypeId);
+            params.set('ViewMode', viewMode);
+
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // Navigate to a specific date
+        function navigateToDate(dateStr) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('Start', dateStr);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // Open filter modal (placeholder)
+        function openFilterModal() {
+            // TODO: Implement filter modal
+            alert('@Localizer["FilterComingSoon"]');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            // Left arrow - previous period
+            if (e.key === 'ArrowLeft' && e.altKey) {
+                document.querySelector('.shifts-calendar__nav-btn:first-child')?.click();
+            }
+            // Right arrow - next period
+            if (e.key === 'ArrowRight' && e.altKey) {
+                document.querySelector('.shifts-calendar__nav-btn:last-child')?.click();
+            }
+            // P key - print
+            if (e.key === 'p' && e.ctrlKey) {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        /* Shifts Calendar Layout */
+        .shifts-calendar {
+            padding: 1rem;
+        }
+
+        .shifts-calendar__toolbar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .shifts-calendar__toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .shifts-calendar__toolbar-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Selectors */
+        .shifts-calendar__selector {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 150px;
+        }
+
+        .shifts-calendar__selector label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .shifts-calendar__selector .form-select {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            min-height: 38px;
+        }
+
+        /* Date Navigation */
+        .shifts-calendar__date-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .shifts-calendar__nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            min-height: 38px;
+        }
+
+        .shifts-calendar__date-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .shifts-calendar__date-picker {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .shifts-calendar__date-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            background: var(--surface-soft);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Actions */
+        .shifts-calendar__actions {
+            margin-left: auto;
+        }
+
+        .shifts-calendar__actions .btn-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Toggles */
+        .shifts-calendar__toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .shifts-calendar__toggle-group {
+            display: flex;
+            background: var(--surface-soft);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .shifts-calendar__toggle-group .btn {
+            border-radius: 0;
+            border: none;
+            min-height: 36px;
+        }
+
+        .shifts-calendar__toggle-group .btn:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .shifts-calendar__toggle-group .btn:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .shifts-calendar__toggle-group .btn:only-child {
+            border-radius: 6px;
+        }
+
+        /* Empty State */
+        .shifts-calendar__empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+        }
+
+        .shifts-calendar__empty-icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .shifts-calendar__empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .shifts-calendar__empty-message {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .shifts-calendar__toolbar-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .shifts-calendar__selector {
+                width: 100%;
+            }
+
+            .shifts-calendar__date-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .shifts-calendar__actions {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .shifts-calendar__actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .shifts-calendar__toggles {
+                width: 100%;
+            }
+
+            .shifts-calendar__toggle-group {
+                flex: 1;
+            }
+
+            .shifts-calendar__toggle-group .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .shifts-calendar__nav-btn .nav-text {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .shifts-calendar {
+                padding: 0.5rem;
+            }
+
+            .shifts-calendar__toolbar {
+                padding: 0.75rem;
+            }
+
+            .shifts-calendar__date-label {
+                font-size: 0.85rem;
+                padding: 0.375rem 0.75rem;
+            }
+        }
+
+        /* Print styles */
+        @@media print {
+            .shifts-calendar__toolbar {
+                display: none;
+            }
+
+            .shifts-calendar {
+                padding: 0;
+            }
+        }
+    </style>
+}

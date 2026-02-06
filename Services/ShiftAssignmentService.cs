@@ -51,8 +51,11 @@ public class ShiftAssignmentService : IShiftAssignmentService
         if (shiftType == null)
             return new List<EligibleUserDto>();
 
-        // Determine which companies to include
+        // Determine effective grouping and job type
         var effectiveGroupingId = shiftGroupingId ?? shiftType.ShiftGroupingId;
+        var effectiveJobTypeId = jobTypeId ?? shiftType.JobTypeId;
+
+        // Determine which companies to include
         List<int> companyIds;
 
         if (effectiveGroupingId.HasValue)
@@ -81,7 +84,6 @@ public class ShiftAssignmentService : IShiftAssignmentService
             .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
 
         // Filter by JobType if specified
-        var effectiveJobTypeId = jobTypeId ?? shiftType.JobTypeId;
         if (effectiveJobTypeId.HasValue)
         {
             usersQuery = usersQuery.Where(u => u.JobTypeId == effectiveJobTypeId.Value);

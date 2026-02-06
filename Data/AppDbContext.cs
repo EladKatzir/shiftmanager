@@ -35,6 +35,9 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
     public DbSet<Chore> Chores => Set<Chore>();
+    public DbSet<ChoreType> ChoreTypes => Set<ChoreType>();
+    public DbSet<ShiftCapacityOverride> ShiftCapacityOverrides => Set<ShiftCapacityOverride>();
+    public DbSet<UserDayNote> UserDayNotes => Set<UserDayNote>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -393,9 +396,53 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.MoleculeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Chore → ChoreType relationship (for calendar categorization)
+        modelBuilder.Entity<Chore>()
+            .HasOne(c => c.ChoreType)
+            .WithMany(ct => ct.Chores)
+            .HasForeignKey(c => c.ChoreTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Index for molecule-scoped chore queries
         modelBuilder.Entity<Chore>()
             .HasIndex(c => new { c.MoleculeId, c.Date });
+
+        // Configure ChoreType (Excel Calendars feature)
+        modelBuilder.Entity<ChoreType>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Molecule)
+                .WithMany()
+                .HasForeignKey(e => e.MoleculeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.MoleculeId, e.Name }).IsUnique();
+        });
+
+        // Configure ShiftCapacityOverride (Excel Calendars feature)
+        modelBuilder.Entity<ShiftCapacityOverride>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.ShiftTypeId, e.MoleculeId, e.JobTypeId, e.Date }).IsUnique();
+            entity.HasOne(e => e.ShiftType).WithMany().HasForeignKey(e => e.ShiftTypeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Molecule).WithMany().HasForeignKey(e => e.MoleculeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.JobType).WithMany().HasForeignKey(e => e.JobTypeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure UserDayNote (Excel Calendars feature)
+        modelBuilder.Entity<UserDayNote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.Date, e.CompanyId }).IsUnique();
+            entity.Property(e => e.Note).HasMaxLength(500);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
 
         // Configure Language Management
         // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)
@@ -568,6 +615,10 @@ public class AppDbContext : DbContext
 
             // Announcements Feed: Query filter for tenant scoping
             modelBuilder.Entity<Announcement>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Excel Calendars: Query filter for UserDayNote tenant scoping
+            modelBuilder.Entity<UserDayNote>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
@@ -839,6 +890,19 @@ public class AppDbContext : DbContext
             .WithMany(m => m.ShiftGroupings)
             .HasForeignKey(sg => sg.MoleculeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ShiftGrouping → JobType relationship (for per-Molecule/JobType groupings)
+        modelBuilder.Entity<ShiftGrouping>()
+            .HasOne(sg => sg.JobType)
+            .WithMany()
+            .HasForeignKey(sg => sg.JobTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Unique index for ShiftGrouping (Molecule, JobType, Name) when JobType is set
+        modelBuilder.Entity<ShiftGrouping>()
+            .HasIndex(sg => new { sg.MoleculeId, sg.JobTypeId, sg.Name })
+            .IsUnique()
+            .HasFilter("[JobTypeId] IS NOT NULL");
 
         // ShiftGroupingCompany: Composite primary key
         modelBuilder.Entity<ShiftGroupingCompany>()

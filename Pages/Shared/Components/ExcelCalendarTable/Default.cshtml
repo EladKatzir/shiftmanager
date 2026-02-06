@@ -1,0 +1,120 @@
+@model ShiftManager.ViewComponents.ExcelCalendarTableViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    var days = Enumerable.Range(0, (Model.EndDate.DayNumber - Model.StartDate.DayNumber) + 1)
+        .Select(i => Model.StartDate.AddDays(i))
+        .ToList();
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var isCompact = Model.ViewMode == "month";
+    var hebrewDays = new[] { "ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת" };
+    var shortHebrewDays = new[] { "א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳" };
+}
+
+@if (Model.IsReadOnly)
+{
+    <div class="excel-calendar__readonly-banner">
+        <loc key="Calendar_ReadOnlyMode" />
+    </div>
+}
+
+<div class="excel-calendar @(isCompact ? "excel-calendar--compact" : "")"
+     data-calendar-type="@Model.CalendarType"
+     data-start-date="@Model.StartDate.ToString("yyyy-MM-dd")"
+     data-end-date="@Model.EndDate.ToString("yyyy-MM-dd")"
+     data-readonly="@Model.IsReadOnly.ToString().ToLower()">
+
+    <table class="excel-calendar__table" role="grid">
+        <thead class="excel-calendar__header">
+            <tr>
+                <th class="excel-calendar__corner" scope="col"></th>
+                @foreach (var day in days)
+                {
+                    var dayIndex = (int)day.DayOfWeek;
+                    var isToday = day == today;
+                    var isWeekend = dayIndex == 5 || dayIndex == 6;
+                    var showWeekend = Model.ViewMode == "month" && isWeekend;
+                    var dayName = isCompact ? shortHebrewDays[dayIndex] : hebrewDays[dayIndex];
+
+                    <th class="excel-calendar__header-day @(isToday ? "excel-calendar__header-day--today" : "") @(showWeekend ? "excel-calendar__header-day--weekend" : "")"
+                        scope="col"
+                        data-date="@day.ToString("yyyy-MM-dd")">
+                        <span class="excel-calendar__day-name">@dayName</span>
+                        <span class="excel-calendar__day-date">@day.ToString("dd/MM")</span>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Groups != null)
+            {
+                foreach (var group in Model.Groups.OrderBy(g => g.SortOrder))
+                {
+                    <tr class="excel-calendar__group-header" data-group-id="@group.Id">
+                        <td colspan="@(days.Count + 1)">
+                            <div class="excel-calendar__group-toggle">
+                                <span class="excel-calendar__group-chevron @(group.IsCollapsed ? "excel-calendar__group-chevron--collapsed" : "")">▼</span>
+                                <span class="excel-calendar__group-name" data-editable="true">@group.Name</span>
+                                <span class="excel-calendar__group-grip" title="@Localizer["DragToReorder"]">⋮⋮</span>
+                            </div>
+                        </td>
+                    </tr>
+
+                    foreach (var row in Model.Rows.Where(r => r.GroupId == group.Id))
+                    {
+                        var rowStyle = row.Color != null ? $"--row-color: {row.Color}" : "";
+                        var rowHiddenStyle = group.IsCollapsed ? "display: none;" : "";
+                        @await Html.PartialAsync("_CalendarRow", new ExcelCalendarRowViewModel
+                        {
+                            Row = row,
+                            Days = days,
+                            Today = today,
+                            IsReadOnly = Model.IsReadOnly,
+                            IsCollapsed = group.IsCollapsed
+                        })
+                    }
+                }
+
+                @* Rows without group *@
+                foreach (var row in Model.Rows.Where(r => r.GroupId == null))
+                {
+                    @await Html.PartialAsync("_CalendarRow", new ExcelCalendarRowViewModel
+                    {
+                        Row = row,
+                        Days = days,
+                        Today = today,
+                        IsReadOnly = Model.IsReadOnly,
+                        IsCollapsed = false
+                    })
+                }
+            }
+            else
+            {
+                foreach (var row in Model.Rows)
+                {
+                    @await Html.PartialAsync("_CalendarRow", new ExcelCalendarRowViewModel
+                    {
+                        Row = row,
+                        Days = days,
+                        Today = today,
+                        IsReadOnly = Model.IsReadOnly,
+                        IsCollapsed = false
+                    })
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    public class ExcelCalendarRowViewModel
+    {
+        public ShiftManager.ViewComponents.ExcelCalendarRow Row { get; set; } = new();
+        public List<DateOnly> Days { get; set; } = new();
+        public DateOnly Today { get; set; }
+        public bool IsReadOnly { get; set; }
+        public bool IsCollapsed { get; set; }
+    }
+}

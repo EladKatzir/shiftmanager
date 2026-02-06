@@ -5256,6 +5256,26 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Create and edit Katzin on-call programs</value>
   </data>
 
+  <!-- Grant Type Localizations - Calendar Grants -->
+  <data name="Grant_ManageShiftCapacity" xml:space="preserve">
+    <value>Manage Shift Capacity</value>
+  </data>
+  <data name="Grant_ManageShiftCapacity_Desc" xml:space="preserve">
+    <value>Override shift capacity limits for specific days</value>
+  </data>
+  <data name="Grant_WriteOverviewNotes" xml:space="preserve">
+    <value>Write Overview Notes</value>
+  </data>
+  <data name="Grant_WriteOverviewNotes_Desc" xml:space="preserve">
+    <value>Add free-text notes in company overview calendar</value>
+  </data>
+  <data name="Grant_ManageOnDutyTypes" xml:space="preserve">
+    <value>Manage On-Duty Types</value>
+  </data>
+  <data name="Grant_ManageOnDutyTypes_Desc" xml:space="preserve">
+    <value>Create and edit on-call duty types</value>
+  </data>
+
   <!-- UI Overhaul v3.0 - Navigation -->
   <data name="Nav_MyShifty" xml:space="preserve">
     <value>My Shifty</value>
@@ -8120,5 +8140,201 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Error_UserLacksPermission" xml:space="preserve">
     <value>You do not have sufficient permissions to perform this action.</value>
+  </data>
+
+  <!-- Excel Calendars Feature -->
+  <data name="ShiftsCalendar" xml:space="preserve">
+    <value>Shifts Calendar</value>
+    <comment>Title for the Excel-style shifts calendar page</comment>
+  </data>
+  <data name="Print" xml:space="preserve">
+    <value>Print</value>
+    <comment>Button to print the calendar</comment>
+  </data>
+  <data name="ByUser" xml:space="preserve">
+    <value>By User</value>
+    <comment>Toggle to show calendar organized by user</comment>
+  </data>
+  <data name="ByShift" xml:space="preserve">
+    <value>By Shift</value>
+    <comment>Toggle to show calendar organized by shift type</comment>
+  </data>
+  <data name="CapacityMode" xml:space="preserve">
+    <value>Capacity Mode</value>
+    <comment>Toggle to show/edit capacity in calendar cells</comment>
+  </data>
+  <data name="JustMine" xml:space="preserve">
+    <value>Just Mine</value>
+    <comment>Toggle to show only current user's assignments</comment>
+  </data>
+  <data name="Molecule" xml:space="preserve">
+    <value>Molecule</value>
+    <comment>Label for molecule selector dropdown</comment>
+  </data>
+  <data name="JobType" xml:space="preserve">
+    <value>Job Type</value>
+    <comment>Label for job type selector dropdown</comment>
+  </data>
+  <data name="ViewMode" xml:space="preserve">
+    <value>View</value>
+    <comment>Label for view mode selector dropdown</comment>
+  </data>
+  <data name="Calendar_Empty_NoShifts" xml:space="preserve">
+    <value>No Shifts Found</value>
+    <comment>Title shown when calendar has no shifts</comment>
+  </data>
+  <data name="Calendar_Empty_SelectJobType" xml:space="preserve">
+    <value>Select a job type to see shifts for this molecule.</value>
+    <comment>Message when no job type is selected</comment>
+  </data>
+  <data name="Calendar_Empty_NoJobTypes" xml:space="preserve">
+    <value>No job types are configured for this molecule.</value>
+    <comment>Message when molecule has no job types</comment>
+  </data>
+  <data name="FilterComingSoon" xml:space="preserve">
+    <value>Advanced filtering coming soon!</value>
+    <comment>Placeholder message for filter feature</comment>
+  </data>
+  <data name="DragToReorder" xml:space="preserve">
+    <value>Drag to reorder</value>
+    <comment>Tooltip for drag handle on calendar groups</comment>
+  </data>
+
+  <!-- Chores Calendar Feature -->
+  <data name="ChoreType" xml:space="preserve">
+    <value>Chore Type</value>
+    <comment>Label for chore type filter dropdown</comment>
+  </data>
+  <data name="Calendar_Empty_NoChores" xml:space="preserve">
+    <value>No Chores Found</value>
+    <comment>Title shown when calendar has no chores</comment>
+  </data>
+  <data name="Calendar_Empty_NoChoresMessage" xml:space="preserve">
+    <value>No chores are scheduled for this period. Use the molecule selector to view chores in a different molecule.</value>
+    <comment>Message shown when calendar has no chores</comment>
+  </data>
+  <data name="Calendar_Empty_NoOnDuty" xml:space="preserve">
+    <value>No Day Shifts Found</value>
+    <comment>Title shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="Calendar_Empty_NoOnDutyMessage" xml:space="preserve">
+    <value>No day shift assignments are scheduled for this period. Use the filters to adjust the view or contact your manager to assign shifts.</value>
+    <comment>Message shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="AllAreas" xml:space="preserve">
+    <value>All Areas</value>
+    <comment>Option to show all areas in area selector</comment>
+  </data>
+  <data name="Primary" xml:space="preserve">
+    <value>Primary</value>
+    <comment>Label for primary assignment in on-call calendar</comment>
+  </data>
+  <data name="Backup" xml:space="preserve">
+    <value>Backup</value>
+    <comment>Label for backup assignment in on-call calendar</comment>
+  </data>
+
+  <!-- Overview Calendar Feature -->
+  <data name="OverviewCalendar" xml:space="preserve">
+    <value>Overview Calendar</value>
+    <comment>Title for overview calendar page</comment>
+  </data>
+  <data name="UsersFilter" xml:space="preserve">
+    <value>Users</value>
+    <comment>Label for user filter dropdown in overview calendar</comment>
+  </data>
+  <data name="ActiveUsers" xml:space="preserve">
+    <value>Active Users</value>
+    <comment>Option to show only active users</comment>
+  </data>
+  <data name="InactiveUsers" xml:space="preserve">
+    <value>Inactive Users</value>
+    <comment>Option to show only inactive users</comment>
+  </data>
+  <data name="AddNote" xml:space="preserve">
+    <value>Add Note</value>
+    <comment>Button label to add a note to a calendar cell</comment>
+  </data>
+  <data name="EditNote" xml:space="preserve">
+    <value>Edit Note</value>
+    <comment>Modal title for editing a note</comment>
+  </data>
+  <data name="AddNoteHint" xml:space="preserve">
+    <value>Enter a note for this user on this date...</value>
+    <comment>Placeholder text for note input</comment>
+  </data>
+  <data name="SaveNoteFailed" xml:space="preserve">
+    <value>Failed to save note</value>
+    <comment>Error message when note save fails</comment>
+  </data>
+  <data name="DeleteNoteConfirm" xml:space="preserve">
+    <value>Are you sure you want to delete this note?</value>
+    <comment>Confirmation message for deleting a note</comment>
+  </data>
+  <data name="Calendar_Empty_NoUsersMessage" xml:space="preserve">
+    <value>No users are found in your company for the selected filter. Try changing the user filter.</value>
+    <comment>Message shown when overview calendar has no users</comment>
+  </data>
+  <data name="NoAssignments" xml:space="preserve">
+    <value>No Assignments</value>
+    <comment>Label for cells with no assignments</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+    <comment>Generic error message</comment>
+  </data>
+
+  <!-- Calendar Landing Page -->
+  <data name="CalendarsSubtitle" xml:space="preserve">
+    <value>Manage shifts, chores, and on-call duties</value>
+    <comment>Subtitle on calendar landing page</comment>
+  </data>
+  <data name="ShiftsCalendarDesc" xml:space="preserve">
+    <value>Manage and plan work shift assignments</value>
+    <comment>Description for shifts calendar card</comment>
+  </data>
+  <data name="ChoresCalendarDesc" xml:space="preserve">
+    <value>Manage chore duties and tasks</value>
+    <comment>Description for chores calendar card</comment>
+  </data>
+  <data name="OnCallCalendar" xml:space="preserve">
+    <value>On-Call Calendar</value>
+    <comment>Title for on-call calendar</comment>
+  </data>
+  <data name="OnCallCalendarDesc" xml:space="preserve">
+    <value>Manage on-call duties and availability</value>
+    <comment>Description for on-call calendar card</comment>
+  </data>
+  <data name="OverviewCalendarDesc" xml:space="preserve">
+    <value>Company-wide view of all assignments</value>
+    <comment>Description for overview calendar card</comment>
+  </data>
+  <data name="ViewCalendar" xml:space="preserve">
+    <value>View Calendar</value>
+    <comment>Button text on calendar card</comment>
+  </data>
+  <data name="Grant_AccessAdminNavigation" xml:space="preserve">
+    <value>Access Admin Navigation</value>
+  </data>
+  <data name="Grant_AccessAdminNavigation_Desc" xml:space="preserve">
+    <value>Access the administrative navigation menu and management features</value>
+  </data>
+  <data name="Grant_DirectorHubAccess" xml:space="preserve">
+    <value>Director Hub Access</value>
+  </data>
+  <data name="Grant_DirectorHubAccess_Desc" xml:space="preserve">
+    <value>Access the Director Hub for cross-company management</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess" xml:space="preserve">
+    <value>Manager Home Access</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess_Desc" xml:space="preserve">
+    <value>Access the manager home dashboard</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar" xml:space="preserve">
+    <value>View Company Calendar</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar_Desc" xml:space="preserve">
+    <value>View the company-wide calendar overview</value>
   </data>
 </root>

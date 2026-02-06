@@ -56,6 +56,57 @@ public static class FeatureFlagSeed
                 UserId = null,
                 CreatedAt = now,
                 UpdatedAt = now
+            },
+            // Excel Calendar feature flags
+            new FeatureFlag
+            {
+                Name = "FF_EXCEL_CALENDARS",
+                IsEnabled = false,
+                Description = "Master flag for all Excel-like table calendars. When enabled, allows individual calendar flags to take effect.",
+                CompanyId = null,
+                UserId = null,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new FeatureFlag
+            {
+                Name = "FF_EXCEL_CALENDAR_SHIFTS",
+                IsEnabled = false,
+                Description = "Enables the Excel-like Shifts calendar with molecule/job-type scoping and real-time updates.",
+                CompanyId = null,
+                UserId = null,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new FeatureFlag
+            {
+                Name = "FF_EXCEL_CALENDAR_CHORES",
+                IsEnabled = false,
+                Description = "Enables the Excel-like Chores calendar with molecule scoping.",
+                CompanyId = null,
+                UserId = null,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new FeatureFlag
+            {
+                Name = "FF_EXCEL_CALENDAR_ONCALL",
+                IsEnabled = false,
+                Description = "Enables the Excel-like On-Call calendar with area scoping.",
+                CompanyId = null,
+                UserId = null,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new FeatureFlag
+            {
+                Name = "FF_EXCEL_CALENDAR_OVERVIEW",
+                IsEnabled = false,
+                Description = "Enables the Excel-like Overview calendar with company-wide view.",
+                CompanyId = null,
+                UserId = null,
+                CreatedAt = now,
+                UpdatedAt = now
             }
         };
     }
@@ -69,5 +120,12 @@ public static class FeatureFlagSeed
         public const string ScopeSwitcherEnabled = "FF_SCOPE_SWITCHER_ENABLED";
         public const string NewCalendarStyles = "FF_NEW_CALENDAR_STYLES";
         public const string WidgetsEnabled = "FF_WIDGETS_ENABLED";
+
+        // Excel Calendar flags
+        public const string ExcelCalendars = "FF_EXCEL_CALENDARS";
+        public const string ExcelCalendarShifts = "FF_EXCEL_CALENDAR_SHIFTS";
+        public const string ExcelCalendarChores = "FF_EXCEL_CALENDAR_CHORES";
+        public const string ExcelCalendarOnCall = "FF_EXCEL_CALENDAR_ONCALL";
+        public const string ExcelCalendarOverview = "FF_EXCEL_CALENDAR_OVERVIEW";
     }
 }

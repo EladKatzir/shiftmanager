@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Reflection;
 using ShiftManager.Middleware;
 using ShiftManager.Authorization;
+using ShiftManager.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -237,6 +238,15 @@ builder.Services.AddHostedService<DailyNotificationJob>();
 // My Team Calendars Services
 builder.Services.AddScoped<TeamCalendarService>();
 builder.Services.AddScoped<TeamCalendarEventAggregator>();
+
+// Excel Calendars Services
+builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
+builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
+builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
+
+// SignalR for real-time calendar updates
+builder.Services.AddSignalR();
+builder.Services.AddScoped<ICalendarNotificationService, CalendarNotificationService>();
 
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
@@ -762,7 +772,7 @@ app.Use(async (context, next) =>
         "style-src 'self' 'unsafe-inline'; " +  // Allow inline styles
         "img-src 'self' data:; " +               // Allow inline images for avatars
         "font-src 'self'; " +
-        "connect-src 'self'; " +
+        "connect-src 'self' ws: wss:; " +
         "frame-ancestors 'none'";                // Redundant with X-Frame-Options but recommended
 
     // Remove potentially revealing server headers
@@ -818,7 +828,64 @@ app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>(); // API key-based rate limiting
 app.MapControllers(); // Map API controllers
+
+// ============================================================
+// EXCEL CALENDAR REDIRECTS (when feature flags enabled)
+// Redirects old calendar URLs to new Excel-style calendars
+// Uses middleware to redirect before Razor Pages handles request
+// ============================================================
+app.Use(async (context, next) =>
+{
+    var config = context.RequestServices.GetRequiredService<IConfiguration>();
+    var excelCalendarsEnabled = config.GetValue<bool>("Features:ExcelCalendars");
+
+    if (excelCalendarsEnabled)
+    {
+        var path = context.Request.Path.Value?.ToLowerInvariant();
+        string? redirectTo = null;
+
+        // Shifts calendar redirects
+        if (config.GetValue<bool>("Features:ExcelCalendarShifts"))
+        {
+            if (path == "/calendar/month" || path == "/calendar/week" ||
+                path == "/calendar/day" || path == "/calendar/table")
+            {
+                redirectTo = "/Calendar/Shifts" + context.Request.QueryString;
+            }
+        }
+
+        // Chores calendar redirects
+        if (config.GetValue<bool>("Features:ExcelCalendarChores"))
+        {
+            if (path == "/chores/calendar" || path == "/public/chores")
+            {
+                redirectTo = "/Calendar/Chores" + context.Request.QueryString;
+            }
+        }
+
+        // On-Call calendar redirects
+        if (config.GetValue<bool>("Features:ExcelCalendarOnCall"))
+        {
+            if (path == "/public/onduty")
+            {
+                redirectTo = "/Calendar/OnCall" + context.Request.QueryString;
+            }
+        }
+
+        if (redirectTo != null)
+        {
+            context.Response.Redirect(redirectTo, permanent: false);
+            return;
+        }
+    }
+
+    await next();
+});
+
 app.MapRazorPages();
+
+// SignalR hub for real-time calendar updates
+app.MapHub<CalendarHub>("/hubs/calendar");
 
 // Health check endpoints for container orchestration
 app.MapHealthChecks("/health");  // Liveness probe - is the app alive?

@@ -875,7 +875,7 @@ public class AssignerRoleTests : IDisposable
 
 /// <summary>
 /// Tests for V3 Audit - Grant Type Seed Count
-/// Verifies that all 107 grant types are properly seeded.
+/// Verifies that all grant types are properly seeded.
 /// </summary>
 public class GrantTypeSeedTests
 {
@@ -885,8 +885,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 114 grants: 107 original + 4 navigation grants + 3 join request grants (ManageJoinRequests, ViewCompanyUsers, EditCompanyUsers)
-        grantTypes.Should().HaveCount(114, "Should have exactly 114 grant types including navigation and join request grants");
+        // Assert - 117 grants: 107 original + 3 calendar grants + 4 navigation grants + 3 join request grants (ManageJoinRequests, ViewCompanyUsers, EditCompanyUsers)
+        grantTypes.Should().HaveCount(117, "Should have exactly 117 grant types including calendar, navigation, and join request grants");
     }
 
     [Fact]

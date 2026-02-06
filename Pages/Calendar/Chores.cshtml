@@ -1,0 +1,495 @@
+@page
+@model ShiftManager.Pages.Calendar.ChoresModel
+@using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["ChoresCalendar"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendars"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["ChoresCalendar"], IsActive = true }
+})
+
+<div class="chores-calendar" data-ui-version="v2">
+    @* Toolbar *@
+    <div class="chores-calendar__toolbar">
+        <div class="chores-calendar__toolbar-row">
+            @* Molecule selector *@
+            <div class="chores-calendar__selector">
+                <label for="moleculeSelect">@Localizer["Molecule"]</label>
+                <select id="moleculeSelect" class="form-select" onchange="updateCalendarFilters()">
+                    @foreach (var molecule in Model.AvailableMolecules)
+                    {
+                        var isSelected = molecule.Id == Model.MoleculeId;
+                        <option value="@molecule.Id" selected="@isSelected">@molecule.DisplayName</option>
+                    }
+                </select>
+            </div>
+
+            @* Chore type filter (optional) *@
+            @if (Model.ChoreTypes.Any())
+            {
+                <div class="chores-calendar__selector">
+                    <label for="choreTypeSelect">@Localizer["ChoreType"]</label>
+                    <select id="choreTypeSelect" class="form-select" onchange="updateCalendarFilters()">
+                        <option value="">@Localizer["All"]</option>
+                        @foreach (var choreType in Model.ChoreTypes)
+                        {
+                            var isSelected = choreType.Id == Model.ChoreTypeFilter;
+                            <option value="@choreType.Id" selected="@isSelected">@choreType.DisplayName</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @* View mode selector *@
+            <div class="chores-calendar__selector">
+                <label for="viewModeSelect">@Localizer["ViewMode"]</label>
+                <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
+                    <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
+                    <option value="2weeks" selected="@(Model.ViewMode == "2weeks")">@Localizer["TwoWeeks"]</option>
+                    <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chores-calendar__toolbar-row">
+            @* Date navigation *@
+            <div class="chores-calendar__date-nav">
+                <a href="?MoleculeId=@Model.MoleculeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&ChoreTypeFilter=@Model.ChoreTypeFilter"
+                   class="btn btn-ghost chores-calendar__nav-btn"
+                   title="@Localizer["Previous"]">
+                    <span class="nav-icon">&larr;</span>
+                    <span class="nav-text">@Localizer["Previous"]</span>
+                </a>
+
+                <div class="chores-calendar__date-display">
+                    <input type="date"
+                           id="datePickerInput"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           onchange="navigateToDate(this.value)"
+                           class="chores-calendar__date-picker" />
+                    <span class="chores-calendar__date-label">
+                        @Model.StartDate.ToString("MMM dd") - @Model.EndDate.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
+
+                <a href="?MoleculeId=@Model.MoleculeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&ChoreTypeFilter=@Model.ChoreTypeFilter"
+                   class="btn btn-ghost chores-calendar__nav-btn"
+                   title="@Localizer["Next"]">
+                    <span class="nav-text">@Localizer["Next"]</span>
+                    <span class="nav-icon">&rarr;</span>
+                </a>
+            </div>
+
+            @* Action buttons *@
+            <div class="chores-calendar__actions">
+                <button type="button" class="btn btn-secondary" onclick="window.print()" title="@Localizer["Print"]">
+                    <span class="btn-icon">&#128438;</span>
+                    <span class="btn-text">@Localizer["Print"]</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="chores-calendar__toolbar-row">
+            @* Toggle buttons *@
+            <div class="chores-calendar__toggles">
+                @* Just Mine filter *@
+                <div class="chores-calendar__toggle-group">
+                    <a href="?MoleculeId=@Model.MoleculeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&ChoreTypeFilter=@Model.ChoreTypeFilter&JustMine=@(!Model.JustMine)"
+                       class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
+                        @Localizer["JustMine"]
+                    </a>
+                </div>
+            </div>
+
+            @* Legend for chore types *@
+            @if (Model.ChoreTypes.Any())
+            {
+                <div class="chores-calendar__legend">
+                    @foreach (var choreType in Model.ChoreTypes)
+                    {
+                        <div class="chores-calendar__legend-item">
+                            <span class="chores-calendar__legend-color" style="background-color: @(choreType.Color ?? "#6B7280")"></span>
+                            <span class="chores-calendar__legend-label">@choreType.DisplayName</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Calendar Table *@
+    @if (Model.CalendarData.Rows.Any())
+    {
+        @await Component.InvokeAsync("ExcelCalendarTable", Model.CalendarData)
+    }
+    else
+    {
+        <div class="chores-calendar__empty">
+            <div class="chores-calendar__empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+            </div>
+            <h3 class="chores-calendar__empty-title">@Localizer["Calendar_Empty_NoChores"]</h3>
+            <p class="chores-calendar__empty-message">
+                @Localizer["Calendar_Empty_NoChoresMessage"]
+            </p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
+    <script>
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            CalendarRealtime.initialize({
+                calendarType: 'chores',
+                scope: {
+                    moleculeId: @Model.MoleculeId
+                },
+                onRefresh: refreshCalendarData,
+                handlers: {
+                    onChoreChanged: handleChoreChanged
+                }
+            });
+        });
+
+        // Refresh calendar data via AJAX
+        async function refreshCalendarData() {
+            const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
+            const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
+            const moleculeId = @Model.MoleculeId;
+
+            try {
+                const response = await fetch(
+                    `/Api/Calendar/GetChoresData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`,
+                    { credentials: 'same-origin' }
+                );
+
+                if (!response.ok) throw new Error('Failed to refresh');
+
+                const result = await response.json();
+                if (result.success) {
+                    // Full page refresh for now - cell update logic can be added later
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Shadow refresh failed:', error);
+            }
+        }
+
+        // Handle real-time chore change
+        function handleChoreChanged(evt) {
+            refreshCalendarData();
+        }
+
+        // Update calendar with new filter selections
+        function updateCalendarFilters() {
+            const moleculeId = document.getElementById('moleculeSelect').value;
+            const choreTypeSelect = document.getElementById('choreTypeSelect');
+            const choreTypeFilter = choreTypeSelect ? choreTypeSelect.value : '';
+            const viewMode = document.getElementById('viewModeSelect').value;
+
+            const params = new URLSearchParams(window.location.search);
+            params.set('MoleculeId', moleculeId);
+            if (choreTypeFilter) {
+                params.set('ChoreTypeFilter', choreTypeFilter);
+            } else {
+                params.delete('ChoreTypeFilter');
+            }
+            params.set('ViewMode', viewMode);
+
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // Navigate to a specific date
+        function navigateToDate(dateStr) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('Start', dateStr);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            // Left arrow - previous period
+            if (e.key === 'ArrowLeft' && e.altKey) {
+                document.querySelector('.chores-calendar__nav-btn:first-child')?.click();
+            }
+            // Right arrow - next period
+            if (e.key === 'ArrowRight' && e.altKey) {
+                document.querySelector('.chores-calendar__nav-btn:last-child')?.click();
+            }
+            // P key - print
+            if (e.key === 'p' && e.ctrlKey) {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        /* Chores Calendar Layout */
+        .chores-calendar {
+            padding: 1rem;
+        }
+
+        .chores-calendar__toolbar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chores-calendar__toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chores-calendar__toolbar-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Selectors */
+        .chores-calendar__selector {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 150px;
+        }
+
+        .chores-calendar__selector label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chores-calendar__selector .form-select {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            min-height: 38px;
+        }
+
+        /* Date Navigation */
+        .chores-calendar__date-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chores-calendar__nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            min-height: 38px;
+        }
+
+        .chores-calendar__date-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .chores-calendar__date-picker {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .chores-calendar__date-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            background: var(--surface-soft);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Actions */
+        .chores-calendar__actions {
+            margin-left: auto;
+        }
+
+        .chores-calendar__actions .btn-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Toggles */
+        .chores-calendar__toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .chores-calendar__toggle-group {
+            display: flex;
+            background: var(--surface-soft);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .chores-calendar__toggle-group .btn {
+            border-radius: 6px;
+            border: none;
+            min-height: 36px;
+        }
+
+        /* Legend */
+        .chores-calendar__legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-left: auto;
+        }
+
+        .chores-calendar__legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .chores-calendar__legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .chores-calendar__legend-label {
+            color: var(--muted);
+        }
+
+        /* Empty State */
+        .chores-calendar__empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+        }
+
+        .chores-calendar__empty-icon {
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .chores-calendar__empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .chores-calendar__empty-message {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .chores-calendar__toolbar-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .chores-calendar__selector {
+                width: 100%;
+            }
+
+            .chores-calendar__date-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .chores-calendar__actions {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .chores-calendar__actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .chores-calendar__toggles {
+                width: 100%;
+            }
+
+            .chores-calendar__toggle-group {
+                flex: 1;
+            }
+
+            .chores-calendar__toggle-group .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .chores-calendar__legend {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .chores-calendar__nav-btn .nav-text {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .chores-calendar {
+                padding: 0.5rem;
+            }
+
+            .chores-calendar__toolbar {
+                padding: 0.75rem;
+            }
+
+            .chores-calendar__date-label {
+                font-size: 0.85rem;
+                padding: 0.375rem 0.75rem;
+            }
+        }
+
+        /* Print styles */
+        @@media print {
+            .chores-calendar__toolbar {
+                display: none;
+            }
+
+            .chores-calendar {
+                padding: 0;
+            }
+        }
+    </style>
+}

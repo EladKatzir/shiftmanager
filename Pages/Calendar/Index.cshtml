@@ -1,0 +1,74 @@
+@page
+@model ShiftManager.Pages.Calendar.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Calendars"];
+}
+
+<div class="calendar-landing" data-ui-version="v2">
+    <header class="calendar-landing__header">
+        <h1 class="calendar-landing__title">@Localizer["Calendars"]</h1>
+        <p class="calendar-landing__subtitle">@Localizer["CalendarsSubtitle"]</p>
+    </header>
+
+    <div class="calendar-landing__grid">
+        @* Shifts Calendar Card *@
+        <a href="/Calendar/Shifts" class="calendar-card calendar-card--shifts">
+            <div class="calendar-card__icon-wrapper">
+                <span class="calendar-card__icon" aria-hidden="true">📋</span>
+            </div>
+            <h2 class="calendar-card__title">@Localizer["ShiftsCalendar"]</h2>
+            <p class="calendar-card__description">@Localizer["ShiftsCalendarDesc"]</p>
+            <span class="calendar-card__action">
+                @Localizer["ViewCalendar"]
+                <span class="calendar-card__arrow" aria-hidden="true">&rarr;</span>
+            </span>
+        </a>
+
+        @* Chores Calendar Card *@
+        <a href="/Calendar/Chores" class="calendar-card calendar-card--chores">
+            <div class="calendar-card__icon-wrapper">
+                <span class="calendar-card__icon" aria-hidden="true">🧹</span>
+            </div>
+            <h2 class="calendar-card__title">@Localizer["ChoresCalendar"]</h2>
+            <p class="calendar-card__description">@Localizer["ChoresCalendarDesc"]</p>
+            <span class="calendar-card__action">
+                @Localizer["ViewCalendar"]
+                <span class="calendar-card__arrow" aria-hidden="true">&rarr;</span>
+            </span>
+        </a>
+
+        @* On-Call Calendar Card *@
+        <a href="/Calendar/OnCall" class="calendar-card calendar-card--oncall">
+            <div class="calendar-card__icon-wrapper">
+                <span class="calendar-card__icon" aria-hidden="true">📞</span>
+            </div>
+            <h2 class="calendar-card__title">@Localizer["OnCallCalendar"]</h2>
+            <p class="calendar-card__description">@Localizer["OnCallCalendarDesc"]</p>
+            <span class="calendar-card__action">
+                @Localizer["ViewCalendar"]
+                <span class="calendar-card__arrow" aria-hidden="true">&rarr;</span>
+            </span>
+        </a>
+
+        @* Overview Calendar Card *@
+        <a href="/Calendar/Overview" class="calendar-card calendar-card--overview">
+            <div class="calendar-card__icon-wrapper">
+                <span class="calendar-card__icon" aria-hidden="true">👁️</span>
+            </div>
+            <h2 class="calendar-card__title">@Localizer["OverviewCalendar"]</h2>
+            <p class="calendar-card__description">@Localizer["OverviewCalendarDesc"]</p>
+            <span class="calendar-card__action">
+                @Localizer["ViewCalendar"]
+                <span class="calendar-card__arrow" aria-hidden="true">&rarr;</span>
+            </span>
+        </a>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/calendar-landing.css" asp-append-version="true" />
+}

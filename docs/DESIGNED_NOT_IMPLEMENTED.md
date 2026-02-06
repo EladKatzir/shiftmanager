@@ -1,480 +1,246 @@
-# Designed But Not Implemented Systems
+# Feature Implementation Status
 
-**Version:** 1.0
-**Date:** 2026-02-04
-**Source:** V3 Design Documents, Genesis Docs, Plan Files
+**Version:** 2.0
+**Date:** 2026-02-06
+**Source:** V3 Design Documents, Genesis Docs, Plan Files, Codebase Verification
 
 ---
 
 ## Overview
 
-This document catalogs all features that have been designed (partially or fully) but not yet implemented in the codebase. Each item includes current status, missing pieces, dependencies, and recommended next action.
+This document tracks the implementation status of all major features that were designed during the V3 planning phase. Updated 2026-02-06 after a full codebase audit.
 
 ---
 
-## Priority Legend
+## Status Legend
 
-| Priority | Meaning |
-|----------|---------|
-| 🔴 **Critical** | Blocks other features, security/correctness issue |
-| 🟠 **High** | High business value, enables key workflows |
-| 🟡 **Medium** | Useful but not blocking |
-| 🟢 **Low** | Nice to have, can defer |
-
----
-
-## 1. Military Rank System
-
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Fully Designed |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 23) |
-| **Priority** | 🟠 High |
-| **Effort** | 16-24 hours |
-
-### What Was Designed
-- `MilitaryRank` enum with 18 IDF ranks (Turai → RavAluf)
-- `IsOfficer()`, `IsNCO()`, `IsEnlisted()` helper methods
-- `RequiresOfficerRank` flag on duty types
-- Rank-based eligibility for Katzin on-call
-- Rank display/abbreviations in Hebrew and English
-
-### Missing Pieces
-- [ ] `MilitaryRank` enum not created
-- [ ] `AppUser.Rank` property not added
-- [ ] Database migration not created
-- [ ] Eligibility service not implemented
-- [ ] UI for rank selection not built
-- [ ] Integration with OnDutyService
-
-### Dependencies
-- None (self-contained)
-
-### Suggested Next Action
-**Implementation plan created:** `docs/plans/2026-02-04-military-rank-system.md`
-Execute the plan in a separate session.
+| Status | Meaning |
+|--------|---------|
+| :white_check_mark: **Implemented** | Fully implemented and tested |
+| :construction: **In Progress** | Actively being developed |
+| :warning: **Partial** | Core exists, some workflows missing |
+| :x: **Not Implemented** | Zero code exists |
 
 ---
 
-## 2. V3 Grant System (Full Scope Inheritance)
+## Summary Matrix
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | ⚠️ Partially Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Sections 6-10) |
-| **Priority** | 🔴 Critical |
-| **Effort** | 60-80 hours |
-
-### What Was Designed
-- 107 built-in grant types across 15 categories
-- Hierarchical scope inheritance (Project → Area → Molecule → Company)
-- `CanOwn` / `CanGive` permission delegation
-- 6 cascading auto-grant rules
-- Grant scope checking algorithm
-
-### What's Implemented
-- ✅ Grant, GrantType, RoleTemplate, RoleTemplateGrant models
-- ✅ 97+ grant types seeded
-- ✅ Basic `HasGrantAsync()` method
-- ✅ `GrantAuthorizationHandler` policy integration
-
-### Missing Pieces
-- [ ] Full scope inheritance traversal (Project > Area > Molecule > Company)
-- [ ] Auto-grant wiring on role assignment
-- [ ] `CanGive` delegation enforcement
-- [ ] Grant management UI (assign/revoke)
-- [ ] Role template assignment workflow
-- [ ] Scope resolution for nested hierarchies
-
-### Dependencies
-- Depends on: Hierarchy Navigation Service (for scope resolution)
-
-### Suggested Next Action
-1. Create implementation plan for "Grant Scope Inheritance"
-2. Build HierarchyNavigationService first
-3. Then implement scope traversal in GrantService
+| # | Feature | Status | Evidence |
+|---|---------|--------|----------|
+| 1 | Military Rank System | :white_check_mark: Implemented | Enum, migration, service, 18 integration tests |
+| 2 | V3 Grant Scope Inheritance | :white_check_mark: Implemented | Full hierarchy traversal, 97+ grant types, scope resolution |
+| 3 | Auto-Grant System | :white_check_mark: Implemented | ApplyAutoGrantsAsync wired to role assignment/removal |
+| 4 | Setup Tasks | :white_check_mark: Implemented | Model, service, admin UI, auto-generation |
+| 5 | Circle/Friends | :white_check_mark: Implemented | Model, service, request/accept workflow, tests |
+| 6 | Shift Programs & Master Programs | :white_check_mark: Implemented | Models, generation service, UI pages |
+| 7 | Duty Rotation | :x: Not Implemented | No models, services, or UI |
+| 8 | Settings Hierarchy | :white_check_mark: Implemented | Cascade resolution, tests |
+| 9 | Announcements | :white_check_mark: Implemented | Model, service, admin page, migration, tests |
+| 10 | Schedule Export/Print | :white_check_mark: Implemented | QuestPDF + ClosedXML + CSV, API endpoint |
+| 11 | Tech Shifts | :warning: Partial | Grant types seeded, workflows missing |
+| 12 | Vacation Approval Chain | :warning: Partial | Model exists, multi-level routing incomplete |
+| 13 | CSS Token Migration | :white_check_mark: Implemented | No legacy --text-primary references remain |
+| 14 | Excel-Like Calendars | :construction: In Progress | Design complete, ~40% implemented in worktree |
 
 ---
 
-## 3. Auto-Grant System
+## Implemented Features
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Designed, Not Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 10) |
-| **Priority** | 🔴 Critical |
-| **Effort** | 16-24 hours |
+### 1. Military Rank System :white_check_mark:
 
-### What Was Designed
-- When user is assigned a RoleTemplate, auto-create Grant records
-- Auto-grant cascading rules (e.g., AssignShifts → ViewCalendar)
-- Remove auto-grants when role is revoked
-- `IsAutoGrant` flag to distinguish from manual grants
+**Completed:** 2026-02-04
+**Key Files:**
+- `Models/Support/MilitaryRank.cs` — 18 IDF ranks (Turai → RavAluf)
+- `Models/Support/MilitaryRankExtensions.cs` — IsOfficer(), IsNCO(), IsEnlisted(), GetBadgeClass(), GetDisplayName(), GetAbbreviation()
+- `Models/AppUser.cs` — Rank property (default: Turai)
+- `Migrations/20260204161515_AddMilitaryRankToAppUser.cs`
+- `Services/OnDutyService.cs` — Rank-based eligibility with EnforceRankEligibility feature flag
+- `ShiftManager.Tests/IntegrationTests/MilitaryRankIntegrationTests.cs` — 18 test cases
+- `ShiftManager.Tests/UnitTests/Models/MilitaryRankExtensionsTests.cs`
+- UI: Admin EditProfile rank dropdown, User Settings, OnDuty public page rank badges
 
-### Missing Pieces
-- [ ] `ApplyAutoGrantsAsync()` not called on role assignment
-- [ ] Role assignment service/UI not built
-- [ ] Auto-grant cascade logic not implemented
-- [ ] `RemoveAutoGrantsAsync()` on role revocation
+### 2. V3 Grant Scope Inheritance :white_check_mark:
 
-### Dependencies
-- Depends on: Grant system, Role assignment workflow
+**Completed:** 2026-02-06
+**Key Files:**
+- `Services/GrantService.cs` — Full scope inheritance traversal (Project → Area → Molecule → Company)
+- `Services/IGrantService.cs` — HasGrantWithScopeAsync(), GetAccessibleCompanyIdsForGrantAsync(), HasGrantForCompanyAsync()
+- `Data/SeedData/GrantTypeSeed.cs` — 97+ grant types across 15 categories
+- `GrantAuthorizationHandler` — Policy integration
+- `ShiftManager.Tests/UnitTests/Services/V3Hierarchy/GrantServiceTests.cs`
+- `docs/plans/2026-02-06-scope-aware-grants-refactoring.md` — All 5 phases completed
 
-### Suggested Next Action
-Create implementation plan for "Auto-Grant Wiring"
+### 3. Auto-Grant System :white_check_mark:
 
----
+**Completed:** 2026-02-06
+**Key Files:**
+- `Services/GrantService.cs` — ApplyAutoGrantsAsync() (lines 325-374), RemoveAutoGrantsAsync()
+- `Services/RoleService.cs` — Auto-grant wiring on role assignment/removal
+- `Pages/Admin/Users.cshtml.cs` — Grant-based authorization (converted from role checks)
+- Tests in GrantServiceTests.cs (lines 447-524)
 
-## 4. Setup Tasks System
+### 4. Setup Tasks :white_check_mark:
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | ⚠️ Partially Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 20) |
-| **Priority** | 🟠 High |
-| **Effort** | 24-32 hours |
+**Key Files:**
+- `Models/SetupTask.cs`, `Models/Support/SetupTaskType.cs`, `Models/Support/SetupTaskStatus.cs`
+- `Services/SetupTaskService.cs` — Auto-generation on molecule creation
+- `Services/ISetupTaskService.cs`
+- `Pages/Admin/SetupTasks/Index.cshtml.cs` — Admin management UI
 
-### What Was Designed
-- 10 setup task types for onboarding new molecules/companies
-- Auto-generation when hierarchy entities created
-- Suggested assignees based on existing roles
-- Task completion triggers role/grant assignment
-- Sequential task dependencies
+### 5. Circle/Friends System :white_check_mark:
 
-### What's Implemented
-- ✅ `SetupTask` model
-- ✅ `SetupTaskType` enum
-- ✅ `SetupTaskService` (partial)
+**Key Files:**
+- `Models/UserFriendship.cs` — Full model with status, timestamps
+- `Services/FriendshipService.cs` — GetFriends, SendRequest, Accept/Reject workflow
+- `Services/IFriendshipService.cs`
+- `Pages/Friends/Index.cshtml.cs` — UI page
+- `ShiftManager.Tests/UnitTests/Services/V3Hierarchy/FriendshipServiceTests.cs`
 
-### Missing Pieces
-- [ ] Auto-generation on Molecule/Company create
-- [ ] Setup task dashboard UI
-- [ ] Task completion → role assignment wiring
-- [ ] Suggested assignee algorithm
-- [ ] Task dependency ordering
+### 6. Shift Programs & Master Programs :white_check_mark:
 
-### Dependencies
-- Depends on: Role assignment, Auto-grant system
+**Key Files:**
+- `Models/ShiftProgram.cs`, `Models/ProgramDay.cs`, `Models/MasterProgram.cs`, `Models/MasterProgramItem.cs`
+- `Services/ShiftProgramService.cs` — CreateProgram, GenerateInstances, ApplyToDateRange, Detach/Reset
+- `Services/MasterProgramService.cs` — Program composition
+- `Pages/Owner/Programs.cshtml.cs`, `Pages/Owner/MasterPrograms.cshtml.cs` — UI
 
-### Suggested Next Action
-Create implementation plan for "Setup Task Automation"
+### 7. Settings Hierarchy :white_check_mark:
 
----
+**Key Files:**
+- `Models/AreaSettings.cs`, `Models/MoleculeSettings.cs`, `Models/CompanySettings.cs`
+- `Services/HierarchySettingsService.cs` — GetEffectiveSettingsAsync() with Company→Molecule→Area→Default cascade
+- `Pages/Admin/Settings/Index.cshtml.cs` — Admin UI
+- `ShiftManager.Tests/UnitTests/Services/V3Hierarchy/HierarchySettingsServiceTests.cs`
 
-## 5. Circle/Friends System
+### 8. Announcements :white_check_mark:
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Designed, Minimal Implementation |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 16) |
-| **Priority** | 🟡 Medium |
-| **Effort** | 16-24 hours |
+**Key Files:**
+- `Models/Announcement.cs` — Title, Content, Scope (All/Department/Role), IsPinned, ExpiresAt
+- `Services/AnnouncementService.cs` — GetActiveAnnouncements (scope-filtered), GetAll
+- `Pages/Admin/Announcements.cshtml.cs` — CRUD management
+- `Migrations/20260203222201_AddAnnouncements.cs`
+- `ShiftManager.Tests/UnitTests/Services/AnnouncementServiceTests.cs`
 
-### What Was Designed
-- Cross-molecule visibility via friendship connections
-- Mutual friendship acceptance workflow
-- View friends' shifts, vacations, chores
-- Admin-managed friendships
-- No limit on friend count
+### 9. Schedule Export/Print :white_check_mark:
 
-### What's Implemented
-- ✅ `UserFriendship` model (minimal)
+**Key Files:**
+- `Services/ScheduleExportService.cs` — QuestPDF, ClosedXML, CSV format handlers
+- `Models/Export/ScheduleExportData.cs`, `Models/Export/ScheduleExportRequest.cs`
+- `Pages/Api/ScheduleExport.cshtml.cs` — API endpoint
+- `wwwroot/css/print.css` — Print-optimized stylesheet
 
-### Missing Pieces
-- [ ] Friendship request/accept workflow
-- [ ] Friends list UI
-- [ ] Cross-molecule visibility in calendars
-- [ ] Friend status in team calendar
-- [ ] API endpoints for friendship management
+### 10. CSS Token Migration :white_check_mark:
 
-### Dependencies
-- Depends on: Calendar scope system (for visibility filtering)
-
-### Suggested Next Action
-Create implementation plan for "Circle/Friends Feature"
+All 33 files migrated. No `--text-primary` or `--text-secondary` references remain. Modern tokens (`--text`, `--text-muted`, `--text-subtle`) used throughout all 10 CSS files in `wwwroot/css/`.
 
 ---
 
-## 6. Shift Programs & Master Programs
+## In Progress
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | ⚠️ Partially Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 12) |
-| **Priority** | 🟠 High |
-| **Effort** | 32-40 hours |
+### 14. Excel-Like Calendars :construction:
 
-### What Was Designed
-- Weekly shift templates with day-of-week configuration
-- Staffing requirements per shift per day
-- Master programs combining multiple programs
-- Auto-generation of shift instances from programs
-- Program attachment/detachment from shifts
+**Status:** Design complete, ~40% implemented in `.worktrees/excel-calendars` branch
+**Design Doc:** `docs/plans/2026-02-05-excel-calendars-design.md`
 
-### What's Implemented
-- ✅ `ShiftProgram`, `ProgramDay`, `MasterProgram`, `MasterProgramItem` models
-- ✅ Database schema and indexes
-- ✅ Basic program display in Table page
+**What's Done (in worktree):**
+- :white_check_mark: Database migration (ShiftCapacityOverride, UserDayNote tables)
+- :white_check_mark: IShiftCalendarService / ShiftCalendarService
+- :white_check_mark: CalendarHub (SignalR real-time updates)
+- :white_check_mark: Calendar landing page with premium cards
+- :white_check_mark: Shifts Calendar page
+- :white_check_mark: Chores Calendar page
+- :white_check_mark: On-Call Calendar page
+- :white_check_mark: Overview Calendar page
+- :white_check_mark: calendar-realtime.js with SignalR integration
+- :white_check_mark: Feature flags and URL redirects
 
-### Missing Pieces
-- [ ] Program generation service (auto-create shifts)
-- [ ] Program editor UI
-- [ ] Master program composition UI
-- [ ] Staffing requirement enforcement
-- [ ] Program-based fill mode
+**What's Left:**
+- [ ] Cell editor popovers (RTL-aware)
+- [ ] Advanced filter panel UI
+- [ ] Capacity mode UI
+- [ ] Row grouping drag-and-drop
+- [ ] Full testing and QA
+- [ ] Merge to main branch
 
-### Dependencies
-- None (self-contained)
-
-### Suggested Next Action
-Create implementation plan for "Shift Program Generation"
+**Key Models (in worktree):**
+- `Models/ShiftCapacityOverride.cs`
+- `Models/UserDayNote.cs`
+- `Models/ChoreType.cs` (already in main branch)
 
 ---
 
-## 7. Duty Rotation System
+## Not Yet Implemented
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Designed, Not Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 14) |
-| **Priority** | 🟡 Medium |
-| **Effort** | 24-32 hours |
+### 7. Duty Rotation :x:
 
-### What Was Designed
+**Design Doc:** V3 Design (Section 14)
+**What Was Designed:**
 - Automatic duty rotation through eligible users
 - Frequency-based scheduling (daily, weekly, biweekly, monthly)
 - Primary + backup assignee per duty
 - Skip rules (vacation, conflict detection)
 - Rotation queue management
 
-### Missing Pieces
-- [ ] Duty rotation service
-- [ ] Rotation queue entity/storage
-- [ ] Auto-assignment scheduler
-- [ ] Skip rule implementation
-- [ ] Rotation management UI
-
-### Dependencies
-- Depends on: Military Rank (for officer eligibility), Vacation system
-
-### Suggested Next Action
-Create implementation plan for "Duty Rotation Automation"
+**Missing:** All of it — no models, services, or UI exist.
+**Dependencies:** Military Rank (done), Vacation system (partial)
+**Effort:** 24-32 hours
 
 ---
 
-## 8. Settings Hierarchy (Override Pattern)
+### 11. Tech Shifts (Department-Specific) :warning:
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | ⚠️ Partially Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 19) |
-| **Priority** | 🟡 Medium |
-| **Effort** | 8-16 hours |
+**What Exists:**
+- :white_check_mark: Grant types for tech shifts seeded (Delta, Hanava, Yekev, Moviltech, NOC, Shiklut)
+- :white_check_mark: Department entity exists
 
-### What Was Designed
-- 3-level settings hierarchy: Area → Molecule → Company
-- NULL = use parent default, set value = override
-- Settings: RestHours, WeeklyCap, etc.
-- Resolution service that walks hierarchy
-
-### What's Implemented
-- ✅ `AreaSettings`, `MoleculeSettings`, `CompanySettings` models
-- ✅ Basic `SettingsService`
-
-### Missing Pieces
-- [ ] Full hierarchy resolution logic
-- [ ] Settings management UI per level
-- [ ] Override indicator in UI
-- [ ] Settings change audit logging
-
-### Dependencies
-- None (self-contained)
-
-### Suggested Next Action
-Create implementation plan for "Settings Hierarchy Resolution"
-
----
-
-## 9. Announcement Feed
-
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Fully Designed |
-| **Design Doc** | `docs/plans/2026-02-03-backlog-items.md` (Announcements section) |
-| **Priority** | 🟢 Low |
-| **Effort** | 16-24 hours |
-
-### What Was Designed
-- Company-wide announcements with visibility scopes
-- Pinned announcements
-- Expiration dates
-- Dashboard widget
-- Admin CRUD management
-
-### Missing Pieces
-- [ ] `Announcement` model
-- [ ] Database migration
-- [ ] Announcement service
-- [ ] Admin management page
-- [ ] Dashboard widget
-- [ ] Visibility filtering
-
-### Dependencies
-- None (self-contained)
-
-### Suggested Next Action
-Create implementation plan (low priority, defer)
-
----
-
-## 10. Schedule Export/Print
-
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Fully Designed |
-| **Design Doc** | `docs/plans/2026-02-03-backlog-items.md` (Export section) |
-| **Priority** | 🟢 Low |
-| **Effort** | 24-32 hours |
-
-### What Was Designed
-- Export formats: PDF (QuestPDF), Excel (ClosedXML), CSV
-- Period selection: Week, Month, Custom
-- Filter options: Department, JobType
-- Print-optimized stylesheet
-
-### Missing Pieces
-- [ ] Export service with format handlers
-- [ ] QuestPDF integration
-- [ ] ClosedXML integration
-- [ ] Export API endpoint
-- [ ] Print stylesheet
-- [ ] Export dialog UI
-
-### Dependencies
-- None (self-contained)
-
-### Suggested Next Action
-Create implementation plan (low priority, defer)
-
----
-
-## 11. Tech Shifts (Department-Specific)
-
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 📋 Designed, Minimal Implementation |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 13) |
-| **Priority** | 🟡 Medium |
-| **Effort** | 24-32 hours |
-
-### What Was Designed
-- Department-specific shift types: HANAVA, DELTA, YEKEV, MOVILTECH
-- Tech molecule structure (vs Workforce)
-- Department-scoped grants
-- Tech shift calendars
-
-### What's Implemented
-- ✅ Grant types for tech shifts defined
-- ✅ Department entity exists
-
-### Missing Pieces
+**Missing:**
 - [ ] Tech shift type seeding
 - [ ] Tech calendar views
-- [ ] Department-scoped filtering
+- [ ] Department-scoped filtering in calendars
 - [ ] Tech shift assignment workflow
 
-### Dependencies
-- Depends on: Department entity, Grant system
-
-### Suggested Next Action
-Create implementation plan for "Tech Molecule Shifts"
+**Effort:** 16-24 hours (reduced — infrastructure already in place)
 
 ---
 
-## 12. Vacation Approval Chain
+### 12. Vacation Approval Chain :warning:
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | ⚠️ Partially Implemented |
-| **Design Doc** | `docs/plans/2026-01-25-organizational-hierarchy-design-v3.md` (Section 15) |
-| **Priority** | 🟡 Medium |
-| **Effort** | 16-24 hours |
+**What Exists:**
+- :white_check_mark: `TimeOffRequest` model with Status (Pending/Approved/Rejected) and ApproverId
 
-### What Was Designed
-- JobType-specific approvers (Alhut Lead → Text Lead → BR Director)
-- Approval matrix with fallback
-- Multi-level approval for extended leave
-- Auto-approval for under N days
-
-### What's Implemented
-- ✅ `TimeOffRequest` model with status
-- ✅ Basic approval workflow
-
-### Missing Pieces
+**Missing:**
 - [ ] JobType → Approver mapping
-- [ ] Approval routing service
-- [ ] Multi-level approval logic
-- [ ] Auto-approval configuration
+- [ ] Multi-level approval routing service
+- [ ] Auto-approval for short leave (< N days)
+- [ ] Approval matrix with fallback logic
 
-### Dependencies
-- Depends on: Role system (for approver identification)
-
-### Suggested Next Action
-Create implementation plan for "Vacation Approval Routing"
+**Effort:** 16-24 hours
 
 ---
 
-## Summary Matrix
+## Remaining Work Summary
 
-| Feature | Status | Priority | Effort | Dependencies |
-|---------|--------|----------|--------|--------------|
-| Military Rank | Designed | 🟠 High | 16-24h | None |
-| Grant Scope Inheritance | Partial | 🔴 Critical | 60-80h | Hierarchy |
-| Auto-Grant System | Designed | 🔴 Critical | 16-24h | Grant, Role |
-| Setup Tasks | Partial | 🟠 High | 24-32h | Role, Grant |
-| Circle/Friends | Minimal | 🟡 Medium | 16-24h | Calendar |
-| Shift Programs | Partial | 🟠 High | 32-40h | None |
-| Duty Rotation | Designed | 🟡 Medium | 24-32h | Rank, Vacation |
-| Settings Hierarchy | Partial | 🟡 Medium | 8-16h | None |
-| Announcements | Designed | 🟢 Low | 16-24h | None |
-| Export/Print | Designed | 🟢 Low | 24-32h | None |
-| Tech Shifts | Minimal | 🟡 Medium | 24-32h | Dept, Grant |
-| Vacation Approval | Partial | 🟡 Medium | 16-24h | Role |
-
-**Total Estimated Effort:** ~300-400 hours (8-10 weeks)
+| Feature | Effort | Blocking Release? |
+|---------|--------|-------------------|
+| Excel Calendars (finish + merge) | 20-30h | No (behind feature flag) |
+| Duty Rotation | 24-32h | No |
+| Tech Shifts (workflows) | 16-24h | No |
+| Vacation Approval (routing) | 16-24h | No |
+| **Total** | **~76-110h** | **None are blockers** |
 
 ---
 
-## Recommended Implementation Order
+## Active Code TODOs
 
-### Phase 1: Foundation (Weeks 1-3)
-1. **Military Rank System** - Self-contained, enables Katzin eligibility
-2. **Grant Scope Inheritance** - Critical for all authorization
-3. **Auto-Grant System** - Required for role assignment to work
-
-### Phase 2: Core Features (Weeks 4-6)
-4. **Setup Tasks** - Enables onboarding workflow
-5. **Shift Programs** - Key scheduling feature
-6. **Settings Hierarchy** - Quick win, low complexity
-
-### Phase 3: Extended Features (Weeks 7-9)
-7. **Vacation Approval Chain** - Improves workflow
-8. **Tech Shifts** - Department-specific scheduling
-9. **Duty Rotation** - Automation
-
-### Phase 4: Nice-to-Have (Weeks 10+)
-10. **Circle/Friends** - Social feature
-11. **Announcements** - Communication
-12. **Export/Print** - Reporting
+| File | Line | Issue |
+|------|------|-------|
+| `Models/Molecule.cs` | 22 | ChoreType navigation property commented out |
+| `Pages/Api/Hierarchy/Reorder.cshtml.cs` | 79 | Reorder is a stub (returns success, no persistence) |
+| `Services/ShiftAssignmentService.cs` | 216 | Weekly cap hardcoded to 60h (should use settings hierarchy) |
+| `Services/WidgetService.cs` | 232 | Widget preferences not persisted (localStorage only) |
+| `Services/DirectorService.cs` | 50 | Interface async refactor noted |
+| `wwwroot/js/localization-attributes.js` | 269 | Draft system integration incomplete |
 
 ---
 
-## Tracking
-
-This document should be updated when:
-- A feature moves from "Designed" to "Implemented"
-- New designs are created
-- Priority changes based on business needs
-- Dependencies are resolved
-
-**Last Updated:** 2026-02-04
+**Last Updated:** 2026-02-06 (full codebase verification audit)

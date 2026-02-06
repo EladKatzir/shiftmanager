@@ -8088,4 +8088,215 @@
   <data name="Scopes" xml:space="preserve">
     <value>תחומים</value>
   </data>
+  <!-- Grant Type Localizations - Calendar Grants -->
+  <data name="Grant_ManageShiftCapacity" xml:space="preserve">
+    <value>ניהול קיבולת משמרות</value>
+  </data>
+  <data name="Grant_ManageShiftCapacity_Desc" xml:space="preserve">
+    <value>שינוי מכסת משמרות עבור ימים מסוימים</value>
+  </data>
+  <data name="Grant_WriteOverviewNotes" xml:space="preserve">
+    <value>הערות לוח תקציר</value>
+  </data>
+  <data name="Grant_WriteOverviewNotes_Desc" xml:space="preserve">
+    <value>הוספת הערות חופשיות ללוח תקציר החברה</value>
+  </data>
+  <data name="Grant_ManageOnDutyTypes" xml:space="preserve">
+    <value>ניהול סוגי כוננויות</value>
+  </data>
+  <data name="Grant_ManageOnDutyTypes_Desc" xml:space="preserve">
+    <value>יצירה ועריכה של סוגי כוננויות</value>
+  </data>
+
+  <!-- Excel Calendars Feature -->
+  <data name="ShiftsCalendar" xml:space="preserve">
+    <value>לוח משמרות</value>
+    <comment>Title for the Excel-style shifts calendar page</comment>
+  </data>
+  <data name="Print" xml:space="preserve">
+    <value>הדפסה</value>
+    <comment>Button to print the calendar</comment>
+  </data>
+  <data name="ByUser" xml:space="preserve">
+    <value>לפי אנשים</value>
+    <comment>Toggle to show calendar organized by user</comment>
+  </data>
+  <data name="ByShift" xml:space="preserve">
+    <value>לפי משמרות</value>
+    <comment>Toggle to show calendar organized by shift type</comment>
+  </data>
+  <data name="CapacityMode" xml:space="preserve">
+    <value>מצב קיבולת</value>
+    <comment>Toggle to show/edit capacity in calendar cells</comment>
+  </data>
+  <data name="JustMine" xml:space="preserve">
+    <value>רק שלי</value>
+    <comment>Toggle to show only current user's assignments</comment>
+  </data>
+  <data name="Molecule" xml:space="preserve">
+    <value>מולקולה</value>
+    <comment>Label for molecule selector dropdown</comment>
+  </data>
+  <data name="ViewMode" xml:space="preserve">
+    <value>תצוגה</value>
+    <comment>Label for view mode selector dropdown</comment>
+  </data>
+  <data name="Calendar_Empty_NoShifts" xml:space="preserve">
+    <value>לא נמצאו משמרות</value>
+    <comment>Title shown when calendar has no shifts</comment>
+  </data>
+  <data name="Calendar_Empty_SelectJobType" xml:space="preserve">
+    <value>בחר סוג תפקיד כדי לראות משמרות למולקולה זו.</value>
+    <comment>Message when no job type is selected</comment>
+  </data>
+  <data name="Calendar_Empty_NoJobTypes" xml:space="preserve">
+    <value>לא הוגדרו סוגי תפקידים למולקולה זו.</value>
+    <comment>Message when molecule has no job types</comment>
+  </data>
+  <data name="FilterComingSoon" xml:space="preserve">
+    <value>סינון מתקדם בקרוב!</value>
+    <comment>Placeholder message for filter feature</comment>
+  </data>
+  <data name="DragToReorder" xml:space="preserve">
+    <value>גרור לשינוי סדר</value>
+    <comment>Tooltip for drag handle on calendar groups</comment>
+  </data>
+
+  <!-- Chores Calendar Feature -->
+  <data name="ChoreType" xml:space="preserve">
+    <value>סוג תורנות</value>
+    <comment>Label for chore type filter dropdown</comment>
+  </data>
+  <data name="Calendar_Empty_NoChores" xml:space="preserve">
+    <value>לא נמצאו תורנויות</value>
+    <comment>Title shown when calendar has no chores</comment>
+  </data>
+  <data name="Calendar_Empty_NoChoresMessage" xml:space="preserve">
+    <value>אין תורנויות מתוכננות לתקופה זו. השתמש בבורר המולקולה כדי לראות תורנויות במולקולה אחרת.</value>
+    <comment>Message shown when calendar has no chores</comment>
+  </data>
+  <data name="Calendar_Empty_NoOnDuty" xml:space="preserve">
+    <value>לא נמצאו משמרות יומיות</value>
+    <comment>Title shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="Calendar_Empty_NoOnDutyMessage" xml:space="preserve">
+    <value>אין משמרות יומיות מתוכננות לתקופה זו. השתמש בסינון כדי להתאים את התצוגה או פנה למנהל שלך לשיבוץ משמרות.</value>
+    <comment>Message shown when on-call calendar has no duty assignments</comment>
+  </data>
+  <data name="AllAreas" xml:space="preserve">
+    <value>כל האזורים</value>
+    <comment>Option to show all areas in area selector</comment>
+  </data>
+  <data name="Primary" xml:space="preserve">
+    <value>ראשי</value>
+    <comment>Label for primary assignment in on-call calendar</comment>
+  </data>
+  <data name="Backup" xml:space="preserve">
+    <value>מגבה</value>
+    <comment>Label for backup assignment in on-call calendar</comment>
+  </data>
+
+  <!-- Overview Calendar Feature -->
+  <data name="OverviewCalendar" xml:space="preserve">
+    <value>לוח סקירה</value>
+    <comment>Title for overview calendar page</comment>
+  </data>
+  <data name="UsersFilter" xml:space="preserve">
+    <value>משתמשים</value>
+    <comment>Label for user filter dropdown in overview calendar</comment>
+  </data>
+  <data name="ActiveUsers" xml:space="preserve">
+    <value>משתמשים פעילים</value>
+    <comment>Option to show only active users</comment>
+  </data>
+  <data name="InactiveUsers" xml:space="preserve">
+    <value>משתמשים לא פעילים</value>
+    <comment>Option to show only inactive users</comment>
+  </data>
+  <data name="AddNote" xml:space="preserve">
+    <value>הוסף הערה</value>
+    <comment>Button label to add a note to a calendar cell</comment>
+  </data>
+  <data name="EditNote" xml:space="preserve">
+    <value>ערוך הערה</value>
+    <comment>Modal title for editing a note</comment>
+  </data>
+  <data name="AddNoteHint" xml:space="preserve">
+    <value>הכנס הערה עבור המשתמש בתאריך זה...</value>
+    <comment>Placeholder text for note input</comment>
+  </data>
+  <data name="SaveNoteFailed" xml:space="preserve">
+    <value>שמירת ההערה נכשלה</value>
+    <comment>Error message when note save fails</comment>
+  </data>
+  <data name="DeleteNoteConfirm" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק הערה זו?</value>
+    <comment>Confirmation message for deleting a note</comment>
+  </data>
+  <data name="Calendar_Empty_NoUsersMessage" xml:space="preserve">
+    <value>לא נמצאו משתמשים בפלוגה שלך עבור הסינון הנבחר. נסה לשנות את סינון המשתמשים.</value>
+    <comment>Message shown when overview calendar has no users</comment>
+  </data>
+  <data name="NoAssignments" xml:space="preserve">
+    <value>אין שיבוצים</value>
+    <comment>Label for cells with no assignments</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>שגיאה לא ידועה</value>
+    <comment>Generic error message</comment>
+  </data>
+
+  <!-- Calendar Landing Page -->
+  <data name="CalendarsSubtitle" xml:space="preserve">
+    <value>ניהול משמרות, תורנויות וכוננויות</value>
+    <comment>Subtitle on calendar landing page</comment>
+  </data>
+  <data name="ShiftsCalendarDesc" xml:space="preserve">
+    <value>ניהול ותכנון משמרות עבודה</value>
+    <comment>Description for shifts calendar card</comment>
+  </data>
+  <data name="ChoresCalendarDesc" xml:space="preserve">
+    <value>ניהול תורנויות ומטלות</value>
+    <comment>Description for chores calendar card</comment>
+  </data>
+  <data name="OnCallCalendar" xml:space="preserve">
+    <value>לוח כוננויות</value>
+    <comment>Title for on-call calendar</comment>
+  </data>
+  <data name="OnCallCalendarDesc" xml:space="preserve">
+    <value>ניהול כוננויות וזמינות</value>
+    <comment>Description for on-call calendar card</comment>
+  </data>
+  <data name="OverviewCalendarDesc" xml:space="preserve">
+    <value>סקירה כללית של כל השיבוצים</value>
+    <comment>Description for overview calendar card</comment>
+  </data>
+  <data name="ViewCalendar" xml:space="preserve">
+    <value>צפה בלוח</value>
+    <comment>Button text on calendar card</comment>
+  </data>
+  <data name="Grant_AccessAdminNavigation" xml:space="preserve">
+    <value>גישה לניווט ניהולי</value>
+  </data>
+  <data name="Grant_AccessAdminNavigation_Desc" xml:space="preserve">
+    <value>גישה לתפריט הניווט הניהולי ולתכונות ניהול</value>
+  </data>
+  <data name="Grant_DirectorHubAccess" xml:space="preserve">
+    <value>גישה למרכז מנהלים</value>
+  </data>
+  <data name="Grant_DirectorHubAccess_Desc" xml:space="preserve">
+    <value>גישה למרכז המנהלים לניהול חוצה חברות</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess" xml:space="preserve">
+    <value>גישה לדף הבית של מנהל</value>
+  </data>
+  <data name="Grant_ManagerHomeAccess_Desc" xml:space="preserve">
+    <value>גישה ללוח הבקרה של מנהל</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar" xml:space="preserve">
+    <value>צפייה בלוח שנה חברתי</value>
+  </data>
+  <data name="Grant_ViewCompanyCalendar_Desc" xml:space="preserve">
+    <value>צפייה בסקירה הכללית של לוח השנה החברתי</value>
+  </data>
 </root>
