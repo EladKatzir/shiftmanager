@@ -71,6 +71,10 @@
             <span class="tab-icon">&#x1F465;</span>
             <loc key="Grants_Tab_UserGrants">User Grants</loc>
         </button>
+        <button class="tab-btn" data-tab="grant-actions">
+            <span class="tab-icon">&#x26A1;</span>
+            <loc key="Grants_Tab_GrantActions">Grant Actions</loc>
+        </button>
     </div>
 
     <!-- Tab Panels -->
@@ -197,6 +201,50 @@
                     <div class="user-grants-list" id="user-grants-list">
                         <!-- Populated by JavaScript -->
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grant Actions Panel -->
+        <div class="tab-panel" id="grant-actions">
+            <div class="panel-header">
+                <h2><loc key="Grants_GrantActions">Grant Actions</loc></h2>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success" style="padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--success, #22c55e);font-size:0.875rem;">
+                    @Model.SuccessMessage
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-error" style="padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--error, #ef4444);font-size:0.875rem;">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="grant-actions-grid">
+                <div class="action-card">
+                    <div class="action-card-header">
+                        <span class="action-card-icon">&#x1F451;</span>
+                        <h3><loc key="Grants_ApplyOwnerGrants">Apply Owner Grants</loc></h3>
+                    </div>
+                    <p class="action-card-desc"><loc key="Grants_ApplyOwnerGrantsDesc">Apply the Owner role template grants to user #1 with project-level scope. This uses the auto-grant system to ensure all Owner permissions are properly assigned.</loc></p>
+                    <form method="post" asp-page-handler="ApplyOwnerGrants">
+                        <button type="submit" class="btn btn-primary"><loc key="Grants_ApplyOwnerGrants">Apply Owner Grants</loc></button>
+                    </form>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-card-header">
+                        <span class="action-card-icon">&#x1F465;</span>
+                        <h3><loc key="Grants_AddUserMgmtGrants">Add User Management Grants</loc></h3>
+                    </div>
+                    <p class="action-card-desc"><loc key="Grants_AddUserMgmtGrantsDesc">Add user management grants (ViewUsers, EditUsers, CreateUsers, DeactivateUsers, ResetPasswords, AssignJobTypes, ViewAllUsers) to admin user #1. Skips grants already assigned.</loc></p>
+                    <form method="post" asp-page-handler="ApplyUserManagementGrants">
+                        <button type="submit" class="btn btn-primary"><loc key="Grants_AddUserMgmtGrants">Add User Management Grants</loc></button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1132,6 +1180,44 @@
     .grant-type-cards {
         grid-template-columns: 1fr;
     }
+}
+
+/* Grant Actions Panel */
+.grant-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.action-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.action-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.action-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.action-card-icon {
+    font-size: 1.5rem;
+}
+
+.action-card-desc {
+    color: var(--muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
 }
 </style>
 }

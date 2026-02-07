@@ -9,7 +9,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 
 /// <summary>
 /// OwnerHub - Consolidated dashboard for system-wide administration.
-/// Provides 6 category cards: Hierarchy, People, Grants, Scheduling, Settings, Analytics.
+/// Provides 7 category cards: Hierarchy, People, Grants, Scheduling, Settings, Analytics, Seed Data.
 /// </summary>
 [Authorize(Policy = "Grant:AdminAccess")]
 public class IndexModel : PageModel
@@ -53,6 +53,10 @@ public class IndexModel : PageModel
     public int TotalAuditLogs { get; set; }
     public int RecentAuditLogs { get; set; }
 
+    // Seed Data Stats
+    public int TotalSeedEntities { get; set; }
+    public bool SeedDataHealthy { get; set; }
+
     public async Task OnGetAsync()
     {
         try
@@ -89,6 +93,13 @@ public class IndexModel : PageModel
             TotalAuditLogs = await _db.AuditLogs.IgnoreQueryFilters().CountAsync();
             var weekAgo = DateTime.UtcNow.AddDays(-7);
             RecentAuditLogs = await _db.AuditLogs.IgnoreQueryFilters().CountAsync(a => a.Timestamp >= weekAgo);
+
+            // Seed data stats
+            var grantTypeCount = await _db.GrantTypes.CountAsync();
+            var roleTemplateCount = await _db.RoleTemplates.CountAsync();
+            var featureFlagCount = await _db.FeatureFlags.CountAsync();
+            TotalSeedEntities = grantTypeCount + roleTemplateCount + TotalProjects + featureFlagCount;
+            SeedDataHealthy = !await _db.Companies.IgnoreQueryFilters().AnyAsync(c => c.MoleculeId == null);
         }
         catch (Exception ex)
         {

@@ -1,0 +1,500 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.SeedDataModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["SeedData_Title"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = Localizer["SeedData_Title"], IsActive = true }
+})
+
+<div class="seed-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F331;</span>
+            <loc key="SeedData_Title">Seed Data</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="SeedData_Subtitle">Database seed status, seeding actions, and diagnostics</loc></p>
+    </div>
+
+    @* Messages *@
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success">@Model.Message</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">@Model.ErrorMessage</div>
+    }
+
+    @* Status Dashboard *@
+    <div class="section-card">
+        <h2 class="section-title"><loc key="SeedData_StatusDashboard">Status Dashboard</loc></h2>
+        <div class="status-grid">
+            <div class="status-item @(Model.GrantTypeCount >= Model.ExpectedGrantTypes ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.GrantTypeCount</div>
+                <div class="status-label"><loc key="SeedData_GrantTypes">Grant Types</loc></div>
+                <div class="status-badge">@(Model.GrantTypeCount >= Model.ExpectedGrantTypes ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item @(Model.RoleTemplateCount >= Model.ExpectedRoleTemplates ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.RoleTemplateCount</div>
+                <div class="status-label"><loc key="SeedData_RoleTemplates">Role Templates</loc></div>
+                <div class="status-badge">@(Model.RoleTemplateCount >= Model.ExpectedRoleTemplates ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item @(Model.RoleTemplateGrantCount > 0 ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.RoleTemplateGrantCount</div>
+                <div class="status-label"><loc key="SeedData_RoleTemplateGrants">Role Template Grants</loc></div>
+                <div class="status-badge">@(Model.RoleTemplateGrantCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item @(Model.ProjectCount > 0 ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.ProjectCount</div>
+                <div class="status-label"><loc key="SeedData_Projects">Projects</loc></div>
+                <div class="status-badge">@(Model.ProjectCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item @(Model.AreaCount > 0 ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.AreaCount</div>
+                <div class="status-label"><loc key="SeedData_Areas">Areas</loc></div>
+                <div class="status-badge">@(Model.AreaCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item @(Model.MoleculeCount > 0 ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.MoleculeCount</div>
+                <div class="status-label"><loc key="SeedData_Molecules">Molecules</loc></div>
+                <div class="status-badge">@(Model.MoleculeCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item">
+                <div class="status-count">@Model.CompanyCount</div>
+                <div class="status-label"><loc key="SeedData_Companies">Companies</loc></div>
+                <div class="status-badge">@(Model.CompanyCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item">
+                <div class="status-count">@Model.DepartmentCount</div>
+                <div class="status-label"><loc key="SeedData_Departments">Departments</loc></div>
+                <div class="status-badge">@(Model.DepartmentCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item">
+                <div class="status-count">@Model.ShiftGroupingCount</div>
+                <div class="status-label"><loc key="SeedData_ShiftGroupings">Shift Groupings</loc></div>
+                <div class="status-badge">@(Model.ShiftGroupingCount > 0 ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+            <div class="status-item @(Model.FeatureFlagCount >= Model.ExpectedFeatureFlags ? "status-ok" : "status-warn")">
+                <div class="status-count">@Model.FeatureFlagCount</div>
+                <div class="status-label"><loc key="SeedData_FeatureFlags">Feature Flags</loc></div>
+                <div class="status-badge">@(Model.FeatureFlagCount >= Model.ExpectedFeatureFlags ? Localizer["SeedData_Seeded"] : Localizer["SeedData_NotSeeded"])</div>
+            </div>
+        </div>
+    </div>
+
+    @* Seeding Actions *@
+    <div class="section-card">
+        <h2 class="section-title"><loc key="SeedData_SeedingActions">Seeding Actions</loc></h2>
+        <p class="section-desc"><loc key="SeedData_SeedingActionsDesc">Seed missing data. Existing records will not be duplicated.</loc></p>
+        <div class="action-buttons">
+            <form method="post" asp-page-handler="SeedAll" class="inline-form">
+                <button type="submit" class="btn btn-primary">
+                    <loc key="SeedData_SeedAll">Seed All</loc>
+                </button>
+            </form>
+            <form method="post" asp-page-handler="SeedGrantTypes" class="inline-form">
+                <button type="submit" class="btn btn-secondary" @(Model.GrantTypeCount >= Model.ExpectedGrantTypes ? "disabled" : "")>
+                    <loc key="SeedData_SeedGrantTypes">Seed Grant Types</loc>
+                </button>
+            </form>
+            <form method="post" asp-page-handler="SeedRoleTemplates" class="inline-form">
+                <button type="submit" class="btn btn-secondary" @(Model.RoleTemplateCount >= Model.ExpectedRoleTemplates ? "disabled" : "")>
+                    <loc key="SeedData_SeedRoleTemplates">Seed Role Templates</loc>
+                </button>
+            </form>
+            <form method="post" asp-page-handler="SeedOrganization" class="inline-form">
+                <button type="submit" class="btn btn-secondary" @(Model.ProjectCount > 0 ? "disabled" : "")>
+                    <loc key="SeedData_SeedOrganization">Seed Organization</loc>
+                </button>
+            </form>
+            <form method="post" asp-page-handler="SeedFeatureFlags" class="inline-form">
+                <button type="submit" class="btn btn-secondary" @(Model.FeatureFlagCount >= Model.ExpectedFeatureFlags ? "disabled" : "")>
+                    <loc key="SeedData_SeedFeatureFlags">Seed Feature Flags</loc>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @* Diagnostics - Companies *@
+    <div class="section-card">
+        <h2 class="section-title"><loc key="SeedData_DiagCompanies">Company Diagnostics</loc></h2>
+        @if (Model.Companies.Any())
+        {
+            <div class="table-wrap">
+                <table class="diag-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th><loc key="SeedData_Name">Name</loc></th>
+                            <th><loc key="SeedData_Molecule">Molecule</loc></th>
+                            <th><loc key="SeedData_Status">Status</loc></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Companies)
+                        {
+                            <tr class="@(c.IsOrphaned ? "row-error" : "")">
+                                <td>@c.Id</td>
+                                <td>@c.Name</td>
+                                <td>@(c.MoleculeName ?? "-")</td>
+                                <td>
+                                    @if (c.IsOrphaned)
+                                    {
+                                        <span class="badge badge-error"><loc key="SeedData_Orphaned">Orphaned</loc></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-ok"><loc key="SeedData_OK">OK</loc></span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="empty-msg"><loc key="SeedData_NoCompanies">No companies found. Seed the organization first.</loc></p>
+        }
+    </div>
+
+    @* Diagnostics - Users *@
+    <div class="section-card">
+        <h2 class="section-title"><loc key="SeedData_DiagUsers">User Diagnostics</loc></h2>
+        @if (Model.Users.Any())
+        {
+            <div class="table-wrap">
+                <table class="diag-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th><loc key="SeedData_DisplayName">Display Name</loc></th>
+                            <th><loc key="SeedData_Company">Company</loc></th>
+                            <th><loc key="SeedData_Molecule">Molecule</loc></th>
+                            <th><loc key="SeedData_Status">Status</loc></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model.Users)
+                        {
+                            <tr class="@(u.IsOrphaned ? "row-error" : "")">
+                                <td>@u.Id</td>
+                                <td>@u.DisplayName</td>
+                                <td>@(u.CompanyName ?? "-")</td>
+                                <td>@(u.MoleculeId.HasValue ? u.MoleculeId.Value.ToString() : "-")</td>
+                                <td>
+                                    @if (u.IsOrphaned)
+                                    {
+                                        <span class="badge badge-error"><loc key="SeedData_Orphaned">Orphaned</loc></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-ok"><loc key="SeedData_OK">OK</loc></span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="empty-msg"><loc key="SeedData_NoUsers">No users found.</loc></p>
+        }
+    </div>
+
+    @* Diagnostics - Admin Grants *@
+    <div class="section-card">
+        <h2 class="section-title"><loc key="SeedData_DiagAdminGrants">Admin Grants (User #1)</loc></h2>
+        @if (Model.AdminGrants.Any())
+        {
+            <div class="table-wrap">
+                <table class="diag-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th><loc key="SeedData_GrantTypeKey">Grant Type</loc></th>
+                            <th><loc key="SeedData_ProjectScope">Project</loc></th>
+                            <th><loc key="SeedData_AreaScope">Area</loc></th>
+                            <th><loc key="SeedData_MoleculeScope">Molecule</loc></th>
+                            <th><loc key="SeedData_CompanyScope">Company</loc></th>
+                            <th><loc key="SeedData_CanOwn">Can Own</loc></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model.AdminGrants)
+                        {
+                            <tr>
+                                <td>@g.Id</td>
+                                <td>@g.GrantTypeKey</td>
+                                <td>@(g.ProjectId?.ToString() ?? "-")</td>
+                                <td>@(g.AreaId?.ToString() ?? "-")</td>
+                                <td>@(g.MoleculeId?.ToString() ?? "-")</td>
+                                <td>@(g.CompanyId?.ToString() ?? "-")</td>
+                                <td>@(g.CanOwn ? "&#x2713;" : "&#x2717;")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="empty-msg"><loc key="SeedData_NoAdminGrants">No grants assigned to admin user (ID 1).</loc></p>
+        }
+    </div>
+</div>
+
+@section Styles {
+<style>
+.seed-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.page-icon {
+    font-size: 2.5rem;
+}
+
+.page-subtitle {
+    color: var(--muted);
+    margin: 0;
+}
+
+/* Alerts */
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: var(--success, #22c55e);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--error, #ef4444);
+}
+
+/* Section Cards */
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.section-desc {
+    color: var(--muted);
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+}
+
+/* Status Grid */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.status-item {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.status-item.status-ok {
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.status-item.status-warn {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.status-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0.25rem 0;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-ok .status-badge {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success, #22c55e);
+}
+
+.status-warn .status-badge {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning, #f59e0b);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.inline-form {
+    display: inline;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.btn-secondary {
+    background: var(--background);
+    color: inherit;
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--surface);
+    border-color: var(--primary);
+}
+
+/* Diagnostic Tables */
+.table-wrap {
+    overflow-x: auto;
+}
+
+.diag-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.diag-table th,
+.diag-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.diag-table th {
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.row-error {
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.badge-ok {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success, #22c55e);
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--error, #ef4444);
+}
+
+.empty-msg {
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+@@media (max-width: 768px) {
+    .seed-container {
+        padding: 1rem;
+    }
+    .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+}

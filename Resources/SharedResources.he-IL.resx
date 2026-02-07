@@ -8329,4 +8329,160 @@
   <data name="VacationApproval_RequestNotFound" xml:space="preserve">
     <value>בקשת חופשה לא נמצאה</value>
   </data>
+  <!-- SeedData Page -->
+  <data name="SeedData_Title" xml:space="preserve">
+    <value>נתוני בסיס</value>
+  </data>
+  <data name="SeedData_Subtitle" xml:space="preserve">
+    <value>סטטוס נתוני בסיס, פעולות זריעה ואבחון</value>
+  </data>
+  <data name="SeedData_StatusDashboard" xml:space="preserve">
+    <value>לוח סטטוס</value>
+  </data>
+  <data name="SeedData_GrantTypes" xml:space="preserve">
+    <value>סוגי הרשאות</value>
+  </data>
+  <data name="SeedData_RoleTemplates" xml:space="preserve">
+    <value>תבניות תפקיד</value>
+  </data>
+  <data name="SeedData_RoleTemplateGrants" xml:space="preserve">
+    <value>הרשאות תבנית תפקיד</value>
+  </data>
+  <data name="SeedData_Projects" xml:space="preserve">
+    <value>פרויקטים</value>
+  </data>
+  <data name="SeedData_Areas" xml:space="preserve">
+    <value>אזורים</value>
+  </data>
+  <data name="SeedData_Molecules" xml:space="preserve">
+    <value>מולקולות</value>
+  </data>
+  <data name="SeedData_Companies" xml:space="preserve">
+    <value>פלוגות</value>
+  </data>
+  <data name="SeedData_Departments" xml:space="preserve">
+    <value>מחלקות</value>
+  </data>
+  <data name="SeedData_ShiftGroupings" xml:space="preserve">
+    <value>קבוצות משמרות</value>
+  </data>
+  <data name="SeedData_FeatureFlags" xml:space="preserve">
+    <value>דגלי פיצ'ר</value>
+  </data>
+  <data name="SeedData_Seeded" xml:space="preserve">
+    <value>נזרע</value>
+  </data>
+  <data name="SeedData_NotSeeded" xml:space="preserve">
+    <value>לא נזרע</value>
+  </data>
+  <data name="SeedData_SeedingActions" xml:space="preserve">
+    <value>פעולות זריעה</value>
+  </data>
+  <data name="SeedData_SeedingActionsDesc" xml:space="preserve">
+    <value>זריעת נתונים חסרים. רשומות קיימות לא ישוכפלו.</value>
+  </data>
+  <data name="SeedData_SeedAll" xml:space="preserve">
+    <value>זרע הכל</value>
+  </data>
+  <data name="SeedData_SeedGrantTypes" xml:space="preserve">
+    <value>זרע סוגי הרשאות</value>
+  </data>
+  <data name="SeedData_SeedRoleTemplates" xml:space="preserve">
+    <value>זרע תבניות תפקיד</value>
+  </data>
+  <data name="SeedData_SeedOrganization" xml:space="preserve">
+    <value>זרע ארגון</value>
+  </data>
+  <data name="SeedData_SeedFeatureFlags" xml:space="preserve">
+    <value>זרע דגלי פיצ'ר</value>
+  </data>
+  <data name="SeedData_DiagCompanies" xml:space="preserve">
+    <value>אבחון פלוגות</value>
+  </data>
+  <data name="SeedData_DiagUsers" xml:space="preserve">
+    <value>אבחון משתמשים</value>
+  </data>
+  <data name="SeedData_DiagAdminGrants" xml:space="preserve">
+    <value>הרשאות מנהל (משתמש #1)</value>
+  </data>
+  <data name="SeedData_Name" xml:space="preserve">
+    <value>שם</value>
+  </data>
+  <data name="SeedData_Molecule" xml:space="preserve">
+    <value>מולקולה</value>
+  </data>
+  <data name="SeedData_Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="SeedData_Orphaned" xml:space="preserve">
+    <value>יתום</value>
+  </data>
+  <data name="SeedData_OK" xml:space="preserve">
+    <value>תקין</value>
+  </data>
+  <data name="SeedData_NoCompanies" xml:space="preserve">
+    <value>לא נמצאו פלוגות. זרע את הארגון תחילה.</value>
+  </data>
+  <data name="SeedData_DisplayName" xml:space="preserve">
+    <value>שם תצוגה</value>
+  </data>
+  <data name="SeedData_Company" xml:space="preserve">
+    <value>פלוגה</value>
+  </data>
+  <data name="SeedData_NoUsers" xml:space="preserve">
+    <value>לא נמצאו משתמשים.</value>
+  </data>
+  <data name="SeedData_GrantTypeKey" xml:space="preserve">
+    <value>סוג הרשאה</value>
+  </data>
+  <data name="SeedData_ProjectScope" xml:space="preserve">
+    <value>פרויקט</value>
+  </data>
+  <data name="SeedData_AreaScope" xml:space="preserve">
+    <value>אזור</value>
+  </data>
+  <data name="SeedData_MoleculeScope" xml:space="preserve">
+    <value>מולקולה</value>
+  </data>
+  <data name="SeedData_CompanyScope" xml:space="preserve">
+    <value>פלוגה</value>
+  </data>
+  <data name="SeedData_CanOwn" xml:space="preserve">
+    <value>יכול להחזיק</value>
+  </data>
+  <data name="SeedData_NoAdminGrants" xml:space="preserve">
+    <value>אין הרשאות למשתמש מנהל (מזהה 1).</value>
+  </data>
+  <!-- Grant Actions Tab -->
+  <data name="Grants_Tab_GrantActions" xml:space="preserve">
+    <value>פעולות הרשאה</value>
+  </data>
+  <data name="Grants_GrantActions" xml:space="preserve">
+    <value>פעולות הרשאה</value>
+  </data>
+  <data name="Grants_ApplyOwnerGrants" xml:space="preserve">
+    <value>החל הרשאות בעלים</value>
+  </data>
+  <data name="Grants_ApplyOwnerGrantsDesc" xml:space="preserve">
+    <value>החלת הרשאות תבנית תפקיד בעלים על משתמש #1 עם היקף ברמת פרויקט. משתמש במנגנון הרשאות אוטומטי להבטחת כל ההרשאות מוגדרות כראוי.</value>
+  </data>
+  <data name="Grants_AddUserMgmtGrants" xml:space="preserve">
+    <value>הוסף הרשאות ניהול משתמשים</value>
+  </data>
+  <data name="Grants_AddUserMgmtGrantsDesc" xml:space="preserve">
+    <value>הוספת הרשאות ניהול משתמשים (צפייה, עריכה, יצירה, השבתה, איפוס סיסמאות, הקצאת תפקידים, צפייה בכל המשתמשים) למשתמש מנהל #1. מדלג על הרשאות שכבר הוקצו.</value>
+  </data>
+  <!-- OwnerHub SeedData Card -->
+  <data name="OwnerHub_SeedData" xml:space="preserve">
+    <value>נתוני בסיס</value>
+  </data>
+  <data name="OwnerHub_SeedEntities" xml:space="preserve">
+    <value>ישויות בסיס</value>
+  </data>
+  <data name="OwnerHub_DataHealth" xml:space="preserve">
+    <value>בריאות נתונים</value>
+  </data>
+  <data name="OwnerHub_ManageSeedData" xml:space="preserve">
+    <value>ניהול נתוני בסיס</value>
+  </data>
 </root>

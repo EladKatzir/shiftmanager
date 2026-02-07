@@ -34,6 +34,12 @@ public class GrantsModel : PageModel
     public int TotalGrants { get; set; }
     public int UsersWithGrants { get; set; }
 
+    // Messages for Grant Actions tab
+    [TempData]
+    public string? SuccessMessage { get; set; }
+    [TempData]
+    public string? ErrorMessage { get; set; }
+
     // Grant Types by Category
     public Dictionary<GrantCategory, List<GrantTypeViewModel>> GrantTypesByCategory { get; set; } = new();
 
@@ -137,6 +143,111 @@ public class GrantsModel : PageModel
         {
             _logger.LogError(ex, "Error loading grant management data");
         }
+    }
+
+    // === Grant Actions POST Handlers ===
+
+    public async Task<IActionResult> OnPostApplyOwnerGrantsAsync()
+    {
+        try
+        {
+            var ownerTemplate = await _db.RoleTemplates.FirstOrDefaultAsync(rt => rt.Key == "Owner");
+            if (ownerTemplate == null)
+            {
+                ErrorMessage = "Owner role template not found. Seed role templates first.";
+                return RedirectToPage();
+            }
+
+            var project = await _db.Projects.IgnoreQueryFilters().FirstOrDefaultAsync();
+            if (project == null)
+            {
+                ErrorMessage = "No project found. Seed the organization first.";
+                return RedirectToPage();
+            }
+
+            await _grantService.ApplyAutoGrantsAsync(
+                userId: 1,
+                roleTemplateId: ownerTemplate.Id,
+                roleScope: GrantScope.Project(project.Id));
+
+            SuccessMessage = "Owner grants applied to user #1 successfully.";
+            _logger.LogInformation("Applied Owner grants to user #1 with project scope {ProjectId}", project.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying owner grants");
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostApplyUserManagementGrantsAsync()
+    {
+        try
+        {
+            var userMgmtKeys = new[]
+            {
+                "ViewUsers", "EditUsers", "CreateUsers", "DeactivateUsers",
+                "ResetPasswords", "AssignJobTypes", "ViewAllUsers"
+            };
+
+            var grantTypes = await _db.GrantTypes
+                .Where(gt => userMgmtKeys.Contains(gt.Key))
+                .ToListAsync();
+
+            if (grantTypes.Count == 0)
+            {
+                ErrorMessage = "User management grant types not found. Seed grant types first.";
+                return RedirectToPage();
+            }
+
+            var existingGrants = await _db.Grants
+                .IgnoreQueryFilters()
+                .Where(g => g.UserId == 1)
+                .Select(g => g.GrantTypeId)
+                .ToListAsync();
+
+            var project = await _db.Projects.IgnoreQueryFilters().FirstOrDefaultAsync();
+            int added = 0;
+
+            foreach (var gt in grantTypes)
+            {
+                if (!existingGrants.Contains(gt.Id))
+                {
+                    _db.Grants.Add(new Grant
+                    {
+                        UserId = 1,
+                        GrantTypeId = gt.Id,
+                        ProjectId = project?.Id,
+                        CanOwn = true,
+                        CanGive = true,
+                        IsAutoGrant = false,
+                        GrantedAt = DateTime.UtcNow,
+                        Notes = "Added via OwnerHub Grant Actions"
+                    });
+                    added++;
+                }
+            }
+
+            if (added > 0)
+            {
+                await _db.SaveChangesAsync();
+                SuccessMessage = $"Added {added} user management grants to user #1.";
+                _logger.LogInformation("Added {Count} user management grants to user #1", added);
+            }
+            else
+            {
+                SuccessMessage = "All user management grants already assigned.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying user management grants");
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+
+        return RedirectToPage();
     }
 
     // === AJAX Handlers ===

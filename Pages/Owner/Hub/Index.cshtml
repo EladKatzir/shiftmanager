@@ -192,6 +192,34 @@
                 <span class="hub-action-link"><loc key="OwnerHub_ViewReports">View reports</loc> &rarr;</span>
             </div>
         </a>
+
+        @* Seed Data Card *@
+        <a href="/Owner/Hub/SeedData" class="hub-card hub-card-seeddata">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x1F331;</div>
+                <h2><loc key="OwnerHub_SeedData">Seed Data</loc></h2>
+            </div>
+            <div class="hub-card-stats">
+                <div class="hub-stat">
+                    <span class="hub-stat-value">@Model.TotalSeedEntities</span>
+                    <span class="hub-stat-label"><loc key="OwnerHub_SeedEntities">seed entities</loc></span>
+                </div>
+                <div class="hub-stat">
+                    @if (Model.SeedDataHealthy)
+                    {
+                        <span class="hub-stat-check">&#x2713;</span>
+                    }
+                    else
+                    {
+                        <span class="hub-stat-x">&#x2717;</span>
+                    }
+                    <span class="hub-stat-label"><loc key="OwnerHub_DataHealth">data health</loc></span>
+                </div>
+            </div>
+            <div class="hub-card-actions">
+                <span class="hub-action-link"><loc key="OwnerHub_ManageSeedData">Manage seed data</loc> &rarr;</span>
+            </div>
+        </a>
     </div>
 
     @* Quick Links Section *@
@@ -392,6 +420,7 @@
 .hub-card-scheduling:hover::before { background: #3b82f6; }
 .hub-card-settings:hover::before { background: #8b5cf6; }
 .hub-card-analytics:hover::before { background: #ec4899; }
+.hub-card-seeddata:hover::before { background: #22c55e; }
 
 /* Quick Links Section */
 .hub-quick-links {

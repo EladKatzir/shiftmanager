@@ -8363,4 +8363,160 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="VacationApproval_RequestNotFound" xml:space="preserve">
     <value>Vacation request not found</value>
   </data>
+  <!-- SeedData Page -->
+  <data name="SeedData_Title" xml:space="preserve">
+    <value>Seed Data</value>
+  </data>
+  <data name="SeedData_Subtitle" xml:space="preserve">
+    <value>Database seed status, seeding actions, and diagnostics</value>
+  </data>
+  <data name="SeedData_StatusDashboard" xml:space="preserve">
+    <value>Status Dashboard</value>
+  </data>
+  <data name="SeedData_GrantTypes" xml:space="preserve">
+    <value>Grant Types</value>
+  </data>
+  <data name="SeedData_RoleTemplates" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="SeedData_RoleTemplateGrants" xml:space="preserve">
+    <value>Role Template Grants</value>
+  </data>
+  <data name="SeedData_Projects" xml:space="preserve">
+    <value>Projects</value>
+  </data>
+  <data name="SeedData_Areas" xml:space="preserve">
+    <value>Areas</value>
+  </data>
+  <data name="SeedData_Molecules" xml:space="preserve">
+    <value>Molecules</value>
+  </data>
+  <data name="SeedData_Companies" xml:space="preserve">
+    <value>Companies</value>
+  </data>
+  <data name="SeedData_Departments" xml:space="preserve">
+    <value>Departments</value>
+  </data>
+  <data name="SeedData_ShiftGroupings" xml:space="preserve">
+    <value>Shift Groupings</value>
+  </data>
+  <data name="SeedData_FeatureFlags" xml:space="preserve">
+    <value>Feature Flags</value>
+  </data>
+  <data name="SeedData_Seeded" xml:space="preserve">
+    <value>Seeded</value>
+  </data>
+  <data name="SeedData_NotSeeded" xml:space="preserve">
+    <value>Not Seeded</value>
+  </data>
+  <data name="SeedData_SeedingActions" xml:space="preserve">
+    <value>Seeding Actions</value>
+  </data>
+  <data name="SeedData_SeedingActionsDesc" xml:space="preserve">
+    <value>Seed missing data. Existing records will not be duplicated.</value>
+  </data>
+  <data name="SeedData_SeedAll" xml:space="preserve">
+    <value>Seed All</value>
+  </data>
+  <data name="SeedData_SeedGrantTypes" xml:space="preserve">
+    <value>Seed Grant Types</value>
+  </data>
+  <data name="SeedData_SeedRoleTemplates" xml:space="preserve">
+    <value>Seed Role Templates</value>
+  </data>
+  <data name="SeedData_SeedOrganization" xml:space="preserve">
+    <value>Seed Organization</value>
+  </data>
+  <data name="SeedData_SeedFeatureFlags" xml:space="preserve">
+    <value>Seed Feature Flags</value>
+  </data>
+  <data name="SeedData_DiagCompanies" xml:space="preserve">
+    <value>Company Diagnostics</value>
+  </data>
+  <data name="SeedData_DiagUsers" xml:space="preserve">
+    <value>User Diagnostics</value>
+  </data>
+  <data name="SeedData_DiagAdminGrants" xml:space="preserve">
+    <value>Admin Grants (User #1)</value>
+  </data>
+  <data name="SeedData_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="SeedData_Molecule" xml:space="preserve">
+    <value>Molecule</value>
+  </data>
+  <data name="SeedData_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="SeedData_Orphaned" xml:space="preserve">
+    <value>Orphaned</value>
+  </data>
+  <data name="SeedData_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="SeedData_NoCompanies" xml:space="preserve">
+    <value>No companies found. Seed the organization first.</value>
+  </data>
+  <data name="SeedData_DisplayName" xml:space="preserve">
+    <value>Display Name</value>
+  </data>
+  <data name="SeedData_Company" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="SeedData_NoUsers" xml:space="preserve">
+    <value>No users found.</value>
+  </data>
+  <data name="SeedData_GrantTypeKey" xml:space="preserve">
+    <value>Grant Type</value>
+  </data>
+  <data name="SeedData_ProjectScope" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="SeedData_AreaScope" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="SeedData_MoleculeScope" xml:space="preserve">
+    <value>Molecule</value>
+  </data>
+  <data name="SeedData_CompanyScope" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="SeedData_CanOwn" xml:space="preserve">
+    <value>Can Own</value>
+  </data>
+  <data name="SeedData_NoAdminGrants" xml:space="preserve">
+    <value>No grants assigned to admin user (ID 1).</value>
+  </data>
+  <!-- Grant Actions Tab -->
+  <data name="Grants_Tab_GrantActions" xml:space="preserve">
+    <value>Grant Actions</value>
+  </data>
+  <data name="Grants_GrantActions" xml:space="preserve">
+    <value>Grant Actions</value>
+  </data>
+  <data name="Grants_ApplyOwnerGrants" xml:space="preserve">
+    <value>Apply Owner Grants</value>
+  </data>
+  <data name="Grants_ApplyOwnerGrantsDesc" xml:space="preserve">
+    <value>Apply the Owner role template grants to user #1 with project-level scope. This uses the auto-grant system to ensure all Owner permissions are properly assigned.</value>
+  </data>
+  <data name="Grants_AddUserMgmtGrants" xml:space="preserve">
+    <value>Add User Management Grants</value>
+  </data>
+  <data name="Grants_AddUserMgmtGrantsDesc" xml:space="preserve">
+    <value>Add user management grants (ViewUsers, EditUsers, CreateUsers, DeactivateUsers, ResetPasswords, AssignJobTypes, ViewAllUsers) to admin user #1. Skips grants already assigned.</value>
+  </data>
+  <!-- OwnerHub SeedData Card -->
+  <data name="OwnerHub_SeedData" xml:space="preserve">
+    <value>Seed Data</value>
+  </data>
+  <data name="OwnerHub_SeedEntities" xml:space="preserve">
+    <value>seed entities</value>
+  </data>
+  <data name="OwnerHub_DataHealth" xml:space="preserve">
+    <value>data health</value>
+  </data>
+  <data name="OwnerHub_ManageSeedData" xml:space="preserve">
+    <value>Manage seed data</value>
+  </data>
 </root>
