@@ -1,0 +1,386 @@
+using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data;
+using ShiftManager.Models;
+using ShiftManager.Models.Support;
+
+namespace ShiftManager.Services;
+
+public class VacationApprovalService : IVacationApprovalService
+{
+    private readonly AppDbContext _context;
+    private readonly IGrantService _grantService;
+    private readonly ILogger<VacationApprovalService> _logger;
+
+    public VacationApprovalService(
+        AppDbContext context,
+        IGrantService grantService,
+        ILogger<VacationApprovalService> logger)
+    {
+        _context = context;
+        _grantService = grantService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Determines the approval route for a given time-off request.
+    /// Finds matching VacationApprovalRule by JobTypeId and CompanyId,
+    /// handles auto-approve for short leaves, and flags extended leave for second approval.
+    /// </summary>
+    public async Task<(int? ApproverId, string ApproverGrantKey, bool RequiresSecondApproval)> GetApprovalRouteAsync(int requestId)
+    {
+        // 1. Load the TimeOffRequest with user info
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+        {
+            _logger.LogWarning("GetApprovalRouteAsync: TimeOffRequest {RequestId} not found", requestId);
+            return (null, "ApproveVacations", false);
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
+        int? userJobTypeId = user?.JobTypeId;
+
+        // 2. Find matching VacationApprovalRule
+        //    Order by Priority desc, JobTypeId-specific first, then default (null JobTypeId)
+        var rules = await _context.VacationApprovalRules
+            .Where(r => r.CompanyId == request.CompanyId && r.IsActive)
+            .OrderByDescending(r => r.Priority)
+            .ThenByDescending(r => r.JobTypeId != null ? 1 : 0)  // JobType-specific rules first
+            .ToListAsync();
+
+        // Find the best matching rule: first try JobType-specific, then default
+        var matchingRule = rules.FirstOrDefault(r => r.JobTypeId != null && r.JobTypeId == userJobTypeId)
+                        ?? rules.FirstOrDefault(r => r.JobTypeId == null);
+
+        // 3. If no rule found, fall back to any user with "ApproveVacations" grant
+        if (matchingRule == null)
+        {
+            _logger.LogInformation(
+                "No approval rule found for request {RequestId}, company {CompanyId}. Falling back to default grant.",
+                requestId, request.CompanyId);
+            return (null, "ApproveVacations", false);
+        }
+
+        // 4. Calculate leave days
+        int leaveDays = request.EndDate.DayNumber - request.StartDate.DayNumber + 1;
+
+        // 5. Auto-approve if within threshold
+        if (matchingRule.MaxAutoApproveDays > 0 && leaveDays <= matchingRule.MaxAutoApproveDays)
+        {
+            _logger.LogInformation(
+                "Request {RequestId} eligible for auto-approve ({LeaveDays} days <= {MaxDays} day limit)",
+                requestId, leaveDays, matchingRule.MaxAutoApproveDays);
+            return (null, matchingRule.ApproverGrantKey, false);
+        }
+
+        // 6. Check if extended leave requires second approval
+        bool requiresSecondApproval = matchingRule.RequiresSecondApproval
+            && leaveDays > matchingRule.ExtendedLeaveDaysThreshold;
+
+        return (matchingRule.ApproverUserId, matchingRule.ApproverGrantKey, requiresSecondApproval);
+    }
+
+    /// <summary>
+    /// Submits a time-off request for approval. Handles auto-approve when applicable.
+    /// </summary>
+    public async Task<(bool Success, string Message)> SubmitForApprovalAsync(int requestId, int submittedBy)
+    {
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+        {
+            return (false, "VacationApproval_RequestNotFound");
+        }
+
+        if (request.Status != RequestStatus.Pending)
+        {
+            return (false, "VacationApproval_AlreadyProcessed");
+        }
+
+        var (approverId, approverGrantKey, requiresSecondApproval) = await GetApprovalRouteAsync(requestId);
+
+        // Calculate leave days for auto-approve check
+        int leaveDays = request.EndDate.DayNumber - request.StartDate.DayNumber + 1;
+
+        // Check if auto-approve applies
+        var rule = await GetMatchingRuleAsync(request);
+        if (rule != null && rule.MaxAutoApproveDays > 0 && leaveDays <= rule.MaxAutoApproveDays)
+        {
+            // Auto-approve
+            request.Status = RequestStatus.Approved;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Request {RequestId} auto-approved for user {UserId} ({LeaveDays} days)",
+                requestId, request.UserId, leaveDays);
+
+            return (true, "VacationApproval_AutoApproved");
+        }
+
+        // Set specific approver if rule defines one
+        if (approverId.HasValue)
+        {
+            request.ApproverId = approverId.Value;
+            await _context.SaveChangesAsync();
+        }
+
+        _logger.LogInformation(
+            "Request {RequestId} submitted for approval. RequiresSecondApproval={RequiresSecond}",
+            requestId, requiresSecondApproval);
+
+        if (requiresSecondApproval)
+        {
+            return (true, "VacationApproval_RequiresSecondApproval");
+        }
+
+        return (true, "VacationApproval_PendingApproval");
+    }
+
+    /// <summary>
+    /// Approves a time-off request. Verifies the approver has the required grant.
+    /// </summary>
+    public async Task<(bool Success, string Message)> ApproveAsync(int requestId, int approverId, string? notes = null)
+    {
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+        {
+            return (false, "VacationApproval_RequestNotFound");
+        }
+
+        if (request.Status != RequestStatus.Pending)
+        {
+            return (false, "VacationApproval_AlreadyProcessed");
+        }
+
+        // Verify approver has the required grant
+        bool canApprove = await CanUserApproveAsync(approverId, requestId);
+        if (!canApprove)
+        {
+            _logger.LogWarning(
+                "User {UserId} attempted to approve request {RequestId} without authorization",
+                approverId, requestId);
+            return (false, "VacationApproval_NotAuthorized");
+        }
+
+        // Update the request
+        request.Status = RequestStatus.Approved;
+        request.ApproverId = approverId;
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Request {RequestId} approved by user {ApproverId}",
+            requestId, approverId);
+
+        return (true, "VacationApproval_Approved");
+    }
+
+    /// <summary>
+    /// Declines a time-off request. Verifies the decliner has the required grant.
+    /// </summary>
+    public async Task<(bool Success, string Message)> DeclineAsync(int requestId, int declinerId, string? reason = null)
+    {
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+        {
+            return (false, "VacationApproval_RequestNotFound");
+        }
+
+        if (request.Status != RequestStatus.Pending)
+        {
+            return (false, "VacationApproval_AlreadyProcessed");
+        }
+
+        // Verify decliner has the required grant
+        bool canApprove = await CanUserApproveAsync(declinerId, requestId);
+        if (!canApprove)
+        {
+            _logger.LogWarning(
+                "User {UserId} attempted to decline request {RequestId} without authorization",
+                declinerId, requestId);
+            return (false, "VacationApproval_NotAuthorized");
+        }
+
+        request.Status = RequestStatus.Declined;
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Request {RequestId} declined by user {DeclinerId}. Reason: {Reason}",
+            requestId, declinerId, reason ?? "(none)");
+
+        return (true, "VacationApproval_Declined");
+    }
+
+    /// <summary>
+    /// Checks whether a user can approve a specific request.
+    /// If the rule defines a specific ApproverUserId, only that user can approve.
+    /// Otherwise, any user with the ApproverGrantKey for the request's company can approve.
+    /// </summary>
+    public async Task<bool> CanUserApproveAsync(int userId, int requestId)
+    {
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+            return false;
+
+        // Get the approval route
+        var (specificApproverId, approverGrantKey, _) = await GetApprovalRouteAsync(requestId);
+
+        // If a specific approver is set, only that user can approve
+        if (specificApproverId.HasValue)
+        {
+            if (userId == specificApproverId.Value)
+                return true;
+
+            // Also allow if user has the grant (fallback for flexibility)
+            return await _grantService.HasGrantForCompanyAsync(userId, approverGrantKey, request.CompanyId);
+        }
+
+        // Otherwise, check if user has the required grant for the company
+        return await _grantService.HasGrantForCompanyAsync(userId, approverGrantKey, request.CompanyId);
+    }
+
+    /// <summary>
+    /// Gets all pending time-off requests that a user can approve.
+    /// </summary>
+    public async Task<List<TimeOffRequest>> GetPendingApprovalsForUserAsync(int userId)
+    {
+        // Get the companies where the user has the ApproveVacations grant
+        var approveCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "ApproveVacations");
+
+        // Also check for ApproveExtendedLeave grant
+        var extendedLeaveCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "ApproveExtendedLeave");
+
+        var allCompanyIds = approveCompanyIds.Union(extendedLeaveCompanyIds).Distinct().ToList();
+
+        if (!allCompanyIds.Any())
+            return new List<TimeOffRequest>();
+
+        // Get pending requests in those companies
+        var pendingRequests = await _context.TimeOffRequests
+            .Where(r => r.Status == RequestStatus.Pending
+                     && allCompanyIds.Contains(r.CompanyId))
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        // Filter: if a request has a specific ApproverId, only include if it matches this user
+        var result = new List<TimeOffRequest>();
+        foreach (var req in pendingRequests)
+        {
+            if (req.ApproverId.HasValue && req.ApproverId.Value != userId)
+            {
+                // Specific approver is set and it's not this user.
+                // Still include if user has the grant (flexibility).
+                var (_, grantKey, _) = await GetApprovalRouteAsync(req.Id);
+                if (await _grantService.HasGrantForCompanyAsync(userId, grantKey, req.CompanyId))
+                {
+                    result.Add(req);
+                }
+            }
+            else
+            {
+                result.Add(req);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets all approval rules for a company.
+    /// </summary>
+    public async Task<List<VacationApprovalRule>> GetRulesForCompanyAsync(int companyId)
+    {
+        return await _context.VacationApprovalRules
+            .Where(r => r.CompanyId == companyId)
+            .OrderByDescending(r => r.Priority)
+            .ThenByDescending(r => r.JobTypeId != null ? 1 : 0)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Creates a new approval rule.
+    /// </summary>
+    public async Task<VacationApprovalRule> CreateRuleAsync(VacationApprovalRule rule)
+    {
+        _context.VacationApprovalRules.Add(rule);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Created approval rule {RuleId} for company {CompanyId}, JobTypeId={JobTypeId}, Priority={Priority}",
+            rule.Id, rule.CompanyId, rule.JobTypeId, rule.Priority);
+
+        return rule;
+    }
+
+    /// <summary>
+    /// Updates an existing approval rule.
+    /// </summary>
+    public async Task<bool> UpdateRuleAsync(VacationApprovalRule rule)
+    {
+        var existing = await _context.VacationApprovalRules
+            .FirstOrDefaultAsync(r => r.Id == rule.Id);
+
+        if (existing == null)
+            return false;
+
+        existing.JobTypeId = rule.JobTypeId;
+        existing.ApproverUserId = rule.ApproverUserId;
+        existing.ApproverGrantKey = rule.ApproverGrantKey;
+        existing.MaxAutoApproveDays = rule.MaxAutoApproveDays;
+        existing.RequiresSecondApproval = rule.RequiresSecondApproval;
+        existing.ExtendedLeaveDaysThreshold = rule.ExtendedLeaveDaysThreshold;
+        existing.SecondApproverGrantKey = rule.SecondApproverGrantKey;
+        existing.Priority = rule.Priority;
+        existing.IsActive = rule.IsActive;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Updated approval rule {RuleId}", rule.Id);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Deletes an approval rule.
+    /// </summary>
+    public async Task<bool> DeleteRuleAsync(int ruleId)
+    {
+        var rule = await _context.VacationApprovalRules
+            .FirstOrDefaultAsync(r => r.Id == ruleId);
+
+        if (rule == null)
+            return false;
+
+        _context.VacationApprovalRules.Remove(rule);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Deleted approval rule {RuleId}", ruleId);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the matching approval rule for a request (helper method).
+    /// </summary>
+    private async Task<VacationApprovalRule?> GetMatchingRuleAsync(TimeOffRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
+        int? userJobTypeId = user?.JobTypeId;
+
+        var rules = await _context.VacationApprovalRules
+            .Where(r => r.CompanyId == request.CompanyId && r.IsActive)
+            .OrderByDescending(r => r.Priority)
+            .ThenByDescending(r => r.JobTypeId != null ? 1 : 0)
+            .ToListAsync();
+
+        return rules.FirstOrDefault(r => r.JobTypeId != null && r.JobTypeId == userJobTypeId)
+            ?? rules.FirstOrDefault(r => r.JobTypeId == null);
+    }
+}

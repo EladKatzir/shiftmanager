@@ -76,8 +76,21 @@ public class ReorderModel : PageModel
                     UserId = userId
                 }));
 
-            // TODO: Implement actual reordering when SortOrder columns are added
-            // For now, return success to allow the UI to work
+            // WARNING: Actual reordering is not yet implemented.
+            // The hierarchy entities (Area, Molecule, Company, Department) do not have SortOrder columns.
+            // To enable reordering:
+            //   1. Add a SortOrder (int) column to Area, Molecule, Company, and Department models
+            //   2. Create and apply an EF Core migration
+            //   3. In this handler, resolve the entity type from request.EntityType,
+            //      load the matching entities by request.OrderedIds,
+            //      update each entity's SortOrder based on its position in the array,
+            //      and call _db.SaveChangesAsync()
+            // Until then, the intended order is logged above for audit purposes.
+            _logger.LogWarning(
+                "Hierarchy reorder requested but not applied: SortOrder columns not yet added to hierarchy entities. Type={EntityType}, ParentId={ParentId}",
+                request.EntityType,
+                request.ParentId);
+
             return new JsonResult(new { success = true, message = "Reorder logged (explicit ordering not yet implemented)" });
         }
         catch (Exception ex)

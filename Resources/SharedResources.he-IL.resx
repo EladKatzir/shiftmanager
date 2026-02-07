@@ -5383,14 +5383,8 @@
   <data name="Error_ServerError_Title" xml:space="preserve">
     <value>שגיאת שרת</value>
   </data>
-  <data name="Error_SessionExpired" xml:space="preserve">
-    <value>פג תוקף ההפעלה שלך. אנא התחבר שוב.</value>
-  </data>
   <data name="Error_SessionExpired_Title" xml:space="preserve">
     <value>פג תוקף ההפעלה</value>
-  </data>
-  <data name="Error_SessionExpiring" xml:space="preserve">
-    <value>תוקף ההפעלה שלך יפוג בעוד {0}. האם תרצה להישאר מחובר?</value>
   </data>
   <data name="Error_SessionExpiring_Title" xml:space="preserve">
     <value>ההפעלה עומדת לפוג</value>
@@ -6105,10 +6099,6 @@
   </data>
 
   <!-- A-015: Page and Section Titles -->
-  <data name="AdminHub_Title" xml:space="preserve">
-    <value>מרכז ניהול</value>
-    <comment>A-015 - Page title for admin hub</comment>
-  </data>
   <data name="DirectorHub_Title" xml:space="preserve">
     <value>מרכז דירקטור</value>
     <comment>A-015 - Page title for director hub</comment>
@@ -6802,14 +6792,6 @@
   <data name="Label_DepartmentLegacy" xml:space="preserve">
     <value>מחלקה (ישן)</value>
     <comment>A-015 - Label for legacy department field</comment>
-  </data>
-  <data name="Label_Skills" xml:space="preserve">
-    <value>כישורים (מופרדים בפסיקים)</value>
-    <comment>A-015 - Label for skills field</comment>
-  </data>
-  <data name="Label_Certifications" xml:space="preserve">
-    <value>הסמכות (מופרדות בפסיקים)</value>
-    <comment>A-015 - Label for certifications field</comment>
   </data>
   <data name="EditProfile_RecentChanges" xml:space="preserve">
     <value>שינויי פרופיל אחרונים (30 יום אחרונים)</value>
@@ -8298,5 +8280,53 @@
   </data>
   <data name="Grant_ViewCompanyCalendar_Desc" xml:space="preserve">
     <value>צפייה בסקירה הכללית של לוח השנה החברתי</value>
+  </data>
+  <data name="TechShift_Hanava" xml:space="preserve">
+    <value>משמרת טכנאי הנבה</value>
+  </data>
+  <data name="TechShift_Delta" xml:space="preserve">
+    <value>משמרת טכנאי דלתא</value>
+  </data>
+  <data name="TechShift_Yekev" xml:space="preserve">
+    <value>משמרת טכנאי יקב</value>
+  </data>
+  <data name="TechShift_Moviltech" xml:space="preserve">
+    <value>משמרת טכנאי מובילטק</value>
+  </data>
+  <data name="TechShift_NOC" xml:space="preserve">
+    <value>תורנות NOC</value>
+  </data>
+  <data name="TechShift_Shiklut" xml:space="preserve">
+    <value>תורנות שיקלוט</value>
+  </data>
+  <data name="Grant_ApproveExtendedLeave" xml:space="preserve">
+    <value>אישור חופשה מורחבת</value>
+  </data>
+  <data name="Grant_ApproveExtendedLeave_Desc" xml:space="preserve">
+    <value>אישור בקשות חופשה מורחבות (אישור ברמה שנייה)</value>
+  </data>
+  <data name="VacationApproval_AutoApproved" xml:space="preserve">
+    <value>בקשת חופשה אושרה אוטומטית (בתוך מגבלת {0} ימים)</value>
+  </data>
+  <data name="VacationApproval_PendingApproval" xml:space="preserve">
+    <value>בקשת חופשה נשלחה לאישור</value>
+  </data>
+  <data name="VacationApproval_Approved" xml:space="preserve">
+    <value>בקשת חופשה אושרה</value>
+  </data>
+  <data name="VacationApproval_Declined" xml:space="preserve">
+    <value>בקשת חופשה נדחתה</value>
+  </data>
+  <data name="VacationApproval_RequiresSecondApproval" xml:space="preserve">
+    <value>חופשה מורחבת דורשת אישור נוסף</value>
+  </data>
+  <data name="VacationApproval_NotAuthorized" xml:space="preserve">
+    <value>אינך מורשה לאשר בקשה זו</value>
+  </data>
+  <data name="VacationApproval_AlreadyProcessed" xml:space="preserve">
+    <value>בקשה זו כבר טופלה</value>
+  </data>
+  <data name="VacationApproval_RequestNotFound" xml:space="preserve">
+    <value>בקשת חופשה לא נמצאה</value>
   </data>
 </root>

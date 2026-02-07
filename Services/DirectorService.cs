@@ -46,8 +46,11 @@ public class DirectorService : IDirectorService
             return false;
 
         // Check if user has DirectorHubAccess grant
-        // Note: We use GetAwaiter().GetResult() here because the interface is sync
-        // TODO: Consider making interface async in future refactor
+        // Note: We use GetAwaiter().GetResult() here because the interface is synchronous.
+        // Converting IsDirector() and CanAssignRole() to async would require updating
+        // IDirectorService and all call sites (Razor pages, middleware, authorization handlers).
+        // This is a known sync-over-async pattern; acceptable here since these are short-lived
+        // grant lookups, but should be refactored when callers are migrated to async.
         return _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)
             .GetAwaiter().GetResult();
     }

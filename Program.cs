@@ -186,6 +186,7 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IChoreService, ChoreService>();
 builder.Services.AddScoped<IOnDutyService, OnDutyService>();
+builder.Services.AddScoped<IDutyRotationService, DutyRotationService>();
 builder.Services.AddScoped<IBusyUserService, BusyUserService>();
 builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
@@ -231,6 +232,12 @@ builder.Services.AddScoped<IMasterProgramService, MasterProgramService>();
 
 // Schedule Export Service
 builder.Services.AddScoped<IScheduleExportService, ScheduleExportService>();
+
+// Vacation Approval Chain Service
+builder.Services.AddScoped<IVacationApprovalService, VacationApprovalService>();
+
+// Tech Shift Services - Department-scoped tech shift eligibility and filtering
+builder.Services.AddScoped<ITechShiftService, TechShiftService>();
 
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();

@@ -19,8 +19,7 @@ public class Molecule
 
     public List<ShiftGrouping> ShiftGroupings { get; set; } = new();
 
-    // TODO: Uncomment when ChoreType entity is created
-    // public List<ChoreType> ChoreTypes { get; set; } = new();
+    public List<ChoreType> ChoreTypes { get; set; } = new();
 
     public MoleculeSettings? Settings { get; set; }
 }

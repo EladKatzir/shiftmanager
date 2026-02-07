@@ -11,15 +11,18 @@ public class ShiftAssignmentService : IShiftAssignmentService
     private readonly AppDbContext _db;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<ShiftAssignmentService> _logger;
+    private readonly IHierarchySettingsService _hierarchySettingsService;
 
     public ShiftAssignmentService(
         AppDbContext db,
         IStringLocalizer<SharedResources> localizer,
-        ILogger<ShiftAssignmentService> logger)
+        ILogger<ShiftAssignmentService> logger,
+        IHierarchySettingsService hierarchySettingsService)
     {
         _db = db;
         _localizer = localizer;
         _logger = logger;
+        _hierarchySettingsService = hierarchySettingsService;
     }
 
     public async Task<List<EligibleUserDto>> GetEligibleUsersForShiftAsync(int shiftInstanceId)
@@ -202,7 +205,10 @@ public class ShiftAssignmentService : IShiftAssignmentService
             notInShiftGrouping = !groupingCompanyIds.Contains(user.CompanyId);
         }
 
-        // Check weekly cap (simplified - uses default 60 hours)
+        // Check weekly cap using effective settings from hierarchy (Area -> Molecule -> Company)
+        var effectiveSettings = await _hierarchySettingsService.GetEffectiveSettingsAsync(shiftInstance.CompanyId);
+        var weeklyCap = effectiveSettings.WeeklyCap;
+
         var startOfWeek = GetStartOfWeek(shiftInstance.WorkDate);
         var endOfWeek = startOfWeek.AddDays(7);
 
@@ -215,7 +221,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
             .SumAsync(sa => GetShiftHours(sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End));
 
         var shiftHours = GetShiftHours(shiftInstance.ShiftType.Start, shiftInstance.ShiftType.End);
-        bool exceedsWeeklyCap = (weeklyHours + shiftHours) > 60; // TODO: Get from settings hierarchy
+        bool exceedsWeeklyCap = (weeklyHours + shiftHours) > weeklyCap;
 
         // Check rest hours (simplified - uses default 11 hours)
         bool restHoursViolation = await CheckRestHoursViolationAsync(userId, shiftInstance);

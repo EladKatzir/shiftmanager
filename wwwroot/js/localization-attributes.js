@@ -262,12 +262,8 @@
                 const newValue = input.value.trim();
 
                 if (newValue) {
-                    // Save to drafts (reuse existing draft system from language-edit-mode.js)
-                    // For attributes, we use the same key mechanism
-                    // The draft will be applied when saved
-
-                    // TODO: Integrate with existing draft system
-                    // For now, just apply directly (temp solution until proper integration)
+                    // Direct application is the current behavior. Draft system integration
+                    // will be added when draft workflow is implemented for attribute editing.
                     element.setAttribute(attr.name, newValue);
 
                     console.log(`[Localization Attributes] Updated ${attr.name}: ${attr.key} = ${newValue}`);

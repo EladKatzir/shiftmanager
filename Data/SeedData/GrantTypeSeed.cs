@@ -59,6 +59,7 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "RequestVacation", NameKey = "Grant_RequestVacation", DescriptionKey = "Grant_RequestVacation_Desc", Category = GrantCategory.Vacation, DefaultScope = GrantScopeLevel.Self, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ApproveVacations", NameKey = "Grant_ApproveVacations", DescriptionKey = "Grant_ApproveVacations_Desc", Category = GrantCategory.Vacation, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "OverrideVacationLimits", NameKey = "Grant_OverrideVacationLimits", DescriptionKey = "Grant_OverrideVacationLimits_Desc", Category = GrantCategory.Vacation, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ApproveExtendedLeave", NameKey = "Grant_ApproveExtendedLeave", DescriptionKey = "Grant_ApproveExtendedLeave_Desc", Category = GrantCategory.Vacation, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
 
         // ============================================
         // SWAP GRANTS (Category.Swap)

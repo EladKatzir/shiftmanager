@@ -115,9 +115,21 @@ public class AppDbContext : DbContext
     public DbSet<PerformanceMetric> PerformanceMetrics => Set<PerformanceMetric>();
 
     // ========================================
+    // Duty Rotation System (global tables)
+    // ========================================
+    public DbSet<DutyRotation> DutyRotations => Set<DutyRotation>();
+    public DbSet<DutyRotationEntry> DutyRotationEntries => Set<DutyRotationEntry>();
+    public DbSet<DutyRotationLog> DutyRotationLogs => Set<DutyRotationLog>();
+
+    // ========================================
     // Announcements Feed (tenant-scoped)
     // ========================================
     public DbSet<Announcement> Announcements => Set<Announcement>();
+
+    // ========================================
+    // Vacation Approval Rules (tenant-scoped)
+    // ========================================
+    public DbSet<VacationApprovalRule> VacationApprovalRules => Set<VacationApprovalRule>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -619,6 +631,10 @@ public class AppDbContext : DbContext
 
             // Excel Calendars: Query filter for UserDayNote tenant scoping
             modelBuilder.Entity<UserDayNote>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Vacation Approval Rules: Query filter for tenant scoping
+            modelBuilder.Entity<VacationApprovalRule>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
@@ -1311,6 +1327,111 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<PerformanceMetric>()
             .HasIndex(m => new { m.MetricName, m.Rating });
+
+        // ========================================
+        // Duty Rotation System Configurations
+        // ========================================
+
+        // DutyRotation: DateOnly conversion for LastAssignedDate
+        modelBuilder.Entity<DutyRotation>()
+            .Property(r => r.LastAssignedDate).HasConversion(dateConverter);
+
+        // DutyRotation → Creator relationship
+        modelBuilder.Entity<DutyRotation>()
+            .HasOne(r => r.Creator)
+            .WithMany()
+            .HasForeignKey(r => r.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters on AppUser
+
+        // DutyRotationEntry → DutyRotation relationship
+        modelBuilder.Entity<DutyRotationEntry>()
+            .HasOne(e => e.DutyRotation)
+            .WithMany(r => r.Entries)
+            .HasForeignKey(e => e.DutyRotationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // DutyRotationEntry → User relationship
+        modelBuilder.Entity<DutyRotationEntry>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation is optional due to query filters on AppUser
+
+        // DutyRotationEntry index for queue ordering
+        modelBuilder.Entity<DutyRotationEntry>()
+            .HasIndex(e => new { e.DutyRotationId, e.Position });
+
+        // DutyRotationLog: DateOnly conversion for AssignmentDate
+        modelBuilder.Entity<DutyRotationLog>()
+            .Property(l => l.AssignmentDate).HasConversion(dateConverter);
+
+        // DutyRotationLog → DutyRotation relationship
+        modelBuilder.Entity<DutyRotationLog>()
+            .HasOne(l => l.DutyRotation)
+            .WithMany(r => r.Logs)
+            .HasForeignKey(l => l.DutyRotationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // DutyRotationLog → AssignedUser relationship
+        modelBuilder.Entity<DutyRotationLog>()
+            .HasOne(l => l.AssignedUser)
+            .WithMany()
+            .HasForeignKey(l => l.AssignedUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // DutyRotationLog → SkippedUser relationship
+        modelBuilder.Entity<DutyRotationLog>()
+            .HasOne(l => l.SkippedUser)
+            .WithMany()
+            .HasForeignKey(l => l.SkippedUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // DutyRotationLog → OnDuty relationship
+        modelBuilder.Entity<DutyRotationLog>()
+            .HasOne(l => l.OnDuty)
+            .WithMany()
+            .HasForeignKey(l => l.OnDutyId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        // DutyRotationLog indexes
+        modelBuilder.Entity<DutyRotationLog>()
+            .HasIndex(l => new { l.DutyRotationId, l.AssignmentDate });
+
+        // ========================================
+        // Vacation Approval Rule Configurations
+        // ========================================
+
+        // VacationApprovalRule → Company relationship
+        modelBuilder.Entity<VacationApprovalRule>()
+            .HasOne(r => r.Company)
+            .WithMany()
+            .HasForeignKey(r => r.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // VacationApprovalRule → JobType relationship
+        modelBuilder.Entity<VacationApprovalRule>()
+            .HasOne(r => r.JobType)
+            .WithMany()
+            .HasForeignKey(r => r.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // VacationApprovalRule → ApproverUser relationship
+        modelBuilder.Entity<VacationApprovalRule>()
+            .HasOne(r => r.ApproverUser)
+            .WithMany()
+            .HasForeignKey(r => r.ApproverUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // Composite index for querying rules by company, job type, and priority
+        modelBuilder.Entity<VacationApprovalRule>()
+            .HasIndex(r => new { r.CompanyId, r.JobTypeId, r.Priority });
 
         base.OnModelCreating(modelBuilder);
     }

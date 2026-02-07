@@ -16,6 +16,8 @@ public class ShiftType : IBelongsToCompany
     // Tech shift type keys
     public const string TECH_HANAVA = "HANAVA";
     public const string TECH_DELTA = "DELTA";
+    public const string TECH_YEKEV = "YEKEV";
+    public const string TECH_MOVILTECH = "MOVILTECH";
     public const string TECH_SUPPORT = "SUPPORT";
     public const string TECH_ONCALL = "ONCALL";
 

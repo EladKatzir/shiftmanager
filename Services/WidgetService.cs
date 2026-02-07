@@ -229,8 +229,8 @@ public class WidgetService : IWidgetService
 
     public Task SaveUserWidgetPreferencesAsync(int userId, WidgetPreferences preferences)
     {
-        // TODO: Implement persistence to UserPreferences table
-        // For now, this is a no-op as preferences are stored client-side in localStorage
+        // Note: Widget preferences are stored client-side in localStorage.
+        // Server-side persistence planned for future release.
         return Task.CompletedTask;
     }
 
