@@ -67,7 +67,7 @@ public class GetOverviewDataModel : PageModel
                 .ToListAsync();
 
             // Get notes for date range
-            var notesDict = await _noteService.GetNotesForCompanyAsync(effectiveCompanyId.Value, start, end);
+            var notesDict = await _noteService.GetNotesForCompanyAsync(effectiveCompanyId!.Value, start, end);
             var notes = notesDict.Select(kvp => new
             {
                 userId = kvp.Key.UserId,

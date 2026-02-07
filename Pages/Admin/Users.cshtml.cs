@@ -1298,7 +1298,7 @@ public class UsersModel : LocalizedPageModel
                 if (!accessibleCompanyIds.Contains(joinRequest.CompanyId))
                 {
                     _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company {CompanyId}",
-                        currentUserId, currentUser.Role, joinRequest.Id, joinRequest.CompanyId);
+                        currentUserId, currentUser!.Role, joinRequest.Id, joinRequest.CompanyId);
                     errors.Add(string.Format(_localizer["Error_NoPermissionDifferentCompany"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;

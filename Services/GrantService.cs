@@ -184,7 +184,7 @@ public class GrantService : IGrantService
                 // SECURITY-AUDITED: SAFE — scoped by grant's ProjectId; resolves companies within granted project scope
                 var projectCompanyIds = await _db.Companies
                     .IgnoreQueryFilters()
-                    .Where(c => c.Molecule.Area.ProjectId == grant.ProjectId.Value)
+                    .Where(c => c.Molecule!.Area!.ProjectId == grant.ProjectId.Value)
                     .Select(c => c.Id)
                     .ToListAsync();
                 foreach (var id in projectCompanyIds)
@@ -198,7 +198,7 @@ public class GrantService : IGrantService
                 // SECURITY-AUDITED: SAFE — scoped by grant's AreaId; resolves companies within granted area scope
                 var areaCompanyIds = await _db.Companies
                     .IgnoreQueryFilters()
-                    .Where(c => c.Molecule.AreaId == grant.AreaId.Value)
+                    .Where(c => c.Molecule!.AreaId == grant.AreaId.Value)
                     .Select(c => c.Id)
                     .ToListAsync();
                 foreach (var id in areaCompanyIds)
@@ -228,7 +228,7 @@ public class GrantService : IGrantService
             }
 
             // Self scope (no scope defined) - user's own company
-            if (userContext != null)
+            if (userContext?.Path.Company != null)
             {
                 companyIds.Add(userContext.Path.Company.Id);
             }
