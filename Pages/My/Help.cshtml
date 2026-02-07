@@ -1,0 +1,258 @@
+@page
+@model ShiftManager.Pages.My.HelpModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Help_PageTitle"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Help_PageTitle"], IsActive = true }
+})
+
+<div class="help-page">
+    <div class="help-header">
+        <h1><loc key="Help_PageTitle" /></h1>
+        <p class="help-subtitle"><loc key="Help_Subtitle" /></p>
+    </div>
+
+    @* FAQ Sections *@
+    <div class="help-sections">
+
+        @* Calendar & Shifts *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">📅</span>
+                <loc key="Help_Section_Calendar" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ViewSchedule_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ViewSchedule_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_CalendarViews_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_CalendarViews_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_PrintSchedule_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_PrintSchedule_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Requests *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">📝</span>
+                <loc key="Help_Section_Requests" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_VacationRequest_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_VacationRequest_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_SwapShift_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_SwapShift_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_RequestStatus_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_RequestStatus_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Account & Settings *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">👤</span>
+                <loc key="Help_Section_Account" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ChangePassword_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ChangePassword_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_Notifications_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_Notifications_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_CantLogin_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_CantLogin_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Troubleshooting *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">🔧</span>
+                <loc key="Help_Section_Troubleshooting" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_StaleData_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_StaleData_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_PageError_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_PageError_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Support Contact *@
+        <div class="help-contact">
+            <h2 class="help-contact__title"><loc key="Help_NeedMoreHelp" /></h2>
+            <p class="help-contact__text"><loc key="Help_ContactSupport" /></p>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .help-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .help-header {
+            margin-bottom: 2rem;
+        }
+
+        .help-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .help-subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .help-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .help-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .help-section__title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .help-section__icon {
+            font-size: 1.25rem;
+        }
+
+        .help-faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .help-faq {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .help-faq[open] {
+            border-color: var(--primary, #3B82F6);
+        }
+
+        .help-faq__question {
+            padding: 0.875rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text);
+            background: var(--surface-soft, var(--bg));
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .help-faq__question::-webkit-details-marker {
+            display: none;
+        }
+
+        .help-faq__question::before {
+            content: "▸";
+            font-size: 0.85rem;
+            color: var(--muted);
+            transition: transform 0.2s;
+        }
+
+        .help-faq[open] .help-faq__question::before {
+            transform: rotate(90deg);
+        }
+
+        .help-faq__question:hover {
+            background: var(--hover, rgba(0,0,0,0.03));
+        }
+
+        .help-faq__answer {
+            padding: 1rem;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .help-contact {
+            background: var(--surface-soft, var(--bg));
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .help-contact__title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .help-contact__text {
+            color: var(--muted);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        @@media (max-width: 768px) {
+            .help-page {
+                padding: 0.5rem;
+            }
+
+            .help-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+}

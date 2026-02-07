@@ -13,6 +13,8 @@ namespace ShiftManager.Pages.Api.Hierarchy;
 /// API endpoint to rename hierarchy entities (inline edit).
 /// POST /Api/Hierarchy/Rename
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:EditHierarchy policy;
+// hierarchy rename needs cross-company entity lookups
 [Authorize(Policy = "Grant:EditHierarchy")]
 [IgnoreAntiforgeryToken]
 public class RenameModel : PageModel

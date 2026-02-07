@@ -125,15 +125,29 @@ public class LoginModel : LocalizedPageModel
     {
         try
         {
-            // ✅ SECURITY FIX: Rate limiting (10 attempts per 15 minutes per IP)
+            // ✅ SECURITY FIX: Rate limiting — per-IP AND per-account
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            var rateLimitKey = $"login:{ipAddress}";
+            var ipRateLimitKey = $"login:ip:{ipAddress}";
 
-            if (!_rateLimiting.IsAllowed(rateLimitKey, 10, 15))
+            if (!_rateLimiting.IsAllowed(ipRateLimitKey, 10, 15))
             {
                 _logger.LogWarning("Rate limit exceeded for login from IP: {IP}", ipAddress);
                 Error = _localizer["Error_Login_RateLimitExceeded"];
                 return Page();
+            }
+
+            // Per-account rate limiting (protects against multi-IP attacks on single account)
+            var normalizedEmail = Email?.Trim().ToLowerInvariant() ?? "";
+            if (!string.IsNullOrEmpty(normalizedEmail))
+            {
+                var accountRateLimitKey = $"login:account:{normalizedEmail}";
+                if (!_rateLimiting.IsAllowed(accountRateLimitKey, 15, 15))
+                {
+                    _logger.LogWarning("Per-account rate limit exceeded for {Email} from IP {IP} (possible multi-IP attack)",
+                        Services.PiiMasker.MaskEmail(normalizedEmail), ipAddress);
+                    Error = _localizer["Error_Login_RateLimitExceeded"];
+                    return Page();
+                }
             }
 
             // ✅ SECURITY FIX: Input validation
@@ -157,6 +171,7 @@ public class LoginModel : LocalizedPageModel
                 return Page();
             }
 
+            // SECURITY-AUDITED: SAFE — login must search across all companies to authenticate users
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow login across all companies
                 .FirstOrDefaultAsync(u => u.Email == Email && u.IsActive);
@@ -168,7 +183,7 @@ public class LoginModel : LocalizedPageModel
                 if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
                 {
                     var remainingMinutes = (int)(user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes + 1;
-                    _logger.LogWarning("Login attempt for locked account: {Email}. Lockout ends in {Minutes} minutes", Email, remainingMinutes);
+                    _logger.LogWarning("Login attempt for locked account: {Email}. Lockout ends in {Minutes} minutes", ShiftManager.Services.PiiMasker.MaskEmail(Email), remainingMinutes);
 
                     // Set lockout properties for UI display
                     IsAccountLocked = true;
@@ -195,7 +210,7 @@ public class LoginModel : LocalizedPageModel
                         user.LockoutEnd = DateTime.UtcNow.AddMinutes(3);
                         await _db.SaveChangesAsync();
 
-                        _logger.LogWarning("Account locked for {Email} after {Attempts} failed attempts", Email, user.FailedLoginAttempts);
+                        _logger.LogWarning("Account locked for {Email} after {Attempts} failed attempts", ShiftManager.Services.PiiMasker.MaskEmail(Email), user.FailedLoginAttempts);
 
                         // Set lockout properties for UI display
                         IsAccountLocked = true;
@@ -205,14 +220,14 @@ public class LoginModel : LocalizedPageModel
                     }
 
                     await _db.SaveChangesAsync();
-                    _logger.LogWarning("Login failed for {Email} (attempt {Attempt}/10)", Email, user.FailedLoginAttempts);
+                    _logger.LogWarning("Login failed for {Email} (attempt {Attempt}/10)", ShiftManager.Services.PiiMasker.MaskEmail(Email), user.FailedLoginAttempts);
 
                     // Set failed attempts count for warning display (only if user exists)
                     FailedAttemptsCount = user.FailedLoginAttempts;
                 }
                 else
                 {
-                    _logger.LogWarning("Login failed for {Email} (user not found)", Email);
+                    _logger.LogWarning("Login failed for {Email} (user not found)", ShiftManager.Services.PiiMasker.MaskEmail(Email));
                 }
 
                 Error = _localizer["Error_Login_InvalidCredentials"];
@@ -224,8 +239,9 @@ public class LoginModel : LocalizedPageModel
             user.LockoutEnd = null;
             await _db.SaveChangesAsync();
 
-            // Reset rate limit for this IP after successful login
-            _rateLimiting.Reset(rateLimitKey);
+            // Reset rate limits for this IP and account after successful login
+            _rateLimiting.Reset(ipRateLimitKey);
+            _rateLimiting.Reset($"login:account:{normalizedEmail}");
 
             var claims = new List<Claim>
             {
@@ -255,7 +271,7 @@ public class LoginModel : LocalizedPageModel
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
-            _logger.LogInformation("User {UserId} ({Email}) signed in successfully. Role={Role}", user.Id, user.Email, user.Role);
+            _logger.LogInformation("User {UserId} ({Email}) signed in successfully. Role={Role}", user.Id, ShiftManager.Services.PiiMasker.MaskEmail(user.Email), user.Role);
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);

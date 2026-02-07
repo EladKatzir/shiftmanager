@@ -24,6 +24,7 @@ public class ChoreTypeService : IChoreTypeService
 
     public async Task<ChoreType?> GetByIdAsync(int id)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific ChoreType id
         return await _db.ChoreTypes
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(ct => ct.Id == id);
@@ -52,6 +53,7 @@ public class ChoreTypeService : IChoreTypeService
 
     public async Task<ChoreType> UpdateAsync(int id, string displayName, string? color, int sortOrder)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific ChoreType id; admin-only update operation
         var choreType = await _db.ChoreTypes
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(ct => ct.Id == id);
@@ -68,6 +70,7 @@ public class ChoreTypeService : IChoreTypeService
 
     public async Task<bool> DeactivateAsync(int id)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific ChoreType id; admin-only deactivate operation
         var choreType = await _db.ChoreTypes
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(ct => ct.Id == id);

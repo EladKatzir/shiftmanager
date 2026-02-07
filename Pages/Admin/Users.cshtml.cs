@@ -15,6 +15,9 @@ using System.Text;
 
 namespace ShiftManager.Pages.Admin;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires IsManagerOrAdmin policy;
+// Owner-only paths are gated by AdminAccess grant check; grant-scoped queries enforce per-company access;
+// hierarchy data (Molecules, JobTypes, Companies) is reference data for dropdowns, not sensitive
 [Authorize(Policy = "IsManagerOrAdmin")]
 public class UsersModel : LocalizedPageModel
 {
@@ -1025,14 +1028,14 @@ public class UsersModel : LocalizedPageModel
                 await _db.TimeOffRequests.Where(tor => tor.UserId == id).ExecuteDeleteAsync();
             }
 
-            // 4. Delete the user
-            _logger.LogInformation("Deleting user {UserId} ({UserName})", id, user.DisplayName);
-            _db.Users.Remove(user);
+            // 4. Deactivate the user (soft-delete to preserve audit trail integrity)
+            _logger.LogInformation("Deactivating user {UserId} ({UserName})", id, user.DisplayName);
+            user.IsActive = false;
 
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            _logger.LogInformation("Successfully deleted user {UserId} ({UserName}) and cleaned up all related data", id, user.DisplayName);
+            _logger.LogInformation("Successfully deactivated user {UserId} ({UserName}) and cleaned up all related data", id, user.DisplayName);
 
             // Use TempData to show success message after redirect
             TempData["SuccessMessage"] = string.Format(_localizer["Success_UserDeleted"], user.DisplayName);
@@ -1537,7 +1540,13 @@ public class UsersModel : LocalizedPageModel
             }
 
             var fileName = $"Users_Export_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
-            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+            // Add UTF-8 BOM for Hebrew Excel compatibility (fixes G-07)
+            var preamble = Encoding.UTF8.GetPreamble();
+            var csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
+            var result = new byte[preamble.Length + csvBytes.Length];
+            preamble.CopyTo(result, 0);
+            csvBytes.CopyTo(result, preamble.Length);
+            return File(result, "text/csv", fileName);
         }
         catch (Exception ex)
         {

@@ -260,6 +260,23 @@
     </script>
 </head>
 <body>
+    @* B-02: noscript fallback for JS-disabled browsers - Critical for air-gapped military networks *@
+    <noscript>
+        <div style="background-color:#FFC107;background-image:linear-gradient(135deg,#FFD700 0%,#FFA500 100%);color:#333333;padding:1.5rem 1rem;text-align:center;font-size:1rem;font-weight:bold;border-bottom:3px solid #FF8C00;direction:auto;box-shadow:0 2px 4px rgba(0,0,0,0.15);">
+            <div style="margin-bottom:0.75rem;line-height:1.5;">אפליקציה זו דורשת JavaScript כדי לפעול. אנא אפשר JavaScript בדפדפן שלך.</div>
+            <div style="line-height:1.5;">This application requires JavaScript to function. Please enable JavaScript in your browser.</div>
+        </div>
+    </noscript>
+
+    @* I-02: Context-switch confirmation toast *@
+    @if (TempData["ContextSwitchMessage"] is string ctxMsg)
+    {
+        <div id="context-switch-toast" style="position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:10000;background:var(--primary,#0d6efd);color:#fff;padding:0.5rem 1.5rem;border-radius:0.5rem;font-size:0.9rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);opacity:1;transition:opacity 0.5s ease;">
+            @ctxMsg
+        </div>
+        <script>setTimeout(function(){var t=document.getElementById('context-switch-toast');if(t){t.style.opacity='0';setTimeout(function(){t.remove();},500);}},3000);</script>
+    }
+
     @* A-013: Skip link for keyboard navigation (WCAG 2.4.1) *@
     <a href="#main-content" class="skip-link">@(isHebrew ? "דלג לתוכן הראשי" : "Skip to main content")</a>
 
@@ -542,6 +559,12 @@
                     <a href="/My/Profile" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Profile") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">👤</span>
                         <span><loc key="MyProfile" /></span>
+                    </a>
+
+                    @* Help *@
+                    <a href="/My/Help" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Help") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">❓</span>
+                        <span><loc key="Help_NavLink" /></span>
                     </a>
 
                     @* Settings *@

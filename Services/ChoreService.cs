@@ -9,6 +9,7 @@ public interface IChoreService
 {
     Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null);
     Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null);
+    Task<(bool Success, string Message)> RestoreChoreAsync(int choreId);
     Task<(bool Success, string Message, Chore? Chore)> ReplaceShiftWithChoreAsync(int shiftAssignmentId, string title, string? notes = null);
     Task<(bool Success, string Message)> ReplaceChoreWithShiftAsync(int choreId, int shiftInstanceId);
     Task<List<Chore>> GetChoresAsync(DateOnly? startDate = null, DateOnly? endDate = null, int? userId = null, bool? includeCancel = false, int? moleculeId = null);
@@ -111,6 +112,7 @@ public class ChoreService : IChoreService
         }
 
         // Query users in accessible companies
+        // SECURITY-AUDITED: SAFE — re-scoped by grant-derived accessibleCompanyIds
         var query = _db.Users.IgnoreQueryFilters()
             .Where(u => u.IsActive && accessibleCompanyIds.Contains(u.CompanyId));
 
@@ -243,18 +245,10 @@ public class ChoreService : IChoreService
                 return (false, "You cannot assign chores to this user.", null);
             }
 
-            // Check if assignee already has an active chore on this date
-            if (await HasActiveChoreOnDateAsync(assigneeId, date))
+            // Validate title early (before transaction)
+            if (string.IsNullOrWhiteSpace(title))
             {
-                return (false, "This user already has an active chore on this date.", null);
-            }
-
-            // Check if assignee has a shift on this date (warning, not blocking)
-            // This should be handled in the UI with a confirmation dialog
-            // For now, we block it here and let the UI call ReplaceShiftWithChoreAsync instead
-            if (await HasShiftOnDateAsync(assigneeId, date))
-            {
-                return (false, "SHIFT_CONFLICT", null); // Special message for UI to handle
+                return (false, "Chore title is required.", null);
             }
 
             // COLLISION RULE: Check for vacation conflict (unless force-assigning)
@@ -263,15 +257,8 @@ public class ChoreService : IChoreService
                 var (hasConflict, vacationStart, vacationEnd, vacationType) = await GetVacationConflictDetailsAsync(assigneeId, date);
                 if (hasConflict)
                 {
-                    // Return vacation details for UI to display in confirmation dialog
                     return (false, $"VACATION_CONFLICT|{vacationStart}|{vacationEnd}|{vacationType}", null);
                 }
-            }
-
-            // Validate title
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                return (false, "Chore title is required.", null);
             }
 
             // Get MoleculeId from the assignee's company if not explicitly provided
@@ -282,21 +269,48 @@ public class ChoreService : IChoreService
                 effectiveMoleculeId = company?.MoleculeId;
             }
 
-            // Create the chore
-            var chore = new Chore
+            // Atomic mutual exclusion: wrap chore+shift checks and insert in single transaction (fixes A-03)
+            // SQLite serializes writes, so this ensures the check-then-insert is atomic
+            using var transaction = await _db.Database.BeginTransactionAsync();
+            Chore chore;
+            try
             {
-                CompanyId = assignee.CompanyId, // Use assignee's company ID for multi-tenant support
-                MoleculeId = effectiveMoleculeId, // Nullable - will be null for legacy/unassigned molecules
-                UserId = assigneeId,
-                Date = date,
-                Title = title.Trim(),
-                Notes = notes?.Trim(),
-                CreatedBy = currentUserId,
-                CreatedAt = DateTime.UtcNow
-            };
+                // Check if assignee already has an active chore on this date (inside transaction)
+                if (await HasActiveChoreOnDateAsync(assigneeId, date))
+                {
+                    await transaction.RollbackAsync();
+                    return (false, "This user already has an active chore on this date.", null);
+                }
 
-            _db.Chores.Add(chore);
-            await _db.SaveChangesAsync();
+                // Check if assignee has a shift on this date (mutual exclusion with shifts)
+                if (await HasShiftOnDateAsync(assigneeId, date))
+                {
+                    await transaction.RollbackAsync();
+                    return (false, "SHIFT_CONFLICT", null);
+                }
+
+                chore = new Chore
+                {
+                    CompanyId = assignee.CompanyId,
+                    MoleculeId = effectiveMoleculeId,
+                    UserId = assigneeId,
+                    Date = date,
+                    Title = title.Trim(),
+                    Notes = notes?.Trim(),
+                    CreatedBy = currentUserId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Chores.Add(chore);
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Failed to atomically create chore for user {UserId} on {Date}", assigneeId, date);
+                return (false, "Failed to create chore - please try again.", null);
+            }
 
             _logger.LogInformation("Chore {ChoreId} created by user {CreatedBy} for user {UserId} on {Date}",
                 chore.Id, currentUserId, assigneeId, date);
@@ -342,6 +356,7 @@ public class ChoreService : IChoreService
             }
 
             // IgnoreQueryFilters() allows cross-company chore management for users with appropriate grants
+            // SECURITY-AUDITED: SAFE — scoped by specific choreId; grant check for chore's company follows below
             var chore = await _db.Chores
                 .IgnoreQueryFilters()
                 .Include(c => c.User)
@@ -387,6 +402,43 @@ public class ChoreService : IChoreService
             _logger.LogError(ex, "Unexpected error canceling chore. CompanyId={CompanyId}, CanceledBy={CanceledBy}, ChoreId={ChoreId}, Reason={Reason}",
                 companyId, currentUserId, choreId, reason ?? "None");
             return (false, "An error occurred while canceling the chore.");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> RestoreChoreAsync(int choreId)
+    {
+        var currentUserId = GetCurrentUserId();
+        try
+        {
+            var chore = await _db.Chores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == choreId);
+
+            if (chore == null)
+                return (false, "Chore not found.");
+
+            if (chore.CanceledAt == null)
+                return (false, "Chore is not canceled.");
+
+            // Only allow restore within 60 seconds of cancellation
+            if ((DateTime.UtcNow - chore.CanceledAt.Value).TotalSeconds > 60)
+                return (false, "Undo window has expired.");
+
+            var hasGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignChores", chore.CompanyId);
+            if (!hasGrant)
+                return (false, "You do not have permission to restore this chore.");
+
+            chore.CanceledAt = null;
+            chore.CanceledBy = null;
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Chore {ChoreId} restored (undo) by user {UserId}", choreId, currentUserId);
+            return (true, "Chore restored successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring chore {ChoreId}", choreId);
+            return (false, "An error occurred while restoring the chore.");
         }
     }
 

@@ -17,6 +17,9 @@ namespace ShiftManager.Pages.Calendar;
 /// ✅ PHASE 20: Monthly calendar view - Read-only unified view of shifts, chores, and on-duty
 /// ✅ A-018: Scope switcher integration for filtering by mine/company/molecule/area
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// data is re-scoped by Molecule/Area/JobType via scope switcher; OnDuty is global by design;
+// hierarchy lookups (Companies, Molecules, JobTypes, ShiftGroupings) are reference data for filters
 [Authorize]
 public class MonthModel : PageModel
 {

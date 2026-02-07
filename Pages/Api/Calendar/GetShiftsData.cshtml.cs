@@ -12,6 +12,8 @@ namespace ShiftManager.Pages.Api.Calendar;
 /// API endpoint for shadow refresh of Shifts calendar data.
 /// Returns cell-level data for the current view without requiring full page reload.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// assignments are filtered by molecule/jobType-scoped instanceIds; no cross-tenant data leak
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class GetShiftsDataModel : PageModel
@@ -63,29 +65,39 @@ public class GetShiftsDataModel : PageModel
             // Get company IDs for molecule scope
             var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync("molecule", moleculeId);
 
-            // Fetch users and instances
+            // Fetch users, instances, and overlays
             var users = await _shiftCalendarService.GetUsersForCalendarAsync(moleculeId, jobTypeId);
             var instances = await _shiftCalendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, start, end);
             var overlays = await _shiftCalendarService.GetOverlaysAsync(moleculeId, start, end);
 
-            // Get assignments for these instances
+            // C-07 OPTIMIZED: Batch-load all capacities in 2 queries instead of N+1 per instance
+            var capacities = await _shiftCalendarService.GetCapacitiesBatchAsync(moleculeId, jobTypeId, start, end);
+
+            // Get assignments for these instances using projection (avoid loading full User entity)
             var instanceIds = instances.Select(i => i.Id).ToList();
             var assignments = await _db.ShiftAssignments
                 .IgnoreQueryFilters()
-                .Include(sa => sa.User)
                 .Where(sa => instanceIds.Contains(sa.ShiftInstanceId))
+                .Select(sa => new
+                {
+                    sa.ShiftInstanceId,
+                    sa.UserId,
+                    UserDisplayName = sa.User != null ? sa.User.DisplayName : null
+                })
                 .ToListAsync();
 
             var assignmentsByInstance = assignments
                 .GroupBy(a => a.ShiftInstanceId)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // Transform to cell data
+            // Transform to cell data — no per-instance queries needed
             var cells = new List<object>();
             foreach (var instance in instances)
             {
-                var capacity = await _shiftCalendarService.GetCapacityAsync(
-                    instance.ShiftTypeId, moleculeId, jobTypeId, instance.WorkDate);
+                // Use batch-loaded capacity; fall back to instance's StaffingRequired
+                var capacity = capacities.GetValueOrDefault(
+                    (instance.ShiftTypeId, instance.WorkDate),
+                    instance.StaffingRequired);
 
                 var instanceAssignments = assignmentsByInstance.GetValueOrDefault(instance.Id) ?? new();
 
@@ -102,7 +114,7 @@ public class GetShiftsDataModel : PageModel
                         .Select(a => new
                         {
                             userId = a.UserId,
-                            userName = a.User?.DisplayName ?? "Unknown"
+                            userName = a.UserDisplayName ?? "Unknown"
                         })
                         .ToList()
                 });

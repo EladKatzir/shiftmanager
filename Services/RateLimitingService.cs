@@ -3,23 +3,31 @@ using System.Collections.Concurrent;
 namespace ShiftManager.Services;
 
 /// <summary>
-/// In-memory rate limiting service to prevent brute force attacks
-/// Note: For multi-server deployments, use Redis or similar distributed cache
+/// In-memory rate limiting service to prevent brute force attacks.
+/// Uses periodic timer-based cleanup to prevent memory leaks.
+/// Note: For multi-server deployments, use Redis or similar distributed cache.
 /// </summary>
-public class RateLimitingService : IRateLimitingService
+public class RateLimitingService : IRateLimitingService, IDisposable
 {
     private readonly ConcurrentDictionary<string, RateLimitEntry> _attempts = new();
     private readonly ILogger<RateLimitingService> _logger;
+    private readonly Timer _cleanupTimer;
+    private const int CleanupIntervalMinutes = 5;
+    private const int EntryExpiryMinutes = 60;
 
     public RateLimitingService(ILogger<RateLimitingService> logger)
     {
         _logger = logger;
+        // Run cleanup every 5 minutes instead of on every request
+        _cleanupTimer = new Timer(
+            _ => CleanupExpiredEntries(),
+            null,
+            TimeSpan.FromMinutes(CleanupIntervalMinutes),
+            TimeSpan.FromMinutes(CleanupIntervalMinutes));
     }
 
     public bool IsAllowed(string key, int maxAttempts, int windowMinutes)
     {
-        CleanupExpiredEntries();
-
         var now = DateTime.UtcNow;
         var windowStart = now.AddMinutes(-windowMinutes);
 
@@ -51,18 +59,31 @@ public class RateLimitingService : IRateLimitingService
 
     private void CleanupExpiredEntries()
     {
-        // Periodically clean up old entries to prevent memory leak
-        var cutoff = DateTime.UtcNow.AddHours(-1);
+        var cutoff = DateTime.UtcNow.AddMinutes(-EntryExpiryMinutes);
+        var removedCount = 0;
+
         foreach (var kvp in _attempts)
         {
             lock (kvp.Value)
             {
                 if (kvp.Value.Attempts.All(t => t < cutoff))
                 {
-                    _attempts.TryRemove(kvp.Key, out _);
+                    if (_attempts.TryRemove(kvp.Key, out _))
+                        removedCount++;
                 }
             }
         }
+
+        if (removedCount > 0)
+        {
+            _logger.LogDebug("Rate limiter cleanup: removed {Count} expired entries, {Remaining} remaining",
+                removedCount, _attempts.Count);
+        }
+    }
+
+    public void Dispose()
+    {
+        _cleanupTimer.Dispose();
     }
 
     private class RateLimitEntry

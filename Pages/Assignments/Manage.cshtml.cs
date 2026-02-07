@@ -12,6 +12,8 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Assignments;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires IsManagerOrAdmin policy;
+// access further validated per-company (Owner/Director/Manager checks); cross-company assignment explicitly blocked
 [Authorize(Policy = "IsManagerOrAdmin")]
 public class ManageModel : LocalizedPageModel
 {

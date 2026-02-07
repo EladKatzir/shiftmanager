@@ -5,6 +5,8 @@ namespace ShiftManager.Data.SeedData;
 /// <summary>
 /// Seed data for initial feature flags.
 /// All flags are created as global (no CompanyId/UserId) and disabled by default.
+/// Production recommended values are documented in appsettings.Production.json under "FeatureFlagDefaults".
+/// After deployment, enable flags via OwnerHub > Feature Flags page.
 /// </summary>
 public static class FeatureFlagSeed
 {

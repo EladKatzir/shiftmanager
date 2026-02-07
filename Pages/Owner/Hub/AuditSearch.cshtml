@@ -1,0 +1,688 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.AuditSearchModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["AuditSearch_Title"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = Localizer["AuditSearch_Title"], IsActive = true }
+})
+
+@section Styles {
+<style>
+.audit-search-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.page-icon {
+    font-size: 2.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Section Card */
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 1rem 0;
+}
+
+/* Filter Grid */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--text);
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.form-input:hover {
+    border-color: var(--primary);
+    background: var(--surface);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: transparent;
+}
+
+.btn-ghost:hover {
+    background: var(--surface-soft);
+    border-color: var(--border);
+}
+
+.btn.active {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-color: var(--primary);
+}
+
+/* Audit Table */
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.audit-table thead tr {
+    border-bottom: 2px solid var(--border);
+}
+
+.audit-table th {
+    padding: 0.875rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.audit-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.audit-table tbody tr:hover {
+    background: var(--surface-soft);
+}
+
+.audit-table tbody tr:last-of-type {
+    border-bottom: none;
+}
+
+.audit-table tbody tr.details-row {
+    cursor: default;
+    background: var(--surface-soft);
+}
+
+.audit-table tbody tr.details-row:hover {
+    background: var(--surface-soft);
+}
+
+.audit-table td {
+    padding: 1rem 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--text);
+}
+
+/* Cell Styles */
+.timestamp-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.timestamp-date {
+    font-weight: 500;
+}
+
+.timestamp-time {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.user-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.user-email {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.entity-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.entity-type {
+    font-weight: 500;
+}
+
+.entity-id {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.action-badge {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+    color: var(--primary-contrast);
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ip-code {
+    background: var(--surface-soft);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+}
+
+.company-badge {
+    background: var(--surface-soft);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Details Rows */
+.details-content {
+    padding: 1rem;
+}
+
+.details-section {
+    margin-bottom: 1rem;
+}
+
+.details-section:last-child {
+    margin-bottom: 0;
+}
+
+.details-label {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.details-pre {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pagination-info {
+    color: var(--text-muted);
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Stats Bar */
+.stats-bar {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.empty-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.empty-text {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
+}
+
+.ml-auto {
+    margin-left: auto;
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+    .audit-search-container {
+        padding: 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .section-card {
+        padding: 1.25rem;
+    }
+
+    .table-wrapper {
+        margin: 0 -1.25rem;
+        padding: 0 1.25rem;
+    }
+
+    .audit-table {
+        font-size: 0.875rem;
+    }
+
+    .audit-table th,
+    .audit-table td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ml-auto {
+        margin-left: 0;
+    }
+
+    .stats-bar {
+        gap: 1rem;
+    }
+}
+
+@@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+}
+</style>
+}
+
+<div class="audit-search-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F50D;</span>
+            <loc key="AuditSearch_Title">Audit Log Search</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="AuditSearch_Subtitle">Search and filter audit logs across all tenants</loc></p>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="section-card">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-value">@Model.TotalRecords</span>
+                <span class="stat-label"><loc key="AuditSearch_MatchingRecords">matching records</loc></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">@Model.Actions.Count</span>
+                <span class="stat-label"><loc key="AuditSearch_ActionTypes">action types</loc></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">@Model.EntityTypes.Count</span>
+                <span class="stat-label"><loc key="AuditSearch_EntityTypes">entity types</loc></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="section-card">
+        <h3 class="section-header"><loc key="Filters" /></h3>
+        <form method="get">
+            <div class="filter-grid">
+                <div>
+                    <label class="form-label" for="auditStartDate"><loc key="StartDate" /></label>
+                    <input type="date" name="StartDate" id="auditStartDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-input" />
+                </div>
+                <div>
+                    <label class="form-label" for="auditEndDate"><loc key="EndDate" /></label>
+                    <input type="date" name="EndDate" id="auditEndDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-input" />
+                </div>
+                <div>
+                    <label class="form-label" for="auditUserId"><loc key="User" /></label>
+                    <select name="UserId" id="auditUserId" class="form-input">
+                        <option value=""><loc key="AllUsers" /></option>
+                        @foreach (var user in Model.Users)
+                        {
+                            <option value="@user.Id" selected="@(Model.UserId == user.Id)">@user.DisplayName</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="auditAction"><loc key="Action" /></label>
+                    <select name="Action" id="auditAction" class="form-input">
+                        <option value=""><loc key="AllActions" /></option>
+                        @foreach (var action in Model.Actions)
+                        {
+                            <option value="@action" selected="@(Model.Action == action)">@action</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="auditEntityType"><loc key="EntityType" /></label>
+                    <select name="EntityType" id="auditEntityType" class="form-input">
+                        <option value=""><loc key="AllEntityTypes" /></option>
+                        @foreach (var entityType in Model.EntityTypes)
+                        {
+                            <option value="@entityType" selected="@(Model.EntityType == entityType)">@entityType</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="auditSearchTerm"><loc key="Search" /></label>
+                    <input type="text" name="SearchTerm" id="auditSearchTerm" value="@Model.SearchTerm" placeholder="@Localizer["SearchPlaceholder"]" class="form-input" />
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary"><loc key="ApplyFilters" /></button>
+                <a href="/Owner/Hub/AuditSearch" class="btn btn-ghost"><loc key="ClearFilters" /></a>
+                <a href="?handler=ExportCsv&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-primary ml-auto">
+                    &#x1F4E5; @Localizer["ExportCSV"]
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Summary -->
+    @if (Model.TotalRecords > 0)
+    {
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+            @Localizer["ShowingResults", (Model.CurrentPage - 1) * Model.PageSize + 1, Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords), Model.TotalRecords]
+        </p>
+    }
+
+    <!-- Audit Log Table -->
+    @if (Model.AuditLogs.Any())
+    {
+        <div class="section-card">
+            <div class="table-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Timestamp" /></th>
+                            <th><loc key="User" /></th>
+                            <th><loc key="Action" /></th>
+                            <th><loc key="EntityType" /></th>
+                            <th><loc key="AuditSearch_EntityId">Entity ID</loc></th>
+                            <th><loc key="Description" /></th>
+                            <th><loc key="IPAddress" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model.AuditLogs)
+                        {
+                            <tr onclick="toggleDetails@(log.Id)()">
+                                <td>
+                                    <div class="timestamp-cell">
+                                        <span class="timestamp-date">@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                        <span class="timestamp-time">@log.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="user-cell">
+                                        <span class="user-name">@log.UserDisplayName</span>
+                                        <span class="user-email">@log.UserEmail</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="action-badge">@log.Action</span>
+                                </td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <span class="entity-type">@log.EntityType</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (log.EntityId.HasValue)
+                                    {
+                                        <span class="entity-id">#@log.EntityId</span>
+                                    }
+                                </td>
+                                <td>@log.Description</td>
+                                <td>
+                                    <code class="ip-code">@log.IpAddress</code>
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrWhiteSpace(log.Details) || !string.IsNullOrWhiteSpace(log.UserAgent))
+                            {
+                                <tr id="details@(log.Id)" style="display: none;" class="details-row">
+                                    <td colspan="7">
+                                        <div class="details-content">
+                                            @if (!string.IsNullOrWhiteSpace(log.Details))
+                                            {
+                                                <div class="details-section">
+                                                    <div class="details-label"><loc key="AdditionalDetails" />:</div>
+                                                    <pre class="details-pre">@log.Details</pre>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(log.UserAgent))
+                                            {
+                                                <div class="details-section" style="font-size: 0.85rem;">
+                                                    <strong>@Localizer["UserAgent"]:</strong> @log.UserAgent
+                                                </div>
+                                            }
+                                            <div class="details-section" style="font-size: 0.85rem;">
+                                                <strong><loc key="AuditSearch_CompanyId">Company ID</loc>:</strong> @log.CompanyId
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <script>
+                                    function toggleDetails@(log.Id)() {
+                                        var detailsRow = document.getElementById('details@(log.Id)');
+                                        if (detailsRow.style.display === 'none') {
+                                            detailsRow.style.display = 'table-row';
+                                        } else {
+                                            detailsRow.style.display = 'none';
+                                        }
+                                    }
+                                </script>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="section-card">
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        @Localizer["Page"] @Model.CurrentPage @Localizer["Of"] @Model.TotalPages
+                    </div>
+                    <div class="pagination-buttons">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a href="?PageNumber=1&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-ghost">
+                                @Localizer["First"]
+                            </a>
+                            <a href="?PageNumber=@(Model.CurrentPage - 1)&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-ghost">
+                                @Localizer["Previous"]
+                            </a>
+                        }
+
+                        @{
+                            var startPage = Math.Max(1, Model.CurrentPage - 2);
+                            var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                        }
+
+                        @for (var i = startPage; i <= endPage; i++)
+                        {
+                            var pageNum = i;
+                            @if (pageNum == Model.CurrentPage)
+                            {
+                                <span class="btn active">@pageNum</span>
+                            }
+                            else
+                            {
+                                <a href="?PageNumber=@pageNum&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-ghost">@pageNum</a>
+                            }
+                        }
+
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a href="?PageNumber=@(Model.CurrentPage + 1)&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-ghost">
+                                @Localizer["Next"]
+                            </a>
+                            <a href="?PageNumber=@Model.TotalPages&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-ghost">
+                                @Localizer["Last"]
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="section-card">
+            <div class="empty-state">
+                <div class="empty-icon">&#x1F50D;</div>
+                <h3 class="empty-title"><loc key="AuditSearch_NoResults">No audit logs found</loc></h3>
+                <p class="empty-text"><loc key="AuditSearch_NoResultsMessage">Try adjusting your search filters to find audit log entries.</loc></p>
+                <a href="/Owner/Hub/AuditSearch" class="btn btn-primary"><loc key="ClearFilters" /></a>
+            </div>
+        </div>
+    }
+</div>

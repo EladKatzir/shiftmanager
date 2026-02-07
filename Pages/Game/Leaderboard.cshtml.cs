@@ -9,6 +9,8 @@ namespace ShiftManager.Pages.Game;
 /// <summary>
 /// ✅ PHASE 19: Leaderboard page showing top game scores
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — game leaderboard is global by design;
+// display names are abbreviated for OPSEC; no sensitive data exposed
 [Authorize]
 public class LeaderboardModel : PageModel
 {
@@ -81,12 +83,12 @@ public class LeaderboardModel : PageModel
             .Select(u => new { u.Id, u.DisplayName })
             .ToListAsync();
 
-        // Combine data
+        // Combine data (use abbreviated names for OPSEC — B-11)
         return leaderboard.Select((item, index) => new LeaderboardEntry
         {
             Rank = index + 1,
             UserId = item.UserId,
-            DisplayName = users.FirstOrDefault(u => u.Id == item.UserId)?.DisplayName ?? "Unknown",
+            DisplayName = AbbreviateName(users.FirstOrDefault(u => u.Id == item.UserId)?.DisplayName, item.UserId == CurrentUserId),
             Score = item.Score,
             PlayedAt = item.PlayedAt,
             IsCurrentUser = item.UserId == CurrentUserId
@@ -132,6 +134,24 @@ public class LeaderboardModel : PageModel
             Score = userBestScore.Value,
             IsCurrentUser = true
         };
+    }
+
+    /// <summary>
+    /// Abbreviates a name for OPSEC on public leaderboard (B-11).
+    /// Full names are not shown — only first name + last initial.
+    /// Current user sees their own full name.
+    /// </summary>
+    private static string AbbreviateName(string? displayName, bool isCurrentUser)
+    {
+        if (string.IsNullOrWhiteSpace(displayName)) return "???";
+        if (isCurrentUser) return displayName; // Show own full name
+
+        var parts = displayName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0]} {parts[^1][0]}.";
+        }
+        return parts[0]; // Single name — show as-is
     }
 
     public class LeaderboardEntry

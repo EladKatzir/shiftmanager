@@ -137,7 +137,11 @@ window.ApiClient = (function() {
             const response = await fetch(url, {
                 ...options,
                 credentials: 'same-origin',
-                signal: controller.signal
+                signal: controller.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(options.headers || {})
+                }
             });
 
             // Clear timeout on successful response

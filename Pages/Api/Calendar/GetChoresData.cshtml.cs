@@ -11,6 +11,8 @@ namespace ShiftManager.Pages.Api.Calendar;
 /// <summary>
 /// API endpoint for shadow refresh of Chores calendar data.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// chores and users are filtered by molecule-scoped companyIds; no cross-tenant data leak
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class GetChoresDataModel : PageModel

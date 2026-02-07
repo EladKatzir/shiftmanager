@@ -16,6 +16,8 @@ namespace ShiftManager.Pages.Calendar;
 /// Excel-style Chores Calendar page - Shows chore assignments by user across dates.
 /// Chores are molecule-scoped (cross-company within molecule).
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// chores are molecule-scoped (cross-company within molecule); users filtered by companyIds in molecule
 [Authorize]
 public class ChoresModel : PageModel
 {

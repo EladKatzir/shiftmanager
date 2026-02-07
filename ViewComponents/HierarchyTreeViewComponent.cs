@@ -15,6 +15,8 @@ namespace ShiftManager.ViewComponents;
 /// Shows Project > Area > Molecule > Company/Department structure with
 /// expand/collapse, inline editing, context menu, and drag-drop reordering.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — ViewComponent used only on grant-protected admin pages;
+// hierarchy tree (Projects, Areas, Molecules, Companies, Departments) is inherently cross-company organizational data
 public class HierarchyTreeViewComponent : ViewComponent
 {
     private readonly IStringLocalizer<SharedResources> _localizer;

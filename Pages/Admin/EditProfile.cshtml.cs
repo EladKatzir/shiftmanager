@@ -15,6 +15,8 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Admin;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires IsManagerOrAdmin policy;
+// hierarchy lookups (Companies, JobTypes, Departments, Grants) are reference data for profile editing
 [Authorize(Policy = "IsManagerOrAdmin")]
 public class EditProfileModel : LocalizedPageModel
 {

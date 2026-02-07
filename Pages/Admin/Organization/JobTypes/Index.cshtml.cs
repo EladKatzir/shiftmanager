@@ -8,6 +8,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.JobTypes;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManageJobTypes policy;
+// job type management is inherently cross-company hierarchy data
 [Authorize(Policy = "Grant:ManageJobTypes")]
 public class IndexModel : LocalizedPageModel
 {

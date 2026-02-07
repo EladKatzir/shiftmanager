@@ -17,6 +17,8 @@ namespace ShiftManager.Pages.Calendar;
 /// ✅ PHASE 20: Weekly calendar view - Read-only unified view of shifts, chores, and on-duty
 /// ✅ A-018: Scope switcher integration for filtering by mine/company/molecule/area
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// OnDuty is global by design; data is re-scoped via scope switcher
 [Authorize]
 public class WeekModel : PageModel
 {

@@ -4624,6 +4624,44 @@ code {
   border-left: 4px solid var(--danger);
 }
 
+.toast-undo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-left: 4px solid var(--warning, #F59E0B);
+}
+
+.toast-undo__text {
+  flex: 1;
+}
+
+.toast-undo__btn {
+  padding: 0.375rem 0.75rem;
+  background: var(--primary, #3B82F6);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.toast-undo__btn:hover {
+  opacity: 0.9;
+}
+
+.toast-undo__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toast-undo__timer {
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-width: 1rem;
+  text-align: center;
+}
+
 /* Navigation section headers */
 .nav-section-header {
   padding: 0.75rem 1rem;

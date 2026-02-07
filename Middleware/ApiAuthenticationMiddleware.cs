@@ -53,6 +53,22 @@ public class ApiAuthenticationMiddleware
             // If user is already authenticated via cookies, allow request
             if (context.User?.Identity?.IsAuthenticated == true)
             {
+                // CSRF protection: Require X-Requested-With header for state-changing requests
+                // that use cookie auth (fixes D-03). GET/HEAD/OPTIONS are safe from CSRF.
+                var method = context.Request.Method;
+                if (!HttpMethods.IsGet(method) && !HttpMethods.IsHead(method) && !HttpMethods.IsOptions(method))
+                {
+                    var xRequestedWith = context.Request.Headers["X-Requested-With"].FirstOrDefault();
+                    if (!string.Equals(xRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning(
+                            "CSRF protection: Rejected {Method} request to {Path} without X-Requested-With header from user {User}",
+                            method, context.Request.Path, context.User.Identity?.Name);
+                        context.Response.StatusCode = 403;
+                        await context.Response.WriteAsync("Forbidden: Missing X-Requested-With header");
+                        return;
+                    }
+                }
                 await _next(context);
                 return;
             }
@@ -254,15 +270,20 @@ public class ApiAuthenticationMiddleware
     }
 
     /// <summary>
-    /// Hashes an API key using SHA256
+    /// Hashes an API key using HMAC-SHA256 with a server secret.
+    /// Prevents rainbow table attacks on DB compromise (fixes D-04).
     /// </summary>
-    private string HashApiKey(string apiKey)
+    internal static string HashApiKey(string apiKey, string? hmacSecret = null)
     {
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(apiKey);
-        var hash = sha256.ComputeHash(bytes);
+        var secret = hmacSecret ?? HmacSecret;
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(apiKey));
         return Convert.ToBase64String(hash);
     }
+
+    // Server-wide HMAC secret for API key hashing. In production, load from config or Data Protection.
+    // This is intentionally a constant fallback — override via IConfiguration "ApiKeyHmacSecret" at startup.
+    internal static string HmacSecret { get; set; } = "ShiftManager-ApiKey-HMAC-v1-Default";
 
     /// <summary>
     /// Writes a 401 Unauthorized response

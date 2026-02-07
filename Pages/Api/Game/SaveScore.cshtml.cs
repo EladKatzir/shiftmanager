@@ -12,6 +12,8 @@ namespace ShiftManager.Pages.Api.Game;
 /// <summary>
 /// ✅ PHASE 19: API endpoint to save game scores to the leaderboard
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// game leaderboard is global by design; rank calculation must span all companies
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class SaveScoreModel : PageModel

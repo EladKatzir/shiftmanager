@@ -16,6 +16,8 @@ namespace ShiftManager.Pages.Calendar;
 /// Excel-style Shifts Calendar page - Primary deliverable for Excel Calendars feature.
 /// Supports shift-based and user-based view modes with molecule/job type filtering.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// shift types are scoped by Molecule/JobType; data re-scoped via scope switcher
 [Authorize]
 public class ShiftsModel : PageModel
 {

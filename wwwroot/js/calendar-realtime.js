@@ -97,7 +97,10 @@
             .withAutomaticReconnect({
                 nextRetryDelayInMilliseconds: (retryContext) => {
                     const index = Math.min(retryContext.previousRetryCount, CONFIG.reconnectDelays.length - 1);
-                    return CONFIG.reconnectDelays[index];
+                    const baseDelay = CONFIG.reconnectDelays[index];
+                    // Add random jitter (0-50% of base delay) to prevent thundering herd
+                    const jitter = Math.floor(Math.random() * baseDelay * 0.5);
+                    return baseDelay + jitter;
                 }
             })
             .configureLogging(signalR.LogLevel.Warning)
@@ -108,6 +111,7 @@
             connectionState = 'reconnecting';
             disconnectedSince = disconnectedSince || Date.now();
             console.log('[CalendarRealtime] Reconnecting...', error?.message);
+            updateConnectionIndicator();
             checkPollingNeeded();
         });
 
@@ -116,6 +120,7 @@
             disconnectedSince = null;
             reconnectAttempts = 0;
             console.log('[CalendarRealtime] Reconnected:', connectionId);
+            updateConnectionIndicator();
             stopPolling();
             rejoinGroup();
             triggerShadowRefresh(); // Refresh after reconnection
@@ -125,6 +130,7 @@
             connectionState = 'disconnected';
             disconnectedSince = disconnectedSince || Date.now();
             console.log('[CalendarRealtime] Connection closed:', error?.message);
+            updateConnectionIndicator();
             checkPollingNeeded();
             attemptReconnect();
         });
@@ -210,6 +216,7 @@
             reconnectAttempts = 0;
             console.log('[CalendarRealtime] Connected to hub');
 
+            updateConnectionIndicator();
             stopPolling();
             await joinGroup();
 
@@ -217,6 +224,7 @@
             connectionState = 'disconnected';
             disconnectedSince = disconnectedSince || Date.now();
             console.warn('[CalendarRealtime] Connection failed:', error.message);
+            updateConnectionIndicator();
             checkPollingNeeded();
             attemptReconnect();
         }
@@ -276,7 +284,10 @@
             return;
         }
 
-        const delay = CONFIG.reconnectDelays[Math.min(reconnectAttempts, CONFIG.reconnectDelays.length - 1)];
+        const baseDelay = CONFIG.reconnectDelays[Math.min(reconnectAttempts, CONFIG.reconnectDelays.length - 1)];
+        // Add random jitter (0-50% of base delay) to prevent thundering herd on server restart
+        const jitter = Math.floor(Math.random() * baseDelay * 0.5);
+        const delay = baseDelay + jitter;
         reconnectAttempts++;
 
         setTimeout(() => {
@@ -426,6 +437,38 @@
     }
 
     /**
+     * Update the visual connection status indicator (Item 64: stale data indicator).
+     * Shows a banner when SignalR is disconnected so users know data may be stale.
+     */
+    function updateConnectionIndicator() {
+        let indicator = document.getElementById('calendar-connection-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'calendar-connection-indicator';
+            indicator.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;padding:4px 12px;font-size:0.85rem;transition:transform 0.3s ease;direction:rtl;';
+            document.body.appendChild(indicator);
+        }
+
+        if (connectionState === 'connected') {
+            indicator.style.transform = 'translateY(-100%)';
+            indicator.textContent = '';
+        } else if (connectionState === 'reconnecting') {
+            indicator.style.background = '#fff3cd';
+            indicator.style.color = '#856404';
+            indicator.style.borderBottom = '1px solid #ffc107';
+            indicator.style.transform = 'translateY(0)';
+            indicator.textContent = '\u26A0 \u05DE\u05EA\u05D7\u05D1\u05E8 \u05DE\u05D7\u05D3\u05E9... \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E2\u05E9\u05D5\u05D9\u05D9\u05DD \u05DC\u05D0 \u05DC\u05D4\u05D9\u05D5\u05EA \u05E2\u05D3\u05DB\u05E0\u05D9\u05D9\u05DD'; // Reconnecting... Data may not be up to date
+        } else {
+            indicator.style.background = '#f8d7da';
+            indicator.style.color = '#721c24';
+            indicator.style.borderBottom = '1px solid #f5c6cb';
+            indicator.style.transform = 'translateY(0)';
+            const elapsed = disconnectedSince ? Math.floor((Date.now() - disconnectedSince) / 1000) : 0;
+            indicator.textContent = `\u26A0 \u05DE\u05E0\u05D5\u05EA\u05E7 (${elapsed}\u05E9') \u2014 \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E2\u05DC\u05D5\u05DC\u05D9\u05DD \u05DC\u05D4\u05D9\u05D5\u05EA \u05DC\u05D0 \u05E2\u05D3\u05DB\u05E0\u05D9\u05D9\u05DD`; // Disconnected (Xs) — data may be stale
+        }
+    }
+
+    /**
      * Get current connection status.
      */
     function getStatus() {
@@ -466,6 +509,13 @@
         currentGroup = null;
         console.log('[CalendarRealtime] Disposed');
     }
+
+    // Update stale indicator elapsed time every 10s while disconnected
+    setInterval(() => {
+        if (connectionState !== 'connected' && disconnectedSince) {
+            updateConnectionIndicator();
+        }
+    }, 10000);
 
     // Expose public API
     window.CalendarRealtime = {

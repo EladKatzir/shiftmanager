@@ -13,6 +13,8 @@ using System.Text.RegularExpressions;
 
 namespace ShiftManager.Pages.Admin;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:EditCompany policy;
+// company management inherently requires cross-company visibility
 [Authorize(Policy = "Grant:EditCompany")]
 public class CompaniesModel : LocalizedPageModel
 {
@@ -432,8 +434,9 @@ public class CompaniesModel : LocalizedPageModel
             // 9. Delete all join requests
             await _db.UserJoinRequests.Where(jr => jr.CompanyId == id).ExecuteDeleteAsync();
 
-            // 10. Delete all non-Owner users (Owners were already checked above)
-            await _db.Users.Where(u => u.CompanyId == id && u.Role != UserRole.Owner).ExecuteDeleteAsync();
+            // 10. Deactivate all non-Owner users (soft-delete preserves audit trail integrity)
+            await _db.Users.Where(u => u.CompanyId == id && u.Role != UserRole.Owner)
+                .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsActive, false));
 
             // 11. Finally, delete the company itself
             _db.Companies.Remove(company);

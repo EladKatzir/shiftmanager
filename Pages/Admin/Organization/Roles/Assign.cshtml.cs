@@ -10,6 +10,8 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Roles;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:AssignRoles policy;
+// role assignment needs cross-company hierarchy references for scope selection
 [Authorize(Policy = "Grant:AssignRoles")]
 public class AssignModel : LocalizedPageModel
 {

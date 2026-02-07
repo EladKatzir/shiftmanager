@@ -9,6 +9,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Molecules;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:EditMolecule policy;
+// molecule management is inherently cross-company hierarchy data
 [Authorize(Policy = "Grant:EditMolecule")]
 public class IndexModel : LocalizedPageModel
 {

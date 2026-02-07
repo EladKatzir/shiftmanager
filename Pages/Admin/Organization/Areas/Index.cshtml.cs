@@ -8,6 +8,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Areas;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:EditArea policy;
+// area management is inherently cross-company hierarchy data
 [Authorize(Policy = "Grant:EditArea")]
 public class IndexModel : LocalizedPageModel
 {

@@ -224,6 +224,7 @@ namespace ShiftManager.Pages.Home
                 var startOfMonth = new DateOnly(today.Year, today.Month, 1);
                 var endOfMonth = startOfMonth.AddMonths(1);
 
+                // SECURITY-AUDITED: IgnoreQueryFilters() below are SAFE — Owner-only analytics (gated by IsOwner check); aggregate counts only, no sensitive data
                 // Phase 2C: Parallelize Owner analytics queries
                 var totalCompaniesTask = _context.Companies.CountAsync();
                 var totalUsersTask = _context.Users

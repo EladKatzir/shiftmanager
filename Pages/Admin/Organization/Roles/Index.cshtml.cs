@@ -9,6 +9,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Roles;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:AssignRoles policy;
+// role template management needs cross-company grant data for configuration
 [Authorize(Policy = "Grant:AssignRoles")]
 public class IndexModel : LocalizedPageModel
 {

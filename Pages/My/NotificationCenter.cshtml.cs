@@ -59,7 +59,10 @@ public class NotificationCenterModel : LocalizedPageModel
                 CreatedAt = n.CreatedAt,
                 ReadAt = n.ReadAt,
                 Icon = GetNotificationIcon(n.Type),
-                CssClass = GetNotificationCssClass(n.Type)
+                CssClass = GetNotificationCssClass(n.Type),
+                RelatedEntityId = n.RelatedEntityId,
+                RelatedEntityType = n.RelatedEntityType,
+                DeepLink = GetDeepLink(n.Type, n.RelatedEntityId)
             }).ToList();
 
             UnreadCount = notifications.Count(n => !n.IsRead);
@@ -197,6 +200,20 @@ public class NotificationCenterModel : LocalizedPageModel
         _ => "notification-default"
     };
 
+    private static string? GetDeepLink(NotificationType type, int? entityId)
+    {
+        if (!entityId.HasValue) return null;
+
+        return type switch
+        {
+            NotificationType.SwapRequestApproved or NotificationType.SwapRequestDeclined
+                => $"/Requests?tab=swap&highlight={entityId.Value}",
+            NotificationType.TimeOffApproved or NotificationType.TimeOffDeclined
+                => $"/Requests?tab=timeoff&highlight={entityId.Value}",
+            _ => null
+        };
+    }
+
     public class NotificationViewModel
     {
         public int Id { get; set; }
@@ -208,5 +225,8 @@ public class NotificationCenterModel : LocalizedPageModel
         public DateTime? ReadAt { get; set; }
         public string Icon { get; set; } = "";
         public string CssClass { get; set; } = "";
+        public int? RelatedEntityId { get; set; }
+        public string? RelatedEntityType { get; set; }
+        public string? DeepLink { get; set; }
     }
 }

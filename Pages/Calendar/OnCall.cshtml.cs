@@ -17,6 +17,8 @@ namespace ShiftManager.Pages.Calendar;
 /// Excel-style On-Call (Day Shifts) Calendar page - Shows duty types as rows, dates as columns.
 /// On-Duty assignments are global (cross-company), optionally filtered by area.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// OnDuty is global by design; user lookup scoped by area-based company membership
 [Authorize]
 public class OnCallModel : PageModel
 {

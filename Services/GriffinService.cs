@@ -183,6 +183,7 @@ public class GriffinService : IGriffinService
         }
 
         // Lookup user by UPN (email)
+        // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email/UPN
         var user = await _dbContext.Users
             .IgnoreQueryFilters() // Search across all companies
             .FirstOrDefaultAsync(u => u.Email.ToLower() == griffinClaims.UPN.ToLower() && u.IsActive);
@@ -267,13 +268,16 @@ public class GriffinService : IGriffinService
             await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("Auto-provisioned Griffin user: {Email} with role {Role}", user.Email, user.Role);
+            _logger.LogWarning("Griffin auto-provisioned user {Email} has no molecule/hierarchy placement. " +
+                "Owner or Manager must assign placement before user can access operational features (D-06).",
+                user.Email);
 
             // Audit log
             await _auditLogService.LogSystemActionAsync(
                 "GriffinAutoProvision",
                 "AppUser",
                 user.Id,
-                $"Auto-provisioned Griffin user: {user.Email}",
+                $"Auto-provisioned Griffin user: {user.Email} — PENDING PLACEMENT (no molecule/hierarchy assigned)",
                 $"Role={user.Role}, CompanyId={user.CompanyId}, UPN={griffinClaims.UPN}");
 
             return user;

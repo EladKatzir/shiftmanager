@@ -26,7 +26,7 @@ public class GrantServiceTests : IDisposable
 
         _db = new AppDbContext(options);
         _hierarchyServiceMock = new Mock<IHierarchyService>();
-        _service = new GrantService(_db, _hierarchyServiceMock.Object);
+        _service = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
 
     public void Dispose()
@@ -327,7 +327,7 @@ public class RoleAssignmentTests : IDisposable
 
         _db = new AppDbContext(options);
         _hierarchyServiceMock = new Mock<IHierarchyService>();
-        _grantService = new GrantService(_db, _hierarchyServiceMock.Object);
+        _grantService = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
 
     public void Dispose()
@@ -560,7 +560,7 @@ public class CanGiveDelegationTests : IDisposable
 
         _db = new AppDbContext(options);
         _hierarchyServiceMock = new Mock<IHierarchyService>();
-        _grantService = new GrantService(_db, _hierarchyServiceMock.Object);
+        _grantService = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
 
     public void Dispose()
@@ -885,8 +885,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 117 grants: 107 original + 3 calendar grants + 4 navigation grants + 3 join request grants (ManageJoinRequests, ViewCompanyUsers, EditCompanyUsers)
-        grantTypes.Should().HaveCount(117, "Should have exactly 117 grant types including calendar, navigation, and join request grants");
+        // Assert - 118 grants: 107 original + 3 calendar grants + 4 navigation grants + 3 join request grants + 1 ExportUserData grant
+        grantTypes.Should().HaveCount(118, "Should have exactly 118 grant types including calendar, navigation, join request, and export grants");
     }
 
     [Fact]
@@ -1026,7 +1026,7 @@ public class GrantScopeResolutionTests : IDisposable
 
         _db = new AppDbContext(options);
         _hierarchyServiceMock = new Mock<IHierarchyService>();
-        _grantService = new GrantService(_db, _hierarchyServiceMock.Object);
+        _grantService = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
 
         SetupTestData().GetAwaiter().GetResult();
     }

@@ -13,6 +13,8 @@ namespace ShiftManager.Pages.Api.Hierarchy;
 /// API endpoint to move hierarchy entities to a new parent.
 /// POST /Api/Hierarchy/Move
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ReorderHierarchy policy;
+// hierarchy move needs cross-company entity and target lookups
 [Authorize(Policy = "Grant:ReorderHierarchy")]
 [IgnoreAntiforgeryToken]
 public class MoveModel : PageModel

@@ -4711,7 +4711,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Chores</value>
   </data>
   <data name="Calendar_OnDuty" xml:space="preserve">
-    <value>On-Duty</value>
+    <value>Day Shift</value>
   </data>
   <data name="Calendar_TotalItems" xml:space="preserve">
     <value>Total Items</value>
@@ -8518,5 +8518,156 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="OwnerHub_ManageSeedData" xml:space="preserve">
     <value>Manage seed data</value>
+  </data>
+  <!-- Help / FAQ Page -->
+  <data name="Help_PageTitle" xml:space="preserve">
+    <value>Help &amp; FAQ</value>
+  </data>
+  <data name="Help_Subtitle" xml:space="preserve">
+    <value>Answers to common questions about using the system.</value>
+  </data>
+  <data name="Help_Section_Calendar" xml:space="preserve">
+    <value>Calendar &amp; Shifts</value>
+  </data>
+  <data name="Help_FAQ_ViewSchedule_Q" xml:space="preserve">
+    <value>How do I view my schedule?</value>
+  </data>
+  <data name="Help_FAQ_ViewSchedule_A" xml:space="preserve">
+    <value>Go to Calendar from the sidebar menu. Use the "Just Mine" toggle to filter the view to only your assignments. You can switch between Week, Two Weeks, and Month views using the view selector.</value>
+  </data>
+  <data name="Help_FAQ_CalendarViews_Q" xml:space="preserve">
+    <value>What are the different calendar views?</value>
+  </data>
+  <data name="Help_FAQ_CalendarViews_A" xml:space="preserve">
+    <value>The calendar has separate views for Shifts (regular duty assignments), Chores (cleaning and maintenance tasks), and On-Call (duty rotation). Each view can be filtered by molecule, area, and time period. Use the navigation arrows or date picker to change the displayed period.</value>
+  </data>
+  <data name="Help_FAQ_PrintSchedule_Q" xml:space="preserve">
+    <value>How do I print the schedule?</value>
+  </data>
+  <data name="Help_FAQ_PrintSchedule_A" xml:space="preserve">
+    <value>Click the Print button in the calendar toolbar, or use the keyboard shortcut Ctrl+P. The calendar will display in a print-optimized format without the toolbar and navigation elements.</value>
+  </data>
+  <data name="Help_Section_Requests" xml:space="preserve">
+    <value>Requests</value>
+  </data>
+  <data name="Help_FAQ_VacationRequest_Q" xml:space="preserve">
+    <value>How do I request vacation?</value>
+  </data>
+  <data name="Help_FAQ_VacationRequest_A" xml:space="preserve">
+    <value>Go to My Requests from the sidebar and click "New Request". Select "Vacation" as the type, choose your dates, and submit. Your request will be routed to the appropriate approvers based on your unit's approval chain. You can track the status in the Requests page.</value>
+  </data>
+  <data name="Help_FAQ_SwapShift_Q" xml:space="preserve">
+    <value>How do I swap a shift with someone?</value>
+  </data>
+  <data name="Help_FAQ_SwapShift_A" xml:space="preserve">
+    <value>Go to My Requests, click "New Request", and select "Swap". Choose the shift you want to swap and the person you want to swap with. Both parties and the relevant manager must approve the swap before it takes effect.</value>
+  </data>
+  <data name="Help_FAQ_RequestStatus_Q" xml:space="preserve">
+    <value>How do I check the status of my request?</value>
+  </data>
+  <data name="Help_FAQ_RequestStatus_A" xml:space="preserve">
+    <value>Go to My Requests from the sidebar. All your submitted requests are listed with their current status (Pending, Approved, Declined). You will also receive notifications when your request status changes.</value>
+  </data>
+  <data name="Help_Section_Account" xml:space="preserve">
+    <value>Account &amp; Settings</value>
+  </data>
+  <data name="Help_FAQ_ChangePassword_Q" xml:space="preserve">
+    <value>How do I change my password?</value>
+  </data>
+  <data name="Help_FAQ_ChangePassword_A" xml:space="preserve">
+    <value>Go to My Profile from the sidebar. Scroll to the password section and enter your current password followed by your new password. Click Save to update.</value>
+  </data>
+  <data name="Help_FAQ_Notifications_Q" xml:space="preserve">
+    <value>How do I manage my notifications?</value>
+  </data>
+  <data name="Help_FAQ_Notifications_A" xml:space="preserve">
+    <value>Go to Settings from the sidebar. You can configure which notifications you receive and your preferred notification delivery method (in-app, email, or both).</value>
+  </data>
+  <data name="Help_FAQ_CantLogin_Q" xml:space="preserve">
+    <value>I can't log in. What should I do?</value>
+  </data>
+  <data name="Help_FAQ_CantLogin_A" xml:space="preserve">
+    <value>If your account is locked after too many failed attempts, wait a few minutes and try again. If you still cannot log in, contact your manager or system administrator to check your account status and reset your password if needed.</value>
+  </data>
+  <data name="Help_Section_Troubleshooting" xml:space="preserve">
+    <value>Troubleshooting</value>
+  </data>
+  <data name="Help_FAQ_StaleData_Q" xml:space="preserve">
+    <value>The calendar shows outdated information. What should I do?</value>
+  </data>
+  <data name="Help_FAQ_StaleData_A" xml:space="preserve">
+    <value>If you see a yellow or red banner at the top of the page indicating a connection issue, the real-time updates are interrupted. Try refreshing the page (F5). If the problem persists, check your network connection.</value>
+  </data>
+  <data name="Help_FAQ_PageError_Q" xml:space="preserve">
+    <value>I see an error message on the page. What should I do?</value>
+  </data>
+  <data name="Help_FAQ_PageError_A" xml:space="preserve">
+    <value>Try refreshing the page. If the error persists, note the error message and contact your system administrator. Include the page URL, what action you were performing, and the approximate time of the error.</value>
+  </data>
+  <data name="Help_NeedMoreHelp" xml:space="preserve">
+    <value>Need more help?</value>
+  </data>
+  <data name="Help_ContactSupport" xml:space="preserve">
+    <value>Contact your manager or system administrator for additional assistance.</value>
+  </data>
+  <data name="Help_NavLink" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="AuditSearch" xml:space="preserve">
+    <value>Audit Log Search</value>
+  </data>
+  <data name="AuditSearch_Description" xml:space="preserve">
+    <value>Search and filter audit log entries across all tenants</value>
+  </data>
+  <data name="AuditSearch_StartDate" xml:space="preserve">
+    <value>Start Date</value>
+  </data>
+  <data name="AuditSearch_EndDate" xml:space="preserve">
+    <value>End Date</value>
+  </data>
+  <data name="AuditSearch_User" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="AuditSearch_Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="AuditSearch_EntityType" xml:space="preserve">
+    <value>Entity Type</value>
+  </data>
+  <data name="AuditSearch_SearchTerm" xml:space="preserve">
+    <value>Search Term</value>
+  </data>
+  <data name="AuditSearch_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="AuditSearch_Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="AuditSearch_ExportCsv" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="AuditSearch_NoResults" xml:space="preserve">
+    <value>No audit log entries found matching your criteria.</value>
+  </data>
+  <data name="AuditSearch_TotalRecords" xml:space="preserve">
+    <value>Total Records</value>
+  </data>
+  <data name="ExportUserData" xml:space="preserve">
+    <value>Export User Data</value>
+  </data>
+  <data name="ExportUserData_Description" xml:space="preserve">
+    <value>Download all data for this user as JSON</value>
+  </data>
+  <data name="ShiftHistory" xml:space="preserve">
+    <value>Shift History</value>
+  </data>
+  <data name="ShiftHistory_Description" xml:space="preserve">
+    <value>View assignment change history</value>
+  </data>
+  <data name="ContextSwitch_Message" xml:space="preserve">
+    <value>Switched to: {0}</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>View</value>
   </data>
 </root>

@@ -50,6 +50,9 @@ public class SelectCompanyModel : PageModel
         {
             var companyName = await _ownerCompanySelector.GetSelectedCompanyNameAsync();
 
+            // Show context-switch confirmation message (I-02)
+            TempData["ContextSwitchMessage"] = $"Switched to: {companyName}";
+
             // Audit log
             await _auditLogService.LogUserActionAsync(
                 GetCurrentUserId(),

@@ -207,6 +207,24 @@ public class MasterProgramService : IMasterProgramService
         DateOnly endDate,
         bool overwriteExisting = false)
     {
+        // Skip past dates — only generate for today and future (fixes A-12)
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (startDate < today)
+        {
+            _logger.LogWarning(
+                "MasterProgram {MasterProgramId}: adjusting start date from {OriginalStart} to {Today} (skipping past dates)",
+                masterProgramId, startDate, today);
+            startDate = today;
+        }
+
+        if (startDate > endDate)
+        {
+            _logger.LogInformation(
+                "MasterProgram {MasterProgramId}: no future dates to generate (start {Start} > end {End})",
+                masterProgramId, startDate, endDate);
+            return new Dictionary<int, List<ShiftInstance>>();
+        }
+
         _logger.LogInformation(
             "Generating instances from MasterProgram {MasterProgramId} from {StartDate} to {EndDate}",
             masterProgramId, startDate, endDate);

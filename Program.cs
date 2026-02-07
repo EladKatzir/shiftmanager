@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Data.Sqlite;
 using Microsoft.OpenApi.Models;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -49,11 +51,42 @@ else
         options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ"; // ISO 8601 format
         options.UseUtcTimestamp = true;
     });
+
+    // F-01/F-02: Write critical events to Windows Event Log for IIS monitoring
+    if (OperatingSystem.IsWindows())
+    {
+#pragma warning disable CA1416 // Platform compatibility — guarded by IsWindows()
+        builder.Logging.AddEventLog(settings =>
+        {
+            settings.SourceName = "ShiftManager";
+            settings.LogName = "Application";
+            settings.Filter = (category, level) => level >= LogLevel.Warning;
+        });
+#pragma warning restore CA1416
+    }
 }
 
 builder.Logging.AddDebug();
 
 
+
+// Response compression for reduced payload size (C-04)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/javascript", "text/css", "application/json", "image/svg+xml" });
+});
+
+// WebOptimizer for JS/CSS minification (C-04)
+builder.Services.AddWebOptimizer(pipeline =>
+{
+    // Minify all JS files (except already-minified lib files)
+    pipeline.MinifyJsFiles("js/**/*.js");
+
+    // Minify all CSS files
+    pipeline.MinifyCssFiles("css/**/*.css");
+});
 
 // Configure localization
 builder.Services.AddLocalization();
@@ -155,7 +188,13 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
-builder.Services.AddDataProtection(); // Required for EncryptionService
+// Data Protection: Persist keys to stable filesystem path (survives IIS app pool recycle, server migration)
+// Keys are stored alongside the app so they're included in backup scope (fixes G-01, D-07)
+var dataProtectionKeysPath = Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys");
+Directory.CreateDirectory(dataProtectionKeysPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
+    .SetApplicationName("ShiftManager");
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
@@ -242,6 +281,13 @@ builder.Services.AddScoped<ITechShiftService, TechShiftService>();
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();
 
+// Data Safety: Automated SQLite backup service (fixes C-02, E-07)
+builder.Services.AddHostedService<DatabaseBackupService>();
+
+// Data Safety: Graceful shutdown handler — WAL checkpoint on IIS app pool recycle (fixes C-08)
+builder.Services.AddSingleton<GracefulShutdownService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<GracefulShutdownService>());
+
 // My Team Calendars Services
 builder.Services.AddScoped<TeamCalendarService>();
 builder.Services.AddScoped<TeamCalendarEventAggregator>();
@@ -264,6 +310,19 @@ builder.Services.AddScoped<ShiftManager.Services.Api.SwapRequestApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.ChoreApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.OnDutyApiService>();
 builder.Services.AddScoped<ShiftManager.Services.Api.FeedbackApiService>();
+builder.Services.AddScoped<UserDataExportService>(); // QA Item 65: User data export
+
+// Hierarchy Settings Service — cascade settings resolution (Area → Molecule → Company)
+builder.Services.AddScoped<IHierarchySettingsService, HierarchySettingsService>();
+
+// Shift Assignment Service — JobType/ShiftGrouping-aware assignment + validation
+builder.Services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>();
+
+// Setup Task Service — onboarding/setup task tracking
+builder.Services.AddScoped<ISetupTaskService, SetupTaskService>();
+
+// Friendship Service — user friendship management
+builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 
 // Add Controllers for API endpoints
 builder.Services.AddControllers()
@@ -275,7 +334,9 @@ builder.Services.AddControllers()
 
 // Add health checks for container orchestration
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>();
+    .AddDbContextCheck<AppDbContext>(tags: new[] { "live", "ready" })
+    .AddCheck("disk_space", new DiskSpaceHealthCheck(), tags: new[] { "ready" })
+    .AddCheck("memory", new MemoryHealthCheck(), tags: new[] { "ready" });
 
 // B-026: Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
@@ -334,7 +395,63 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // ============================================================
+    // PRE-MIGRATION BACKUP (fixes H-02, H-03, E-05)
+    // Copy app.db before running migrations to enable rollback
+    // ============================================================
+    {
+        var connStr = app.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+        var dbFilePath = connStr.Split('=', 2).Length > 1 ? connStr.Split('=', 2)[1].Trim() : "app.db";
+
+        if (File.Exists(dbFilePath))
+        {
+            try
+            {
+                var backupDir = app.Configuration.GetValue<string>("Backup:Directory") ?? "Backups";
+                Directory.CreateDirectory(backupDir);
+                var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                var preMigrationPath = Path.Combine(backupDir, $"app.db.pre-migration-{timestamp}");
+                File.Copy(dbFilePath, preMigrationPath, overwrite: false);
+                logger.LogInformation("Pre-migration backup created: {Path} ({SizeKB:F1} KB)",
+                    preMigrationPath, new FileInfo(preMigrationPath).Length / 1024.0);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to create pre-migration backup. Proceeding with migration.");
+            }
+        }
+    }
+
     await db.Database.MigrateAsync();
+
+    // ============================================================
+    // SQLITE WAL MODE + BUSY TIMEOUT (fixes C-01)
+    // WAL mode allows concurrent reads during writes.
+    // busy_timeout prevents immediate SQLITE_BUSY errors under contention.
+    // ============================================================
+    try
+    {
+        var connection = db.Database.GetDbConnection();
+        await connection.OpenAsync();
+        using (var walCmd = connection.CreateCommand())
+        {
+            walCmd.CommandText = "PRAGMA journal_mode=WAL;";
+            var result = await walCmd.ExecuteScalarAsync();
+            logger.LogInformation("SQLite journal mode set to: {Mode}", result);
+        }
+        using (var busyCmd = connection.CreateCommand())
+        {
+            busyCmd.CommandText = "PRAGMA busy_timeout=5000;";
+            await busyCmd.ExecuteNonQueryAsync();
+            logger.LogInformation("SQLite busy_timeout set to 5000ms");
+        }
+        await connection.CloseAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Failed to configure SQLite WAL mode / busy_timeout");
+    }
 
     // ============================================================
     // LOAD SEEDING CONFIGURATION FROM appsettings.json
@@ -509,6 +626,7 @@ using (var scope = app.Services.CreateScope())
         company = db.Companies.First();
     }
 
+    // SECURITY-AUDITED: All IgnoreQueryFilters() in this startup seeding block are SAFE — runs at app startup only, not user-facing
     // Seed shift types (fixed keys) - company-specific
     if (!db.ShiftTypes.IgnoreQueryFilters().Any(st => st.CompanyId == company.Id))
     {
@@ -729,11 +847,20 @@ else
 }
 
 // ✅ Only redirect to HTTPS when explicitly enabled (or in Production)
+// Correlation ID for request tracing (fixes F-07)
+app.UseMiddleware<ShiftManager.Middleware.CorrelationIdMiddleware>();
+
 var enableHttps = app.Configuration.GetValue<bool>("EnableHttpsRedirection", !app.Environment.IsDevelopment());
 if (enableHttps)
 {
     app.UseHttpsRedirection();
 }
+
+// Response compression middleware (C-04) — before static files
+app.UseResponseCompression();
+
+// WebOptimizer middleware — minifies JS/CSS on-the-fly (C-04)
+app.UseWebOptimizer();
 
 // Configure static file serving with explicit MIME types for offline reliability
 app.UseStaticFiles(new StaticFileOptions
@@ -750,9 +877,13 @@ app.UseStaticFiles(new StaticFileOptions
             ctx.Context.Response.ContentType = "application/javascript; charset=utf-8";
         }
 
-        // Add cache control headers for offline deployments
-        // Allow caching but require revalidation with asp-append-version hashes
-        ctx.Context.Response.Headers["Cache-Control"] = "public, must-revalidate, max-age=0";
+        // Cache control: versioned assets (asp-append-version) can be cached longer
+        // Non-versioned assets require revalidation
+        var hasVersion = ctx.Context.Request.QueryString.HasValue &&
+                         ctx.Context.Request.QueryString.Value?.Contains("v=") == true;
+        ctx.Context.Response.Headers["Cache-Control"] = hasVersion
+            ? "public, max-age=604800, immutable"  // 7 days for versioned assets
+            : "public, must-revalidate, max-age=0";
     }
 });
 app.UseRouting();
@@ -760,9 +891,15 @@ app.UseRouting();
 // Add request logging middleware (must be after routing, before auth)
 app.UseRequestLogging();
 
-// ✅ SECURITY FIX: Add security headers middleware
+// Security headers middleware with per-request CSP nonce (fixes G-02)
 app.Use(async (context, next) =>
 {
+    // Generate per-request nonce for CSP (fixes G-02: replaces unsafe-inline for scripts)
+    var nonceBytes = new byte[16];
+    System.Security.Cryptography.RandomNumberGenerator.Fill(nonceBytes);
+    var nonce = Convert.ToBase64String(nonceBytes);
+    context.Items["CspNonce"] = nonce;
+
     // Prevent clickjacking attacks
     context.Response.Headers["X-Frame-Options"] = "DENY";
 
@@ -772,15 +909,15 @@ app.Use(async (context, next) =>
     // Control referrer information
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
-    // Prevent loading resources from untrusted sources
+    // CSP with nonce for inline scripts (still allows unsafe-inline for styles)
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " + // Allow inline scripts for Razor (all libs bundled locally for air-gapped environments)
-        "style-src 'self' 'unsafe-inline'; " +  // Allow inline styles
-        "img-src 'self' data:; " +               // Allow inline images for avatars
+        $"script-src 'self' 'nonce-{nonce}' 'unsafe-inline'; " + // Nonce + unsafe-inline fallback for older browsers
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data:; " +
         "font-src 'self'; " +
         "connect-src 'self' ws: wss:; " +
-        "frame-ancestors 'none'";                // Redundant with X-Frame-Options but recommended
+        "frame-ancestors 'none'";
 
     // Remove potentially revealing server headers
     context.Response.Headers.Remove("Server");
@@ -828,6 +965,13 @@ app.Use(async (context, next) =>
 // B-027: UI Rate Limiting Middleware (for calendar, context, widget endpoints)
 // Uses user ID or IP for rate limiting, separate from API key-based limits
 app.UseMiddleware<ShiftManager.Middleware.RateLimitingMiddleware>();
+
+// Configure HMAC secret for API key hashing (D-04)
+var hmacSecret = builder.Configuration["ApiKeyHmacSecret"];
+if (!string.IsNullOrEmpty(hmacSecret))
+{
+    ShiftManager.Middleware.ApiAuthenticationMiddleware.HmacSecret = hmacSecret;
+}
 
 // API Middleware (only for /api routes)
 app.UseMiddleware<ShiftManager.Middleware.ApiExceptionMiddleware>(); // B-028: Standardized error responses
@@ -894,9 +1038,88 @@ app.MapRazorPages();
 // SignalR hub for real-time calendar updates
 app.MapHub<CalendarHub>("/hubs/calendar");
 
-// Health check endpoints for container orchestration
-app.MapHealthChecks("/health");  // Liveness probe - is the app alive?
-app.MapHealthChecks("/ready");   // Readiness probe - is the app ready to receive traffic?
+// Health check endpoints
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+});
+app.MapHealthChecks("/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
+
+// ============================================================
+// STARTUP SAFETY CHECKS
+// ============================================================
+{
+    var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+
+    // Data Protection key availability check (fixes G-01, D-07)
+    try
+    {
+        var dpProvider = app.Services.GetRequiredService<IDataProtectionProvider>();
+        var protector = dpProvider.CreateProtector("startup-check");
+        var testData = protector.Protect("test");
+        protector.Unprotect(testData);
+        startupLogger.LogInformation("Data Protection keys verified at: {Path}",
+            Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogCritical(ex, "DATA PROTECTION KEY FAILURE: Cannot encrypt/decrypt data. " +
+            "Email configs and other encrypted data will be unreadable. " +
+            "Check DataProtection-Keys directory at: {Path}",
+            Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
+    }
+
+    // SQLite network share detection (fixes G-05)
+    {
+        var connStr = app.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+        var dbFilePath = connStr.Split('=', 2).Length > 1 ? connStr.Split('=', 2)[1].Trim() : "app.db";
+        var fullDbPath = Path.GetFullPath(dbFilePath);
+
+        if (fullDbPath.StartsWith(@"\\") || fullDbPath.StartsWith("//"))
+        {
+            startupLogger.LogCritical(
+                "SQLITE ON NETWORK SHARE DETECTED: {Path}. " +
+                "SQLite file locking is unreliable on network shares and can cause database corruption. " +
+                "Move app.db to a local disk immediately.", fullDbPath);
+        }
+    }
+
+    // Timezone policy assertion (fixes A-04)
+    var localTz = TimeZoneInfo.Local;
+    startupLogger.LogInformation("Server timezone: {TimeZone} (UTC offset: {Offset})",
+        localTz.DisplayName, localTz.BaseUtcOffset);
+    // Warn if server timezone doesn't match expected Israel timezone
+    var expectedTzId = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
+        ? "Israel Standard Time" : "Asia/Jerusalem";
+    if (localTz.Id != expectedTzId && !localTz.DisplayName.Contains("Israel") && !localTz.DisplayName.Contains("Jerusalem"))
+    {
+        startupLogger.LogWarning(
+            "Server timezone '{CurrentTZ}' does not match expected '{ExpectedTZ}'. " +
+            "Date boundaries for shifts may be incorrect. Set server timezone to Israel Standard Time.",
+            localTz.Id, expectedTzId);
+    }
+
+    // Default credentials warning (fixes D-01, B-06) — checked during seeding but also at startup banner level
+    var seedingPassword = app.Configuration.GetValue<string>("Seeding:Owner:Password");
+    if (seedingPassword == "admin123" && !app.Environment.IsDevelopment())
+    {
+        startupLogger.LogWarning(
+            "DEFAULT CREDENTIALS: Owner account is using the default password 'admin123'. " +
+            "Change immediately in production via appsettings.json Seeding:Owner:Password or SEED_ADMIN_PASSWORD env var.");
+    }
+
+    // AllowPublicSignup warning (fixes H-07, B-10)
+    var publicSignup = app.Configuration.GetValue<bool>("Features:AllowPublicSignup");
+    if (publicSignup && !app.Environment.IsDevelopment())
+    {
+        startupLogger.LogWarning(
+            "PUBLIC SIGNUP ENABLED: Anyone with access to this server can create an account. " +
+            "Set Features:AllowPublicSignup=false in appsettings.json for production deployments.");
+    }
+}
 
 // ============================================================
 // STARTUP BANNER - Display application information

@@ -10,6 +10,8 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ViewHierarchy policy;
+// organization hierarchy overview is inherently cross-company reference data
 [Authorize(Policy = "Grant:ViewHierarchy")]
 public class IndexModel : LocalizedPageModel
 {

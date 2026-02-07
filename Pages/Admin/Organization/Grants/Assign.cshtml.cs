@@ -9,6 +9,8 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Grants;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:AssignGrants policy;
+// grant assignment needs cross-company hierarchy references for scope selection
 [Authorize(Policy = "Grant:AssignGrants")]
 public class AssignModel : LocalizedPageModel
 {

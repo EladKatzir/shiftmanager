@@ -10,6 +10,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// System Health Dashboard - Monitor application health and performance
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all 107 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class SystemHealthModel : PageModel
 {
@@ -61,6 +62,16 @@ public class SystemHealthModel : PageModel
     public int ErrorCount { get; set; }
     public int WarningCount { get; set; }
     public int InfoCount { get; set; }
+    public List<RecentErrorEntry> RecentErrors { get; set; } = new();
+
+    // Disk
+    public long DiskFreeSpaceMB { get; set; }
+    public string DiskDrive { get; set; } = "";
+
+    // Security Warnings (fixes D-01, B-06, H-07, B-10)
+    public bool HasDefaultCredentials { get; set; }
+    public bool PublicSignupEnabled { get; set; }
+    public List<string> SecurityWarnings { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -78,8 +89,14 @@ public class SystemHealthModel : PageModel
             // Check Configuration
             await CheckConfigurationAsync();
 
-            // Check Logs (placeholder - would need log file parsing)
-            CheckLogs();
+            // Check Logs from audit trail
+            await CheckLogsAsync();
+
+            // Check Disk Space
+            CheckDiskSpace();
+
+            // Check Security Warnings
+            await CheckSecurityWarningsAsync();
 
             // Determine overall status
             OverallStatus = DetermineOverallStatus();
@@ -198,16 +215,80 @@ public class SystemHealthModel : PageModel
         }
     }
 
-    private void CheckLogs()
+    private async Task CheckLogsAsync()
     {
-        // Placeholder: In production, you would parse log files or query a logging database
-        // For now, return simulated values
-        ErrorCount = 0;
-        WarningCount = 2;
-        InfoCount = 150;
+        try
+        {
+            // Query recent audit log entries for error-like actions
+            var recentErrors = await _db.AuditLogs
+                .IgnoreQueryFilters()
+                .Where(a => a.Action.Contains("Error") || a.Action.Contains("Failed") || a.Action.Contains("Denied"))
+                .OrderByDescending(a => a.Timestamp)
+                .Take(50)
+                .Select(a => new RecentErrorEntry
+                {
+                    Timestamp = a.Timestamp,
+                    Action = a.Action,
+                    Description = a.Description ?? "",
+                    UserEmail = a.UserEmail ?? "System"
+                })
+                .ToListAsync();
 
-        // You could implement actual log file parsing here
-        // For example, read from Logs/log-{date}.txt and count log levels
+            RecentErrors = recentErrors;
+            ErrorCount = recentErrors.Count;
+
+            // Get counts from audit log for the last 24 hours
+            var since = DateTime.UtcNow.AddHours(-24);
+            InfoCount = await _db.AuditLogs
+                .IgnoreQueryFilters()
+                .Where(a => a.Timestamp >= since)
+                .CountAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking logs");
+            ErrorCount = 0;
+            InfoCount = 0;
+        }
+    }
+
+    private void CheckDiskSpace()
+    {
+        try
+        {
+            var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "app.db");
+            var root = Path.GetPathRoot(dbPath) ?? "C:\\";
+            var driveInfo = new DriveInfo(root);
+            DiskFreeSpaceMB = driveInfo.AvailableFreeSpace / 1024 / 1024;
+            DiskDrive = driveInfo.Name;
+        }
+        catch
+        {
+            DiskFreeSpaceMB = -1;
+        }
+    }
+
+    private async Task CheckSecurityWarningsAsync()
+    {
+        // Check for default owner credentials (fixes D-01, B-06)
+        var ownerUser = await _db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Role == ShiftManager.Models.Support.UserRole.Owner);
+
+        if (ownerUser != null)
+        {
+            if (ShiftManager.Models.PasswordHasher.Verify("admin123", ownerUser.PasswordHash, ownerUser.PasswordSalt))
+            {
+                HasDefaultCredentials = true;
+                SecurityWarnings.Add("Owner account is using the default password 'admin123'. Change immediately.");
+            }
+        }
+
+        // Check for public signup enabled (fixes H-07, B-10)
+        PublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup");
+        if (PublicSignupEnabled)
+        {
+            SecurityWarnings.Add("Public signup is enabled. Anyone with server access can create an account.");
+        }
     }
 
     private string DetermineOverallStatus()
@@ -215,9 +296,23 @@ public class SystemHealthModel : PageModel
         if (!DatabaseHealthy)
             return "Critical";
 
-        if (ErrorCount > 10 || !MemoryHealthy)
+        if (ErrorCount > 10 || !MemoryHealthy || HasDefaultCredentials)
+            return "Warning";
+
+        if (SecurityWarnings.Count > 0)
+            return "Warning";
+
+        if (DiskFreeSpaceMB >= 0 && DiskFreeSpaceMB < 100)
             return "Warning";
 
         return "Healthy";
     }
+}
+
+public class RecentErrorEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string Action { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string UserEmail { get; set; } = "";
 }

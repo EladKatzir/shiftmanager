@@ -368,13 +368,10 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-    /// Hashes an API key using SHA256
+    /// Hashes an API key using HMAC-SHA256 with server secret (fixes D-04).
     /// </summary>
     private string HashApiKey(string apiKey)
     {
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(apiKey);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
+        return Middleware.ApiAuthenticationMiddleware.HashApiKey(apiKey);
     }
 }

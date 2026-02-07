@@ -51,6 +51,7 @@ public class TechShiftService : ITechShiftService
         }
 
         // Query users who have the corresponding grant with CanOwn = true
+        // SECURITY-AUDITED: SAFE — scoped by specific grantTypeId; returns only user IDs with matching grant
         var query = _db.Grants
             .IgnoreQueryFilters()
             .Where(g => g.GrantTypeId == grantType.Id && g.CanOwn)
@@ -67,6 +68,7 @@ public class TechShiftService : ITechShiftService
         }
 
         // Fetch the actual users, filtering by company if specified
+        // SECURITY-AUDITED: SAFE — re-scoped by grant-derived eligibleUserIds + optional companyId
         var usersQuery = _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive && eligibleUserIds.Contains(u.Id));

@@ -84,6 +84,12 @@
 
                             <!-- Actions -->
                             <div style="display: flex; gap: 0.5rem;">
+                                @if (!string.IsNullOrEmpty(notification.DeepLink))
+                                {
+                                    <a href="@notification.DeepLink" style="background: var(--info); color: #fff; border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.8rem; cursor: pointer; text-decoration: none; display: inline-block;">
+                                        @Localizer["View"]
+                                    </a>
+                                }
                                 @if (!notification.IsRead)
                                 {
                                     <form method="post" asp-page-handler="MarkAsRead" style="display: inline;">

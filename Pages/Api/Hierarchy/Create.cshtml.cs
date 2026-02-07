@@ -15,6 +15,8 @@ namespace ShiftManager.Pages.Api.Hierarchy;
 /// API endpoint to create new hierarchy entities.
 /// POST /Api/Hierarchy/Create
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:CreateHierarchy policy;
+// hierarchy entity creation needs cross-company parent lookups
 [Authorize(Policy = "Grant:CreateHierarchy")]
 [IgnoreAntiforgeryToken]
 public class CreateModel : PageModel

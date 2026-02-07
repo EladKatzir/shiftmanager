@@ -25,6 +25,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<List<FriendDto>> GetFriendsAsync(int userId)
     {
+        // SECURITY-AUDITED: SAFE — friendships are cross-company by design; scoped by userId
         var friendships = await _db.UserFriendships
             .IgnoreQueryFilters()
             .Include(f => f.User)
@@ -35,12 +36,14 @@ public class FriendshipService : IFriendshipService
 
         // Get company and job type info
         var friendIds = friendships.Select(f => f.UserId == userId ? f.FriendId : f.UserId).ToList();
+        // SECURITY-AUDITED: SAFE — scoped by friendIds derived from user's accepted friendships
         var users = await _db.Users.IgnoreQueryFilters()
             .Where(u => friendIds.Contains(u.Id))
             .Include(u => u.JobType)
             .ToListAsync();
 
         var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        // SECURITY-AUDITED: SAFE — scoped by companyIds of user's accepted friends; returns names only
         var companies = await _db.Companies.IgnoreQueryFilters()
             .Where(c => companyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.Name);
@@ -63,6 +66,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<List<FriendRequestDto>> GetPendingRequestsAsync(int userId)
     {
+        // SECURITY-AUDITED: SAFE — friendships are cross-company by design; scoped by userId as recipient
         return await _db.UserFriendships
             .IgnoreQueryFilters()
             .Include(f => f.User)
@@ -81,6 +85,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<List<FriendRequestDto>> GetOutgoingRequestsAsync(int userId)
     {
+        // SECURITY-AUDITED: SAFE — friendships are cross-company by design; scoped by userId as sender
         return await _db.UserFriendships
             .IgnoreQueryFilters()
             .Include(f => f.User)
@@ -106,6 +111,7 @@ public class FriendshipService : IFriendshipService
         }
 
         // Check if friendship already exists
+        // SECURITY-AUDITED: SAFE — scoped by userId + friendId pair; returns existing relationship only
         var existing = await _db.UserFriendships
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(f =>
@@ -155,6 +161,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<FriendshipResult> AcceptRequestAsync(int friendshipId, int acceptingUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific friendshipId; ownership check follows (FriendId == acceptingUserId)
         var friendship = await _db.UserFriendships
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(f => f.Id == friendshipId);
@@ -189,6 +196,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<FriendshipResult> RejectRequestAsync(int friendshipId, int rejectingUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific friendshipId; ownership check follows (FriendId == rejectingUserId)
         var friendship = await _db.UserFriendships
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(f => f.Id == friendshipId);
@@ -216,6 +224,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<FriendshipResult> RemoveFriendAsync(int friendshipId, int removingUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific friendshipId; ownership check follows (UserId or FriendId == removingUserId)
         var friendship = await _db.UserFriendships
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(f => f.Id == friendshipId);
@@ -243,6 +252,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<bool> AreFriendsAsync(int userId1, int userId2)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific userId pair; returns boolean only
         return await _db.UserFriendships
             .IgnoreQueryFilters()
             .AnyAsync(f =>
@@ -253,6 +263,7 @@ public class FriendshipService : IFriendshipService
 
     public async Task<HashSet<int>> GetFriendIdsAsync(int userId)
     {
+        // SECURITY-AUDITED: SAFE — friendships are cross-company by design; scoped by userId
         var friendships = await _db.UserFriendships
             .IgnoreQueryFilters()
             .Where(f => (f.UserId == userId || f.FriendId == userId)
@@ -271,6 +282,7 @@ public class FriendshipService : IFriendshipService
         var queryLower = query.ToLower();
 
         // Get existing friendships for this user
+        // SECURITY-AUDITED: SAFE — scoped by userId; used to annotate search results with friendship status
         var existingFriendships = await _db.UserFriendships
             .IgnoreQueryFilters()
             .Where(f => f.UserId == userId || f.FriendId == userId)
@@ -287,6 +299,7 @@ public class FriendshipService : IFriendshipService
             .ToHashSet();
 
         // Search users
+        // SECURITY-AUDITED: SAFE — cross-company user search is intentional for friend discovery; limited to 20 results, basic info only
         var users = await _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive && u.Id != userId &&
@@ -298,6 +311,7 @@ public class FriendshipService : IFriendshipService
 
         // Get company names
         var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        // SECURITY-AUDITED: SAFE — scoped by companyIds of search results; returns names only
         var companies = await _db.Companies.IgnoreQueryFilters()
             .Where(c => companyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.Name);

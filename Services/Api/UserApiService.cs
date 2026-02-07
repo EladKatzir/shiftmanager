@@ -119,6 +119,7 @@ public class UserApiService
         string? jobTitle = null)
     {
         // Validate email uniqueness
+        // SECURITY-AUDITED: SAFE — email uniqueness must be global; returns boolean only (AnyAsync)
         var existingUser = await _context.Users
             .IgnoreQueryFilters() // Check across all companies
             .AnyAsync(u => u.Email == email);

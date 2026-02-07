@@ -209,7 +209,13 @@ public class AnalyticsModel : LocalizedPageModel
             csv.AppendLine($"Approval Rate,{timeOffStats.ApprovalRate:F2}%");
 
             var fileName = $"Analytics_Report_{company?.Name.Replace(" ", "_")}_{DateTime.UtcNow:yyyyMMdd}.csv";
-            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+            // Add UTF-8 BOM for Hebrew Excel compatibility (fixes G-07)
+            var preamble = Encoding.UTF8.GetPreamble();
+            var csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
+            var bomResult = new byte[preamble.Length + csvBytes.Length];
+            preamble.CopyTo(bomResult, 0);
+            csvBytes.CopyTo(bomResult, preamble.Length);
+            return File(bomResult, "text/csv", fileName);
         }
         catch (Exception ex)
         {

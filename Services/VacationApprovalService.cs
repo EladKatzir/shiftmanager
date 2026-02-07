@@ -367,6 +367,155 @@ public class VacationApprovalService : IVacationApprovalService
     }
 
     /// <summary>
+    /// Allows a user to cancel their own pending request.
+    /// </summary>
+    public async Task<(bool Success, string Message)> CancelRequestAsync(int requestId, int userId)
+    {
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+            return (false, "VacationApproval_RequestNotFound");
+
+        if (request.UserId != userId)
+            return (false, "VacationApproval_NotYourRequest");
+
+        if (request.Status != RequestStatus.Pending)
+            return (false, "VacationApproval_AlreadyProcessed");
+
+        request.Status = RequestStatus.Declined;
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Request {RequestId} canceled by user {UserId}", requestId, userId);
+        return (true, "VacationApproval_Canceled");
+    }
+
+    /// <summary>
+    /// Detects approval rules that have no active users who can fulfill them.
+    /// Returns warnings for admin display.
+    /// </summary>
+    public async Task<List<OrphanedApprovalRuleInfo>> DetectOrphanedRulesAsync(int companyId)
+    {
+        var orphaned = new List<OrphanedApprovalRuleInfo>();
+        var rules = await GetRulesForCompanyAsync(companyId);
+
+        foreach (var rule in rules.Where(r => r.IsActive))
+        {
+            // If rule has specific approver, check if that user is active
+            if (rule.ApproverUserId.HasValue)
+            {
+                // SECURITY-AUDITED: SAFE — scoped by specific ApproverUserId from rule; admin diagnostic
+                var approver = await _context.Users
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Id == rule.ApproverUserId.Value);
+
+                if (approver == null || !approver.IsActive)
+                {
+                    orphaned.Add(new OrphanedApprovalRuleInfo(
+                        rule.Id,
+                        rule.ApproverGrantKey,
+                        rule.JobTypeId,
+                        $"Specific approver (User #{rule.ApproverUserId}) is deactivated or missing"));
+                    continue;
+                }
+            }
+
+            // Check if any active user has the required grant for this company
+            var companyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(0, rule.ApproverGrantKey);
+            // The above won't work for checking "any user" — use direct query instead
+            // SECURITY-AUDITED: SAFE — scoped by grantKey + companyId; admin diagnostic returns boolean only
+            var hasAnyApprover = await _context.Grants
+                .IgnoreQueryFilters()
+                .Include(g => g.GrantType)
+                .Include(g => g.User)
+                .AnyAsync(g => g.GrantType.Key == rule.ApproverGrantKey
+                    && g.User != null && g.User.IsActive
+                    && g.CompanyId == companyId);
+
+            if (!hasAnyApprover && !rule.ApproverUserId.HasValue)
+            {
+                orphaned.Add(new OrphanedApprovalRuleInfo(
+                    rule.Id,
+                    rule.ApproverGrantKey,
+                    rule.JobTypeId,
+                    $"No active user has the '{rule.ApproverGrantKey}' grant for this company"));
+            }
+        }
+
+        return orphaned;
+    }
+
+    /// <summary>
+    /// Gets the current approval pipeline status for a request,
+    /// including current stage, approver info, and whether it's orphaned.
+    /// </summary>
+    public async Task<ApprovalPipelineStatus> GetApprovalStatusAsync(int requestId)
+    {
+        var request = await _context.TimeOffRequests
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+        {
+            return new ApprovalPipelineStatus(requestId, RequestStatus.Pending, "Unknown", null, null, null, false, false, DateTime.UtcNow);
+        }
+
+        var (approverId, approverGrantKey, requiresSecondApproval) = await GetApprovalRouteAsync(requestId);
+
+        string stage = request.Status switch
+        {
+            RequestStatus.Approved => "Approved",
+            RequestStatus.Declined => "Declined",
+            _ => requiresSecondApproval ? "PendingSecondApproval" : "PendingApproval"
+        };
+
+        string? approverName = null;
+        bool isOrphaned = false;
+
+        if (approverId.HasValue)
+        {
+            // SECURITY-AUDITED: SAFE — scoped by specific approverId from approval route; returns display name only
+            var approver = await _context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == approverId.Value);
+            approverName = approver?.DisplayName;
+            if (approver == null || !approver.IsActive)
+            {
+                isOrphaned = true;
+                stage = "Orphaned";
+            }
+        }
+        else if (request.Status == RequestStatus.Pending)
+        {
+            // Check if anyone can actually approve this
+            // SECURITY-AUDITED: SAFE — scoped by grantKey + request's companyId; returns boolean only
+            var hasAnyApprover = await _context.Grants
+                .IgnoreQueryFilters()
+                .Include(g => g.GrantType)
+                .Include(g => g.User)
+                .AnyAsync(g => g.GrantType.Key == approverGrantKey
+                    && g.User != null && g.User.IsActive
+                    && g.CompanyId == request.CompanyId);
+
+            if (!hasAnyApprover)
+            {
+                isOrphaned = true;
+                stage = "Orphaned";
+            }
+        }
+
+        return new ApprovalPipelineStatus(
+            requestId,
+            request.Status,
+            stage,
+            approverGrantKey,
+            approverId,
+            approverName,
+            requiresSecondApproval,
+            isOrphaned,
+            request.CreatedAt);
+    }
+
+    /// <summary>
     /// Gets the matching approval rule for a request (helper method).
     /// </summary>
     private async Task<VacationApprovalRule?> GetMatchingRuleAsync(TimeOffRequest request)

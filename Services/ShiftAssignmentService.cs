@@ -82,6 +82,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         }
 
         // Start with active users from the determined companies
+        // SECURITY-AUDITED: SAFE — re-scoped by ShiftGrouping-derived companyIds or shift type's own companyId
         var usersQuery = _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
@@ -105,6 +106,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
 
         // Get company names
         var userCompanyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        // SECURITY-AUDITED: SAFE — scoped by companyIds of eligible users; returns names only
         var companyNames = await _db.Companies
             .IgnoreQueryFilters()
             .Where(c => userCompanyIds.Contains(c.Id))
@@ -207,7 +209,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
 
         // Check weekly cap using effective settings from hierarchy (Area -> Molecule -> Company)
         var effectiveSettings = await _hierarchySettingsService.GetEffectiveSettingsAsync(shiftInstance.CompanyId);
-        var weeklyCap = effectiveSettings.WeeklyCap;
+        var weeklyCap = effectiveSettings?.WeeklyCap ?? 48; // Default 48h weekly cap if settings not configured
 
         var startOfWeek = GetStartOfWeek(shiftInstance.WorkDate);
         var endOfWeek = startOfWeek.AddDays(7);

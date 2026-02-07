@@ -10,6 +10,8 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Settings;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ViewSettings policy;
+// hierarchy dropdowns (Areas, Molecules, Companies) are reference data for settings navigation
 [Authorize(Policy = "Grant:ViewSettings")]
 public class IndexModel : LocalizedPageModel
 {

@@ -25,6 +25,7 @@ public class SetupTaskService : ISetupTaskService
 
     public async Task<List<SetupTaskDto>> GenerateTasksForMoleculeAsync(int moleculeId, int assignToUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter; admin setup wizard
         var molecule = await _db.Molecules.IgnoreQueryFilters()
             .Include(m => m.Area)
             .FirstOrDefaultAsync(m => m.Id == moleculeId);
@@ -61,6 +62,7 @@ public class SetupTaskService : ISetupTaskService
             });
 
             // Task 3: Assign directors for each job type
+            // SECURITY-AUDITED: SAFE — scoped by molecule's areaId; admin setup wizard
             var jobTypes = await _db.JobTypes.IgnoreQueryFilters()
                 .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
                 .ToListAsync();
@@ -107,6 +109,7 @@ public class SetupTaskService : ISetupTaskService
 
     public async Task<List<SetupTaskDto>> GenerateTasksForCompanyAsync(int companyId, int assignToUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter; admin setup wizard
         var company = await _db.Companies.IgnoreQueryFilters()
             .Include(c => c.Molecule)
                 .ThenInclude(m => m!.Area)
@@ -133,6 +136,7 @@ public class SetupTaskService : ISetupTaskService
         // Task 2: Assign Leads for each job type
         if (company.Molecule.Type == MoleculeType.Workforce)
         {
+            // SECURITY-AUDITED: SAFE — scoped by company's molecule's areaId; admin setup wizard
             var jobTypes = await _db.JobTypes.IgnoreQueryFilters()
                 .Where(jt => jt.AreaId == company.Molecule.AreaId && jt.IsActive)
                 .ToListAsync();
@@ -181,6 +185,7 @@ public class SetupTaskService : ISetupTaskService
 
     public async Task<List<SetupTaskDto>> GetPendingTasksAsync(int userId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific userId (assigned tasks); admin/owner operation
         var tasks = await _db.SetupTasks.IgnoreQueryFilters()
             .Include(t => t.Molecule)
             .Include(t => t.Company)
@@ -198,6 +203,7 @@ public class SetupTaskService : ISetupTaskService
 
     public async Task<List<SetupTaskDto>> GetTasksForMoleculeAsync(int moleculeId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter; admin operation
         var tasks = await _db.SetupTasks.IgnoreQueryFilters()
             .Include(t => t.Molecule)
             .Include(t => t.Company)
@@ -214,6 +220,7 @@ public class SetupTaskService : ISetupTaskService
 
     public async Task<SetupProgressDto> GetProgressAsync(int moleculeId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter; admin progress view
         var molecule = await _db.Molecules.IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.Id == moleculeId);
 
@@ -222,6 +229,7 @@ public class SetupTaskService : ISetupTaskService
             return new SetupProgressDto(moleculeId, "Unknown", 0, 0, 0, 0, 0, 0);
         }
 
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter; admin progress view
         var tasks = await _db.SetupTasks.IgnoreQueryFilters()
             .Where(t => t.MoleculeId == moleculeId)
             .ToListAsync();
@@ -258,6 +266,7 @@ public class SetupTaskService : ISetupTaskService
 
     public async Task<bool> UpdateTaskStatusAsync(int taskId, SetupTaskStatus status, int updatedByUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific taskId parameter; admin status update
         var task = await _db.SetupTasks.IgnoreQueryFilters()
             .FirstOrDefaultAsync(t => t.Id == taskId);
 

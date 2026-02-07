@@ -19,8 +19,27 @@ public static class TimeHelpers
 
     public static double Hours(ShiftType t)
     {
-        var (s, e) = GetShiftWindow(t, DateOnly.FromDateTime(DateTime.Today));
-        return (e - s).TotalHours;
+        return Hours(t, DateOnly.FromDateTime(DateTime.Today));
+    }
+
+    /// <summary>
+    /// Returns DST-aware shift duration for a specific date.
+    /// On DST transition dates (2 per year), duration may differ from the nominal value
+    /// (e.g., a NIGHT shift spanning spring-forward loses 1 hour, fall-back gains 1 hour).
+    /// </summary>
+    public static double Hours(ShiftType t, DateOnly date)
+    {
+        var tz = TimeZoneInfo.Local;
+        var startLocal = date.ToDateTime(t.Start);
+        var endLocal = t.End <= t.Start
+            ? date.AddDays(1).ToDateTime(t.End) // overnight shift
+            : date.ToDateTime(t.End);
+
+        // Convert to UTC to get true elapsed time (accounts for DST transitions)
+        var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocal, tz);
+        var endUtc = TimeZoneInfo.ConvertTimeToUtc(endLocal, tz);
+
+        return (endUtc - startUtc).TotalHours;
     }
 
     public static DateOnly WeekStart(DateOnly date)

@@ -28,6 +28,14 @@ public interface IValidationService
     bool IsSafeString(string? input);
 
     /// <summary>
+    /// Normalizes input text for safe comparison and search.
+    /// Applies Unicode NFC normalization to handle Hebrew niqqud consistently.
+    /// </summary>
+    /// <param name="input">The string to normalize</param>
+    /// <returns>NFC-normalized, trimmed string</returns>
+    string NormalizeForSearch(string? input);
+
+    /// <summary>
     /// Validates a URL format.
     /// </summary>
     /// <param name="url">The URL to validate</param>

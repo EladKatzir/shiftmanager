@@ -321,7 +321,13 @@ public class EmailConfigModel : LocalizedPageModel
         }
 
         var fileName = $"EmailApiLogs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
-        return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+        // Add UTF-8 BOM for Hebrew Excel compatibility (fixes G-07)
+        var preamble = Encoding.UTF8.GetPreamble();
+        var csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
+        var bomResult = new byte[preamble.Length + csvBytes.Length];
+        preamble.CopyTo(bomResult, 0);
+        csvBytes.CopyTo(bomResult, preamble.Length);
+        return File(bomResult, "text/csv", fileName);
     }
 
     private int GetCurrentUserId()

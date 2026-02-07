@@ -98,10 +98,15 @@
                 </div>
 
                 <div class="template-actions">
-                    <button type="button" class="btn btn-primary btn-sm"
+                    <button type="button" class="btn btn-primary btn-sm edit-template-btn"
                             data-bs-toggle="modal"
                             data-bs-target="#editModal"
-                            onclick="loadTemplateForEdit('@((int)template.Type)', '@template.DisplayName', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(template.AvailableVariables))', '@Html.Raw(template.DefaultMessage.Replace("'", "\\'"))', '@Html.Raw(template.CustomMessage.Replace("'", "\\'"))', @template.IsEnabled.ToString().ToLower())">
+                            data-template-type="@((int)template.Type)"
+                            data-template-name="@template.DisplayName"
+                            data-template-variables="@System.Text.Json.JsonSerializer.Serialize(template.AvailableVariables)"
+                            data-template-default="@template.DefaultMessage"
+                            data-template-custom="@template.CustomMessage"
+                            data-template-enabled="@template.IsEnabled.ToString().ToLower()">
                         <loc key="Action_Edit" />
                     </button>
                     @if (template.IsEnabled)
@@ -191,6 +196,22 @@
             const variablesHtml = variables.map(v => `<code class="variable-tag">{${v}}</code>`).join(' ');
             document.getElementById('availableVariables').innerHTML = variablesHtml;
         }
+
+        // XSS-safe: Read template data from data attributes instead of inline onclick
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.edit-template-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    loadTemplateForEdit(
+                        this.dataset.templateType,
+                        this.dataset.templateName,
+                        this.dataset.templateVariables,
+                        this.dataset.templateDefault,
+                        this.dataset.templateCustom,
+                        this.dataset.templateEnabled === 'true'
+                    );
+                });
+            });
+        });
 
         function updateCharCount() {
             const textarea = document.getElementById('customMessage');

@@ -1,6 +1,20 @@
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
+
+public record OrphanedApprovalRuleInfo(int RuleId, string ApproverGrantKey, int? JobTypeId, string Reason);
+
+public record ApprovalPipelineStatus(
+    int RequestId,
+    RequestStatus Status,
+    string CurrentStage,
+    string? ApproverGrantKey,
+    int? SpecificApproverId,
+    string? SpecificApproverName,
+    bool RequiresSecondApproval,
+    bool IsOrphaned,
+    DateTime CreatedAt);
 
 public interface IVacationApprovalService
 {
@@ -14,4 +28,7 @@ public interface IVacationApprovalService
     Task<VacationApprovalRule> CreateRuleAsync(VacationApprovalRule rule);
     Task<bool> UpdateRuleAsync(VacationApprovalRule rule);
     Task<bool> DeleteRuleAsync(int ruleId);
+    Task<(bool Success, string Message)> CancelRequestAsync(int requestId, int userId);
+    Task<List<OrphanedApprovalRuleInfo>> DetectOrphanedRulesAsync(int companyId);
+    Task<ApprovalPipelineStatus> GetApprovalStatusAsync(int requestId);
 }

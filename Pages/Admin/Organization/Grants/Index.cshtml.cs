@@ -8,6 +8,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Grants;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ViewGrants policy;
+// grant overview is inherently cross-company administrative data
 [Authorize(Policy = "Grant:ViewGrants")]
 public class IndexModel : LocalizedPageModel
 {

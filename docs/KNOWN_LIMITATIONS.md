@@ -220,6 +220,84 @@ Each instance runs with its own server timezone, users access the appropriate in
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2026-01-06
-**Related Issues:** TEST-REPORT-ISSUE-005
+---
+
+## 2. DST Transition Duration (2 Days/Year)
+
+**Status:** Mitigated (DST-aware calculation added)
+**Impact:** Shift duration calculations on DST transition dates are now UTC-corrected via `TimeHelpers.Hours(ShiftType, DateOnly)`. However, some secondary calculations (analytics, rest hours) may still use naive local time.
+
+### Workaround
+Manually verify shift durations on the 2 DST transition dates per year (spring-forward/fall-back).
+
+---
+
+## 3. CSP `unsafe-inline`
+
+**Status:** Known Limitation (Long-term fix: nonce-based CSP)
+**Impact:** CSP header allows `unsafe-inline` for scripts, weakening XSS protection.
+
+### Mitigation
+- All user-supplied content is sanitized before rendering
+- `@Html.Raw()` usage has been audited
+- Full nonce-based CSP migration is a future enhancement
+
+---
+
+## 4. No CAPTCHA on Login
+
+**Status:** Accepted by Policy
+**Impact:** No CAPTCHA challenge on login attempts. Per policy, lockout mitigation is handled via admin tooling (OwnerHub > Locked Users).
+
+### Mitigation
+- Per-IP rate limiting (10 attempts / 15 minutes)
+- Per-account rate limiting (15 attempts / 15 minutes)
+- Account lockout after 10 failed attempts (3-minute lockout)
+- OwnerHub page for viewing and unlocking locked accounts
+
+---
+
+## 5. No User Data Export (GDPR-style)
+
+**Status:** Low Priority for Military Use
+**Impact:** No self-service "export my data" feature for individual users.
+
+### Workaround
+Owner can export user data via Admin > Users CSV export or Owner > Data Lifecycle archive.
+
+---
+
+## 6. Calendar Performance with 100+ Users
+
+**Status:** Known Limitation
+**Impact:** Calendars with >100 users may experience slow rendering due to DOM element count (no virtual scrolling).
+
+### Mitigation
+- Calendar views are scoped by molecule/job type, limiting typical user counts to 20-50
+- Consider splitting large molecules if performance degrades
+
+---
+
+## 7. Mobile Calendar Limitations
+
+**Status:** Known Limitation
+**Impact:** Calendar fill-handle and inline editing are mouse-centric. Touch devices may have difficulty with small targets.
+
+### Workaround
+Use desktop/laptop for calendar management. Mobile view is suitable for viewing only.
+
+---
+
+## 8. Feature Flags Without Cleanup Lifecycle
+
+**Status:** Low Priority
+**Impact:** Stale feature flags accumulate over time.
+
+### Mitigation
+Feature flags have `CreatedAt`/`UpdatedAt` timestamps for tracking. Periodic manual review recommended.
+
+---
+
+**Document Version:** 2.0
+**Last Updated:** 2026-02-07
+**Related Issues:** TEST-REPORT-ISSUE-005, Pre-Release QA Audit 2026-02

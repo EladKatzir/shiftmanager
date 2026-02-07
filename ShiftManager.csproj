@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <!-- B-026: Swagger/OpenAPI support -->
+    <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.422" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

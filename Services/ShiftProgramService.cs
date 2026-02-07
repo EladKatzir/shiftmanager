@@ -233,6 +233,24 @@ public class ShiftProgramService : IShiftProgramService
             // Determine staffing for this day (use per-day override if set, otherwise default)
             var staffing = programDay.StaffingRequired ?? program.DefaultStaffingRequired;
 
+            // Check for ShiftCapacityOverride (overrides from calendar UI)
+            if (program.JobTypeId.HasValue)
+            {
+                var capacityOverride = await _db.ShiftCapacityOverrides
+                    .Where(o => o.ShiftTypeId == program.ShiftTypeId
+                        && o.JobTypeId == program.JobTypeId.Value
+                        && o.Date == date)
+                    .Select(o => (int?)o.Capacity)
+                    .FirstOrDefaultAsync();
+
+                if (capacityOverride.HasValue)
+                {
+                    staffing = capacityOverride.Value;
+                    _logger.LogDebug("Applied ShiftCapacityOverride for ShiftType {ShiftTypeId} on {Date}: {Capacity}",
+                        program.ShiftTypeId, date, staffing);
+                }
+            }
+
             // Check if instance already exists
             var existingInstance = await _db.ShiftInstances
                 .FirstOrDefaultAsync(si =>

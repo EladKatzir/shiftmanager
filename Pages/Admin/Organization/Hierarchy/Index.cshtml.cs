@@ -13,6 +13,8 @@ namespace ShiftManager.Pages.Admin.Organization.Hierarchy;
 /// Hierarchy Overview - Visual tree structure of Project → Area → Molecule
 /// Provides quick navigation and edit links for each level
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ViewHierarchy policy;
+// hierarchy tree view is inherently cross-company organizational data
 [Authorize(Policy = "Grant:ViewHierarchy")]
 public class IndexModel : LocalizedPageModel
 {

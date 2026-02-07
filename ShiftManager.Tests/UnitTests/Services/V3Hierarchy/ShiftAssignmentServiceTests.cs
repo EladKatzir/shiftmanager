@@ -30,8 +30,15 @@ public class ShiftAssignmentServiceTests : IDisposable
 
         var localizer = Mock.Of<IStringLocalizer<SharedResources>>();
         var logger = Mock.Of<ILogger<ShiftAssignmentService>>();
-        var hierarchySettingsService = Mock.Of<IHierarchySettingsService>();
-        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsService);
+        var hierarchySettingsServiceMock = new Mock<IHierarchySettingsService>();
+        hierarchySettingsServiceMock
+            .Setup(x => x.GetEffectiveSettingsAsync(It.IsAny<int>()))
+            .ReturnsAsync(new EffectiveSettings(
+                RestHours: 11,
+                WeeklyCap: 48,
+                RestHoursSource: "Area",
+                WeeklyCapSource: "Area"));
+        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object);
     }
 
     public void Dispose()

@@ -8,6 +8,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Projects;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:EditArea policy;
+// project management is inherently cross-company hierarchy data
 [Authorize(Policy = "Grant:EditArea")]
 public class IndexModel : LocalizedPageModel
 {

@@ -17,6 +17,16 @@
           "XLParser": "1.5.2"
         }
       },
+      "LigerShark.WebOptimizer.Core": {
+        "type": "Direct",
+        "requested": "[3.0.422, )",
+        "resolved": "3.0.422",
+        "contentHash": "WAr1l4v597T4g2de6iC7oDlOpy5gsnLWxj+ZWeQiL3P4i0Qo2bQIuvKlqH/Nw7QQGBoTUvuOZCHViC0RhSKeTg==",
+        "dependencies": {
+          "NUglify": "1.21.9",
+          "System.Text.Json": "8.0.4"
+        }
+      },
       "Microsoft.EntityFrameworkCore.Design": {
         "type": "Direct",
         "requested": "[9.0.9, )",
@@ -466,6 +476,11 @@
           "System.Xml.ReaderWriter": "4.3.0",
           "System.Xml.XDocument": "4.3.0"
         }
+      },
+      "NUglify": {
+        "type": "Transitive",
+        "resolved": "1.21.9",
+        "contentHash": "ULyI/scrIRAo2In6cnaCc/QkWUt+wB6pBVt5lrVddOKyamsCAm1XgArkk4px9tVn6SipjhbTt4M38QPlpoET+g=="
       },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",

@@ -34,12 +34,24 @@ public class ScheduleExportService : IScheduleExportService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
+    /// <summary>Maximum export date range to prevent OOM (C-09).</summary>
+    private const int MaxExportDays = 90;
+
     /// <inheritdoc />
     public async Task<ScheduleExportData> CollectExportDataAsync(ScheduleExportRequest request)
     {
+        // Guard against excessively large exports (C-09)
+        var exportDays = (request.EndDate - request.StartDate).TotalDays;
+        if (exportDays > MaxExportDays)
+        {
+            _logger.LogWarning("Export date range too large: {Days} days. Max is {Max}", exportDays, MaxExportDays);
+            request.EndDate = request.StartDate.AddDays(MaxExportDays);
+        }
+
         var companyId = _tenantResolver.GetCurrentTenantId();
 
         // Get company name
+        // SECURITY-AUDITED: SAFE — scoped by tenant-resolved companyId; returns company name for export header
         var company = await _db.Companies
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Id == companyId);
@@ -218,7 +230,8 @@ public class ScheduleExportService : IScheduleExportService
             {
                 page.Size(PageSizes.A4.Landscape());
                 page.Margin(1, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(10));
+                // Use a font that supports Hebrew characters (G-04)
+                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
 
                 page.Header()
                     .Column(column =>

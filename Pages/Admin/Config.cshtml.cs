@@ -164,6 +164,7 @@ public class ConfigModel : LocalizedPageModel
             return Page();
         }
 
+        // SECURITY-AUDITED: SAFE — admin check if OnDuty type is referenced globally before deletion; requires IsManagerOrAdmin policy
         // Check if this type is in use
         var inUse = await _db.OnDuties
             .IgnoreQueryFilters()

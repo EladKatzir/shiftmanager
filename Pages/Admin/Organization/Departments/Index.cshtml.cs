@@ -9,6 +9,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Pages.Admin.Organization.Departments;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManageDepartments policy;
+// department management is inherently cross-company hierarchy data
 [Authorize(Policy = "Grant:ManageDepartments")]
 public class IndexModel : LocalizedPageModel
 {

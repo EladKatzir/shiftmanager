@@ -11,6 +11,7 @@ namespace ShiftManager.Data.SeedData;
 /// IMPORTANT: This is only seeded in Development/Test environments.
 /// Production databases NEVER receive test data.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — dev-only test data seeding, not user-facing, guarded by IsTestEnvironment() check
 public static class TestDataSeed
 {
     #region Test User Constants

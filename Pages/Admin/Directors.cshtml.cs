@@ -11,6 +11,8 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:AssignRoles policy;
+// companies list needed for cross-company director assignment management
 [Authorize(Policy = "Grant:AssignRoles")]
 public class DirectorsModel : LocalizedPageModel
 {

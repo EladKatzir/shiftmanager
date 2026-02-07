@@ -12,6 +12,7 @@ namespace ShiftManager.Pages.Owner;
 /// DEPRECATED: Redirects to new Owner Hub (/Owner/Hub)
 /// Kept for backward compatibility with bookmarks and external links
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all 107 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class IndexModel : PageModel
 {

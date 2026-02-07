@@ -4536,7 +4536,7 @@
     <value>תורנויות</value>
   </data>
   <data name="Calendar_OnDuty" xml:space="preserve">
-    <value>תפקידים</value>
+    <value>משמרת רוחב</value>
   </data>
   <data name="Calendar_TotalItems" xml:space="preserve">
     <value>סה"כ פריטים</value>
@@ -8484,5 +8484,156 @@
   </data>
   <data name="OwnerHub_ManageSeedData" xml:space="preserve">
     <value>ניהול נתוני בסיס</value>
+  </data>
+  <!-- Help / FAQ Page -->
+  <data name="Help_PageTitle" xml:space="preserve">
+    <value>עזרה ושאלות נפוצות</value>
+  </data>
+  <data name="Help_Subtitle" xml:space="preserve">
+    <value>תשובות לשאלות נפוצות על השימוש במערכת.</value>
+  </data>
+  <data name="Help_Section_Calendar" xml:space="preserve">
+    <value>לוח שנה ומשמרות</value>
+  </data>
+  <data name="Help_FAQ_ViewSchedule_Q" xml:space="preserve">
+    <value>איך אני רואה את לוח המשמרות שלי?</value>
+  </data>
+  <data name="Help_FAQ_ViewSchedule_A" xml:space="preserve">
+    <value>עבור ללוח שנה מתפריט הצד. השתמש בכפתור "רק שלי" כדי לסנן את התצוגה למשמרות שלך בלבד. ניתן לעבור בין תצוגות שבוע, שבועיים וחודש באמצעות בורר התצוגה.</value>
+  </data>
+  <data name="Help_FAQ_CalendarViews_Q" xml:space="preserve">
+    <value>מהן תצוגות הלוח השונות?</value>
+  </data>
+  <data name="Help_FAQ_CalendarViews_A" xml:space="preserve">
+    <value>ללוח יש תצוגות נפרדות למשמרות (שיבוצי תורנות רגילים), תורנויות (משימות ניקיון ותחזוקה) ותורני כוננות. ניתן לסנן כל תצוגה לפי מולקולה, אזור ותקופת זמן. השתמש בחצי הניווט או בבורר התאריך כדי לשנות את התקופה המוצגת.</value>
+  </data>
+  <data name="Help_FAQ_PrintSchedule_Q" xml:space="preserve">
+    <value>איך מדפיסים את לוח המשמרות?</value>
+  </data>
+  <data name="Help_FAQ_PrintSchedule_A" xml:space="preserve">
+    <value>לחץ על כפתור ההדפסה בסרגל הכלים של הלוח, או השתמש בקיצור המקלדת Ctrl+P. הלוח יוצג בפורמט מותאם להדפסה ללא סרגל כלים ואלמנטי ניווט.</value>
+  </data>
+  <data name="Help_Section_Requests" xml:space="preserve">
+    <value>בקשות</value>
+  </data>
+  <data name="Help_FAQ_VacationRequest_Q" xml:space="preserve">
+    <value>איך מגישים בקשת חופשה?</value>
+  </data>
+  <data name="Help_FAQ_VacationRequest_A" xml:space="preserve">
+    <value>עבור לבקשות שלי מתפריט הצד ולחץ על "בקשה חדשה". בחר "חופשה" כסוג, בחר את התאריכים ושלח. הבקשה תנותב למאשרים המתאימים בהתאם לשרשרת האישורים של היחידה שלך. ניתן לעקוב אחר הסטטוס בדף הבקשות.</value>
+  </data>
+  <data name="Help_FAQ_SwapShift_Q" xml:space="preserve">
+    <value>איך מחליפים משמרת עם מישהו?</value>
+  </data>
+  <data name="Help_FAQ_SwapShift_A" xml:space="preserve">
+    <value>עבור לבקשות שלי, לחץ על "בקשה חדשה" ובחר "החלפה". בחר את המשמרת שברצונך להחליף ואת האדם שאיתו אתה רוצה להחליף. שני הצדדים והמנהל הרלוונטי חייבים לאשר לפני שההחלפה נכנסת לתוקף.</value>
+  </data>
+  <data name="Help_FAQ_RequestStatus_Q" xml:space="preserve">
+    <value>איך בודקים את סטטוס הבקשה שלי?</value>
+  </data>
+  <data name="Help_FAQ_RequestStatus_A" xml:space="preserve">
+    <value>עבור לבקשות שלי מתפריט הצד. כל הבקשות שהגשת מופיעות עם הסטטוס הנוכחי (ממתין, אושר, נדחה). תקבל גם התראות כשסטטוס הבקשה משתנה.</value>
+  </data>
+  <data name="Help_Section_Account" xml:space="preserve">
+    <value>חשבון והגדרות</value>
+  </data>
+  <data name="Help_FAQ_ChangePassword_Q" xml:space="preserve">
+    <value>איך משנים סיסמה?</value>
+  </data>
+  <data name="Help_FAQ_ChangePassword_A" xml:space="preserve">
+    <value>עבור לפרופיל שלי מתפריט הצד. גלול לאזור הסיסמה והזן את הסיסמה הנוכחית ולאחר מכן את הסיסמה החדשה. לחץ על שמור לעדכון.</value>
+  </data>
+  <data name="Help_FAQ_Notifications_Q" xml:space="preserve">
+    <value>איך מנהלים את ההתראות?</value>
+  </data>
+  <data name="Help_FAQ_Notifications_A" xml:space="preserve">
+    <value>עבור להגדרות מתפריט הצד. ניתן להגדיר אילו התראות לקבל ואת שיטת המסירה המועדפת (באפליקציה, אימייל, או שניהם).</value>
+  </data>
+  <data name="Help_FAQ_CantLogin_Q" xml:space="preserve">
+    <value>אני לא מצליח להתחבר. מה לעשות?</value>
+  </data>
+  <data name="Help_FAQ_CantLogin_A" xml:space="preserve">
+    <value>אם החשבון שלך ננעל אחרי יותר מדי ניסיונות כושלים, המתן כמה דקות ונסה שוב. אם עדיין לא מצליח, פנה למפקד או למנהל המערכת כדי לבדוק את מצב החשבון ולאפס את הסיסמה במידת הצורך.</value>
+  </data>
+  <data name="Help_Section_Troubleshooting" xml:space="preserve">
+    <value>פתרון בעיות</value>
+  </data>
+  <data name="Help_FAQ_StaleData_Q" xml:space="preserve">
+    <value>הלוח מציג מידע לא מעודכן. מה לעשות?</value>
+  </data>
+  <data name="Help_FAQ_StaleData_A" xml:space="preserve">
+    <value>אם אתה רואה באנר צהוב או אדום בראש הדף המציין בעיית חיבור, העדכונים בזמן אמת הופסקו. נסה לרענן את הדף (F5). אם הבעיה נמשכת, בדוק את חיבור הרשת.</value>
+  </data>
+  <data name="Help_FAQ_PageError_Q" xml:space="preserve">
+    <value>אני רואה הודעת שגיאה בדף. מה לעשות?</value>
+  </data>
+  <data name="Help_FAQ_PageError_A" xml:space="preserve">
+    <value>נסה לרענן את הדף. אם השגיאה נמשכת, רשום את הודעת השגיאה ופנה למנהל המערכת. כלול את כתובת הדף, הפעולה שביצעת והזמן המשוער של השגיאה.</value>
+  </data>
+  <data name="Help_NeedMoreHelp" xml:space="preserve">
+    <value>צריכים עוד עזרה?</value>
+  </data>
+  <data name="Help_ContactSupport" xml:space="preserve">
+    <value>פנה למפקד או למנהל המערכת לקבלת סיוע נוסף.</value>
+  </data>
+  <data name="Help_NavLink" xml:space="preserve">
+    <value>עזרה</value>
+  </data>
+  <data name="AuditSearch" xml:space="preserve">
+    <value>חיפוש יומן ביקורת</value>
+  </data>
+  <data name="AuditSearch_Description" xml:space="preserve">
+    <value>חיפוש וסינון רשומות יומן ביקורת בכל הארגונים</value>
+  </data>
+  <data name="AuditSearch_StartDate" xml:space="preserve">
+    <value>תאריך התחלה</value>
+  </data>
+  <data name="AuditSearch_EndDate" xml:space="preserve">
+    <value>תאריך סיום</value>
+  </data>
+  <data name="AuditSearch_User" xml:space="preserve">
+    <value>משתמש</value>
+  </data>
+  <data name="AuditSearch_Action" xml:space="preserve">
+    <value>פעולה</value>
+  </data>
+  <data name="AuditSearch_EntityType" xml:space="preserve">
+    <value>סוג ישות</value>
+  </data>
+  <data name="AuditSearch_SearchTerm" xml:space="preserve">
+    <value>מילת חיפוש</value>
+  </data>
+  <data name="AuditSearch_Search" xml:space="preserve">
+    <value>חיפוש</value>
+  </data>
+  <data name="AuditSearch_Reset" xml:space="preserve">
+    <value>איפוס</value>
+  </data>
+  <data name="AuditSearch_ExportCsv" xml:space="preserve">
+    <value>ייצוא CSV</value>
+  </data>
+  <data name="AuditSearch_NoResults" xml:space="preserve">
+    <value>לא נמצאו רשומות יומן ביקורת התואמות את הקריטריונים שלך.</value>
+  </data>
+  <data name="AuditSearch_TotalRecords" xml:space="preserve">
+    <value>סה"כ רשומות</value>
+  </data>
+  <data name="ExportUserData" xml:space="preserve">
+    <value>ייצוא נתוני משתמש</value>
+  </data>
+  <data name="ExportUserData_Description" xml:space="preserve">
+    <value>הורד את כל הנתונים של משתמש זה כקובץ JSON</value>
+  </data>
+  <data name="ShiftHistory" xml:space="preserve">
+    <value>היסטוריית משמרות</value>
+  </data>
+  <data name="ShiftHistory_Description" xml:space="preserve">
+    <value>הצג היסטוריית שינויי שיבוץ</value>
+  </data>
+  <data name="ContextSwitch_Message" xml:space="preserve">
+    <value>עברת אל: {0}</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>הצג</value>
   </data>
 </root>

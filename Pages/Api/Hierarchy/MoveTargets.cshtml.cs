@@ -11,6 +11,8 @@ namespace ShiftManager.Pages.Api.Hierarchy;
 /// API endpoint to get valid move targets for a hierarchy entity.
 /// GET /Api/Hierarchy/MoveTargets?entityType=area&amp;entityId=1
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ReorderHierarchy policy;
+// move targets needs cross-company hierarchy lookups to find valid parents
 [Authorize(Policy = "Grant:ReorderHierarchy")]
 public class MoveTargetsModel : PageModel
 {

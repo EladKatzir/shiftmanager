@@ -154,6 +154,20 @@ public class SwapRequestApiService
             }
         }
 
+        // Check for conflicting pending swap on the same assignment (prevents circular swaps)
+        var hasConflictingSwap = await _context.SwapRequests
+            .AnyAsync(sr => sr.Status == RequestStatus.Pending
+                && sr.CompanyId == companyId
+                && (sr.FromAssignmentId == dto.FromAssignmentId
+                    || (dto.ToAssignmentId.HasValue && sr.FromAssignmentId == dto.ToAssignmentId.Value)
+                    || sr.ToAssignmentId == dto.FromAssignmentId
+                    || (dto.ToAssignmentId.HasValue && sr.ToAssignmentId == dto.ToAssignmentId.Value)));
+
+        if (hasConflictingSwap)
+        {
+            return (null, "A pending swap request already exists for one of these assignments. Cancel it first.");
+        }
+
         // Create swap request
         var swapRequest = new SwapRequest
         {
@@ -201,27 +215,76 @@ public class SwapRequestApiService
             return (null, $"Swap request is already {swapRequest.Status}");
         }
 
-        // Perform the swap
-        if (swapRequest.ToAssignmentId.HasValue)
+        // Wrap swap in transaction to prevent conflicting concurrent approvals
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            var fromUserId = swapRequest.FromAssignment!.UserId;
-            var toUserId = swapRequest.ToAssignment!.UserId;
+            // Re-check no other pending swap was approved for the same assignments
+            var conflictingApproved = await _context.SwapRequests
+                .AnyAsync(sr => sr.Id != requestId
+                    && sr.Status == RequestStatus.Approved
+                    && sr.ReviewedAt > DateTime.UtcNow.AddMinutes(-5)
+                    && (sr.FromAssignmentId == swapRequest.FromAssignmentId
+                        || sr.ToAssignmentId == swapRequest.FromAssignmentId
+                        || (swapRequest.ToAssignmentId.HasValue &&
+                            (sr.FromAssignmentId == swapRequest.ToAssignmentId.Value
+                            || sr.ToAssignmentId == swapRequest.ToAssignmentId.Value))));
 
-            swapRequest.FromAssignment.UserId = toUserId;
-            swapRequest.ToAssignment.UserId = fromUserId;
+            if (conflictingApproved)
+            {
+                await transaction.RollbackAsync();
+                return (null, "A conflicting swap was just approved. Please review assignments before retrying.");
+            }
+
+            // Perform the swap
+            if (swapRequest.ToAssignmentId.HasValue)
+            {
+                var fromUserId = swapRequest.FromAssignment!.UserId;
+                var toUserId = swapRequest.ToAssignment!.UserId;
+
+                swapRequest.FromAssignment.UserId = toUserId;
+                swapRequest.ToAssignment.UserId = fromUserId;
+            }
+            else
+            {
+                // Just remove from assignment
+                swapRequest.FromAssignment!.UserId = null;
+            }
+
+            // Update swap request status
+            swapRequest.Status = RequestStatus.Approved;
+            swapRequest.ReviewedAt = DateTime.UtcNow;
+            swapRequest.ReviewedBy = reviewerId;
+
+            // Auto-decline other pending swaps for the same assignments
+            var conflictingPending = await _context.SwapRequests
+                .Where(sr => sr.Id != requestId
+                    && sr.Status == RequestStatus.Pending
+                    && sr.CompanyId == companyId
+                    && (sr.FromAssignmentId == swapRequest.FromAssignmentId
+                        || sr.ToAssignmentId == swapRequest.FromAssignmentId
+                        || (swapRequest.ToAssignmentId.HasValue &&
+                            (sr.FromAssignmentId == swapRequest.ToAssignmentId.Value
+                            || sr.ToAssignmentId == swapRequest.ToAssignmentId.Value))))
+                .ToListAsync();
+
+            foreach (var conflicting in conflictingPending)
+            {
+                conflicting.Status = RequestStatus.Declined;
+                conflicting.ReviewedAt = DateTime.UtcNow;
+                conflicting.ReviewedBy = reviewerId;
+                conflicting.DeclineReason = "Auto-declined: a conflicting swap was approved";
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
-        else
+        catch (Exception ex)
         {
-            // Just remove from assignment
-            swapRequest.FromAssignment!.UserId = null;
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to approve swap request {RequestId}", requestId);
+            return (null, "Failed to approve swap - please try again");
         }
-
-        // Update swap request status
-        swapRequest.Status = RequestStatus.Approved;
-        swapRequest.ReviewedAt = DateTime.UtcNow;
-        swapRequest.ReviewedBy = reviewerId;
-
-        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Swap request approved: Id={Id}, Reviewer={Reviewer}",
             requestId, reviewerId);

@@ -86,6 +86,7 @@ public class HierarchyService : IHierarchyService
         // IMPORTANT: Use IgnoreQueryFilters to bypass tenant filtering.
         // This is needed because Owners/Directors may be viewing a different company
         // but still need their own user record to determine their hierarchy context.
+        // SECURITY-AUDITED: SAFE — scoped by specific userId; returns only the user's own hierarchy context
         var user = await _db.Users
             .IgnoreQueryFilters()
             .Include(u => u.JobType)

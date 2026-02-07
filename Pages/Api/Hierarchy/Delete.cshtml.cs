@@ -13,6 +13,8 @@ namespace ShiftManager.Pages.Api.Hierarchy;
 /// API endpoint to delete (soft-delete) hierarchy entities.
 /// POST /Api/Hierarchy/Delete
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:DeleteHierarchy policy;
+// hierarchy deletion needs cross-company child existence checks
 [Authorize(Policy = "Grant:DeleteHierarchy")]
 [IgnoreAntiforgeryToken]
 public class DeleteModel : PageModel
@@ -123,6 +125,14 @@ public class DeleteModel : PageModel
                         return new JsonResult(new { success = false, message = "Cannot delete company with users. Reassign or remove users first." }) { StatusCode = 400 };
                     }
                     entityName = company.DisplayName ?? company.Name;
+                    // Clean up DirectorCompany mappings before removing the company
+                    var directorMappings = await _db.DirectorCompanies
+                        .Where(dc => dc.CompanyId == request.EntityId)
+                        .ToListAsync();
+                    if (directorMappings.Any())
+                    {
+                        _db.DirectorCompanies.RemoveRange(directorMappings);
+                    }
                     // For companies, we actually remove since they don't have an IsActive flag
                     _db.Companies.Remove(company);
                     result = $"Company '{entityName}' deleted";

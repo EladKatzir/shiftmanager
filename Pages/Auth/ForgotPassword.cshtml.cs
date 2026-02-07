@@ -109,6 +109,7 @@ public class ForgotPasswordModel : LocalizedPageModel
 
         try
         {
+            // SECURITY-AUDITED: SAFE — password recovery must search across all companies
             // Find user by email and phone number match (case-insensitive for email)
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow searching across all companies
@@ -242,6 +243,7 @@ public class ForgotPasswordModel : LocalizedPageModel
 
         try
         {
+            // SECURITY-AUDITED: SAFE — password change must search across all companies
             // Find user by email (case-insensitive)
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow searching across all companies

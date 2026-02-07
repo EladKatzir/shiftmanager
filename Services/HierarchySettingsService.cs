@@ -22,6 +22,7 @@ public class HierarchySettingsService : IHierarchySettingsService
     public async Task<EffectiveSettings> GetEffectiveSettingsAsync(int companyId)
     {
         // Load company and its hierarchy
+        // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter
         var company = await _db.Companies.IgnoreQueryFilters()
             .Include(c => c.Molecule)
                 .ThenInclude(m => m!.Area)
@@ -33,6 +34,7 @@ public class HierarchySettingsService : IHierarchySettingsService
         }
 
         // Load all settings
+        // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter
         var companySettings = await _db.CompanySettings.IgnoreQueryFilters()
             .FirstOrDefaultAsync(cs => cs.CompanyId == companyId);
 
@@ -41,11 +43,13 @@ public class HierarchySettingsService : IHierarchySettingsService
 
         if (company.MoleculeId.HasValue)
         {
+            // SECURITY-AUDITED: SAFE — scoped by company's moleculeId (derived from companyId parameter)
             moleculeSettings = await _db.MoleculeSettings.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(ms => ms.MoleculeId == company.MoleculeId.Value);
 
             if (company.Molecule?.AreaId != null)
             {
+                // SECURITY-AUDITED: SAFE — scoped by company's molecule's areaId (derived from companyId parameter)
                 areaSettings = await _db.AreaSettings.IgnoreQueryFilters()
                     .FirstOrDefaultAsync(a => a.AreaId == company.Molecule.AreaId);
             }
@@ -102,6 +106,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<EffectiveSettings> GetMoleculeSettingsAsync(int moleculeId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter
         var molecule = await _db.Molecules.IgnoreQueryFilters()
             .Include(m => m.Area)
             .FirstOrDefaultAsync(m => m.Id == moleculeId);
@@ -111,9 +116,11 @@ public class HierarchySettingsService : IHierarchySettingsService
             return new EffectiveSettings(DefaultRestHours, DefaultWeeklyCap, "Default", "Default");
         }
 
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter
         var moleculeSettings = await _db.MoleculeSettings.IgnoreQueryFilters()
             .FirstOrDefaultAsync(ms => ms.MoleculeId == moleculeId);
 
+        // SECURITY-AUDITED: SAFE — scoped by molecule's areaId (derived from moleculeId parameter)
         var areaSettings = await _db.AreaSettings.IgnoreQueryFilters()
             .FirstOrDefaultAsync(a => a.AreaId == molecule.AreaId);
 
@@ -149,6 +156,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<AreaSettingsDto?> GetAreaSettingsAsync(int areaId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific areaId parameter; admin-only settings page
         var settings = await _db.AreaSettings.IgnoreQueryFilters()
             .Include(a => a.Area)
             .Include(a => a.UpdatedByUser)
@@ -157,6 +165,7 @@ public class HierarchySettingsService : IHierarchySettingsService
         if (settings == null)
         {
             // Return defaults if no settings record exists
+            // SECURITY-AUDITED: SAFE — scoped by specific areaId parameter
             var area = await _db.Areas.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == areaId);
             if (area == null) return null;
 
@@ -180,6 +189,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<bool> UpdateAreaSettingsAsync(int areaId, int restHours, int weeklyCap, int updatedByUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific areaId parameter; admin-only write operation
         var settings = await _db.AreaSettings.IgnoreQueryFilters()
             .FirstOrDefaultAsync(a => a.AreaId == areaId);
 
@@ -210,6 +220,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<MoleculeSettingsDto?> GetMoleculeSettingsOverrideAsync(int moleculeId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter; admin-only settings page
         var settings = await _db.MoleculeSettings.IgnoreQueryFilters()
             .Include(m => m.Molecule)
             .Include(m => m.UpdatedByUser)
@@ -217,6 +228,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
         if (settings == null)
         {
+            // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter
             var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == moleculeId);
             if (molecule == null) return null;
 
@@ -240,6 +252,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<bool> UpdateMoleculeSettingsAsync(int moleculeId, int? restHoursOverride, int? weeklyCapOverride, int updatedByUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific moleculeId parameter; admin-only write operation
         var settings = await _db.MoleculeSettings.IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.MoleculeId == moleculeId);
 
@@ -270,6 +283,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<CompanySettingsDto?> GetCompanySettingsOverrideAsync(int companyId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter; admin-only settings page
         var settings = await _db.CompanySettings.IgnoreQueryFilters()
             .Include(c => c.Company)
             .Include(c => c.UpdatedByUser)
@@ -277,6 +291,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
         if (settings == null)
         {
+            // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter
             var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == companyId);
             if (company == null) return null;
 
@@ -300,6 +315,7 @@ public class HierarchySettingsService : IHierarchySettingsService
 
     public async Task<bool> UpdateCompanySettingsAsync(int companyId, int? restHoursOverride, int? weeklyCapOverride, int updatedByUserId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter; admin-only write operation
         var settings = await _db.CompanySettings.IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 

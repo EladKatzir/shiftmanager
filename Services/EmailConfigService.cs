@@ -35,6 +35,7 @@ public class EmailConfigService : IEmailConfigService
 
     public async Task<EmailConfig?> GetEmailConfigByCompanyIdAsync(int companyId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific companyId parameter
         return await _context.EmailConfigs
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);

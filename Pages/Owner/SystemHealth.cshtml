@@ -33,6 +33,25 @@
         <button onclick="location.reload()" class="btn btn-ghost">🔄 Refresh</button>
     </div>
 
+    @* Security Warnings (fixes D-01, B-06, H-07, B-10) *@
+    @if (Model.SecurityWarnings.Count > 0)
+    {
+        <div class="health-check-card" style="border: 2px solid var(--danger); background: var(--danger-bg, rgba(220,53,69,0.1)); margin-bottom: 1rem;">
+            <div class="check-header">
+                <h3>🔒 Security Warnings</h3>
+                <span class="status-badge badge-error">Action Required</span>
+            </div>
+            <div class="check-details">
+                @foreach (var warning in Model.SecurityWarnings)
+                {
+                    <div class="detail-item" style="color: var(--danger, #dc3545); font-weight: 600;">
+                        <span>⚠️ @warning</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
     @* Health Checks Grid *@
     <div class="health-checks-grid">
         @* Database Health *@

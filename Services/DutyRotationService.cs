@@ -253,6 +253,7 @@ public class DutyRotationService : IDutyRotationService
             if (user == null) continue;
 
             // Check 1: User is active
+            // SECURITY-AUDITED: SAFE — scoped by specific userId from rotation queue entry
             var dbUser = await _db.Users.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Id == entry.UserId);
 
@@ -263,6 +264,7 @@ public class DutyRotationService : IDutyRotationService
             }
 
             // Check 2: Vacation conflict
+            // SECURITY-AUDITED: SAFE — scoped by specific userId + date; returns boolean only
             var hasVacation = await _db.TimeOffRequests.IgnoreQueryFilters()
                 .AnyAsync(t => t.UserId == entry.UserId &&
                               t.Status == RequestStatus.Approved &&
@@ -276,6 +278,7 @@ public class DutyRotationService : IDutyRotationService
             }
 
             // Check 3: Existing OnDuty of same type on same date
+            // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by userId + date + type
             var hasExisting = await _db.Set<OnDuty>().IgnoreQueryFilters()
                 .AnyAsync(o => o.UserId == entry.UserId &&
                               o.Date == date &&
@@ -340,8 +343,15 @@ public class DutyRotationService : IDutyRotationService
             return (true, $"Assigned to user {dbUser.DisplayName}.", createdOnDuty);
         }
 
-        // No eligible user found after checking all entries
-        return (false, "No eligible user found in rotation queue for this date.", null);
+        // Circuit breaker: No eligible user found after checking all entries (fixes A-08)
+        _logger.LogWarning(
+            "DutyRotation circuit breaker: No eligible user found in rotation {RotationId} ({RotationName}) for {Date}. " +
+            "All {TotalEntries} queue members were skipped. Manual assignment required.",
+            rotationId, rotation.Name, date, totalEntries);
+
+        return (false, $"No eligible user found in rotation queue for {date:yyyy-MM-dd}. " +
+            $"All {totalEntries} queue members were skipped (vacation, inactive, or conflict). " +
+            "Manual assignment required.", null);
     }
 
     public async Task<List<(DateOnly Date, int UserId, string? SkipReason)>> PreviewRotationAsync(
@@ -372,6 +382,7 @@ public class DutyRotationService : IDutyRotationService
 
         // Pre-load vacation data for the date range
         var userIds = activeEntries.Select(e => e.UserId).ToList();
+        // SECURITY-AUDITED: SAFE — scoped by rotation queue's userIds + date range; preview-only
         var vacations = await _db.TimeOffRequests.IgnoreQueryFilters()
             .Where(t => userIds.Contains(t.UserId) &&
                        t.Status == RequestStatus.Approved &&
@@ -380,6 +391,7 @@ public class DutyRotationService : IDutyRotationService
             .ToListAsync();
 
         // Pre-load existing OnDuty assignments for the date range
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by rotation queue's userIds + date range
         var existingDuties = await _db.Set<OnDuty>().IgnoreQueryFilters()
             .Where(o => userIds.Contains(o.UserId) &&
                        o.Date >= startDate &&
@@ -389,6 +401,7 @@ public class DutyRotationService : IDutyRotationService
             .ToListAsync();
 
         // Pre-load user data
+        // SECURITY-AUDITED: SAFE — scoped by rotation queue's userIds; preview-only
         var users = await _db.Users.IgnoreQueryFilters()
             .Where(u => userIds.Contains(u.Id))
             .ToListAsync();

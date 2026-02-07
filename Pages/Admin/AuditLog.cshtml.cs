@@ -201,7 +201,13 @@ public class AuditLogModel : LocalizedPageModel
             var company = await _db.Companies.FindAsync(_tenantResolver.GetCurrentTenantId());
             var fileName = $"AuditLog_{company?.Name.Replace(" ", "_")}_{DateTime.UtcNow:yyyyMMdd}.csv";
 
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+            // Add UTF-8 BOM for Hebrew Excel compatibility (fixes G-07)
+            var preamble = System.Text.Encoding.UTF8.GetPreamble();
+            var csvBytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            var bomResult = new byte[preamble.Length + csvBytes.Length];
+            preamble.CopyTo(bomResult, 0);
+            csvBytes.CopyTo(bomResult, preamble.Length);
+            return File(bomResult, "text/csv", fileName);
         }
         catch (Exception ex)
         {

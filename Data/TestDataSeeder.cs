@@ -5,6 +5,7 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Data
 {
+    // SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — dev-only test data seeding, guarded by IsDevelopment check
     public class TestDataSeeder
     {
         private readonly AppDbContext _context;

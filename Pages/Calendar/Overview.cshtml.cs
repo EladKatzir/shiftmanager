@@ -18,6 +18,8 @@ namespace ShiftManager.Pages.Calendar;
 /// Company-scoped: shows users in current company as rows, days as columns.
 /// Each cell shows aggregated status (vacations, shifts, chores, on-duty) plus notes.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// users filtered by CompanyId; note save validates user is in same company
 [Authorize]
 public class OverviewModel : PageModel
 {

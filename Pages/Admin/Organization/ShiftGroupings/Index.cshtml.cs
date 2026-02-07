@@ -9,6 +9,8 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.ShiftGroupings;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManageShiftGroupings policy;
+// shift grouping management is inherently cross-company hierarchy data
 [Authorize(Policy = "Grant:ManageShiftGroupings")]
 public class IndexModel : LocalizedPageModel
 {

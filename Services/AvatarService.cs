@@ -117,6 +117,12 @@ public class AvatarService : IAvatarService
 
                 using (image)
                 {
+                    // Strip EXIF metadata (may contain GPS coordinates — OPSEC concern)
+                    image.Metadata.ExifProfile = null;
+                    image.Metadata.IccProfile = null;
+                    image.Metadata.IptcProfile = null;
+                    image.Metadata.XmpProfile = null;
+
                     // Resize to 400x400 (crop to center if not square)
                     image.Mutate(x => x.Resize(new ResizeOptions
                     {

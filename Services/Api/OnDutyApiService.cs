@@ -42,6 +42,7 @@ public class OnDutyApiService
         if (pageSize > 100) pageSize = 100;
 
         // On-duty is global, use IgnoreQueryFilters to bypass company filtering
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; re-filtered by userId/date/type/canceled parameters
         var query = _context.OnDuties.IgnoreQueryFilters().AsQueryable();
 
         // Filter by canceled status
@@ -101,6 +102,7 @@ public class OnDutyApiService
     /// </summary>
     public async Task<OnDutyDto?> GetOnDutyAsync(int onDutyId, bool includeRelated = true)
     {
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by specific onDutyId
         var onDuty = await _context.OnDuties
             .IgnoreQueryFilters()
             .Where(od => od.Id == onDutyId)
@@ -122,6 +124,7 @@ public class OnDutyApiService
         CreateOnDutyDto dto)
     {
         // Validate user exists (use IgnoreQueryFilters since on-duty is cross-company)
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by specific userId from DTO
         var user = await _context.Users
             .IgnoreQueryFilters()
             .Where(u => u.Id == dto.UserId)
@@ -145,6 +148,7 @@ public class OnDutyApiService
         }
 
         // Check for existing active on-duty assignment of the same type on the same day
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by date + type
         var existingOnDuty = await _context.OnDuties
             .IgnoreQueryFilters()
             .Where(od => od.Date == date &&
@@ -185,6 +189,7 @@ public class OnDutyApiService
         int onDutyId,
         UpdateOnDutyDto dto)
     {
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by specific onDutyId
         var onDuty = await _context.OnDuties
             .IgnoreQueryFilters()
             .Where(od => od.Id == onDutyId)
@@ -219,6 +224,7 @@ public class OnDutyApiService
     /// </summary>
     public async Task<bool> DeleteOnDutyAsync(int onDutyId, int canceledBy)
     {
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by specific onDutyId
         var onDuty = await _context.OnDuties
             .IgnoreQueryFilters()
             .Where(od => od.Id == onDutyId)

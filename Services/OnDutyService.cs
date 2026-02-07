@@ -91,6 +91,7 @@ public class OnDutyService : IOnDutyService
         if (userId <= 0) return null;
 
         // Must use IgnoreQueryFilters since we need to access users across all companies
+        // SECURITY-AUDITED: SAFE — scoped by authenticated userId from claims; returns only current user's record
         return await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
     }
 
@@ -134,6 +135,7 @@ public class OnDutyService : IOnDutyService
         }
 
         // Query users in accessible companies
+        // SECURITY-AUDITED: SAFE — re-scoped by grant-derived accessibleCompanyIds
         var query = _db.Users.IgnoreQueryFilters()
             .Where(u => u.IsActive && accessibleCompanyIds.Contains(u.CompanyId));
 
@@ -156,6 +158,7 @@ public class OnDutyService : IOnDutyService
     public async Task<bool> HasActiveOnDutyOnDateAsync(int userId, DateOnly date, OnDutyType type)
     {
         // OnDuty is global - must use IgnoreQueryFilters
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by userId + date + type
         return await _db.OnDuties.IgnoreQueryFilters()
             .AnyAsync(o => o.UserId == userId && o.Date == date && o.Type == type && o.CanceledAt == null);
     }
@@ -167,12 +170,14 @@ public class OnDutyService : IOnDutyService
     public async Task<bool> HasVacationConflictAsync(int userId, DateOnly date)
     {
         // Get user to find their company (needed for vacation query)
+        // SECURITY-AUDITED: SAFE — scoped by specific userId parameter; no data exposure
         var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return false;
 
         // Check for approved time off requests that include this date
         // Vacation logic: StartDate 00:00 to EndDate+1 13:00
         // After logic: StartDate 16:00 to StartDate+1 13:00
+        // SECURITY-AUDITED: SAFE — scoped by userId + companyId + date; returns boolean only
         var hasConflict = await _db.TimeOffRequests.IgnoreQueryFilters()
             .AnyAsync(t => t.UserId == userId &&
                           t.CompanyId == user.CompanyId &&
@@ -190,9 +195,11 @@ public class OnDutyService : IOnDutyService
     public async Task<(bool HasConflict, DateOnly? StartDate, DateOnly? EndDate, TimeOffType? Type)>
         GetVacationConflictDetailsAsync(int userId, DateOnly date)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific userId parameter; no data exposure
         var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return (false, null, null, null);
 
+        // SECURITY-AUDITED: SAFE — scoped by userId + companyId + date; returns only conflict dates/type
         var vacation = await _db.TimeOffRequests.IgnoreQueryFilters()
             .Where(t => t.UserId == userId &&
                        t.CompanyId == user.CompanyId &&
@@ -263,6 +270,7 @@ public class OnDutyService : IOnDutyService
             }
 
             // Get assignee (must use IgnoreQueryFilters for cross-company access)
+            // SECURITY-AUDITED: SAFE — scoped by specific assigneeId; grant check performed above
             var assignee = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == assigneeId);
             if (assignee == null)
             {
@@ -350,6 +358,7 @@ public class OnDutyService : IOnDutyService
             }
 
             // OnDuty is global - must use IgnoreQueryFilters
+            // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by specific onDutyId; grant check follows
             var onDuty = await _db.OnDuties.IgnoreQueryFilters()
                 .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == onDutyId);
@@ -420,6 +429,7 @@ public class OnDutyService : IOnDutyService
         bool? includeCanceled = false)
     {
         // OnDuty is global - must use IgnoreQueryFilters
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; re-filtered by date/userId/type parameters
         var query = _db.OnDuties.IgnoreQueryFilters()
             .Include(o => o.User)
             .Include(o => o.Creator)
@@ -464,6 +474,7 @@ public class OnDutyService : IOnDutyService
     public async Task<OnDuty?> GetOnDutyByIdAsync(int onDutyId)
     {
         // OnDuty is global - must use IgnoreQueryFilters
+        // SECURITY-AUDITED: SAFE — OnDuty is global by design; scoped by specific onDutyId
         return await _db.OnDuties.IgnoreQueryFilters()
             .Include(o => o.User)
             .Include(o => o.Creator)
@@ -476,6 +487,7 @@ public class OnDutyService : IOnDutyService
     /// </summary>
     public async Task<List<AppUser>> GetEligibleUsersForDutyAsync(OnDutyType dutyType, bool requireOfficer = false)
     {
+        // SECURITY-AUDITED: SAFE — OnDuty is global/cross-company by design; filtered by IsActive and optional rank
         var query = _db.Users
             .IgnoreQueryFilters() // OnDuty is cross-company
             .Where(u => u.IsActive);
@@ -512,6 +524,7 @@ public class OnDutyService : IOnDutyService
     /// </summary>
     public async Task<bool> IsUserEligibleForDutyAsync(int userId, OnDutyType dutyType, bool requireOfficer = false)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific userId; returns boolean eligibility check only
         var user = await _db.Users
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Id == userId);

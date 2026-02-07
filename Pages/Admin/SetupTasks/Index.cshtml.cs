@@ -11,6 +11,8 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.SetupTasks;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:SystemConfiguration policy;
+// molecule list and setup task tracking are system-wide administrative data
 [Authorize(Policy = "Grant:SystemConfiguration")]
 public class IndexModel : LocalizedPageModel
 {

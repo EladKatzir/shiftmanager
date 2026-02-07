@@ -9,11 +9,13 @@ public class GrantService : IGrantService
 {
     private readonly AppDbContext _db;
     private readonly IHierarchyService _hierarchyService;
+    private readonly IAuditLogService _auditLogService;
 
-    public GrantService(AppDbContext db, IHierarchyService hierarchyService)
+    public GrantService(AppDbContext db, IHierarchyService hierarchyService, IAuditLogService auditLogService)
     {
         _db = db;
         _hierarchyService = hierarchyService;
+        _auditLogService = auditLogService;
     }
 
     // Grant checking
@@ -179,6 +181,7 @@ public class GrantService : IGrantService
             // Project scope - all companies in project
             if (grant.ProjectId.HasValue)
             {
+                // SECURITY-AUDITED: SAFE — scoped by grant's ProjectId; resolves companies within granted project scope
                 var projectCompanyIds = await _db.Companies
                     .IgnoreQueryFilters()
                     .Where(c => c.Molecule.Area.ProjectId == grant.ProjectId.Value)
@@ -192,6 +195,7 @@ public class GrantService : IGrantService
             // Area scope - all companies in area
             if (grant.AreaId.HasValue)
             {
+                // SECURITY-AUDITED: SAFE — scoped by grant's AreaId; resolves companies within granted area scope
                 var areaCompanyIds = await _db.Companies
                     .IgnoreQueryFilters()
                     .Where(c => c.Molecule.AreaId == grant.AreaId.Value)
@@ -205,6 +209,7 @@ public class GrantService : IGrantService
             // Molecule scope - all companies in molecule
             if (grant.MoleculeId.HasValue)
             {
+                // SECURITY-AUDITED: SAFE — scoped by grant's MoleculeId; resolves companies within granted molecule scope
                 var moleculeCompanyIds = await _db.Companies
                     .IgnoreQueryFilters()
                     .Where(c => c.MoleculeId == grant.MoleculeId.Value)
@@ -242,6 +247,7 @@ public class GrantService : IGrantService
     public async Task<Grant?> GrantAsync(int userId, int grantTypeId, GrantScope scope, int? grantedByUserId = null, string? notes = null)
     {
         // Use IgnoreQueryFilters to allow granting to users in any company
+        // SECURITY-AUDITED: SAFE — scoped by specific userId; CanGive delegation check follows
         var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return null;
@@ -298,17 +304,38 @@ public class GrantService : IGrantService
         _db.Grants.Add(grant);
         await _db.SaveChangesAsync();
 
+        // Audit trail for grant assignment (fixes D-05)
+        if (grantedByUserId.HasValue)
+        {
+            await _auditLogService.LogUserActionAsync(grantedByUserId.Value, "GrantAssigned", "Grant", grant.Id,
+                $"Granted '{grantType.Key}' to user {userId}",
+                $"GrantTypeId={grantTypeId}, Scope=[Project={scope.ProjectId}, Area={scope.AreaId}, Molecule={scope.MoleculeId}, Company={scope.CompanyId}, Dept={scope.DepartmentId}, JobType={scope.JobTypeId}]");
+        }
+
         return grant;
     }
 
     public async Task<bool> RevokeAsync(int grantId, int? revokedByUserId = null)
     {
-        var grant = await _db.Grants.FindAsync(grantId);
+        var grant = await _db.Grants
+            .Include(g => g.GrantType)
+            .FirstOrDefaultAsync(g => g.Id == grantId);
         if (grant == null)
             return false;
 
+        var grantTypeKey = grant.GrantType?.Key ?? "Unknown";
+        var targetUserId = grant.UserId;
+
         _db.Grants.Remove(grant);
         await _db.SaveChangesAsync();
+
+        // Audit trail for grant revocation (fixes D-05)
+        if (revokedByUserId.HasValue)
+        {
+            await _auditLogService.LogUserActionAsync(revokedByUserId.Value, "GrantRevoked", "Grant", grantId,
+                $"Revoked '{grantTypeKey}' from user {targetUserId}",
+                $"GrantId={grantId}, GrantTypeKey={grantTypeKey}, TargetUserId={targetUserId}");
+        }
 
         return true;
     }
@@ -568,6 +595,7 @@ public class GrantService : IGrantService
     /// </summary>
     public async Task<GrantVerificationResult> VerifyUserGrantsAsync(int userId)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific userId; admin diagnostic operation
         var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
         {
@@ -626,6 +654,7 @@ public class GrantService : IGrantService
     /// </summary>
     public async Task<List<GrantVerificationResult>> VerifyAllUserGrantsAsync()
     {
+        // SECURITY-AUDITED: SAFE — admin-only bulk verification; returns only user IDs for further processing
         var users = await _db.Users.IgnoreQueryFilters()
             .Where(u => u.IsActive)
             .Select(u => u.Id)
@@ -645,6 +674,7 @@ public class GrantService : IGrantService
     /// </summary>
     public async Task<int> RepairUserGrantsAsync(int userId, int? repairedByUserId = null)
     {
+        // SECURITY-AUDITED: SAFE — scoped by specific userId; admin repair operation
         var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return 0;
@@ -660,6 +690,7 @@ public class GrantService : IGrantService
     /// </summary>
     public async Task<int> RepairAllUserGrantsAsync(int? repairedByUserId = null)
     {
+        // SECURITY-AUDITED: SAFE — admin-only bulk repair; iterates all active users to fix grants
         var users = await _db.Users.IgnoreQueryFilters()
             .Where(u => u.IsActive)
             .ToListAsync();

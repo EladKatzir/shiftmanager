@@ -113,12 +113,15 @@
             @if (Model.ChoreTypes.Any())
             {
                 <div class="chores-calendar__legend">
+                    @{ var choreTypeIndex = 0; }
                     @foreach (var choreType in Model.ChoreTypes)
                     {
+                        var patternClass = $"chore-pattern-{choreTypeIndex % 6}";
                         <div class="chores-calendar__legend-item">
-                            <span class="chores-calendar__legend-color" style="background-color: @(choreType.Color ?? "#6B7280")"></span>
+                            <span class="chores-calendar__legend-color @patternClass" style="background-color: @(choreType.Color ?? "#6B7280")"></span>
                             <span class="chores-calendar__legend-label">@choreType.DisplayName</span>
                         </div>
+                        choreTypeIndex++;
                     }
                 </div>
             }
@@ -148,6 +151,8 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>
@@ -380,6 +385,70 @@
 
         .chores-calendar__legend-label {
             color: var(--muted);
+        }
+
+        /* Colorblind-accessible patterns for chore types */
+        .chore-pattern-0 {
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.5) 2px,
+                rgba(255,255,255,0.5) 4px
+            ) !important;
+        }
+        .chore-pattern-1 {
+            background-image: radial-gradient(
+                circle,
+                rgba(255,255,255,0.6) 1px,
+                transparent 1px
+            ) !important;
+            background-size: 5px 5px !important;
+        }
+        .chore-pattern-2 {
+            background-image: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.5) 2px,
+                rgba(255,255,255,0.5) 4px
+            ) !important;
+        }
+        .chore-pattern-3 {
+            background-image:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 3px,
+                    rgba(255,255,255,0.5) 3px,
+                    rgba(255,255,255,0.5) 5px
+                ) !important;
+        }
+        .chore-pattern-4 {
+            background-image:
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255,255,255,0.5) 2px,
+                    rgba(255,255,255,0.5) 4px
+                ),
+                repeating-linear-gradient(
+                    -45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255,255,255,0.5) 2px,
+                    rgba(255,255,255,0.5) 4px
+                ) !important;
+        }
+        .chore-pattern-5 {
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 3px,
+                rgba(255,255,255,0.5) 3px,
+                rgba(255,255,255,0.5) 5px
+            ) !important;
         }
 
         /* Empty State */

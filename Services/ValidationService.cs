@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ShiftManager.Services;
@@ -86,6 +87,19 @@ public class ValidationService : IValidationService
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Normalizes input text for safe comparison and search.
+    /// Applies Unicode NFC normalization to handle Hebrew niqqud consistently (fixes A-13).
+    /// </summary>
+    public string NormalizeForSearch(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        // NFC normalization ensures consistent representation of Hebrew characters with niqqud
+        return input.Normalize(NormalizationForm.FormC).Trim();
     }
 
     public bool IsValidUrl(string? url)

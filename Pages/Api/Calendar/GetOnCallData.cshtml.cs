@@ -11,6 +11,8 @@ namespace ShiftManager.Pages.Api.Calendar;
 /// <summary>
 /// API endpoint for shadow refresh of On-Call (Day Shifts) calendar data.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires [Authorize];
+// users are filtered by area-scoped companyIds; OnDuty is global by design
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class GetOnCallDataModel : PageModel

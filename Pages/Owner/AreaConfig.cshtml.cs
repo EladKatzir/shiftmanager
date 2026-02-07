@@ -13,6 +13,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Owner Area Configuration - Configure area-specific settings like rest hours, weekly caps
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all 107 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class AreaConfigModel : PageModel
 {

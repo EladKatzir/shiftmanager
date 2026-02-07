@@ -6,6 +6,7 @@ using ShiftManager.Data;
 
 namespace ShiftManager.Pages;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — admin-only diagnostic page, requires Grant:AdminAccess policy
 [Authorize(Policy = "Grant:AdminAccess")]
 public class DiagnosticModel : PageModel
 {

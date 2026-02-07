@@ -16,6 +16,12 @@
      * Initialize Fill Handle functionality
      */
     function initFillHandle() {
+        // Disable fill handle on touch devices — touch targets too small, drag not reliable
+        if (isTouchDevice()) {
+            console.log('[Fill Handle] Disabled on touch device');
+            return;
+        }
+
         console.log('[Fill Handle] Initializing...');
 
         // Attach fill handles to cells with assignments
@@ -25,6 +31,15 @@
         observeCellUpdates();
 
         console.log('[Fill Handle] Initialized');
+    }
+
+    /**
+     * Detect touch-primary devices
+     */
+    function isTouchDevice() {
+        return ('ontouchstart' in window) ||
+               (navigator.maxTouchPoints > 0) ||
+               (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     }
 
     /**
