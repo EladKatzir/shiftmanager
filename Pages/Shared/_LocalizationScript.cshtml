@@ -2,7 +2,7 @@
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
 
-<script>
+<script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
     window.AppLocalizer = {
         // Common UI
         "Cancel": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Cancel"].Value)),

@@ -163,7 +163,7 @@
         </main>
     </div>
 
-    <script>
+    <script nonce="@(HttpContext.Items["CspNonce"])">
         // Apply saved theme
         (function() {
             const saved = localStorage.getItem('theme');

@@ -8,7 +8,7 @@
     </button>
 </div>
 
-<script>
+<script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
 function toggleLanguage(currentLang, defaultCulture, alternateCulture) {
     // Determine the target language based on company settings
     // If current is default, switch to alternate. Otherwise, switch to default.

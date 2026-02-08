@@ -108,6 +108,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/");
     options.Conventions.AllowAnonymousToPage("/Auth/Login");
     options.Conventions.AllowAnonymousToPage("/Auth/Signup");
+    options.Conventions.AllowAnonymousToPage("/Api/Signup/GetSignupOptions");
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization();
@@ -1024,21 +1025,25 @@ app.UseAuthorization();
 // Ensures calendar data is not cached stale, other users see changes within 30 seconds
 app.Use(async (context, next) =>
 {
-    await next();
-
-    // Set cache headers for API responses (after the response is generated)
+    // Set cache headers for API responses BEFORE the response starts streaming
     if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase) ||
         context.Request.Path.StartsWithSegments("/Api", StringComparison.OrdinalIgnoreCase))
     {
-        // Only modify if response hasn't already set cache headers
-        if (!context.Response.Headers.ContainsKey("Cache-Control"))
+        context.Response.OnStarting(() =>
         {
-            // No caching for API data - prevents stale calendar data
-            context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-            context.Response.Headers["Pragma"] = "no-cache";
-            context.Response.Headers["Expires"] = "0";
-        }
+            // Only modify if response hasn't already set cache headers
+            if (!context.Response.Headers.ContainsKey("Cache-Control"))
+            {
+                // No caching for API data - prevents stale calendar data
+                context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+                context.Response.Headers["Pragma"] = "no-cache";
+                context.Response.Headers["Expires"] = "0";
+            }
+            return Task.CompletedTask;
+        });
     }
+
+    await next();
 });
 
 // B-027: UI Rate Limiting Middleware (for calendar, context, widget endpoints)

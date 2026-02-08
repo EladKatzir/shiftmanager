@@ -6586,22 +6586,22 @@
     <value>תפקיד</value>
   </data>
   <data name="Auth_SelectMolecule" xml:space="preserve">
-    <value>בחר יחידה</value>
+    <value>בחר מולקולה</value>
   </data>
   <data name="Auth_ChooseMolecule" xml:space="preserve">
-    <value>בחר יחידה...</value>
+    <value>בחר מולקולה...</value>
   </data>
   <data name="Auth_ChooseCompanyFirst" xml:space="preserve">
-    <value>בחר יחידה קודם</value>
+    <value>בחר מולקולה קודם</value>
   </data>
   <data name="Auth_SelectJobType" xml:space="preserve">
     <value>סוג תפקיד (אופציונלי)</value>
   </data>
   <data name="Auth_ChooseJobTypeFirst" xml:space="preserve">
-    <value>בחר יחידה קודם</value>
+    <value>בחר מולקולה קודם</value>
   </data>
   <data name="Auth_NoCompaniesAvailable" xml:space="preserve">
-    <value>אין חברות זמינות ביחידה זו</value>
+    <value>אין חברות זמינות במולקולה זו</value>
   </data>
   <data name="Auth_NoJobTypesAvailable" xml:space="preserve">
     <value>אין סוגי תפקידים זמינים</value>

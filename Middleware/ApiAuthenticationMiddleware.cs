@@ -49,6 +49,13 @@ public class ApiAuthenticationMiddleware
                 return;
             }
 
+            // Signup API allows anonymous access (cascading dropdowns on public signup page)
+            if (context.Request.Path.StartsWithSegments("/Api/Signup", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
             // Other internal endpoints require authentication
             // If user is already authenticated via cookies, allow request
             if (context.User?.Identity?.IsAuthenticated == true)
@@ -272,6 +279,12 @@ public class ApiAuthenticationMiddleware
 
         // Scope Switcher API - used by scope-switcher component for fetching available scopes
         if (path.StartsWithSegments("/Api/ScopeSwitcher", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Signup API - used by public signup page for cascading dropdowns (molecule → company → job type)
+        if (path.StartsWithSegments("/Api/Signup", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
