@@ -945,14 +945,23 @@
     left: 0;
     right: 0;
     bottom: 0;
+    width: auto;
+    max-width: none;
+    max-height: none;
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
     align-items: center;
     justify-content: center;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    transition: none;
 }
 
 .modal.visible {
     display: flex;
+    opacity: 1;
+    visibility: visible;
 }
 
 .modal-content {
