@@ -141,6 +141,13 @@
   flex-direction: row-reverse;
 }
 
+/* Form select dropdown caret - flip to left side in RTL */
+[dir="rtl"] .form-select {
+  background-position: left 0.75rem center;
+  padding-right: 0.75rem;
+  padding-left: 2.5rem;
+}
+
 /* Form validation icons - flip to left side in RTL */
 [dir="rtl"] .form-control.valid,
 [dir="rtl"] .form-select.valid,

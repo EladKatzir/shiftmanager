@@ -8519,6 +8519,160 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="OwnerHub_ManageSeedData" xml:space="preserve">
     <value>Manage seed data</value>
   </data>
+  <data name="OwnerHub_Title" xml:space="preserve">
+    <value>Owner Hub</value>
+  </data>
+  <data name="OwnerHub_Subtitle" xml:space="preserve">
+    <value>System-wide administration dashboard</value>
+  </data>
+  <data name="OwnerHub_Hierarchy" xml:space="preserve">
+    <value>Hierarchy</value>
+  </data>
+  <data name="OwnerHub_Projects" xml:space="preserve">
+    <value>projects</value>
+  </data>
+  <data name="OwnerHub_Areas" xml:space="preserve">
+    <value>areas</value>
+  </data>
+  <data name="OwnerHub_Molecules" xml:space="preserve">
+    <value>molecules</value>
+  </data>
+  <data name="OwnerHub_Companies" xml:space="preserve">
+    <value>companies</value>
+  </data>
+  <data name="OwnerHub_ManageHierarchy" xml:space="preserve">
+    <value>Manage hierarchy</value>
+  </data>
+  <data name="OwnerHub_People" xml:space="preserve">
+    <value>People</value>
+  </data>
+  <data name="OwnerHub_TotalUsers" xml:space="preserve">
+    <value>total users</value>
+  </data>
+  <data name="OwnerHub_ActiveUsers" xml:space="preserve">
+    <value>active</value>
+  </data>
+  <data name="OwnerHub_Pending" xml:space="preserve">
+    <value>pending</value>
+  </data>
+  <data name="OwnerHub_ManageUsers" xml:space="preserve">
+    <value>Manage users</value>
+  </data>
+  <data name="OwnerHub_Grants" xml:space="preserve">
+    <value>Grants</value>
+  </data>
+  <data name="OwnerHub_GrantTypes" xml:space="preserve">
+    <value>grant types</value>
+  </data>
+  <data name="OwnerHub_RoleTemplates" xml:space="preserve">
+    <value>role templates</value>
+  </data>
+  <data name="OwnerHub_Assignments" xml:space="preserve">
+    <value>assignments</value>
+  </data>
+  <data name="OwnerHub_ManageGrants" xml:space="preserve">
+    <value>Manage permissions</value>
+  </data>
+  <data name="OwnerHub_Scheduling" xml:space="preserve">
+    <value>Scheduling</value>
+  </data>
+  <data name="OwnerHub_Programs" xml:space="preserve">
+    <value>programs</value>
+  </data>
+  <data name="OwnerHub_Blueprints" xml:space="preserve">
+    <value>blueprints</value>
+  </data>
+  <data name="OwnerHub_Groupings" xml:space="preserve">
+    <value>groupings</value>
+  </data>
+  <data name="OwnerHub_ManageScheduling" xml:space="preserve">
+    <value>Manage scheduling</value>
+  </data>
+  <data name="OwnerHub_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="OwnerHub_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="OwnerHub_ADFS" xml:space="preserve">
+    <value>ADFS</value>
+  </data>
+  <data name="OwnerHub_Flags" xml:space="preserve">
+    <value>flags on</value>
+  </data>
+  <data name="OwnerHub_ManageSettings" xml:space="preserve">
+    <value>Manage settings</value>
+  </data>
+  <data name="OwnerHub_Analytics" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="OwnerHub_TotalLogs" xml:space="preserve">
+    <value>total logs</value>
+  </data>
+  <data name="OwnerHub_RecentLogs" xml:space="preserve">
+    <value>this week</value>
+  </data>
+  <data name="OwnerHub_ViewReports" xml:space="preserve">
+    <value>View reports</value>
+  </data>
+  <data name="OwnerHub_QuickLinks" xml:space="preserve">
+    <value>Quick Links</value>
+  </data>
+  <data name="OwnerHub_LegacyPanel" xml:space="preserve">
+    <value>Legacy Owner Panel</value>
+  </data>
+  <data name="OwnerHub_SystemHealth" xml:space="preserve">
+    <value>System Health</value>
+  </data>
+  <data name="OwnerHub_Database" xml:space="preserve">
+    <value>Database Console</value>
+  </data>
+  <data name="OwnerHub_AuditLog" xml:space="preserve">
+    <value>Audit Log</value>
+  </data>
+  <data name="OwnerHub_Backup" xml:space="preserve">
+    <value>Backup</value>
+  </data>
+  <data name="OwnerHub_Languages" xml:space="preserve">
+    <value>Languages</value>
+  </data>
+  <!-- Grants Page -->
+  <data name="Grants_Title" xml:space="preserve">
+    <value>Grant Management</value>
+  </data>
+  <data name="Grants_Subtitle" xml:space="preserve">
+    <value>Manage permissions, role templates, and user grants</value>
+  </data>
+  <data name="Grants_GrantTypes" xml:space="preserve">
+    <value>Grant Types</value>
+  </data>
+  <data name="Grants_RoleTemplates" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="Grants_TotalGrants" xml:space="preserve">
+    <value>Total Grants</value>
+  </data>
+  <data name="Grants_UsersWithGrants" xml:space="preserve">
+    <value>Users with Grants</value>
+  </data>
+  <data name="Grants_Tab_GrantTypes" xml:space="preserve">
+    <value>Grant Types</value>
+  </data>
+  <data name="Grants_Tab_RoleTemplates" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="Grants_Tab_UserGrants" xml:space="preserve">
+    <value>User Grants</value>
+  </data>
+  <data name="Grants_GrantTypesBrowser" xml:space="preserve">
+    <value>Grant Types Browser</value>
+  </data>
+  <data name="Grants_RoleTemplateEditor" xml:space="preserve">
+    <value>Role Template Editor</value>
+  </data>
+  <data name="Grants_UserGrantAssignment" xml:space="preserve">
+    <value>User Grant Assignment</value>
+  </data>
   <!-- Help / FAQ Page -->
   <data name="Help_PageTitle" xml:space="preserve">
     <value>Help &amp; FAQ</value>

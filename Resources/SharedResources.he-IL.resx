@@ -8485,6 +8485,160 @@
   <data name="OwnerHub_ManageSeedData" xml:space="preserve">
     <value>ניהול נתוני בסיס</value>
   </data>
+  <data name="OwnerHub_Title" xml:space="preserve">
+    <value>מרכז בעלים</value>
+  </data>
+  <data name="OwnerHub_Subtitle" xml:space="preserve">
+    <value>לוח בקרה לניהול כלל-מערכתי</value>
+  </data>
+  <data name="OwnerHub_Hierarchy" xml:space="preserve">
+    <value>היררכיה</value>
+  </data>
+  <data name="OwnerHub_Projects" xml:space="preserve">
+    <value>פרויקטים</value>
+  </data>
+  <data name="OwnerHub_Areas" xml:space="preserve">
+    <value>אזורים</value>
+  </data>
+  <data name="OwnerHub_Molecules" xml:space="preserve">
+    <value>מולקולות</value>
+  </data>
+  <data name="OwnerHub_Companies" xml:space="preserve">
+    <value>חברות</value>
+  </data>
+  <data name="OwnerHub_ManageHierarchy" xml:space="preserve">
+    <value>ניהול היררכיה</value>
+  </data>
+  <data name="OwnerHub_People" xml:space="preserve">
+    <value>אנשים</value>
+  </data>
+  <data name="OwnerHub_TotalUsers" xml:space="preserve">
+    <value>סה״כ משתמשים</value>
+  </data>
+  <data name="OwnerHub_ActiveUsers" xml:space="preserve">
+    <value>פעילים</value>
+  </data>
+  <data name="OwnerHub_Pending" xml:space="preserve">
+    <value>ממתינים</value>
+  </data>
+  <data name="OwnerHub_ManageUsers" xml:space="preserve">
+    <value>ניהול משתמשים</value>
+  </data>
+  <data name="OwnerHub_Grants" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="OwnerHub_GrantTypes" xml:space="preserve">
+    <value>סוגי הרשאות</value>
+  </data>
+  <data name="OwnerHub_RoleTemplates" xml:space="preserve">
+    <value>תבניות תפקיד</value>
+  </data>
+  <data name="OwnerHub_Assignments" xml:space="preserve">
+    <value>הקצאות</value>
+  </data>
+  <data name="OwnerHub_ManageGrants" xml:space="preserve">
+    <value>ניהול הרשאות</value>
+  </data>
+  <data name="OwnerHub_Scheduling" xml:space="preserve">
+    <value>תזמון</value>
+  </data>
+  <data name="OwnerHub_Programs" xml:space="preserve">
+    <value>תוכניות</value>
+  </data>
+  <data name="OwnerHub_Blueprints" xml:space="preserve">
+    <value>תבניות</value>
+  </data>
+  <data name="OwnerHub_Groupings" xml:space="preserve">
+    <value>קבוצות</value>
+  </data>
+  <data name="OwnerHub_ManageScheduling" xml:space="preserve">
+    <value>ניהול תזמון</value>
+  </data>
+  <data name="OwnerHub_Settings" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
+  <data name="OwnerHub_Email" xml:space="preserve">
+    <value>דוא״ל</value>
+  </data>
+  <data name="OwnerHub_ADFS" xml:space="preserve">
+    <value>ADFS</value>
+  </data>
+  <data name="OwnerHub_Flags" xml:space="preserve">
+    <value>דגלים פעילים</value>
+  </data>
+  <data name="OwnerHub_ManageSettings" xml:space="preserve">
+    <value>ניהול הגדרות</value>
+  </data>
+  <data name="OwnerHub_Analytics" xml:space="preserve">
+    <value>ניתוח נתונים</value>
+  </data>
+  <data name="OwnerHub_TotalLogs" xml:space="preserve">
+    <value>סה״כ רשומות</value>
+  </data>
+  <data name="OwnerHub_RecentLogs" xml:space="preserve">
+    <value>השבוע</value>
+  </data>
+  <data name="OwnerHub_ViewReports" xml:space="preserve">
+    <value>צפייה בדוחות</value>
+  </data>
+  <data name="OwnerHub_QuickLinks" xml:space="preserve">
+    <value>קישורים מהירים</value>
+  </data>
+  <data name="OwnerHub_LegacyPanel" xml:space="preserve">
+    <value>פאנל בעלים ישן</value>
+  </data>
+  <data name="OwnerHub_SystemHealth" xml:space="preserve">
+    <value>תקינות מערכת</value>
+  </data>
+  <data name="OwnerHub_Database" xml:space="preserve">
+    <value>קונסולת מסד נתונים</value>
+  </data>
+  <data name="OwnerHub_AuditLog" xml:space="preserve">
+    <value>יומן ביקורת</value>
+  </data>
+  <data name="OwnerHub_Backup" xml:space="preserve">
+    <value>גיבוי</value>
+  </data>
+  <data name="OwnerHub_Languages" xml:space="preserve">
+    <value>שפות</value>
+  </data>
+  <!-- Grants Page -->
+  <data name="Grants_Title" xml:space="preserve">
+    <value>ניהול הרשאות</value>
+  </data>
+  <data name="Grants_Subtitle" xml:space="preserve">
+    <value>ניהול הרשאות, תבניות תפקיד והקצאות משתמשים</value>
+  </data>
+  <data name="Grants_GrantTypes" xml:space="preserve">
+    <value>סוגי הרשאות</value>
+  </data>
+  <data name="Grants_RoleTemplates" xml:space="preserve">
+    <value>תבניות תפקיד</value>
+  </data>
+  <data name="Grants_TotalGrants" xml:space="preserve">
+    <value>סה״כ הרשאות</value>
+  </data>
+  <data name="Grants_UsersWithGrants" xml:space="preserve">
+    <value>משתמשים עם הרשאות</value>
+  </data>
+  <data name="Grants_Tab_GrantTypes" xml:space="preserve">
+    <value>סוגי הרשאות</value>
+  </data>
+  <data name="Grants_Tab_RoleTemplates" xml:space="preserve">
+    <value>תבניות תפקיד</value>
+  </data>
+  <data name="Grants_Tab_UserGrants" xml:space="preserve">
+    <value>הרשאות משתמשים</value>
+  </data>
+  <data name="Grants_GrantTypesBrowser" xml:space="preserve">
+    <value>דפדפן סוגי הרשאות</value>
+  </data>
+  <data name="Grants_RoleTemplateEditor" xml:space="preserve">
+    <value>עורך תבניות תפקיד</value>
+  </data>
+  <data name="Grants_UserGrantAssignment" xml:space="preserve">
+    <value>הקצאת הרשאות למשתמש</value>
+  </data>
   <!-- Help / FAQ Page -->
   <data name="Help_PageTitle" xml:space="preserve">
     <value>עזרה ושאלות נפוצות</value>
