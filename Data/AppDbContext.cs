@@ -1336,6 +1336,20 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<DutyRotation>()
             .Property(r => r.LastAssignedDate).HasConversion(dateConverter);
 
+        // DutyRotation: tenant query filter
+        if (_tenantResolver != null)
+        {
+            modelBuilder.Entity<DutyRotation>()
+                .HasQueryFilter(r => r.CompanyId == _tenantResolver.GetCurrentTenantId());
+        }
+
+        // DutyRotation → Company relationship
+        modelBuilder.Entity<DutyRotation>()
+            .HasOne(r => r.Company)
+            .WithMany()
+            .HasForeignKey(r => r.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // DutyRotation → Creator relationship
         modelBuilder.Entity<DutyRotation>()
             .HasOne(r => r.Creator)

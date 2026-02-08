@@ -6,8 +6,8 @@ using ShiftManager.Data;
 
 namespace ShiftManager.Pages;
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — admin-only diagnostic page, requires Grant:AdminAccess policy
-[Authorize(Policy = "Grant:AdminAccess")]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner-only diagnostic page (B-09: restricted from AdminAccess to Owner)
+[Authorize(Roles = nameof(ShiftManager.Models.Support.UserRole.Owner))]
 public class DiagnosticModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -87,7 +87,7 @@ public class DiagnosticModel : PageModel
             }
         }
 
-        // Get shift instances for date range
+        // C-05: Limit query results to prevent OOM on large deployments
         ShiftInstances = await (from si in _db.ShiftInstances.IgnoreQueryFilters()
                                 join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
                                 where si.WorkDate >= startDate && si.WorkDate <= endDate
@@ -98,6 +98,6 @@ public class DiagnosticModel : PageModel
                                     si.WorkDate.ToString(),
                                     st.Key,
                                     si.StaffingRequired
-                                )).ToListAsync();
+                                )).Take(500).ToListAsync();
     }
 }

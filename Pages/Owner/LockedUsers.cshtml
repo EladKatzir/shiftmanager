@@ -41,6 +41,8 @@
                             <th><loc key="LockedUsers_User">User</loc></th>
                             <th><loc key="LockedUsers_Email">Email</loc></th>
                             <th><loc key="LockedUsers_FailedAttempts">Failed Attempts</loc></th>
+                            <th><loc key="LockedUsers_LastAttempt">Last Attempt</loc></th>
+                            <th><loc key="LockedUsers_SourceIP">Source IP</loc></th>
                             <th><loc key="LockedUsers_Status">Status</loc></th>
                             <th><loc key="LockedUsers_Actions">Actions</loc></th>
                         </tr>
@@ -52,6 +54,8 @@
                                 <td>@user.DisplayName</td>
                                 <td>@user.Email</td>
                                 <td>@user.FailedAttempts</td>
+                                <td>@(user.LastAttempt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                <td>@(user.LastFailedIp ?? "-")</td>
                                 <td>
                                     @if (user.IsExpired)
                                     {

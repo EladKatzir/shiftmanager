@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using System.Data;
@@ -16,13 +17,16 @@ public class DatabaseConsoleModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<DatabaseConsoleModel> _logger;
+    private readonly IConfiguration _configuration;
 
     public DatabaseConsoleModel(
         AppDbContext db,
-        ILogger<DatabaseConsoleModel> logger)
+        ILogger<DatabaseConsoleModel> logger,
+        IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
+        _configuration = configuration;
     }
 
     [BindProperty]
@@ -52,19 +56,42 @@ public class DatabaseConsoleModel : PageModel
                 return Page();
             }
 
-            // Security: Only allow SELECT statements for safety
-            var trimmedQuery = Query.Trim().ToUpper();
-            if (!trimmedQuery.StartsWith("SELECT"))
+            // Security: Only allow single SELECT statements
+            var trimmedQuery = Query.Trim();
+            var upperQuery = trimmedQuery.ToUpper();
+
+            if (!upperQuery.StartsWith("SELECT"))
             {
                 Error = "For safety, only SELECT queries are allowed in the console.";
                 return Page();
             }
 
-            var connection = _db.Database.GetDbConnection();
-            await connection.OpenAsync();
+            // Security: Reject multi-statement queries (prevents "SELECT 1; DROP TABLE x" injection)
+            if (trimmedQuery.Contains(';'))
+            {
+                Error = "For safety, queries containing semicolons are not allowed. Please use a single SELECT statement.";
+                return Page();
+            }
 
-            using var command = connection.CreateCommand();
-            command.CommandText = Query;
+            // Use a dedicated read-only connection to prevent any write operations
+            var connString = _configuration.GetConnectionString("Default");
+            if (string.IsNullOrEmpty(connString))
+            {
+                Error = "Database connection string not configured.";
+                return Page();
+            }
+
+            // Force read-only mode on the SQLite connection
+            var builder = new SqliteConnectionStringBuilder(connString)
+            {
+                Mode = SqliteOpenMode.ReadOnly
+            };
+
+            await using var readOnlyConnection = new SqliteConnection(builder.ConnectionString);
+            await readOnlyConnection.OpenAsync();
+
+            using var command = readOnlyConnection.CreateCommand();
+            command.CommandText = trimmedQuery;
             command.CommandType = CommandType.Text;
 
             using var reader = await command.ExecuteReaderAsync();
@@ -90,7 +117,7 @@ public class DatabaseConsoleModel : PageModel
 
             QueryResult = $"Query executed successfully. {ResultRows.Count} rows returned.";
             _logger.LogInformation("Database query executed: {Query}, Rows: {RowCount}",
-                Query.Substring(0, Math.Min(Query.Length, 100)), ResultRows.Count);
+                trimmedQuery.Substring(0, Math.Min(trimmedQuery.Length, 100)), ResultRows.Count);
 
             return Page();
         }

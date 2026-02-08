@@ -109,6 +109,9 @@ public class ForgotPasswordModel : LocalizedPageModel
 
         try
         {
+            // D-05: Start timer to enforce constant-time response regardless of user existence
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             // SECURITY-AUDITED: SAFE — password recovery must search across all companies
             // Find user by email and phone number match (case-insensitive for email)
             var user = await _db.Users
@@ -120,10 +123,17 @@ public class ForgotPasswordModel : LocalizedPageModel
 
             if (user == null)
             {
+                // D-05: Constant-time delay to prevent user enumeration via timing
+                stopwatch.Stop();
+                var elapsed = stopwatch.ElapsedMilliseconds;
+                var minDelay = 800; // milliseconds
+                if (elapsed < minDelay)
+                    await Task.Delay(minDelay - (int)elapsed);
+
                 // No match found - show error but don't reveal which field is wrong (security)
                 var errorMsg = _localizer["Error_EmailPhoneNoMatch"];
                 Error = errorMsg;
-                _logger.LogWarning("Failed password recovery attempt for email: {Email}", Email);
+                _logger.LogWarning("Failed password recovery attempt for email: {Email}", RedactEmail(Email));
 
                 return new JsonResult(new
                 {
@@ -138,6 +148,8 @@ public class ForgotPasswordModel : LocalizedPageModel
 
             user.PasswordHash = newHash;
             user.PasswordSalt = newSalt;
+            // A-07: Force user to change password on next login
+            user.MustChangePassword = true;
             await _db.SaveChangesAsync();
 
             // Send temporary password via email
@@ -175,15 +187,10 @@ public class ForgotPasswordModel : LocalizedPageModel
             if (emailSent)
             {
                 Success = _localizer["Success_TemporaryPasswordSent"];
-                _logger.LogInformation("Password recovery email sent to user: {Email}", user.Email);
+                _logger.LogInformation("Password recovery email sent to user: {Email}", RedactEmail(user.Email));
 
-                // ✅ PHASE 18: Store temp password for one-time display (not logged, not persisted)
-                GeneratedTempPassword = temporaryPassword;
-
-                // ✅ PHASE 18: Set no-cache headers to prevent password from being cached
-                Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
-                Response.Headers["Pragma"] = "no-cache";
-                Response.Headers["Expires"] = "0";
+                // B-01: Do NOT display temp password on screen — shoulder-surfing risk in military environment
+                // Password is sent via email only. GeneratedTempPassword left null intentionally.
 
                 // Clear sensitive data from page
                 Email = string.Empty;
@@ -193,14 +200,17 @@ public class ForgotPasswordModel : LocalizedPageModel
             }
             else
             {
-                Error = _localizer["Error_FailedToSendRecoveryEmail"];
-                _logger.LogError("Failed to send password recovery email for user: {Email}", user.Email);
+                // I-01: In air-gapped environments without email, display temp password on screen
+                // as the only viable recovery path. Log this as a security event.
+                _logger.LogWarning("Email delivery failed for password recovery (user: {Email}). Falling back to on-screen display.", RedactEmail(user.Email));
+                GeneratedTempPassword = temporaryPassword;
+                Success = _localizer["Error_FailedToSendRecoveryEmail_FallbackDisplayed"];
                 return Page();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during password recovery for email: {Email}", Email);
+            _logger.LogError(ex, "Error during password recovery for email: {Email}", RedactEmail(Email));
             Error = _localizer["Error_AnErrorOccurred"];
             return Page();
         }
@@ -234,8 +244,8 @@ public class ForgotPasswordModel : LocalizedPageModel
             return Page();
         }
 
-        // ✅ VALIDATION: New password length check
-        if (NewPassword.Length < 6)
+        // D-09: Password minimum length increased to 12 characters for military environment
+        if (NewPassword.Length < 12)
         {
             PasswordChangeError = _localizer["Error_NewPasswordTooShort"];
             return Page();
@@ -253,7 +263,7 @@ public class ForgotPasswordModel : LocalizedPageModel
             {
                 // Don't reveal if user exists or not (security)
                 PasswordChangeError = _localizer["Error_FailedToChangePassword"];
-                _logger.LogWarning("Password change attempt for non-existent email: {Email}", ChangeEmail);
+                _logger.LogWarning("Password change attempt for non-existent email: {Email}", RedactEmail(ChangeEmail));
                 return Page();
             }
 
@@ -261,7 +271,7 @@ public class ForgotPasswordModel : LocalizedPageModel
             if (!PasswordHasher.Verify(OldPassword, user.PasswordHash, user.PasswordSalt))
             {
                 PasswordChangeError = _localizer["Error_CurrentPasswordIncorrect"];
-                _logger.LogWarning("Password change attempt with incorrect old password for user: {Email}", user.Email);
+                _logger.LogWarning("Password change attempt with incorrect old password for user: {Email}", RedactEmail(user.Email));
                 return Page();
             }
 
@@ -269,10 +279,12 @@ public class ForgotPasswordModel : LocalizedPageModel
             var (newHash, newSalt) = PasswordHasher.CreateHash(NewPassword);
             user.PasswordHash = newHash;
             user.PasswordSalt = newSalt;
+            // A-07: Clear forced password change flag after successful change
+            user.MustChangePassword = false;
             await _db.SaveChangesAsync();
 
             PasswordChangeSuccess = _localizer["Success_PasswordChangedSuccessfully"];
-            _logger.LogInformation("Password changed successfully for user: {Email}", user.Email);
+            _logger.LogInformation("Password changed successfully for user: {Email}", RedactEmail(user.Email));
 
             // Clear sensitive data from page
             ChangeEmail = string.Empty;
@@ -283,28 +295,45 @@ public class ForgotPasswordModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during password change for email: {Email}", ChangeEmail);
+            _logger.LogError(ex, "Error during password change for email: {Email}", RedactEmail(ChangeEmail));
             PasswordChangeError = _localizer["Error_AnErrorOccurred"];
             return Page();
         }
     }
 
+    /// <summary>
+    /// E-01: Redact email for safe logging. Shows first 2 chars + domain.
+    /// Example: "john.doe@army.mil" → "jo***@army.mil"
+    /// </summary>
+    private static string RedactEmail(string? email)
+    {
+        if (string.IsNullOrEmpty(email)) return "[empty]";
+        var atIndex = email.IndexOf('@');
+        if (atIndex <= 0) return "[redacted]";
+        var prefix = email[..Math.Min(2, atIndex)];
+        return $"{prefix}***{email[atIndex..]}";
+    }
+
     private string GenerateTemporaryPassword()
     {
-        // SECURITY FIX: Use cryptographically secure random number generator
-        // Previously used System.Random which is NOT cryptographically secure
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
         var password = new StringBuilder();
 
-        // Generate 12-character password with mix of uppercase, lowercase, numbers, and symbols
+        // D-11: Use rejection sampling to avoid modulus bias
+        // chars.Length = 56, largest multiple of 56 fitting in byte = 252 (56*4)
+        // Reject values >= 252 to ensure uniform distribution
+        var maxUnbiased = (byte)(256 - (256 % chars.Length)); // 252
+
         using (var rng = RandomNumberGenerator.Create())
         {
-            byte[] randomBytes = new byte[12];
-            rng.GetBytes(randomBytes);
-
-            for (int i = 0; i < 12; i++)
+            var buffer = new byte[1];
+            while (password.Length < 12)
             {
-                password.Append(chars[randomBytes[i] % chars.Length]);
+                rng.GetBytes(buffer);
+                if (buffer[0] < maxUnbiased)
+                {
+                    password.Append(chars[buffer[0] % chars.Length]);
+                }
             }
         }
 

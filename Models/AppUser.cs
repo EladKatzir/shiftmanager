@@ -3,6 +3,9 @@ using ShiftManager.Models.Support;
 namespace ShiftManager.Models;
 
 // SECURITY FIX: Implement IBelongsToCompany so CompanyIdInterceptor auto-sets CompanyId
+// A-11/E-05: WARNING — Changing a user's CompanyId will orphan related records
+// (ShiftAssignments, TimeOffRequests, OnDuty, Chores) behind EF query filters.
+// If company transfer is implemented, those records must be archived/migrated first.
 public class AppUser : IBelongsToCompany
 {
     public int Id { get; set; }
@@ -50,6 +53,9 @@ public class AppUser : IBelongsToCompany
     public int FailedLoginAttempts { get; set; } = 0;
     public DateTime? LockoutEnd { get; set; }
     public DateTime? LastLoginAttempt { get; set; }
+
+    // A-07: Force password change after temp password reset
+    public bool MustChangePassword { get; set; } = false;
 
     // Organizational - workforce users have JobType, tech users have Department
     public int? JobTypeId { get; set; }    // Workforce molecules only

@@ -7,7 +7,19 @@ using ShiftManager.Models;
 namespace ShiftManager.Services;
 
 /// <summary>
-/// Service for purging historical data with safety mechanisms
+/// Service for purging historical data with safety mechanisms.
+///
+/// E-03: Deletion Strategy Reference
+/// - ShiftInstance / ShiftAssignment: HARD DELETE during purge (cascade). No soft-delete.
+/// - Chore: Soft-delete via CanceledAt in normal ops. HARD DELETE during purge.
+/// - OnDuty: Soft-delete via CanceledAt in normal ops. HARD DELETE during purge.
+/// - TimeOffRequest: HARD DELETE during purge. No soft-delete.
+/// - SwapRequest: HARD DELETE during purge. No soft-delete.
+/// - DirectorCompany: Soft-delete via IsDeleted/DeletedAt.
+/// - TeamCalendar: Soft-delete via IsDeleted.
+/// - AuditLog: HARD DELETE via retention policy (E-02). Never soft-deleted.
+///
+/// All purge operations MUST be preceded by a verified archive (E-04).
 /// </summary>
 public class PurgeService : IPurgeService
 {
@@ -372,7 +384,7 @@ public class PurgeService : IPurgeService
     {
         try
         {
-            var dbPath = _configuration.GetConnectionString("DefaultConnection")?.Replace("Data Source=", "").Trim();
+            var dbPath = _configuration.GetConnectionString("Default")?.Replace("Data Source=", "").Trim();
             if (string.IsNullOrEmpty(dbPath) || !File.Exists(dbPath))
             {
                 throw new FileNotFoundException("Database file not found", dbPath);
@@ -411,7 +423,7 @@ public class PurgeService : IPurgeService
     {
         try
         {
-            var dbPath = _configuration.GetConnectionString("DefaultConnection")?.Replace("Data Source=", "").Trim();
+            var dbPath = _configuration.GetConnectionString("Default")?.Replace("Data Source=", "").Trim();
             if (string.IsNullOrEmpty(dbPath) || !File.Exists(dbPath))
             {
                 return 0;

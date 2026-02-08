@@ -106,6 +106,16 @@ try {
     }
     Write-Success "Razor views precompiled (no Pages/Views folders)"
 
+    # H-08: Verify SHA256 manifest exists
+    Write-Info "Checking SHA256 manifest..."
+    $manifestPath = Join-Path $OutputPath "SHA256SUMS.txt"
+    if (Test-Path $manifestPath) {
+        $lines = Get-Content $manifestPath
+        Write-Success "SHA256 manifest present: $($lines.Count) file hashes"
+    } else {
+        Write-ErrorMsg "SHA256 manifest (SHA256SUMS.txt) not found — run Build-Release.ps1 to generate"
+    }
+
     Write-Host ""
     Write-Host "✅ Build output verified successfully" -ForegroundColor Green
     return $true

@@ -224,6 +224,9 @@ public class ScheduleExportService : IScheduleExportService
     /// <inheritdoc />
     public Task<byte[]> GeneratePdfAsync(ScheduleExportData data)
     {
+        // B-07: Detect RTL for Hebrew locale
+        var isRtl = CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft;
+
         var document = Document.Create(container =>
         {
             container.Page(page =>
@@ -232,6 +235,9 @@ public class ScheduleExportService : IScheduleExportService
                 page.Margin(1, Unit.Centimetre);
                 // Use a font that supports Hebrew characters (G-04)
                 page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                // B-07: Set RTL content direction for Hebrew
+                if (isRtl)
+                    page.ContentFromRightToLeft();
 
                 page.Header()
                     .Column(column =>
@@ -383,6 +389,12 @@ public class ScheduleExportService : IScheduleExportService
     {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Schedule");
+
+        // B-07: Set RTL for Hebrew locale
+        if (CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft)
+        {
+            worksheet.RightToLeft = true;
+        }
 
         // Title and metadata
         worksheet.Cell("A1").Value = data.CompanyName;

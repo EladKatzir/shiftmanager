@@ -150,25 +150,31 @@ public class ApiAuthenticationMiddleware
         context.Items["ApiKey"] = apiKey;
         context.Items["CorrelationId"] = Guid.NewGuid().ToString();
 
-        // Update last used timestamp (fire-and-forget, don't block request)
-        _ = Task.Run(async () =>
+        // A-09: Debounced LastUsedAt update — only update if not updated in the last 60 seconds
+        // This prevents SQLITE_BUSY from concurrent fire-and-forget writes
+        var lastUpdated = _lastUsedCache.GetValueOrDefault(apiKey.Id);
+        if ((DateTime.UtcNow - lastUpdated).TotalSeconds > 60)
         {
-            try
+            _lastUsedCache[apiKey.Id] = DateTime.UtcNow;
+            _ = Task.Run(async () =>
             {
-                using var scope = context.RequestServices.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                var key = await db.ApiKeys.FindAsync(apiKey.Id);
-                if (key != null)
+                try
                 {
-                    key.LastUsedAt = DateTime.UtcNow;
-                    await db.SaveChangesAsync();
+                    using var scope = context.RequestServices.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var key = await db.ApiKeys.FindAsync(apiKey.Id);
+                    if (key != null)
+                    {
+                        key.LastUsedAt = DateTime.UtcNow;
+                        await db.SaveChangesAsync();
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update LastUsedAt for API key {KeyId}", apiKey.Id);
-            }
-        });
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to update LastUsedAt for API key {KeyId}", apiKey.Id);
+                }
+            });
+        }
 
         await _next(context);
     }
@@ -200,8 +206,24 @@ public class ApiAuthenticationMiddleware
         if (path.StartsWithSegments("/api/v1/audit-logs")) return "audit:read";
         if (path.StartsWithSegments("/api/v1/webhooks")) return "webhook:manage";
 
-        // Standard resource:operation format (e.g., user:read, shift:write)
-        var resourceName = resource.TrimEnd('s'); // users -> user
+        // D-07: Use explicit mapping instead of naive TrimEnd('s') which breaks
+        // "analytics" → "analytic", "status" → "statu", etc.
+        var resourceName = resource.ToLowerInvariant() switch
+        {
+            "users" => "user",
+            "shifts" => "shift",
+            "chores" => "chore",
+            "notifications" => "notification",
+            "swap-requests" => "swap-request",
+            "time-off-requests" => "time-off",
+            "analytics" => "analytics",
+            "audit-logs" => "audit",
+            "feedback" => "feedback",
+            "onduty" => "onduty",
+            "on-duty" => "onduty",
+            "webhooks" => "webhook",
+            _ => resource.ToLowerInvariant()
+        };
         return $"{resourceName}:{operation}";
     }
 
@@ -284,6 +306,9 @@ public class ApiAuthenticationMiddleware
     // Server-wide HMAC secret for API key hashing. In production, load from config or Data Protection.
     // This is intentionally a constant fallback — override via IConfiguration "ApiKeyHmacSecret" at startup.
     internal static string HmacSecret { get; set; } = "ShiftManager-ApiKey-HMAC-v1-Default";
+
+    // A-09: Debounce cache for LastUsedAt updates — prevents SQLITE_BUSY from concurrent writes
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, DateTime> _lastUsedCache = new();
 
     /// <summary>
     /// Writes a 401 Unauthorized response

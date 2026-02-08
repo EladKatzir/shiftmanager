@@ -7,10 +7,8 @@ using System.Security.Claims;
 namespace ShiftManager.Pages.Game;
 
 /// <summary>
-/// ✅ PHASE 19: Leaderboard page showing top game scores
+/// Leaderboard page showing top game scores — company-scoped (E-08 fix)
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — game leaderboard is global by design;
-// display names are abbreviated for OPSEC; no sensitive data exposed
 [Authorize]
 public class LeaderboardModel : PageModel
 {
@@ -31,31 +29,31 @@ public class LeaderboardModel : PageModel
 
     public async Task OnGetAsync()
     {
-        // Get current user
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim))
-        {
+        if (string.IsNullOrEmpty(userIdClaim) || string.IsNullOrEmpty(companyIdClaim))
             return;
-        }
 
         CurrentUserId = int.Parse(userIdClaim);
+        var companyId = int.Parse(companyIdClaim);
 
-        // Load all-time leaderboard (public - all companies)
-        AllTimeLeaderboard = await GetLeaderboardData(allTime: true);
+        // E-08: Scope leaderboard by company to prevent cross-tenant user name exposure
+        var companyUserIds = await _db.Users
+            .Where(u => u.CompanyId == companyId)
+            .Select(u => u.Id)
+            .ToListAsync();
 
-        // Load monthly leaderboard (public - all companies)
-        MonthlyLeaderboard = await GetLeaderboardData(allTime: false);
-
-        // Get user's best scores
-        UserBestAllTime = await GetUserBest(CurrentUserId, allTime: true);
-        UserBestMonthly = await GetUserBest(CurrentUserId, allTime: false);
+        AllTimeLeaderboard = await GetLeaderboardData(companyUserIds, allTime: true);
+        MonthlyLeaderboard = await GetLeaderboardData(companyUserIds, allTime: false);
+        UserBestAllTime = await GetUserBest(CurrentUserId, companyUserIds, allTime: true);
+        UserBestMonthly = await GetUserBest(CurrentUserId, companyUserIds, allTime: false);
     }
 
-    private async Task<List<LeaderboardEntry>> GetLeaderboardData(bool allTime)
+    private async Task<List<LeaderboardEntry>> GetLeaderboardData(List<int> companyUserIds, bool allTime)
     {
-        // Public leaderboard - no company filtering
-        var query = _db.GameScores.IgnoreQueryFilters();
+        // E-08: Company-scoped leaderboard — only show users from same company
+        var query = _db.GameScores.Where(gs => companyUserIds.Contains(gs.UserId));
 
         if (!allTime)
         {
@@ -63,7 +61,6 @@ public class LeaderboardModel : PageModel
             query = query.Where(gs => gs.CurrentMonth == currentMonth);
         }
 
-        // Get top 10 scores (highest score per user)
         var leaderboard = await query
             .GroupBy(gs => gs.UserId)
             .Select(g => new
@@ -76,14 +73,12 @@ public class LeaderboardModel : PageModel
             .Take(10)
             .ToListAsync();
 
-        // Get user display names
         var userIds = leaderboard.Select(l => l.UserId).ToList();
-        var users = await _db.Users.IgnoreQueryFilters()
+        var users = await _db.Users
             .Where(u => userIds.Contains(u.Id))
             .Select(u => new { u.Id, u.DisplayName })
             .ToListAsync();
 
-        // Combine data (use abbreviated names for OPSEC — B-11)
         return leaderboard.Select((item, index) => new LeaderboardEntry
         {
             Rank = index + 1,
@@ -95,10 +90,9 @@ public class LeaderboardModel : PageModel
         }).ToList();
     }
 
-    private async Task<LeaderboardEntry?> GetUserBest(int userId, bool allTime)
+    private async Task<LeaderboardEntry?> GetUserBest(int userId, List<int> companyUserIds, bool allTime)
     {
-        // Public leaderboard - no company filtering
-        var query = _db.GameScores.IgnoreQueryFilters().Where(gs => gs.UserId == userId);
+        var query = _db.GameScores.Where(gs => gs.UserId == userId);
 
         if (!allTime)
         {
@@ -107,11 +101,10 @@ public class LeaderboardModel : PageModel
         }
 
         var userBestScore = await query.MaxAsync(gs => (int?)gs.Score);
-
         if (!userBestScore.HasValue) return null;
 
-        // Calculate rank across all users (public)
-        var allScoresQuery = _db.GameScores.IgnoreQueryFilters();
+        // E-08: Calculate rank within company only
+        var allScoresQuery = _db.GameScores.Where(gs => companyUserIds.Contains(gs.UserId));
         if (!allTime)
         {
             var currentMonth = DateTime.UtcNow.ToString("yyyy-MM");
@@ -124,7 +117,7 @@ public class LeaderboardModel : PageModel
             .Where(s => s >= userBestScore.Value)
             .CountAsync();
 
-        var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        var currentUser = await _db.Users.FindAsync(userId);
 
         return new LeaderboardEntry
         {

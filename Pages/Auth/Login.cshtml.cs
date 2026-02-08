@@ -273,6 +273,13 @@ public class LoginModel : LocalizedPageModel
 
             _logger.LogInformation("User {UserId} ({Email}) signed in successfully. Role={Role}", user.Id, ShiftManager.Services.PiiMasker.MaskEmail(user.Email), user.Role);
 
+            // A-07: Force redirect to password change page if MustChangePassword flag is set
+            if (user.MustChangePassword)
+            {
+                _logger.LogInformation("User {UserId} must change password — redirecting to ForgotPassword", user.Id);
+                return RedirectToPage("/Auth/ForgotPassword");
+            }
+
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 

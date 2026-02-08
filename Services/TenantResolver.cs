@@ -54,13 +54,15 @@ public class TenantResolver : ITenantResolver
             var companyIdClaim = user.FindFirst("CompanyId");
             if (companyIdClaim != null && int.TryParse(companyIdClaim.Value, out var companyId))
             {
-                _logger?.LogInformation("TenantResolver: User {Email} has CompanyId claim={CompanyId}", email, companyId);
+                // E-01: Log debug-level only (PII redaction); use userId for tracking instead of email
+                _logger?.LogDebug("TenantResolver: User CompanyId claim={CompanyId}", companyId);
                 return companyId;
             }
             else
             {
-                _logger?.LogWarning("TenantResolver: User {Email} authenticated but CompanyId claim missing or invalid! Claim value: {ClaimValue}",
-                    email, companyIdClaim?.Value ?? "null");
+                // E-01: Don't log email — only log claim state for debugging
+                _logger?.LogWarning("TenantResolver: Authenticated user has missing or invalid CompanyId claim. Claim value: {ClaimValue}",
+                    companyIdClaim?.Value ?? "null");
             }
         }
         else

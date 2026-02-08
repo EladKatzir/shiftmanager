@@ -1,0 +1,18 @@
+@model List<string>
+
+@if (Model.Count > 0)
+{
+    <div class="system-alerts" style="position: sticky; top: 0; z-index: 1050;">
+        @foreach (var alert in Model)
+        {
+            var isCritical = alert.StartsWith("CRITICAL:");
+            var isSecurity = alert.StartsWith("SECURITY:");
+            var bgColor = isCritical || isSecurity ? "var(--danger, #dc3545)" : "var(--warning, #ffc107)";
+            var textColor = isCritical || isSecurity ? "white" : "black";
+
+            <div style="padding: 0.5rem 1rem; background: @bgColor; color: @textColor; font-size: 0.85rem; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1);">
+                @alert
+            </div>
+        }
+    </div>
+}

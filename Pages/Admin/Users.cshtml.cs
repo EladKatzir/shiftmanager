@@ -1588,4 +1588,142 @@ public class UsersModel : LocalizedPageModel
             _ => "Employee"
         };
     }
+
+    /// <summary>
+    /// I-07: Bulk user import from CSV file.
+    /// Expected CSV format: Email,DisplayName,Password,Role,Phone,DepartmentName
+    /// First row is treated as header and skipped.
+    /// </summary>
+    [BindProperty]
+    public IFormFile? BulkImportFile { get; set; }
+
+    public string? BulkImportResult { get; set; }
+
+    public async Task<IActionResult> OnPostBulkImportAsync()
+    {
+        await OnGetAsync();
+
+        if (BulkImportFile == null || BulkImportFile.Length == 0)
+        {
+            Error = "Please select a CSV file to import.";
+            return Page();
+        }
+
+        if (!BulkImportFile.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            Error = "Only CSV files are supported.";
+            return Page();
+        }
+
+        // Max 5MB file size
+        if (BulkImportFile.Length > 5 * 1024 * 1024)
+        {
+            Error = "File too large. Maximum 5MB.";
+            return Page();
+        }
+
+        var companyId = _companyContext.GetCompanyIdOrThrow();
+        var lines = new List<string>();
+
+        using (var reader = new StreamReader(BulkImportFile.OpenReadStream(), Encoding.UTF8))
+        {
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                    lines.Add(line);
+            }
+        }
+
+        if (lines.Count < 2) // header + at least 1 row
+        {
+            Error = "CSV must have a header row and at least one data row.";
+            return Page();
+        }
+
+        // Skip header
+        var created = 0;
+        var skipped = 0;
+        var errors = new List<string>();
+
+        for (int i = 1; i < lines.Count && i <= 500; i++) // Max 500 users per import
+        {
+            var parts = lines[i].Split(',');
+            if (parts.Length < 3)
+            {
+                errors.Add($"Row {i + 1}: insufficient columns (need at least Email,DisplayName,Password).");
+                continue;
+            }
+
+            var email = parts[0].Trim().Trim('"');
+            var displayName = parts[1].Trim().Trim('"');
+            var password = parts[2].Trim().Trim('"');
+            var roleStr = parts.Length > 3 ? parts[3].Trim().Trim('"') : "Employee";
+            var phone = parts.Length > 4 ? parts[4].Trim().Trim('"') : null;
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(displayName) || string.IsNullOrWhiteSpace(password))
+            {
+                errors.Add($"Row {i + 1}: Email, DisplayName, and Password are required.");
+                continue;
+            }
+
+            if (!email.Contains('@'))
+            {
+                errors.Add($"Row {i + 1}: Invalid email format '{email}'.");
+                continue;
+            }
+
+            if (password.Length < 12)
+            {
+                errors.Add($"Row {i + 1}: Password must be at least 12 characters.");
+                continue;
+            }
+
+            if (await _db.Users.AnyAsync(u => u.Email == email))
+            {
+                skipped++;
+                continue;
+            }
+
+            if (!Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var role))
+                role = UserRole.Employee;
+
+            // Don't allow bulk creation of Owner/Director
+            if (role == UserRole.Owner || role == UserRole.Director)
+                role = UserRole.Employee;
+
+            var (hash, salt) = PasswordHasher.CreateHash(password);
+            var user = new AppUser
+            {
+                Email = email,
+                DisplayName = displayName,
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                Role = role,
+                Phone = string.IsNullOrWhiteSpace(phone) ? null : phone,
+                CompanyId = companyId,
+                IsActive = true,
+                MustChangePassword = true // Force password change on first login
+            };
+
+            _db.Users.Add(user);
+            created++;
+        }
+
+        if (created > 0)
+            await _db.SaveChangesAsync();
+
+        var resultParts = new List<string>();
+        resultParts.Add($"Created: {created}");
+        if (skipped > 0) resultParts.Add($"Skipped (existing): {skipped}");
+        if (errors.Count > 0) resultParts.Add($"Errors: {errors.Count}");
+        BulkImportResult = string.Join(" | ", resultParts);
+        if (errors.Count > 0)
+            BulkImportResult += "\n" + string.Join("\n", errors.Take(10));
+
+        _logger.LogInformation("Bulk import completed: {Created} created, {Skipped} skipped, {Errors} errors for company {CompanyId}",
+            created, skipped, errors.Count, companyId);
+
+        return Page();
+    }
 }

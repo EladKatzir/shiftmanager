@@ -47,6 +47,12 @@ public class TelemetryModel : PageModel
             return BadRequest(new { error = "Event type is required" });
         }
 
+        // D-08: Validate and truncate field lengths to prevent data stuffing
+        dto.EventType = TruncateField(dto.EventType, 100)!;
+        dto.EventData = TruncateField(dto.EventData, 2000);
+        dto.PageUrl = TruncateField(dto.PageUrl, 500);
+        dto.SessionId = TruncateField(dto.SessionId, 100);
+
         var evt = new ClientAnalyticsEvent
         {
             EventType = dto.EventType,
@@ -119,6 +125,13 @@ public class TelemetryModel : PageModel
         {
             return BadRequest(new { error = "Error message is required" });
         }
+
+        // D-08: Validate and truncate field lengths
+        dto.Message = TruncateField(dto.Message, 1000)!;
+        dto.StackTrace = TruncateField(dto.StackTrace, 5000);
+        dto.Source = TruncateField(dto.Source, 500);
+        dto.PageUrl = TruncateField(dto.PageUrl, 500);
+        dto.ErrorType = TruncateField(dto.ErrorType, 100);
 
         var error = new ClientError
         {
@@ -201,6 +214,11 @@ public class TelemetryModel : PageModel
         {
             return BadRequest(new { error = "Metric name is required" });
         }
+
+        // D-08: Validate and truncate field lengths
+        dto.MetricName = TruncateField(dto.MetricName, 100)!;
+        dto.PageUrl = TruncateField(dto.PageUrl, 500);
+        dto.Rating = TruncateField(dto.Rating, 50);
 
         var metric = new PerformanceMetric
         {
@@ -316,6 +334,15 @@ public class TelemetryModel : PageModel
             queue.Enqueue(now);
             return true;
         }
+    }
+
+    /// <summary>
+    /// D-08: Truncate field to maximum length to prevent data stuffing / storage abuse.
+    /// </summary>
+    private static string? TruncateField(string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length > maxLength ? value[..maxLength] : value;
     }
 
     /// <summary>

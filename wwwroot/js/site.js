@@ -942,6 +942,14 @@ document.addEventListener('DOMContentLoaded', function() {
       closeCommandPalette();
     }
 
+    // B-06: ? key opens keyboard shortcuts help (when not in input)
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT' &&
+        !e.target.isContentEditable) {
+      e.preventDefault();
+      toggleShortcutsHelp();
+    }
+
     // Arrow navigation when palette is open
     if (commandPaletteState.isOpen) {
       if (e.key === 'ArrowDown') {
@@ -1218,6 +1226,41 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// ============= B-06: KEYBOARD SHORTCUTS HELP DIALOG =============
+function toggleShortcutsHelp() {
+  let dialog = document.getElementById('shortcutsHelpDialog');
+  if (dialog) {
+    dialog.remove();
+    return;
+  }
+  const shortcuts = [
+    { keys: 'Ctrl+K', desc: window.AppLocalizer?.CommandPalette || 'Command Palette' },
+    { keys: '?', desc: window.AppLocalizer?.KeyboardShortcuts || 'Keyboard Shortcuts' },
+    { keys: 'Esc', desc: window.AppLocalizer?.CloseDialog || 'Close Dialog' },
+    { keys: '\u2190 / h', desc: window.AppLocalizer?.PreviousMonth || 'Previous Month (Calendar)' },
+    { keys: '\u2192 / l', desc: window.AppLocalizer?.NextMonth || 'Next Month (Calendar)' },
+    { keys: 't / Home', desc: window.AppLocalizer?.TodayCalendar || 'Today (Calendar)' },
+  ];
+  dialog = document.createElement('div');
+  dialog.id = 'shortcutsHelpDialog';
+  dialog.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  dialog.innerHTML = `
+    <div style="background:var(--surface,#fff);border-radius:0.75rem;padding:1.5rem;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;font-size:1.125rem;">${window.AppLocalizer?.KeyboardShortcuts || 'Keyboard Shortcuts'}</h3>
+        <button onclick="document.getElementById('shortcutsHelpDialog').remove()" style="background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--text-muted,#666);">&times;</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        ${shortcuts.map(s => `<tr style="border-bottom:1px solid var(--border,#eee);">
+          <td style="padding:0.5rem 0;"><kbd style="background:var(--surface-soft,#f4f4f4);padding:0.15rem 0.5rem;border-radius:0.25rem;font-size:0.85rem;border:1px solid var(--border,#ddd);">${s.keys}</kbd></td>
+          <td style="padding:0.5rem 0;padding-left:1rem;color:var(--text-muted,#666);font-size:0.875rem;">${s.desc}</td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  dialog.addEventListener('click', function(e) { if (e.target === dialog) dialog.remove(); });
+  document.body.appendChild(dialog);
+}
 
 // ============= LOCALIZATION BRIDGE =============
 // This file cannot use Razor's @Localizer since it's a standalone .js file.

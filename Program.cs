@@ -192,9 +192,15 @@ builder.Services.AddHttpClient(); // Required for MailService
 // Keys are stored alongside the app so they're included in backup scope (fixes G-01, D-07)
 var dataProtectionKeysPath = Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys");
 Directory.CreateDirectory(dataProtectionKeysPath);
-builder.Services.AddDataProtection()
+var dpBuilder = builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
     .SetApplicationName("ShiftManager");
+
+// D-04: Protect DataProtection keys at rest with DPAPI on Windows
+if (OperatingSystem.IsWindows())
+{
+    dpBuilder.ProtectKeysWithDpapi(protectToLocalMachine: true);
+}
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
@@ -204,7 +210,12 @@ builder.Services.AddScoped<IEmailApiLogService, EmailApiLogService>();
 builder.Services.AddScoped<IGriffinConfigService, GriffinConfigService>();
 builder.Services.AddScoped<IGriffinService, GriffinService>();
 builder.Services.AddScoped<IGriffinApiLogService, GriffinApiLogService>();
-builder.Services.AddMemoryCache(); // For Griffin claims caching (may already be registered)
+// C-06: Configure memory cache with more frequent expiration scanning to prevent unbounded growth
+builder.Services.AddMemoryCache(options =>
+{
+    options.ExpirationScanFrequency = TimeSpan.FromMinutes(5); // Scan for expired entries every 5 min (default is 1 min)
+    options.CompactionPercentage = 0.25; // Remove 25% of entries when compaction triggers
+});
 
 // Phase 2C: Performance Optimization - Caching Services
 builder.Services.AddScoped<IShiftTypeCacheService, ShiftTypeCacheService>();
@@ -333,10 +344,13 @@ builder.Services.AddControllers()
     });
 
 // Add health checks for container orchestration
+// F-06: Separate liveness (process alive) from readiness (can serve traffic)
+// Liveness (/health) should NOT include DB — a stalled DB shouldn't cause IIS to restart the process.
+// Readiness (/ready) includes DB, disk, and memory checks.
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>(tags: new[] { "live", "ready" })
+    .AddDbContextCheck<AppDbContext>(tags: new[] { "ready" })
     .AddCheck("disk_space", new DiskSpaceHealthCheck(), tags: new[] { "ready" })
-    .AddCheck("memory", new MemoryHealthCheck(), tags: new[] { "ready" });
+    .AddCheck("memory", new MemoryHealthCheck(), tags: new[] { "live", "ready" });
 
 // B-026: Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
@@ -389,6 +403,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// C-08: Track startup timing for diagnostics (large DB may take 5-10s)
+var startupStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 // Ensure DB exists and seed minimal data
 using (var scope = app.Services.CreateScope())
@@ -446,6 +463,13 @@ using (var scope = app.Services.CreateScope())
             await busyCmd.ExecuteNonQueryAsync();
             logger.LogInformation("SQLite busy_timeout set to 5000ms");
         }
+        // G-05: Log SQLite version at startup for diagnostics
+        using (var versionCmd = connection.CreateCommand())
+        {
+            versionCmd.CommandText = "SELECT sqlite_version();";
+            var sqliteVersion = await versionCmd.ExecuteScalarAsync();
+            logger.LogInformation("SQLite version: {Version}", sqliteVersion);
+        }
         await connection.CloseAsync();
     }
     catch (Exception ex)
@@ -481,24 +505,49 @@ using (var scope = app.Services.CreateScope())
     // SEED V3 HIERARCHY FIRST (before creating users)
     // ============================================================
 
-    // Seed GrantTypes (107 grants)
-    if (!await db.GrantTypes.AnyAsync())
+    // H-04: Seed GrantTypes — upsert-style (insert missing by Key, not all-or-nothing)
     {
         var grantTypes = ShiftManager.Data.SeedData.GrantTypeSeed.GetGrantTypes();
-        db.GrantTypes.AddRange(grantTypes);
-        await db.SaveChangesAsync();
+        var existingKeys = await db.GrantTypes.Select(g => g.Key).ToHashSetAsync();
+        var newGrants = grantTypes.Where(g => !existingKeys.Contains(g.Key)).ToList();
+        if (newGrants.Any())
+        {
+            // Clear hardcoded Ids so SQLite auto-generates them (avoids UNIQUE constraint on Id)
+            foreach (var g in newGrants) g.Id = 0;
+            db.GrantTypes.AddRange(newGrants);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Seeded {Count} new grant types (total defined: {Total})", newGrants.Count, grantTypes.Count);
+        }
     }
 
-    // Seed RoleTemplates (11 roles)
-    if (!await db.RoleTemplates.AnyAsync())
+    // H-04: Seed RoleTemplates — upsert-style (insert missing by Key)
     {
         var roleTemplates = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
-        db.RoleTemplates.AddRange(roleTemplates);
-        await db.SaveChangesAsync();
+        var existingKeys = await db.RoleTemplates.Select(r => r.Key).ToHashSetAsync();
+        var newTemplates = roleTemplates.Where(r => !existingKeys.Contains(r.Key)).ToList();
+        if (newTemplates.Any())
+        {
+            db.RoleTemplates.AddRange(newTemplates);
+            await db.SaveChangesAsync();
 
-        var roleTemplateGrants = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
-        db.RoleTemplateGrants.AddRange(roleTemplateGrants);
-        await db.SaveChangesAsync();
+            // Seed grants for ALL templates (existing + new) to fill in any missing mappings
+            var roleTemplateGrants = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
+            var existingMappings = await db.RoleTemplateGrants
+                .Select(g => new { g.RoleTemplateId, g.GrantTypeId })
+                .ToListAsync();
+            var existingSet = existingMappings.Select(m => $"{m.RoleTemplateId}:{m.GrantTypeId}").ToHashSet();
+            var newMappings = roleTemplateGrants
+                .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}"))
+                .ToList();
+            if (newMappings.Any())
+            {
+                // Clear hardcoded Ids so SQLite auto-generates them (avoids UNIQUE constraint on Id)
+                foreach (var m in newMappings) m.Id = 0;
+                db.RoleTemplateGrants.AddRange(newMappings);
+                await db.SaveChangesAsync();
+            }
+            logger.LogInformation("Seeded {Count} new role templates, {MappingCount} new grant mappings", newTemplates.Count, newMappings.Count);
+        }
     }
 
     // Seed Shifty Organization (Project → Area → Molecules → Companies including SystemAdmins)
@@ -627,27 +676,34 @@ using (var scope = app.Services.CreateScope())
     }
 
     // SECURITY-AUDITED: All IgnoreQueryFilters() in this startup seeding block are SAFE — runs at app startup only, not user-facing
-    // Seed shift types (fixed keys) - company-specific
-    if (!db.ShiftTypes.IgnoreQueryFilters().Any(st => st.CompanyId == company.Id))
+    // H-04: Seed shift types — upsert-style (insert missing by Key per company)
     {
-        db.ShiftTypes.AddRange(new[] {
+        var defaultShiftTypes = new[]
+        {
             new ShiftType{ CompanyId=company.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
             new ShiftType{ CompanyId=company.Id, Key="NOON", Start=new TimeOnly(16,0), End=new TimeOnly(0,0)},
             new ShiftType{ CompanyId=company.Id, Key="NIGHT", Start=new TimeOnly(0,0), End=new TimeOnly(8,0)},
             new ShiftType{ CompanyId=company.Id, Key="MIDDLE", Start=new TimeOnly(12,0), End=new TimeOnly(20,0)},
-            new ShiftType{ CompanyId=company.Id, Key="OFFLINE", Start=new TimeOnly(0,0), End=new TimeOnly(0,0)}, // Special shift type that can overlap
-        });
-        await db.SaveChangesAsync();
+            new ShiftType{ CompanyId=company.Id, Key="OFFLINE", Start=new TimeOnly(0,0), End=new TimeOnly(0,0)},
+        };
+        var existingKeys = db.ShiftTypes.IgnoreQueryFilters()
+            .Where(st => st.CompanyId == company.Id)
+            .Select(st => st.Key)
+            .ToHashSet();
+        var newTypes = defaultShiftTypes.Where(st => !existingKeys.Contains(st.Key)).ToArray();
+        if (newTypes.Length > 0)
+        {
+            db.ShiftTypes.AddRange(newTypes);
+            await db.SaveChangesAsync();
+        }
     }
 
-    // Seed config
-    if (!db.Configs.IgnoreQueryFilters().Any(c => c.CompanyId == company.Id))
+    // H-04: Seed config — upsert-style (insert missing by Key per company)
     {
-        db.Configs.AddRange(new[] {
+        var defaultConfigs = new[]
+        {
             new AppConfig{ CompanyId = company.Id, Key = "RestHours", Value = "8" },
             new AppConfig{ CompanyId = company.Id, Key = "WeeklyHoursCap", Value = "40" },
-
-            // Game Configuration Defaults
             new AppConfig{ CompanyId = company.Id, Key = "GameEnabled", Value = "true" },
             new AppConfig{ CompanyId = company.Id, Key = "GameGridSize", Value = "6" },
             new AppConfig{ CompanyId = company.Id, Key = "GamePointsPer3Match", Value = "40" },
@@ -658,8 +714,17 @@ using (var scope = app.Services.CreateScope())
             new AppConfig{ CompanyId = company.Id, Key = "GameMegaCombo4MatchMinLines", Value = "2" },
             new AppConfig{ CompanyId = company.Id, Key = "GameMegaCombo5MatchMinLines", Value = "0" },
             new AppConfig{ CompanyId = company.Id, Key = "GameMilestones", Value = "1000,2500,5000,7500,10000,15000,20000" },
-        });
-        await db.SaveChangesAsync();
+        };
+        var existingKeys = db.Configs.IgnoreQueryFilters()
+            .Where(c => c.CompanyId == company.Id)
+            .Select(c => c.Key)
+            .ToHashSet();
+        var newConfigs = defaultConfigs.Where(c => !existingKeys.Contains(c.Key)).ToArray();
+        if (newConfigs.Length > 0)
+        {
+            db.Configs.AddRange(newConfigs);
+            await db.SaveChangesAsync();
+        }
     }
 
     // Seed owner user (using configuration from appsettings.json)
@@ -793,12 +858,17 @@ using (var scope = app.Services.CreateScope())
     // ============================================================
     // SEED FEATURE FLAGS
     // ============================================================
-    if (!await db.FeatureFlags.AnyAsync())
+    // H-04: Seed FeatureFlags — upsert-style (insert missing by Name)
     {
         var featureFlags = ShiftManager.Data.SeedData.FeatureFlagSeed.GetFeatureFlags();
-        db.FeatureFlags.AddRange(featureFlags);
-        await db.SaveChangesAsync();
-        logger.LogInformation("Seeded {Count} feature flags", featureFlags.Count);
+        var existingNames = await db.FeatureFlags.Select(f => f.Name).ToHashSetAsync();
+        var newFlags = featureFlags.Where(f => !existingNames.Contains(f.Name)).ToList();
+        if (newFlags.Any())
+        {
+            db.FeatureFlags.AddRange(newFlags);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Seeded {Count} new feature flags (total defined: {Total})", newFlags.Count, featureFlags.Count);
+        }
     }
 
     // Seed test data for QA automation (legacy seeder)
@@ -825,6 +895,15 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "An error occurred while seeding E2E test data");
     }
+}
+
+// C-08: Log startup duration for diagnostics
+startupStopwatch.Stop();
+{
+    var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    startupLogger.LogInformation("Database migration + seeding completed in {ElapsedMs}ms", startupStopwatch.ElapsedMilliseconds);
+    if (startupStopwatch.ElapsedMilliseconds > 5000)
+        startupLogger.LogWarning("Slow startup detected ({ElapsedMs}ms). Consider pre-warming or optimizing seed checks.", startupStopwatch.ElapsedMilliseconds);
 }
 
 if (app.Environment.IsDevelopment())
@@ -972,6 +1051,13 @@ if (!string.IsNullOrEmpty(hmacSecret))
 {
     ShiftManager.Middleware.ApiAuthenticationMiddleware.HmacSecret = hmacSecret;
 }
+else if (!app.Environment.IsDevelopment())
+{
+    // D-02: Warn loudly if default HMAC secret is used in production
+    app.Logger.LogCritical(
+        "SECURITY: ApiKeyHmacSecret is not configured. Using default HMAC secret in non-development environment " +
+        "allows cross-deployment API key forgery. Set 'ApiKeyHmacSecret' in appsettings.Production.json.");
+}
 
 // API Middleware (only for /api routes)
 app.UseMiddleware<ShiftManager.Middleware.ApiExceptionMiddleware>(); // B-028: Standardized error responses
@@ -1048,6 +1134,21 @@ app.MapHealthChecks("/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.
     Predicate = check => check.Tags.Contains("ready")
 });
 
+// H-02: Version tracking endpoint — returns app version for deployment verification
+app.MapGet("/api/v1/version", () =>
+{
+    var assemblyVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown";
+    // Support version.txt file written by Build-Release.ps1
+    var versionFile = Path.Combine(AppContext.BaseDirectory, "version.txt");
+    var buildVersion = File.Exists(versionFile) ? File.ReadAllText(versionFile).Trim() : null;
+    return Results.Ok(new
+    {
+        version = buildVersion ?? assemblyVersion,
+        assemblyVersion,
+        environment = app.Environment.EnvironmentName
+    });
+}).AllowAnonymous();
+
 // ============================================================
 // STARTUP SAFETY CHECKS
 // ============================================================
@@ -1070,6 +1171,19 @@ app.MapHealthChecks("/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.
             "Email configs and other encrypted data will be unreadable. " +
             "Check DataProtection-Keys directory at: {Path}",
             Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
+    }
+
+    // H-05: Warn if DataProtection-Keys directory is empty or missing (critical for deployment migration)
+    {
+        var dpKeysDir = Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys");
+        if (!Directory.Exists(dpKeysDir) || !Directory.GetFiles(dpKeysDir, "*.xml").Any())
+        {
+            startupLogger.LogWarning(
+                "DEPLOYMENT WARNING: DataProtection-Keys directory is empty or missing at {Path}. " +
+                "This means new encryption keys will be generated. All previously encrypted data " +
+                "(email API keys, session cookies) from other deployments will be unreadable. " +
+                "Include DataProtection-Keys in your backup and deployment package.", dpKeysDir);
+        }
     }
 
     // SQLite network share detection (fixes G-05)
@@ -1262,7 +1376,23 @@ void DisplayStartupBanner(WebApplication app)
     
     WriteStatusLine(f1);
     WriteStatusLine(f2);
-    
+
+    // H-06: Log all feature flag states for version tracking
+    {
+        var featureFlagLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        var featureKeys = new[] {
+            "Features:EnableDailyNotifications", "Features:EnableDirectorRole",
+            "Features:AllowPublicSignup", "Features:Api:Enabled",
+            "Features:ExcelCalendars", "Features:ExcelCalendarShifts",
+            "Features:ExcelCalendarChores", "Features:ExcelCalendarOnCall"
+        };
+        foreach (var key in featureKeys)
+        {
+            var val = app.Configuration.GetValue<bool>(key);
+            featureFlagLogger.LogInformation("FeatureFlag: {Key}={Value}", key, val);
+        }
+    }
+
     // Bottom border
     WriteBoxSeparator();
     

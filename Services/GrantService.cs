@@ -11,6 +11,11 @@ public class GrantService : IGrantService
     private readonly IHierarchyService _hierarchyService;
     private readonly IAuditLogService _auditLogService;
 
+    // C-09: Per-request cache for hierarchy contexts and grant type lookups
+    // GrantService is scoped (one per HTTP request), so this caches for the request lifetime
+    private readonly Dictionary<int, UserHierarchyContext?> _hierarchyCache = new();
+    private readonly Dictionary<string, GrantType?> _grantTypeCache = new();
+
     public GrantService(AppDbContext db, IHierarchyService hierarchyService, IAuditLogService auditLogService)
     {
         _db = db;
@@ -37,14 +42,19 @@ public class GrantService : IGrantService
     }
 
     public async Task<bool> HasGrantWithScopeAsync(int userId, string grantKey, int? projectId = null, int? areaId = null,
-        int? moleculeId = null, int? departmentId = null, int? companyId = null, int? jobTypeId = null)
+        int? moleculeId = null, int? departmentId = null, int? companyId = null, int? jobTypeId = null,
+        int? targetUserId = null)
     {
         var grantType = await GetGrantTypeByKeyAsync(grantKey);
         if (grantType == null)
             return false;
 
-        // Get user's hierarchy context to check scope inheritance
-        var userContext = await _hierarchyService.GetUserHierarchyContextAsync(userId);
+        // C-09: Cache hierarchy context per-request to avoid repeated multi-join queries
+        if (!_hierarchyCache.TryGetValue(userId, out var userContext))
+        {
+            userContext = await _hierarchyService.GetUserHierarchyContextAsync(userId);
+            _hierarchyCache[userId] = userContext;
+        }
 
         // Check for exact scope match or higher-level scope that includes this scope
         var grants = await _db.Grants
@@ -53,22 +63,29 @@ public class GrantService : IGrantService
 
         foreach (var grant in grants)
         {
-            // Self scope - user always has their own grants
+            // A-10: Self scope — match when target user equals the requesting user
             if (!grant.ProjectId.HasValue && !grant.AreaId.HasValue && !grant.MoleculeId.HasValue &&
                 !grant.DepartmentId.HasValue && !grant.CompanyId.HasValue && !grant.JobTypeId.HasValue)
             {
-                // Self-scoped grant - only valid for user's own resources
+                // Self-scoped grant: valid only when accessing own resources
+                if (targetUserId.HasValue && targetUserId.Value == userId)
+                    return true;
                 continue;
             }
 
             // Project scope covers everything below
             if (grant.ProjectId.HasValue)
             {
-                // Project-level grants provide access even when no specific scope is requested
-                // (e.g., user has no hierarchy context but has a project-wide grant)
+                // When no specific scope is requested, validate the user's own hierarchy
+                // falls within the grant's project scope. This prevents cross-project access
+                // when calling code passes no scope params.
                 if (!projectId.HasValue && !areaId.HasValue && !moleculeId.HasValue &&
                     !departmentId.HasValue && !companyId.HasValue && !jobTypeId.HasValue)
-                    return true;
+                {
+                    if (userContext != null && grant.ProjectId == userContext.Path.Project.Id)
+                        return true;
+                    continue;
+                }
 
                 if (projectId.HasValue && grant.ProjectId == projectId)
                     return true;
@@ -143,8 +160,14 @@ public class GrantService : IGrantService
 
     public async Task<GrantType?> GetGrantTypeByKeyAsync(string key)
     {
-        return await _db.GrantTypes
+        // C-01: Cache GrantType lookups to reduce N+1 queries per authorization check
+        if (_grantTypeCache.TryGetValue(key, out var cached))
+            return cached;
+
+        var result = await _db.GrantTypes
             .FirstOrDefaultAsync(gt => gt.Key == key && gt.IsActive);
+        _grantTypeCache[key] = result;
+        return result;
     }
 
     public async Task<List<GrantType>> GetAllGrantTypesAsync()

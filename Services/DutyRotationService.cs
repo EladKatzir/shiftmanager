@@ -8,15 +8,18 @@ namespace ShiftManager.Services;
 public class DutyRotationService : IDutyRotationService
 {
     private readonly AppDbContext _db;
+    private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<DutyRotationService> _logger;
     private readonly IConfiguration _configuration;
 
     public DutyRotationService(
         AppDbContext db,
+        ITenantResolver tenantResolver,
         ILogger<DutyRotationService> logger,
         IConfiguration configuration)
     {
         _db = db;
+        _tenantResolver = tenantResolver;
         _logger = logger;
         _configuration = configuration;
     }
@@ -31,6 +34,7 @@ public class DutyRotationService : IDutyRotationService
     {
         var rotation = new DutyRotation
         {
+            CompanyId = _tenantResolver.GetCurrentTenantId(),
             Name = name,
             DutyType = dutyType,
             Frequency = frequency,

@@ -262,6 +262,11 @@
             throw ("dotnet publish failed with exit code {0}" -f $exit)
         }
         Write-Log -Level OK -Message "dotnet publish completed."
+
+        # H-02: Write version file for runtime version tracking
+        $versionFilePath = Join-Path $OutputFolder "version.txt"
+        Set-Content -Path $versionFilePath -Value $Version -Encoding UTF8
+        Write-Log -Level OK -Message ("Version file written: {0}" -f $versionFilePath)
     }
 
     function Copy-DeploymentAssets {
@@ -384,6 +389,20 @@
             # AllowDirtyGit not enabled by default
         } -WorkingDirectory $ScriptRoot -Optional
 
+        # STAGE 1.5: H-01: Validate EF migration state
+        Write-Log -Level STAGE -Message "STAGE 1.5/8: Validate EF migration state"
+        try {
+            $pendingMigrations = & dotnet ef migrations list --project $ProjectFile --no-build 2>&1 | Where-Object { $_ -match '\(Pending\)' }
+            if ($pendingMigrations) {
+                Write-Log -Level WARN -Message ("Pending migrations detected: {0}" -f ($pendingMigrations -join ', '))
+                Write-Log -Level WARN -Message "Ensure target database has been migrated before deployment."
+            } else {
+                Write-Log -Level OK -Message "No pending migrations detected."
+            }
+        } catch {
+            Write-Log -Level WARN -Message ("Could not check migration state: {0}" -f $_.Exception.Message)
+        }
+
         # STAGE 2: Backup
         Write-Log -Level STAGE -Message "STAGE 2/8: Backup existing ProjectPublish"
         $backupMade = Backup-ProjectPublish
@@ -403,6 +422,22 @@
             Version    = $Version
             OutputPath = $OutputFolder
         } -WorkingDirectory $ScriptRoot -Optional
+
+        # STAGE 4.7: H-08: Generate SHA256 manifest for deployed artifacts
+        Write-Log -Level STAGE -Message "STAGE 4.7/8: Generate SHA256 manifest"
+        try {
+            $manifestPath = Join-Path $OutputFolder "SHA256SUMS.txt"
+            $manifestLines = @()
+            Get-ChildItem -Path $OutputFolder -Recurse -File | ForEach-Object {
+                $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+                $relativePath = $_.FullName.Substring($OutputFolder.Length + 1).Replace('\', '/')
+                $manifestLines += "$hash  $relativePath"
+            }
+            $manifestLines | Out-File -FilePath $manifestPath -Encoding UTF8
+            Write-Log -Level OK -Message ("SHA256 manifest generated: {0} files hashed" -f $manifestLines.Count)
+        } catch {
+            Write-Log -Level WARN -Message ("Failed to generate SHA256 manifest: {0}" -f $_.Exception.Message)
+        }
 
         # STAGE 5: Verify build output (optional)
         Write-Log -Level STAGE -Message "STAGE 5/8: Verify build output"

@@ -298,6 +298,79 @@ Feature flags have `CreatedAt`/`UpdatedAt` timestamps for tracking. Periodic man
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2026-02-07
+## 9. Onboarding Wizard Not Implemented (B-05)
+
+**Status:** Deferred to next release
+**Impact:** New units must manually discover setup steps (shift types, hierarchy, grants, email, users).
+
+### Mitigation
+Use Setup Tasks page and Admin documentation. Owner dashboard shows system alerts for misconfiguration.
+
+---
+
+## 10. Database Rollback Requires Manual Procedure (H-03)
+
+**Status:** Known limitation
+**Impact:** Rolling back code to a previous version after migrations have run causes EF model mismatch.
+
+### Recovery Procedure
+1. Stop the application
+2. Restore pre-migration backup from `Backups/app.db.pre-migration-*`
+3. Copy restored file to `app.db`
+4. Deploy the previous application version
+5. Start the application
+
+Pre-migration backups are created automatically before each startup migration.
+
+---
+
+## 11. Database Corruption Recovery (I-02)
+
+**Status:** Documented procedure
+**Impact:** SQLite corruption from hardware failure or interrupted writes.
+
+### Recovery Procedure
+1. Stop the application immediately
+2. Check backup integrity: `sqlite3 Backups/latest.db "PRAGMA integrity_check;"`
+3. If backup is clean, restore: copy backup to `app.db`
+4. If backup is corrupt, try `.recover` command: `sqlite3 corrupt.db ".recover" | sqlite3 recovered.db`
+5. Copy `DataProtection-Keys/` directory alongside the restored database
+6. Restart application
+7. Verify data in admin diagnostic page
+
+### Prevention
+- Daily backups with integrity verification (PRAGMA integrity_check)
+- WAL checkpoint monitoring (admin alerts for WAL > 100MB)
+- Disk space monitoring (alert at < 20% free)
+
+---
+
+## 12. User Company Transfer Not Supported (A-11/E-05)
+
+**Status:** Not implemented
+**Impact:** Changing a user's CompanyId directly orphans their related records (assignments, time-off, chores) behind EF query filters.
+
+### Workaround
+Do not modify user CompanyId directly. Instead: deactivate user in old company, create new account in new company.
+
+---
+
+## 13. Tenant Isolation Breach Response (I-05)
+
+**Status:** Process documentation
+**Impact:** No automated detection of cross-tenant data leaks.
+
+### Response Procedure
+1. Immediately disable the affected user account
+2. Check audit logs for the user's recent actions (Admin > Audit Logs)
+3. Review SignalR group memberships in server logs (search for "JoinCalendarGroup")
+4. Check for `IgnoreQueryFilters()` usage in custom/diagnostic pages
+5. Rotate the HMAC secret (Security:ApiKeyHmacSecret) if API keys may be compromised
+6. Generate a new DataProtection key set and restart to invalidate all sessions
+7. Document the incident and affected data scope
+
+---
+
+**Document Version:** 3.0
+**Last Updated:** 2026-02-08
 **Related Issues:** TEST-REPORT-ISSUE-005, Pre-Release QA Audit 2026-02

@@ -20,6 +20,7 @@ public class ArchiveService : IArchiveService
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<ArchiveService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IConfiguration _configuration;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public ArchiveService(
@@ -28,7 +29,8 @@ public class ArchiveService : IArchiveService
         IAuditLogService auditLogService,
         IWebHostEnvironment env,
         ILogger<ArchiveService> logger,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        IConfiguration configuration)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -36,6 +38,7 @@ public class ArchiveService : IArchiveService
         _env = env;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
+        _configuration = configuration;
 
         _jsonOptions = new JsonSerializerOptions
         {
@@ -254,7 +257,37 @@ public class ArchiveService : IArchiveService
                 return false;
 
             // Verify exact match on cutoff and types
-            return latest.CutoffDate == cutoffDate && latest.Types == types;
+            if (latest.CutoffDate != cutoffDate || latest.Types != types)
+                return false;
+
+            // E-04: Verify archive files actually exist on disk (don't trust audit log entry alone)
+            var archivesFolder = Path.Combine(_env.ContentRootPath, "Archives");
+            if (!Directory.Exists(archivesFolder))
+            {
+                _logger.LogWarning("Archives directory does not exist: {Path}", archivesFolder);
+                return false;
+            }
+
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var archiveFiles = Directory.GetFiles(archivesFolder, $"archive_*_{companyId}_*.zip");
+            if (archiveFiles.Length == 0)
+            {
+                _logger.LogWarning("No archive zip files found for company {CompanyId}", companyId);
+                return false;
+            }
+
+            // Check that at least one archive file was created within the last 24 hours
+            var recentFile = archiveFiles
+                .Select(f => new FileInfo(f))
+                .Any(f => (DateTime.UtcNow - f.CreationTimeUtc).TotalHours < 24);
+
+            if (!recentFile)
+            {
+                _logger.LogWarning("No recent archive files found for company {CompanyId}", companyId);
+                return false;
+            }
+
+            return true;
         }
         catch (Exception ex)
         {
@@ -265,6 +298,8 @@ public class ArchiveService : IArchiveService
 
     private async Task<ArchiveData> CollectArchiveDataAsync(DateOnly cutoffDate, ArchiveDataTypes types)
     {
+        // C-03: Configurable max records per entity to prevent OOM on large datasets
+        var maxRecords = _configuration.GetValue<int>("Archive:MaxRecordsPerEntity", 50000);
         var companyId = _tenantResolver.GetCurrentTenantId();
         var data = new ArchiveData();
 
@@ -275,6 +310,7 @@ public class ArchiveService : IArchiveService
                 .Include(si => si.ShiftType)
                 .Where(si => si.WorkDate < cutoffDate && si.ShiftType.Key != ShiftType.KEY_OFFLINE)
                 .OrderBy(si => si.WorkDate)
+                .Take(maxRecords) // C-03: Memory guard
                 .ToListAsync();
 
             var shiftIds = data.ShiftInstances.Select(si => si.Id).ToList();
@@ -317,6 +353,7 @@ public class ArchiveService : IArchiveService
                 .AsNoTracking()
                 .Where(tor => tor.CompanyId == companyId && tor.EndDate < cutoffDate)
                 .OrderBy(tor => tor.StartDate)
+                .Take(maxRecords) // C-03: Memory guard
                 .ToListAsync();
 
             // Include OFFLINE shifts for auto-cleanup tracking
@@ -337,6 +374,7 @@ public class ArchiveService : IArchiveService
                 .Include(c => c.User)
                 .Where(c => c.Date < cutoffDate)
                 .OrderBy(c => c.Date)
+                .Take(maxRecords) // C-03: Memory guard
                 .ToListAsync();
 
             data.Counts["Chores"] = data.Chores.Count;
@@ -354,6 +392,7 @@ public class ArchiveService : IArchiveService
                 .Include(od => od.User)
                 .Where(od => od.Date < cutoffDate && companyUserIds.Contains(od.UserId))
                 .OrderBy(od => od.Date)
+                .Take(maxRecords) // C-03: Memory guard
                 .ToListAsync();
 
             data.Counts["OnDuty"] = data.OnDuties.Count;
@@ -367,18 +406,31 @@ public class ArchiveService : IArchiveService
         var zipFileName = $"archive_csv_{metadata.CompanyId}_{timestamp}.zip";
         var zipPath = Path.Combine(archivesFolder, zipFileName);
 
-        // Create user email lookup for entities without User navigation property
-        var allUserIds = data.TimeOffRequests.Select(t => t.UserId)
+        // E-06: Use user IDs + display names instead of emails in archive exports (PII redaction)
+        var allUserIds = data.ShiftAssignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value)
+            .Concat(data.ShiftAssignments.Where(a => a.TraineeUserId.HasValue).Select(a => a.TraineeUserId!.Value))
+            .Concat(data.TimeOffRequests.Select(t => t.UserId))
             .Concat(data.Chores.Select(c => c.UserId))
             .Concat(data.OnDuties.Select(od => od.UserId))
             .Distinct()
             .ToList();
 
-        var userEmailLookup = await _db.Users
+        var userLookup = await _db.Users
             .Where(u => allUserIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.Email);
+            .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
 
         using var zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Create);
+
+        // E-06: Include user ID → display name lookup (no emails)
+        var usersEntry = zipArchive.CreateEntry("csv/users_lookup.csv");
+        using (var usersWriter = new StreamWriter(usersEntry.Open()))
+        {
+            await usersWriter.WriteLineAsync("UserId,DisplayName");
+            foreach (var kvp in userLookup)
+            {
+                await usersWriter.WriteLineAsync($"{kvp.Key},\"{EscapeCsv(kvp.Value)}\"");
+            }
+        }
 
         // README.txt
         var readmeEntry = zipArchive.CreateEntry("README.txt");
@@ -393,6 +445,7 @@ public class ArchiveService : IArchiveService
             await writer.WriteLineAsync($"Schema Version: {metadata.SchemaVersion}");
             await writer.WriteLineAsync();
             await writer.WriteLineAsync("CSV Files:");
+            await writer.WriteLineAsync("- csv/users_lookup.csv (User ID → Display Name mapping)");
             await writer.WriteLineAsync("- csv/shift_instances.csv");
             await writer.WriteLineAsync("- csv/shift_assignments.csv");
             await writer.WriteLineAsync("- csv/swap_requests.csv");
@@ -400,6 +453,7 @@ public class ArchiveService : IArchiveService
             await writer.WriteLineAsync("- csv/chores.csv");
             await writer.WriteLineAsync("- csv/onduty.csv");
             await writer.WriteLineAsync();
+            await writer.WriteLineAsync("NOTE: Email addresses are not included for privacy. Use users_lookup.csv for user mapping.");
             await writer.WriteLineAsync("This is a HUMAN-READABLE export. For re-importing, use the NDJSON archive.");
         }
 
@@ -422,12 +476,13 @@ public class ArchiveService : IArchiveService
         {
             var csvEntry = zipArchive.CreateEntry("csv/shift_assignments.csv");
             using var csvWriter = new StreamWriter(csvEntry.Open());
-            await csvWriter.WriteLineAsync("Id,CompanyId,ShiftInstanceId,UserEmail,TraineeEmail,CreatedAt");
+            // E-06: UserId instead of email for PII protection
+            await csvWriter.WriteLineAsync("Id,CompanyId,ShiftInstanceId,UserId,TraineeId,CreatedAt");
 
             foreach (var sa in data.ShiftAssignments)
             {
                 var csv = $"{sa.Id},{sa.CompanyId},{sa.ShiftInstanceId}," +
-                          $"{sa.User?.Email ?? ""},{sa.Trainee?.Email ?? ""},{sa.CreatedAt:yyyy-MM-dd HH:mm:ss}";
+                          $"{sa.UserId?.ToString() ?? ""},{sa.TraineeUserId?.ToString() ?? ""},{sa.CreatedAt:yyyy-MM-dd HH:mm:ss}";
                 await csvWriter.WriteLineAsync(csv);
             }
         }
@@ -436,12 +491,13 @@ public class ArchiveService : IArchiveService
         {
             var csvEntry = zipArchive.CreateEntry("csv/swap_requests.csv");
             using var csvWriter = new StreamWriter(csvEntry.Open());
-            await csvWriter.WriteLineAsync("Id,CompanyId,FromAssignmentId,ToAssignmentId,FromUserEmail,ToUserEmail,Status,Reason,DeclineReason,CreatedAt,ReviewedAt");
+            // E-06: UserId instead of email for PII protection
+            await csvWriter.WriteLineAsync("Id,CompanyId,FromAssignmentId,ToAssignmentId,FromUserId,ToUserId,Status,Reason,DeclineReason,CreatedAt,ReviewedAt");
 
             foreach (var sr in data.SwapRequests)
             {
                 var csv = $"{sr.Id},{sr.CompanyId},{sr.FromAssignmentId},{sr.ToAssignmentId ?? 0}," +
-                          $"{sr.FromUser?.Email ?? ""},{sr.ToUser?.Email ?? ""},{sr.Status}," +
+                          $"{sr.FromUserId},{sr.ToUserId?.ToString() ?? ""},{sr.Status}," +
                           $"\"{EscapeCsv(sr.Reason)}\",\"{EscapeCsv(sr.DeclineReason)}\"," +
                           $"{sr.CreatedAt:yyyy-MM-dd HH:mm:ss},{sr.ReviewedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""}";
                 await csvWriter.WriteLineAsync(csv);
@@ -452,12 +508,12 @@ public class ArchiveService : IArchiveService
         {
             var csvEntry = zipArchive.CreateEntry("csv/timeoff_requests.csv");
             using var csvWriter = new StreamWriter(csvEntry.Open());
-            await csvWriter.WriteLineAsync("Id,CompanyId,UserEmail,StartDate,EndDate,Type,Reason,Status,CreatedAt");
+            // E-06: UserId instead of email for PII protection
+            await csvWriter.WriteLineAsync("Id,CompanyId,UserId,StartDate,EndDate,Type,Reason,Status,CreatedAt");
 
             foreach (var tor in data.TimeOffRequests)
             {
-                var userEmail = userEmailLookup.TryGetValue(tor.UserId, out var email) ? email : "";
-                var csv = $"{tor.Id},{tor.CompanyId},{userEmail}," +
+                var csv = $"{tor.Id},{tor.CompanyId},{tor.UserId}," +
                           $"{tor.StartDate:yyyy-MM-dd},{tor.EndDate:yyyy-MM-dd},{tor.Type}," +
                           $"\"{EscapeCsv(tor.Reason)}\",{tor.Status},{tor.CreatedAt:yyyy-MM-dd HH:mm:ss}";
                 await csvWriter.WriteLineAsync(csv);
@@ -468,11 +524,12 @@ public class ArchiveService : IArchiveService
         {
             var csvEntry = zipArchive.CreateEntry("csv/chores.csv");
             using var csvWriter = new StreamWriter(csvEntry.Open());
-            await csvWriter.WriteLineAsync("Id,CompanyId,UserEmail,Date,Title,Notes,CreatedBy,CreatedAt,CanceledAt,CanceledBy");
+            // E-06: UserId instead of email for PII protection
+            await csvWriter.WriteLineAsync("Id,CompanyId,UserId,Date,Title,Notes,CreatedBy,CreatedAt,CanceledAt,CanceledBy");
 
             foreach (var c in data.Chores)
             {
-                var csv = $"{c.Id},{c.CompanyId},{c.User?.Email ?? ""},{c.Date:yyyy-MM-dd}," +
+                var csv = $"{c.Id},{c.CompanyId},{c.UserId},{c.Date:yyyy-MM-dd}," +
                           $"\"{EscapeCsv(c.Title)}\",\"{EscapeCsv(c.Notes)}\",{c.CreatedBy}," +
                           $"{c.CreatedAt:yyyy-MM-dd HH:mm:ss},{c.CanceledAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""},{c.CanceledBy?.ToString() ?? ""}";
                 await csvWriter.WriteLineAsync(csv);
@@ -483,11 +540,12 @@ public class ArchiveService : IArchiveService
         {
             var csvEntry = zipArchive.CreateEntry("csv/onduty.csv");
             using var csvWriter = new StreamWriter(csvEntry.Open());
-            await csvWriter.WriteLineAsync("Id,UserEmail,Date,Type,Notes,CreatedBy,CreatedAt,CanceledAt,CanceledBy");
+            // E-06: UserId instead of email for PII protection
+            await csvWriter.WriteLineAsync("Id,UserId,Date,Type,Notes,CreatedBy,CreatedAt,CanceledAt,CanceledBy");
 
             foreach (var od in data.OnDuties)
             {
-                var csv = $"{od.Id},{od.User?.Email ?? ""},{od.Date:yyyy-MM-dd},{od.Type}," +
+                var csv = $"{od.Id},{od.UserId},{od.Date:yyyy-MM-dd},{od.Type}," +
                           $"\"{EscapeCsv(od.Notes)}\",{od.CreatedBy}," +
                           $"{od.CreatedAt:yyyy-MM-dd HH:mm:ss},{od.CanceledAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""},{od.CanceledBy?.ToString() ?? ""}";
                 await csvWriter.WriteLineAsync(csv);
@@ -502,16 +560,7 @@ public class ArchiveService : IArchiveService
         var zipFileName = $"archive_import_{metadata.CompanyId}_{timestamp}.zip";
         var zipPath = Path.Combine(archivesFolder, zipFileName);
 
-        // Create user email lookup for entities without User navigation property
-        var allUserIds = data.TimeOffRequests.Select(t => t.UserId)
-            .Concat(data.Chores.Select(c => c.UserId))
-            .Concat(data.OnDuties.Select(od => od.UserId))
-            .Distinct()
-            .ToList();
-
-        var userEmailLookup = await _db.Users
-            .Where(u => allUserIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.Email);
+        // E-06: NDJSON uses UserIds instead of emails for PII protection
 
         using var zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Create);
 
@@ -561,8 +610,8 @@ public class ArchiveService : IArchiveService
                     sa.Id,
                     sa.CompanyId,
                     sa.ShiftInstanceId,
-                    UserEmail = sa.User?.Email ?? "",
-                    TraineeEmail = sa.Trainee?.Email ?? "",
+                    sa.UserId,
+                    sa.TraineeUserId,
                     CreatedAt = sa.CreatedAt.ToString("o")
                 }
             };
@@ -580,8 +629,8 @@ public class ArchiveService : IArchiveService
                     sr.CompanyId,
                     sr.FromAssignmentId,
                     sr.ToAssignmentId,
-                    FromUserEmail = sr.FromUser?.Email ?? "",
-                    ToUserEmail = sr.ToUser?.Email ?? "",
+                    sr.FromUserId,
+                    sr.ToUserId,
                     Status = sr.Status.ToString(),
                     sr.Reason,
                     sr.DeclineReason,
@@ -594,7 +643,6 @@ public class ArchiveService : IArchiveService
 
         foreach (var tor in data.TimeOffRequests)
         {
-            var userEmail = userEmailLookup.TryGetValue(tor.UserId, out var email) ? email : "";
             var record = new
             {
                 type = "TimeOffRequest",
@@ -602,7 +650,7 @@ public class ArchiveService : IArchiveService
                 {
                     tor.Id,
                     tor.CompanyId,
-                    UserEmail = userEmail,
+                    tor.UserId,
                     StartDate = tor.StartDate.ToString("yyyy-MM-dd"),
                     EndDate = tor.EndDate.ToString("yyyy-MM-dd"),
                     Type = tor.Type.ToString(),
@@ -623,7 +671,7 @@ public class ArchiveService : IArchiveService
                 {
                     c.Id,
                     c.CompanyId,
-                    UserEmail = c.User?.Email ?? "",
+                    c.UserId,
                     Date = c.Date.ToString("yyyy-MM-dd"),
                     c.Title,
                     c.Notes,
@@ -644,7 +692,7 @@ public class ArchiveService : IArchiveService
                 data = new
                 {
                     od.Id,
-                    UserEmail = od.User?.Email ?? "",
+                    od.UserId,
                     Date = od.Date.ToString("yyyy-MM-dd"),
                     Type = od.Type.ToString(),
                     od.Notes,

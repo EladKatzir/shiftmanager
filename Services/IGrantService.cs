@@ -8,7 +8,8 @@ public interface IGrantService
     Task<bool> HasGrantAsync(int userId, string grantKey);
     Task<bool> HasGrantAsync(int userId, string grantKey, GrantScope scope);
     Task<bool> HasGrantWithScopeAsync(int userId, string grantKey, int? projectId = null, int? areaId = null,
-        int? moleculeId = null, int? departmentId = null, int? companyId = null, int? jobTypeId = null);
+        int? moleculeId = null, int? departmentId = null, int? companyId = null, int? jobTypeId = null,
+        int? targetUserId = null);
 
     // Grant queries
     Task<List<Grant>> GetUserGrantsAsync(int userId);

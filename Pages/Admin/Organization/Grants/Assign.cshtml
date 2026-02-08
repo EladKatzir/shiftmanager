@@ -85,6 +85,21 @@
                 }
             </select>
             <span class="form-hint"><loc key="GrantTypeDescription" /></span>
+            @* I-03: Show grant description below dropdown for discoverability *@
+            <div id="grantDescriptionDisplay" style="margin-top: 0.5rem; padding: 0.5rem; background: var(--surface-soft); border-radius: 0.375rem; font-size: 0.85rem; color: var(--text-muted); display: none;"></div>
+            <script>
+            document.getElementById('SelectedGrantTypeId')?.addEventListener('change', function() {
+                var opt = this.options[this.selectedIndex];
+                var desc = opt?.getAttribute('title');
+                var display = document.getElementById('grantDescriptionDisplay');
+                if (desc && desc.trim()) {
+                    display.textContent = desc;
+                    display.style.display = 'block';
+                } else {
+                    display.style.display = 'none';
+                }
+            });
+            </script>
         </div>
 
         <div class="form-group">

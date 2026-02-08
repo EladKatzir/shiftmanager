@@ -44,8 +44,16 @@ public static class TimeHelpers
 
     public static DateOnly WeekStart(DateOnly date)
     {
-        // Monday as start
-        int delta = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        // Monday as start (default)
+        return WeekStart(date, DayOfWeek.Sunday);
+    }
+
+    /// <summary>
+    /// A-05: Configurable week start day. IDF units may use Sunday as week start.
+    /// </summary>
+    public static DateOnly WeekStart(DateOnly date, DayOfWeek startDay)
+    {
+        int delta = ((int)date.DayOfWeek - (int)startDay + 7) % 7;
         return date.AddDays(-delta);
     }
 }

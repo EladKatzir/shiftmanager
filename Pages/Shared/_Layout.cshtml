@@ -258,6 +258,19 @@
         });
     })();
     </script>
+    @* G-03: Browser compatibility check for older military browsers *@
+    <script>
+    (function() {
+        try { eval('const a = 1?.toString(); a ?? 0;'); } catch(e) {
+            document.addEventListener('DOMContentLoaded', function() {
+                var b = document.createElement('div');
+                b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;padding:8px 16px;text-align:center;font-size:14px;';
+                b.textContent = 'Your browser is outdated and may not display this application correctly. Please use Chrome 80+, Firefox 80+, or Edge 80+.';
+                document.body.prepend(b);
+            });
+        }
+    })();
+    </script>
 </head>
 <body>
     @* B-02: noscript fallback for JS-disabled browsers - Critical for air-gapped military networks *@
@@ -352,6 +365,9 @@
         setTimeout(hideLoader, 5000);
     })();
     </script>
+
+    @* F-07: System alerts banner for admins (critical disk/backup/security warnings) *@
+    @await Component.InvokeAsync("SystemAlerts")
 
     @* Language Edit Mode Banner (only shown when edit mode cookies are set) *@
     @await Component.InvokeAsync("LanguageEditModeBanner")

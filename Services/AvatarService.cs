@@ -230,13 +230,22 @@ public class AvatarService : IAvatarService
     {
         try
         {
+            // D-06: Validate filename to prevent path traversal via manipulated AvatarFileName
+            var sanitizedFileName = Path.GetFileName(fileName);
+            if (string.IsNullOrEmpty(sanitizedFileName) || sanitizedFileName != fileName ||
+                fileName.Contains("..") || fileName.Contains('/') || fileName.Contains('\\'))
+            {
+                _logger.LogWarning("Avatar path traversal attempt blocked: {FileName} for company {CompanyId}", fileName, companyId);
+                return;
+            }
+
             var avatarsDir = Path.Combine(_env.WebRootPath, "avatars", companyId.ToString());
 
             // Extract user ID from filename (e.g., "123.jpg" -> "123")
-            var userIdStr = Path.GetFileNameWithoutExtension(fileName);
+            var userIdStr = Path.GetFileNameWithoutExtension(sanitizedFileName);
 
             // Delete full size
-            var fullPath = Path.Combine(avatarsDir, fileName);
+            var fullPath = Path.Combine(avatarsDir, sanitizedFileName);
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);

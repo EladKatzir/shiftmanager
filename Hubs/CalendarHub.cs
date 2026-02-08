@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data;
 
 namespace ShiftManager.Hubs;
 
@@ -11,10 +13,12 @@ namespace ShiftManager.Hubs;
 public class CalendarHub : Hub
 {
     private readonly ILogger<CalendarHub> _logger;
+    private readonly AppDbContext _db;
 
-    public CalendarHub(ILogger<CalendarHub> logger)
+    public CalendarHub(ILogger<CalendarHub> logger, AppDbContext db)
     {
         _logger = logger;
+        _db = db;
     }
 
     /// <summary>
@@ -24,6 +28,12 @@ public class CalendarHub : Hub
     /// </summary>
     public async Task JoinCalendarGroup(string groupName)
     {
+        if (!await ValidateGroupAccessAsync(groupName))
+        {
+            _logger.LogWarning("Connection {ConnectionId} denied access to group {GroupName}", Context.ConnectionId, groupName);
+            return;
+        }
+
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
         _logger.LogDebug("Connection {ConnectionId} joined group {GroupName}", Context.ConnectionId, groupName);
     }
@@ -62,6 +72,77 @@ public class CalendarHub : Hub
         var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         _logger.LogDebug("Connection {ConnectionId} connected (User: {UserId})", Context.ConnectionId, userId ?? "unknown");
         await base.OnConnectedAsync();
+    }
+
+    /// <summary>
+    /// Validates that the current user is authorized to join the requested group.
+    /// Prevents cross-tenant real-time data leaks by checking group scope against user's company.
+    /// </summary>
+    private async Task<bool> ValidateGroupAccessAsync(string groupName)
+    {
+        if (string.IsNullOrWhiteSpace(groupName))
+            return false;
+
+        var companyIdClaim = Context.User?.FindFirst("CompanyId")?.Value;
+        if (string.IsNullOrEmpty(companyIdClaim) || !int.TryParse(companyIdClaim, out var userCompanyId))
+            return false;
+
+        var parts = groupName.Split('-');
+        if (parts.Length < 2)
+            return false;
+
+        var groupType = parts[0];
+
+        switch (groupType)
+        {
+            case "overview":
+                // overview-{companyId} — direct company match
+                if (int.TryParse(parts[1], out var overviewCompanyId))
+                    return overviewCompanyId == userCompanyId;
+                return false;
+
+            case "shifts":
+                // shifts-{moleculeId}-{jobTypeId} — validate molecule belongs to user's company
+                if (parts.Length >= 3 && int.TryParse(parts[1], out var shiftsMoleculeId))
+                    return await MoleculeBelongsToCompanyAsync(shiftsMoleculeId, userCompanyId);
+                return false;
+
+            case "chores":
+                // chores-{moleculeId} — validate molecule belongs to user's company
+                if (int.TryParse(parts[1], out var choresMoleculeId))
+                    return await MoleculeBelongsToCompanyAsync(choresMoleculeId, userCompanyId);
+                return false;
+
+            case "oncall":
+                // oncall-{areaId} — validate area is accessible to user's company
+                if (int.TryParse(parts[1], out var oncallAreaId))
+                    return await AreaBelongsToCompanyAsync(oncallAreaId, userCompanyId);
+                return false;
+
+            default:
+                _logger.LogWarning("Unknown group type '{GroupType}' in group name '{GroupName}'", groupType, groupName);
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if the given molecule is associated with the user's company.
+    /// </summary>
+    private async Task<bool> MoleculeBelongsToCompanyAsync(int moleculeId, int companyId)
+    {
+        // SECURITY-AUDITED: SAFE — validates tenant scope; IgnoreQueryFilters needed to check cross-tenant molecule ownership
+        return await _db.Companies.IgnoreQueryFilters()
+            .AnyAsync(c => c.Id == companyId && c.MoleculeId == moleculeId);
+    }
+
+    /// <summary>
+    /// Checks if the given area is associated with the user's company (via molecule).
+    /// </summary>
+    private async Task<bool> AreaBelongsToCompanyAsync(int areaId, int companyId)
+    {
+        // SECURITY-AUDITED: SAFE — validates tenant scope; IgnoreQueryFilters needed to check cross-tenant area ownership
+        return await _db.Companies.IgnoreQueryFilters()
+            .AnyAsync(c => c.Id == companyId && c.Molecule != null && c.Molecule.AreaId == areaId);
     }
 }
 

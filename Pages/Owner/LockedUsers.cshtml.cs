@@ -81,7 +81,9 @@ public class LockedUsersModel : PageModel
                 Email = u.Email,
                 FailedAttempts = u.FailedLoginAttempts,
                 LockoutEnd = u.LockoutEnd!.Value,
-                MinutesRemaining = (int)(u.LockoutEnd!.Value - now).TotalMinutes + 1
+                MinutesRemaining = (int)(u.LockoutEnd!.Value - now).TotalMinutes + 1,
+                // I-04: Include last attempt timestamp
+                LastAttempt = u.LastLoginAttempt
             })
             .ToListAsync();
 
@@ -100,11 +102,29 @@ public class LockedUsersModel : PageModel
                 FailedAttempts = u.FailedLoginAttempts,
                 LockoutEnd = u.LockoutEnd ?? now,
                 MinutesRemaining = 0,
-                IsExpired = true
+                IsExpired = true,
+                LastAttempt = u.LastLoginAttempt
             })
             .ToListAsync();
 
         LockedUsers.AddRange(recentlyLocked);
+
+        // I-04: Enrich with source IP from audit logs (most recent login failure per user)
+        var lockedUserIds = LockedUsers.Select(u => u.UserId).ToList();
+        if (lockedUserIds.Any())
+        {
+            var recentFailedLogins = await _db.AuditLogs.IgnoreQueryFilters()
+                .Where(al => al.Action == "LoginFailed" && al.UserId != null && lockedUserIds.Contains(al.UserId.Value))
+                .GroupBy(al => al.UserId)
+                .Select(g => new { UserId = g.Key, LastIp = g.OrderByDescending(al => al.Timestamp).First().IpAddress })
+                .ToListAsync();
+
+            foreach (var entry in recentFailedLogins)
+            {
+                var user = LockedUsers.FirstOrDefault(u => u.UserId == entry.UserId);
+                if (user != null) user.LastFailedIp = entry.LastIp;
+            }
+        }
     }
 }
 
@@ -117,4 +137,7 @@ public class LockedUserInfo
     public DateTime LockoutEnd { get; set; }
     public int MinutesRemaining { get; set; }
     public bool IsExpired { get; set; }
+    // I-04: Additional detail for admin investigation
+    public DateTime? LastAttempt { get; set; }
+    public string? LastFailedIp { get; set; }
 }

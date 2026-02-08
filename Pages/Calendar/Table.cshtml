@@ -1477,6 +1477,9 @@
     @await Component.InvokeAsync("CalendarSkeleton", new { viewType = "table" })
     <div data-calendar-content class="calendar-content">
 
+@* G-06: Screen reader announcer for dynamic calendar updates *@
+<div id="calendar-table-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
 <h2><loc key="ShiftAssignmentTable" /></h2>
 
 <!-- View Mode Toggle -->
@@ -2773,6 +2776,23 @@ async function detachFromProgram(instanceId, reason) {
     <script src="~/js/calendar-radar.js" asp-append-version="true"></script>
     <script src="~/js/calendar-fill-handle.js" asp-append-version="true"></script>
     <script>
+        // G-07: Keyboard accessibility for assignment slots (Enter/Space to activate, arrow keys to navigate)
+        document.addEventListener('keydown', function(e) {
+            const slot = e.target.closest('.assignment-slot');
+            if (!slot) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                slot.click();
+            }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const slots = Array.from(document.querySelectorAll('.assignment-slot[tabindex="0"]'));
+                const idx = slots.indexOf(slot);
+                const next = e.key === 'ArrowDown' ? slots[idx + 1] : slots[idx - 1];
+                if (next) next.focus();
+            }
+        });
+
         // B-007: Signal calendar content is ready
         document.addEventListener('DOMContentLoaded', function() {
             const calendarContent = document.querySelector('[data-calendar-content]');
