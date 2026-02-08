@@ -177,7 +177,7 @@
                 calendarType: 'shifts',
                 scope: {
                     moleculeId: @Model.MoleculeId,
-                    jobTypeId: @Model.JobTypeId
+                    jobTypeId: @(Model.JobTypeId?.ToString() ?? "null")
                 },
                 onRefresh: refreshCalendarData,
                 handlers: {
@@ -192,7 +192,7 @@
             const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
             const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
             const moleculeId = @Model.MoleculeId;
-            const jobTypeId = @Model.JobTypeId;
+            const jobTypeId = @(Model.JobTypeId?.ToString() ?? "null");
 
             try {
                 const response = await fetch(
