@@ -72,7 +72,7 @@
     @if (User?.Identity?.IsAuthenticated ?? false)
     {
         @Html.AntiForgeryToken()
-        <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+        <script>
         // Anti-forgery token for AJAX (B-034)
         (function() {
             'use strict';
@@ -108,7 +108,7 @@
     @* B-052: Toast Notification System - Must load before site.js for showToast compatibility *@
     <script defer src="~/js/toast-notifications.js" asp-append-version="true"></script>
     <script defer src="~/js/shift-swap-game.js" asp-append-version="true"></script>
-    <script defer src="~/js/site.js"></script>
+    <script defer src="~/js/site.js" asp-append-version="true"></script>
     @* Localization API - Load on all pages for attribute localization and JavaScript string access *@
     <script defer src="~/js/localization-api.js" asp-append-version="true"></script>
     <script defer src="~/js/localization-attributes.js" asp-append-version="true"></script>
@@ -159,7 +159,7 @@
     @* B-006: Calendar Print Button - Adds print functionality to calendar pages *@
     <script defer src="~/js/calendar-print.js" asp-append-version="true"></script>
     @* A-002: Sidebar Collapse State Persistence - Apply BEFORE first paint to prevent flash *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     (function() {
         'use strict';
         var SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
@@ -196,7 +196,7 @@
     })();
     </script>
     @* A-008: Widget Collapse State - Apply BEFORE first paint to prevent flash *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     (function() {
         'use strict';
         var STORAGE_PREFIX = 'shifty_widget_';
@@ -235,7 +235,7 @@
     })();
     </script>
     @* Offline deployment diagnostic: Verify sidebar CSS loads correctly *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     (function() {
         window.addEventListener('DOMContentLoaded', function() {
             var sidebar = document.querySelector('.app-sidebar');
@@ -259,7 +259,7 @@
     })();
     </script>
     @* G-03: Browser compatibility check for older military browsers *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     (function() {
         try { eval('const a = 1?.toString(); a ?? 0;'); } catch(e) {
             document.addEventListener('DOMContentLoaded', function() {
@@ -287,7 +287,7 @@
         <div id="context-switch-toast" style="position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:10000;background:var(--primary,#0d6efd);color:#fff;padding:0.5rem 1.5rem;border-radius:0.5rem;font-size:0.9rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);opacity:1;transition:opacity 0.5s ease;">
             @ctxMsg
         </div>
-        <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">setTimeout(function(){var t=document.getElementById('context-switch-toast');if(t){t.style.opacity='0';setTimeout(function(){t.remove();},500);}},3000);</script>
+        <script>setTimeout(function(){var t=document.getElementById('context-switch-toast');if(t){t.style.opacity='0';setTimeout(function(){t.remove();},500);}},3000);</script>
     }
 
     @* A-013: Skip link for keyboard navigation (WCAG 2.4.1) *@
@@ -305,7 +305,7 @@
         <div class="page-loader__spinner" aria-hidden="true"></div>
         <span class="page-loader__text">@(isHebrew ? "טוען..." : "Loading...")</span>
     </div>
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     // B-015: Smart page loader - shows only for slow page loads (>150ms)
     (function() {
         'use strict';
@@ -774,7 +774,7 @@
     @await RenderSectionAsync("PageScripts", required: false)
 
     @* Initialize Lucide icons *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
         // Re-initialize icons after any dynamic content updates
@@ -785,7 +785,7 @@
     </script>
 
     @* Sidebar & Mobile Navigation Scripts (A-002: Enhanced with state persistence) *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     (function() {
         'use strict';
         var SIDEBAR_COLLAPSED_KEY = 'shifty_sidebar_collapsed';
@@ -928,7 +928,7 @@
     </script>
 
     @* Bottom Dock Toggle Script *@
-    <script nonce="@(ViewContext.HttpContext.Items["CspNonce"])">
+    <script>
     (function() {
         'use strict';
         var DOCK_COLLAPSED_KEY = 'shifty_bottom_dock_collapsed';

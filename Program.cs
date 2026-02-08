@@ -971,15 +971,9 @@ app.UseRouting();
 // Add request logging middleware (must be after routing, before auth)
 app.UseRequestLogging();
 
-// Security headers middleware with per-request CSP nonce (fixes G-02)
+// Security headers middleware
 app.Use(async (context, next) =>
 {
-    // Generate per-request nonce for CSP (fixes G-02: replaces unsafe-inline for scripts)
-    var nonceBytes = new byte[16];
-    System.Security.Cryptography.RandomNumberGenerator.Fill(nonceBytes);
-    var nonce = Convert.ToBase64String(nonceBytes);
-    context.Items["CspNonce"] = nonce;
-
     // Prevent clickjacking attacks
     context.Response.Headers["X-Frame-Options"] = "DENY";
 
@@ -989,10 +983,10 @@ app.Use(async (context, next) =>
     // Control referrer information
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
-    // CSP with nonce for inline scripts (still allows unsafe-inline for styles)
+    // Content Security Policy — unsafe-inline required for inline event handlers (onclick, onchange, etc.)
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        $"script-src 'self' 'nonce-{nonce}' 'unsafe-inline'; " + // Nonce + unsafe-inline fallback for older browsers
+        "script-src 'self' 'unsafe-inline'; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data:; " +
         "font-src 'self'; " +

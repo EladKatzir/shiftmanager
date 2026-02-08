@@ -763,7 +763,8 @@
         </div>
     </form>
 
-    <table class="data-table">
+    <div style="overflow-x: auto;">
+    <table class="data-table" style="min-width: 900px;">
         <thead>
             <tr>
                 <th>@Localizer["Name"]</th>
@@ -774,8 +775,8 @@
                 <th>@Localizer["Role"]</th>
                 <th>@Localizer["Grants"]</th>
                 <th>@Localizer["Status"]</th>
-                <th style="width:1%">@Localizer["Password"]</th>
-                <th style="width:1%">@Localizer["Actions"]</th>
+                <th style="white-space: nowrap;">@Localizer["Password"]</th>
+                <th style="white-space: nowrap;">@Localizer["Actions"]</th>
             </tr>
         </thead>
         <tbody>
@@ -896,6 +897,7 @@
         }
         </tbody>
     </table>
+    </div>
 
     @* Pagination controls for users *@
     @if (Model.TotalPages > 1)
