@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Public;
 
-[Authorize(Policy = "CanViewChores")]
+[AllowAnonymous]
 public class ChoresModel : LocalizedPageModel
 {
     private readonly IChoreService _choreService;
@@ -92,6 +92,12 @@ public class ChoresModel : LocalizedPageModel
         if (Month < 1 || Month > 12)
         {
             Month = today.Month;
+        }
+
+        // Anonymous users: show empty calendar (no tenant context available)
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return Page();
         }
 
         // Get chores for the month (optionally filtered by molecule)

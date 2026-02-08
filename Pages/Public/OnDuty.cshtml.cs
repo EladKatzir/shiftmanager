@@ -13,7 +13,7 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Public;
 
-[Authorize(Policy = "CanViewOnDuty")]
+[AllowAnonymous]
 public class OnDutyModel : LocalizedPageModel
 {
     private readonly IOnDutyService _onDutyService;
@@ -95,6 +95,12 @@ public class OnDutyModel : LocalizedPageModel
         if (Month < 1 || Month > 12)
         {
             Month = today.Month;
+        }
+
+        // Anonymous users: show empty calendar (no tenant context available)
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return Page();
         }
 
         // Get on-duty assignments for the month

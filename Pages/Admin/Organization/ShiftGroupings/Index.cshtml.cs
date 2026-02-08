@@ -60,7 +60,7 @@ public class IndexModel : LocalizedPageModel
 
     private async Task LoadDataAsync()
     {
-        ShiftGroupings = await _db.ShiftGroupings
+        ShiftGroupings = (await _db.ShiftGroupings
             .IgnoreQueryFilters()
             .Include(sg => sg.Molecule)
             .Include(sg => sg.Companies)
@@ -75,18 +75,20 @@ public class IndexModel : LocalizedPageModel
                 sg.JobTypes.Count,
                 0 // User count calculated separately if needed
             ))
+            .ToListAsync())
             .OrderBy(sg => sg.MoleculeName)
             .ThenBy(sg => sg.Name)
-            .ToListAsync();
+            .ToList();
 
-        AvailableMolecules = await _db.Molecules
+        AvailableMolecules = (await _db.Molecules
             .IgnoreQueryFilters()
             .Where(m => m.IsActive)
             .Include(m => m.Area)
             .Select(m => new MoleculeOption(m.Id, m.DisplayName, m.Area.DisplayName))
+            .ToListAsync())
             .OrderBy(m => m.AreaName)
             .ThenBy(m => m.Name)
-            .ToListAsync();
+            .ToList();
 
         AvailableCompanies = await _db.Companies
             .IgnoreQueryFilters()
@@ -94,14 +96,15 @@ public class IndexModel : LocalizedPageModel
             .Select(c => new CompanyOption(c.Id, c.DisplayName ?? c.Name))
             .ToListAsync();
 
-        AvailableJobTypes = await _db.JobTypes
+        AvailableJobTypes = (await _db.JobTypes
             .IgnoreQueryFilters()
             .Where(jt => jt.IsActive)
             .Include(jt => jt.Area)
             .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName))
+            .ToListAsync())
             .OrderBy(jt => jt.AreaName)
             .ThenBy(jt => jt.Name)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<IActionResult> OnPostCreateAsync()

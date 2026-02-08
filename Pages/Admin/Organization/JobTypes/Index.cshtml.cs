@@ -59,7 +59,7 @@ public class IndexModel : LocalizedPageModel
             .Select(g => new { JobTypeId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.JobTypeId, x => x.Count);
 
-        JobTypes = await _db.JobTypes
+        JobTypes = (await _db.JobTypes
             .IgnoreQueryFilters()
             .Include(jt => jt.Area)
             .ThenInclude(a => a.Project)
@@ -74,21 +74,23 @@ public class IndexModel : LocalizedPageModel
                 jt.IsActive,
                 userCountsByJobType.GetValueOrDefault(jt.Id, 0)
             ))
+            .ToListAsync())
             .OrderBy(jt => jt.ProjectName)
             .ThenBy(jt => jt.AreaName)
             .ThenBy(jt => jt.SortOrder)
             .ThenBy(jt => jt.Name)
-            .ToListAsync();
+            .ToList();
 
-        AvailableAreas = await _db.Areas
+        AvailableAreas = (await _db.Areas
             .IgnoreQueryFilters()
             .Where(a => a.IsActive)
             .Include(a => a.Project)
             .Where(a => a.Project.IsActive)
             .Select(a => new AreaOption(a.Id, a.DisplayName, a.Project.DisplayName))
+            .ToListAsync())
             .OrderBy(a => a.ProjectName)
             .ThenBy(a => a.Name)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<IActionResult> OnPostCreateAsync()

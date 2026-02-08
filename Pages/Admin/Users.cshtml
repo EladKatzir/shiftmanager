@@ -1052,8 +1052,8 @@
             const batchApproveBtn = document.getElementById('batchApproveBtn');
             const selectAllCheckbox = document.getElementById('selectAllRequests');
 
-            countElement.textContent = count > 0 ? `(${count} ${selectedText})` : '';
-            batchApproveBtn.disabled = count === 0;
+            if (countElement) countElement.textContent = count > 0 ? `(${count} ${selectedText})` : '';
+            if (batchApproveBtn) batchApproveBtn.disabled = count === 0;
 
             // Update select all checkbox state
             const totalCheckboxes = document.querySelectorAll('.request-checkbox').length;

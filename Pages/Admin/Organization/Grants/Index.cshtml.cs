@@ -112,7 +112,7 @@ public class IndexModel : LocalizedPageModel
         else
         {
             // Show user summaries (default view)
-            UserSummaries = await _db.Users
+            UserSummaries = (await _db.Users
                 .IgnoreQueryFilters()
                 .Where(u => u.IsActive)
                 .Select(u => new UserGrantSummary(
@@ -121,10 +121,11 @@ public class IndexModel : LocalizedPageModel
                     u.Email,
                     _db.Grants.IgnoreQueryFilters().Count(g => g.UserId == u.Id)
                 ))
+                .ToListAsync())
                 .Where(us => us.GrantCount > 0)
                 .OrderByDescending(us => us.GrantCount)
                 .ThenBy(us => us.UserName)
-                .ToListAsync();
+                .ToList();
         }
     }
 

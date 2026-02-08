@@ -109,6 +109,8 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Auth/Login");
     options.Conventions.AllowAnonymousToPage("/Auth/Signup");
     options.Conventions.AllowAnonymousToPage("/Api/Signup/GetSignupOptions");
+    options.Conventions.AllowAnonymousToPage("/Public/Chores");
+    options.Conventions.AllowAnonymousToPage("/Public/OnDuty");
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization();
@@ -1093,7 +1095,12 @@ app.Use(async (context, next) =>
         // Chores calendar redirects
         if (config.GetValue<bool>("Features:ExcelCalendarChores"))
         {
-            if (path == "/chores/calendar" || path == "/public/chores")
+            if (path == "/chores/calendar")
+            {
+                redirectTo = "/Calendar/Chores" + context.Request.QueryString;
+            }
+            // Only redirect authenticated users; anonymous users stay on Public page
+            if (path == "/public/chores" && context.User.Identity?.IsAuthenticated == true)
             {
                 redirectTo = "/Calendar/Chores" + context.Request.QueryString;
             }
@@ -1102,7 +1109,8 @@ app.Use(async (context, next) =>
         // On-Call calendar redirects
         if (config.GetValue<bool>("Features:ExcelCalendarOnCall"))
         {
-            if (path == "/public/onduty")
+            // Only redirect authenticated users; anonymous users stay on Public page
+            if (path == "/public/onduty" && context.User.Identity?.IsAuthenticated == true)
             {
                 redirectTo = "/Calendar/OnCall" + context.Request.QueryString;
             }
