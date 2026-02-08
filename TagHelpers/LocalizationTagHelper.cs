@@ -11,7 +11,7 @@ namespace ShiftManager.TagHelpers;
 /// Tag helper for rendering localized text with company-scoped overrides and edit mode support.
 /// Usage: &lt;loc key="Button_Save" /&gt; or &lt;loc key="Welcome_Message" params='new object[] { userName }' /&gt;
 /// </summary>
-[HtmlTargetElement("loc", TagStructure = TagStructure.WithoutEndTag)]
+[HtmlTargetElement("loc", TagStructure = TagStructure.NormalOrSelfClosing)]
 public class LocalizationTagHelper : TagHelper
 {
     private readonly IStringLocalizer<SharedResources> _localizer;

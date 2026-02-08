@@ -292,8 +292,20 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
             // Clear search before navigating
             clearSearch();
 
-            // Navigate to switch context
-            window.location.href = '/Owner/SelectCompany?companyId=' + contextId + '&returnUrl=' + encodeURIComponent(window.location.pathname);
+            // Submit via POST (D-03: company switching is POST-only)
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Owner/SelectCompany';
+            var input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'companyId'; input.value = contextId;
+            form.appendChild(input);
+            var returnInput = document.createElement('input');
+            returnInput.type = 'hidden'; returnInput.name = 'returnUrl'; returnInput.value = window.location.pathname;
+            form.appendChild(returnInput);
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) { form.appendChild(token.cloneNode(true)); }
+            document.body.appendChild(form);
+            form.submit();
         }
 
         // Toggle dropdown

@@ -173,7 +173,7 @@ public class SignupModel : LocalizedPageModel
         if (existingPendingRequest != null)
         {
             var company = await _db.Companies.FindAsync(CompanyId);
-            PendingRequestMessage = _localizer["SignupPendingMessage", company?.Name ?? "", RequestedRole.ToString()];
+            PendingRequestMessage = _localizer["SignupPendingMessage", company?.Name ?? "", _localizer[RequestedRole.ToString()].Value];
             return Page();
         }
 
@@ -214,7 +214,7 @@ public class SignupModel : LocalizedPageModel
             selectedCompany.Name,
             joinRequest.Id);
 
-        PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, RequestedRole.ToString()];
+        PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, _localizer[RequestedRole.ToString()].Value];
 
         // Clear form fields
         Email = string.Empty;

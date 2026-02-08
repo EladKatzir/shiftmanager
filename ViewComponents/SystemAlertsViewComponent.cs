@@ -13,12 +13,14 @@ public class SystemAlertsViewComponent : ViewComponent
 {
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _env;
     private const string CacheKey = "SystemAlerts";
 
-    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration)
+    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env)
     {
         _cache = cache;
         _configuration = configuration;
+        _env = env;
     }
 
     public IViewComponentResult Invoke()
@@ -101,9 +103,9 @@ public class SystemAlertsViewComponent : ViewComponent
         }
         catch { /* Ignore */ }
 
-        // Check HMAC secret
+        // Check HMAC secret (skip in Development — not relevant for local dev)
         var hmacSecret = _configuration.GetValue<string>("Security:ApiKeyHmacSecret");
-        if (string.IsNullOrEmpty(hmacSecret) || hmacSecret == "ShiftManager-ApiKey-HMAC-v1-Default")
+        if (!_env.IsDevelopment() && (string.IsNullOrEmpty(hmacSecret) || hmacSecret == "ShiftManager-ApiKey-HMAC-v1-Default"))
             alerts.Add("SECURITY: API key HMAC secret is using default value. Configure Security:ApiKeyHmacSecret.");
 
         // G-04: Check Hebrew font availability for PDF exports

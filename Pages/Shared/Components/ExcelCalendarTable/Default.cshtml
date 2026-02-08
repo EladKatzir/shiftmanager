@@ -66,7 +66,7 @@
                     {
                         var rowStyle = row.Color != null ? $"--row-color: {row.Color}" : "";
                         var rowHiddenStyle = group.IsCollapsed ? "display: none;" : "";
-                        @await Html.PartialAsync("_CalendarRow", new ExcelCalendarRowViewModel
+                        @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
                         {
                             Row = row,
                             Days = days,
@@ -80,7 +80,7 @@
                 @* Rows without group *@
                 foreach (var row in Model.Rows.Where(r => r.GroupId == null))
                 {
-                    @await Html.PartialAsync("_CalendarRow", new ExcelCalendarRowViewModel
+                    @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
                     {
                         Row = row,
                         Days = days,
@@ -94,7 +94,7 @@
             {
                 foreach (var row in Model.Rows)
                 {
-                    @await Html.PartialAsync("_CalendarRow", new ExcelCalendarRowViewModel
+                    @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
                     {
                         Row = row,
                         Days = days,

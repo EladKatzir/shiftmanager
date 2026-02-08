@@ -104,7 +104,7 @@
                 {
                     <div class="category-section" data-category="@categoryGroup.Key">
                         <h3 class="category-header">
-                            <span class="category-icon">@GetCategoryIcon(categoryGroup.Key)</span>
+                            <span class="category-icon">@Html.Raw(GetCategoryIcon(categoryGroup.Key))</span>
                             @categoryGroup.Key
                             <span class="category-count">(@categoryGroup.Value.Count)</span>
                         </h3>

@@ -261,7 +261,8 @@
     @* G-03: Browser compatibility check for older military browsers *@
     <script>
     (function() {
-        try { eval('const a = 1?.toString(); a ?? 0;'); } catch(e) {
+        // Feature-detect ES2020+ without eval (CSP blocks eval/new Function)
+        if (typeof globalThis === 'undefined' || !('replaceAll' in String.prototype)) {
             document.addEventListener('DOMContentLoaded', function() {
                 var b = document.createElement('div');
                 b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;padding:8px 16px;text-align:center;font-size:14px;';
