@@ -8824,4 +8824,1957 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="View" xml:space="preserve">
     <value>View</value>
   </data>
+  <data name="AuditSearch_Title" xml:space="preserve">
+    <value>Audit Log Search</value>
+  </data>
+  <data name="AuditSearch_Subtitle" xml:space="preserve">
+    <value>Search and filter audit logs across all tenants</value>
+  </data>
+  <data name="AuditSearch_MatchingRecords" xml:space="preserve">
+    <value>matching records</value>
+  </data>
+  <data name="AuditSearch_ActionTypes" xml:space="preserve">
+    <value>action types</value>
+  </data>
+  <data name="AuditSearch_EntityTypes" xml:space="preserve">
+    <value>entity types</value>
+  </data>
+  <data name="AuditSearch_EntityId" xml:space="preserve">
+    <value>Entity ID</value>
+  </data>
+  <data name="MaxFileSizeAnd" xml:space="preserve">
+    <value>Max file size 2MB,</value>
+  </data>
+  <data name="HowYouPreferToBeAddressed" xml:space="preserve">
+    <value>How you prefer to be addressed</value>
+  </data>
+  <data name="CommaSeparated" xml:space="preserve">
+    <value>Comma separated</value>
+  </data>
+
+
+  <!-- === Missing translations added automatically === -->
+  <data name="Accept" xml:space="preserve">
+    <value>Accept</value>
+  </data>
+  <data name="AddFriend" xml:space="preserve">
+    <value>Add Friend</value>
+  </data>
+  <data name="AlreadyFriends" xml:space="preserve">
+    <value>Already Friends</value>
+  </data>
+  <data name="ConfirmCancelRequest" xml:space="preserve">
+    <value>Are you sure you want to cancel this request?</value>
+  </data>
+  <data name="ConfirmRemoveFriend" xml:space="preserve">
+    <value>Are you sure you want to remove this friend?</value>
+  </data>
+  <data name="Friends" xml:space="preserve">
+    <value>Friends</value>
+  </data>
+  <data name="FriendsDescription" xml:space="preserve">
+    <value>Manage your friends and friend requests</value>
+  </data>
+  <data name="FriendsSince" xml:space="preserve">
+    <value>Friends Since</value>
+  </data>
+  <data name="MyFriends" xml:space="preserve">
+    <value>My Friends</value>
+  </data>
+  <data name="NoFriendsYet" xml:space="preserve">
+    <value>No friends yet</value>
+  </data>
+  <data name="OutgoingRequests" xml:space="preserve">
+    <value>Outgoing Requests</value>
+  </data>
+  <data name="RequestPending" xml:space="preserve">
+    <value>Request Pending</value>
+  </data>
+  <data name="RequestSentTo" xml:space="preserve">
+    <value>Request Sent To</value>
+  </data>
+  <data name="SearchByNameOrEmail" xml:space="preserve">
+    <value>Search by name or email</value>
+  </data>
+  <data name="SendRequest" xml:space="preserve">
+    <value>Send Request</value>
+  </data>
+  <data name="Action_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Action_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Action_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>Activate</value>
+  </data>
+  <data name="Assign" xml:space="preserve">
+    <value>Assign</value>
+  </data>
+  <data name="By" xml:space="preserve">
+    <value>By</value>
+  </data>
+  <data name="Choose" xml:space="preserve">
+    <value>Choose</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Collapse All</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="CompletedAt" xml:space="preserve">
+    <value>Completed At</value>
+  </data>
+  <data name="Content" xml:space="preserve">
+    <value>Content</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Created At</value>
+  </data>
+  <data name="CreatedBy" xml:space="preserve">
+    <value>Created By</value>
+  </data>
+  <data name="Deactivate" xml:space="preserve">
+    <value>Deactivate</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Expand All</value>
+  </data>
+  <data name="ExpandCollapseAll" xml:space="preserve">
+    <value>Expand / Collapse All</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>Expires At</value>
+  </data>
+  <data name="Formats" xml:space="preserve">
+    <value>Formats</value>
+  </data>
+  <data name="Give" xml:space="preserve">
+    <value>Give</value>
+  </data>
+  <data name="Icon" xml:space="preserve">
+    <value>Icon</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="InProgress" xml:space="preserve">
+    <value>In Progress</value>
+  </data>
+  <data name="Manage" xml:space="preserve">
+    <value>Manage</value>
+  </data>
+  <data name="Manual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="Auto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="MaxSize" xml:space="preserve">
+    <value>Max Size</value>
+  </data>
+  <data name="Metadata" xml:space="preserve">
+    <value>Metadata</value>
+  </data>
+  <data name="Move" xml:space="preserve">
+    <value>Move</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>Move To</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="Own" xml:space="preserve">
+    <value>Own</value>
+  </data>
+  <data name="Pinned" xml:space="preserve">
+    <value>Pinned</value>
+  </data>
+  <data name="PinToTop" xml:space="preserve">
+    <value>Pin to Top</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="Skip" xml:space="preserve">
+    <value>Skip</value>
+  </data>
+  <data name="SortOrder" xml:space="preserve">
+    <value>Sort Order</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Self" xml:space="preserve">
+    <value>Self</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Online" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>Organization</value>
+  </data>
+  <data name="OrganizationStructure" xml:space="preserve">
+    <value>Organization Structure</value>
+  </data>
+  <data name="ActiveAreas" xml:space="preserve">
+    <value>Active Areas</value>
+  </data>
+  <data name="ActiveMolecules" xml:space="preserve">
+    <value>Active Molecules</value>
+  </data>
+  <data name="ActiveProjects" xml:space="preserve">
+    <value>Active Projects</value>
+  </data>
+  <data name="NeedsAssignment" xml:space="preserve">
+    <value>Needs Assignment</value>
+  </data>
+  <data name="TotalUsers" xml:space="preserve">
+    <value>Total Users</value>
+  </data>
+  <data name="UnassignedCompanies" xml:space="preserve">
+    <value>Unassigned Companies</value>
+  </data>
+  <data name="QuickActions" xml:space="preserve">
+    <value>Quick Actions</value>
+  </data>
+  <data name="Hierarchy" xml:space="preserve">
+    <value>Hierarchy</value>
+  </data>
+  <data name="HierarchyTree" xml:space="preserve">
+    <value>Hierarchy Tree</value>
+  </data>
+  <data name="HierarchySettings" xml:space="preserve">
+    <value>Hierarchy Settings</value>
+  </data>
+  <data name="HierarchySettingsDescription" xml:space="preserve">
+    <value>Configure hierarchy settings for your organization</value>
+  </data>
+  <data name="AddChild" xml:space="preserve">
+    <value>Add Child</value>
+  </data>
+  <data name="AddProject" xml:space="preserve">
+    <value>Add Project</value>
+  </data>
+  <data name="EnterName" xml:space="preserve">
+    <value>Enter Name</value>
+  </data>
+  <data name="EnterProjectName" xml:space="preserve">
+    <value>Enter Project Name</value>
+  </data>
+  <data name="ErrorCreating" xml:space="preserve">
+    <value>Error creating item</value>
+  </data>
+  <data name="ErrorDeleting" xml:space="preserve">
+    <value>Error deleting item</value>
+  </data>
+  <data name="ErrorMoving" xml:space="preserve">
+    <value>Error moving item</value>
+  </data>
+  <data name="ErrorReordering" xml:space="preserve">
+    <value>Error reordering items</value>
+  </data>
+  <data name="ErrorSaving" xml:space="preserve">
+    <value>Error saving item</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>Name is required</value>
+  </data>
+  <data name="NoMoveTargets" xml:space="preserve">
+    <value>No available targets to move to</value>
+  </data>
+  <data name="SelectDestination" xml:space="preserve">
+    <value>Select Destination</value>
+  </data>
+  <data name="Project" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="Projects" xml:space="preserve">
+    <value>Projects</value>
+  </data>
+  <data name="CreateProject" xml:space="preserve">
+    <value>Create Project</value>
+  </data>
+  <data name="CreateNewProject" xml:space="preserve">
+    <value>Create New Project</value>
+  </data>
+  <data name="ManageProjects" xml:space="preserve">
+    <value>Manage Projects</value>
+  </data>
+  <data name="CreateFirstProject" xml:space="preserve">
+    <value>Create First Project</value>
+  </data>
+  <data name="CreateAndManageProjects" xml:space="preserve">
+    <value>Create and manage projects</value>
+  </data>
+  <data name="NoProjectsYet" xml:space="preserve">
+    <value>No projects yet</value>
+  </data>
+  <data name="NoProjectsAvailable" xml:space="preserve">
+    <value>No projects available</value>
+  </data>
+  <data name="SelectProject" xml:space="preserve">
+    <value>Select Project</value>
+  </data>
+  <data name="ConfirmDeleteProject" xml:space="preserve">
+    <value>Are you sure you want to delete this project?</value>
+  </data>
+  <data name="ManageAreas" xml:space="preserve">
+    <value>Manage Areas</value>
+  </data>
+  <data name="CreateArea" xml:space="preserve">
+    <value>Create Area</value>
+  </data>
+  <data name="CreateNewArea" xml:space="preserve">
+    <value>Create New Area</value>
+  </data>
+  <data name="CreateAndManageAreas" xml:space="preserve">
+    <value>Create and manage areas</value>
+  </data>
+  <data name="NoAreasYet" xml:space="preserve">
+    <value>No areas yet</value>
+  </data>
+  <data name="NoAreasAvailable" xml:space="preserve">
+    <value>No areas available</value>
+  </data>
+  <data name="ConfirmDeleteArea" xml:space="preserve">
+    <value>Are you sure you want to delete this area?</value>
+  </data>
+  <data name="ManageMolecules" xml:space="preserve">
+    <value>Manage Molecules</value>
+  </data>
+  <data name="CreateMolecule" xml:space="preserve">
+    <value>Create Molecule</value>
+  </data>
+  <data name="CreateNewMolecule" xml:space="preserve">
+    <value>Create New Molecule</value>
+  </data>
+  <data name="CreateAndManageMolecules" xml:space="preserve">
+    <value>Create and manage molecules</value>
+  </data>
+  <data name="NoMoleculesYet" xml:space="preserve">
+    <value>No molecules yet</value>
+  </data>
+  <data name="NoMoleculesAvailable" xml:space="preserve">
+    <value>No molecules available</value>
+  </data>
+  <data name="ConfirmDeleteMolecule" xml:space="preserve">
+    <value>Are you sure you want to delete this molecule?</value>
+  </data>
+  <data name="Helper" xml:space="preserve">
+    <value>Helper</value>
+  </data>
+  <data name="Tech" xml:space="preserve">
+    <value>Tech</value>
+  </data>
+  <data name="Workforce" xml:space="preserve">
+    <value>Workforce</value>
+  </data>
+  <data name="MoleculeSettings" xml:space="preserve">
+    <value>Molecule Settings</value>
+  </data>
+  <data name="Departments" xml:space="preserve">
+    <value>Departments</value>
+  </data>
+  <data name="ManageDepartments" xml:space="preserve">
+    <value>Manage Departments</value>
+  </data>
+  <data name="CreateDepartment" xml:space="preserve">
+    <value>Create Department</value>
+  </data>
+  <data name="CreateNewDepartment" xml:space="preserve">
+    <value>Create New Department</value>
+  </data>
+  <data name="CreateAndManageDepartments" xml:space="preserve">
+    <value>Create and manage departments</value>
+  </data>
+  <data name="NoDepartmentsYet" xml:space="preserve">
+    <value>No departments yet</value>
+  </data>
+  <data name="DepartmentsAreForTechMolecules" xml:space="preserve">
+    <value>Departments are available for tech molecules only</value>
+  </data>
+  <data name="TechMolecule" xml:space="preserve">
+    <value>Tech Molecule</value>
+  </data>
+  <data name="NoTechMoleculesAvailable" xml:space="preserve">
+    <value>No tech molecules available</value>
+  </data>
+  <data name="NoDepartment" xml:space="preserve">
+    <value>No Department</value>
+  </data>
+  <data name="DepartmentDescription" xml:space="preserve">
+    <value>Department</value>
+  </data>
+  <data name="ConfirmDeleteDepartment" xml:space="preserve">
+    <value>Are you sure you want to delete this department?</value>
+  </data>
+  <data name="SelectDepartment" xml:space="preserve">
+    <value>Select Department</value>
+  </data>
+  <data name="LegacyDepartmentNote" xml:space="preserve">
+    <value>Legacy department field - managed in Organization</value>
+  </data>
+  <data name="ManageJobTypes" xml:space="preserve">
+    <value>Manage Job Types</value>
+  </data>
+  <data name="CreateJobType" xml:space="preserve">
+    <value>Create Job Type</value>
+  </data>
+  <data name="CreateNewJobType" xml:space="preserve">
+    <value>Create New Job Type</value>
+  </data>
+  <data name="CreateAndManageJobTypes" xml:space="preserve">
+    <value>Create and manage job types</value>
+  </data>
+  <data name="NoJobTypesYet" xml:space="preserve">
+    <value>No job types yet</value>
+  </data>
+  <data name="NoJobType" xml:space="preserve">
+    <value>No Job Type</value>
+  </data>
+  <data name="JobTypeDescription" xml:space="preserve">
+    <value>Job Type</value>
+  </data>
+  <data name="JobTypesAreAreaScoped" xml:space="preserve">
+    <value>Job types are scoped to areas</value>
+  </data>
+  <data name="ConfirmDeleteJobType" xml:space="preserve">
+    <value>Are you sure you want to delete this job type?</value>
+  </data>
+  <data name="ShiftGroupings" xml:space="preserve">
+    <value>Shift Groupings</value>
+  </data>
+  <data name="Grouping" xml:space="preserve">
+    <value>Grouping</value>
+  </data>
+  <data name="ManageShiftGroupings" xml:space="preserve">
+    <value>Manage Shift Groupings</value>
+  </data>
+  <data name="CreateShiftGrouping" xml:space="preserve">
+    <value>Create Shift Grouping</value>
+  </data>
+  <data name="CreateNewShiftGrouping" xml:space="preserve">
+    <value>Create New Shift Grouping</value>
+  </data>
+  <data name="CreateAndManageShiftGroupings" xml:space="preserve">
+    <value>Create and manage shift groupings</value>
+  </data>
+  <data name="ShiftGroupingsCombineCompaniesAndJobTypes" xml:space="preserve">
+    <value>Shift groupings combine companies and job types</value>
+  </data>
+  <data name="AllShiftGroupings" xml:space="preserve">
+    <value>All Shift Groupings</value>
+  </data>
+  <data name="NoShiftGroupingsYet" xml:space="preserve">
+    <value>No shift groupings yet</value>
+  </data>
+  <data name="ConfirmDeleteGrouping" xml:space="preserve">
+    <value>Are you sure you want to delete this grouping?</value>
+  </data>
+  <data name="HoldCtrlToSelectMultiple" xml:space="preserve">
+    <value>Hold Ctrl to select multiple</value>
+  </data>
+  <data name="AllGrants" xml:space="preserve">
+    <value>All Grants</value>
+  </data>
+  <data name="AllGrantTypes" xml:space="preserve">
+    <value>All Grant Types</value>
+  </data>
+  <data name="AddGrant" xml:space="preserve">
+    <value>Add Grant</value>
+  </data>
+  <data name="AddGrantToRoleTemplate" xml:space="preserve">
+    <value>Add Grant to Role Template</value>
+  </data>
+  <data name="AssignGrant" xml:space="preserve">
+    <value>Assign Grant</value>
+  </data>
+  <data name="AssignGrantToUser" xml:space="preserve">
+    <value>Assign Grant to User</value>
+  </data>
+  <data name="AssignNewGrant" xml:space="preserve">
+    <value>Assign New Grant</value>
+  </data>
+  <data name="ManageGrants" xml:space="preserve">
+    <value>Manage Grants</value>
+  </data>
+  <data name="ViewGrants" xml:space="preserve">
+    <value>View Grants</value>
+  </data>
+  <data name="ViewAndManageUserGrants" xml:space="preserve">
+    <value>View and manage user grants</value>
+  </data>
+  <data name="NoGrantsFound" xml:space="preserve">
+    <value>No grants found</value>
+  </data>
+  <data name="NoGrantsInTemplate" xml:space="preserve">
+    <value>No grants in this template</value>
+  </data>
+  <data name="NoUsersWithGrants" xml:space="preserve">
+    <value>No users with grants</value>
+  </data>
+  <data name="SelectUserToAssignGrant" xml:space="preserve">
+    <value>Select a user to assign a grant</value>
+  </data>
+  <data name="SelectUserAndGrant" xml:space="preserve">
+    <value>Select User and Grant</value>
+  </data>
+  <data name="ConfirmRevokeGrant" xml:space="preserve">
+    <value>Are you sure you want to revoke this grant?</value>
+  </data>
+  <data name="ConfirmRemoveGrant" xml:space="preserve">
+    <value>Are you sure you want to remove this grant?</value>
+  </data>
+  <data name="GrantType" xml:space="preserve">
+    <value>Grant Type</value>
+  </data>
+  <data name="GrantTypeDescription" xml:space="preserve">
+    <value>Description of the grant type</value>
+  </data>
+  <data name="GrantTypeUsage" xml:space="preserve">
+    <value>Grant Type Usage</value>
+  </data>
+  <data name="GrantNotesPlaceholder" xml:space="preserve">
+    <value>Optional notes about this grant</value>
+  </data>
+  <data name="NotesOptional" xml:space="preserve">
+    <value>Notes (optional)</value>
+  </data>
+  <data name="OptionalNotes" xml:space="preserve">
+    <value>Optional Notes</value>
+  </data>
+  <data name="CanGive" xml:space="preserve">
+    <value>Can Give (Allow delegation)</value>
+  </data>
+  <data name="CanGiveHelp" xml:space="preserve">
+    <value>If enabled, this user can grant this permission to others within their scope.</value>
+  </data>
+  <data name="CanOwn" xml:space="preserve">
+    <value>Can Own (Can perform action)</value>
+  </data>
+  <data name="Capabilities" xml:space="preserve">
+    <value>Capabilities</value>
+  </data>
+  <data name="CapabilitiesDescription" xml:space="preserve">
+    <value>Configure the capabilities for this grant</value>
+  </data>
+  <data name="DisableCanGive" xml:space="preserve">
+    <value>Disable Can Give</value>
+  </data>
+  <data name="EnableCanGive" xml:space="preserve">
+    <value>Enable Can Give</value>
+  </data>
+  <data name="ManagedByRole" xml:space="preserve">
+    <value>Managed by Role</value>
+  </data>
+  <data name="PleaseSelectGrantType" xml:space="preserve">
+    <value>Please select a grant type</value>
+  </data>
+  <data name="EditRoleTemplateGrant" xml:space="preserve">
+    <value>Edit Role Template Grant</value>
+  </data>
+  <data name="IncludedInRoleTemplates" xml:space="preserve">
+    <value>Included in Role Templates</value>
+  </data>
+  <data name="NotIncludedInAnyRoleTemplate" xml:space="preserve">
+    <value>Not included in any role template</value>
+  </data>
+  <data name="AssignedToUsers" xml:space="preserve">
+    <value>Assigned to Users</value>
+  </data>
+  <data name="UsedBy" xml:space="preserve">
+    <value>Used By</value>
+  </data>
+  <data name="ViewUsage" xml:space="preserve">
+    <value>View Usage</value>
+  </data>
+  <data name="TypeToSearch" xml:space="preserve">
+    <value>Type to search...</value>
+  </data>
+  <data name="SearchUser" xml:space="preserve">
+    <value>Search User</value>
+  </data>
+  <data name="Scope" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="ScopeDescription" xml:space="preserve">
+    <value>Define the scope for this grant</value>
+  </data>
+  <data name="ScopeMode" xml:space="preserve">
+    <value>Scope Mode</value>
+  </data>
+  <data name="ScopeLevel" xml:space="preserve">
+    <value>Scope Level</value>
+  </data>
+  <data name="SelectRoleTemplate" xml:space="preserve">
+    <value>Select a role template to view and edit its grants</value>
+  </data>
+  <data name="Roles" xml:space="preserve">
+    <value>Roles</value>
+  </data>
+  <data name="RoleTemplates" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="ManageRoles" xml:space="preserve">
+    <value>Manage Roles</value>
+  </data>
+  <data name="AssignNewRole" xml:space="preserve">
+    <value>Assign New Role</value>
+  </data>
+  <data name="AssignRoleToUser" xml:space="preserve">
+    <value>Assign Role to User</value>
+  </data>
+  <data name="SelectUserToAssignRole" xml:space="preserve">
+    <value>Select a user to assign a role</value>
+  </data>
+  <data name="SelectUserAndRole" xml:space="preserve">
+    <value>Select User and Role</value>
+  </data>
+  <data name="SelectRole" xml:space="preserve">
+    <value>Select Role</value>
+  </data>
+  <data name="ViewAndManageRoleAssignments" xml:space="preserve">
+    <value>View and manage role assignments</value>
+  </data>
+  <data name="ViewAssignments" xml:space="preserve">
+    <value>View Assignments</value>
+  </data>
+  <data name="NoRoleAssignmentsFound" xml:space="preserve">
+    <value>No role assignments found</value>
+  </data>
+  <data name="NoRoleTemplatesFound" xml:space="preserve">
+    <value>No role templates found</value>
+  </data>
+  <data name="ConfirmRevokeRole" xml:space="preserve">
+    <value>Are you sure you want to revoke this role?</value>
+  </data>
+  <data name="AssignedAt" xml:space="preserve">
+    <value>Assigned At</value>
+  </data>
+  <data name="AssignedBy" xml:space="preserve">
+    <value>Assigned By</value>
+  </data>
+  <data name="AutoGrants" xml:space="preserve">
+    <value>Auto Grants</value>
+  </data>
+  <data name="RoleScope" xml:space="preserve">
+    <value>Role Scope</value>
+  </data>
+  <data name="RoleScopeExplanation" xml:space="preserve">
+    <value>The scope determines where this role assignment applies</value>
+  </data>
+  <data name="RoleDescriptionHint" xml:space="preserve">
+    <value>Optional description for this role assignment</value>
+  </data>
+  <data name="AreaScopeHint" xml:space="preserve">
+    <value>Select the area for this assignment</value>
+  </data>
+  <data name="CompanyScopeHint" xml:space="preserve">
+    <value>Select the company for this assignment</value>
+  </data>
+  <data name="DepartmentScopeHint" xml:space="preserve">
+    <value>Select the department for this assignment</value>
+  </data>
+  <data name="MoleculeScopeHint" xml:space="preserve">
+    <value>Select the molecule for this assignment</value>
+  </data>
+  <data name="JobTypeScopeHint" xml:space="preserve">
+    <value>Select the job type for this assignment</value>
+  </data>
+  <data name="ManageEntities" xml:space="preserve">
+    <value>Manage Entities</value>
+  </data>
+  <data name="ManageHierarchyProjectsAreasMolecules" xml:space="preserve">
+    <value>Manage hierarchy - projects, areas, and molecules</value>
+  </data>
+  <data name="AllDepartments" xml:space="preserve">
+    <value>All Departments</value>
+  </data>
+  <data name="Announcements" xml:space="preserve">
+    <value>Announcements</value>
+  </data>
+  <data name="AnnouncementManagement" xml:space="preserve">
+    <value>Announcement Management</value>
+  </data>
+  <data name="AnnouncementScope_All" xml:space="preserve">
+    <value>All Users</value>
+  </data>
+  <data name="AnnouncementScope_Department" xml:space="preserve">
+    <value>Department</value>
+  </data>
+  <data name="AnnouncementScope_Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="ManageCompanyAnnouncements" xml:space="preserve">
+    <value>Manage company announcements</value>
+  </data>
+  <data name="CreateAnnouncement" xml:space="preserve">
+    <value>Create Announcement</value>
+  </data>
+  <data name="ExistingAnnouncements" xml:space="preserve">
+    <value>Existing Announcements</value>
+  </data>
+  <data name="NoAnnouncementsFound" xml:space="preserve">
+    <value>No announcements found</value>
+  </data>
+  <data name="EnterAnnouncementTitle" xml:space="preserve">
+    <value>Enter announcement title</value>
+  </data>
+  <data name="EnterAnnouncementContent" xml:space="preserve">
+    <value>Enter announcement content</value>
+  </data>
+  <data name="ConfirmDeleteAnnouncement" xml:space="preserve">
+    <value>Are you sure you want to delete this announcement?</value>
+  </data>
+  <data name="AreaSettings" xml:space="preserve">
+    <value>Area Settings</value>
+  </data>
+  <data name="EditCompanyOverrides" xml:space="preserve">
+    <value>Edit Company Overrides</value>
+  </data>
+  <data name="EditMoleculeOverrides" xml:space="preserve">
+    <value>Edit Molecule Overrides</value>
+  </data>
+  <data name="EffectiveSettings" xml:space="preserve">
+    <value>Effective Settings</value>
+  </data>
+  <data name="ClearOverrideInheritFromParent" xml:space="preserve">
+    <value>Clear override (inherit from parent)</value>
+  </data>
+  <data name="LeaveEmptyToInherit" xml:space="preserve">
+    <value>Leave empty to inherit from parent level</value>
+  </data>
+  <data name="LastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+  </data>
+  <data name="SettingsCascadeInfo" xml:space="preserve">
+    <value>Settings cascade from molecule to company. Company overrides apply unless molecule has its own.</value>
+  </data>
+  <data name="RestHoursBetweenShifts" xml:space="preserve">
+    <value>Rest Hours Between Shifts</value>
+  </data>
+  <data name="RestHoursHint" xml:space="preserve">
+    <value>Minimum rest hours required between shifts</value>
+  </data>
+  <data name="WeeklyHoursCap" xml:space="preserve">
+    <value>Weekly Hours Cap</value>
+  </data>
+  <data name="WeeklyCapHint" xml:space="preserve">
+    <value>Maximum weekly working hours allowed</value>
+  </data>
+  <data name="SetupTasks" xml:space="preserve">
+    <value>Setup Tasks</value>
+  </data>
+  <data name="SetupTasksDescription" xml:space="preserve">
+    <value>Track and complete setup tasks for your molecules</value>
+  </data>
+  <data name="AllTasks" xml:space="preserve">
+    <value>All Tasks</value>
+  </data>
+  <data name="MyPendingTasks" xml:space="preserve">
+    <value>My Pending Tasks</value>
+  </data>
+  <data name="NoPendingTasks" xml:space="preserve">
+    <value>No pending tasks</value>
+  </data>
+  <data name="NoSetupTasksYet" xml:space="preserve">
+    <value>No setup tasks yet</value>
+  </data>
+  <data name="NoTasksForMolecule" xml:space="preserve">
+    <value>No tasks for this molecule</value>
+  </data>
+  <data name="SelectMoleculeToViewTasks" xml:space="preserve">
+    <value>Select a molecule to view tasks</value>
+  </data>
+  <data name="SetupProgressByMolecule" xml:space="preserve">
+    <value>Setup Progress by Molecule</value>
+  </data>
+  <data name="MarkComplete" xml:space="preserve">
+    <value>Mark Complete</value>
+  </data>
+  <data name="ViewTasks" xml:space="preserve">
+    <value>View Tasks</value>
+  </data>
+  <data name="SuggestedUser" xml:space="preserve">
+    <value>Suggested User</value>
+  </data>
+  <data name="AssignedTo" xml:space="preserve">
+    <value>Assigned To</value>
+  </data>
+  <data name="SetupTask_AssignAssigners_Title" xml:space="preserve">
+    <value>Assign Shift Assigners</value>
+  </data>
+  <data name="SetupTask_AssignAssigners_Desc" xml:space="preserve">
+    <value>Assign users who will be responsible for assigning shifts</value>
+  </data>
+  <data name="SetupTask_AssignBRDirector_Title" xml:space="preserve">
+    <value>Assign BR Director</value>
+  </data>
+  <data name="SetupTask_AssignBRDirector_Desc" xml:space="preserve">
+    <value>Assign a director for business review oversight</value>
+  </data>
+  <data name="SetupTask_AssignMoleculeAdmin_Title" xml:space="preserve">
+    <value>Assign Molecule Admin</value>
+  </data>
+  <data name="SetupTask_AssignMoleculeAdmin_Desc" xml:space="preserve">
+    <value>Assign an administrator for this molecule</value>
+  </data>
+  <data name="SetupTask_SetupShiftBlueprints_Title" xml:space="preserve">
+    <value>Setup Shift Blueprints</value>
+  </data>
+  <data name="SetupTask_SetupShiftBlueprints_Desc" xml:space="preserve">
+    <value>Create shift blueprints for scheduling</value>
+  </data>
+  <data name="SetupTask_SetupShiftGroupings_Title" xml:space="preserve">
+    <value>Setup Shift Groupings</value>
+  </data>
+  <data name="SetupTask_SetupShiftGroupings_Desc" xml:space="preserve">
+    <value>Configure shift groupings for this molecule</value>
+  </data>
+  <data name="Calendar_MonthView" xml:space="preserve">
+    <value>Month View</value>
+  </data>
+  <data name="Calendar_ReadOnlyMode" xml:space="preserve">
+    <value>Read-Only Mode</value>
+  </data>
+  <data name="ShiftType" xml:space="preserve">
+    <value>Shift Type</value>
+  </data>
+  <data name="Shifts" xml:space="preserve">
+    <value>Shifts</value>
+  </data>
+  <data name="Assignee" xml:space="preserve">
+    <value>Assignee</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
+  </data>
+  <data name="ProposeSwap" xml:space="preserve">
+    <value>Propose Swap</value>
+  </data>
+  <data name="ProposedTo" xml:space="preserve">
+    <value>Proposed To</value>
+  </data>
+  <data name="RequestedOn" xml:space="preserve">
+    <value>Requested On</value>
+  </data>
+  <data name="ApprovedTimeOffRequests" xml:space="preserve">
+    <value>Approved Time Off Requests</value>
+  </data>
+  <data name="ManageAssignments" xml:space="preserve">
+    <value>Manage Assignments</value>
+  </data>
+  <data name="OnDutyDetails" xml:space="preserve">
+    <value>On Duty Details</value>
+  </data>
+  <data name="AreYouSureDeleteOnDuty" xml:space="preserve">
+    <value>Are you sure you want to delete this on-duty assignment?</value>
+  </data>
+  <data name="BatchActions" xml:space="preserve">
+    <value>Batch Actions</value>
+  </data>
+  <data name="AdminOnly" xml:space="preserve">
+    <value>Admin Only</value>
+  </data>
+  <data name="Email_AccessRequestAction" xml:space="preserve">
+    <value>Review Access Request</value>
+  </data>
+  <data name="Email_AccessRequestLoginToReview" xml:space="preserve">
+    <value>Please login to review this access request</value>
+  </data>
+  <data name="Email_AccessRequestSubmittedBody" xml:space="preserve">
+    <value>A new access request has been submitted</value>
+  </data>
+  <data name="Email_AccessRequestSubmittedSubject" xml:space="preserve">
+    <value>New Access Request Submitted</value>
+  </data>
+  <data name="Email_AccessRequestSubmittedTitle" xml:space="preserve">
+    <value>Access Request Submitted</value>
+  </data>
+  <data name="Email_Approved" xml:space="preserve">
+    <value>Approved</value>
+  </data>
+  <data name="Email_DateRange" xml:space="preserve">
+    <value>Date Range</value>
+  </data>
+  <data name="Email_Declined" xml:space="preserve">
+    <value>Declined</value>
+  </data>
+  <data name="Email_OnDutyAssignedBody" xml:space="preserve">
+    <value>You have been assigned to on-duty</value>
+  </data>
+  <data name="Email_OnDutyAssignedLoginPrompt" xml:space="preserve">
+    <value>Please login to view your on-duty schedule</value>
+  </data>
+  <data name="Email_OnDutyAssignedSubject" xml:space="preserve">
+    <value>On-Duty Assignment</value>
+  </data>
+  <data name="Email_OnDutyAssignedTitle" xml:space="preserve">
+    <value>On-Duty Assignment</value>
+  </data>
+  <data name="Email_OnDutyCanceledBody" xml:space="preserve">
+    <value>Your on-duty assignment has been canceled</value>
+  </data>
+  <data name="Email_OnDutyCanceledScheduleUpdated" xml:space="preserve">
+    <value>Your schedule has been updated accordingly</value>
+  </data>
+  <data name="Email_OnDutyCanceledSubject" xml:space="preserve">
+    <value>On-Duty Canceled</value>
+  </data>
+  <data name="Email_OnDutyCanceledTitle" xml:space="preserve">
+    <value>On-Duty Canceled</value>
+  </data>
+  <data name="Email_OnDutyType" xml:space="preserve">
+    <value>On-Duty Type</value>
+  </data>
+  <data name="Email_RequesterEmail" xml:space="preserve">
+    <value>Requester Email</value>
+  </data>
+  <data name="Email_RequesterName" xml:space="preserve">
+    <value>Requester Name</value>
+  </data>
+  <data name="Email_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Email_SwapRequestApprovedBody" xml:space="preserve">
+    <value>Your swap request has been approved</value>
+  </data>
+  <data name="Email_SwapRequestApprovedScheduleUpdated" xml:space="preserve">
+    <value>Your schedule has been updated with the swap</value>
+  </data>
+  <data name="Email_SwapRequestApprovedSubject" xml:space="preserve">
+    <value>Swap Request Approved</value>
+  </data>
+  <data name="Email_SwapRequestApprovedTitle" xml:space="preserve">
+    <value>Swap Request Approved</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedBody" xml:space="preserve">
+    <value>Your swap request has been declined</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedContactManager" xml:space="preserve">
+    <value>Please contact your manager for more information</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedSubject" xml:space="preserve">
+    <value>Swap Request Declined</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedTitle" xml:space="preserve">
+    <value>Swap Request Declined</value>
+  </data>
+  <data name="Email_TimeOffApprovedBody" xml:space="preserve">
+    <value>Your time off request has been approved</value>
+  </data>
+  <data name="Email_TimeOffApprovedEnjoy" xml:space="preserve">
+    <value>Enjoy your time off!</value>
+  </data>
+  <data name="Email_TimeOffApprovedSubject" xml:space="preserve">
+    <value>Time Off Approved</value>
+  </data>
+  <data name="Email_TimeOffApprovedTitle" xml:space="preserve">
+    <value>Time Off Approved</value>
+  </data>
+  <data name="Email_TimeOffDeclinedBody" xml:space="preserve">
+    <value>Your time off request has been declined</value>
+  </data>
+  <data name="Email_TimeOffDeclinedContactManager" xml:space="preserve">
+    <value>Please contact your manager for more information</value>
+  </data>
+  <data name="Email_TimeOffDeclinedSubject" xml:space="preserve">
+    <value>Time Off Declined</value>
+  </data>
+  <data name="Email_TimeOffDeclinedTitle" xml:space="preserve">
+    <value>Time Off Declined</value>
+  </data>
+  <data name="Email_TimeOffDeletedBody" xml:space="preserve">
+    <value>Your time off request has been deleted</value>
+  </data>
+  <data name="Email_TimeOffDeletedContactManager" xml:space="preserve">
+    <value>Please contact your manager for more information</value>
+  </data>
+  <data name="Email_TimeOffDeletedSubject" xml:space="preserve">
+    <value>Time Off Request Deleted</value>
+  </data>
+  <data name="Email_TimeOffDeletedTitle" xml:space="preserve">
+    <value>Time Off Deleted</value>
+  </data>
+  <data name="NotificationAccessRequestApprovedMessage" xml:space="preserve">
+    <value>Your access request has been approved</value>
+  </data>
+  <data name="NotificationAccessRequestApprovedTitle" xml:space="preserve">
+    <value>Access Request Approved</value>
+  </data>
+  <data name="NotificationAccessRequestSubmittedMessage" xml:space="preserve">
+    <value>A new access request has been submitted for review</value>
+  </data>
+  <data name="NotificationAccessRequestSubmittedTitle" xml:space="preserve">
+    <value>New Access Request</value>
+  </data>
+  <data name="ContactAdminToActivate" xml:space="preserve">
+    <value>Please contact your administrator to activate your account.</value>
+  </data>
+  <data name="LockedUsers_Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="LockedUsers_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="LockedUsers_FailedAttempts" xml:space="preserve">
+    <value>Failed Attempts</value>
+  </data>
+  <data name="LockedUsers_LastAttempt" xml:space="preserve">
+    <value>Last Attempt</value>
+  </data>
+  <data name="LockedUsers_Locked" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="LockedUsers_MinRemaining" xml:space="preserve">
+    <value>min remaining</value>
+  </data>
+  <data name="LockedUsers_NoLockedUsers" xml:space="preserve">
+    <value>No locked accounts found</value>
+  </data>
+  <data name="LockedUsers_RecentlyLocked" xml:space="preserve">
+    <value>Recently Locked (expired)</value>
+  </data>
+  <data name="LockedUsers_SourceIP" xml:space="preserve">
+    <value>Source IP</value>
+  </data>
+  <data name="LockedUsers_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="LockedUsers_Subtitle" xml:space="preserve">
+    <value>View and unlock accounts that have been locked due to failed login attempts</value>
+  </data>
+  <data name="LockedUsers_Title" xml:space="preserve">
+    <value>Locked User Accounts</value>
+  </data>
+  <data name="LockedUsers_Unlock" xml:space="preserve">
+    <value>Unlock</value>
+  </data>
+  <data name="LockedUsers_User" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="BackToOwnerHub" xml:space="preserve">
+    <value>Back to Owner Hub</value>
+  </data>
+  <data name="Owner_DataLifecycle_ArchiveConfirmed" xml:space="preserve">
+    <value>Archive confirmed</value>
+  </data>
+  <data name="Owner_DataLifecycle_Chores" xml:space="preserve">
+    <value>Chores</value>
+  </data>
+  <data name="Owner_DataLifecycle_CreateArchive_Desc" xml:space="preserve">
+    <value>Create a backup archive of your data before purging</value>
+  </data>
+  <data name="Owner_DataLifecycle_CsvExport" xml:space="preserve">
+    <value>CSV Export</value>
+  </data>
+  <data name="Owner_DataLifecycle_CutoffDate_Help" xml:space="preserve">
+    <value>All data before this date will be affected</value>
+  </data>
+  <data name="Owner_DataLifecycle_DataTypesToPurge" xml:space="preserve">
+    <value>Data Types to Purge</value>
+  </data>
+  <data name="Owner_DataLifecycle_DbSizeAfter" xml:space="preserve">
+    <value>DB Size After</value>
+  </data>
+  <data name="Owner_DataLifecycle_DbSizeBefore" xml:space="preserve">
+    <value>DB Size Before</value>
+  </data>
+  <data name="Owner_DataLifecycle_DestructiveOperation" xml:space="preserve">
+    <value>Destructive Operation</value>
+  </data>
+  <data name="Owner_DataLifecycle_DestructiveOperation_Desc" xml:space="preserve">
+    <value>This operation permanently deletes data and cannot be undone</value>
+  </data>
+  <data name="Owner_DataLifecycle_DownloadArchives" xml:space="preserve">
+    <value>Download Archives</value>
+  </data>
+  <data name="Owner_DataLifecycle_DownloadCsvZip" xml:space="preserve">
+    <value>Download CSV ZIP</value>
+  </data>
+  <data name="Owner_DataLifecycle_DownloadNdjsonZip" xml:space="preserve">
+    <value>Download NDJSON ZIP</value>
+  </data>
+  <data name="Owner_DataLifecycle_EstimatedSize" xml:space="preserve">
+    <value>Estimated Size</value>
+  </data>
+  <data name="Owner_DataLifecycle_HardDelete" xml:space="preserve">
+    <value>Hard Delete</value>
+  </data>
+  <data name="Owner_DataLifecycle_HardDelete_Desc" xml:space="preserve">
+    <value>Permanently remove records from the database</value>
+  </data>
+  <data name="Owner_DataLifecycle_NdjsonExport" xml:space="preserve">
+    <value>NDJSON Export</value>
+  </data>
+  <data name="Owner_DataLifecycle_OnDuty" xml:space="preserve">
+    <value>On Duty</value>
+  </data>
+  <data name="Owner_DataLifecycle_PreviewCounts" xml:space="preserve">
+    <value>Preview Counts</value>
+  </data>
+  <data name="Owner_DataLifecycle_PreviewResults" xml:space="preserve">
+    <value>Preview Results</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeCutoffDate" xml:space="preserve">
+    <value>Purge Cutoff Date</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeCutoffDate_Help" xml:space="preserve">
+    <value>Select the date before which data will be purged</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeHistoricalData" xml:space="preserve">
+    <value>Purge Historical Data</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeResults" xml:space="preserve">
+    <value>Purge Results</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeWarning" xml:space="preserve">
+    <value>Warning: This action is irreversible</value>
+  </data>
+  <data name="Owner_DataLifecycle_ReImport_Desc" xml:space="preserve">
+    <value>Re-import data from a previously created archive</value>
+  </data>
+  <data name="Owner_DataLifecycle_RunVacuum" xml:space="preserve">
+    <value>Run Vacuum</value>
+  </data>
+  <data name="Owner_DataLifecycle_SafetyConfirmations" xml:space="preserve">
+    <value>Safety Confirmations</value>
+  </data>
+  <data name="Owner_DataLifecycle_SelectArchive" xml:space="preserve">
+    <value>Select Archive</value>
+  </data>
+  <data name="Owner_DataLifecycle_SelectArchive_Help" xml:space="preserve">
+    <value>Choose an archive file to validate or import</value>
+  </data>
+  <data name="Owner_DataLifecycle_Sha256Hash" xml:space="preserve">
+    <value>SHA-256 Hash</value>
+  </data>
+  <data name="Owner_DataLifecycle_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Owner_DataLifecycle_SpaceSaved" xml:space="preserve">
+    <value>Space Saved</value>
+  </data>
+  <data name="Owner_DataLifecycle_SwapRequests" xml:space="preserve">
+    <value>Swap Requests</value>
+  </data>
+  <data name="Owner_DataLifecycle_TimeOff" xml:space="preserve">
+    <value>Time Off</value>
+  </data>
+  <data name="Owner_DataLifecycle_TimeOffPurge" xml:space="preserve">
+    <value>Time Off Purge</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalDeleted" xml:space="preserve">
+    <value>Total Deleted</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalRecords" xml:space="preserve">
+    <value>Total Records</value>
+  </data>
+  <data name="Owner_DataLifecycle_TypeExactly" xml:space="preserve">
+    <value>Type exactly</value>
+  </data>
+  <data name="Owner_DataLifecycle_TypedConfirmation" xml:space="preserve">
+    <value>Typed Confirmation</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidateArchive" xml:space="preserve">
+    <value>Validate Archive</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidationFailed" xml:space="preserve">
+    <value>Validation Failed</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidationResults" xml:space="preserve">
+    <value>Validation Results</value>
+  </data>
+  <data name="Owner_DataLifecycle_Warnings" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="Owner_DatabaseConsole_ActiveUsers" xml:space="preserve">
+    <value>Active Users</value>
+  </data>
+  <data name="Owner_DatabaseConsole_IncompleteChores" xml:space="preserve">
+    <value>Incomplete Chores</value>
+  </data>
+  <data name="Owner_DatabaseConsole_PendingTimeOff" xml:space="preserve">
+    <value>Pending Time Off</value>
+  </data>
+  <data name="Owner_DatabaseConsole_RecentAuditLogs" xml:space="preserve">
+    <value>Recent Audit Logs</value>
+  </data>
+  <data name="Owner_DatabaseConsole_UpcomingAssignments" xml:space="preserve">
+    <value>Upcoming Assignments</value>
+  </data>
+  <data name="Owner_DatabaseConsole_UpcomingOnDuty" xml:space="preserve">
+    <value>Upcoming On Duty</value>
+  </data>
+  <data name="Owner_DatabaseConsole_UpcomingShifts" xml:space="preserve">
+    <value>Upcoming Shifts</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiKey_ExistingHelp" xml:space="preserve">
+    <value>An API key is already configured. Enter a new one to replace it.</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiKey_Help" xml:space="preserve">
+    <value>Enter your email service API key</value>
+  </data>
+  <data name="Owner_EmailConfig_EnterApiKey" xml:space="preserve">
+    <value>Enter API Key</value>
+  </data>
+  <data name="Owner_EmailConfig_FromAddress_Help" xml:space="preserve">
+    <value>The email address that will appear as the sender</value>
+  </data>
+  <data name="Owner_EmailConfig_TestDiagnostics" xml:space="preserve">
+    <value>Test Diagnostics</value>
+  </data>
+  <data name="Owner_EmailConfig_TestEmail_Desc" xml:space="preserve">
+    <value>Send a test email to verify your configuration</value>
+  </data>
+  <data name="AuditSearch_CompanyId" xml:space="preserve">
+    <value>Company ID</value>
+  </data>
+  <data name="AuditSearch_NoResultsMessage" xml:space="preserve">
+    <value>Try adjusting your search filters to find audit log entries.</value>
+  </data>
+  <data name="RevokeApiKeyWarning" xml:space="preserve">
+    <value>Are you sure you want to revoke this API key? This action cannot be undone.</value>
+  </data>
+  <data name="RevokeKey" xml:space="preserve">
+    <value>Revoke Key</value>
+  </data>
+  <data name="ScopesEditableHint" xml:space="preserve">
+    <value>Scopes can be modified after creation</value>
+  </data>
+  <data name="NoAssignmentsFound" xml:space="preserve">
+    <value>No assignments found</value>
+  </data>
+  <data name="NoShiftInstancesFound" xml:space="preserve">
+    <value>No shift instances found</value>
+  </data>
+  <data name="After1stEncoding" xml:space="preserve">
+    <value>After 1st Encoding</value>
+  </data>
+  <data name="After2ndEncoding" xml:space="preserve">
+    <value>After 2nd Encoding</value>
+  </data>
+  <data name="After3rdEncoding" xml:space="preserve">
+    <value>After 3rd Encoding</value>
+  </data>
+  <data name="AirGappedWarning" xml:space="preserve">
+    <value>Air-Gapped Environment Warning</value>
+  </data>
+  <data name="AllChecksPassed" xml:space="preserve">
+    <value>All Checks Passed</value>
+  </data>
+  <data name="Analysis" xml:space="preserve">
+    <value>Analysis</value>
+  </data>
+  <data name="Approach" xml:space="preserve">
+    <value>Approach</value>
+  </data>
+  <data name="AuthUrlRedirectDescription" xml:space="preserve">
+    <value>Authentication URL redirect description</value>
+  </data>
+  <data name="AutoProvisionUsers" xml:space="preserve">
+    <value>Auto Provision Users</value>
+  </data>
+  <data name="BaseUrlGriffinServer" xml:space="preserve">
+    <value>Base URL Griffin Server</value>
+  </data>
+  <data name="Chars" xml:space="preserve">
+    <value>Chars</value>
+  </data>
+  <data name="ChecksPassed" xml:space="preserve">
+    <value>Checks Passed</value>
+  </data>
+  <data name="ClickTestConnection" xml:space="preserve">
+    <value>Click to test connection</value>
+  </data>
+  <data name="ConfigSource" xml:space="preserve">
+    <value>Config Source</value>
+  </data>
+  <data name="ConfigureGriffinSettings" xml:space="preserve">
+    <value>Configure Griffin Settings</value>
+  </data>
+  <data name="CopyDataForSupport" xml:space="preserve">
+    <value>Copy Data for Support</value>
+  </data>
+  <data name="CriticalError" xml:space="preserve">
+    <value>Critical Error</value>
+  </data>
+  <data name="CriticalInsight" xml:space="preserve">
+    <value>Critical Insight</value>
+  </data>
+  <data name="CriticalInsightExplanation" xml:space="preserve">
+    <value>This is a critical insight that requires immediate attention</value>
+  </data>
+  <data name="CriticalIssues" xml:space="preserve">
+    <value>Critical Issues</value>
+  </data>
+  <data name="CurrentConfiguration" xml:space="preserve">
+    <value>Current Configuration</value>
+  </data>
+  <data name="DatabaseId" xml:space="preserve">
+    <value>Database ID</value>
+  </data>
+  <data name="DefaultProvisionedRole" xml:space="preserve">
+    <value>Default Provisioned Role</value>
+  </data>
+  <data name="DiagnosticChecks" xml:space="preserve">
+    <value>Diagnostic Checks</value>
+  </data>
+  <data name="DiagnosticDataJsonExport" xml:space="preserve">
+    <value>Diagnostic Data JSON Export</value>
+  </data>
+  <data name="DoofApproachTitle" xml:space="preserve">
+    <value>Doof Approach</value>
+  </data>
+  <data name="DoofProvenApproachExplanation" xml:space="preserve">
+    <value>The Doof approach is a proven method for URL encoding</value>
+  </data>
+  <data name="DoofReference" xml:space="preserve">
+    <value>Doof Reference</value>
+  </data>
+  <data name="DoofUrlStructure" xml:space="preserve">
+    <value>Doof URL Structure</value>
+  </data>
+  <data name="EnhancedDiagnosticEngine" xml:space="preserve">
+    <value>Enhanced Diagnostic Engine</value>
+  </data>
+  <data name="EntireCallbackUrl2x" xml:space="preserve">
+    <value>Entire Callback URL (2x encoded)</value>
+  </data>
+  <data name="FinalUrlSentToGriffin" xml:space="preserve">
+    <value>Final URL Sent to Griffin</value>
+  </data>
+  <data name="FixInstructions" xml:space="preserve">
+    <value>Fix Instructions</value>
+  </data>
+  <data name="GeneratedAuthenticationUrl" xml:space="preserve">
+    <value>Generated Authentication URL</value>
+  </data>
+  <data name="GeneratedByShiftManager" xml:space="preserve">
+    <value>Generated by ShiftManager</value>
+  </data>
+  <data name="Generated" xml:space="preserve">
+    <value>Generated</value>
+  </data>
+  <data name="GoToGriffinConfig" xml:space="preserve">
+    <value>Go to Griffin Config</value>
+  </data>
+  <data name="GriffinConfiguration" xml:space="preserve">
+    <value>Griffin Configuration</value>
+  </data>
+  <data name="GriffinDiagnosticPurpose" xml:space="preserve">
+    <value>Diagnostic tool for Griffin SSO integration</value>
+  </data>
+  <data name="GriffinDiagnosticTitle" xml:space="preserve">
+    <value>Griffin Diagnostic</value>
+  </data>
+  <data name="GriffinDiagnosticToolVersion" xml:space="preserve">
+    <value>Griffin Diagnostic Tool Version</value>
+  </data>
+  <data name="GriffinRejects" xml:space="preserve">
+    <value>Griffin Rejects</value>
+  </data>
+  <data name="Host" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="KeyDifferencesSummary" xml:space="preserve">
+    <value>Key Differences Summary</value>
+  </data>
+  <data name="LoginPage" xml:space="preserve">
+    <value>Login Page</value>
+  </data>
+  <data name="LooksLikeUrl" xml:space="preserve">
+    <value>Looks Like URL</value>
+  </data>
+  <data name="MissingScheme" xml:space="preserve">
+    <value>Missing Scheme</value>
+  </data>
+  <data name="NewApproachTitle" xml:space="preserve">
+    <value>New Approach</value>
+  </data>
+  <data name="NewProposed" xml:space="preserve">
+    <value>New (Proposed)</value>
+  </data>
+  <data name="NewUrlRecognizableExplanation" xml:space="preserve">
+    <value>The new URL format is more recognizable and debuggable</value>
+  </data>
+  <data name="NextSteps" xml:space="preserve">
+    <value>Next Steps</value>
+  </data>
+  <data name="NoFixNeeded" xml:space="preserve">
+    <value>No Fix Needed</value>
+  </data>
+  <data name="NoGriffinConfigDescription" xml:space="preserve">
+    <value>Griffin SSO is not configured. Configure it to enable single sign-on.</value>
+  </data>
+  <data name="NoGriffinConfigFound" xml:space="preserve">
+    <value>No Griffin Config Found</value>
+  </data>
+  <data name="OldApproachTitle" xml:space="preserve">
+    <value>Old Approach</value>
+  </data>
+  <data name="OldCurrent" xml:space="preserve">
+    <value>Old (Current)</value>
+  </data>
+  <data name="OldUrlEncodedGibberishExplanation" xml:space="preserve">
+    <value>The old URL format produces encoded text that is hard to debug</value>
+  </data>
+  <data name="OnlyDestinationPath3x" xml:space="preserve">
+    <value>Only Destination Path (3x encoded)</value>
+  </data>
+  <data name="OnlyReturnUrl3x" xml:space="preserve">
+    <value>Only Return URL (3x encoded)</value>
+  </data>
+  <data name="OverallStatus" xml:space="preserve">
+    <value>Overall Status</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="PrintReport" xml:space="preserve">
+    <value>Print Report</value>
+  </data>
+  <data name="ProvenToWork" xml:space="preserve">
+    <value>Proven to Work</value>
+  </data>
+  <data name="Purpose" xml:space="preserve">
+    <value>Purpose</value>
+  </data>
+  <data name="QueryLength" xml:space="preserve">
+    <value>Query Length</value>
+  </data>
+  <data name="RefreshDiagnostic" xml:space="preserve">
+    <value>Refresh Diagnostic</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="ReturnToDiagnostic" xml:space="preserve">
+    <value>Return to Diagnostic</value>
+  </data>
+  <data name="RootCauseAnalysis" xml:space="preserve">
+    <value>Root Cause Analysis</value>
+  </data>
+  <data name="Scheme" xml:space="preserve">
+    <value>Scheme</value>
+  </data>
+  <data name="Seconds" xml:space="preserve">
+    <value>Seconds</value>
+  </data>
+  <data name="ServerStatus" xml:space="preserve">
+    <value>Server Status</value>
+  </data>
+  <data name="ShouldWork" xml:space="preserve">
+    <value>Should Work</value>
+  </data>
+  <data name="Step1ReturnUrlEncoding" xml:space="preserve">
+    <value>Step 1: Return URL Encoding</value>
+  </data>
+  <data name="Steps" xml:space="preserve">
+    <value>Steps</value>
+  </data>
+  <data name="TestReturnUrl0x" xml:space="preserve">
+    <value>Test Return URL (0x, no encoding)</value>
+  </data>
+  <data name="Timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="TokenConsumerUrlCallback" xml:space="preserve">
+    <value>Token Consumer URL Callback</value>
+  </data>
+  <data name="Unreachable" xml:space="preserve">
+    <value>Unreachable</value>
+  </data>
+  <data name="UrlEncodingComparison" xml:space="preserve">
+    <value>URL Encoding Comparison</value>
+  </data>
+  <data name="UrlIsAbsolute" xml:space="preserve">
+    <value>URL is Absolute</value>
+  </data>
+  <data name="UrlIsRelative" xml:space="preserve">
+    <value>URL is Relative</value>
+  </data>
+  <data name="UrlReadable" xml:space="preserve">
+    <value>URL Readable</value>
+  </data>
+  <data name="UrlRelativeExplanation" xml:space="preserve">
+    <value>Relative URLs are resolved against the base URL</value>
+  </data>
+  <data name="UsesLocalhost" xml:space="preserve">
+    <value>Uses Localhost</value>
+  </data>
+  <data name="ValidScheme" xml:space="preserve">
+    <value>Valid Scheme</value>
+  </data>
+  <data name="ValidationScore" xml:space="preserve">
+    <value>Validation Score</value>
+  </data>
+  <data name="Warnings" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="WarningsFound" xml:space="preserve">
+    <value>Warnings Found</value>
+  </data>
+  <data name="WhatDoofEncodes" xml:space="preserve">
+    <value>What Doof Encodes</value>
+  </data>
+  <data name="WhatGetsEncoded" xml:space="preserve">
+    <value>What Gets Encoded</value>
+  </data>
+  <data name="WhatGriffinSees" xml:space="preserve">
+    <value>What Griffin Sees</value>
+  </data>
+  <data name="WhatGriffinSeesTokenConsumer" xml:space="preserve">
+    <value>What Griffin Sees (Token Consumer)</value>
+  </data>
+  <data name="WhatWeEncoding" xml:space="preserve">
+    <value>What We Encode</value>
+  </data>
+  <data name="Error_AllFieldsRequired" xml:space="preserve">
+    <value>All fields are required</value>
+  </data>
+  <data name="Error_AlreadyAssigned" xml:space="preserve">
+    <value>User is already assigned to this shift</value>
+  </data>
+  <data name="Error_AlreadyFriends" xml:space="preserve">
+    <value>You are already friends with this user</value>
+  </data>
+  <data name="Error_AlreadyReviewed" xml:space="preserve">
+    <value>This request has already been reviewed</value>
+  </data>
+  <data name="Error_AnnouncementNotFound" xml:space="preserve">
+    <value>Announcement not found</value>
+  </data>
+  <data name="Error_AreaNameRequired" xml:space="preserve">
+    <value>Area name is required</value>
+  </data>
+  <data name="Error_AreaRequired" xml:space="preserve">
+    <value>Area is required</value>
+  </data>
+  <data name="Error_AreaScopeRequired" xml:space="preserve">
+    <value>Area scope is required</value>
+  </data>
+  <data name="Error_AreaSettingsRequired" xml:space="preserve">
+    <value>Area settings are required</value>
+  </data>
+  <data name="Error_BatchApprovalFailed" xml:space="preserve">
+    <value>Batch approval failed</value>
+  </data>
+  <data name="Error_CanOnlyDeleteOwnCompanyUsers" xml:space="preserve">
+    <value>You can only delete users from your own company</value>
+  </data>
+  <data name="Error_CannotChangeToTrainee_ActiveShifts" xml:space="preserve">
+    <value>Cannot change role to trainee while user has active shifts</value>
+  </data>
+  <data name="Error_CannotChangeToTrainee_ShadowingTrainees" xml:space="preserve">
+    <value>Cannot change role to trainee while user is shadowing trainees</value>
+  </data>
+  <data name="Error_CannotDeleteAreaWithDependencies" xml:space="preserve">
+    <value>Cannot delete area with existing dependencies</value>
+  </data>
+  <data name="Error_CannotDeleteDepartmentWithUsers" xml:space="preserve">
+    <value>Cannot delete department with assigned users</value>
+  </data>
+  <data name="Error_CannotDeleteJobTypeWithUsers" xml:space="preserve">
+    <value>Cannot delete job type with assigned users</value>
+  </data>
+  <data name="Error_CannotDeleteMoleculeWithDependencies" xml:space="preserve">
+    <value>Cannot delete molecule with existing dependencies</value>
+  </data>
+  <data name="Error_CannotDeleteOwnAccount" xml:space="preserve">
+    <value>You cannot delete your own account</value>
+  </data>
+  <data name="Error_CannotDeleteProjectWithAreas" xml:space="preserve">
+    <value>Cannot delete project with existing areas</value>
+  </data>
+  <data name="Error_CannotFriendSelf" xml:space="preserve">
+    <value>You cannot send a friend request to yourself</value>
+  </data>
+  <data name="Error_CompanyAndJobTypeScopeRequired" xml:space="preserve">
+    <value>Company and job type scope are required</value>
+  </data>
+  <data name="Error_CompanyScopeRequired" xml:space="preserve">
+    <value>Company scope is required</value>
+  </data>
+  <data name="Error_ContentRequired" xml:space="preserve">
+    <value>Content is required</value>
+  </data>
+  <data name="Error_DeletingUser" xml:space="preserve">
+    <value>Error deleting user</value>
+  </data>
+  <data name="Error_DepartmentNameRequired" xml:space="preserve">
+    <value>Department name is required</value>
+  </data>
+  <data name="Error_DepartmentNotFound" xml:space="preserve">
+    <value>Department not found</value>
+  </data>
+  <data name="Error_DepartmentRequired" xml:space="preserve">
+    <value>Department is required</value>
+  </data>
+  <data name="Error_DepartmentScopeRequired" xml:space="preserve">
+    <value>Department scope is required</value>
+  </data>
+  <data name="Error_DepartmentsOnlyForTechMolecules" xml:space="preserve">
+    <value>Departments are only available for tech molecules</value>
+  </data>
+  <data name="Error_EmailAlreadyExists" xml:space="preserve">
+    <value>A user with this email already exists</value>
+  </data>
+  <data name="Error_ExceedsWeeklyCap" xml:space="preserve">
+    <value>Assignment exceeds weekly hours cap</value>
+  </data>
+  <data name="Error_FailedToSaveSettings" xml:space="preserve">
+    <value>Failed to save settings</value>
+  </data>
+  <data name="Error_FailedToSendRecoveryEmail_FallbackDisplayed" xml:space="preserve">
+    <value>Failed to send recovery email. Please contact your administrator.</value>
+  </data>
+  <data name="Error_FriendshipNotFound" xml:space="preserve">
+    <value>Friendship not found</value>
+  </data>
+  <data name="Error_GrantAlreadyExists" xml:space="preserve">
+    <value>This grant already exists for this user</value>
+  </data>
+  <data name="Error_GrantNotFound" xml:space="preserve">
+    <value>Grant not found</value>
+  </data>
+  <data name="Error_GrantTypeNotFound" xml:space="preserve">
+    <value>Grant type not found</value>
+  </data>
+  <data name="Error_GrantTypeRequired" xml:space="preserve">
+    <value>Grant type is required</value>
+  </data>
+  <data name="Error_GroupingCreationFailed" xml:space="preserve">
+    <value>Failed to create grouping</value>
+  </data>
+  <data name="Error_GroupingNameRequired" xml:space="preserve">
+    <value>Grouping name is required</value>
+  </data>
+  <data name="Error_GroupingNotFound" xml:space="preserve">
+    <value>Grouping not found</value>
+  </data>
+  <data name="Error_InvalidCompanySelected" xml:space="preserve">
+    <value>Invalid company selected</value>
+  </data>
+  <data name="Error_InvalidRequestId" xml:space="preserve">
+    <value>Invalid request ID</value>
+  </data>
+  <data name="Error_InvalidRole" xml:space="preserve">
+    <value>Invalid role</value>
+  </data>
+  <data name="Error_JobTypeMismatch" xml:space="preserve">
+    <value>Job type does not match the shift requirements</value>
+  </data>
+  <data name="Error_JobTypeNameRequired" xml:space="preserve">
+    <value>Job type name is required</value>
+  </data>
+  <data name="Error_JobTypeNotFound" xml:space="preserve">
+    <value>Job type not found</value>
+  </data>
+  <data name="Error_JoinRequestNotFound" xml:space="preserve">
+    <value>Join request not found</value>
+  </data>
+  <data name="Error_MoleculeAndJobTypeScopeRequired" xml:space="preserve">
+    <value>Molecule and job type scope are required</value>
+  </data>
+  <data name="Error_MoleculeNameRequired" xml:space="preserve">
+    <value>Molecule name is required</value>
+  </data>
+  <data name="Error_MoleculeNotFound" xml:space="preserve">
+    <value>Molecule not found</value>
+  </data>
+  <data name="Error_MoleculeRequired" xml:space="preserve">
+    <value>Molecule is required</value>
+  </data>
+  <data name="Error_MoleculeScopeRequired" xml:space="preserve">
+    <value>Molecule scope is required</value>
+  </data>
+  <data name="Error_NoEntitySelected" xml:space="preserve">
+    <value>No entity selected</value>
+  </data>
+  <data name="Error_NoPermissionApproveJoinRequest" xml:space="preserve">
+    <value>You do not have permission to approve join requests</value>
+  </data>
+  <data name="Error_NoPermissionApproveRequests" xml:space="preserve">
+    <value>You do not have permission to approve requests</value>
+  </data>
+  <data name="Error_NoPermissionAssignRole" xml:space="preserve">
+    <value>You do not have permission to assign roles</value>
+  </data>
+  <data name="Error_NoPermissionAssignRoleTo" xml:space="preserve">
+    <value>You do not have permission to assign this role to this user</value>
+  </data>
+  <data name="Error_NoPermissionDeleteUser" xml:space="preserve">
+    <value>You do not have permission to delete this user</value>
+  </data>
+  <data name="Error_NoPermissionDifferentCompany" xml:space="preserve">
+    <value>You do not have permission to manage users in a different company</value>
+  </data>
+  <data name="Error_NoPermissionForCompany" xml:space="preserve">
+    <value>You do not have permission for this company</value>
+  </data>
+  <data name="Error_NoPermissionModifyUser" xml:space="preserve">
+    <value>You do not have permission to modify this user</value>
+  </data>
+  <data name="Error_NoPermissionRejectRequest" xml:space="preserve">
+    <value>You do not have permission to reject requests</value>
+  </data>
+  <data name="Error_NoPermissionResetPassword" xml:space="preserve">
+    <value>You do not have permission to reset passwords</value>
+  </data>
+  <data name="Error_NoRequestsSelected" xml:space="preserve">
+    <value>No requests selected</value>
+  </data>
+  <data name="Error_NotAuthenticated" xml:space="preserve">
+    <value>You are not authenticated</value>
+  </data>
+  <data name="Error_NotAuthorized" xml:space="preserve">
+    <value>You are not authorized to perform this action</value>
+  </data>
+  <data name="Error_NotInShiftGrouping" xml:space="preserve">
+    <value>User is not in the required shift grouping</value>
+  </data>
+  <data name="Error_PasswordRequired" xml:space="preserve">
+    <value>Password is required</value>
+  </data>
+  <data name="Error_ProjectNameRequired" xml:space="preserve">
+    <value>Project name is required</value>
+  </data>
+  <data name="Error_ProjectNotFound" xml:space="preserve">
+    <value>Project not found</value>
+  </data>
+  <data name="Error_ProjectRequired" xml:space="preserve">
+    <value>Project is required</value>
+  </data>
+  <data name="Error_RejectionReasonTooLong" xml:space="preserve">
+    <value>Rejection reason is too long</value>
+  </data>
+  <data name="Error_RequestAlreadyPending" xml:space="preserve">
+    <value>A request is already pending</value>
+  </data>
+  <data name="Error_RequestAlreadyReviewed" xml:space="preserve">
+    <value>This request has already been reviewed</value>
+  </data>
+  <data name="Error_RequestNotFound" xml:space="preserve">
+    <value>Request not found</value>
+  </data>
+  <data name="Error_RequestNotPending" xml:space="preserve">
+    <value>Request is not pending</value>
+  </data>
+  <data name="Error_RestHoursViolation" xml:space="preserve">
+    <value>Assignment violates minimum rest hours requirement</value>
+  </data>
+  <data name="Error_RoleAlreadyAssigned" xml:space="preserve">
+    <value>This role is already assigned to this user</value>
+  </data>
+  <data name="Error_RoleAssignmentNotFound" xml:space="preserve">
+    <value>Role assignment not found</value>
+  </data>
+  <data name="Error_RoleNotFound" xml:space="preserve">
+    <value>Role not found</value>
+  </data>
+  <data name="Error_RoleRequired" xml:space="preserve">
+    <value>Role is required</value>
+  </data>
+  <data name="Error_ShiftNotFound" xml:space="preserve">
+    <value>Shift not found</value>
+  </data>
+  <data name="Error_SomeRequestsHadIssues" xml:space="preserve">
+    <value>Some requests had issues during processing</value>
+  </data>
+  <data name="Error_TaskNotFound" xml:space="preserve">
+    <value>Task not found</value>
+  </data>
+  <data name="Error_TitleRequired" xml:space="preserve">
+    <value>Title is required</value>
+  </data>
+  <data name="Error_Unknown" xml:space="preserve">
+    <value>An unknown error occurred</value>
+  </data>
+  <data name="Error_UserEmailAlreadyExists" xml:space="preserve">
+    <value>A user with this email already exists</value>
+  </data>
+  <data name="Error_UserRequired" xml:space="preserve">
+    <value>User is required</value>
+  </data>
+  <data name="Error_UserWithEmailExists" xml:space="preserve">
+    <value>A user with this email already exists</value>
+  </data>
+  <data name="Success_AnnouncementActivated" xml:space="preserve">
+    <value>Announcement activated successfully</value>
+  </data>
+  <data name="Success_AnnouncementCreated" xml:space="preserve">
+    <value>Announcement created successfully</value>
+  </data>
+  <data name="Success_AnnouncementDeactivated" xml:space="preserve">
+    <value>Announcement deactivated successfully</value>
+  </data>
+  <data name="Success_AnnouncementDeleted" xml:space="preserve">
+    <value>Announcement deleted successfully</value>
+  </data>
+  <data name="Success_ApprovedCount" xml:space="preserve">
+    <value>Approved {0} requests successfully</value>
+  </data>
+  <data name="Success_AreaActivated" xml:space="preserve">
+    <value>Area activated successfully</value>
+  </data>
+  <data name="Success_AreaCreated" xml:space="preserve">
+    <value>Area created successfully</value>
+  </data>
+  <data name="Success_AreaDeactivated" xml:space="preserve">
+    <value>Area deactivated successfully</value>
+  </data>
+  <data name="Success_AreaDeleted" xml:space="preserve">
+    <value>Area deleted successfully</value>
+  </data>
+  <data name="Success_DepartmentActivated" xml:space="preserve">
+    <value>Department activated successfully</value>
+  </data>
+  <data name="Success_DepartmentCreated" xml:space="preserve">
+    <value>Department created successfully</value>
+  </data>
+  <data name="Success_DepartmentDeactivated" xml:space="preserve">
+    <value>Department deactivated successfully</value>
+  </data>
+  <data name="Success_DepartmentDeleted" xml:space="preserve">
+    <value>Department deleted successfully</value>
+  </data>
+  <data name="Success_FriendRemoved" xml:space="preserve">
+    <value>Friend removed successfully</value>
+  </data>
+  <data name="Success_GrantAssigned" xml:space="preserve">
+    <value>Grant assigned successfully</value>
+  </data>
+  <data name="Success_GrantRevoked" xml:space="preserve">
+    <value>Grant revoked successfully</value>
+  </data>
+  <data name="Success_GroupingActivated" xml:space="preserve">
+    <value>Grouping activated successfully</value>
+  </data>
+  <data name="Success_GroupingCreated" xml:space="preserve">
+    <value>Grouping created successfully</value>
+  </data>
+  <data name="Success_GroupingDeactivated" xml:space="preserve">
+    <value>Grouping deactivated successfully</value>
+  </data>
+  <data name="Success_GroupingDeleted" xml:space="preserve">
+    <value>Grouping deleted successfully</value>
+  </data>
+  <data name="Success_JobTypeActivated" xml:space="preserve">
+    <value>Job type activated successfully</value>
+  </data>
+  <data name="Success_JobTypeCreated" xml:space="preserve">
+    <value>Job type created successfully</value>
+  </data>
+  <data name="Success_JobTypeDeactivated" xml:space="preserve">
+    <value>Job type deactivated successfully</value>
+  </data>
+  <data name="Success_JobTypeDeleted" xml:space="preserve">
+    <value>Job type deleted successfully</value>
+  </data>
+  <data name="Success_JoinRequestApproved" xml:space="preserve">
+    <value>Join request approved successfully</value>
+  </data>
+  <data name="Success_JoinRequestRejected" xml:space="preserve">
+    <value>Join request rejected successfully</value>
+  </data>
+  <data name="Success_MoleculeActivated" xml:space="preserve">
+    <value>Molecule activated successfully</value>
+  </data>
+  <data name="Success_MoleculeCreated" xml:space="preserve">
+    <value>Molecule created successfully</value>
+  </data>
+  <data name="Success_MoleculeDeactivated" xml:space="preserve">
+    <value>Molecule deactivated successfully</value>
+  </data>
+  <data name="Success_MoleculeDeleted" xml:space="preserve">
+    <value>Molecule deleted successfully</value>
+  </data>
+  <data name="Success_PasswordUpdated" xml:space="preserve">
+    <value>Password updated successfully</value>
+  </data>
+  <data name="Success_ProjectActivated" xml:space="preserve">
+    <value>Project activated successfully</value>
+  </data>
+  <data name="Success_ProjectCreated" xml:space="preserve">
+    <value>Project created successfully</value>
+  </data>
+  <data name="Success_ProjectDeactivated" xml:space="preserve">
+    <value>Project deactivated successfully</value>
+  </data>
+  <data name="Success_ProjectDeleted" xml:space="preserve">
+    <value>Project deleted successfully</value>
+  </data>
+  <data name="Success_RequestAccepted" xml:space="preserve">
+    <value>Request accepted successfully</value>
+  </data>
+  <data name="Success_RequestCanceled" xml:space="preserve">
+    <value>Request canceled successfully</value>
+  </data>
+  <data name="Success_RequestRejected" xml:space="preserve">
+    <value>Request rejected successfully</value>
+  </data>
+  <data name="Success_RequestSent" xml:space="preserve">
+    <value>Friend request sent successfully</value>
+  </data>
+  <data name="Success_RoleAssigned" xml:space="preserve">
+    <value>Role assigned successfully</value>
+  </data>
+  <data name="Success_RoleRevoked" xml:space="preserve">
+    <value>Role revoked successfully</value>
+  </data>
+  <data name="Success_RoleUpdated" xml:space="preserve">
+    <value>Role updated successfully</value>
+  </data>
+  <data name="Success_SettingsSaved" xml:space="preserve">
+    <value>Settings saved successfully</value>
+  </data>
+  <data name="Success_SkippedCount" xml:space="preserve">
+    <value>Skipped {0} requests</value>
+  </data>
+  <data name="Success_TaskCompleted" xml:space="preserve">
+    <value>Task marked as completed</value>
+  </data>
+  <data name="Success_TaskSkipped" xml:space="preserve">
+    <value>Task skipped</value>
+  </data>
+  <data name="Success_TaskStarted" xml:space="preserve">
+    <value>Task started</value>
+  </data>
+  <data name="Success_UserCreated" xml:space="preserve">
+    <value>User created successfully</value>
+  </data>
+  <data name="Success_UserDeleted" xml:space="preserve">
+    <value>User deleted successfully</value>
+  </data>
 </root>

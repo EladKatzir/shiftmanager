@@ -6,6 +6,7 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["My_Settings"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>

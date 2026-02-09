@@ -8820,4 +8820,1960 @@
   <data name="BulkImport" xml:space="preserve">
     <value>ייבוא מרובה</value>
   </data>
+  <data name="Area" xml:space="preserve">
+    <value>אזור</value>
+  </data>
+  <data name="AuditSearch_Title" xml:space="preserve">
+    <value>חיפוש יומן ביקורת</value>
+  </data>
+  <data name="AuditSearch_Subtitle" xml:space="preserve">
+    <value>חיפוש וסינון יומני ביקורת בכל הדיירים</value>
+  </data>
+  <data name="AuditSearch_MatchingRecords" xml:space="preserve">
+    <value>רשומות תואמות</value>
+  </data>
+  <data name="AuditSearch_ActionTypes" xml:space="preserve">
+    <value>סוגי פעולות</value>
+  </data>
+  <data name="AuditSearch_EntityTypes" xml:space="preserve">
+    <value>סוגי ישויות</value>
+  </data>
+  <data name="AuditSearch_EntityId" xml:space="preserve">
+    <value>מזהה ישות</value>
+  </data>
+  <data name="MaxFileSizeAnd" xml:space="preserve">
+    <value>גודל קובץ מקסימלי 2MB,</value>
+  </data>
+  <data name="HowYouPreferToBeAddressed" xml:space="preserve">
+    <value>איך שתרצה שיפנו אליך</value>
+  </data>
+  <data name="CommaSeparated" xml:space="preserve">
+    <value>מופרדים בפסיקים</value>
+  </data>
+
+
+  <!-- === Missing translations added automatically === -->
+  <data name="Accept" xml:space="preserve">
+    <value>קבל</value>
+  </data>
+  <data name="AddFriend" xml:space="preserve">
+    <value>הוסף חבר</value>
+  </data>
+  <data name="AlreadyFriends" xml:space="preserve">
+    <value>כבר חברים</value>
+  </data>
+  <data name="ConfirmCancelRequest" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לבטל בקשה זו?</value>
+  </data>
+  <data name="ConfirmRemoveFriend" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך להסיר חבר זה?</value>
+  </data>
+  <data name="Friends" xml:space="preserve">
+    <value>חברים</value>
+  </data>
+  <data name="FriendsDescription" xml:space="preserve">
+    <value>נהל את החברים ובקשות החברות שלך</value>
+  </data>
+  <data name="FriendsSince" xml:space="preserve">
+    <value>חברים מאז</value>
+  </data>
+  <data name="MyFriends" xml:space="preserve">
+    <value>החברים שלי</value>
+  </data>
+  <data name="NoFriendsYet" xml:space="preserve">
+    <value>אין חברים עדיין</value>
+  </data>
+  <data name="OutgoingRequests" xml:space="preserve">
+    <value>בקשות יוצאות</value>
+  </data>
+  <data name="RequestPending" xml:space="preserve">
+    <value>בקשה ממתינה</value>
+  </data>
+  <data name="RequestSentTo" xml:space="preserve">
+    <value>בקשה נשלחה אל</value>
+  </data>
+  <data name="SearchByNameOrEmail" xml:space="preserve">
+    <value>חפש לפי שם או אימייל</value>
+  </data>
+  <data name="SendRequest" xml:space="preserve">
+    <value>שלח בקשה</value>
+  </data>
+  <data name="Action_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
+  <data name="Action_Edit" xml:space="preserve">
+    <value>עריכה</value>
+  </data>
+  <data name="Action_SaveChanges" xml:space="preserve">
+    <value>שמור שינויים</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>הפעל</value>
+  </data>
+  <data name="Assign" xml:space="preserve">
+    <value>הקצה</value>
+  </data>
+  <data name="By" xml:space="preserve">
+    <value>על ידי</value>
+  </data>
+  <data name="Choose" xml:space="preserve">
+    <value>בחר</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>כווץ הכל</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>צבע</value>
+  </data>
+  <data name="Completed" xml:space="preserve">
+    <value>הושלם</value>
+  </data>
+  <data name="CompletedAt" xml:space="preserve">
+    <value>הושלם בתאריך</value>
+  </data>
+  <data name="Content" xml:space="preserve">
+    <value>תוכן</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>צור</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>נוצר בתאריך</value>
+  </data>
+  <data name="CreatedBy" xml:space="preserve">
+    <value>נוצר על ידי</value>
+  </data>
+  <data name="Deactivate" xml:space="preserve">
+    <value>השבת</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>הרחב הכל</value>
+  </data>
+  <data name="ExpandCollapseAll" xml:space="preserve">
+    <value>הרחב / כווץ הכל</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>פג תוקף</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>פג תוקף בתאריך</value>
+  </data>
+  <data name="Formats" xml:space="preserve">
+    <value>פורמטים</value>
+  </data>
+  <data name="Give" xml:space="preserve">
+    <value>הענק</value>
+  </data>
+  <data name="Icon" xml:space="preserve">
+    <value>אייקון</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>ייבוא</value>
+  </data>
+  <data name="InProgress" xml:space="preserve">
+    <value>בתהליך</value>
+  </data>
+  <data name="Manage" xml:space="preserve">
+    <value>ניהול</value>
+  </data>
+  <data name="Manual" xml:space="preserve">
+    <value>ידני</value>
+  </data>
+  <data name="Auto" xml:space="preserve">
+    <value>אוטומטי</value>
+  </data>
+  <data name="MaxSize" xml:space="preserve">
+    <value>גודל מקסימלי</value>
+  </data>
+  <data name="Metadata" xml:space="preserve">
+    <value>מטא-דאטא</value>
+  </data>
+  <data name="Move" xml:space="preserve">
+    <value>הזז</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>הזז אל</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>סדר</value>
+  </data>
+  <data name="Own" xml:space="preserve">
+    <value>בעלות</value>
+  </data>
+  <data name="Pinned" xml:space="preserve">
+    <value>מוצמד</value>
+  </data>
+  <data name="PinToTop" xml:space="preserve">
+    <value>הצמד למעלה</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>התקדמות</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>בחר</value>
+  </data>
+  <data name="Skip" xml:space="preserve">
+    <value>דלג</value>
+  </data>
+  <data name="SortOrder" xml:space="preserve">
+    <value>סדר מיון</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>מקור</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>הצלחה</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>כותרת</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>לא ידוע</value>
+  </data>
+  <data name="Self" xml:space="preserve">
+    <value>עצמי</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>מערכת</value>
+  </data>
+  <data name="Online" xml:space="preserve">
+    <value>מקוון</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>ארגון</value>
+  </data>
+  <data name="OrganizationStructure" xml:space="preserve">
+    <value>מבנה ארגוני</value>
+  </data>
+  <data name="ActiveAreas" xml:space="preserve">
+    <value>אזורים פעילים</value>
+  </data>
+  <data name="ActiveMolecules" xml:space="preserve">
+    <value>מולקולות פעילות</value>
+  </data>
+  <data name="ActiveProjects" xml:space="preserve">
+    <value>פרויקטים פעילים</value>
+  </data>
+  <data name="NeedsAssignment" xml:space="preserve">
+    <value>דורש הקצאה</value>
+  </data>
+  <data name="TotalUsers" xml:space="preserve">
+    <value>סך משתמשים</value>
+  </data>
+  <data name="UnassignedCompanies" xml:space="preserve">
+    <value>חברות לא משויכות</value>
+  </data>
+  <data name="QuickActions" xml:space="preserve">
+    <value>פעולות מהירות</value>
+  </data>
+  <data name="Hierarchy" xml:space="preserve">
+    <value>היררכיה</value>
+  </data>
+  <data name="HierarchyTree" xml:space="preserve">
+    <value>עץ היררכיה</value>
+  </data>
+  <data name="HierarchySettings" xml:space="preserve">
+    <value>הגדרות היררכיה</value>
+  </data>
+  <data name="HierarchySettingsDescription" xml:space="preserve">
+    <value>הגדר את הגדרות ההיררכיה של הארגון שלך</value>
+  </data>
+  <data name="AddChild" xml:space="preserve">
+    <value>הוסף תת-פריט</value>
+  </data>
+  <data name="AddProject" xml:space="preserve">
+    <value>הוסף פרויקט</value>
+  </data>
+  <data name="EnterName" xml:space="preserve">
+    <value>הזן שם</value>
+  </data>
+  <data name="EnterProjectName" xml:space="preserve">
+    <value>הזן שם פרויקט</value>
+  </data>
+  <data name="ErrorCreating" xml:space="preserve">
+    <value>שגיאה ביצירת הפריט</value>
+  </data>
+  <data name="ErrorDeleting" xml:space="preserve">
+    <value>שגיאה במחיקת הפריט</value>
+  </data>
+  <data name="ErrorMoving" xml:space="preserve">
+    <value>שגיאה בהזזת הפריט</value>
+  </data>
+  <data name="ErrorReordering" xml:space="preserve">
+    <value>שגיאה בסידור מחדש של הפריטים</value>
+  </data>
+  <data name="ErrorSaving" xml:space="preserve">
+    <value>שגיאה בשמירת הפריט</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>שם הוא שדה חובה</value>
+  </data>
+  <data name="NoMoveTargets" xml:space="preserve">
+    <value>אין יעדים זמינים להעברה</value>
+  </data>
+  <data name="SelectDestination" xml:space="preserve">
+    <value>בחר יעד</value>
+  </data>
+  <data name="Project" xml:space="preserve">
+    <value>פרויקט</value>
+  </data>
+  <data name="Projects" xml:space="preserve">
+    <value>פרויקטים</value>
+  </data>
+  <data name="CreateProject" xml:space="preserve">
+    <value>צור פרויקט</value>
+  </data>
+  <data name="CreateNewProject" xml:space="preserve">
+    <value>צור פרויקט חדש</value>
+  </data>
+  <data name="ManageProjects" xml:space="preserve">
+    <value>ניהול פרויקטים</value>
+  </data>
+  <data name="CreateFirstProject" xml:space="preserve">
+    <value>צור פרויקט ראשון</value>
+  </data>
+  <data name="CreateAndManageProjects" xml:space="preserve">
+    <value>צור ונהל פרויקטים</value>
+  </data>
+  <data name="NoProjectsYet" xml:space="preserve">
+    <value>אין פרויקטים עדיין</value>
+  </data>
+  <data name="NoProjectsAvailable" xml:space="preserve">
+    <value>אין פרויקטים זמינים</value>
+  </data>
+  <data name="SelectProject" xml:space="preserve">
+    <value>בחר פרויקט</value>
+  </data>
+  <data name="ConfirmDeleteProject" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק פרויקט זה?</value>
+  </data>
+  <data name="ManageAreas" xml:space="preserve">
+    <value>ניהול אזורים</value>
+  </data>
+  <data name="CreateArea" xml:space="preserve">
+    <value>צור אזור</value>
+  </data>
+  <data name="CreateNewArea" xml:space="preserve">
+    <value>צור אזור חדש</value>
+  </data>
+  <data name="CreateAndManageAreas" xml:space="preserve">
+    <value>צור ונהל אזורים</value>
+  </data>
+  <data name="NoAreasYet" xml:space="preserve">
+    <value>אין אזורים עדיין</value>
+  </data>
+  <data name="NoAreasAvailable" xml:space="preserve">
+    <value>אין אזורים זמינים</value>
+  </data>
+  <data name="ConfirmDeleteArea" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק אזור זה?</value>
+  </data>
+  <data name="ManageMolecules" xml:space="preserve">
+    <value>ניהול מולקולות</value>
+  </data>
+  <data name="CreateMolecule" xml:space="preserve">
+    <value>צור מולקולה</value>
+  </data>
+  <data name="CreateNewMolecule" xml:space="preserve">
+    <value>צור מולקולה חדשה</value>
+  </data>
+  <data name="CreateAndManageMolecules" xml:space="preserve">
+    <value>צור ונהל מולקולות</value>
+  </data>
+  <data name="NoMoleculesYet" xml:space="preserve">
+    <value>אין מולקולות עדיין</value>
+  </data>
+  <data name="NoMoleculesAvailable" xml:space="preserve">
+    <value>אין מולקולות זמינות</value>
+  </data>
+  <data name="ConfirmDeleteMolecule" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק מולקולה זו?</value>
+  </data>
+  <data name="Helper" xml:space="preserve">
+    <value>עוזר</value>
+  </data>
+  <data name="Tech" xml:space="preserve">
+    <value>טכנולוגי</value>
+  </data>
+  <data name="Workforce" xml:space="preserve">
+    <value>כוח אדם</value>
+  </data>
+  <data name="MoleculeSettings" xml:space="preserve">
+    <value>הגדרות מולקולה</value>
+  </data>
+  <data name="Departments" xml:space="preserve">
+    <value>מחלקות</value>
+  </data>
+  <data name="ManageDepartments" xml:space="preserve">
+    <value>ניהול מחלקות</value>
+  </data>
+  <data name="CreateDepartment" xml:space="preserve">
+    <value>צור מחלקה</value>
+  </data>
+  <data name="CreateNewDepartment" xml:space="preserve">
+    <value>צור מחלקה חדשה</value>
+  </data>
+  <data name="CreateAndManageDepartments" xml:space="preserve">
+    <value>צור ונהל מחלקות</value>
+  </data>
+  <data name="NoDepartmentsYet" xml:space="preserve">
+    <value>אין מחלקות עדיין</value>
+  </data>
+  <data name="DepartmentsAreForTechMolecules" xml:space="preserve">
+    <value>מחלקות זמינות למולקולות טכנולוגיות בלבד</value>
+  </data>
+  <data name="TechMolecule" xml:space="preserve">
+    <value>מולקולה טכנולוגית</value>
+  </data>
+  <data name="NoTechMoleculesAvailable" xml:space="preserve">
+    <value>אין מולקולות טכנולוגיות זמינות</value>
+  </data>
+  <data name="NoDepartment" xml:space="preserve">
+    <value>ללא מחלקה</value>
+  </data>
+  <data name="DepartmentDescription" xml:space="preserve">
+    <value>מחלקה</value>
+  </data>
+  <data name="ConfirmDeleteDepartment" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק מחלקה זו?</value>
+  </data>
+  <data name="SelectDepartment" xml:space="preserve">
+    <value>בחר מחלקה</value>
+  </data>
+  <data name="LegacyDepartmentNote" xml:space="preserve">
+    <value>שדה מחלקה ישן - מנוהל בארגון</value>
+  </data>
+  <data name="ManageJobTypes" xml:space="preserve">
+    <value>ניהול סוגי תפקידים</value>
+  </data>
+  <data name="CreateJobType" xml:space="preserve">
+    <value>צור סוג תפקיד</value>
+  </data>
+  <data name="CreateNewJobType" xml:space="preserve">
+    <value>צור סוג תפקיד חדש</value>
+  </data>
+  <data name="CreateAndManageJobTypes" xml:space="preserve">
+    <value>צור ונהל סוגי תפקידים</value>
+  </data>
+  <data name="NoJobTypesYet" xml:space="preserve">
+    <value>אין סוגי תפקידים עדיין</value>
+  </data>
+  <data name="NoJobType" xml:space="preserve">
+    <value>ללא סוג תפקיד</value>
+  </data>
+  <data name="JobTypeDescription" xml:space="preserve">
+    <value>סוג תפקיד</value>
+  </data>
+  <data name="JobTypesAreAreaScoped" xml:space="preserve">
+    <value>סוגי תפקידים משויכים לאזורים</value>
+  </data>
+  <data name="ConfirmDeleteJobType" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק סוג תפקיד זה?</value>
+  </data>
+  <data name="ShiftGroupings" xml:space="preserve">
+    <value>קבוצות משמרות</value>
+  </data>
+  <data name="Grouping" xml:space="preserve">
+    <value>קבוצה</value>
+  </data>
+  <data name="ManageShiftGroupings" xml:space="preserve">
+    <value>ניהול קבוצות משמרות</value>
+  </data>
+  <data name="CreateShiftGrouping" xml:space="preserve">
+    <value>צור קבוצת משמרות</value>
+  </data>
+  <data name="CreateNewShiftGrouping" xml:space="preserve">
+    <value>צור קבוצת משמרות חדשה</value>
+  </data>
+  <data name="CreateAndManageShiftGroupings" xml:space="preserve">
+    <value>צור ונהל קבוצות משמרות</value>
+  </data>
+  <data name="ShiftGroupingsCombineCompaniesAndJobTypes" xml:space="preserve">
+    <value>קבוצות משמרות משלבות חברות וסוגי תפקידים</value>
+  </data>
+  <data name="AllShiftGroupings" xml:space="preserve">
+    <value>כל קבוצות המשמרות</value>
+  </data>
+  <data name="NoShiftGroupingsYet" xml:space="preserve">
+    <value>אין קבוצות משמרות עדיין</value>
+  </data>
+  <data name="ConfirmDeleteGrouping" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק קבוצה זו?</value>
+  </data>
+  <data name="HoldCtrlToSelectMultiple" xml:space="preserve">
+    <value>החזק Ctrl לבחירה מרובה</value>
+  </data>
+  <data name="AllGrants" xml:space="preserve">
+    <value>כל ההרשאות</value>
+  </data>
+  <data name="AllGrantTypes" xml:space="preserve">
+    <value>כל סוגי ההרשאות</value>
+  </data>
+  <data name="AddGrant" xml:space="preserve">
+    <value>הוסף הרשאה</value>
+  </data>
+  <data name="AddGrantToRoleTemplate" xml:space="preserve">
+    <value>הוסף הרשאה לתבנית תפקיד</value>
+  </data>
+  <data name="AssignGrant" xml:space="preserve">
+    <value>הקצה הרשאה</value>
+  </data>
+  <data name="AssignGrantToUser" xml:space="preserve">
+    <value>הקצה הרשאה למשתמש</value>
+  </data>
+  <data name="AssignNewGrant" xml:space="preserve">
+    <value>הקצה הרשאה חדשה</value>
+  </data>
+  <data name="ManageGrants" xml:space="preserve">
+    <value>ניהול הרשאות</value>
+  </data>
+  <data name="ViewGrants" xml:space="preserve">
+    <value>צפה בהרשאות</value>
+  </data>
+  <data name="ViewAndManageUserGrants" xml:space="preserve">
+    <value>צפה ונהל הרשאות משתמשים</value>
+  </data>
+  <data name="NoGrantsFound" xml:space="preserve">
+    <value>לא נמצאו הרשאות</value>
+  </data>
+  <data name="NoGrantsInTemplate" xml:space="preserve">
+    <value>אין הרשאות בתבנית זו</value>
+  </data>
+  <data name="NoUsersWithGrants" xml:space="preserve">
+    <value>אין משתמשים עם הרשאות</value>
+  </data>
+  <data name="SelectUserToAssignGrant" xml:space="preserve">
+    <value>בחר משתמש להקצאת הרשאה</value>
+  </data>
+  <data name="SelectUserAndGrant" xml:space="preserve">
+    <value>בחר משתמש והרשאה</value>
+  </data>
+  <data name="ConfirmRevokeGrant" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לבטל הרשאה זו?</value>
+  </data>
+  <data name="ConfirmRemoveGrant" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך להסיר הרשאה זו?</value>
+  </data>
+  <data name="GrantType" xml:space="preserve">
+    <value>סוג הרשאה</value>
+  </data>
+  <data name="GrantTypeDescription" xml:space="preserve">
+    <value>תיאור סוג ההרשאה</value>
+  </data>
+  <data name="GrantTypeUsage" xml:space="preserve">
+    <value>שימוש בסוג הרשאה</value>
+  </data>
+  <data name="GrantNotesPlaceholder" xml:space="preserve">
+    <value>הערות אופציונליות על הרשאה זו</value>
+  </data>
+  <data name="NotesOptional" xml:space="preserve">
+    <value>הערות (אופציונלי)</value>
+  </data>
+  <data name="OptionalNotes" xml:space="preserve">
+    <value>הערות אופציונליות</value>
+  </data>
+  <data name="CanGive" xml:space="preserve">
+    <value>יכול להעניק (אפשר האצלה)</value>
+  </data>
+  <data name="CanGiveHelp" xml:space="preserve">
+    <value>אם מופעל, משתמש זה יכול להעניק הרשאה זו לאחרים בטווח שלו.</value>
+  </data>
+  <data name="CanOwn" xml:space="preserve">
+    <value>בעלות (יכול לבצע פעולה)</value>
+  </data>
+  <data name="Capabilities" xml:space="preserve">
+    <value>יכולות</value>
+  </data>
+  <data name="CapabilitiesDescription" xml:space="preserve">
+    <value>הגדר את היכולות להרשאה זו</value>
+  </data>
+  <data name="DisableCanGive" xml:space="preserve">
+    <value>השבת אפשרות הענקה</value>
+  </data>
+  <data name="EnableCanGive" xml:space="preserve">
+    <value>הפעל אפשרות הענקה</value>
+  </data>
+  <data name="ManagedByRole" xml:space="preserve">
+    <value>מנוהל לפי תפקיד</value>
+  </data>
+  <data name="PleaseSelectGrantType" xml:space="preserve">
+    <value>אנא בחר סוג הרשאה</value>
+  </data>
+  <data name="EditRoleTemplateGrant" xml:space="preserve">
+    <value>ערוך הרשאת תבנית תפקיד</value>
+  </data>
+  <data name="IncludedInRoleTemplates" xml:space="preserve">
+    <value>כלול בתבניות תפקידים</value>
+  </data>
+  <data name="NotIncludedInAnyRoleTemplate" xml:space="preserve">
+    <value>לא כלול באף תבנית תפקיד</value>
+  </data>
+  <data name="AssignedToUsers" xml:space="preserve">
+    <value>מוקצה למשתמשים</value>
+  </data>
+  <data name="UsedBy" xml:space="preserve">
+    <value>משמש את</value>
+  </data>
+  <data name="ViewUsage" xml:space="preserve">
+    <value>צפה בשימוש</value>
+  </data>
+  <data name="TypeToSearch" xml:space="preserve">
+    <value>הקלד לחיפוש...</value>
+  </data>
+  <data name="SearchUser" xml:space="preserve">
+    <value>חפש משתמש</value>
+  </data>
+  <data name="Scope" xml:space="preserve">
+    <value>טווח</value>
+  </data>
+  <data name="ScopeDescription" xml:space="preserve">
+    <value>הגדר את הטווח להרשאה זו</value>
+  </data>
+  <data name="ScopeMode" xml:space="preserve">
+    <value>מצב טווח</value>
+  </data>
+  <data name="ScopeLevel" xml:space="preserve">
+    <value>רמת טווח</value>
+  </data>
+  <data name="SelectRoleTemplate" xml:space="preserve">
+    <value>בחר תבנית תפקיד לצפייה ועריכת הרשאותיה</value>
+  </data>
+  <data name="Roles" xml:space="preserve">
+    <value>תפקידים</value>
+  </data>
+  <data name="RoleTemplates" xml:space="preserve">
+    <value>תבניות תפקידים</value>
+  </data>
+  <data name="ManageRoles" xml:space="preserve">
+    <value>ניהול תפקידים</value>
+  </data>
+  <data name="AssignNewRole" xml:space="preserve">
+    <value>הקצה תפקיד חדש</value>
+  </data>
+  <data name="AssignRoleToUser" xml:space="preserve">
+    <value>הקצה תפקיד למשתמש</value>
+  </data>
+  <data name="SelectUserToAssignRole" xml:space="preserve">
+    <value>בחר משתמש להקצאת תפקיד</value>
+  </data>
+  <data name="SelectUserAndRole" xml:space="preserve">
+    <value>בחר משתמש ותפקיד</value>
+  </data>
+  <data name="SelectRole" xml:space="preserve">
+    <value>בחר תפקיד</value>
+  </data>
+  <data name="ViewAndManageRoleAssignments" xml:space="preserve">
+    <value>צפה ונהל הקצאות תפקידים</value>
+  </data>
+  <data name="ViewAssignments" xml:space="preserve">
+    <value>צפה בהקצאות</value>
+  </data>
+  <data name="NoRoleAssignmentsFound" xml:space="preserve">
+    <value>לא נמצאו הקצאות תפקידים</value>
+  </data>
+  <data name="NoRoleTemplatesFound" xml:space="preserve">
+    <value>לא נמצאו תבניות תפקידים</value>
+  </data>
+  <data name="ConfirmRevokeRole" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לבטל תפקיד זה?</value>
+  </data>
+  <data name="AssignedAt" xml:space="preserve">
+    <value>הוקצה בתאריך</value>
+  </data>
+  <data name="AssignedBy" xml:space="preserve">
+    <value>הוקצה על ידי</value>
+  </data>
+  <data name="AutoGrants" xml:space="preserve">
+    <value>הרשאות אוטומטיות</value>
+  </data>
+  <data name="RoleScope" xml:space="preserve">
+    <value>טווח תפקיד</value>
+  </data>
+  <data name="RoleScopeExplanation" xml:space="preserve">
+    <value>הטווח קובע היכן הקצאת תפקיד זו חלה</value>
+  </data>
+  <data name="RoleDescriptionHint" xml:space="preserve">
+    <value>תיאור אופציונלי להקצאת תפקיד זו</value>
+  </data>
+  <data name="AreaScopeHint" xml:space="preserve">
+    <value>בחר את האזור להקצאה זו</value>
+  </data>
+  <data name="CompanyScopeHint" xml:space="preserve">
+    <value>בחר את החברה להקצאה זו</value>
+  </data>
+  <data name="DepartmentScopeHint" xml:space="preserve">
+    <value>בחר את המחלקה להקצאה זו</value>
+  </data>
+  <data name="MoleculeScopeHint" xml:space="preserve">
+    <value>בחר את המולקולה להקצאה זו</value>
+  </data>
+  <data name="JobTypeScopeHint" xml:space="preserve">
+    <value>בחר את סוג התפקיד להקצאה זו</value>
+  </data>
+  <data name="ManageEntities" xml:space="preserve">
+    <value>ניהול ישויות</value>
+  </data>
+  <data name="ManageHierarchyProjectsAreasMolecules" xml:space="preserve">
+    <value>נהל היררכיה - פרויקטים, אזורים ומולקולות</value>
+  </data>
+  <data name="AllDepartments" xml:space="preserve">
+    <value>כל המחלקות</value>
+  </data>
+  <data name="Announcements" xml:space="preserve">
+    <value>הודעות</value>
+  </data>
+  <data name="AnnouncementManagement" xml:space="preserve">
+    <value>ניהול הודעות</value>
+  </data>
+  <data name="AnnouncementScope_All" xml:space="preserve">
+    <value>כל המשתמשים</value>
+  </data>
+  <data name="AnnouncementScope_Department" xml:space="preserve">
+    <value>מחלקה</value>
+  </data>
+  <data name="AnnouncementScope_Role" xml:space="preserve">
+    <value>תפקיד</value>
+  </data>
+  <data name="ManageCompanyAnnouncements" xml:space="preserve">
+    <value>נהל הודעות חברה</value>
+  </data>
+  <data name="CreateAnnouncement" xml:space="preserve">
+    <value>צור הודעה</value>
+  </data>
+  <data name="ExistingAnnouncements" xml:space="preserve">
+    <value>הודעות קיימות</value>
+  </data>
+  <data name="NoAnnouncementsFound" xml:space="preserve">
+    <value>לא נמצאו הודעות</value>
+  </data>
+  <data name="EnterAnnouncementTitle" xml:space="preserve">
+    <value>הזן כותרת הודעה</value>
+  </data>
+  <data name="EnterAnnouncementContent" xml:space="preserve">
+    <value>הזן תוכן הודעה</value>
+  </data>
+  <data name="ConfirmDeleteAnnouncement" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק הודעה זו?</value>
+  </data>
+  <data name="AreaSettings" xml:space="preserve">
+    <value>הגדרות אזור</value>
+  </data>
+  <data name="EditCompanyOverrides" xml:space="preserve">
+    <value>ערוך דריסות חברה</value>
+  </data>
+  <data name="EditMoleculeOverrides" xml:space="preserve">
+    <value>ערוך דריסות מולקולה</value>
+  </data>
+  <data name="EffectiveSettings" xml:space="preserve">
+    <value>הגדרות בפועל</value>
+  </data>
+  <data name="ClearOverrideInheritFromParent" xml:space="preserve">
+    <value>נקה דריסה (ירש מהורה)</value>
+  </data>
+  <data name="LeaveEmptyToInherit" xml:space="preserve">
+    <value>השאר ריק כדי לרשת מרמה עליונה</value>
+  </data>
+  <data name="LastUpdated" xml:space="preserve">
+    <value>עודכן לאחרונה</value>
+  </data>
+  <data name="SettingsCascadeInfo" xml:space="preserve">
+    <value>הגדרות מורשות ממולקולה לחברה. דריסות חברה חלות אלא אם למולקולה יש הגדרות משלה.</value>
+  </data>
+  <data name="RestHoursBetweenShifts" xml:space="preserve">
+    <value>שעות מנוחה בין משמרות</value>
+  </data>
+  <data name="RestHoursHint" xml:space="preserve">
+    <value>מינימום שעות מנוחה נדרשות בין משמרות</value>
+  </data>
+  <data name="WeeklyHoursCap" xml:space="preserve">
+    <value>תקרת שעות שבועית</value>
+  </data>
+  <data name="WeeklyCapHint" xml:space="preserve">
+    <value>מקסימום שעות עבודה שבועיות מותרות</value>
+  </data>
+  <data name="SetupTasks" xml:space="preserve">
+    <value>משימות הגדרה</value>
+  </data>
+  <data name="SetupTasksDescription" xml:space="preserve">
+    <value>עקוב והשלם משימות הגדרה למולקולות שלך</value>
+  </data>
+  <data name="AllTasks" xml:space="preserve">
+    <value>כל המשימות</value>
+  </data>
+  <data name="MyPendingTasks" xml:space="preserve">
+    <value>המשימות הממתינות שלי</value>
+  </data>
+  <data name="NoPendingTasks" xml:space="preserve">
+    <value>אין משימות ממתינות</value>
+  </data>
+  <data name="NoSetupTasksYet" xml:space="preserve">
+    <value>אין משימות הגדרה עדיין</value>
+  </data>
+  <data name="NoTasksForMolecule" xml:space="preserve">
+    <value>אין משימות למולקולה זו</value>
+  </data>
+  <data name="SelectMoleculeToViewTasks" xml:space="preserve">
+    <value>בחר מולקולה לצפייה במשימות</value>
+  </data>
+  <data name="SetupProgressByMolecule" xml:space="preserve">
+    <value>התקדמות הגדרה לפי מולקולה</value>
+  </data>
+  <data name="MarkComplete" xml:space="preserve">
+    <value>סמן כהושלם</value>
+  </data>
+  <data name="ViewTasks" xml:space="preserve">
+    <value>צפה במשימות</value>
+  </data>
+  <data name="SuggestedUser" xml:space="preserve">
+    <value>משתמש מוצע</value>
+  </data>
+  <data name="AssignedTo" xml:space="preserve">
+    <value>מוקצה ל</value>
+  </data>
+  <data name="SetupTask_AssignAssigners_Title" xml:space="preserve">
+    <value>הקצה מקצי משמרות</value>
+  </data>
+  <data name="SetupTask_AssignAssigners_Desc" xml:space="preserve">
+    <value>הקצה משתמשים שיהיו אחראים על הקצאת משמרות</value>
+  </data>
+  <data name="SetupTask_AssignBRDirector_Title" xml:space="preserve">
+    <value>הקצה מנהל BR</value>
+  </data>
+  <data name="SetupTask_AssignBRDirector_Desc" xml:space="preserve">
+    <value>הקצה מנהל לפיקוח על סקירה עסקית</value>
+  </data>
+  <data name="SetupTask_AssignMoleculeAdmin_Title" xml:space="preserve">
+    <value>הקצה מנהל מולקולה</value>
+  </data>
+  <data name="SetupTask_AssignMoleculeAdmin_Desc" xml:space="preserve">
+    <value>הקצה מנהל למולקולה זו</value>
+  </data>
+  <data name="SetupTask_SetupShiftBlueprints_Title" xml:space="preserve">
+    <value>הגדר תבניות משמרות</value>
+  </data>
+  <data name="SetupTask_SetupShiftBlueprints_Desc" xml:space="preserve">
+    <value>צור תבניות משמרות לצורך תזמון</value>
+  </data>
+  <data name="SetupTask_SetupShiftGroupings_Title" xml:space="preserve">
+    <value>הגדר קבוצות משמרות</value>
+  </data>
+  <data name="SetupTask_SetupShiftGroupings_Desc" xml:space="preserve">
+    <value>הגדר קבוצות משמרות למולקולה זו</value>
+  </data>
+  <data name="Calendar_MonthView" xml:space="preserve">
+    <value>תצוגת חודש</value>
+  </data>
+  <data name="Calendar_ReadOnlyMode" xml:space="preserve">
+    <value>מצב קריאה בלבד</value>
+  </data>
+  <data name="ShiftType" xml:space="preserve">
+    <value>סוג משמרת</value>
+  </data>
+  <data name="Shifts" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="Assignee" xml:space="preserve">
+    <value>מוקצה</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>לא מוקצה</value>
+  </data>
+  <data name="ProposeSwap" xml:space="preserve">
+    <value>הצע החלפה</value>
+  </data>
+  <data name="ProposedTo" xml:space="preserve">
+    <value>הוצע ל</value>
+  </data>
+  <data name="RequestedOn" xml:space="preserve">
+    <value>הוגש בתאריך</value>
+  </data>
+  <data name="ApprovedTimeOffRequests" xml:space="preserve">
+    <value>בקשות חופשה שאושרו</value>
+  </data>
+  <data name="ManageAssignments" xml:space="preserve">
+    <value>ניהול הקצאות</value>
+  </data>
+  <data name="OnDutyDetails" xml:space="preserve">
+    <value>פרטי תורנות</value>
+  </data>
+  <data name="AreYouSureDeleteOnDuty" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק הקצאת תורנות זו?</value>
+  </data>
+  <data name="BatchActions" xml:space="preserve">
+    <value>פעולות מרובות</value>
+  </data>
+  <data name="AdminOnly" xml:space="preserve">
+    <value>מנהלים בלבד</value>
+  </data>
+  <data name="Email_AccessRequestAction" xml:space="preserve">
+    <value>סקור בקשת גישה</value>
+  </data>
+  <data name="Email_AccessRequestLoginToReview" xml:space="preserve">
+    <value>אנא התחבר כדי לסקור בקשת גישה זו</value>
+  </data>
+  <data name="Email_AccessRequestSubmittedBody" xml:space="preserve">
+    <value>בקשת גישה חדשה הוגשה</value>
+  </data>
+  <data name="Email_AccessRequestSubmittedSubject" xml:space="preserve">
+    <value>בקשת גישה חדשה הוגשה</value>
+  </data>
+  <data name="Email_AccessRequestSubmittedTitle" xml:space="preserve">
+    <value>בקשת גישה הוגשה</value>
+  </data>
+  <data name="Email_Approved" xml:space="preserve">
+    <value>אושר</value>
+  </data>
+  <data name="Email_DateRange" xml:space="preserve">
+    <value>טווח תאריכים</value>
+  </data>
+  <data name="Email_Declined" xml:space="preserve">
+    <value>נדחה</value>
+  </data>
+  <data name="Email_OnDutyAssignedBody" xml:space="preserve">
+    <value>הוקצית לתורנות</value>
+  </data>
+  <data name="Email_OnDutyAssignedLoginPrompt" xml:space="preserve">
+    <value>אנא התחבר לצפייה בלוח התורנויות שלך</value>
+  </data>
+  <data name="Email_OnDutyAssignedSubject" xml:space="preserve">
+    <value>הקצאת תורנות</value>
+  </data>
+  <data name="Email_OnDutyAssignedTitle" xml:space="preserve">
+    <value>הקצאת תורנות</value>
+  </data>
+  <data name="Email_OnDutyCanceledBody" xml:space="preserve">
+    <value>הקצאת התורנות שלך בוטלה</value>
+  </data>
+  <data name="Email_OnDutyCanceledScheduleUpdated" xml:space="preserve">
+    <value>לוח הזמנים שלך עודכן בהתאם</value>
+  </data>
+  <data name="Email_OnDutyCanceledSubject" xml:space="preserve">
+    <value>תורנות בוטלה</value>
+  </data>
+  <data name="Email_OnDutyCanceledTitle" xml:space="preserve">
+    <value>תורנות בוטלה</value>
+  </data>
+  <data name="Email_OnDutyType" xml:space="preserve">
+    <value>סוג תורנות</value>
+  </data>
+  <data name="Email_RequesterEmail" xml:space="preserve">
+    <value>אימייל מבקש</value>
+  </data>
+  <data name="Email_RequesterName" xml:space="preserve">
+    <value>שם מבקש</value>
+  </data>
+  <data name="Email_Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="Email_SwapRequestApprovedBody" xml:space="preserve">
+    <value>בקשת ההחלפה שלך אושרה</value>
+  </data>
+  <data name="Email_SwapRequestApprovedScheduleUpdated" xml:space="preserve">
+    <value>לוח הזמנים שלך עודכן עם ההחלפה</value>
+  </data>
+  <data name="Email_SwapRequestApprovedSubject" xml:space="preserve">
+    <value>בקשת החלפה אושרה</value>
+  </data>
+  <data name="Email_SwapRequestApprovedTitle" xml:space="preserve">
+    <value>בקשת החלפה אושרה</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedBody" xml:space="preserve">
+    <value>בקשת ההחלפה שלך נדחתה</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedContactManager" xml:space="preserve">
+    <value>אנא פנה למנהל שלך למידע נוסף</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedSubject" xml:space="preserve">
+    <value>בקשת החלפה נדחתה</value>
+  </data>
+  <data name="Email_SwapRequestDeclinedTitle" xml:space="preserve">
+    <value>בקשת החלפה נדחתה</value>
+  </data>
+  <data name="Email_TimeOffApprovedBody" xml:space="preserve">
+    <value>בקשת החופשה שלך אושרה</value>
+  </data>
+  <data name="Email_TimeOffApprovedEnjoy" xml:space="preserve">
+    <value>תהנה מהחופשה!</value>
+  </data>
+  <data name="Email_TimeOffApprovedSubject" xml:space="preserve">
+    <value>חופשה אושרה</value>
+  </data>
+  <data name="Email_TimeOffApprovedTitle" xml:space="preserve">
+    <value>חופשה אושרה</value>
+  </data>
+  <data name="Email_TimeOffDeclinedBody" xml:space="preserve">
+    <value>בקשת החופשה שלך נדחתה</value>
+  </data>
+  <data name="Email_TimeOffDeclinedContactManager" xml:space="preserve">
+    <value>אנא פנה למנהל שלך למידע נוסף</value>
+  </data>
+  <data name="Email_TimeOffDeclinedSubject" xml:space="preserve">
+    <value>חופשה נדחתה</value>
+  </data>
+  <data name="Email_TimeOffDeclinedTitle" xml:space="preserve">
+    <value>חופשה נדחתה</value>
+  </data>
+  <data name="Email_TimeOffDeletedBody" xml:space="preserve">
+    <value>בקשת החופשה שלך נמחקה</value>
+  </data>
+  <data name="Email_TimeOffDeletedContactManager" xml:space="preserve">
+    <value>אנא פנה למנהל שלך למידע נוסף</value>
+  </data>
+  <data name="Email_TimeOffDeletedSubject" xml:space="preserve">
+    <value>בקשת חופשה נמחקה</value>
+  </data>
+  <data name="Email_TimeOffDeletedTitle" xml:space="preserve">
+    <value>חופשה נמחקה</value>
+  </data>
+  <data name="NotificationAccessRequestApprovedMessage" xml:space="preserve">
+    <value>בקשת הגישה שלך אושרה</value>
+  </data>
+  <data name="NotificationAccessRequestApprovedTitle" xml:space="preserve">
+    <value>בקשת גישה אושרה</value>
+  </data>
+  <data name="NotificationAccessRequestSubmittedMessage" xml:space="preserve">
+    <value>בקשת גישה חדשה הוגשה לסקירה</value>
+  </data>
+  <data name="NotificationAccessRequestSubmittedTitle" xml:space="preserve">
+    <value>בקשת גישה חדשה</value>
+  </data>
+  <data name="ContactAdminToActivate" xml:space="preserve">
+    <value>אנא פנה למנהל המערכת כדי להפעיל את חשבונך.</value>
+  </data>
+  <data name="LockedUsers_Actions" xml:space="preserve">
+    <value>פעולות</value>
+  </data>
+  <data name="LockedUsers_Email" xml:space="preserve">
+    <value>אימייל</value>
+  </data>
+  <data name="LockedUsers_FailedAttempts" xml:space="preserve">
+    <value>ניסיונות כושלים</value>
+  </data>
+  <data name="LockedUsers_LastAttempt" xml:space="preserve">
+    <value>ניסיון אחרון</value>
+  </data>
+  <data name="LockedUsers_Locked" xml:space="preserve">
+    <value>נעול</value>
+  </data>
+  <data name="LockedUsers_MinRemaining" xml:space="preserve">
+    <value>דקות נותרו</value>
+  </data>
+  <data name="LockedUsers_NoLockedUsers" xml:space="preserve">
+    <value>לא נמצאו חשבונות נעולים</value>
+  </data>
+  <data name="LockedUsers_RecentlyLocked" xml:space="preserve">
+    <value>ננעלו לאחרונה (פג תוקף)</value>
+  </data>
+  <data name="LockedUsers_SourceIP" xml:space="preserve">
+    <value>כתובת IP מקור</value>
+  </data>
+  <data name="LockedUsers_Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="LockedUsers_Subtitle" xml:space="preserve">
+    <value>צפה ושחרר חשבונות שננעלו עקב ניסיונות התחברות כושלים</value>
+  </data>
+  <data name="LockedUsers_Title" xml:space="preserve">
+    <value>חשבונות משתמשים נעולים</value>
+  </data>
+  <data name="LockedUsers_Unlock" xml:space="preserve">
+    <value>שחרר נעילה</value>
+  </data>
+  <data name="LockedUsers_User" xml:space="preserve">
+    <value>משתמש</value>
+  </data>
+  <data name="BackToOwnerHub" xml:space="preserve">
+    <value>חזרה למרכז הבעלים</value>
+  </data>
+  <data name="Owner_DataLifecycle_ArchiveConfirmed" xml:space="preserve">
+    <value>ארכיון אושר</value>
+  </data>
+  <data name="Owner_DataLifecycle_Chores" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="Owner_DataLifecycle_CreateArchive_Desc" xml:space="preserve">
+    <value>צור ארכיון גיבוי של הנתונים שלך לפני מחיקה</value>
+  </data>
+  <data name="Owner_DataLifecycle_CsvExport" xml:space="preserve">
+    <value>ייצוא CSV</value>
+  </data>
+  <data name="Owner_DataLifecycle_CutoffDate_Help" xml:space="preserve">
+    <value>כל הנתונים לפני תאריך זה יושפעו</value>
+  </data>
+  <data name="Owner_DataLifecycle_DataTypesToPurge" xml:space="preserve">
+    <value>סוגי נתונים למחיקה</value>
+  </data>
+  <data name="Owner_DataLifecycle_DbSizeAfter" xml:space="preserve">
+    <value>גודל מסד נתונים אחרי</value>
+  </data>
+  <data name="Owner_DataLifecycle_DbSizeBefore" xml:space="preserve">
+    <value>גודל מסד נתונים לפני</value>
+  </data>
+  <data name="Owner_DataLifecycle_DestructiveOperation" xml:space="preserve">
+    <value>פעולה הרסנית</value>
+  </data>
+  <data name="Owner_DataLifecycle_DestructiveOperation_Desc" xml:space="preserve">
+    <value>פעולה זו מוחקת נתונים לצמיתות ולא ניתן לבטלה</value>
+  </data>
+  <data name="Owner_DataLifecycle_DownloadArchives" xml:space="preserve">
+    <value>הורד ארכיונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_DownloadCsvZip" xml:space="preserve">
+    <value>הורד ZIP של CSV</value>
+  </data>
+  <data name="Owner_DataLifecycle_DownloadNdjsonZip" xml:space="preserve">
+    <value>הורד ZIP של NDJSON</value>
+  </data>
+  <data name="Owner_DataLifecycle_EstimatedSize" xml:space="preserve">
+    <value>גודל משוער</value>
+  </data>
+  <data name="Owner_DataLifecycle_HardDelete" xml:space="preserve">
+    <value>מחיקה קשיחה</value>
+  </data>
+  <data name="Owner_DataLifecycle_HardDelete_Desc" xml:space="preserve">
+    <value>הסר רשומות לצמיתות ממסד הנתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_NdjsonExport" xml:space="preserve">
+    <value>ייצוא NDJSON</value>
+  </data>
+  <data name="Owner_DataLifecycle_OnDuty" xml:space="preserve">
+    <value>תורנות</value>
+  </data>
+  <data name="Owner_DataLifecycle_PreviewCounts" xml:space="preserve">
+    <value>תצוגה מקדימה של כמויות</value>
+  </data>
+  <data name="Owner_DataLifecycle_PreviewResults" xml:space="preserve">
+    <value>תוצאות תצוגה מקדימה</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeCutoffDate" xml:space="preserve">
+    <value>תאריך גבול למחיקה</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeCutoffDate_Help" xml:space="preserve">
+    <value>בחר את התאריך שלפניו יימחקו הנתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeHistoricalData" xml:space="preserve">
+    <value>מחק נתונים היסטוריים</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeResults" xml:space="preserve">
+    <value>תוצאות מחיקה</value>
+  </data>
+  <data name="Owner_DataLifecycle_PurgeWarning" xml:space="preserve">
+    <value>אזהרה: פעולה זו אינה הפיכה</value>
+  </data>
+  <data name="Owner_DataLifecycle_ReImport_Desc" xml:space="preserve">
+    <value>ייבא מחדש נתונים מארכיון שנוצר בעבר</value>
+  </data>
+  <data name="Owner_DataLifecycle_RunVacuum" xml:space="preserve">
+    <value>הרץ ניקוי מסד נתונים</value>
+  </data>
+  <data name="Owner_DataLifecycle_SafetyConfirmations" xml:space="preserve">
+    <value>אישורי בטיחות</value>
+  </data>
+  <data name="Owner_DataLifecycle_SelectArchive" xml:space="preserve">
+    <value>בחר ארכיון</value>
+  </data>
+  <data name="Owner_DataLifecycle_SelectArchive_Help" xml:space="preserve">
+    <value>בחר קובץ ארכיון לאימות או ייבוא</value>
+  </data>
+  <data name="Owner_DataLifecycle_Sha256Hash" xml:space="preserve">
+    <value>חתימת SHA-256</value>
+  </data>
+  <data name="Owner_DataLifecycle_Size" xml:space="preserve">
+    <value>גודל</value>
+  </data>
+  <data name="Owner_DataLifecycle_SpaceSaved" xml:space="preserve">
+    <value>מקום שנחסך</value>
+  </data>
+  <data name="Owner_DataLifecycle_SwapRequests" xml:space="preserve">
+    <value>בקשות החלפה</value>
+  </data>
+  <data name="Owner_DataLifecycle_TimeOff" xml:space="preserve">
+    <value>חופשות</value>
+  </data>
+  <data name="Owner_DataLifecycle_TimeOffPurge" xml:space="preserve">
+    <value>מחיקת חופשות</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalDeleted" xml:space="preserve">
+    <value>סך נמחקו</value>
+  </data>
+  <data name="Owner_DataLifecycle_TotalRecords" xml:space="preserve">
+    <value>סך רשומות</value>
+  </data>
+  <data name="Owner_DataLifecycle_TypeExactly" xml:space="preserve">
+    <value>הקלד בדיוק</value>
+  </data>
+  <data name="Owner_DataLifecycle_TypedConfirmation" xml:space="preserve">
+    <value>אישור מוקלד</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidateArchive" xml:space="preserve">
+    <value>אמת ארכיון</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidationFailed" xml:space="preserve">
+    <value>אימות נכשל</value>
+  </data>
+  <data name="Owner_DataLifecycle_ValidationResults" xml:space="preserve">
+    <value>תוצאות אימות</value>
+  </data>
+  <data name="Owner_DataLifecycle_Warnings" xml:space="preserve">
+    <value>אזהרות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_ActiveUsers" xml:space="preserve">
+    <value>משתמשים פעילים</value>
+  </data>
+  <data name="Owner_DatabaseConsole_IncompleteChores" xml:space="preserve">
+    <value>תורנויות לא הושלמו</value>
+  </data>
+  <data name="Owner_DatabaseConsole_PendingTimeOff" xml:space="preserve">
+    <value>חופשות ממתינות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_RecentAuditLogs" xml:space="preserve">
+    <value>יומני ביקורת אחרונים</value>
+  </data>
+  <data name="Owner_DatabaseConsole_UpcomingAssignments" xml:space="preserve">
+    <value>הקצאות קרובות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_UpcomingOnDuty" xml:space="preserve">
+    <value>תורנויות קרובות</value>
+  </data>
+  <data name="Owner_DatabaseConsole_UpcomingShifts" xml:space="preserve">
+    <value>משמרות קרובות</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiKey_ExistingHelp" xml:space="preserve">
+    <value>מפתח API כבר מוגדר. הזן חדש כדי להחליף אותו.</value>
+  </data>
+  <data name="Owner_EmailConfig_ApiKey_Help" xml:space="preserve">
+    <value>הזן את מפתח ה-API של שירות הדוא"ל</value>
+  </data>
+  <data name="Owner_EmailConfig_EnterApiKey" xml:space="preserve">
+    <value>הזן מפתח API</value>
+  </data>
+  <data name="Owner_EmailConfig_FromAddress_Help" xml:space="preserve">
+    <value>כתובת הדוא"ל שתופיע כשולח</value>
+  </data>
+  <data name="Owner_EmailConfig_TestDiagnostics" xml:space="preserve">
+    <value>אבחון בדיקה</value>
+  </data>
+  <data name="Owner_EmailConfig_TestEmail_Desc" xml:space="preserve">
+    <value>שלח אימייל בדיקה לאימות ההגדרות שלך</value>
+  </data>
+  <data name="AuditSearch_CompanyId" xml:space="preserve">
+    <value>מזהה חברה</value>
+  </data>
+  <data name="AuditSearch_NoResultsMessage" xml:space="preserve">
+    <value>נסה לשנות את מסנני החיפוש כדי למצוא רשומות ביומן הביקורת.</value>
+  </data>
+  <data name="RevokeApiKeyWarning" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך לבטל מפתח API זה? לא ניתן לבטל פעולה זו.</value>
+  </data>
+  <data name="RevokeKey" xml:space="preserve">
+    <value>בטל מפתח</value>
+  </data>
+  <data name="ScopesEditableHint" xml:space="preserve">
+    <value>ניתן לשנות טווחים לאחר היצירה</value>
+  </data>
+  <data name="NoAssignmentsFound" xml:space="preserve">
+    <value>לא נמצאו הקצאות</value>
+  </data>
+  <data name="NoShiftInstancesFound" xml:space="preserve">
+    <value>לא נמצאו מופעי משמרות</value>
+  </data>
+  <data name="After1stEncoding" xml:space="preserve">
+    <value>אחרי קידוד ראשון</value>
+  </data>
+  <data name="After2ndEncoding" xml:space="preserve">
+    <value>אחרי קידוד שני</value>
+  </data>
+  <data name="After3rdEncoding" xml:space="preserve">
+    <value>אחרי קידוד שלישי</value>
+  </data>
+  <data name="AirGappedWarning" xml:space="preserve">
+    <value>אזהרת סביבה מנותקת</value>
+  </data>
+  <data name="AllChecksPassed" xml:space="preserve">
+    <value>כל הבדיקות עברו</value>
+  </data>
+  <data name="Analysis" xml:space="preserve">
+    <value>ניתוח</value>
+  </data>
+  <data name="Approach" xml:space="preserve">
+    <value>גישה</value>
+  </data>
+  <data name="AuthUrlRedirectDescription" xml:space="preserve">
+    <value>תיאור הפניית כתובת אימות</value>
+  </data>
+  <data name="AutoProvisionUsers" xml:space="preserve">
+    <value>הקצאת משתמשים אוטומטית</value>
+  </data>
+  <data name="BaseUrlGriffinServer" xml:space="preserve">
+    <value>כתובת בסיס שרת Griffin</value>
+  </data>
+  <data name="Chars" xml:space="preserve">
+    <value>תווים</value>
+  </data>
+  <data name="ChecksPassed" xml:space="preserve">
+    <value>בדיקות עברו</value>
+  </data>
+  <data name="ClickTestConnection" xml:space="preserve">
+    <value>לחץ לבדיקת חיבור</value>
+  </data>
+  <data name="ConfigSource" xml:space="preserve">
+    <value>מקור הגדרה</value>
+  </data>
+  <data name="ConfigureGriffinSettings" xml:space="preserve">
+    <value>הגדר הגדרות Griffin</value>
+  </data>
+  <data name="CopyDataForSupport" xml:space="preserve">
+    <value>העתק נתונים לתמיכה</value>
+  </data>
+  <data name="CriticalError" xml:space="preserve">
+    <value>שגיאה קריטית</value>
+  </data>
+  <data name="CriticalInsight" xml:space="preserve">
+    <value>תובנה קריטית</value>
+  </data>
+  <data name="CriticalInsightExplanation" xml:space="preserve">
+    <value>זוהי תובנה קריטית שדורשת טיפול מיידי</value>
+  </data>
+  <data name="CriticalIssues" xml:space="preserve">
+    <value>בעיות קריטיות</value>
+  </data>
+  <data name="CurrentConfiguration" xml:space="preserve">
+    <value>הגדרה נוכחית</value>
+  </data>
+  <data name="DatabaseId" xml:space="preserve">
+    <value>מזהה מסד נתונים</value>
+  </data>
+  <data name="DefaultProvisionedRole" xml:space="preserve">
+    <value>תפקיד ברירת מחדל להקצאה</value>
+  </data>
+  <data name="DiagnosticChecks" xml:space="preserve">
+    <value>בדיקות אבחון</value>
+  </data>
+  <data name="DiagnosticDataJsonExport" xml:space="preserve">
+    <value>ייצוא JSON של נתוני אבחון</value>
+  </data>
+  <data name="DoofApproachTitle" xml:space="preserve">
+    <value>גישת Doof</value>
+  </data>
+  <data name="DoofProvenApproachExplanation" xml:space="preserve">
+    <value>גישת Doof היא שיטה מוכחת לקידוד כתובות</value>
+  </data>
+  <data name="DoofReference" xml:space="preserve">
+    <value>הפניה ל-Doof</value>
+  </data>
+  <data name="DoofUrlStructure" xml:space="preserve">
+    <value>מבנה כתובת Doof</value>
+  </data>
+  <data name="EnhancedDiagnosticEngine" xml:space="preserve">
+    <value>מנוע אבחון משופר</value>
+  </data>
+  <data name="EntireCallbackUrl2x" xml:space="preserve">
+    <value>כתובת callback מלאה (מקודדת 2x)</value>
+  </data>
+  <data name="FinalUrlSentToGriffin" xml:space="preserve">
+    <value>כתובת סופית שנשלחה ל-Griffin</value>
+  </data>
+  <data name="FixInstructions" xml:space="preserve">
+    <value>הוראות תיקון</value>
+  </data>
+  <data name="GeneratedAuthenticationUrl" xml:space="preserve">
+    <value>כתובת אימות שנוצרה</value>
+  </data>
+  <data name="GeneratedByShiftManager" xml:space="preserve">
+    <value>נוצר על ידי מנהל משמרות</value>
+  </data>
+  <data name="Generated" xml:space="preserve">
+    <value>נוצר</value>
+  </data>
+  <data name="GoToGriffinConfig" xml:space="preserve">
+    <value>עבור להגדרות Griffin</value>
+  </data>
+  <data name="GriffinConfiguration" xml:space="preserve">
+    <value>הגדרת Griffin</value>
+  </data>
+  <data name="GriffinDiagnosticPurpose" xml:space="preserve">
+    <value>כלי אבחון לאינטגרציית Griffin SSO</value>
+  </data>
+  <data name="GriffinDiagnosticTitle" xml:space="preserve">
+    <value>אבחון Griffin</value>
+  </data>
+  <data name="GriffinDiagnosticToolVersion" xml:space="preserve">
+    <value>גרסת כלי אבחון Griffin</value>
+  </data>
+  <data name="GriffinRejects" xml:space="preserve">
+    <value>דחיות Griffin</value>
+  </data>
+  <data name="Host" xml:space="preserve">
+    <value>שרת</value>
+  </data>
+  <data name="KeyDifferencesSummary" xml:space="preserve">
+    <value>סיכום הבדלים עיקריים</value>
+  </data>
+  <data name="LoginPage" xml:space="preserve">
+    <value>דף התחברות</value>
+  </data>
+  <data name="LooksLikeUrl" xml:space="preserve">
+    <value>נראה ככתובת</value>
+  </data>
+  <data name="MissingScheme" xml:space="preserve">
+    <value>חסר סכמה</value>
+  </data>
+  <data name="NewApproachTitle" xml:space="preserve">
+    <value>גישה חדשה</value>
+  </data>
+  <data name="NewProposed" xml:space="preserve">
+    <value>חדש (מוצע)</value>
+  </data>
+  <data name="NewUrlRecognizableExplanation" xml:space="preserve">
+    <value>פורמט הכתובת החדש קריא יותר וניתן לאבחון</value>
+  </data>
+  <data name="NextSteps" xml:space="preserve">
+    <value>צעדים הבאים</value>
+  </data>
+  <data name="NoFixNeeded" xml:space="preserve">
+    <value>לא נדרש תיקון</value>
+  </data>
+  <data name="NoGriffinConfigDescription" xml:space="preserve">
+    <value>Griffin SSO לא מוגדר. הגדר אותו כדי לאפשר התחברות אחידה.</value>
+  </data>
+  <data name="NoGriffinConfigFound" xml:space="preserve">
+    <value>לא נמצאה הגדרת Griffin</value>
+  </data>
+  <data name="OldApproachTitle" xml:space="preserve">
+    <value>גישה ישנה</value>
+  </data>
+  <data name="OldCurrent" xml:space="preserve">
+    <value>ישן (נוכחי)</value>
+  </data>
+  <data name="OldUrlEncodedGibberishExplanation" xml:space="preserve">
+    <value>פורמט הכתובת הישן מייצר טקסט מקודד שקשה לאבחן</value>
+  </data>
+  <data name="OnlyDestinationPath3x" xml:space="preserve">
+    <value>נתיב יעד בלבד (מקודד 3x)</value>
+  </data>
+  <data name="OnlyReturnUrl3x" xml:space="preserve">
+    <value>כתובת חזרה בלבד (מקודדת 3x)</value>
+  </data>
+  <data name="OverallStatus" xml:space="preserve">
+    <value>סטטוס כללי</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>נתיב</value>
+  </data>
+  <data name="PrintReport" xml:space="preserve">
+    <value>הדפס דוח</value>
+  </data>
+  <data name="ProvenToWork" xml:space="preserve">
+    <value>הוכח כעובד</value>
+  </data>
+  <data name="Purpose" xml:space="preserve">
+    <value>מטרה</value>
+  </data>
+  <data name="QueryLength" xml:space="preserve">
+    <value>אורך שאילתה</value>
+  </data>
+  <data name="RefreshDiagnostic" xml:space="preserve">
+    <value>רענן אבחון</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>תוצאה</value>
+  </data>
+  <data name="ReturnToDiagnostic" xml:space="preserve">
+    <value>חזור לאבחון</value>
+  </data>
+  <data name="RootCauseAnalysis" xml:space="preserve">
+    <value>ניתוח שורש הבעיה</value>
+  </data>
+  <data name="Scheme" xml:space="preserve">
+    <value>סכמה</value>
+  </data>
+  <data name="Seconds" xml:space="preserve">
+    <value>שניות</value>
+  </data>
+  <data name="ServerStatus" xml:space="preserve">
+    <value>סטטוס שרת</value>
+  </data>
+  <data name="ShouldWork" xml:space="preserve">
+    <value>אמור לעבוד</value>
+  </data>
+  <data name="Step1ReturnUrlEncoding" xml:space="preserve">
+    <value>שלב 1: קידוד כתובת חזרה</value>
+  </data>
+  <data name="Steps" xml:space="preserve">
+    <value>שלבים</value>
+  </data>
+  <data name="TestReturnUrl0x" xml:space="preserve">
+    <value>בדוק כתובת חזרה (0x, ללא קידוד)</value>
+  </data>
+  <data name="Timeout" xml:space="preserve">
+    <value>זמן קצוב</value>
+  </data>
+  <data name="TokenConsumerUrlCallback" xml:space="preserve">
+    <value>כתובת callback של צרכן טוקן</value>
+  </data>
+  <data name="Unreachable" xml:space="preserve">
+    <value>לא ניתן להגעה</value>
+  </data>
+  <data name="UrlEncodingComparison" xml:space="preserve">
+    <value>השוואת קידוד כתובות</value>
+  </data>
+  <data name="UrlIsAbsolute" xml:space="preserve">
+    <value>כתובת מוחלטת</value>
+  </data>
+  <data name="UrlIsRelative" xml:space="preserve">
+    <value>כתובת יחסית</value>
+  </data>
+  <data name="UrlReadable" xml:space="preserve">
+    <value>כתובת קריאה</value>
+  </data>
+  <data name="UrlRelativeExplanation" xml:space="preserve">
+    <value>כתובות יחסיות מותאמות לכתובת הבסיס</value>
+  </data>
+  <data name="UsesLocalhost" xml:space="preserve">
+    <value>משתמש ב-Localhost</value>
+  </data>
+  <data name="ValidScheme" xml:space="preserve">
+    <value>סכמה תקינה</value>
+  </data>
+  <data name="ValidationScore" xml:space="preserve">
+    <value>ציון אימות</value>
+  </data>
+  <data name="Warnings" xml:space="preserve">
+    <value>אזהרות</value>
+  </data>
+  <data name="WarningsFound" xml:space="preserve">
+    <value>נמצאו אזהרות</value>
+  </data>
+  <data name="WhatDoofEncodes" xml:space="preserve">
+    <value>מה Doof מקודד</value>
+  </data>
+  <data name="WhatGetsEncoded" xml:space="preserve">
+    <value>מה מקודד</value>
+  </data>
+  <data name="WhatGriffinSees" xml:space="preserve">
+    <value>מה Griffin רואה</value>
+  </data>
+  <data name="WhatGriffinSeesTokenConsumer" xml:space="preserve">
+    <value>מה Griffin רואה (צרכן טוקן)</value>
+  </data>
+  <data name="WhatWeEncoding" xml:space="preserve">
+    <value>מה אנחנו מקודדים</value>
+  </data>
+  <data name="Error_AllFieldsRequired" xml:space="preserve">
+    <value>כל השדות הם חובה</value>
+  </data>
+  <data name="Error_AlreadyAssigned" xml:space="preserve">
+    <value>המשתמש כבר מוקצה למשמרת זו</value>
+  </data>
+  <data name="Error_AlreadyFriends" xml:space="preserve">
+    <value>אתה כבר חבר של משתמש זה</value>
+  </data>
+  <data name="Error_AlreadyReviewed" xml:space="preserve">
+    <value>בקשה זו כבר נסקרה</value>
+  </data>
+  <data name="Error_AnnouncementNotFound" xml:space="preserve">
+    <value>הודעה לא נמצאה</value>
+  </data>
+  <data name="Error_AreaNameRequired" xml:space="preserve">
+    <value>שם אזור הוא שדה חובה</value>
+  </data>
+  <data name="Error_AreaRequired" xml:space="preserve">
+    <value>אזור הוא שדה חובה</value>
+  </data>
+  <data name="Error_AreaScopeRequired" xml:space="preserve">
+    <value>טווח אזור הוא שדה חובה</value>
+  </data>
+  <data name="Error_AreaSettingsRequired" xml:space="preserve">
+    <value>הגדרות אזור הן חובה</value>
+  </data>
+  <data name="Error_BatchApprovalFailed" xml:space="preserve">
+    <value>אישור מרובה נכשל</value>
+  </data>
+  <data name="Error_CanOnlyDeleteOwnCompanyUsers" xml:space="preserve">
+    <value>ניתן למחוק משתמשים מהחברה שלך בלבד</value>
+  </data>
+  <data name="Error_CannotChangeToTrainee_ActiveShifts" xml:space="preserve">
+    <value>לא ניתן לשנות תפקיד למתמחה כשלמשתמש יש משמרות פעילות</value>
+  </data>
+  <data name="Error_CannotChangeToTrainee_ShadowingTrainees" xml:space="preserve">
+    <value>לא ניתן לשנות תפקיד למתמחה כשהמשתמש מלווה מתמחים</value>
+  </data>
+  <data name="Error_CannotDeleteAreaWithDependencies" xml:space="preserve">
+    <value>לא ניתן למחוק אזור עם תלויות קיימות</value>
+  </data>
+  <data name="Error_CannotDeleteDepartmentWithUsers" xml:space="preserve">
+    <value>לא ניתן למחוק מחלקה עם משתמשים מוקצים</value>
+  </data>
+  <data name="Error_CannotDeleteJobTypeWithUsers" xml:space="preserve">
+    <value>לא ניתן למחוק סוג תפקיד עם משתמשים מוקצים</value>
+  </data>
+  <data name="Error_CannotDeleteMoleculeWithDependencies" xml:space="preserve">
+    <value>לא ניתן למחוק מולקולה עם תלויות קיימות</value>
+  </data>
+  <data name="Error_CannotDeleteOwnAccount" xml:space="preserve">
+    <value>לא ניתן למחוק את החשבון שלך</value>
+  </data>
+  <data name="Error_CannotDeleteProjectWithAreas" xml:space="preserve">
+    <value>לא ניתן למחוק פרויקט עם אזורים קיימים</value>
+  </data>
+  <data name="Error_CannotFriendSelf" xml:space="preserve">
+    <value>לא ניתן לשלוח בקשת חברות לעצמך</value>
+  </data>
+  <data name="Error_CompanyAndJobTypeScopeRequired" xml:space="preserve">
+    <value>טווח חברה וסוג תפקיד הם חובה</value>
+  </data>
+  <data name="Error_CompanyScopeRequired" xml:space="preserve">
+    <value>טווח חברה הוא שדה חובה</value>
+  </data>
+  <data name="Error_ContentRequired" xml:space="preserve">
+    <value>תוכן הוא שדה חובה</value>
+  </data>
+  <data name="Error_DeletingUser" xml:space="preserve">
+    <value>שגיאה במחיקת משתמש</value>
+  </data>
+  <data name="Error_DepartmentNameRequired" xml:space="preserve">
+    <value>שם מחלקה הוא שדה חובה</value>
+  </data>
+  <data name="Error_DepartmentNotFound" xml:space="preserve">
+    <value>מחלקה לא נמצאה</value>
+  </data>
+  <data name="Error_DepartmentRequired" xml:space="preserve">
+    <value>מחלקה היא שדה חובה</value>
+  </data>
+  <data name="Error_DepartmentScopeRequired" xml:space="preserve">
+    <value>טווח מחלקה הוא שדה חובה</value>
+  </data>
+  <data name="Error_DepartmentsOnlyForTechMolecules" xml:space="preserve">
+    <value>מחלקות זמינות למולקולות טכנולוגיות בלבד</value>
+  </data>
+  <data name="Error_EmailAlreadyExists" xml:space="preserve">
+    <value>משתמש עם אימייל זה כבר קיים</value>
+  </data>
+  <data name="Error_ExceedsWeeklyCap" xml:space="preserve">
+    <value>ההקצאה חורגת מתקרת השעות השבועית</value>
+  </data>
+  <data name="Error_FailedToSaveSettings" xml:space="preserve">
+    <value>שמירת ההגדרות נכשלה</value>
+  </data>
+  <data name="Error_FailedToSendRecoveryEmail_FallbackDisplayed" xml:space="preserve">
+    <value>שליחת אימייל שחזור נכשלה. אנא פנה למנהל המערכת.</value>
+  </data>
+  <data name="Error_FriendshipNotFound" xml:space="preserve">
+    <value>חברות לא נמצאה</value>
+  </data>
+  <data name="Error_GrantAlreadyExists" xml:space="preserve">
+    <value>הרשאה זו כבר קיימת עבור משתמש זה</value>
+  </data>
+  <data name="Error_GrantNotFound" xml:space="preserve">
+    <value>הרשאה לא נמצאה</value>
+  </data>
+  <data name="Error_GrantTypeNotFound" xml:space="preserve">
+    <value>סוג הרשאה לא נמצא</value>
+  </data>
+  <data name="Error_GrantTypeRequired" xml:space="preserve">
+    <value>סוג הרשאה הוא שדה חובה</value>
+  </data>
+  <data name="Error_GroupingCreationFailed" xml:space="preserve">
+    <value>יצירת הקבוצה נכשלה</value>
+  </data>
+  <data name="Error_GroupingNameRequired" xml:space="preserve">
+    <value>שם קבוצה הוא שדה חובה</value>
+  </data>
+  <data name="Error_GroupingNotFound" xml:space="preserve">
+    <value>קבוצה לא נמצאה</value>
+  </data>
+  <data name="Error_InvalidCompanySelected" xml:space="preserve">
+    <value>נבחרה חברה לא חוקית</value>
+  </data>
+  <data name="Error_InvalidRequestId" xml:space="preserve">
+    <value>מזהה בקשה לא חוקי</value>
+  </data>
+  <data name="Error_InvalidRole" xml:space="preserve">
+    <value>תפקיד לא חוקי</value>
+  </data>
+  <data name="Error_JobTypeMismatch" xml:space="preserve">
+    <value>סוג התפקיד לא תואם את דרישות המשמרת</value>
+  </data>
+  <data name="Error_JobTypeNameRequired" xml:space="preserve">
+    <value>שם סוג תפקיד הוא שדה חובה</value>
+  </data>
+  <data name="Error_JobTypeNotFound" xml:space="preserve">
+    <value>סוג תפקיד לא נמצא</value>
+  </data>
+  <data name="Error_JoinRequestNotFound" xml:space="preserve">
+    <value>בקשת הצטרפות לא נמצאה</value>
+  </data>
+  <data name="Error_MoleculeAndJobTypeScopeRequired" xml:space="preserve">
+    <value>טווח מולקולה וסוג תפקיד הם חובה</value>
+  </data>
+  <data name="Error_MoleculeNameRequired" xml:space="preserve">
+    <value>שם מולקולה הוא שדה חובה</value>
+  </data>
+  <data name="Error_MoleculeNotFound" xml:space="preserve">
+    <value>מולקולה לא נמצאה</value>
+  </data>
+  <data name="Error_MoleculeRequired" xml:space="preserve">
+    <value>מולקולה היא שדה חובה</value>
+  </data>
+  <data name="Error_MoleculeScopeRequired" xml:space="preserve">
+    <value>טווח מולקולה הוא שדה חובה</value>
+  </data>
+  <data name="Error_NoEntitySelected" xml:space="preserve">
+    <value>לא נבחרה ישות</value>
+  </data>
+  <data name="Error_NoPermissionApproveJoinRequest" xml:space="preserve">
+    <value>אין לך הרשאה לאשר בקשות הצטרפות</value>
+  </data>
+  <data name="Error_NoPermissionApproveRequests" xml:space="preserve">
+    <value>אין לך הרשאה לאשר בקשות</value>
+  </data>
+  <data name="Error_NoPermissionAssignRole" xml:space="preserve">
+    <value>אין לך הרשאה להקצות תפקידים</value>
+  </data>
+  <data name="Error_NoPermissionAssignRoleTo" xml:space="preserve">
+    <value>אין לך הרשאה להקצות תפקיד זה למשתמש זה</value>
+  </data>
+  <data name="Error_NoPermissionDeleteUser" xml:space="preserve">
+    <value>אין לך הרשאה למחוק משתמש זה</value>
+  </data>
+  <data name="Error_NoPermissionDifferentCompany" xml:space="preserve">
+    <value>אין לך הרשאה לנהל משתמשים בחברה אחרת</value>
+  </data>
+  <data name="Error_NoPermissionForCompany" xml:space="preserve">
+    <value>אין לך הרשאה לחברה זו</value>
+  </data>
+  <data name="Error_NoPermissionModifyUser" xml:space="preserve">
+    <value>אין לך הרשאה לשנות משתמש זה</value>
+  </data>
+  <data name="Error_NoPermissionRejectRequest" xml:space="preserve">
+    <value>אין לך הרשאה לדחות בקשות</value>
+  </data>
+  <data name="Error_NoPermissionResetPassword" xml:space="preserve">
+    <value>אין לך הרשאה לאפס סיסמאות</value>
+  </data>
+  <data name="Error_NoRequestsSelected" xml:space="preserve">
+    <value>לא נבחרו בקשות</value>
+  </data>
+  <data name="Error_NotAuthenticated" xml:space="preserve">
+    <value>אינך מחובר</value>
+  </data>
+  <data name="Error_NotAuthorized" xml:space="preserve">
+    <value>אינך מורשה לבצע פעולה זו</value>
+  </data>
+  <data name="Error_NotInShiftGrouping" xml:space="preserve">
+    <value>המשתמש לא נמצא בקבוצת המשמרות הנדרשת</value>
+  </data>
+  <data name="Error_PasswordRequired" xml:space="preserve">
+    <value>סיסמה היא שדה חובה</value>
+  </data>
+  <data name="Error_ProjectNameRequired" xml:space="preserve">
+    <value>שם פרויקט הוא שדה חובה</value>
+  </data>
+  <data name="Error_ProjectNotFound" xml:space="preserve">
+    <value>פרויקט לא נמצא</value>
+  </data>
+  <data name="Error_ProjectRequired" xml:space="preserve">
+    <value>פרויקט הוא שדה חובה</value>
+  </data>
+  <data name="Error_RejectionReasonTooLong" xml:space="preserve">
+    <value>סיבת הדחייה ארוכה מדי</value>
+  </data>
+  <data name="Error_RequestAlreadyPending" xml:space="preserve">
+    <value>בקשה כבר ממתינה</value>
+  </data>
+  <data name="Error_RequestAlreadyReviewed" xml:space="preserve">
+    <value>בקשה זו כבר נסקרה</value>
+  </data>
+  <data name="Error_RequestNotFound" xml:space="preserve">
+    <value>בקשה לא נמצאה</value>
+  </data>
+  <data name="Error_RequestNotPending" xml:space="preserve">
+    <value>הבקשה אינה בהמתנה</value>
+  </data>
+  <data name="Error_RestHoursViolation" xml:space="preserve">
+    <value>ההקצאה מפרה את דרישת שעות המנוחה המינימליות</value>
+  </data>
+  <data name="Error_RoleAlreadyAssigned" xml:space="preserve">
+    <value>תפקיד זה כבר מוקצה למשתמש זה</value>
+  </data>
+  <data name="Error_RoleAssignmentNotFound" xml:space="preserve">
+    <value>הקצאת תפקיד לא נמצאה</value>
+  </data>
+  <data name="Error_RoleNotFound" xml:space="preserve">
+    <value>תפקיד לא נמצא</value>
+  </data>
+  <data name="Error_RoleRequired" xml:space="preserve">
+    <value>תפקיד הוא שדה חובה</value>
+  </data>
+  <data name="Error_ShiftNotFound" xml:space="preserve">
+    <value>משמרת לא נמצאה</value>
+  </data>
+  <data name="Error_SomeRequestsHadIssues" xml:space="preserve">
+    <value>חלק מהבקשות נתקלו בבעיות במהלך העיבוד</value>
+  </data>
+  <data name="Error_TaskNotFound" xml:space="preserve">
+    <value>משימה לא נמצאה</value>
+  </data>
+  <data name="Error_TitleRequired" xml:space="preserve">
+    <value>כותרת היא שדה חובה</value>
+  </data>
+  <data name="Error_Unknown" xml:space="preserve">
+    <value>אירעה שגיאה לא ידועה</value>
+  </data>
+  <data name="Error_UserEmailAlreadyExists" xml:space="preserve">
+    <value>משתמש עם אימייל זה כבר קיים</value>
+  </data>
+  <data name="Error_UserRequired" xml:space="preserve">
+    <value>משתמש הוא שדה חובה</value>
+  </data>
+  <data name="Error_UserWithEmailExists" xml:space="preserve">
+    <value>משתמש עם אימייל זה כבר קיים</value>
+  </data>
+  <data name="Success_AnnouncementActivated" xml:space="preserve">
+    <value>ההודעה הופעלה בהצלחה</value>
+  </data>
+  <data name="Success_AnnouncementCreated" xml:space="preserve">
+    <value>ההודעה נוצרה בהצלחה</value>
+  </data>
+  <data name="Success_AnnouncementDeactivated" xml:space="preserve">
+    <value>ההודעה הושבתה בהצלחה</value>
+  </data>
+  <data name="Success_AnnouncementDeleted" xml:space="preserve">
+    <value>ההודעה נמחקה בהצלחה</value>
+  </data>
+  <data name="Success_ApprovedCount" xml:space="preserve">
+    <value>אושרו {0} בקשות בהצלחה</value>
+  </data>
+  <data name="Success_AreaActivated" xml:space="preserve">
+    <value>האזור הופעל בהצלחה</value>
+  </data>
+  <data name="Success_AreaCreated" xml:space="preserve">
+    <value>האזור נוצר בהצלחה</value>
+  </data>
+  <data name="Success_AreaDeactivated" xml:space="preserve">
+    <value>האזור הושבת בהצלחה</value>
+  </data>
+  <data name="Success_AreaDeleted" xml:space="preserve">
+    <value>האזור נמחק בהצלחה</value>
+  </data>
+  <data name="Success_DepartmentActivated" xml:space="preserve">
+    <value>המחלקה הופעלה בהצלחה</value>
+  </data>
+  <data name="Success_DepartmentCreated" xml:space="preserve">
+    <value>המחלקה נוצרה בהצלחה</value>
+  </data>
+  <data name="Success_DepartmentDeactivated" xml:space="preserve">
+    <value>המחלקה הושבתה בהצלחה</value>
+  </data>
+  <data name="Success_DepartmentDeleted" xml:space="preserve">
+    <value>המחלקה נמחקה בהצלחה</value>
+  </data>
+  <data name="Success_FriendRemoved" xml:space="preserve">
+    <value>החבר הוסר בהצלחה</value>
+  </data>
+  <data name="Success_GrantAssigned" xml:space="preserve">
+    <value>ההרשאה הוקצתה בהצלחה</value>
+  </data>
+  <data name="Success_GrantRevoked" xml:space="preserve">
+    <value>ההרשאה בוטלה בהצלחה</value>
+  </data>
+  <data name="Success_GroupingActivated" xml:space="preserve">
+    <value>הקבוצה הופעלה בהצלחה</value>
+  </data>
+  <data name="Success_GroupingCreated" xml:space="preserve">
+    <value>הקבוצה נוצרה בהצלחה</value>
+  </data>
+  <data name="Success_GroupingDeactivated" xml:space="preserve">
+    <value>הקבוצה הושבתה בהצלחה</value>
+  </data>
+  <data name="Success_GroupingDeleted" xml:space="preserve">
+    <value>הקבוצה נמחקה בהצלחה</value>
+  </data>
+  <data name="Success_JobTypeActivated" xml:space="preserve">
+    <value>סוג התפקיד הופעל בהצלחה</value>
+  </data>
+  <data name="Success_JobTypeCreated" xml:space="preserve">
+    <value>סוג התפקיד נוצר בהצלחה</value>
+  </data>
+  <data name="Success_JobTypeDeactivated" xml:space="preserve">
+    <value>סוג התפקיד הושבת בהצלחה</value>
+  </data>
+  <data name="Success_JobTypeDeleted" xml:space="preserve">
+    <value>סוג התפקיד נמחק בהצלחה</value>
+  </data>
+  <data name="Success_JoinRequestApproved" xml:space="preserve">
+    <value>בקשת ההצטרפות אושרה בהצלחה</value>
+  </data>
+  <data name="Success_JoinRequestRejected" xml:space="preserve">
+    <value>בקשת ההצטרפות נדחתה בהצלחה</value>
+  </data>
+  <data name="Success_MoleculeActivated" xml:space="preserve">
+    <value>המולקולה הופעלה בהצלחה</value>
+  </data>
+  <data name="Success_MoleculeCreated" xml:space="preserve">
+    <value>המולקולה נוצרה בהצלחה</value>
+  </data>
+  <data name="Success_MoleculeDeactivated" xml:space="preserve">
+    <value>המולקולה הושבתה בהצלחה</value>
+  </data>
+  <data name="Success_MoleculeDeleted" xml:space="preserve">
+    <value>המולקולה נמחקה בהצלחה</value>
+  </data>
+  <data name="Success_PasswordUpdated" xml:space="preserve">
+    <value>הסיסמה עודכנה בהצלחה</value>
+  </data>
+  <data name="Success_ProjectActivated" xml:space="preserve">
+    <value>הפרויקט הופעל בהצלחה</value>
+  </data>
+  <data name="Success_ProjectCreated" xml:space="preserve">
+    <value>הפרויקט נוצר בהצלחה</value>
+  </data>
+  <data name="Success_ProjectDeactivated" xml:space="preserve">
+    <value>הפרויקט הושבת בהצלחה</value>
+  </data>
+  <data name="Success_ProjectDeleted" xml:space="preserve">
+    <value>הפרויקט נמחק בהצלחה</value>
+  </data>
+  <data name="Success_RequestAccepted" xml:space="preserve">
+    <value>הבקשה התקבלה בהצלחה</value>
+  </data>
+  <data name="Success_RequestCanceled" xml:space="preserve">
+    <value>הבקשה בוטלה בהצלחה</value>
+  </data>
+  <data name="Success_RequestRejected" xml:space="preserve">
+    <value>הבקשה נדחתה בהצלחה</value>
+  </data>
+  <data name="Success_RequestSent" xml:space="preserve">
+    <value>בקשת חברות נשלחה בהצלחה</value>
+  </data>
+  <data name="Success_RoleAssigned" xml:space="preserve">
+    <value>התפקיד הוקצה בהצלחה</value>
+  </data>
+  <data name="Success_RoleRevoked" xml:space="preserve">
+    <value>התפקיד בוטל בהצלחה</value>
+  </data>
+  <data name="Success_RoleUpdated" xml:space="preserve">
+    <value>התפקיד עודכן בהצלחה</value>
+  </data>
+  <data name="Success_SettingsSaved" xml:space="preserve">
+    <value>ההגדרות נשמרו בהצלחה</value>
+  </data>
+  <data name="Success_SkippedCount" xml:space="preserve">
+    <value>דולגו {0} בקשות</value>
+  </data>
+  <data name="Success_TaskCompleted" xml:space="preserve">
+    <value>המשימה סומנה כהושלמה</value>
+  </data>
+  <data name="Success_TaskSkipped" xml:space="preserve">
+    <value>המשימה דולגה</value>
+  </data>
+  <data name="Success_TaskStarted" xml:space="preserve">
+    <value>המשימה התחילה</value>
+  </data>
+  <data name="Success_UserCreated" xml:space="preserve">
+    <value>המשתמש נוצר בהצלחה</value>
+  </data>
+  <data name="Success_UserDeleted" xml:space="preserve">
+    <value>המשתמש נמחק בהצלחה</value>
+  </data>
 </root>

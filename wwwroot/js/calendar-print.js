@@ -17,12 +17,13 @@
    * Create and inject the print button
    */
   function createPrintButton() {
+    var isHebrew = (document.documentElement.lang || 'en').indexOf('he') === 0;
     var button = document.createElement('button');
     button.className = 'btn--print-calendar';
     button.setAttribute('type', 'button');
-    button.setAttribute('aria-label', 'Print calendar');
-    button.setAttribute('title', 'Print this calendar view');
-    button.innerHTML = '<span class="btn--print-calendar__icon" aria-hidden="true">\uD83D\uDDA8\uFE0F</span><span>Print</span>';
+    button.setAttribute('aria-label', isHebrew ? '\u05D4\u05D3\u05E4\u05E1\u05EA \u05DC\u05D5\u05D7 \u05E9\u05E0\u05D4' : 'Print calendar');
+    button.setAttribute('title', isHebrew ? '\u05D4\u05D3\u05E4\u05E1 \u05EA\u05E6\u05D5\u05D2\u05EA \u05DC\u05D5\u05D7 \u05E9\u05E0\u05D4 \u05D6\u05D5' : 'Print this calendar view');
+    button.innerHTML = '<span class="btn--print-calendar__icon" aria-hidden="true">\uD83D\uDDA8\uFE0F</span><span>' + (isHebrew ? '\u05D4\u05D3\u05E4\u05E1\u05D4' : 'Print') + '</span>';
 
     button.addEventListener('click', handlePrint);
 
