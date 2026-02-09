@@ -16,7 +16,7 @@
 
 <div class="profile-edit-container">
     <div class="profile-edit-header">
-        <h1 class="profile-edit-title"><loc key="EditProfile_Title" /></h1>
+        <h1 class="profile-edit-title">@Localizer["EditProfile_Title"]</h1>
         <p class="profile-edit-subtitle">@Localizer["EditingProfile"]: <strong>@Model.DisplayName</strong></p>
     </div>
 
@@ -44,7 +44,7 @@
             <div class="profile-card">
                 <div class="profile-card__header">
                     <span class="profile-card__icon">👤</span>
-                    <h2 class="profile-card__title"><loc key="EditProfile_PersonalInfo" /></h2>
+                    <h2 class="profile-card__title">@Localizer["EditProfile_PersonalInfo"]</h2>
                 </div>
                 <div class="profile-card__body">
                     <!-- Avatar -->
@@ -58,12 +58,12 @@
                             <div class="avatar-placeholder">@Model.InitialsForAvatar</div>
                         }
                         <div class="avatar-upload">
-                            <label class="form-label form-label--sm"><loc key="EditProfile_UploadAvatar" /></label>
+                            <label class="form-label form-label--sm">@Localizer["EditProfile_UploadAvatar"]</label>
                             <input type="file" name="AvatarFile" accept=".jpg,.jpeg,.png" class="form-input form-input--file" />
                             @if (!string.IsNullOrEmpty(Model.AvatarUrl))
                             {
                                 <button type="submit" asp-page-handler="DeleteAvatar" class="btn btn-sm btn-danger" style="margin-top: 0.5rem;">
-                                    <loc key="EditProfile_DeleteAvatar" />
+                                    @Localizer["EditProfile_DeleteAvatar"]
                                 </button>
                             }
                         </div>
@@ -71,28 +71,28 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label"><loc key="Label_DisplayName" /> *</label>
+                            <label class="form-label">@Localizer["Label_DisplayName"] *</label>
                             <input type="text" asp-for="DisplayName" class="form-input" required />
                         </div>
                         <div class="form-group">
-                            <label class="form-label"><loc key="Label_PreferredName" /></label>
+                            <label class="form-label">@Localizer["Label_PreferredName"]</label>
                             <input type="text" asp-for="PreferredName" class="form-input" loc-placeholder="Placeholder_PreferredName" />
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label"><loc key="Label_Phone" /></label>
+                            <label class="form-label">@Localizer["Label_Phone"]</label>
                             <input type="tel" asp-for="Phone" class="form-input" loc-placeholder="Placeholder_Phone" />
                         </div>
                         <div class="form-group">
-                            <label class="form-label"><loc key="Label_DateOfBirth" /></label>
+                            <label class="form-label">@Localizer["Label_DateOfBirth"]</label>
                             <input type="date" asp-for="DateOfBirth" class="form-input" />
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_City" /></label>
+                        <label class="form-label">@Localizer["Label_City"]</label>
                         <input type="text" asp-for="City" class="form-input" loc-placeholder="Placeholder_City" />
                     </div>
                 </div>
@@ -101,29 +101,29 @@
             <div class="profile-card">
                 <div class="profile-card__header">
                     <span class="profile-card__icon">🔐</span>
-                    <h2 class="profile-card__title"><loc key="EditProfile_AccountSettings" /></h2>
+                    <h2 class="profile-card__title">@Localizer["EditProfile_AccountSettings"]</h2>
                 </div>
                 <div class="profile-card__body">
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_Email" /> *</label>
+                        <label class="form-label">@Localizer["Label_Email"] *</label>
                         <input type="email" asp-for="Email" class="form-input" required />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_Role" /> *</label>
+                        <label class="form-label">@Localizer["Label_Role"] *</label>
                         <select asp-for="Role" class="form-input" required>
-                            <option value="@UserRole.Employee"><loc key="Role_Employee" /></option>
-                            <option value="@UserRole.Manager"><loc key="Role_Manager" /></option>
-                            <option value="@UserRole.Owner"><loc key="Role_Owner" /></option>
-                            <option value="@UserRole.Director"><loc key="Role_Director" /></option>
-                            <option value="@UserRole.Trainee"><loc key="Role_Trainee" /></option>
+                            <option value="@UserRole.Employee">@Localizer["Role_Employee"]</option>
+                            <option value="@UserRole.Manager">@Localizer["Role_Manager"]</option>
+                            <option value="@UserRole.Owner">@Localizer["Role_Owner"]</option>
+                            <option value="@UserRole.Director">@Localizer["Role_Director"]</option>
+                            <option value="@UserRole.Trainee">@Localizer["Role_Trainee"]</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label class="form-checkbox">
                             <input type="checkbox" asp-for="IsActive" />
-                            <span class="form-checkbox__label"><loc key="EditProfile_ActiveAccount" /></span>
+                            <span class="form-checkbox__label">@Localizer["EditProfile_ActiveAccount"]</span>
                         </label>
                     </div>
 
@@ -142,21 +142,21 @@
             <div class="profile-card">
                 <div class="profile-card__header">
                     <span class="profile-card__icon">📞</span>
-                    <h2 class="profile-card__title"><loc key="EditProfile_EmergencyContact" /></h2>
+                    <h2 class="profile-card__title">@Localizer["EditProfile_EmergencyContact"]</h2>
                 </div>
                 <div class="profile-card__body">
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_EmergencyContactName" /></label>
+                        <label class="form-label">@Localizer["Label_EmergencyContactName"]</label>
                         <input type="text" asp-for="EmergencyContactName" class="form-input" loc-placeholder="Placeholder_EmergencyContactName" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_EmergencyContactPhone" /></label>
+                        <label class="form-label">@Localizer["Label_EmergencyContactPhone"]</label>
                         <input type="tel" asp-for="EmergencyContactPhone" class="form-input" loc-placeholder="Placeholder_Phone" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_Relationship" /></label>
+                        <label class="form-label">@Localizer["Label_Relationship"]</label>
                         <input type="text" asp-for="EmergencyContactRelation" class="form-input" loc-placeholder="Placeholder_EmergencyContactRelation" />
                     </div>
                 </div>
@@ -165,7 +165,7 @@
             <div class="profile-card">
                 <div class="profile-card__header">
                     <span class="profile-card__icon">💼</span>
-                    <h2 class="profile-card__title"><loc key="EditProfile_ProfessionalInfo" /></h2>
+                    <h2 class="profile-card__title">@Localizer["EditProfile_ProfessionalInfo"]</h2>
                 </div>
                 <div class="profile-card__body">
                     @if (Model.IsWorkforceMolecule && Model.AvailableJobTypes.Any())
@@ -205,17 +205,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_JobTitle" /></label>
+                        <label class="form-label">@Localizer["Label_JobTitle"]</label>
                         <input type="text" asp-for="JobTitle" class="form-input" loc-placeholder="Placeholder_JobTitle" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_HireDate" /></label>
+                        <label class="form-label">@Localizer["Label_HireDate"]</label>
                         <input type="date" asp-for="HireDate" class="form-input" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label"><loc key="Label_DepartmentLegacy" /></label>
+                        <label class="form-label">@Localizer["Label_DepartmentLegacy"]</label>
                         <input type="text" asp-for="Department" class="form-input" loc-placeholder="Placeholder_Department" />
                         <span class="form-hint">@Localizer["LegacyDepartmentNote"]</span>
                     </div>
@@ -226,17 +226,17 @@
             <div class="profile-card profile-card--full">
                 <div class="profile-card__header">
                     <span class="profile-card__icon">🎯</span>
-                    <h2 class="profile-card__title"><loc key="EditProfile_SkillsCertifications">Skills & Certifications</loc></h2>
+                    <h2 class="profile-card__title">@Localizer["EditProfile_SkillsCertifications"]</h2>
                 </div>
                 <div class="profile-card__body">
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label"><loc key="Label_Skills" /></label>
+                            <label class="form-label">@Localizer["Label_Skills"]</label>
                             <input type="text" asp-for="Skills" class="form-input" loc-placeholder="Placeholder_Skills" />
                             <span class="form-hint">@Localizer["SkillsHint"]</span>
                         </div>
                         <div class="form-group">
-                            <label class="form-label"><loc key="Label_Certifications" /></label>
+                            <label class="form-label">@Localizer["Label_Certifications"]</label>
                             <input type="text" asp-for="Certifications" class="form-input" loc-placeholder="Placeholder_Certifications" />
                             <span class="form-hint">@Localizer["CertificationsHint"]</span>
                         </div>
@@ -247,10 +247,10 @@
 
         <div class="profile-actions">
             <button type="submit" class="btn btn-primary btn-lg">
-                <loc key="Button_SaveChanges" />
+                @Localizer["Button_SaveChanges"]
             </button>
             <a href="/Admin/Users" class="btn btn-secondary btn-lg">
-                <loc key="Button_Cancel" />
+                @Localizer["Button_Cancel"]
             </a>
         </div>
     </form>
@@ -260,17 +260,17 @@
         <div class="profile-card profile-card--history">
             <div class="profile-card__header">
                 <span class="profile-card__icon">📋</span>
-                <h2 class="profile-card__title"><loc key="EditProfile_RecentChanges" /></h2>
+                <h2 class="profile-card__title">@Localizer["EditProfile_RecentChanges"]</h2>
             </div>
             <div class="profile-card__body">
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th><loc key="Table_Date" /></th>
-                            <th><loc key="Table_Field" /></th>
-                            <th><loc key="Table_OldValue" /></th>
-                            <th><loc key="Table_NewValue" /></th>
-                            <th><loc key="Table_ChangedBy" /></th>
+                            <th>@Localizer["Table_Date"]</th>
+                            <th>@Localizer["Table_Field"]</th>
+                            <th>@Localizer["Table_OldValue"]</th>
+                            <th>@Localizer["Table_NewValue"]</th>
+                            <th>@Localizer["Table_ChangedBy"]</th>
                         </tr>
                     </thead>
                     <tbody>

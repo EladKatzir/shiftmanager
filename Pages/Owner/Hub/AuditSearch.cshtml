@@ -480,7 +480,7 @@
                 <div>
                     <label class="form-label" for="auditUserId"><loc key="User" /></label>
                     <select name="UserId" id="auditUserId" class="form-input">
-                        <option value=""><loc key="AllUsers" /></option>
+                        <option value="">@Localizer["AllUsers"]</option>
                         @foreach (var user in Model.Users)
                         {
                             <option value="@user.Id" selected="@(Model.UserId == user.Id)">@user.DisplayName</option>
@@ -490,7 +490,7 @@
                 <div>
                     <label class="form-label" for="auditAction"><loc key="Action" /></label>
                     <select name="Action" id="auditAction" class="form-input">
-                        <option value=""><loc key="AllActions" /></option>
+                        <option value="">@Localizer["AllActions"]</option>
                         @foreach (var action in Model.Actions)
                         {
                             <option value="@action" selected="@(Model.Action == action)">@action</option>
@@ -500,7 +500,7 @@
                 <div>
                     <label class="form-label" for="auditEntityType"><loc key="EntityType" /></label>
                     <select name="EntityType" id="auditEntityType" class="form-input">
-                        <option value=""><loc key="AllEntityTypes" /></option>
+                        <option value="">@Localizer["AllEntityTypes"]</option>
                         @foreach (var entityType in Model.EntityTypes)
                         {
                             <option value="@entityType" selected="@(Model.EntityType == entityType)">@entityType</option>

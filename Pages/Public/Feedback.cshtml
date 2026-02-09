@@ -249,8 +249,8 @@
                     <label class="form-label"><loc key="FeedbackType" /><span style="color: var(--danger);">*</span></label>
                     <select asp-for="SelectedType" class="input" required>
                         <option value="">-- @Localizer["Select"] --</option>
-                        <option value="@((int)FeedbackType.Error)"><loc key="FeedbackTypeError" /></option>
-                        <option value="@((int)FeedbackType.Suggestion)"><loc key="FeedbackTypeSuggestion" /></option>
+                        <option value="@((int)FeedbackType.Error)">@Localizer["FeedbackTypeError"]</option>
+                        <option value="@((int)FeedbackType.Suggestion)">@Localizer["FeedbackTypeSuggestion"]</option>
                     </select>
                 </div>
 

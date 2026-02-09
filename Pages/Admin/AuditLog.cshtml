@@ -75,27 +75,27 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">📋 <loc key="AuditLog" /></h1>
+    <h1 class="page-title">📋 @Localizer["AuditLog"]</h1>
     <p class="page-subtitle">@Localizer["AuditLogDescription", Model.TotalRecords]</p>
 </div>
 
 <!-- Filters -->
 <div class="section-card">
-    <h3 class="section-header"><loc key="Filters" /></h3>
+    <h3 class="section-header">@Localizer["Filters"]</h3>
     <form method="get">
         <div class="filter-grid">
             <div>
-                <label class="form-label" for="auditStartDate"><loc key="StartDate" /></label>
+                <label class="form-label" for="auditStartDate">@Localizer["StartDate"]</label>
                 <input type="date" name="StartDate" id="auditStartDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-input" />
             </div>
             <div>
-                <label class="form-label" for="auditEndDate"><loc key="EndDate" /></label>
+                <label class="form-label" for="auditEndDate">@Localizer["EndDate"]</label>
                 <input type="date" name="EndDate" id="auditEndDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-input" />
             </div>
             <div>
-                <label class="form-label" for="auditUserId"><loc key="User" /></label>
+                <label class="form-label" for="auditUserId">@Localizer["User"]</label>
                 <select name="UserId" id="auditUserId" class="form-input">
-                    <option value=""><loc key="AllUsers" /></option>
+                    <option value="">@Localizer["AllUsers"]</option>
                     @foreach (var user in Model.Users)
                     {
                         <option value="@user.Id" selected="@(Model.UserId == user.Id)">@user.DisplayName</option>
@@ -103,9 +103,9 @@
                 </select>
             </div>
             <div>
-                <label class="form-label" for="auditAction"><loc key="Action" /></label>
+                <label class="form-label" for="auditAction">@Localizer["Action"]</label>
                 <select name="Action" id="auditAction" class="form-input">
-                    <option value=""><loc key="AllActions" /></option>
+                    <option value="">@Localizer["AllActions"]</option>
                     @foreach (var action in Model.Actions)
                     {
                         <option value="@action" selected="@(Model.Action == action)">@action</option>
@@ -113,9 +113,9 @@
                 </select>
             </div>
             <div>
-                <label class="form-label" for="auditEntityType"><loc key="EntityType" /></label>
+                <label class="form-label" for="auditEntityType">@Localizer["EntityType"]</label>
                 <select name="EntityType" id="auditEntityType" class="form-input">
-                    <option value=""><loc key="AllEntityTypes" /></option>
+                    <option value="">@Localizer["AllEntityTypes"]</option>
                     @foreach (var entityType in Model.EntityTypes)
                     {
                         <option value="@entityType" selected="@(Model.EntityType == entityType)">@entityType</option>
@@ -123,13 +123,13 @@
                 </select>
             </div>
             <div>
-                <label class="form-label" for="auditSearchTerm"><loc key="Search" /></label>
+                <label class="form-label" for="auditSearchTerm">@Localizer["Search"]</label>
                 <input type="text" name="SearchTerm" id="auditSearchTerm" value="@Model.SearchTerm" placeholder="@Localizer["SearchPlaceholder"]" class="form-input" />
             </div>
         </div>
         <div class="filter-actions">
-            <button type="submit" class="btn btn-primary"><loc key="ApplyFilters" /></button>
-            <a href="/Admin/AuditLog" class="btn btn-ghost"><loc key="ClearFilters" /></a>
+            <button type="submit" class="btn btn-primary">@Localizer["ApplyFilters"]</button>
+            <a href="/Admin/AuditLog" class="btn btn-ghost">@Localizer["ClearFilters"]</a>
             <a href="?handler=ExportCsv&StartDate=@Model.StartDate?.ToString("yyyy-MM-dd")&EndDate=@Model.EndDate?.ToString("yyyy-MM-dd")&UserId=@Model.UserId&Action=@Model.Action&EntityType=@Model.EntityType&SearchTerm=@Model.SearchTerm" class="btn btn-primary ml-auto">
                 📥 @Localizer["ExportCSV"]
             </a>
@@ -153,12 +153,12 @@
             <table class="audit-table">
                 <thead>
                     <tr>
-                        <th><loc key="Timestamp" /></th>
-                        <th><loc key="User" /></th>
-                        <th><loc key="Action" /></th>
-                        <th><loc key="EntityType" /></th>
-                        <th><loc key="Description" /></th>
-                        <th><loc key="IPAddress" /></th>
+                        <th>@Localizer["Timestamp"]</th>
+                        <th>@Localizer["User"]</th>
+                        <th>@Localizer["Action"]</th>
+                        <th>@Localizer["EntityType"]</th>
+                        <th>@Localizer["Description"]</th>
+                        <th>@Localizer["IPAddress"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -202,7 +202,7 @@
                                         @if (!string.IsNullOrWhiteSpace(log.Details))
                                         {
                                             <div class="details-section">
-                                                <div class="details-label"><loc key="AdditionalDetails" />:</div>
+                                                <div class="details-label">@Localizer["AdditionalDetails"]:</div>
                                                 <pre class="details-pre">@log.Details</pre>
                                             </div>
                                         }
@@ -288,9 +288,9 @@ else
     <div class="section-card">
         <div class="empty-state">
             <div class="empty-icon">📋</div>
-            <h3 class="empty-title"><loc key="NoAuditLogs" /></h3>
-            <p class="empty-text"><loc key="NoAuditLogsMessage" /></p>
-            <a href="/Admin/AuditLog" class="btn btn-primary"><loc key="ClearFilters" /></a>
+            <h3 class="empty-title">@Localizer["NoAuditLogs"]</h3>
+            <p class="empty-text">@Localizer["NoAuditLogsMessage"]</p>
+            <a href="/Admin/AuditLog" class="btn btn-primary">@Localizer["ClearFilters"]</a>
         </div>
     </div>
 }

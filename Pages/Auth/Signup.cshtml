@@ -142,7 +142,7 @@
                                     name="MoleculeId"
                                     class="auth-field__select"
                                     required>
-                                <option value=""><loc key="Auth_ChooseMolecule" /></option>
+                                <option value="">@Localizer["Auth_ChooseMolecule"]</option>
                                 @foreach (var molecule in Model.AvailableMolecules)
                                 {
                                     <option value="@molecule.Id" data-area-id="@molecule.AreaId"
@@ -160,7 +160,7 @@
                                     class="auth-field__select"
                                     disabled
                                     required>
-                                <option value=""><loc key="Auth_ChooseCompanyFirst" /></option>
+                                <option value="">@Localizer["Auth_ChooseCompanyFirst"]</option>
                             </select>
                             <div id="companyLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
                                 <loc key="Loading" />...
@@ -173,7 +173,7 @@
                                     name="JobTypeId"
                                     class="auth-field__select"
                                     disabled>
-                                <option value=""><loc key="Auth_ChooseJobTypeFirst" /></option>
+                                <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
                             </select>
                             <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
                                 <loc key="Loading" />...
@@ -187,11 +187,11 @@
                                     name="RequestedRole"
                                     class="auth-field__select"
                                     required>
-                                <option value="@((int)UserRole.Employee)" selected="@(Model.RequestedRole == UserRole.Employee)"><loc key="Employee" /></option>
-                                <option value="@((int)UserRole.Trainee)" selected="@(Model.RequestedRole == UserRole.Trainee)"><loc key="Trainee" /></option>
-                                <option value="@((int)UserRole.Manager)" selected="@(Model.RequestedRole == UserRole.Manager)"><loc key="Manager" /></option>
-                                <option value="@((int)UserRole.Director)" selected="@(Model.RequestedRole == UserRole.Director)"><loc key="Director" /></option>
-                                <option value="@((int)UserRole.Assigner)" selected="@(Model.RequestedRole == UserRole.Assigner)"><loc key="Assigner" /></option>
+                                <option value="@((int)UserRole.Employee)" selected="@(Model.RequestedRole == UserRole.Employee)">@Localizer["Employee"]</option>
+                                <option value="@((int)UserRole.Trainee)" selected="@(Model.RequestedRole == UserRole.Trainee)">@Localizer["Trainee"]</option>
+                                <option value="@((int)UserRole.Manager)" selected="@(Model.RequestedRole == UserRole.Manager)">@Localizer["Manager"]</option>
+                                <option value="@((int)UserRole.Director)" selected="@(Model.RequestedRole == UserRole.Director)">@Localizer["Director"]</option>
+                                <option value="@((int)UserRole.Assigner)" selected="@(Model.RequestedRole == UserRole.Assigner)">@Localizer["Assigner"]</option>
                             </select>
                             <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
                                 <loc key="RequestNeedsApproval" />

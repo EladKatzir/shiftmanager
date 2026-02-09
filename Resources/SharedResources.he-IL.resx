@@ -8790,4 +8790,34 @@
   <data name="View" xml:space="preserve">
     <value>הצג</value>
   </data>
+  <data name="UserManagement" xml:space="preserve">
+    <value>ניהול משתמשים</value>
+  </data>
+  <data name="OnDuty_Hakam" xml:space="preserve">
+    <value>חכ"ם</value>
+  </data>
+  <data name="OnDuty_Lead" xml:space="preserve">
+    <value>אחראי</value>
+  </data>
+  <data name="SelectGrantType" xml:space="preserve">
+    <value>בחר סוג הרשאה</value>
+  </data>
+  <data name="AllProjects" xml:space="preserve">
+    <value>כל הפרויקטים</value>
+  </data>
+  <data name="SelectArea" xml:space="preserve">
+    <value>בחר אזור</value>
+  </data>
+  <data name="SelectMolecule" xml:space="preserve">
+    <value>בחר מולקולה</value>
+  </data>
+  <data name="TotalRequests" xml:space="preserve">
+    <value>סה"כ בקשות</value>
+  </data>
+  <data name="AllMolecules" xml:space="preserve">
+    <value>כל המולקולות</value>
+  </data>
+  <data name="BulkImport" xml:space="preserve">
+    <value>ייבוא מרובה</value>
+  </data>
 </root>

@@ -35,7 +35,7 @@
                     @Localizer["SelectUser"]
                 </label>
                 <select name="SelectedUserId" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text);">
-                    <option value=""><loc key="SelectUserPlaceholder" /></option>
+                    <option value="">@Localizer["SelectUserPlaceholder"]</option>
                     @foreach (var user in Model.AllUsers)
                     {
                         <option value="@user.Id" selected="@(Model.SelectedUserId == user.Id)">

@@ -147,7 +147,7 @@
 
 @* Hidden template for assignee select (rendered once, cloned via JS) *@
 <select id="assignee-options-template" class="calendar-template-hidden">
-    <option value=""><loc key="Calendar_SelectAssignee" /></option>
+    <option value="">@Localizer["Calendar_SelectAssignee"]</option>
     @foreach (var user in Model.EligibleAssignees)
     {
         <option value="@user.Id">@user.DisplayName</option>
@@ -301,8 +301,8 @@
 
                 <div id="ondutyFields-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="hidden">
                     <select id="ondutyType-@Model.CurrentDate.ToString("yyyy-MM-dd")" class="form-select form-select-sm">
-                        <option value="0"><loc key="OnDuty_Hakam" /></option>
-                        <option value="1"><loc key="OnDuty_Lead" /></option>
+                        <option value="0">@Localizer["OnDuty_Hakam"]</option>
+                        <option value="1">@Localizer["OnDuty_Lead"]</option>
                         @foreach (var customType in Model.CustomOnDutyTypes)
                         {
                             var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;

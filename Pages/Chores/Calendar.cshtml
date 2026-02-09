@@ -385,7 +385,7 @@
             <div class="form-group">
                 <label class="form-label" for="choreAssigneeId"><loc key="Assignee" /></label>
                 <select name="AssigneeId" id="choreAssigneeId" class="form-select" required>
-                    <option value=""><loc key="SelectAssignee" /></option>
+                    <option value="">@Localizer["SelectAssignee"]</option>
                     @foreach (var user in Model.EligibleAssignees)
                     {
                         <option value="@user.Id">@user.DisplayName (@user.Email)</option>

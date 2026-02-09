@@ -56,8 +56,8 @@
                         <div class="form-group">
                             <label asp-for="TimeOffRequest.Type" class="form-label"><loc key="VacationType" /></label>
                             <select asp-for="TimeOffRequest.Type" id="vacationType" class="form-select">
-                                <option value="0"><loc key="RegularVacation" /></option>
-                                <option value="1"><loc key="AfterDutyVacation" /></option>
+                                <option value="0">@Localizer["RegularVacation"]</option>
+                                <option value="1">@Localizer["AfterDutyVacation"]</option>
                             </select>
                             <span asp-validation-for="TimeOffRequest.Type" class="validation-error"></span>
                             <p class="form-hint"><loc key="VacationTypeDescription" /></p>
@@ -80,7 +80,7 @@
                         <div class="form-group">
                             <label asp-for="TimeOffRequest.ApproverId" class="form-label"><loc key="SpecificApprover" /> (@Localizer["Optional"])</label>
                             <select asp-for="TimeOffRequest.ApproverId" class="form-select">
-                                <option value=""><loc key="AnyManager" /></option>
+                                <option value="">@Localizer["AnyManager"]</option>
                                 @foreach (var approver in Model.AvailableApprovers)
                                 {
                                     <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
@@ -119,7 +119,7 @@
                             <div class="form-group">
                                 <label asp-for="SwapRequest.ShiftId" class="form-label"><loc key="SelectYourShiftToSwap" /></label>
                                 <select asp-for="SwapRequest.ShiftId" class="form-select">
-                                    <option value="0"><loc key="ChooseAShift" /></option>
+                                    <option value="0">@Localizer["ChooseAShift"]</option>
                                     @foreach (var shift in Model.AvailableShifts)
                                     {
                                         <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>

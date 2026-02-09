@@ -459,7 +459,7 @@
             <div class="form-group">
                 <label class="form-label" for="onDutyType"><loc key="Type" /></label>
                 <select name="OnDutyType" id="onDutyType" class="form-select" required>
-                    <option value=""><loc key="SelectType" /></option>
+                    <option value="">@Localizer["SelectType"]</option>
                     @* ✅ PHASE 18: Show default OnDuty types (from enum) *@
                     <option value="@((int)OnDutyType.Hakam)">🛡️ @Localizer["OnDutyHakam"]</option>
                     <option value="@((int)OnDutyType.Lead)">⭐ @Localizer["OnDutyLead"]</option>

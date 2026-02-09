@@ -278,7 +278,7 @@
                 <div class="form-group">
                     <label><loc key="GrantType">Grant Type</loc></label>
                     <select id="grant-type-select" class="form-control" required>
-                        <option value="">-- <loc key="SelectGrantType">Select Grant Type</loc> --</option>
+                        <option value="">-- @Localizer["SelectGrantType"] --</option>
                         @foreach (var categoryGroup in Model.GrantTypesByCategory.OrderBy(g => g.Key))
                         {
                             <optgroup label="@categoryGroup.Key">
@@ -295,20 +295,20 @@
                     <label><loc key="Scope">Scope</loc></label>
                     <div class="scope-selector">
                         <select id="scope-project" class="form-control">
-                            <option value="">-- <loc key="AllProjects">All Projects</loc> --</option>
+                            <option value="">-- @Localizer["AllProjects"] --</option>
                             @foreach (var project in Model.Projects)
                             {
                                 <option value="@project.Id">@project.Name</option>
                             }
                         </select>
                         <select id="scope-area" class="form-control" disabled>
-                            <option value="">-- <loc key="SelectArea">Select Area</loc> --</option>
+                            <option value="">-- @Localizer["SelectArea"] --</option>
                         </select>
                         <select id="scope-molecule" class="form-control" disabled>
-                            <option value="">-- <loc key="SelectMolecule">Select Molecule</loc> --</option>
+                            <option value="">-- @Localizer["SelectMolecule"] --</option>
                         </select>
                         <select id="scope-company" class="form-control" disabled>
-                            <option value="">-- <loc key="SelectCompany">Select Company</loc> --</option>
+                            <option value="">-- @Localizer["SelectCompany"] --</option>
                         </select>
                     </div>
                 </div>

@@ -480,8 +480,8 @@
 <!-- Page Header -->
 <div class="page-header-actions">
     <div class="page-header-content">
-        <h1 class="page-title"><loc key="AnalyticsDashboard" /></h1>
-        <p class="page-subtitle"><loc key="ViewInsightsMetricsAndReports" /></p>
+        <h1 class="page-title">@Localizer["AnalyticsDashboard"]</h1>
+        <p class="page-subtitle">@Localizer["ViewInsightsMetricsAndReports"]</p>
     </div>
 </div>
 
@@ -505,20 +505,20 @@
 
 <!-- Date Range Filter -->
 <div class="filter-card">
-    <h3 class="filter-header"><loc key="DateRange" /></h3>
+    <h3 class="filter-header">@Localizer["DateRange"]</h3>
     <form method="get" class="filter-form">
         <div class="form-group">
-            <label class="form-label"><loc key="SelectPeriod" /></label>
+            <label class="form-label">@Localizer["SelectPeriod"]</label>
             <select class="form-select" name="dateRange" onchange="this.form.submit()">
-                <option value="7" selected="@(Model.DateRange == 7)"><loc key="Last7Days" /></option>
-                <option value="30" selected="@(Model.DateRange == 30)"><loc key="Last30Days" /></option>
-                <option value="90" selected="@(Model.DateRange == 90)"><loc key="Last90Days" /></option>
-                <option value="365" selected="@(Model.DateRange == 365)"><loc key="LastYear" /></option>
+                <option value="7" selected="@(Model.DateRange == 7)">@Localizer["Last7Days"]</option>
+                <option value="30" selected="@(Model.DateRange == 30)">@Localizer["Last30Days"]</option>
+                <option value="90" selected="@(Model.DateRange == 90)">@Localizer["Last90Days"]</option>
+                <option value="365" selected="@(Model.DateRange == 365)">@Localizer["LastYear"]</option>
             </select>
         </div>
         <a asp-page-handler="ExportCsv" asp-route-dateRange="@Model.DateRange" class="btn btn-primary">
             <span>📥</span>
-            <span><loc key="ExportReport" /></span>
+            <span>@Localizer["ExportReport"]</span>
         </a>
     </form>
 </div>
@@ -526,44 +526,44 @@
 <!-- Summary Stats -->
 <div class="stats-grid">
     <div class="stat-card stat-blue">
-        <div class="stat-label"><loc key="CoverageRate" /></div>
+        <div class="stat-label">@Localizer["CoverageRate"]</div>
         <div class="stat-value">@Model.CoverageRate.ToString("F1")%</div>
-        <div class="stat-description"><loc key="ShiftCoverage" /></div>
+        <div class="stat-description">@Localizer["ShiftCoverage"]</div>
     </div>
 
     <div class="stat-card stat-green">
-        <div class="stat-label"><loc key="TimeOffRate" /></div>
+        <div class="stat-label">@Localizer["TimeOffRate"]</div>
         <div class="stat-value">@Model.TimeOffStats.ApprovalRate.ToString("F1")%</div>
-        <div class="stat-description"><loc key="TimeOffApproval" /></div>
+        <div class="stat-description">@Localizer["TimeOffApproval"]</div>
     </div>
 
     <div class="stat-card stat-purple">
-        <div class="stat-label"><loc key="SwapRate" /></div>
+        <div class="stat-label">@Localizer["SwapRate"]</div>
         <div class="stat-value">@Model.SwapStats.ApprovalRate.ToString("F1")%</div>
-        <div class="stat-description"><loc key="ShiftSwaps" /></div>
+        <div class="stat-description">@Localizer["ShiftSwaps"]</div>
     </div>
 
     <div class="stat-card stat-orange">
-        <div class="stat-label"><loc key="AverageDaysOff" /></div>
+        <div class="stat-label">@Localizer["AverageDaysOff"]</div>
         <div class="stat-value">@Model.AverageDaysOffPerEmployee.ToString("F1")</div>
-        <div class="stat-description"><loc key="PerEmployee" /></div>
+        <div class="stat-description">@Localizer["PerEmployee"]</div>
     </div>
 </div>
 
 <!-- Employee Hours -->
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="EmployeeHours" /></h3>
+        <h3 class="section-header">@Localizer["EmployeeHours"]</h3>
         @if (Model.EmployeeHours.Any())
         {
             <div class="table-wrapper">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th><loc key="Employee" /></th>
-                            <th><loc key="TotalHours" /></th>
-                            <th><loc key="AvgHoursPerWeek" /></th>
-                            <th><loc key="ShiftCount" /></th>
+                            <th>@Localizer["Employee"]</th>
+                            <th>@Localizer["TotalHours"]</th>
+                            <th>@Localizer["AvgHoursPerWeek"]</th>
+                            <th>@Localizer["ShiftCount"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -584,7 +584,7 @@
         {
             <div class="empty-state">
                 <div class="empty-state-icon">📊</div>
-                <div class="empty-state-text"><loc key="NoDataAvailable" /></div>
+                <div class="empty-state-text">@Localizer["NoDataAvailable"]</div>
             </div>
         }
     </div>
@@ -593,18 +593,18 @@
 <!-- Understaffing Report -->
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="UnderstaffingReport" /></h3>
+        <h3 class="section-header">@Localizer["UnderstaffingReport"]</h3>
         @if (Model.UnderstaffingReport.Any())
         {
             <div class="table-wrapper">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th><loc key="Date" /></th>
-                            <th><loc key="ShiftType" /></th>
-                            <th><loc key="Assigned" /></th>
-                            <th><loc key="Required" /></th>
-                            <th><loc key="Deficit" /></th>
+                            <th>@Localizer["Date"]</th>
+                            <th>@Localizer["ShiftType"]</th>
+                            <th>@Localizer["Assigned"]</th>
+                            <th>@Localizer["Required"]</th>
+                            <th>@Localizer["Deficit"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -627,7 +627,7 @@
         {
             <div class="success-state">
                 <div class="success-state-icon">✓</div>
-                <div class="success-state-text"><loc key="NoUnderstaffingIssues" /></div>
+                <div class="success-state-text">@Localizer["NoUnderstaffingIssues"]</div>
             </div>
         }
     </div>
@@ -636,17 +636,17 @@
 <!-- Top Swappers -->
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="MostActiveSwappers" /></h3>
+        <h3 class="section-header">@Localizer["MostActiveSwappers"]</h3>
         @if (Model.TopSwappers.Any())
         {
             <div class="table-wrapper">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th><loc key="Employee" /></th>
-                            <th><loc key="TotalRequests" /></th>
-                            <th><loc key="Approved" /></th>
-                            <th><loc key="Declined" /></th>
+                            <th>@Localizer["Employee"]</th>
+                            <th>@Localizer["TotalRequests"]</th>
+                            <th>@Localizer["Approved"]</th>
+                            <th>@Localizer["Declined"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -667,7 +667,7 @@
         {
             <div class="empty-state">
                 <div class="empty-state-icon">🔄</div>
-                <div class="empty-state-text"><loc key="NoDataAvailable" /></div>
+                <div class="empty-state-text">@Localizer["NoDataAvailable"]</div>
             </div>
         }
     </div>
@@ -676,22 +676,22 @@
 <!-- Swap Statistics -->
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="SwapStatistics" /></h3>
+        <h3 class="section-header">@Localizer["SwapStatistics"]</h3>
         <div class="mini-stats-grid">
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="TotalRequests" /></div>
+                <div class="mini-stat-label">@Localizer["TotalRequests"]</div>
                 <div class="mini-stat-value">@Model.SwapStats.TotalRequests</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="Approved" /></div>
+                <div class="mini-stat-label">@Localizer["Approved"]</div>
                 <div class="mini-stat-value text-success">@Model.SwapStats.ApprovedCount</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="Declined" /></div>
+                <div class="mini-stat-label">@Localizer["Declined"]</div>
                 <div class="mini-stat-value text-danger">@Model.SwapStats.DeclinedCount</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="Pending" /></div>
+                <div class="mini-stat-label">@Localizer["Pending"]</div>
                 <div class="mini-stat-value text-warning">@Model.SwapStats.PendingCount</div>
             </div>
         </div>
@@ -701,22 +701,22 @@
 <!-- Time-Off Statistics -->
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="TimeOffStatistics" /></h3>
+        <h3 class="section-header">@Localizer["TimeOffStatistics"]</h3>
         <div class="mini-stats-grid">
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="TotalRequests" /></div>
+                <div class="mini-stat-label">@Localizer["TotalRequests"]</div>
                 <div class="mini-stat-value">@Model.TimeOffStats.TotalRequests</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="Approved" /></div>
+                <div class="mini-stat-label">@Localizer["Approved"]</div>
                 <div class="mini-stat-value text-success">@Model.TimeOffStats.ApprovedCount</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="Declined" /></div>
+                <div class="mini-stat-label">@Localizer["Declined"]</div>
                 <div class="mini-stat-value text-danger">@Model.TimeOffStats.DeclinedCount</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="Pending" /></div>
+                <div class="mini-stat-label">@Localizer["Pending"]</div>
                 <div class="mini-stat-value text-warning">@Model.TimeOffStats.PendingCount</div>
             </div>
         </div>
@@ -726,18 +726,18 @@
 @* ✅ PHASE 18: Chores Metrics *@
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="ChoresMetrics" /></h3>
+        <h3 class="section-header">@Localizer["ChoresMetrics"]</h3>
         <div class="mini-stats-grid">
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="CompletedThisWeek" /></div>
+                <div class="mini-stat-label">@Localizer["CompletedThisWeek"]</div>
                 <div class="mini-stat-value text-success">@Model.ChoresCompletedThisWeek</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="PendingThisWeek" /></div>
+                <div class="mini-stat-label">@Localizer["PendingThisWeek"]</div>
                 <div class="mini-stat-value text-warning">@Model.ChoresPendingThisWeek</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="OverdueChores" /></div>
+                <div class="mini-stat-label">@Localizer["OverdueChores"]</div>
                 <div class="mini-stat-value text-danger">@Model.ChoresOverdue</div>
             </div>
         </div>
@@ -747,18 +747,18 @@
 @* ✅ PHASE 18: On-Duty Metrics *@
 <div class="section">
     <div class="section-card">
-        <h3 class="section-header"><loc key="OnDutyMetrics" /></h3>
+        <h3 class="section-header">@Localizer["OnDutyMetrics"]</h3>
         <div class="mini-stats-grid">
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="OnDutyAssignmentsThisWeek" /></div>
+                <div class="mini-stat-label">@Localizer["OnDutyAssignmentsThisWeek"]</div>
                 <div class="mini-stat-value text-success">@Model.OnDutyAssignmentsThisWeek</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="DaysWithoutOnDuty" /></div>
+                <div class="mini-stat-label">@Localizer["DaysWithoutOnDuty"]</div>
                 <div class="mini-stat-value @(Model.DaysWithoutOnDuty > 0 ? "text-warning" : "text-success")">@Model.DaysWithoutOnDuty</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-stat-label"><loc key="OnDutyCoverageRate" /></div>
+                <div class="mini-stat-label">@Localizer["OnDutyCoverageRate"]</div>
                 <div class="mini-stat-value @(Model.OnDutyCoverageRate >= 80 ? "text-success" : "text-warning")">@Model.OnDutyCoverageRate.ToString("F1")%</div>
             </div>
         </div>
