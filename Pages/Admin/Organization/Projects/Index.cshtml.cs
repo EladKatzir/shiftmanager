@@ -39,8 +39,8 @@ public class IndexModel : LocalizedPageModel
 
         Projects = await _db.Projects
             .IgnoreQueryFilters()
-            .Select(p => new ProjectVM(p.Id, p.Name, p.DisplayName, p.IsActive, p.Areas.Count(a => a.IsActive), p.CreatedAt))
             .OrderBy(p => p.Name)
+            .Select(p => new ProjectVM(p.Id, p.Name, p.DisplayName, p.IsActive, p.Areas.Count(a => a.IsActive), p.CreatedAt))
             .ToListAsync();
     }
 

@@ -61,6 +61,7 @@ public class IndexModel : LocalizedPageModel
         // Load projects with area counts
         Projects = await _db.Projects
             .IgnoreQueryFilters()
+            .OrderBy(p => p.Name)
             .Select(p => new ProjectVM(
                 p.Id,
                 p.Name,
@@ -68,12 +69,12 @@ public class IndexModel : LocalizedPageModel
                 p.IsActive,
                 p.Areas.Count(a => a.IsActive)
             ))
-            .OrderBy(p => p.Name)
             .ToListAsync();
 
         // Load areas with molecule and job type counts
         Areas = await _db.Areas
             .IgnoreQueryFilters()
+            .OrderBy(a => a.Name)
             .Select(a => new AreaVM(
                 a.Id,
                 a.ProjectId,
@@ -83,12 +84,12 @@ public class IndexModel : LocalizedPageModel
                 a.Molecules.Count(m => m.IsActive),
                 a.JobTypes.Count(jt => jt.IsActive)
             ))
-            .OrderBy(a => a.Name)
             .ToListAsync();
 
         // Load molecules with company/department counts
         Molecules = await _db.Molecules
             .IgnoreQueryFilters()
+            .OrderBy(m => m.Name)
             .Select(m => new MoleculeVM(
                 m.Id,
                 m.AreaId,
@@ -99,7 +100,6 @@ public class IndexModel : LocalizedPageModel
                 m.Companies.Count,
                 m.Departments.Count(d => d.IsActive)
             ))
-            .OrderBy(m => m.Name)
             .ToListAsync();
 
         // Load companies with user counts
@@ -110,8 +110,12 @@ public class IndexModel : LocalizedPageModel
             .Select(g => new { CompanyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.CompanyId, x => x.Count);
 
-        Companies = await _db.Companies
+        var companiesRaw = await _db.Companies
             .IgnoreQueryFilters()
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        Companies = companiesRaw
             .Select(c => new CompanyVM(
                 c.Id,
                 c.MoleculeId,
@@ -119,8 +123,7 @@ public class IndexModel : LocalizedPageModel
                 c.DisplayName,
                 userCountsByCompany.GetValueOrDefault(c.Id, 0)
             ))
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+            .ToList();
 
         // Load departments with user counts
         var userCountsByDept = await _db.Users
@@ -130,8 +133,12 @@ public class IndexModel : LocalizedPageModel
             .Select(g => new { DepartmentId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.DepartmentId, x => x.Count);
 
-        Departments = await _db.Departments
+        var deptsRaw = await _db.Departments
             .IgnoreQueryFilters()
+            .OrderBy(d => d.Name)
+            .ToListAsync();
+
+        Departments = deptsRaw
             .Select(d => new DepartmentVM(
                 d.Id,
                 d.MoleculeId,
@@ -140,8 +147,7 @@ public class IndexModel : LocalizedPageModel
                 d.IsActive,
                 userCountsByDept.GetValueOrDefault(d.Id, 0)
             ))
-            .OrderBy(d => d.Name)
-            .ToListAsync();
+            .ToList();
 
         // Calculate stats
         TotalUsers = await _db.Users.IgnoreQueryFilters().CountAsync(u => u.IsActive);
