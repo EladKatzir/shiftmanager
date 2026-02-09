@@ -56,6 +56,9 @@ public class IndexModel : LocalizedPageModel
             .IgnoreQueryFilters()
             .Include(m => m.Area)
             .ThenInclude(a => a.Project)
+            .OrderBy(m => m.Area.Project.DisplayName)
+            .ThenBy(m => m.Area.DisplayName)
+            .ThenBy(m => m.Name)
             .Select(m => new MoleculeVM(
                 m.Id,
                 m.Name,
@@ -67,9 +70,6 @@ public class IndexModel : LocalizedPageModel
                 m.Companies.Count,
                 m.Departments.Count(d => d.IsActive)
             ))
-            .OrderBy(m => m.ProjectName)
-            .ThenBy(m => m.AreaName)
-            .ThenBy(m => m.Name)
             .ToListAsync();
 
         AvailableAreas = await _db.Areas
@@ -77,9 +77,9 @@ public class IndexModel : LocalizedPageModel
             .Where(a => a.IsActive)
             .Include(a => a.Project)
             .Where(a => a.Project.IsActive)
+            .OrderBy(a => a.Project.DisplayName)
+            .ThenBy(a => a.DisplayName)
             .Select(a => new AreaOption(a.Id, a.DisplayName, a.Project.DisplayName))
-            .OrderBy(a => a.ProjectName)
-            .ThenBy(a => a.Name)
             .ToListAsync();
     }
 

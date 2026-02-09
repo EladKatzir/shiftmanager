@@ -43,15 +43,15 @@ public class IndexModel : LocalizedPageModel
         Areas = await _db.Areas
             .IgnoreQueryFilters()
             .Include(a => a.Project)
+            .OrderBy(a => a.Project.DisplayName).ThenBy(a => a.Name)
             .Select(a => new AreaVM(a.Id, a.Name, a.DisplayName, a.Project.DisplayName, a.IsActive, a.Molecules.Count(m => m.IsActive), a.JobTypes.Count(jt => jt.IsActive)))
-            .OrderBy(a => a.ProjectName).ThenBy(a => a.Name)
             .ToListAsync();
 
         AvailableProjects = await _db.Projects
             .IgnoreQueryFilters()
             .Where(p => p.IsActive)
+            .OrderBy(p => p.DisplayName)
             .Select(p => new ProjectOption(p.Id, p.DisplayName))
-            .OrderBy(p => p.Name)
             .ToListAsync();
     }
 

@@ -99,9 +99,9 @@ public class AnnouncementsModel : LocalizedPageModel
         Departments = await _db.Departments
             .Include(d => d.Molecule)
             .Where(d => d.IsActive)
+            .OrderBy(d => d.Molecule.DisplayName)
+            .ThenBy(d => d.DisplayName)
             .Select(d => new DepartmentOption(d.Id, d.DisplayName, d.Molecule.DisplayName))
-            .OrderBy(d => d.MoleculeName)
-            .ThenBy(d => d.Name)
             .ToListAsync();
 
         // Build role dropdown from UserRole enum

@@ -58,10 +58,14 @@ public class IndexModel : LocalizedPageModel
             .Select(g => new { DepartmentId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.DepartmentId, x => x.Count);
 
-        Departments = await _db.Departments
+        Departments = (await _db.Departments
             .IgnoreQueryFilters()
             .Include(d => d.Molecule)
             .ThenInclude(m => m.Area)
+            .OrderBy(d => d.Molecule.Area.DisplayName)
+            .ThenBy(d => d.Molecule.DisplayName)
+            .ThenBy(d => d.Name)
+            .ToListAsync())
             .Select(d => new DepartmentVM(
                 d.Id,
                 d.Name,
@@ -71,10 +75,7 @@ public class IndexModel : LocalizedPageModel
                 d.IsActive,
                 userCountsByDept.GetValueOrDefault(d.Id, 0)
             ))
-            .OrderBy(d => d.AreaName)
-            .ThenBy(d => d.MoleculeName)
-            .ThenBy(d => d.Name)
-            .ToListAsync();
+            .ToList();
 
         // Only show Tech molecules (departments are for Tech molecules)
         AvailableMolecules = await _db.Molecules
@@ -82,9 +83,9 @@ public class IndexModel : LocalizedPageModel
             .Where(m => m.IsActive && m.Type == MoleculeType.Tech)
             .Include(m => m.Area)
             .Where(m => m.Area.IsActive)
+            .OrderBy(m => m.Area.DisplayName)
+            .ThenBy(m => m.DisplayName)
             .Select(m => new MoleculeOption(m.Id, m.DisplayName, m.Area.DisplayName, m.Type))
-            .OrderBy(m => m.AreaName)
-            .ThenBy(m => m.Name)
             .ToListAsync();
     }
 

@@ -582,7 +582,7 @@
 @section Scripts {
 <script>
 // Stats data
-const statsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stats));
+const statsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stats, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
 const localizer = {
     vacations: '@Localizer["Vacations"]',
     onDuty: '@Localizer["OnDuty"]',
