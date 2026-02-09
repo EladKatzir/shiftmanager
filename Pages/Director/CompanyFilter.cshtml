@@ -6,6 +6,7 @@
 @model ShiftManager.Pages.Director.CompanyFilterModel
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["CompanyFilter"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>

@@ -6,6 +6,7 @@
 @model ShiftManager.Pages.Director.NotificationHubModel
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["NotificationHub"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>

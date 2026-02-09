@@ -5,7 +5,7 @@
 @using ShiftManager.ViewComponents
 @using ShiftManager.Models.Support
 @inject IStringLocalizer<SharedResources> Localizer
-@{ Layout = "_Layout"; }
+@{ Layout = "_Layout"; ViewData["Title"] = Localizer["SetupTasks"]; }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {

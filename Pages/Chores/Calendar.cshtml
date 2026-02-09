@@ -6,6 +6,7 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["Chores"];
     var firstDay = new DateOnly(Model.Year, Model.Month, 1);
     var lastDay = firstDay.AddMonths(1).AddDays(-1);
     var startOfWeek = firstDay.AddDays(-(int)firstDay.DayOfWeek + (firstDay.DayOfWeek == DayOfWeek.Sunday ? -6 : 1));

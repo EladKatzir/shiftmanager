@@ -6,6 +6,7 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["MyOverview"];
     var today = DateOnly.FromDateTime(DateTime.Today);
     var tomorrow = today.AddDays(1);
     var weekEnd = today.AddDays(7);

@@ -6,6 +6,7 @@
 @model ShiftManager.Pages.Director.ViewAsModeModel
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Localizer["ViewAsManager"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
