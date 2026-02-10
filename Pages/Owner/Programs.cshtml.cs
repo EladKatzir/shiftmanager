@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Services;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ShiftManager.Pages.Owner;
@@ -80,7 +81,7 @@ public class ProgramsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate
             if (string.IsNullOrWhiteSpace(ProgramName))
@@ -157,7 +158,7 @@ public class ProgramsModel : PageModel
             }
 
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate
             if (string.IsNullOrWhiteSpace(ProgramName))
@@ -223,7 +224,7 @@ public class ProgramsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             var program = await _programService.GetProgramAsync(programId);
 
@@ -257,7 +258,7 @@ public class ProgramsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate date range
             if (GenerateEndDate < GenerateStartDate)

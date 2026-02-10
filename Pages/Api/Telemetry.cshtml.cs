@@ -24,6 +24,8 @@ public class TelemetryModel : PageModel
     private static readonly Dictionary<string, Queue<DateTime>> _rateLimitTracker = new();
     private static readonly object _rateLimitLock = new();
     private const int MaxRequestsPerMinute = 30;
+    private const int MaxTrackedIps = 1000;
+    private static DateTime _lastCleanup = DateTime.UtcNow;
 
     public TelemetryModel(IClientTelemetryService telemetryService, ILogger<TelemetryModel> logger)
     {
@@ -312,6 +314,18 @@ public class TelemetryModel : PageModel
 
         lock (_rateLimitLock)
         {
+            // Periodic cleanup of stale entries to prevent unbounded growth
+            if ((now - _lastCleanup).TotalMinutes > 5 || _rateLimitTracker.Count > MaxTrackedIps)
+            {
+                var staleKeys = _rateLimitTracker
+                    .Where(kvp => kvp.Value.Count == 0 || (now - kvp.Value.Peek()).TotalMinutes > 2)
+                    .Select(kvp => kvp.Key)
+                    .ToList();
+                foreach (var key in staleKeys)
+                    _rateLimitTracker.Remove(key);
+                _lastCleanup = now;
+            }
+
             if (!_rateLimitTracker.ContainsKey(ip))
             {
                 _rateLimitTracker[ip] = new Queue<DateTime>();

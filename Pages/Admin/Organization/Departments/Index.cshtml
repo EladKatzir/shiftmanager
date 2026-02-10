@@ -129,7 +129,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">@Localizer["DisplayName"]</label>
-                    <input class="form-input" asp-for="DepartmentDisplayName" placeholder="Department Name" />
+                    <input class="form-input" asp-for="DepartmentDisplayName" placeholder="@Localizer["Placeholder_DepartmentName"]" />
                 </div>
             </div>
             <button class="btn btn-primary" type="submit"><loc key="CreateDepartment" /></button>
@@ -163,7 +163,7 @@
                     <tr>
                         <td>@Html.Encode(d.AreaName)</td>
                         <td>
-                            <span class="badge badge-tech">Tech</span>
+                            <span class="badge badge-tech"><loc key="Tech" /></span>
                             @Html.Encode(d.MoleculeName)
                         </td>
                         <td><strong>@Html.Encode(d.DisplayName)</strong><br /><small style="color: var(--text-muted);">@Html.Encode(d.Name)</small></td>

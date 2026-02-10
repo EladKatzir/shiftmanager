@@ -302,6 +302,16 @@ public class ShiftProgramService : IShiftProgramService
                             .ToList();
 
                         _db.ShiftAssignments.RemoveRange(unassignedSlots);
+
+                        var slotsToRemove = currentSlotCount - staffing;
+                        if (unassignedSlots.Count < slotsToRemove)
+                        {
+                            _logger.LogWarning(
+                                "Partial capacity reduction for ShiftInstance {InstanceId} on {Date}: " +
+                                "removed {Removed} of {Needed} excess slots ({Assigned} assigned users prevent full reduction to {Target})",
+                                existingInstance.Id, date, unassignedSlots.Count, slotsToRemove,
+                                currentSlotCount - unassignedSlots.Count, staffing);
+                        }
                     }
 
                     _logger.LogDebug("Updated existing ShiftInstance {InstanceId} for {Date} with {Staffing} slots", existingInstance.Id, date, staffing);

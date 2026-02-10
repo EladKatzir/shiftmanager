@@ -604,11 +604,47 @@ public class ImportService : IImportService
                 }
             }
 
+            // Resolve FromUserId from the imported assignment
+            var importedAssignment = await _db.ShiftAssignments.FindAsync(newFromAssignmentId);
+            var fromUserId = importedAssignment?.UserId ?? 0;
+
+            // Resolve optional ToUserId from archive data
+            int? toUserId = null;
+            if (dataElement.TryGetProperty("toUserId", out var toUserIdProp) && toUserIdProp.ValueKind != JsonValueKind.Null)
+            {
+                var oldToUserId = toUserIdProp.GetInt32();
+                // Try to find user by looking up their email from the archive's user mapping
+                // Fall back to keeping the value if user exists in target company
+                var targetUser = await _db.Users.FirstOrDefaultAsync(u => u.Id == oldToUserId && u.CompanyId == companyId);
+                if (targetUser != null)
+                {
+                    toUserId = oldToUserId;
+                }
+            }
+
+            // Read optional string fields
+            string? reason = null;
+            if (dataElement.TryGetProperty("reason", out var reasonProp) && reasonProp.ValueKind != JsonValueKind.Null)
+            {
+                reason = reasonProp.GetString();
+            }
+
+            string? declineReason = null;
+            if (dataElement.TryGetProperty("declineReason", out var declineReasonProp) && declineReasonProp.ValueKind != JsonValueKind.Null)
+            {
+                declineReason = declineReasonProp.GetString();
+            }
+
             var swapRequest = new SwapRequest
             {
+                CompanyId = companyId,
                 FromAssignmentId = newFromAssignmentId,
                 ToAssignmentId = newToAssignmentId,
+                FromUserId = fromUserId,
+                ToUserId = toUserId,
                 Status = status,
+                Reason = reason,
+                DeclineReason = declineReason,
                 CreatedAt = dataElement.GetProperty("createdAt").GetDateTime()
             };
 
@@ -767,7 +803,18 @@ public class ImportService : IImportService
                 }
             }
 
-            var createdBy = dataElement.GetProperty("createdBy").GetInt32();
+            // Resolve createdBy via email lookup (same pattern as canceledBy)
+            var createdBy = userId; // fallback to the assigned user
+            if (dataElement.TryGetProperty("createdByEmail", out var createdByEmailProp2) &&
+                createdByEmailProp2.ValueKind != JsonValueKind.Null)
+            {
+                var createdByEmail = createdByEmailProp2.GetString();
+                if (!string.IsNullOrEmpty(createdByEmail) &&
+                    userLookup.TryGetValue(createdByEmail.ToLowerInvariant(), out var mappedCreatedBy))
+                {
+                    createdBy = mappedCreatedBy;
+                }
+            }
 
             var chore = new Chore
             {
@@ -824,10 +871,19 @@ public class ImportService : IImportService
 
             var date = DateOnly.Parse(dataElement.GetProperty("date").GetString()!);
 
-            // Check for duplicate
+            // Parse Type before duplicate check so we can include it
+            var typeStringForDup = dataElement.TryGetProperty("type", out var typePropForDup) && typePropForDup.ValueKind != JsonValueKind.Null
+                ? typePropForDup.GetString()
+                : null;
+            var onDutyTypeForDup = !string.IsNullOrEmpty(typeStringForDup) && Enum.TryParse<OnDutyType>(typeStringForDup, out var parsedTypeForDup)
+                ? parsedTypeForDup
+                : OnDutyType.Hakam;
+
+            // Check for duplicate (same user + date + type)
             var exists = await _db.OnDuties.AnyAsync(od =>
                 od.UserId == userId &&
-                od.Date == date);
+                od.Date == date &&
+                od.Type == onDutyTypeForDup);
 
             if (exists)
             {
@@ -857,12 +913,39 @@ public class ImportService : IImportService
                 }
             }
 
-            var createdBy = dataElement.GetProperty("createdBy").GetInt32();
+            // Resolve createdBy via email lookup (same pattern as canceledBy)
+            var createdBy = userId; // fallback to the assigned user
+            if (dataElement.TryGetProperty("createdByEmail", out var createdByEmailProp2) &&
+                createdByEmailProp2.ValueKind != JsonValueKind.Null)
+            {
+                var createdByEmail = createdByEmailProp2.GetString();
+                if (!string.IsNullOrEmpty(createdByEmail) &&
+                    userLookup.TryGetValue(createdByEmail.ToLowerInvariant(), out var mappedCreatedBy))
+                {
+                    createdBy = mappedCreatedBy;
+                }
+            }
+
+            // Resolve Type from archive (required field)
+            var typeString = dataElement.TryGetProperty("type", out var typeProp) && typeProp.ValueKind != JsonValueKind.Null
+                ? typeProp.GetString()
+                : null;
+            var onDutyType = !string.IsNullOrEmpty(typeString) && Enum.TryParse<OnDutyType>(typeString, out var parsedType)
+                ? parsedType
+                : OnDutyType.Hakam; // Default fallback
+
+            string? notes = null;
+            if (dataElement.TryGetProperty("notes", out var notesProp) && notesProp.ValueKind != JsonValueKind.Null)
+            {
+                notes = notesProp.GetString();
+            }
 
             var onDuty = new OnDuty
             {
                 UserId = userId,
                 Date = date,
+                Type = onDutyType,
+                Notes = notes,
                 CreatedBy = createdBy,
                 CreatedAt = dataElement.GetProperty("createdAt").GetDateTime(),
                 CanceledBy = canceledById

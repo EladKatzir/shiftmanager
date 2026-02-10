@@ -1,6 +1,9 @@
 @model ShiftManager.ViewComponents.HierarchyNodeViewModel
 @using ShiftManager.Models.Support
 @using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
 
 @{
     var area = Model.Area!;
@@ -28,10 +31,10 @@
         }
         <span class="htree-node__badge htree-node__badge--area">A</span>
         <span class="htree-node__label">@area.Name</span>
-        <span class="htree-node__count">@area.Molecules.Count molecules</span>
+        <span class="htree-node__count">@area.Molecules.Count @Localizer["Molecules"]</span>
         @if (!area.IsActive)
         {
-            <span class="htree-node__status htree-node__status--inactive">Inactive</span>
+            <span class="htree-node__status htree-node__status--inactive"><loc key="Inactive" /></span>
         }
         @if (Model.CanEdit || Model.CanDelete || Model.CanAddChild)
         {

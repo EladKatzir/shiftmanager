@@ -57,6 +57,9 @@ public class AppUser : IBelongsToCompany
     // A-07: Force password change after temp password reset
     public bool MustChangePassword { get; set; } = false;
 
+    // B-05: Onboarding wizard — shows first-login walkthrough for new users
+    public bool HasCompletedOnboarding { get; set; } = false;
+
     // Organizational - workforce users have JobType, tech users have Department
     public int? JobTypeId { get; set; }    // Workforce molecules only
     public int? DepartmentId { get; set; }  // Tech molecules only

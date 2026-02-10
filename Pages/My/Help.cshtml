@@ -107,6 +107,79 @@
             </div>
         </div>
 
+        @* Chores & On-Duty *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">🗂️</span>
+                <loc key="Help_Section_Chores" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ViewChores_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ViewChores_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_OnDuty_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_OnDuty_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Management (Managers/Owners only) *@
+        @if (User.IsInRole("Manager") || User.IsInRole("Owner") || User.IsInRole("Director"))
+        {
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">⚙️</span>
+                <loc key="Help_Section_Management" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_CreateShift_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_CreateShift_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_AssignEmployee_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_AssignEmployee_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ApproveRequests_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ApproveRequests_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ManageUsers_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ManageUsers_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ExportSchedule_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ExportSchedule_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ScheduleTable_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ScheduleTable_A" /></div>
+                </details>
+            </div>
+        </div>
+        }
+
+        @* Keyboard Shortcuts *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">⌨️</span>
+                <loc key="Help_Section_Shortcuts" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_KeyboardShortcuts_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_KeyboardShortcuts_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_CommandPalette_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_CommandPalette_A" /></div>
+                </details>
+            </div>
+        </div>
+
         @* Support Contact *@
         <div class="help-contact">
             <h2 class="help-contact__title"><loc key="Help_NeedMoreHelp" /></h2>

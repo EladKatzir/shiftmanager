@@ -20,18 +20,18 @@
 <div class="card" style="max-width:680px">
     <form method="post">
         <div style="display:grid; gap:.75rem">
-            <label>My assignment<br />
+            <label>@Localizer["Swap_MyAssignment"]<br />
                 <select class="input" asp-for="SelectedAssignmentId">
-                    <option value="">-- choose one of your upcoming shifts --</option>
+                    <option value="">@Localizer["Swap_ChooseShift"]</option>
                     @foreach (var a in Model.MyAssignments)
                     {
                         <option value="@a.AssignmentId">@a.Label</option>
                     }
                 </select>
             </label>
-            <label>Proposed to user<br />
+            <label>@Localizer["Swap_ProposedToUser"]<br />
                 <select class="input" asp-for="ToUserId">
-                    <option value="">-- choose a user --</option>
+                    <option value="">@Localizer["Swap_ChooseUser"]</option>
                     @foreach (var u in Model.OtherUsers)
                     {
                         <option value="@u.Id">@u.DisplayName (@u.Email)</option>

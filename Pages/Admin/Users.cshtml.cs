@@ -342,6 +342,32 @@ public class UsersModel : LocalizedPageModel
                 .ToDictionaryAsync(c => c.Id);
         }
 
+        // Pre-load director-company mappings to avoid N+1 queries in the loop
+        var directorUserIds = userData.Where(u => u.Role == UserRole.Director).Select(u => u.Id).ToList();
+        var directorCompanyMap = new Dictionary<int, List<int>>();
+        var allManagedCompanyIds = new HashSet<int>();
+
+        foreach (var dirId in directorUserIds)
+        {
+            var dirManagedIds = await _directorService.GetDirectorCompanyIdsAsync(dirId);
+            var filtered = dirManagedIds.Where(id => accessibleCompanyIds.Contains(id)).ToList();
+            if (UserFilterCompanyId.HasValue)
+            {
+                filtered = filtered.Where(id => id == UserFilterCompanyId.Value).ToList();
+            }
+            directorCompanyMap[dirId] = filtered;
+            foreach (var id in filtered) allManagedCompanyIds.Add(id);
+        }
+
+        // Batch-load all managed company names (single query instead of per-director)
+        var managedCompaniesLookup = allManagedCompanyIds.Any()
+            ? await _db.Companies
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => allManagedCompanyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name)
+            : new Dictionary<int, string>();
+
         // Build user list, handling Directors specially
         var userList = new List<UserVM>();
 
@@ -349,30 +375,13 @@ public class UsersModel : LocalizedPageModel
         {
             if (u.Role == UserRole.Director)
             {
-                // For Directors, get all companies they manage
-                var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(u.Id);
-
-                // Filter by accessible companies
-                var managedCompanyIds = directorCompanyIds.Where(id => accessibleCompanyIds.Contains(id)).ToList();
-
-                // Apply company filter if specified
-                if (UserFilterCompanyId.HasValue)
-                {
-                    managedCompanyIds = managedCompanyIds.Where(id => id == UserFilterCompanyId.Value).ToList();
-                }
-
-                // Load company names for managed companies
-                var managedCompanies = await _db.Companies
-                    .AsNoTracking()
-                    .Where(c => managedCompanyIds.Contains(c.Id))
-                    .ToDictionaryAsync(c => c.Id);
+                var managedCompanyIds = directorCompanyMap.TryGetValue(u.Id, out var ids) ? ids : new List<int>();
 
                 // Create one entry per managed company
                 foreach (var companyId in managedCompanyIds)
                 {
-                    // ✅ FIX: Use TryGetValue to prevent KeyNotFoundException if company is missing
-                    var companyName = managedCompanies.TryGetValue(companyId, out var company)
-                        ? company.Name
+                    var companyName = managedCompaniesLookup.TryGetValue(companyId, out var name)
+                        ? name
                         : $"Company #{companyId}";
 
                     userList.Add(new UserVM(

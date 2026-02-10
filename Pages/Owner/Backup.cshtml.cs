@@ -122,16 +122,15 @@ public class BackupModel : PageModel
                 return Page();
             }
 
-            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
-            var backupFilePath = Path.Combine(backupsFolder, backupFileName);
-
-            if (!System.IO.File.Exists(backupFilePath))
+            var backupFilePath = GetValidatedBackupPath(backupFileName);
+            if (backupFilePath == null || !System.IO.File.Exists(backupFilePath))
             {
                 Error = "Backup file not found.";
                 LoadBackups();
                 return Page();
             }
 
+            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
             var dbPath = Path.Combine(_env.ContentRootPath, "app.db");
 
             // Create a backup of current database before restoring
@@ -189,10 +188,8 @@ public class BackupModel : PageModel
                 return Page();
             }
 
-            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
-            var backupFilePath = Path.Combine(backupsFolder, backupFileName);
-
-            if (!System.IO.File.Exists(backupFilePath))
+            var backupFilePath = GetValidatedBackupPath(backupFileName);
+            if (backupFilePath == null || !System.IO.File.Exists(backupFilePath))
             {
                 Error = "Backup file not found.";
                 LoadBackups();
@@ -234,10 +231,8 @@ public class BackupModel : PageModel
                 return NotFound();
             }
 
-            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
-            var backupFilePath = Path.Combine(backupsFolder, backupFileName);
-
-            if (!System.IO.File.Exists(backupFilePath))
+            var backupFilePath = GetValidatedBackupPath(backupFileName);
+            if (backupFilePath == null || !System.IO.File.Exists(backupFilePath))
             {
                 return NotFound();
             }
@@ -286,6 +281,35 @@ public class BackupModel : PageModel
         {
             _logger.LogError(ex, "Error loading backups");
         }
+    }
+
+    /// <summary>
+    /// Validates backup filename to prevent path traversal attacks.
+    /// Returns the safe full path or null if validation fails.
+    /// </summary>
+    private string? GetValidatedBackupPath(string? backupFileName)
+    {
+        if (string.IsNullOrWhiteSpace(backupFileName))
+            return null;
+
+        // Block path traversal characters
+        if (backupFileName.Contains("..") || backupFileName.Contains('/') || backupFileName.Contains('\\'))
+        {
+            _logger.LogWarning("Path traversal attempt in backup filename: {FileName}", backupFileName);
+            return null;
+        }
+
+        var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
+        var fullPath = Path.GetFullPath(Path.Combine(backupsFolder, backupFileName));
+
+        // Ensure resolved path stays within Backups folder
+        if (!fullPath.StartsWith(Path.GetFullPath(backupsFolder), StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Path traversal attempt resolved outside Backups folder: {FileName}", backupFileName);
+            return null;
+        }
+
+        return fullPath;
     }
 
     private int GetCurrentUserId()

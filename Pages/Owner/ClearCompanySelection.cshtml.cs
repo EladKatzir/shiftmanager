@@ -43,7 +43,7 @@ public class ClearCompanySelectionModel : PageModel
             "Owner user {UserId} cleared company selection",
             GetCurrentUserId());
 
-        return Redirect(returnUrl ?? "/Owner/Index");
+        return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToPage("/Owner/Index");
     }
 
     private int GetCurrentUserId()

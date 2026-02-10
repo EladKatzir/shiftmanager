@@ -6,13 +6,13 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Master Programs";
+    ViewData["Title"] = Localizer["MasterPrograms_Title"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
     new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
-    new BreadcrumbItem { Label = "Master Programs", IsActive = true }
+    new BreadcrumbItem { Label = Localizer["MasterPrograms_Title"], IsActive = true }
 })
 
 @* Owner Company Selector *@
@@ -22,47 +22,47 @@
     <div class="page-header">
         <h1>
             <span class="page-icon">📦</span>
-            Master Programs
+            <loc key="MasterPrograms_Title" />
         </h1>
-        <p class="page-subtitle">Compose complete weekly schedules from multiple programs</p>
+        <p class="page-subtitle"><loc key="MasterPrograms_Subtitle" /></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.Success
+            <strong>@Localizer["Alert_Success"]</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-danger">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong>@Localizer["Alert_Error"]</strong> @Model.Error
         </div>
     }
 
     @* Create New MasterProgram Section *@
     <div class="feature-category">
-        <h2>➕ Create New Master Program</h2>
+        <h2><loc key="MasterPrograms_CreateNew" /></h2>
         <form method="post" asp-page-handler="CreateMasterProgram">
             <div class="form-group">
-                <label asp-for="MasterProgramName">Master Program Name</label>
+                <label asp-for="MasterProgramName">@Localizer["MasterPrograms_Name"]</label>
                 <input type="text" asp-for="MasterProgramName" class="form-control"
-                       placeholder="e.g., Standard Week Schedule" required />
+                       placeholder="@Localizer["MasterPrograms_NamePlaceholder"]" required />
             </div>
 
             <div class="form-group">
-                <label asp-for="MasterProgramDescription">Description (Optional)</label>
+                <label asp-for="MasterProgramDescription">@Localizer["MasterPrograms_Description"]</label>
                 <textarea asp-for="MasterProgramDescription" class="form-control"
-                          rows="2" placeholder="Description of this complete weekly schedule"></textarea>
+                          rows="2" placeholder="@Localizer["MasterPrograms_DescPlaceholder"]"></textarea>
             </div>
 
             <div class="form-group">
-                <label>Select Programs to Include</label>
+                <label>@Localizer["MasterPrograms_SelectPrograms"]</label>
                 @if (Model.AvailablePrograms.Count == 0)
                 {
                     <div class="alert alert-warning">
-                        No programs available. <a href="/Owner/Programs">Create programs</a> first.
+                        @Localizer["MasterPrograms_NoProgramsAvailable"] <a href="/Owner/Programs">@Localizer["MasterPrograms_CreateProgramsFirst"]</a>
                     </div>
                 }
                 else
@@ -86,7 +86,7 @@
                                             }
                                         </span>
                                         <span class="text-muted">
-                                            @program.ProgramDays.Count days/week
+                                            @program.ProgramDays.Count @Localizer["MasterPrograms_DaysPerWeek"]
                                         </span>
                                     </div>
                                 </div>
@@ -99,7 +99,7 @@
             @if (Model.AvailablePrograms.Count > 0)
             {
                 <button type="submit" class="btn btn-primary">
-                    ➕ Create Master Program
+                    <loc key="MasterPrograms_Create" />
                 </button>
             }
         </form>
@@ -107,12 +107,12 @@
 
     @* Existing MasterPrograms List *@
     <div class="feature-category">
-        <h2>📦 Existing Master Programs</h2>
+        <h2><loc key="MasterPrograms_Existing" /></h2>
 
         @if (Model.MasterPrograms.Count == 0)
         {
             <div class="alert alert-info">
-                No master programs defined yet. Create one above to get started.
+                <loc key="MasterPrograms_NoneYet" />
             </div>
         }
         else
@@ -124,7 +124,7 @@
                         <div class="master-program-header">
                             <h3>@masterProgram.Name</h3>
                             <span class="badge badge-info">
-                                @masterProgram.Items.Count programs
+                                @masterProgram.Items.Count @Localizer["MasterPrograms_Programs"]
                             </span>
                         </div>
 
@@ -134,7 +134,7 @@
                         }
 
                         <div class="master-program-programs">
-                            <h4>Included Programs:</h4>
+                            <h4>@Localizer["MasterPrograms_IncludedPrograms"]</h4>
                             <ul class="program-list">
                                 @foreach (var item in masterProgram.Items.OrderBy(i => i.SortOrder))
                                 {
@@ -151,7 +151,7 @@
                                             })
                                         </span>
                                         <span class="badge badge-secondary">
-                                            @item.Program.ProgramDays.Count days
+                                            @item.Program.ProgramDays.Count @Localizer["MasterPrograms_Days"]
                                         </span>
                                     </li>
                                 }
@@ -164,15 +164,15 @@
                                     data-master-id="@masterProgram.Id"
                                     data-master-name="@masterProgram.Name"
                                     data-program-count="@masterProgram.Items.Count">
-                                📅 Generate Full Week
+                                📅 @Localizer["MasterPrograms_GenerateFullWeek"]
                             </button>
 
                             <form method="post" asp-page-handler="DeleteMasterProgram"
                                   style="display: inline;"
-                                  onsubmit="return confirm('Are you sure you want to delete this master program? The individual programs will NOT be deleted.');">
+                                  onsubmit="return confirm('@Localizer["MasterPrograms_ConfirmDelete"]');">
                                 <input type="hidden" name="masterProgramId" value="@masterProgram.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
-                                    🗑️ Delete
+                                    🗑️ <loc key="Delete" />
                                 </button>
                             </form>
                         </div>
@@ -189,7 +189,7 @@
         <div class="modal-content">
             <form method="post" asp-page-handler="GenerateFromMaster">
                 <div class="modal-header">
-                    <h3>Generate Full Weekly Schedule</h3>
+                    <h3><loc key="MasterPrograms_GenerateSchedule" /></h3>
                     <button type="button" class="close-modal" onclick="closeGenerateMasterModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -199,33 +199,32 @@
                     <p id="generateMasterProgramCount" class="text-info"></p>
 
                     <div class="form-group">
-                        <label asp-for="GenerateStartDate">Start Date</label>
+                        <label asp-for="GenerateStartDate">@Localizer["Label_StartDate"]</label>
                         <input type="date" asp-for="GenerateStartDate" class="form-control" required />
                     </div>
 
                     <div class="form-group">
-                        <label asp-for="GenerateEndDate">End Date</label>
+                        <label asp-for="GenerateEndDate">@Localizer["Label_EndDate"]</label>
                         <input type="date" asp-for="GenerateEndDate" class="form-control" required />
                     </div>
 
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" asp-for="OverwriteExisting" />
-                            Overwrite existing shift instances?
+                            @Localizer["Programs_OverwriteExisting"]
                         </label>
                         <small class="form-text text-muted">
-                            If checked, will update existing instances. Otherwise, skips dates that already have shifts.
+                            @Localizer["Programs_OverwriteHint"]
                         </small>
                     </div>
 
                     <div class="alert alert-info">
-                        <strong>ℹ️ Note:</strong> This will apply ALL programs in this master program
-                        to the date range, creating a complete weekly schedule.
+                        <strong>@Localizer["Note"]:</strong> @Localizer["MasterPrograms_GenerateNote"]
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeGenerateMasterModal()"><loc key="Button_Cancel">Cancel</loc></button>
-                    <button type="submit" class="btn btn-primary">📅 Generate Full Week</button>
+                    <button type="submit" class="btn btn-primary">📅 @Localizer["MasterPrograms_GenerateFullWeek"]</button>
                 </div>
             </form>
         </div>

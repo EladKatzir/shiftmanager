@@ -20,8 +20,8 @@
     <div class="system-wide-banner">
         <div class="banner-icon">🌐</div>
         <div class="banner-content">
-            <h3>System-Wide Authentication</h3>
-            <p>Griffin ADFS is configured once at the <strong>owner level</strong> and applies to <strong>all companies</strong> in your system. Users from any company can authenticate using their domain credentials.</p>
+            <h3><loc key="Griffin_SystemWideAuth" /></h3>
+            <p><loc key="Griffin_SystemWideAuth_Desc" /></p>
         </div>
     </div>
 
@@ -30,7 +30,7 @@
             <span class="page-icon">🛡️</span>
             <loc key="Owner_GriffinConfig" />
         </h1>
-        <p class="page-subtitle">Configure centralized domain authentication for all companies</p>
+        <p class="page-subtitle"><loc key="Griffin_Subtitle" /></p>
     </div>
 
     @* Status Widget - At-a-glance health monitoring *@
@@ -115,7 +115,7 @@
     <form method="post">
         <div class="config-card">
             <div class="card-header">
-                <h2>🛡️ Griffin Service Configuration</h2>
+                <h2>🛡️ <loc key="Griffin_ServiceConfig" /></h2>
                 <div class="form-group-inline">
                     <label class="toggle-switch">
                         <input type="checkbox" asp-for="Enabled" />
@@ -128,18 +128,18 @@
             <div class="card-body">
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="BaseUrl">Griffin Server URL</label>
+                        <label asp-for="BaseUrl">@Localizer["Griffin_ServerUrl"]</label>
                         <div class="help-buttons-group">
                             <button type="button" class="help-button" onclick="toggleFieldHelp('baseurl-help')" loc-title="Help_ShowDetails">
                                 ❓
                             </button>
                             <button type="button" class="find-this-button" onclick="openModal('find-baseurl-modal')" loc-title="FindThis_HowToFind">
-                                🔍 Find This
+                                🔍 @Localizer["Griffin_FindThis"]
                             </button>
                         </div>
                     </div>
                     <input asp-for="BaseUrl" class="form-control" placeholder="http://griffin-auth.example.mil" id="baseurl-input" onblur="validateUrl(this)" />
-                    <small class="form-text">Griffin service endpoint for the entire system (e.g., http://griffin-auth.example.mil). Must include http:// or https://</small>
+                    <small class="form-text">@Localizer["Griffin_ServerUrl_Hint"]</small>
 
                     <div class="context-panel" id="baseurl-help" style="display: none;">
                         <div class="context-panel-section">
@@ -160,14 +160,14 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="TokenConsumerUrl">Application Callback URL</label>
+                        <label asp-for="TokenConsumerUrl">@Localizer["Griffin_CallbackUrl"]</label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('callback-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
                     </div>
                     <input asp-for="TokenConsumerUrl" class="form-control"
                            placeholder="https://your-app.local/Auth/GriffinCallback" id="callback-input" onblur="validateUrl(this)" />
-                    <small class="form-text">Your application's callback URL where Griffin redirects after authentication. Must include http:// or https:// and end with /Auth/GriffinCallback</small>
+                    <small class="form-text">@Localizer["Griffin_CallbackUrl_Hint"]</small>
 
                     <div class="context-panel" id="callback-help" style="display: none;">
                         <div class="context-panel-section">
@@ -188,7 +188,7 @@
 
                 <div class="form-group">
                     <div class="label-with-help">
-                        <label asp-for="TimeoutSeconds">API Timeout (seconds)</label>
+                        <label asp-for="TimeoutSeconds">@Localizer["Griffin_Timeout"]</label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('timeout-help')" loc-title="Help_ShowDetails">
                             ❓
                         </button>
@@ -197,22 +197,22 @@
 
                     <div class="context-panel" id="timeout-help" style="display: none;">
                         <div class="context-panel-section">
-                            <strong>Purpose</strong>
-                            <p>Maximum time to wait for Griffin API responses (validation, claims retrieval)</p>
+                            <strong><loc key="ContextPanel_Purpose" /></strong>
+                            <p><loc key="Griffin_Timeout_Purpose" /></p>
                         </div>
                         <div class="context-panel-section">
-                            <strong>Recommendation</strong>
-                            <p>10 seconds is recommended for most environments. Increase to 20-30 seconds if experiencing network latency in air-gapped environments.</p>
+                            <strong><loc key="Griffin_Recommendation" /></strong>
+                            <p><loc key="Griffin_Timeout_Recommendation" /></p>
                         </div>
                     </div>
-                    <small class="form-text">Timeout for Griffin API calls (1-60 seconds). Recommended: 10 seconds</small>
+                    <small class="form-text">@Localizer["Griffin_Timeout_Hint"]</small>
                 </div>
             </div>
         </div>
 
         <div class="config-card">
             <div class="card-header">
-                <h2>👥 User Provisioning (System-Wide)</h2>
+                <h2>👥 <loc key="Griffin_UserProvisioning" /></h2>
             </div>
 
             <div class="card-body">
@@ -223,21 +223,21 @@
                             <span class="toggle-slider"></span>
                         </label>
                         <span class="toggle-status-text">
-                            Auto-Provision New Users — @(Model.AutoProvisionUsers ? Localizer["Enabled"] : Localizer["Disabled"])
+                            @Localizer["Griffin_AutoProvision"] — @(Model.AutoProvisionUsers ? Localizer["Enabled"] : Localizer["Disabled"])
                         </span>
                     </div>
-                    <small class="form-text">Automatically create user accounts on first Griffin login. If disabled, users must be manually approved by administrators.</small>
+                    <small class="form-text">@Localizer["Griffin_AutoProvision_Hint"]</small>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="DefaultProvisionedRole">Default Role for Auto-Provisioned Users</label>
+                    <label asp-for="DefaultProvisionedRole">@Localizer["Griffin_DefaultRole"]</label>
                     <select asp-for="DefaultProvisionedRole" class="form-control" asp-items="Model.RoleOptions"></select>
-                    <small class="form-text">Default role assigned to auto-provisioned users across all companies</small>
+                    <small class="form-text">@Localizer["Griffin_DefaultRole_Hint"]</small>
                 </div>
 
                 <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-soft); border-left: 4px solid var(--warning); border-radius: 6px;">
                     <p style="margin: 0; color: var(--text); line-height: 1.6;">
-                        <strong>⚠️ Security Note:</strong> Auto-provisioning applies to <strong>all companies</strong>. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.
+                        <strong>⚠️ @Localizer["Griffin_SecurityNote_Title"]</strong> @Localizer["Griffin_SecurityNote_Text"]
                     </p>
                 </div>
             </div>
@@ -245,12 +245,12 @@
 
         <div class="config-card">
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                <button type="submit" class="btn btn-primary">💾 <loc key="Griffin_SaveConfig" /></button>
                 <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
-                    🔌 Test Connection
+                    🔌 <loc key="Griffin_TestConnection" />
                 </button>
                 <a href="/GriffinDiagnostic" class="btn btn-secondary" target="_blank" style="background: var(--accent); border-color: var(--accent);">
-                    🔍 Run Full Diagnostic
+                    🔍 <loc key="Griffin_RunDiagnostic" />
                 </a>
                 <a href="/Owner/Hub" class="btn btn-outline"><loc key="Button_Cancel">Cancel</loc></a>
             </div>
@@ -260,29 +260,29 @@
     @* Info Card *@
     <div class="config-card">
         <div class="card-header">
-            <h2>ℹ️ About Griffin ADFS</h2>
+            <h2>ℹ️ <loc key="Griffin_AboutTitle" /></h2>
         </div>
         <div class="card-body">
-            <p><strong>Griffin ADFS provides centralized domain authentication for air-gapped military/government environments.</strong></p>
+            <p><strong><loc key="Griffin_AboutDesc" /></strong></p>
 
-            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">Key Features:</h3>
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">@Localizer["Griffin_KeyFeatures"]</h3>
             <ul style="margin-bottom: 1.5rem;">
-                <li>Users authenticate with their domain credentials (CAC/username and password)</li>
-                <li>Local username/password authentication always available as fallback</li>
-                <li>No client secret needed - Griffin service handles ADFS communication</li>
+                <li><loc key="Griffin_Feature1" /></li>
+                <li><loc key="Griffin_Feature2" /></li>
+                <li><loc key="Griffin_Feature3" /></li>
             </ul>
 
-            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">System-Wide Configuration:</h3>
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem; color: var(--text);">@Localizer["Griffin_SystemWideConfig"]</h3>
             <ul style="margin-bottom: 0;">
-                <li><strong>Configured once</strong> by the system owner</li>
-                <li><strong>Applies to all companies</strong> in the system</li>
-                <li><strong>Single Griffin server</strong> serves the entire deployment</li>
-                <li><strong>Consistent authentication</strong> across all companies and users</li>
+                <li><loc key="Griffin_Config1" /></li>
+                <li><loc key="Griffin_Config2" /></li>
+                <li><loc key="Griffin_Config3" /></li>
+                <li><loc key="Griffin_Config4" /></li>
             </ul>
 
             <div style="margin-top: 1.5rem; padding: 1rem; background: var(--info-soft); border-left: 4px solid var(--info); border-radius: 6px;">
                 <p style="margin: 0; color: var(--text); line-height: 1.6;">
-                    <strong>💡 Note:</strong> Individual companies cannot override or disable ADFS authentication. If enabled here, all users across all companies will see the "Login with Griffin ADFS" option on the login page.
+                    <strong>💡 @Localizer["Note"]:</strong> @Localizer["Griffin_NoteText"]
                 </p>
             </div>
         </div>

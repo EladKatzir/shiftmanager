@@ -266,7 +266,7 @@
             document.addEventListener('DOMContentLoaded', function() {
                 var b = document.createElement('div');
                 b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;padding:8px 16px;text-align:center;font-size:14px;';
-                b.textContent = 'Your browser is outdated and may not display this application correctly. Please use Chrome 80+, Firefox 80+, or Edge 80+.';
+                b.textContent = '@Html.Raw(Localizer["BrowserOutdated_Message"].Value.Replace("'", "\\'"))';
                 document.body.prepend(b);
             });
         }
@@ -415,7 +415,7 @@
                             @* Directors use Director Hub as home *@
                             <a href="/Director/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director") || currentPath == "/" ? "active" : "")">
                                 <span class="app-sidebar-nav-icon">👔</span>
-                                <span>Director Hub</span>
+                                <span><loc key="Nav_DirectorHub" /></span>
                             </a>
                         </require-grant>
                         <require-grant key="DirectorHubAccess" negate="true">
@@ -483,7 +483,7 @@
                     <require-grant key="AdminAccess" negate="true">
                         <a href="/Admin/Index" class="app-sidebar-nav-item @(currentPath == "/Admin/Index" || currentPath == "/Admin" ? "active" : "")">
                             <span class="app-sidebar-nav-icon">🎛️</span>
-                            <span>Admin Hub</span>
+                            <span><loc key="Nav_AdminHub" /></span>
                         </a>
                     </require-grant>
 
@@ -709,8 +709,8 @@
             @if (isViewingAsManager && viewAsCompanyName != null)
             {
                 <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid var(--warning-hover);">
-                    ⚠️ Viewing as Manager of <strong>@viewAsCompanyName</strong> —
-                    <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-left: 1rem;">Exit View Mode</a>
+                    ⚠️ @Localizer["ViewAs_ViewingAs"] <strong>@viewAsCompanyName</strong> —
+                    <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-left: 1rem;">@Localizer["ViewAs_ExitViewMode"]</a>
                 </div>
             }
 

@@ -312,6 +312,9 @@ namespace ShiftManager.Migrations
                     b.Property<int>("FailedLoginAttempts")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("HasCompletedOnboarding")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("HireDate")
                         .HasColumnType("TEXT");
 

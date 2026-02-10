@@ -4,6 +4,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using System.Net;
 
 namespace ShiftManager.Services;
 
@@ -103,7 +104,7 @@ public class EmailTemplateService : IEmailTemplateService
         foreach (var variable in variables)
         {
             var placeholder = $"{{{variable.Key}}}";
-            result = result.Replace(placeholder, variable.Value);
+            result = result.Replace(placeholder, WebUtility.HtmlEncode(variable.Value));
         }
 
         return result;

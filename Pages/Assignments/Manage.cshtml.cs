@@ -281,7 +281,7 @@ public class ManageModel : LocalizedPageModel
             _logger.LogWarning("Assignment {AssignmentId} not found for removal", assignmentId);
         }
 
-        return !string.IsNullOrEmpty(ReturnUrl) ? Redirect(ReturnUrl) : RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId });
+        return !string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl) ? Redirect(ReturnUrl) : RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId });
     }
 
     public async Task<IActionResult> OnPostAssignTraineeAsync(int assignmentId, int traineeUserId)

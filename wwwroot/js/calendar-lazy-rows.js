@@ -66,7 +66,10 @@
                         // Update loading text
                         var remaining = hiddenRows.length - revealedCount;
                         if (remaining > 0) {
-                            loadingRow.querySelector('.calendar-lazy-loading__text').textContent = remaining + ' more rows...';
+                            var loadingText = loadingRow.querySelector('.calendar-lazy-loading__text');
+                            if (loadingText) {
+                                loadingText.textContent = remaining + ' more rows...';
+                            }
                         }
 
                         // Move sentinel after newly revealed rows

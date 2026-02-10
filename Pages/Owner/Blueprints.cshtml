@@ -30,14 +30,14 @@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.Success
+            <strong>@Localizer["Alert_Success"]</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-danger">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong>@Localizer["Alert_Error"]</strong> @Model.Error
         </div>
     }
 
@@ -45,11 +45,11 @@
     @if (Model.ShiftTypes.Any(st => string.IsNullOrWhiteSpace(st.NameKey)))
     {
         <div class="alert alert-warning">
-            <strong>⚠️ Migration Required:</strong>
-            Some shift types are missing NameKey values (required for localization).
+            <strong>@Localizer["Blueprints_MigrationRequired"]</strong>
+            @Localizer["Blueprints_MigrationDesc"]
             <form method="post" asp-page-handler="PopulateNameKeys" style="display: inline;">
                 <button type="submit" class="btn btn-sm btn-warning" style="margin-left: 10px;">
-                    🔧 Populate NameKeys Now
+                    🔧 <loc key="Blueprints_PopulateNameKeys" />
                 </button>
             </form>
         </div>
@@ -63,20 +63,20 @@
                 <div class="form-group">
                     <label asp-for="NewShiftKey"><loc key="Label_ShiftKey">Shift Key</loc></label>
                     <input type="text" asp-for="NewShiftKey" class="form-control"
-                           placeholder="e.g., CUSTOM_1" required />
-                    <small class="form-text text-muted">Uppercase, e.g., CUSTOM_DAY</small>
+                           placeholder="@Localizer["Blueprints_ShiftKeyPlaceholder"]" required />
+                    <small class="form-text text-muted">@Localizer["Blueprints_ShiftKeyHint"]</small>
                 </div>
 
                 <div class="form-group">
                     <label asp-for="NewShiftNameEn"><loc key="Label_EnglishName">English Name</loc></label>
                     <input type="text" asp-for="NewShiftNameEn" class="form-control"
-                           placeholder="Day Shift" required />
+                           placeholder="@Localizer["Blueprints_EnglishNamePlaceholder"]" required />
                 </div>
 
                 <div class="form-group">
                     <label asp-for="NewShiftNameHe"><loc key="Label_HebrewName">Hebrew Name</loc></label>
                     <input type="text" asp-for="NewShiftNameHe" class="form-control"
-                           placeholder="משמרת יום" required dir="rtl" />
+                           placeholder="@Localizer["Blueprints_HebrewNamePlaceholder"]" required dir="rtl" />
                 </div>
 
                 <div class="form-group">
@@ -103,7 +103,7 @@
         @if (Model.ShiftTypes.Count == 0)
         {
             <div class="alert alert-info">
-                No shift types defined yet. Create one above to get started.
+                <loc key="Blueprints_NoShiftTypes" />
             </div>
         }
         else
@@ -111,12 +111,12 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Shift Type</th>
-                        <th>English Name</th>
-                        <th>Hebrew Name</th>
-                        <th>Time Range</th>
-                        <th>Type</th>
-                        <th>Actions</th>
+                        <th><loc key="ShiftType" /></th>
+                        <th><loc key="Blueprints_EnglishName" /></th>
+                        <th><loc key="Blueprints_HebrewName" /></th>
+                        <th><loc key="Blueprints_TimeRange" /></th>
+                        <th><loc key="Type" /></th>
+                        <th><loc key="Actions" /></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,7 +127,7 @@
                                 <strong>@shiftType.Key</strong>
                                 @if (shiftType.IsOffline)
                                 {
-                                    <span class="badge badge-secondary">Offline</span>
+                                    <span class="badge badge-secondary"><loc key="Offline" /></span>
                                 }
                             </td>
                             <td>
@@ -166,11 +166,11 @@
                             <td>
                                 @if (shiftType.Key.StartsWith("CUSTOM_"))
                                 {
-                                    <span class="badge badge-info">Custom</span>
+                                    <span class="badge badge-info"><loc key="Blueprints_Custom" /></span>
                                 }
                                 else
                                 {
-                                    <span class="badge badge-success">Predefined</span>
+                                    <span class="badge badge-success"><loc key="Blueprints_Predefined" /></span>
                                 }
                             </td>
                             <td>
@@ -180,7 +180,7 @@
                                             class="btn btn-sm btn-secondary edit-name-btn"
                                             data-shift-id="@shiftType.Id"
                                             data-name-key="@shiftType.NameKey">
-                                        ✏️ Edit Name
+                                        ✏️ @Localizer["Blueprints_EditName"]
                                     </button>
                                 }
 
@@ -189,13 +189,13 @@
                                         data-shift-id="@shiftType.Id"
                                         data-start="@shiftType.Start.ToString("HH:mm")"
                                         data-end="@shiftType.End.ToString("HH:mm")">
-                                    🕐 Edit Time
+                                    🕐 @Localizer["Blueprints_EditTime"]
                                 </button>
 
                                 @* ✅ P1-4: Allow deleting ALL shift types with usage warning *@
                                 <button type="button" class="btn btn-sm btn-danger"
                                         onclick="confirmDeleteShiftType(@shiftType.Id, '@shiftType.Name')">
-                                    🗑️ Delete
+                                    🗑️ <loc key="Delete" />
                                 </button>
                             </td>
                         </tr>
@@ -282,34 +282,34 @@
 
                 <div id="deleteLoadingMessage" style="text-align: center; padding: 20px;" data-loading="true">
                     <div class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 3px solid var(--surface-soft); border-top: 3px solid var(--text); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p>Checking usage...</p>
+                    <p><loc key="Blueprints_CheckingUsage" /></p>
                 </div>
 
                 <div id="deleteConfirmMessage" style="display: none;" data-content-ready="false">
-                    <p><strong>Shift Type:</strong> <span id="deleteDisplayName"></span></p>
+                    <p><strong>@Localizer["ShiftType"]:</strong> <span id="deleteDisplayName"></span></p>
 
                     <div id="programUsageWarning" style="display: none; background: var(--warning-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--warning);" role="alert">
-                        <p><strong>⚠️ Cannot Delete</strong></p>
-                        <p>This shift type is used by <strong><span id="programUsageCount"></span></strong> program(s).</p>
-                        <p>Please remove it from all programs first before deleting.</p>
+                        <p><strong>@Localizer["Blueprints_CannotDelete"]</strong></p>
+                        <p>@Localizer["Blueprints_UsedByPrograms_Before"]<strong><span id="programUsageCount"></span></strong> @Localizer["Blueprints_UsedByPrograms_After"]</p>
+                        <p><loc key="Blueprints_RemoveFromProgramsFirst" /></p>
                     </div>
 
                     <div id="instanceUsageWarning" style="display: none; background: var(--warning-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--warning);" role="alert">
-                        <p><strong>⚠️ Warning</strong></p>
-                        <p>This shift type is currently used by <strong><span id="instanceUsageCount"></span></strong> shift instance(s).</p>
-                        <p>Deleting it will <strong>NOT</strong> delete those shifts. Historical shift data will be preserved.</p>
+                        <p><strong>@Localizer["Warning"]</strong></p>
+                        <p>@Localizer["Blueprints_UsedByInstances_Before"]<strong><span id="instanceUsageCount"></span></strong> @Localizer["Blueprints_UsedByInstances_After"]</p>
+                        <p>@Localizer["Blueprints_DeletionWarning"]</p>
                     </div>
 
                     <div id="noUsageMessage" style="display: none; background: var(--success-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--success);" role="status">
-                        <p><strong>✓ Safe to Delete</strong></p>
-                        <p>This shift type is not currently in use.</p>
+                        <p><strong>@Localizer["Blueprints_SafeToDelete"]</strong></p>
+                        <p><loc key="Blueprints_NotInUse" /></p>
                     </div>
 
-                    <p style="margin-top: 15px;"><strong>Are you sure you want to delete this shift type?</strong></p>
+                    <p style="margin-top: 15px;"><strong>@Localizer["Blueprints_ConfirmDeleteQuestion"]</strong></p>
                 </div>
 
                 <div id="deleteErrorMessage" style="display: none; background: var(--danger-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--danger);" role="alert" data-error-state="false">
-                    <p><strong>Error</strong></p>
+                    <p><strong>@Localizer["Error"]</strong></p>
                     <p id="deleteErrorText"></p>
                     <button type="button" class="btn btn-sm btn-secondary" onclick="retryCheckUsage()" style="margin-top: 10px;"><loc key="Button_Retry">Retry</loc></button>
                 </div>

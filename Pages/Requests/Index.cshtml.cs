@@ -330,15 +330,15 @@ public class IndexModel : LocalizedPageModel
         }
 
         var assign = await _db.ShiftAssignments.FindAsync(s.FromAssignmentId);
-        if (assign == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
+        if (assign == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
         var si = await _db.ShiftInstances.FindAsync(assign.ShiftInstanceId);
-        if (si == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
+        if (si == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
         var shiftType = await _db.ShiftTypes.FindAsync(si.ShiftTypeId);
-        if (shiftType == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
+        if (shiftType == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
-        if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); return RedirectToPage(); }
+        if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
         var conflict = await _checker.CanAssignAsync(s.ToUserId.Value, si);
         if (!conflict.Allowed)

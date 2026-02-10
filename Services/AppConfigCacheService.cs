@@ -79,7 +79,7 @@ public class AppConfigCacheService : IAppConfigCacheService
             .ToListAsync();
 
         // Convert to dictionary for fast lookup
-        configs = configList.ToDictionary(c => c.Key, c => c.Value);
+        configs = configList.GroupBy(c => c.Key).ToDictionary(g => g.Key, g => g.Last().Value);
 
         // Cache for 5 minutes
         var cacheOptions = new MemoryCacheEntryOptions()

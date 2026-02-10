@@ -83,6 +83,81 @@
         "Error_OperationFailed": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_OperationFailed"].Value)),
         "Error_NetworkError": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_NetworkError"].Value)),
         "Error_Prefix": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_Prefix"].Value)),
-        "Error_FailedToDeleteShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_FailedToDeleteShift"].Value))
+        "Error_FailedToDeleteShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_FailedToDeleteShift"].Value)),
+
+        // Command Palette - Navigation page titles (site.js)
+        "Nav_Requests": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Requests"].Value)),
+        "Nav_Analytics": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Analytics"].Value)),
+        "Nav_Users": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Users"].Value)),
+        "Nav_Companies": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Companies"].Value)),
+        "Nav_Directors": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Directors"].Value)),
+        "Nav_Configuration": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Configuration"].Value)),
+        "Nav_ShiftTypes": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_ShiftTypes"].Value)),
+        "Nav_TimeOff": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_TimeOff"].Value)),
+        "Nav_AuditLog": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_AuditLog"].Value)),
+        "Nav_Chores": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Chores"].Value)),
+        "Nav_OnDuty": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_OnDuty"].Value)),
+        "Nav_ScheduleTable": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_ScheduleTable"].Value)),
+        "Nav_ScheduleTableDesc": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_ScheduleTableDesc"].Value)),
+        "Nav_Blueprints": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Blueprints"].Value)),
+        "Nav_BlueprintsDesc": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_BlueprintsDesc"].Value)),
+        "Nav_Programs": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Programs"].Value)),
+        "Nav_ProgramsDesc": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_ProgramsDesc"].Value)),
+        "Nav_MasterPrograms": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_MasterPrograms"].Value)),
+        "Nav_MasterProgramsDesc": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_MasterProgramsDesc"].Value)),
+        "Nav_MyRequests": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_MyRequests"].Value)),
+        "Nav_MyTeam": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_MyTeam"].Value)),
+        "Nav_MyProfile": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_MyProfile"].Value)),
+        "Nav_Notifications": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_Notifications"].Value)),
+        "Nav_MonthView": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_MonthView"].Value)),
+        "Nav_WeekView": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_WeekView"].Value)),
+        "Nav_DayView": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Nav_DayView"].Value)),
+
+        // Roster Dock (roster-dock.js)
+        "Roster_Vacation": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_Vacation"].Value)),
+        "Roster_OnShift": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_OnShift"].Value)),
+        "Roster_HasChore": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_HasChore"].Value)),
+        "Roster_Available": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_Available"].Value)),
+        "Roster_FailedToAssign": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_FailedToAssign"].Value)),
+        "Roster_AssignedSuccess": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_AssignedSuccess"].Value)),
+        "Roster_AssignmentFailed": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_AssignmentFailed"].Value)),
+
+        // Modal Loader (modal-loader.js)
+        "FailedToLoadContent": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["FailedToLoadContent"].Value)),
+        "LoadingFailedTitle": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["LoadingFailedTitle"].Value)),
+
+        // DateTime relative formatting (date-format.js)
+        "DateTime_JustNow": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_JustNow"].Value)),
+        "DateTime_MinutesAgo": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_MinutesAgo"].Value)),
+        "DateTime_HoursAgo": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_HoursAgo"].Value)),
+        "DateTime_Yesterday": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_Yesterday"].Value)),
+        "DateTime_DaysAgo": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_DaysAgo"].Value)),
+        "DateTime_WeeksAgo": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_WeeksAgo"].Value)),
+        "DateTime_Today": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_Today"].Value)),
+        "DateTime_Tomorrow": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["DateTime_Tomorrow"].Value)),
+
+        // Calendar Fill Handle (calendar-fill-handle.js)
+        "FillHandle_DragToCopy": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["FillHandle_DragToCopy"].Value)),
+        "FillHandle_InvalidSource": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["FillHandle_InvalidSource"].Value)),
+        "FillHandle_Applying": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["FillHandle_Applying"].Value)),
+
+        // Calendar Inline Edit (calendar-inline-edit.js)
+        "InlineEdit_CouldNotUndo": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["InlineEdit_CouldNotUndo"].Value)),
+
+        // Calendar Radar (calendar-radar.js)
+        "Radar_Active": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Radar_Active"].Value)),
+        "Radar": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Radar"].Value)),
+        "Radar_FailedToLoad": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Radar_FailedToLoad"].Value)),
+        "Radar_ConflictDetected": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Radar_ConflictDetected"].Value)),
+
+        // Offline Handler (offline-handler.js)
+        "Offline_SavedOffline": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Offline_SavedOffline"].Value)),
+        "Offline_Retry": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Offline_Retry"].Value)),
+        "Offline_NoPendingActions": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Offline_NoPendingActions"].Value)),
+
+        // Roster Dock loading states (roster-dock.js)
+        "Roster_Loading": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_Loading"].Value)),
+        "Roster_FailedToLoad": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_FailedToLoad"].Value)),
+        "Roster_NoEmployees": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Roster_NoEmployees"].Value))
     };
 </script>

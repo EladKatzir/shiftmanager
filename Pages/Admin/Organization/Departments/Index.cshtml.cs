@@ -137,7 +137,8 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var department = await _db.Departments.FindAsync(id);
+        // SECURITY-AUDITED: SAFE — requires Grant:EditDepartment policy; consistent with GET handler
+        var department = await _db.Departments.IgnoreQueryFilters().FirstOrDefaultAsync(d => d.Id == id);
         if (department == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"];
@@ -159,7 +160,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
+        // SECURITY-AUDITED: SAFE — requires Grant:EditDepartment policy; consistent with GET handler
         var department = await _db.Departments
+            .IgnoreQueryFilters()
             .Include(d => d.Users)
             .FirstOrDefaultAsync(d => d.Id == id);
 

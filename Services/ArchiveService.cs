@@ -611,7 +611,9 @@ public class ArchiveService : IArchiveService
                     sa.CompanyId,
                     sa.ShiftInstanceId,
                     sa.UserId,
+                    userEmail = sa.User?.Email,
                     sa.TraineeUserId,
+                    traineeEmail = sa.Trainee?.Email,
                     CreatedAt = sa.CreatedAt.ToString("o")
                 }
             };

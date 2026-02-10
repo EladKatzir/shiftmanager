@@ -132,6 +132,10 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                             })
                         });
 
+                        if (!retryResponse.ok) {
+                            showToast(window.AppLocalizer.ErrorCreatingChore, 'error');
+                            return;
+                        }
                         const retryResult = await retryResponse.json();
 
                         if (retryResult.success) {
@@ -158,6 +162,10 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                 }
                 return;
             }
+
+            // Other error (400, 500, etc.)
+            showToast(window.AppLocalizer.ErrorCreatingChore, 'error');
+            return;
         }
 
         const result = await response.json();
@@ -236,6 +244,10 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                             })
                         });
 
+                        if (!retryResponse.ok) {
+                            showToast(window.AppLocalizer.ErrorCreatingOnDuty, 'error');
+                            return;
+                        }
                         const retryResult = await retryResponse.json();
 
                         if (retryResult.success) {
@@ -262,6 +274,10 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                 }
                 return;
             }
+
+            // Other error (400, 500, etc.)
+            showToast(window.AppLocalizer.ErrorCreatingOnDuty, 'error');
+            return;
         }
 
         const result = await response.json();
@@ -304,6 +320,8 @@ async function deleteItem(itemType, itemId) {
                 handleApiError(response);
                 return;
             }
+            showToast(window.AppLocalizer?.ErrorDeletingItem || 'Error deleting item', 'error');
+            return;
         }
 
         const result = await response.json();
@@ -391,11 +409,11 @@ function showUndoToast(choreId) {
                 toast.remove();
                 location.reload();
             } else {
-                showToast(data.message || 'Could not undo', 'error');
+                showToast(data.message || window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
                 toast.remove();
             }
         } catch (err) {
-            showToast('Could not undo', 'error');
+            showToast(window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
             toast.remove();
         }
     });

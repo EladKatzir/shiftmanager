@@ -155,7 +155,7 @@ public class FeatureFlagService : IFeatureFlagService
         await _context.SaveChangesAsync();
 
         // Invalidate cache for this flag
-        InvalidateCache(flagName);
+        InvalidateCache(flagName, companyId, userId);
     }
 
     /// <inheritdoc/>
@@ -208,26 +208,16 @@ public class FeatureFlagService : IFeatureFlagService
             _logger.LogInformation("Deleted feature flag {FlagName} (Id: {FlagId})", flagName, flagId);
 
             // Invalidate cache for this flag
-            InvalidateCache(flagName);
+            InvalidateCache(flagName, flag.CompanyId, flag.UserId);
         }
     }
 
     /// <inheritdoc/>
-    public void InvalidateCache(string? flagName = null)
+    public void InvalidateCache(string flagName, int? companyId = null, int? userId = null)
     {
-        if (flagName == null)
-        {
-            // Can't easily clear all cache entries with IMemoryCache,
-            // but since entries expire after 1 minute, this is acceptable
-            _logger.LogDebug("Cache invalidation requested for all feature flags");
-        }
-        else
-        {
-            // Remove all cached entries for this flag name
-            // Note: We can't enumerate all keys in IMemoryCache, but the 1-minute expiry
-            // ensures changes take effect within that window
-            _logger.LogDebug("Cache invalidation requested for feature flag {FlagName}", flagName);
-        }
+        var cacheKey = BuildCacheKey(flagName, userId, companyId);
+        _cache.Remove(cacheKey);
+        _logger.LogDebug("Cache invalidated for feature flag {FlagName} (key: {CacheKey})", flagName, cacheKey);
     }
 
     /// <summary>

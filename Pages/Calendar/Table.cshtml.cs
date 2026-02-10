@@ -1474,9 +1474,10 @@ public class TableModel : PageModel
                 var today = DateOnly.FromDateTime(DateTime.Today);
                 startDate = today.AddDays(-(int)today.DayOfWeek); // Start of week (Sunday)
             }
-            else
+            else if (!DateOnly.TryParse(start, out startDate))
             {
-                startDate = DateOnly.Parse(start);
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                startDate = today.AddDays(-(int)today.DayOfWeek);
             }
 
             DateOnly endDate = viewMode switch

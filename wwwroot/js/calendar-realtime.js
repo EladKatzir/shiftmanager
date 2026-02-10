@@ -337,12 +337,23 @@
         }
     }
 
+    // Track event handlers for cleanup
+    let shadowRefreshHandlers = [];
+
     /**
      * Set up shadow refresh triggers for user interactions.
      */
     function setupShadowRefreshTriggers() {
+        // Remove any previous listeners first
+        removeShadowRefreshTriggers();
+
+        function addTrackedListener(target, event, handler) {
+            target.addEventListener(event, handler);
+            shadowRefreshHandlers.push({ target, event, handler });
+        }
+
         // Cell click - refresh to get latest data before editing
-        document.addEventListener('click', (e) => {
+        addTrackedListener(document, 'click', (e) => {
             const cell = e.target.closest('.excel-cell[data-editable="true"]');
             if (cell) {
                 triggerShadowRefresh();
@@ -350,7 +361,7 @@
         });
 
         // Date navigation buttons
-        document.addEventListener('click', (e) => {
+        addTrackedListener(document, 'click', (e) => {
             const navButton = e.target.closest('[data-date-nav], .date-nav-btn, .calendar-nav-btn');
             if (navButton) {
                 // Slight delay to let the page update
@@ -359,7 +370,7 @@
         });
 
         // Filter/scope changes
-        document.addEventListener('change', (e) => {
+        addTrackedListener(document, 'change', (e) => {
             const scopeSelector = e.target.closest('[data-scope-filter], .scope-switcher select, .view-mode-toggle');
             if (scopeSelector) {
                 triggerShadowRefresh();
@@ -367,13 +378,23 @@
         });
 
         // Form submissions that modify data
-        document.addEventListener('submit', (e) => {
+        addTrackedListener(document, 'submit', (e) => {
             const form = e.target;
             if (form.closest('.excel-calendar') || form.matches('[data-calendar-form]')) {
                 // Refresh after form completes (handled by fetch response typically)
                 setTimeout(() => triggerShadowRefresh(), 500);
             }
         });
+    }
+
+    /**
+     * Remove shadow refresh event listeners to prevent memory leaks.
+     */
+    function removeShadowRefreshTriggers() {
+        for (const { target, event, handler } of shadowRefreshHandlers) {
+            target.removeEventListener(event, handler);
+        }
+        shadowRefreshHandlers = [];
     }
 
     /**
@@ -494,6 +515,7 @@
      */
     async function dispose() {
         stopPolling();
+        removeShadowRefreshTriggers();
 
         if (shadowRefreshTimer) {
             clearTimeout(shadowRefreshTimer);

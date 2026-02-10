@@ -29,7 +29,7 @@ public class CompanyFilterService : ICompanyFilterService
         get
         {
             var userIdClaim = CurrentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return userIdClaim != null ? int.Parse(userIdClaim) : null;
+            return int.TryParse(userIdClaim, out var uid) ? uid : null;
         }
     }
 

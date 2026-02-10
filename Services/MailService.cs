@@ -27,6 +27,7 @@ public class MailService : IMailService
     private readonly IEmailApiLogService _emailApiLogService;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IEmailTemplateService _emailTemplateService;
+    private readonly EmailBackgroundQueue _emailQueue;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
@@ -38,7 +39,8 @@ public class MailService : IMailService
         IEmailConfigService emailConfigService,
         IEmailApiLogService emailApiLogService,
         IStringLocalizer<SharedResources> localizer,
-        IEmailTemplateService emailTemplateService)
+        IEmailTemplateService emailTemplateService,
+        EmailBackgroundQueue emailQueue)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -47,6 +49,7 @@ public class MailService : IMailService
         _emailApiLogService = emailApiLogService ?? throw new ArgumentNullException(nameof(emailApiLogService));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
+        _emailQueue = emailQueue ?? throw new ArgumentNullException(nameof(emailQueue));
     }
 
     /// <summary>
@@ -152,13 +155,36 @@ public class MailService : IMailService
     }
 
     /// <summary>
-    /// Send an email notification asynchronously with retry logic and error handling.
+    /// Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
     /// </summary>
-    /// <param name="recipient">Email address of the recipient</param>
-    /// <param name="subject">Email subject line</param>
-    /// <param name="htmlBody">HTML-formatted email body</param>
-    /// <returns>True if email sent successfully, false otherwise</returns>
-    public async Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
+    public Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
+    {
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            _logger.LogWarning("Cannot queue email: recipient is null or empty");
+            return Task.FromResult(false);
+        }
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            _logger.LogWarning("Cannot queue email to {Recipient}: subject is null or empty", recipient);
+            return Task.FromResult(false);
+        }
+
+        var queued = _emailQueue.Enqueue(new QueuedEmail(recipient, subject, htmlBody));
+        if (queued)
+        {
+            _logger.LogDebug("Email queued for background delivery to {Recipient}", recipient);
+        }
+
+        return Task.FromResult(queued);
+    }
+
+    /// <summary>
+    /// Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
+    /// Do not call from HTTP request handlers — use SendMailAsync instead.
+    /// </summary>
+    public async Task<bool> SendMailDirectAsync(string recipient, string subject, string htmlBody)
     {
         // Start timing for diagnostics
         var stopwatch = Stopwatch.StartNew();

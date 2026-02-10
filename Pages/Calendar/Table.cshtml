@@ -1487,27 +1487,27 @@
 <div class="view-mode-toggle" style="margin-bottom: 1rem;">
     <a href="/Calendar/Table?view=week&start=@Model.StartDate.ToString("yyyy-MM-dd")"
        class="view-mode-btn @(Model.ViewMode == "week" ? "active" : "")">
-        Week
+        <loc key="ViewMode_Week" />
     </a>
     <a href="/Calendar/Table?view=2weeks&start=@Model.StartDate.ToString("yyyy-MM-dd")"
        class="view-mode-btn @(Model.ViewMode == "2weeks" ? "active" : "")">
-        2 Weeks
+        <loc key="ViewMode_2Weeks" />
     </a>
     <a href="/Calendar/Table?view=month&start=@Model.StartDate.ToString("yyyy-MM-dd")"
        class="view-mode-btn @(Model.ViewMode == "month" ? "active" : "")">
-        Month
+        <loc key="ViewMode_Month" />
     </a>
 </div>
 
 <div class="nav-buttons">
     <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
-        ← Previous
+        ← @Localizer["Pagination_Previous"]
     </a>
     <span style="font-weight: 600;">
         @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
     </span>
     <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
-        Next →
+        @Localizer["Pagination_Next"] →
     </a>
     <a href="/Calendar/Table?view=@Model.ViewMode" class="btn btn-primary">
         @Localizer["CurrentWeek"]
@@ -1522,9 +1522,9 @@
 @if (!Model.ShiftTypes.Any())
 {
     <div class="alert alert--warning" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem;">
-        <strong>⚠️ No shift types configured.</strong>
+        <strong>⚠️ <loc key="Calendar_NoShiftTypesConfigured" /></strong>
         <p style="margin: 0.5rem 0 0 0;">
-            <a href="/Owner/Blueprints">Configure shift types</a> to start scheduling.
+            <a href="/Owner/Blueprints"><loc key="Calendar_ConfigureShiftTypes" /></a>
         </p>
     </div>
 }
@@ -1535,7 +1535,7 @@
            data-end-date="@Model.EndDate.ToString("yyyy-MM-dd")">
         <thead>
             <tr>
-                <th class="shift-name-col">Shift</th>
+                <th class="shift-name-col"><loc key="Shift" /></th>
                 @foreach (var date in Model.Dates)
                 {
                     <th>
@@ -1566,7 +1566,7 @@
                                 <input type="text"
                                        id="name-@shiftType.Id"
                                        value="@shiftType.Name"
-                                       placeholder="Shift Name"
+                                       placeholder="@Localizer["Label_ShiftName"]"
                                        style="font-weight: 600;" />
                                 <div style="display: flex; gap: 0.25rem;">
                                     <input type="time"
@@ -1624,7 +1624,7 @@
                                                         <div class="primary-user">@assignment.EmployeeName</div>
                                                         @if (!string.IsNullOrEmpty(assignment.TraineeName))
                                                         {
-                                                            <div class="trainee-user">Trainee: @assignment.TraineeName</div>
+                                                            <div class="trainee-user">@Localizer["Trainee"]: @assignment.TraineeName</div>
                                                         }
                                                     </div>
                                                     <div class="slot-actions">⋮</div>
@@ -1773,29 +1773,29 @@
 <div class="fill-options-modal" id="fillOptionsModal">
     <div class="fill-options-content">
         <div class="fill-options-header">
-            <h3>📋 Copy Shift Across Days</h3>
+            <h3>📋 <loc key="Calendar_CopyShiftAcrossDays" /></h3>
             <button onclick="closeFillOptions()" loc-aria-label="Aria_CloseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
         </div>
 
         <div class="fill-preview-info">
-            <p><strong>Source:</strong> <span id="fillSourceInfo"></span></p>
-            <p><strong>Target Days:</strong> <span id="fillTargetInfo"></span></p>
+            <p><strong><loc key="Calendar_FillSource" />:</strong> <span id="fillSourceInfo"></span></p>
+            <p><strong><loc key="Calendar_FillTargetDays" />:</strong> <span id="fillTargetInfo"></span></p>
         </div>
 
         <div id="fillOptionsContainer">
             <div class="fill-option-item" data-mode="exact" onclick="selectFillOption('exact')">
-                <div class="fill-option-title">📄 Copy Exact</div>
-                <div class="fill-option-desc">Copy all assignments, trainees, and manual overrides to target days</div>
+                <div class="fill-option-title">📄 <loc key="Calendar_CopyExact" /></div>
+                <div class="fill-option-desc"><loc key="Calendar_CopyExactDesc" /></div>
             </div>
 
             <div class="fill-option-item" data-mode="staffing" onclick="selectFillOption('staffing')">
-                <div class="fill-option-title">👥 Copy Staffing Only</div>
-                <div class="fill-option-desc">Copy the number of required staff, but leave assignments empty</div>
+                <div class="fill-option-title">👥 <loc key="Calendar_CopyStaffingOnly" /></div>
+                <div class="fill-option-desc"><loc key="Calendar_CopyStaffingOnlyDesc" /></div>
             </div>
 
             <div class="fill-option-item" data-mode="program" onclick="selectFillOption('program')" style="display: none;">
-                <div class="fill-option-title">🔄 Apply Program Defaults</div>
-                <div class="fill-option-desc">Create shifts from Program template (if linked to a Program)</div>
+                <div class="fill-option-title">🔄 <loc key="Calendar_ApplyProgramDefaults" /></div>
+                <div class="fill-option-desc"><loc key="Calendar_ApplyProgramDefaultsDesc" /></div>
             </div>
         </div>
 
@@ -1832,7 +1832,10 @@ const i18n = {
     failedToRemoveUser: '@Html.Raw(Localizer["FailedToRemoveUser"])',
     deleteShift: '@Html.Raw(Localizer["DeleteShift"])',
     deleteShiftConfirm: '@Html.Raw(Localizer["DeleteShiftConfirm"])',
-    failedToDeleteShift: '@Html.Raw(Localizer["FailedToDeleteShift"])'
+    failedToDeleteShift: '@Html.Raw(Localizer["FailedToDeleteShift"])',
+    resetToProgramConfirm: '@Html.Raw(Localizer["Calendar_ResetToProgramConfirm"])',
+    loadingEmployees: '@Html.Raw(Localizer["Calendar_LoadingEmployees"])',
+    roster: '@Html.Raw(Localizer["Roster"])'
 };
 
 // Shift Row Editing Functions
@@ -2670,7 +2673,7 @@ document.addEventListener('keydown', function(event) {
 async function resetToProgram(instanceId, event) {
     event.stopPropagation();
 
-    if (!confirm('Reset this shift to Program defaults? This will restore staffing requirements and clear manual overrides.')) {
+    if (!confirm(i18n.resetToProgramConfirm)) {
         return;
     }
 
@@ -2753,7 +2756,7 @@ async function detachFromProgram(instanceId, reason) {
         <div id="rosterEmployeeList">
             <!-- Employee items will be dynamically populated -->
             <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                <p>Loading employees...</p>
+                <p><loc key="Calendar_LoadingEmployees" /></p>
             </div>
         </div>
     </div>
@@ -2761,7 +2764,7 @@ async function detachFromProgram(instanceId, reason) {
 
 <!-- Roster Dock Toggle Button (Fixed Position) -->
 <button id="rosterDockToggle" class="roster-toggle-btn" loc-title="Title_OpenRosterDock">
-    ☰ Roster
+    ☰ <loc key="Roster" />
 </button>
 
 <!-- Radar Mode Toggle Button (Fixed Position) -->

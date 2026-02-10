@@ -111,7 +111,8 @@ public class GriffinCallbackModel : LocalizedPageModel
         var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var email = principal.FindFirst(ClaimTypes.Email)?.Value;
         var role = principal.FindFirst(ClaimTypes.Role)?.Value;
-        _securityLogger.LogAuthenticationSuccess(int.Parse(userId!), email!, role!, ipAddress);
+        if (int.TryParse(userId, out var parsedUid))
+            _securityLogger.LogAuthenticationSuccess(parsedUid, email ?? "", role ?? "", ipAddress);
 
         // 7. Redirect
         if (!string.IsNullOrEmpty(returnUrl))

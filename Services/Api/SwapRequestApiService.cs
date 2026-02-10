@@ -237,10 +237,22 @@ public class SwapRequestApiService
             }
 
             // Perform the swap
+            if (swapRequest.FromAssignment == null)
+            {
+                await transaction.RollbackAsync();
+                return (null, "From assignment not found — it may have been deleted.");
+            }
+
             if (swapRequest.ToAssignmentId.HasValue)
             {
-                var fromUserId = swapRequest.FromAssignment!.UserId;
-                var toUserId = swapRequest.ToAssignment!.UserId;
+                if (swapRequest.ToAssignment == null)
+                {
+                    await transaction.RollbackAsync();
+                    return (null, "To assignment not found — it may have been deleted.");
+                }
+
+                var fromUserId = swapRequest.FromAssignment.UserId;
+                var toUserId = swapRequest.ToAssignment.UserId;
 
                 swapRequest.FromAssignment.UserId = toUserId;
                 swapRequest.ToAssignment.UserId = fromUserId;
@@ -248,7 +260,7 @@ public class SwapRequestApiService
             else
             {
                 // Just remove from assignment
-                swapRequest.FromAssignment!.UserId = null;
+                swapRequest.FromAssignment.UserId = null;
             }
 
             // Update swap request status
@@ -316,12 +328,23 @@ public class SwapRequestApiService
             return (null, $"Swap request is already {swapRequest.Status}");
         }
 
-        swapRequest.Status = RequestStatus.Declined;
-        swapRequest.ReviewedAt = DateTime.UtcNow;
-        swapRequest.ReviewedBy = reviewerId;
-        swapRequest.DeclineReason = declineReason;
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            swapRequest.Status = RequestStatus.Declined;
+            swapRequest.ReviewedAt = DateTime.UtcNow;
+            swapRequest.ReviewedBy = reviewerId;
+            swapRequest.DeclineReason = declineReason;
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to decline swap request {RequestId}", requestId);
+            return (null, "Failed to decline swap - please try again");
+        }
 
         _logger.LogInformation("Swap request declined: Id={Id}, Reviewer={Reviewer}, Reason={Reason}",
             requestId, reviewerId, declineReason);

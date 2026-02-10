@@ -292,6 +292,10 @@ builder.Services.AddScoped<IVacationApprovalService, VacationApprovalService>();
 // Tech Shift Services - Department-scoped tech shift eligibility and filtering
 builder.Services.AddScoped<ITechShiftService, TechShiftService>();
 
+// Background email queue: emails are enqueued by MailService and sent by the processor
+builder.Services.AddSingleton<EmailBackgroundQueue>();
+builder.Services.AddHostedService<EmailBackgroundProcessor>();
+
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();
 

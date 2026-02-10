@@ -32,22 +32,20 @@ public class CreateModel : LocalizedPageModel
     [BindProperty] public int? SelectedAssignmentId { get; set; }
     [BindProperty] public int? ToUserId { get; set; }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            Response.Redirect("/Auth/Login");
-            return;
+            return RedirectToPage("/Auth/Login");
         }
 
         // Block trainees from creating swap requests
         var currentUser = await _db.Users.FindAsync(userId);
         if (currentUser?.Role == UserRole.Trainee)
         {
-            Response.Redirect("/AccessDenied");
-            return;
+            return RedirectToPage("/AccessDenied");
         }
 
         var upcoming = await (from a in _db.ShiftAssignments
@@ -60,6 +58,7 @@ public class CreateModel : LocalizedPageModel
 
         var companyId = _companyContext.GetCompanyIdOrThrow();
         OtherUsers = await _db.Users.Where(u => u.CompanyId == companyId && u.IsActive && u.Id != userId).OrderBy(u => u.DisplayName).ToListAsync();
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -131,7 +130,7 @@ public class CreateModel : LocalizedPageModel
             return Page();
         }
 
-        _db.SwapRequests.Add(new SwapRequest { FromAssignmentId = SelectedAssignmentId.Value, ToUserId = ToUserId.Value });
+        _db.SwapRequests.Add(new SwapRequest { FromAssignmentId = SelectedAssignmentId.Value, FromUserId = userId, ToUserId = ToUserId.Value });
         await _db.SaveChangesAsync();
         return RedirectToPage("/Requests/Index");
     }

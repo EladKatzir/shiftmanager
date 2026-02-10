@@ -59,8 +59,13 @@ public class SaveScoreModel : PageModel
                 };
             }
 
-            var userId = int.Parse(userIdClaim);
-            var companyId = int.Parse(companyIdClaim);
+            if (!int.TryParse(userIdClaim, out var userId) || !int.TryParse(companyIdClaim, out var companyId))
+            {
+                return new JsonResult(new { success = false, error = "Invalid user data" })
+                {
+                    StatusCode = 400
+                };
+            }
 
             // Create game score entry
             var gameScore = new GameScore

@@ -126,7 +126,8 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var molecule = await _db.Molecules.FindAsync(id);
+        // SECURITY-AUDITED: SAFE — requires Grant:EditMolecule policy; consistent with GET handler
+        var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == id);
         if (molecule == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"];
@@ -148,7 +149,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
+        // SECURITY-AUDITED: SAFE — requires Grant:EditMolecule policy; consistent with GET handler
         var molecule = await _db.Molecules
+            .IgnoreQueryFilters()
             .Include(m => m.Companies)
             .Include(m => m.Departments)
             .FirstOrDefaultAsync(m => m.Id == id);

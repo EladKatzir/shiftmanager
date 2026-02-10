@@ -9,13 +9,20 @@ namespace ShiftManager.Services;
 public interface IMailService
 {
     /// <summary>
-    /// Send an email notification asynchronously.
+    /// Enqueue an email for background delivery.
+    /// Returns true if successfully queued, false if the queue is full.
     /// </summary>
     /// <param name="recipient">Email address of the recipient</param>
     /// <param name="subject">Email subject line</param>
     /// <param name="htmlBody">HTML-formatted email body</param>
-    /// <returns>True if email sent successfully, false otherwise</returns>
+    /// <returns>True if email queued successfully, false otherwise</returns>
     Task<bool> SendMailAsync(string recipient, string subject, string htmlBody);
+
+    /// <summary>
+    /// Send an email directly (synchronous HTTP call). Used by the background processor.
+    /// Do not call from HTTP request handlers — use SendMailAsync instead.
+    /// </summary>
+    Task<bool> SendMailDirectAsync(string recipient, string subject, string htmlBody);
 
     /// <summary>
     /// Send shift assignment notification email.

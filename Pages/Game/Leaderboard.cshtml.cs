@@ -35,8 +35,9 @@ public class LeaderboardModel : PageModel
         if (string.IsNullOrEmpty(userIdClaim) || string.IsNullOrEmpty(companyIdClaim))
             return;
 
-        CurrentUserId = int.Parse(userIdClaim);
-        var companyId = int.Parse(companyIdClaim);
+        if (!int.TryParse(userIdClaim, out var parsedUserId) || !int.TryParse(companyIdClaim, out var companyId))
+            return;
+        CurrentUserId = parsedUserId;
 
         // E-08: Scope leaderboard by company to prevent cross-tenant user name exposure
         var companyUserIds = await _db.Users

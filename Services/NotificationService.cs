@@ -425,9 +425,10 @@ public class NotificationService : INotificationService
     {
         try
         {
-            // Get all owner users
+            // Get owner users (capped for safety — typically 1-5 per company)
             var owners = await _db.Users
                 .Where(u => u.Role == UserRole.Owner && u.IsActive)
+                .Take(100)
                 .ToListAsync();
 
             if (!owners.Any())
@@ -518,12 +519,17 @@ public class NotificationService : INotificationService
             var lowerBound = currentTime.Add(-timeWindow);
             var upperBound = currentTime.Add(timeWindow);
 
+            // Handle midnight wrap-around (e.g., 00:05 - 15min = 23:50)
+            // When lowerBound > upperBound, the window crosses midnight
+            var crossesMidnight = lowerBound > upperBound;
+
             var userIds = await _db.DailyNotificationPreferences
                 .Where(p => p.CompanyId == companyId
                          && p.IsActive
                          && p.ReceiveDailyDigest
-                         && p.PreferredTime >= lowerBound
-                         && p.PreferredTime <= upperBound)
+                         && (crossesMidnight
+                             ? (p.PreferredTime >= lowerBound || p.PreferredTime <= upperBound)
+                             : (p.PreferredTime >= lowerBound && p.PreferredTime <= upperBound)))
                 .Select(p => p.UserId)
                 .ToListAsync();
 
@@ -1031,10 +1037,11 @@ public class NotificationService : INotificationService
 
     public async Task CreateTraineeAddedNotificationAsync(int primaryUserId, int traineeUserId, string traineeName, string shiftTypeName, DateOnly date, TimeOnly start, TimeOnly end)
     {
-        var title = "Trainee Added to Your Shift";
-        var message = $"{traineeName} has been added as a trainee to your {shiftTypeName} shift on {date:MMM dd, yyyy} ({start:HH:mm} - {end:HH:mm})";
+        var title = _localizer["NotificationTraineeAddedTitle"];
+        var message = string.Format(_localizer["NotificationTraineeAddedMessage"],
+            traineeName, shiftTypeName, date.ToString("MMM dd, yyyy"), start.ToString("HH:mm"), end.ToString("HH:mm"));
 
-        await CreateNotificationAsync(primaryUserId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+        await CreateNotificationAsync(primaryUserId, NotificationType.EmployeeTraineeAdded, title, message, null, "ShiftAssignment");
 
         // Send email notification
         try
@@ -1061,33 +1068,43 @@ public class NotificationService : INotificationService
 
     public async Task CreateTraineeChangedNotificationAsync(int primaryUserId, int oldTraineeUserId, int newTraineeUserId, string oldTraineeName, string newTraineeName, string shiftTypeName, DateOnly date)
     {
-        var title = "Trainee Changed on Your Shift";
-        var message = $"Your trainee for {shiftTypeName} on {date:MMM dd, yyyy} has been changed from {oldTraineeName} to {newTraineeName}";
+        var title = _localizer["NotificationTraineeChangedTitle"];
+        var message = string.Format(_localizer["NotificationTraineeChangedMessage"],
+            shiftTypeName, date.ToString("MMM dd, yyyy"), oldTraineeName, newTraineeName);
 
-        await CreateNotificationAsync(primaryUserId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+        await CreateNotificationAsync(primaryUserId, NotificationType.EmployeeTraineeAdded, title, message, null, "ShiftAssignment");
 
-        // Optionally notify old and new trainees
-        await CreateNotificationAsync(oldTraineeUserId, NotificationType.ShiftRemoved, "Trainee Assignment Removed", $"You are no longer a trainee for {shiftTypeName} on {date:MMM dd, yyyy}", null, "ShiftAssignment");
-        await CreateNotificationAsync(newTraineeUserId, NotificationType.ShiftAdded, "New Trainee Assignment", $"You have been assigned as a trainee for {shiftTypeName} on {date:MMM dd, yyyy}", null, "ShiftAssignment");
+        // Notify old and new trainees
+        var removedTitle = _localizer["NotificationTraineeAssignmentRemovedTitle"];
+        var removedMessage = string.Format(_localizer["NotificationTraineeAssignmentRemovedMessage"], shiftTypeName, date.ToString("MMM dd, yyyy"));
+        await CreateNotificationAsync(oldTraineeUserId, NotificationType.TraineeShadowingRemoved, removedTitle, removedMessage, null, "ShiftAssignment");
+
+        var addedTitle = _localizer["NotificationNewTraineeAssignmentTitle"];
+        var addedMessage = string.Format(_localizer["NotificationNewTraineeAssignmentMessage"], shiftTypeName, date.ToString("MMM dd, yyyy"));
+        await CreateNotificationAsync(newTraineeUserId, NotificationType.TraineeShadowingAdded, addedTitle, addedMessage, null, "ShiftAssignment");
     }
 
     public async Task CreateTraineeRemovedNotificationAsync(int primaryUserId, int traineeUserId, string traineeName, string shiftTypeName, DateOnly date)
     {
-        var title = "Trainee Removed from Your Shift";
-        var message = $"{traineeName} has been removed as a trainee from your {shiftTypeName} shift on {date:MMM dd, yyyy}";
+        var title = _localizer["NotificationTraineeRemovedTitle"];
+        var message = string.Format(_localizer["NotificationTraineeRemovedMessage"],
+            traineeName, shiftTypeName, date.ToString("MMM dd, yyyy"));
 
-        await CreateNotificationAsync(primaryUserId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
+        await CreateNotificationAsync(primaryUserId, NotificationType.EmployeeTraineeRemoved, title, message, null, "ShiftAssignment");
 
         // Notify trainee
-        await CreateNotificationAsync(traineeUserId, NotificationType.ShiftRemoved, "Trainee Assignment Removed", $"You are no longer a trainee for {shiftTypeName} on {date:MMM dd, yyyy}", null, "ShiftAssignment");
+        var traineeTitle = _localizer["NotificationTraineeAssignmentRemovedTitle"];
+        var traineeMessage = string.Format(_localizer["NotificationTraineeAssignmentRemovedMessage"], shiftTypeName, date.ToString("MMM dd, yyyy"));
+        await CreateNotificationAsync(traineeUserId, NotificationType.TraineeShadowingRemoved, traineeTitle, traineeMessage, null, "ShiftAssignment");
     }
 
     // ============= Ops Console Scheduler: Staffing Change Notifications =============
 
     public async Task CreateSlotRemovedNotificationAsync(int affectedUserId, string shiftTypeName, DateOnly date, TimeOnly start, TimeOnly end, string reason)
     {
-        var title = "Shift Assignment Removed";
-        var message = $"Your {shiftTypeName} shift on {date:MMM dd, yyyy} ({start:HH:mm} - {end:HH:mm}) has been removed. Reason: {reason}";
+        var title = _localizer["NotificationSlotRemovedTitle"];
+        var message = string.Format(_localizer["NotificationSlotRemovedMessage"],
+            shiftTypeName, date.ToString("MMM dd, yyyy"), start.ToString("HH:mm"), end.ToString("HH:mm"), reason);
 
         await CreateNotificationAsync(affectedUserId, NotificationType.ShiftRemoved, title, message, null, "ShiftAssignment");
 
@@ -1118,8 +1135,9 @@ public class NotificationService : INotificationService
 
     public async Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription)
     {
-        var title = "Shift Details Modified";
-        var message = $"Your {shiftTypeName} shift on {date:MMM dd, yyyy} has been modified: {changeDescription}";
+        var title = _localizer["NotificationShiftModifiedTitle"];
+        var message = string.Format(_localizer["NotificationShiftModifiedMessage"],
+            shiftTypeName, date.ToString("MMM dd, yyyy"), changeDescription);
 
         foreach (var userId in assignedUserIds)
         {

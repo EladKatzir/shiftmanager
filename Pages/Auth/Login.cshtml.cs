@@ -280,6 +280,13 @@ public class LoginModel : LocalizedPageModel
                 return RedirectToPage("/Auth/ForgotPassword");
             }
 
+            // B-05: Redirect new users to onboarding wizard on first login
+            if (!user.HasCompletedOnboarding)
+            {
+                _logger.LogInformation("User {UserId} has not completed onboarding — redirecting to wizard", user.Id);
+                return RedirectToPage("/My/Onboarding");
+            }
+
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 

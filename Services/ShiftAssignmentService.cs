@@ -126,13 +126,14 @@ public class ShiftAssignmentService : IShiftAssignmentService
             .Select(sa => new
             {
                 sa.UserId,
-                Hours = GetShiftHours(sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End)
+                Start = sa.ShiftInstance.ShiftType.Start,
+                End = sa.ShiftInstance.ShiftType.End
             })
             .ToListAsync();
 
         var assignmentCounts = weekAssignments
             .GroupBy(a => a.UserId)
-            .ToDictionary(g => g.Key ?? 0, g => new { Count = g.Count(), Hours = g.Sum(a => a.Hours) });
+            .ToDictionary(g => g.Key ?? 0, g => new { Count = g.Count(), Hours = g.Sum(a => GetShiftHours(a.Start, a.End)) });
 
         // Check if user is in shift grouping
         var groupingCompanyIdsSet = effectiveGroupingId.HasValue
@@ -214,13 +215,15 @@ public class ShiftAssignmentService : IShiftAssignmentService
         var startOfWeek = GetStartOfWeek(shiftInstance.WorkDate);
         var endOfWeek = startOfWeek.AddDays(7);
 
-        var weeklyHours = await _db.ShiftAssignments
+        var weekShiftTimes = await _db.ShiftAssignments
             .Include(sa => sa.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
             .Where(sa => sa.UserId == userId
                 && sa.ShiftInstance.WorkDate >= startOfWeek
                 && sa.ShiftInstance.WorkDate < endOfWeek)
-            .SumAsync(sa => GetShiftHours(sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End));
+            .Select(sa => new { sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End })
+            .ToListAsync();
+        var weeklyHours = weekShiftTimes.Sum(s => GetShiftHours(s.Start, s.End));
 
         var shiftHours = GetShiftHours(shiftInstance.ShiftType.Start, shiftInstance.ShiftType.End);
         bool exceedsWeeklyCap = (weeklyHours + shiftHours) > weeklyCap;
@@ -294,38 +297,70 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 ErrorMessage: _localizer["Error_ShiftNotFound"]);
         }
 
-        // Check if already assigned
-        var existingAssignment = await _db.ShiftAssignments
-            .FirstOrDefaultAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId == userId);
-
-        if (existingAssignment != null)
+        // Wrap check-then-act in transaction to reduce race window for concurrent assignments
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
         {
+            // Check if already assigned
+            var existingAssignment = await _db.ShiftAssignments
+                .FirstOrDefaultAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId == userId);
+
+            if (existingAssignment != null)
+            {
+                await transaction.RollbackAsync();
+                return new ShiftAssignmentResult(
+                    Success: false,
+                    AssignmentId: existingAssignment.Id,
+                    ErrorKey: "Error_AlreadyAssigned",
+                    ErrorMessage: _localizer["Error_AlreadyAssigned"]);
+            }
+
+            // Check capacity — prevent over-staffing beyond StaffingRequired
+            var currentAssignedCount = await _db.ShiftAssignments
+                .CountAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId != null);
+            if (currentAssignedCount >= shiftInstance.StaffingRequired)
+            {
+                await transaction.RollbackAsync();
+                return new ShiftAssignmentResult(
+                    Success: false,
+                    AssignmentId: null,
+                    ErrorKey: "Error_ShiftFullyStaffed",
+                    ErrorMessage: _localizer["Error_ShiftFullyStaffed"]);
+            }
+
+            var assignment = new ShiftAssignment
+            {
+                CompanyId = shiftInstance.CompanyId,
+                ShiftInstanceId = shiftInstanceId,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.ShiftAssignments.Add(assignment);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Assigned user {UserId} to shift {ShiftInstanceId} by {AssignedBy}",
+                userId, shiftInstanceId, assignedByUserId);
+
+            return new ShiftAssignmentResult(
+                Success: true,
+                AssignmentId: assignment.Id,
+                ErrorKey: null,
+                ErrorMessage: null);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning(
+                "Concurrent assignment conflict for user {UserId} on shift {ShiftInstanceId}",
+                userId, shiftInstanceId);
             return new ShiftAssignmentResult(
                 Success: false,
-                AssignmentId: existingAssignment.Id,
+                AssignmentId: null,
                 ErrorKey: "Error_AlreadyAssigned",
                 ErrorMessage: _localizer["Error_AlreadyAssigned"]);
         }
-
-        var assignment = new ShiftAssignment
-        {
-            CompanyId = shiftInstance.CompanyId,
-            ShiftInstanceId = shiftInstanceId,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _db.ShiftAssignments.Add(assignment);
-        await _db.SaveChangesAsync();
-
-        _logger.LogInformation("Assigned user {UserId} to shift {ShiftInstanceId} by {AssignedBy}",
-            userId, shiftInstanceId, assignedByUserId);
-
-        return new ShiftAssignmentResult(
-            Success: true,
-            AssignmentId: assignment.Id,
-            ErrorKey: null,
-            ErrorMessage: null);
     }
 
     public async Task<bool> UnassignShiftAsync(

@@ -104,6 +104,18 @@ public class ScheduleExportService : IScheduleExportService
             .Where(sa => shiftInstanceIds.Contains(sa.ShiftInstanceId))
             .ToListAsync();
 
+        // Apply department filter to assignments if specified
+        if (request.DepartmentId.HasValue)
+        {
+            var departmentUserIds = await _db.Users
+                .Where(u => u.DepartmentId == request.DepartmentId.Value)
+                .Select(u => u.Id)
+                .ToListAsync();
+            assignments = assignments
+                .Where(a => a.UserId.HasValue && departmentUserIds.Contains(a.UserId.Value))
+                .ToList();
+        }
+
         // Query chores if requested
         List<Chore> chores = new();
         if (request.IncludeChores)
@@ -116,13 +128,16 @@ public class ScheduleExportService : IScheduleExportService
         }
 
         // Query on-duty assignments if requested
-        // OnDuty is a global table (no query filters), so we need to filter by date only
+        // OnDuty is a global table (no query filters) — scope to current company via User relationship
         List<OnDuty> onDuties = new();
         if (request.IncludeOnDuty)
         {
+            var companyUserIdsQuery = _db.Users.Select(u => u.Id); // IQueryable — translated to SQL subquery
             onDuties = await _db.OnDuties
                 .Include(od => od.User)
-                .Where(od => od.Date >= startDate && od.Date <= endDate && od.CanceledAt == null)
+                .Where(od => od.Date >= startDate && od.Date <= endDate
+                          && od.CanceledAt == null
+                          && companyUserIdsQuery.Contains(od.UserId))
                 .OrderBy(od => od.Date)
                 .ThenBy(od => od.Type)
                 .ToListAsync();

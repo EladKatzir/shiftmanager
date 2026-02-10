@@ -1,6 +1,9 @@
 @model ShiftManager.ViewComponents.HierarchyNodeViewModel
 @using ShiftManager.Models.Support
 @using ShiftManager.ViewComponents
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
 
 @{
     var molecule = Model.Molecule!;
@@ -14,9 +17,9 @@
     };
     var moleculeTypeLabel = molecule.Type switch
     {
-        MoleculeType.Workforce => "Workforce",
-        MoleculeType.Tech => "Tech",
-        MoleculeType.Helper => "Helper",
+        MoleculeType.Workforce => Localizer["Workforce"].Value,
+        MoleculeType.Tech => Localizer["Tech"].Value,
+        MoleculeType.Helper => Localizer["Helper"].Value,
         _ => molecule.Type.ToString()
     };
 }
@@ -47,15 +50,15 @@
         <span class="htree-node__type @moleculeTypeClass">@moleculeTypeLabel</span>
         @if (molecule.Companies.Count > 0)
         {
-            <span class="htree-node__count">@molecule.Companies.Count companies</span>
+            <span class="htree-node__count">@molecule.Companies.Count @Localizer["Companies"]</span>
         }
         @if (molecule.Departments.Count > 0)
         {
-            <span class="htree-node__count">@molecule.Departments.Count departments</span>
+            <span class="htree-node__count">@molecule.Departments.Count @Localizer["Departments"]</span>
         }
         @if (!molecule.IsActive)
         {
-            <span class="htree-node__status htree-node__status--inactive">Inactive</span>
+            <span class="htree-node__status htree-node__status--inactive"><loc key="Inactive" /></span>
         }
         @if (Model.CanEdit || Model.CanDelete || Model.CanAddChild)
         {
@@ -107,7 +110,7 @@
                         <span class="htree-node__label">@department.Name</span>
                         @if (!department.IsActive)
                         {
-                            <span class="htree-node__status htree-node__status--inactive">Inactive</span>
+                            <span class="htree-node__status htree-node__status--inactive"><loc key="Inactive" /></span>
                         }
                         @if (Model.CanEdit || Model.CanDelete)
                         {

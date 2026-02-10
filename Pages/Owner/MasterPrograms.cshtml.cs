@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ShiftManager.Models;
 using ShiftManager.Services;
+using System.Security.Claims;
 
 namespace ShiftManager.Pages.Owner;
 
@@ -70,7 +71,7 @@ public class MasterProgramsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate
             if (string.IsNullOrWhiteSpace(MasterProgramName))
@@ -119,7 +120,7 @@ public class MasterProgramsModel : PageModel
             }
 
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate
             if (string.IsNullOrWhiteSpace(MasterProgramName))
@@ -163,7 +164,7 @@ public class MasterProgramsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             var masterProgram = await _masterProgramService.GetMasterProgramAsync(masterProgramId);
 
@@ -197,7 +198,7 @@ public class MasterProgramsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate date range
             if (GenerateEndDate < GenerateStartDate)

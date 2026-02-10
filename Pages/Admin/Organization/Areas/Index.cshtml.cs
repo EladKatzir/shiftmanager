@@ -87,7 +87,8 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var area = await _db.Areas.FindAsync(id);
+        // SECURITY-AUDITED: SAFE — requires Grant:EditArea policy; consistent with GET handler
+        var area = await _db.Areas.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == id);
         if (area == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];
@@ -106,7 +107,8 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        var area = await _db.Areas.Include(a => a.Molecules).Include(a => a.JobTypes).FirstOrDefaultAsync(a => a.Id == id);
+        // SECURITY-AUDITED: SAFE — requires Grant:EditArea policy; consistent with GET handler
+        var area = await _db.Areas.IgnoreQueryFilters().Include(a => a.Molecules).Include(a => a.JobTypes).FirstOrDefaultAsync(a => a.Id == id);
         if (area == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];

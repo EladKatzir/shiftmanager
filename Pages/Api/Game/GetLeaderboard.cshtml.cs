@@ -38,8 +38,13 @@ public class GetLeaderboardModel : PageModel
                 };
             }
 
-            var companyId = int.Parse(companyIdClaim);
-            var userId = int.Parse(userIdClaim);
+            if (!int.TryParse(companyIdClaim, out var companyId) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return new JsonResult(new { success = false, error = "Invalid user data" })
+                {
+                    StatusCode = 400
+                };
+            }
 
             // Build query based on type
             var query = _db.GameScores

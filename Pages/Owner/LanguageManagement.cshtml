@@ -6,14 +6,14 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Language Management";
+    ViewData["Title"] = Localizer["LangMgmt_Title"];
 }
 
 @* Breadcrumb Navigation *@
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
-    new BreadcrumbItem { Label = "Admin Panel", Url = "/Owner/Index" },
-    new BreadcrumbItem { Label = "Language Management", IsActive = true }
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["LangMgmt_Title"], IsActive = true }
 })
 
 @* Owner Company Selector *@
@@ -21,15 +21,15 @@
 
 <div class="language-management-container">
     <div class="page-header">
-        <h1><span class="page-icon">🌐</span> Language Management</h1>
-        <p class="page-subtitle">Configure languages and customize translations for your company</p>
+        <h1><span class="page-icon">🌐</span> <loc key="LangMgmt_Title" /></h1>
+        <p class="page-subtitle"><loc key="LangMgmt_Subtitle" /></p>
     </div>
 
     @* Success Alert *@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✓ Success!</strong> @Model.Success
+            <strong>✓ @Localizer["Alert_Success"]</strong> @Model.Success
         </div>
     }
 
@@ -37,7 +37,7 @@
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-error">
-            <strong>✗ Error!</strong> @Model.Error
+            <strong>✗ @Localizer["Alert_Error"]</strong> @Model.Error
         </div>
     }
 
@@ -46,37 +46,37 @@
         @* Language Settings Card *@
         <div class="config-card">
             <div class="card-header">
-                <h2>🎌 Company Language Settings</h2>
+                <h2>🎌 <loc key="LangMgmt_CompanySettings" /></h2>
             </div>
             <div class="card-body">
-                <p class="help-text">Configure which two languages are available for users to toggle between.</p>
+                <p class="help-text">@Localizer["LangMgmt_CompanySettings_Desc"]</p>
                 <form method="post" asp-page-handler="SaveLanguageSettings">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="DefaultCulture">Default Language</label>
+                            <label for="DefaultCulture">@Localizer["LangMgmt_DefaultLanguage"]</label>
                             <select asp-for="DefaultCulture" id="DefaultCulture" class="form-control">
                                 @foreach (var culture in Model.SupportedCultures)
                                 {
                                     <option value="@culture">@GetCultureDisplayName(culture)</option>
                                 }
                             </select>
-                            <small class="form-text">Language shown to new users and as fallback</small>
+                            <small class="form-text">@Localizer["LangMgmt_DefaultLanguage_Hint"]</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="AlternateCulture">Alternate Language</label>
+                            <label for="AlternateCulture">@Localizer["LangMgmt_AlternateLanguage"]</label>
                             <select asp-for="AlternateCulture" id="AlternateCulture" class="form-control">
                                 @foreach (var culture in Model.SupportedCultures)
                                 {
                                     <option value="@culture">@GetCultureDisplayName(culture)</option>
                                 }
                             </select>
-                            <small class="form-text">Language available in toggle switch</small>
+                            <small class="form-text">@Localizer["LangMgmt_AlternateLanguage_Hint"]</small>
                         </div>
                     </div>
 
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">💾 Save Language Settings</button>
+                        <button type="submit" class="btn btn-primary">💾 <loc key="LangMgmt_SaveSettings" /></button>
                     </div>
                 </form>
             </div>
@@ -85,16 +85,16 @@
         @* Edit Mode Entry Point *@
         <div class="config-card edit-mode-card">
             <div class="card-header">
-                <h2>✏️ In-App Translation Editor</h2>
+                <h2>✏️ <loc key="LangMgmt_TranslationEditor" /></h2>
             </div>
             <div class="card-body">
-                <p style="color: var(--primary-contrast);">Edit translations directly by clicking on text throughout the application.</p>
-                <p style="color: var(--primary-contrast); opacity: 0.9; font-size: 0.875rem;">Navigate anywhere in the app and click on any localized text to edit it. Changes are saved as drafts until you click "Save & Exit".</p>
+                <p style="color: var(--primary-contrast);">@Localizer["LangMgmt_EditorDesc1"]</p>
+                <p style="color: var(--primary-contrast); opacity: 0.9; font-size: 0.875rem;">@Localizer["LangMgmt_EditorDesc2"]</p>
 
                 <form method="get" action="/Owner/LanguageEditMode">
                     <input type="hidden" name="companyId" value="@Model.SelectedCompanyId" />
                     <div class="form-group" style="margin-top: 1rem;">
-                        <label style="color: var(--primary-contrast);">Select Culture to Edit</label>
+                        <label style="color: var(--primary-contrast);">@Localizer["LangMgmt_SelectCulture"]</label>
                         <select name="culture" class="form-control">
                             @foreach (var culture in Model.SupportedCultures)
                             {
@@ -103,7 +103,7 @@
                         </select>
                     </div>
                     <div class="card-footer" style="background: transparent; border: none; padding-left: 0;">
-                        <button type="submit" class="btn btn-warning">🚀 Enter Edit Mode</button>
+                        <button type="submit" class="btn btn-warning">🚀 <loc key="LangMgmt_EnterEditMode" /></button>
                     </div>
                 </form>
             </div>
@@ -112,21 +112,21 @@
         @* Overrides Table *@
         <div class="config-card">
             <div class="card-header">
-                <h2>📝 Translation Overrides</h2>
+                <h2>📝 <loc key="LangMgmt_Overrides" /></h2>
             </div>
             <div class="card-body">
                 @* Search/Filter Form *@
                 <form method="get" class="search-form">
                     <div class="search-row">
-                        <label for="langSearchTerm" class="sr-only">Search by key or value</label>
-                        <input type="text" name="searchTerm" id="langSearchTerm" placeholder="Search by key or value..." value="@Model.SearchTerm" class="search-input" />
-                        <label for="langFilterCulture" class="sr-only">Filter by language</label>
+                        <label for="langSearchTerm" class="sr-only">@Localizer["LangMgmt_SearchPlaceholder"]</label>
+                        <input type="text" name="searchTerm" id="langSearchTerm" placeholder="@Localizer["LangMgmt_SearchPlaceholder"]" value="@Model.SearchTerm" class="search-input" />
+                        <label for="langFilterCulture" class="sr-only">@Localizer["LangMgmt_FilterByLanguage"]</label>
                         <select name="filterCulture" id="langFilterCulture" class="filter-select">
-                            <option value="">All Languages</option>
-                            <option value="en-US" selected="@(Model.FilterCulture == "en-US")">English</option>
-                            <option value="he-IL" selected="@(Model.FilterCulture == "he-IL")">Hebrew</option>
+                            <option value="">@Localizer["LangMgmt_AllLanguages"]</option>
+                            <option value="en-US" selected="@(Model.FilterCulture == "en-US")">@Localizer["LangMgmt_English"]</option>
+                            <option value="he-IL" selected="@(Model.FilterCulture == "he-IL")">@Localizer["LangMgmt_Hebrew"]</option>
                         </select>
-                        <button type="submit" class="btn btn-secondary">🔍 Search</button>
+                        <button type="submit" class="btn btn-secondary">🔍 <loc key="LangMgmt_Search" /></button>
                     </div>
                 </form>
 
@@ -137,12 +137,12 @@
                         <table class="overrides-table">
                             <thead>
                                 <tr>
-                                    <th>Resource Key</th>
-                                    <th>Culture</th>
-                                    <th>Base Value</th>
-                                    <th>Override Value</th>
-                                    <th>Last Updated</th>
-                                    <th>Actions</th>
+                                    <th><loc key="LangMgmt_ResourceKey" /></th>
+                                    <th><loc key="LangMgmt_Culture" /></th>
+                                    <th><loc key="LangMgmt_BaseValue" /></th>
+                                    <th><loc key="LangMgmt_OverrideValue" /></th>
+                                    <th><loc key="LangMgmt_LastUpdated" /></th>
+                                    <th><loc key="Actions" /></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,7 +156,7 @@
                                         <td>@o.UpdatedAt.ToString("g")</td>
                                         <td>
                                             <form method="post" asp-page-handler="DeleteOverride" asp-route-id="@o.Id" style="display:inline;">
-                                                <button type="submit" class="btn-delete" onclick="return confirm('Delete this override?');" title="Delete">🗑️</button>
+                                                <button type="submit" class="btn-delete" onclick="return confirm('@Localizer["LangMgmt_ConfirmDeleteOverride"]');" title="Delete">🗑️</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -168,10 +168,10 @@
                 else
                 {
                     <div class="empty-state">
-                        <p>No translation overrides found.</p>
+                        <p><loc key="LangMgmt_NoOverrides" /></p>
                         @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.FilterCulture))
                         {
-                            <p><a href="/Owner/LanguageManagement">Clear filters</a></p>
+                            <p><a href="/Owner/LanguageManagement">@Localizer["LangMgmt_ClearFilters"]</a></p>
                         }
                     </div>
                 }
@@ -181,35 +181,35 @@
         @* Add Override Form *@
         <div class="config-card">
             <div class="card-header">
-                <h2>➕ Add Translation Override</h2>
+                <h2>➕ <loc key="LangMgmt_AddOverride" /></h2>
             </div>
             <div class="card-body">
                 <form method="post" asp-page-handler="AddOverride">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="OverrideKey">Resource Key</label>
-                            <input type="text" asp-for="OverrideKey" id="OverrideKey" class="form-control" placeholder="Button_Save" />
-                            <small class="form-text">Key from SharedResources (e.g., Button_Save, Dashboard_Title)</small>
+                            <label for="OverrideKey">@Localizer["LangMgmt_ResourceKey"]</label>
+                            <input type="text" asp-for="OverrideKey" id="OverrideKey" class="form-control" placeholder="@Localizer["LangMgmt_ResourceKeyPlaceholder"]" />
+                            <small class="form-text">@Localizer["LangMgmt_ResourceKey_Hint"]</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="OverrideCulture">Culture</label>
+                            <label for="OverrideCulture">@Localizer["LangMgmt_Culture"]</label>
                             <select asp-for="OverrideCulture" id="OverrideCulture" class="form-control">
-                                <option value="">-- Select Culture --</option>
-                                <option value="en-US">English (en-US)</option>
-                                <option value="he-IL">Hebrew (he-IL)</option>
+                                <option value="">@Localizer["LangMgmt_SelectCultureOption"]</option>
+                                <option value="en-US">@Localizer["LangMgmt_English"] (en-US)</option>
+                                <option value="he-IL">@Localizer["LangMgmt_Hebrew"] (he-IL)</option>
                             </select>
                         </div>
 
                         <div class="form-group" style="flex: 2;">
-                            <label for="OverrideValue">Override Value</label>
-                            <input type="text" asp-for="OverrideValue" id="OverrideValue" class="form-control" placeholder="Custom translation text" />
-                            <small class="form-text">Custom translation (preserve {0}, {1} placeholders if present)</small>
+                            <label for="OverrideValue">@Localizer["LangMgmt_OverrideValue"]</label>
+                            <input type="text" asp-for="OverrideValue" id="OverrideValue" class="form-control" placeholder="@Localizer["LangMgmt_OverrideValuePlaceholder"]" />
+                            <small class="form-text">@Localizer["LangMgmt_OverrideValue_Hint"]</small>
                         </div>
                     </div>
 
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">💾 Add Override</button>
+                        <button type="submit" class="btn btn-primary">💾 <loc key="LangMgmt_AddOverrideBtn" /></button>
                     </div>
                 </form>
             </div>
@@ -220,7 +220,7 @@
         <div class="config-card">
             <div class="card-body">
                 <div class="empty-state">
-                    <p>Please select a company using the dropdown above to manage language settings.</p>
+                    <p><loc key="LangMgmt_SelectCompanyFirst" /></p>
                 </div>
             </div>
         </div>

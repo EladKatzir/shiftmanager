@@ -38,7 +38,7 @@
             // Enable Radar Mode
             if (radarBtn) {
                 radarBtn.classList.add('active');
-                radarBtn.textContent = '📡 Radar (Active)';
+                radarBtn.textContent = '📡 ' + (window.AppLocalizer?.Radar_Active || 'Radar (Active)');
             }
 
             await loadConflicts();
@@ -55,7 +55,7 @@
             // Disable Radar Mode
             if (radarBtn) {
                 radarBtn.classList.remove('active');
-                radarBtn.textContent = '📡 Radar';
+                radarBtn.textContent = '📡 ' + (window.AppLocalizer?.Radar || 'Radar');
             }
 
             clearConflictHighlights();
@@ -98,7 +98,7 @@
 
         } catch (error) {
             console.error('[Radar Mode] Error loading conflicts:', error);
-            showToast('Failed to load conflict data', 'error');
+            showToast(window.AppLocalizer?.Radar_FailedToLoad || 'Failed to load conflict data', 'error');
         }
     }
 
@@ -188,7 +188,7 @@
 
             default:
                 badge.textContent = '⚠️';
-                badge.title = 'Conflict detected';
+                badge.title = window.AppLocalizer?.Radar_ConflictDetected || 'Conflict detected';
                 badge.classList.add('badge-warning');
         }
 

@@ -305,46 +305,59 @@ public class DutyRotationService : IDutyRotationService
                 }
             }
 
-            // User is eligible - create OnDuty record
-            var onDuty = new OnDuty
+            // User is eligible - create OnDuty + log + advance position atomically
+            using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                UserId = entry.UserId,
-                Date = date,
-                Type = rotation.DutyType,
-                Notes = $"Auto-assigned from rotation: {rotation.Name}",
-                CreatedBy = assignedBy,
-                CreatedAt = DateTime.UtcNow
-            };
+                var onDuty = new OnDuty
+                {
+                    UserId = entry.UserId,
+                    Date = date,
+                    Type = rotation.DutyType,
+                    Notes = $"Auto-assigned from rotation: {rotation.Name}",
+                    CreatedBy = assignedBy,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            _db.OnDuties.Add(onDuty);
-            await _db.SaveChangesAsync();
+                _db.OnDuties.Add(onDuty);
+                await _db.SaveChangesAsync(); // Get OnDuty.Id
 
-            // Log the assignment
-            var assignmentLog = new DutyRotationLog
+                // Log the assignment (with OnDutyId now available)
+                var assignmentLog = new DutyRotationLog
+                {
+                    DutyRotationId = rotationId,
+                    AssignedUserId = entry.UserId,
+                    AssignmentDate = date,
+                    OnDutyId = onDuty.Id,
+                    WasAutoAssigned = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.DutyRotationLogs.Add(assignmentLog);
+
+                // Advance queue position (wrap around)
+                rotation.CurrentQueuePosition = (index + 1) % totalEntries;
+                rotation.LastAssignedDate = date;
+                rotation.UpdatedAt = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync(); // Save log + position update
+                await transaction.CommitAsync();
+
+                _logger.LogInformation(
+                    "DutyRotation {RotationId}: Assigned user {UserId} for {Date}. Queue position advanced to {Position}",
+                    rotationId, entry.UserId, date, rotation.CurrentQueuePosition);
+
+                createdOnDuty = onDuty;
+                return (true, $"Assigned to user {dbUser.DisplayName}.", createdOnDuty);
+            }
+            catch (DbUpdateException ex)
             {
-                DutyRotationId = rotationId,
-                AssignedUserId = entry.UserId,
-                AssignmentDate = date,
-                OnDutyId = onDuty.Id,
-                WasAutoAssigned = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _db.DutyRotationLogs.Add(assignmentLog);
-
-            // Advance queue position (wrap around)
-            rotation.CurrentQueuePosition = (index + 1) % totalEntries;
-            rotation.LastAssignedDate = date;
-            rotation.UpdatedAt = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "DutyRotation {RotationId}: Assigned user {UserId} for {Date}. Queue position advanced to {Position}",
-                rotationId, entry.UserId, date, rotation.CurrentQueuePosition);
-
-            createdOnDuty = onDuty;
-            return (true, $"Assigned to user {dbUser.DisplayName}.", createdOnDuty);
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex,
+                    "DutyRotation {RotationId}: Concurrent conflict assigning user {UserId} for {Date}",
+                    rotationId, entry.UserId, date);
+                return (false, "Duty assignment conflict — another assignment was made simultaneously. Please retry.", null);
+            }
         }
 
         // Circuit breaker: No eligible user found after checking all entries (fixes A-08)

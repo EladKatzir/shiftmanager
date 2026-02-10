@@ -51,7 +51,7 @@ public class SelectCompanyModel : PageModel
         {
             _logger.LogWarning("Rate limit exceeded for company switch by user {UserId}", userId);
             TempData["Error"] = "Too many company switches. Please wait before trying again.";
-            return Redirect(returnUrl ?? "/Owner/Index");
+            return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToPage("/Owner/Index");
         }
 
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -84,7 +84,7 @@ public class SelectCompanyModel : PageModel
                 userId, companyId, ipAddress);
         }
 
-        return Redirect(returnUrl ?? "/Owner/Index");
+        return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToPage("/Owner/Index");
     }
 
     private int GetCurrentUserId()

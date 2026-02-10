@@ -57,8 +57,12 @@ public class ApiKeysModel : LocalizedPageModel
 
     public async Task OnGetAsync()
     {
-        var companyId = int.Parse(User.FindFirstValue("CompanyId")!);
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue("CompanyId"), out var companyId) ||
+            !int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            Error = _localizer["Error_AuthenticationError"];
+            return;
+        }
 
         // Grant-based access checks
         IsAdmin = await CheckIsAdminAsync(userId);
@@ -82,8 +86,9 @@ public class ApiKeysModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRequestAsync(string name, string description, string[] scopes)
     {
-        var companyId = int.Parse(User.FindFirstValue("CompanyId")!);
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue("CompanyId"), out var companyId) ||
+            !int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return RedirectToPage();
 
         // Validate scopes
         if (scopes == null || scopes.Length == 0)
@@ -115,7 +120,8 @@ public class ApiKeysModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRevokeAsync(int keyId)
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return RedirectToPage();
 
         var (key, error) = await _apiKeyService.RevokeApiKeyAsync(keyId, userId, "Revoked by user");
 
@@ -133,7 +139,8 @@ public class ApiKeysModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRefreshAsync(int keyId)
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return RedirectToPage();
 
         var (newApiKey, error) = await _apiKeyService.RegenerateApiKeyAsync(keyId, userId);
 
@@ -158,7 +165,8 @@ public class ApiKeysModel : LocalizedPageModel
         int rateLimitPerMinute = 100,
         int? expiresInDays = null)
     {
-        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var reviewerId))
+            return RedirectToPage();
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
@@ -193,7 +201,8 @@ public class ApiKeysModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRejectAsync(int requestId, string reviewNotes)
     {
-        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var reviewerId))
+            return RedirectToPage();
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
@@ -217,7 +226,8 @@ public class ApiKeysModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRevokeAdminAsync(int keyId, string? reason)
     {
-        var reviewerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var reviewerId))
+            return RedirectToPage();
 
         if (!await CheckIsAdminAsync(reviewerId))
         {

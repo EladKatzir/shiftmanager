@@ -125,7 +125,7 @@ namespace ShiftManager.Services
 
         public string FormatRelativeTime(DateTime dateTime)
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var diff = now - dateTime;
 
             if (IsHebrew)

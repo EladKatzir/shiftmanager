@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ShiftManager.Pages.Owner.Hub;
@@ -353,7 +354,7 @@ public class GrantsModel : PageModel
         try
         {
             // Get current user ID
-            var currentUserIdClaim = User.FindFirst("UserId")?.Value;
+            var currentUserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             int? grantedByUserId = null;
             if (currentUserIdClaim != null && int.TryParse(currentUserIdClaim, out var parsedUserId))
             {

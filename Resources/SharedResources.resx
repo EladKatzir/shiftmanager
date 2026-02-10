@@ -8767,6 +8767,183 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Help_NavLink" xml:space="preserve">
     <value>Help</value>
   </data>
+  <data name="Help_Section_Chores" xml:space="preserve">
+    <value>Chores &amp; On-Duty</value>
+  </data>
+  <data name="Help_FAQ_ViewChores_Q" xml:space="preserve">
+    <value>How do I view my assigned chores?</value>
+  </data>
+  <data name="Help_FAQ_ViewChores_A" xml:space="preserve">
+    <value>Navigate to the Chores page from the main menu. You'll see a list of all chores assigned to you, organized by date. You can filter by status to see pending, completed, or all chores.</value>
+  </data>
+  <data name="Help_FAQ_OnDuty_Q" xml:space="preserve">
+    <value>How does the on-duty schedule work?</value>
+  </data>
+  <data name="Help_FAQ_OnDuty_A" xml:space="preserve">
+    <value>The on-duty schedule shows who is responsible for on-call duties for each day. Your manager assigns on-duty rotations. You can view the current and upcoming on-duty assignments from the On-Duty page.</value>
+  </data>
+  <data name="Help_Section_Management" xml:space="preserve">
+    <value>Management</value>
+  </data>
+  <data name="Help_FAQ_CreateShift_Q" xml:space="preserve">
+    <value>How do I create a new shift?</value>
+  </data>
+  <data name="Help_FAQ_CreateShift_A" xml:space="preserve">
+    <value>Go to the Calendar page and click on the date where you want to add a shift. Fill in the shift details including time, job type, and any notes. Click Save to create the shift.</value>
+  </data>
+  <data name="Help_FAQ_AssignEmployee_Q" xml:space="preserve">
+    <value>How do I assign an employee to a shift?</value>
+  </data>
+  <data name="Help_FAQ_AssignEmployee_A" xml:space="preserve">
+    <value>Open an existing shift from the calendar, then use the assignment panel to select an employee. You can also drag and drop employees from the roster dock directly onto shift slots.</value>
+  </data>
+  <data name="Help_FAQ_ApproveRequests_Q" xml:space="preserve">
+    <value>How do I approve or deny employee requests?</value>
+  </data>
+  <data name="Help_FAQ_ApproveRequests_A" xml:space="preserve">
+    <value>Go to the Requests page to see all pending requests. Review each request and click Approve or Deny. You can also add a note explaining your decision.</value>
+  </data>
+  <data name="Help_FAQ_ManageUsers_Q" xml:space="preserve">
+    <value>How do I manage users and roles?</value>
+  </data>
+  <data name="Help_FAQ_ManageUsers_A" xml:space="preserve">
+    <value>Navigate to Admin &gt; Users to view all employees. From there you can add new users, edit existing users, change roles, and manage department assignments.</value>
+  </data>
+  <data name="Help_FAQ_ExportSchedule_Q" xml:space="preserve">
+    <value>How do I export the schedule?</value>
+  </data>
+  <data name="Help_FAQ_ExportSchedule_A" xml:space="preserve">
+    <value>Use the Export button on the Calendar or Schedule Table page. You can export to Excel format. Select the date range and departments you want to include in the export.</value>
+  </data>
+  <data name="Help_FAQ_ScheduleTable_Q" xml:space="preserve">
+    <value>What is the Schedule Table view?</value>
+  </data>
+  <data name="Help_FAQ_ScheduleTable_A" xml:space="preserve">
+    <value>The Schedule Table provides a grid view of all shifts organized by employee and date. It's useful for getting an overview of the entire team's schedule and identifying coverage gaps.</value>
+  </data>
+  <data name="Help_Section_Shortcuts" xml:space="preserve">
+    <value>Keyboard Shortcuts</value>
+  </data>
+  <data name="Help_FAQ_KeyboardShortcuts_Q" xml:space="preserve">
+    <value>What keyboard shortcuts are available?</value>
+  </data>
+  <data name="Help_FAQ_KeyboardShortcuts_A" xml:space="preserve">
+    <value>Press Shift+? anywhere in the application to see a list of all available keyboard shortcuts. Common shortcuts include navigation between pages, quick actions, and calendar controls.</value>
+  </data>
+  <data name="Help_FAQ_CommandPalette_Q" xml:space="preserve">
+    <value>What is the Command Palette?</value>
+  </data>
+  <data name="Help_FAQ_CommandPalette_A" xml:space="preserve">
+    <value>The Command Palette (Ctrl+K) provides quick access to all pages and actions. Start typing to search for any page, feature, or action. Press Enter to navigate directly to the selected item.</value>
+  </data>
+  <data name="FillHandle_DragToCopy" xml:space="preserve">
+    <value>Drag to copy across days</value>
+  </data>
+  <data name="FillHandle_InvalidSource" xml:space="preserve">
+    <value>Invalid source shift</value>
+  </data>
+  <data name="FillHandle_Applying" xml:space="preserve">
+    <value>Applying fill operation...</value>
+  </data>
+  <data name="InlineEdit_CouldNotUndo" xml:space="preserve">
+    <value>Could not undo</value>
+  </data>
+  <data name="Radar_Active" xml:space="preserve">
+    <value>Radar (Active)</value>
+  </data>
+  <data name="Radar" xml:space="preserve">
+    <value>Radar</value>
+  </data>
+  <data name="Radar_FailedToLoad" xml:space="preserve">
+    <value>Failed to load conflict data</value>
+  </data>
+  <data name="Radar_ConflictDetected" xml:space="preserve">
+    <value>Conflict detected</value>
+  </data>
+  <data name="Offline_SavedOffline" xml:space="preserve">
+    <value>Saved offline</value>
+  </data>
+  <data name="Roster_Loading" xml:space="preserve">
+    <value>Loading employees...</value>
+  </data>
+  <data name="Roster_FailedToLoad" xml:space="preserve">
+    <value>Failed to load employees. Please try again.</value>
+  </data>
+  <data name="Roster_NoEmployees" xml:space="preserve">
+    <value>No employees found.</value>
+  </data>
+  <data name="AllMolecules" xml:space="preserve">
+    <value>All Molecules</value>
+  </data>
+  <data name="AllProjects" xml:space="preserve">
+    <value>All Projects</value>
+  </data>
+  <data name="Area" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>Shift Manager</value>
+  </data>
+  <data name="Auth_CompletingAuthentication" xml:space="preserve">
+    <value>Completing authentication...</value>
+  </data>
+  <data name="BulkImport" xml:space="preserve">
+    <value>Bulk Import</value>
+  </data>
+  <data name="BrowserOutdated_Message" xml:space="preserve">
+    <value>Your browser is outdated and may not display this application correctly. Please use Chrome 80+, Firefox 80+, or Edge 80+.</value>
+  </data>
+  <data name="Director_NoCompaniesAssigned" xml:space="preserve">
+    <value>You are not assigned to any companies yet.</value>
+  </data>
+  <data name="Director_ContactOwnerForCompanies" xml:space="preserve">
+    <value>Contact an Owner to assign you to companies.</value>
+  </data>
+  <data name="OnDuty_Hakam" xml:space="preserve">
+    <value>Hakam</value>
+  </data>
+  <data name="OnDuty_Lead" xml:space="preserve">
+    <value>Lead</value>
+  </data>
+  <data name="Nav_DirectorHub" xml:space="preserve">
+    <value>Director Hub</value>
+  </data>
+  <data name="Nav_AdminHub" xml:space="preserve">
+    <value>Admin Hub</value>
+  </data>
+  <data name="SelectArea" xml:space="preserve">
+    <value>Select Area</value>
+  </data>
+  <data name="SelectGrantType" xml:space="preserve">
+    <value>Select Grant Type</value>
+  </data>
+  <data name="SelectMolecule" xml:space="preserve">
+    <value>Select Molecule</value>
+  </data>
+  <data name="Swap_MyAssignment" xml:space="preserve">
+    <value>My assignment</value>
+  </data>
+  <data name="Swap_ProposedToUser" xml:space="preserve">
+    <value>Proposed to user</value>
+  </data>
+  <data name="Swap_ChooseShift" xml:space="preserve">
+    <value>-- choose one of your upcoming shifts --</value>
+  </data>
+  <data name="Swap_ChooseUser" xml:space="preserve">
+    <value>-- choose a user --</value>
+  </data>
+  <data name="TotalRequests" xml:space="preserve">
+    <value>Total Requests</value>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+    <value>User Management</value>
+  </data>
+  <data name="ViewAs_ViewingAs" xml:space="preserve">
+    <value>Viewing as Manager of</value>
+  </data>
+  <data name="ViewAs_ExitViewMode" xml:space="preserve">
+    <value>Exit View Mode</value>
+  </data>
   <data name="AuditSearch" xml:space="preserve">
     <value>Audit Log Search</value>
   </data>
@@ -10776,5 +10953,787 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Success_UserDeleted" xml:space="preserve">
     <value>User deleted successfully</value>
+  </data>
+  <data name="NotificationTraineeAddedTitle" xml:space="preserve">
+    <value>Trainee Added to Your Shift</value>
+  </data>
+  <data name="NotificationTraineeAddedMessage" xml:space="preserve">
+    <value>{0} has been added as a trainee to your {1} shift on {2} ({3} - {4})</value>
+  </data>
+  <data name="NotificationTraineeChangedTitle" xml:space="preserve">
+    <value>Trainee Changed on Your Shift</value>
+  </data>
+  <data name="NotificationTraineeChangedMessage" xml:space="preserve">
+    <value>Your trainee for {0} on {1} has been changed from {2} to {3}</value>
+  </data>
+  <data name="NotificationTraineeRemovedTitle" xml:space="preserve">
+    <value>Trainee Removed from Your Shift</value>
+  </data>
+  <data name="NotificationTraineeRemovedMessage" xml:space="preserve">
+    <value>{0} has been removed as a trainee from your {1} shift on {2}</value>
+  </data>
+  <data name="NotificationTraineeAssignmentRemovedTitle" xml:space="preserve">
+    <value>Trainee Assignment Removed</value>
+  </data>
+  <data name="NotificationTraineeAssignmentRemovedMessage" xml:space="preserve">
+    <value>You are no longer a trainee for {0} on {1}</value>
+  </data>
+  <data name="NotificationNewTraineeAssignmentTitle" xml:space="preserve">
+    <value>New Trainee Assignment</value>
+  </data>
+  <data name="NotificationNewTraineeAssignmentMessage" xml:space="preserve">
+    <value>You have been assigned as a trainee for {0} on {1}</value>
+  </data>
+  <data name="NotificationSlotRemovedTitle" xml:space="preserve">
+    <value>Shift Assignment Removed</value>
+  </data>
+  <data name="NotificationSlotRemovedMessage" xml:space="preserve">
+    <value>Your {0} shift on {1} ({2} - {3}) has been removed. Reason: {4}</value>
+  </data>
+  <data name="NotificationShiftModifiedTitle" xml:space="preserve">
+    <value>Shift Details Modified</value>
+  </data>
+  <data name="NotificationShiftModifiedMessage" xml:space="preserve">
+    <value>Your {0} shift on {1} has been modified: {2}</value>
+  </data>
+  <data name="Error_ShiftFullyStaffed" xml:space="preserve">
+    <value>This shift is already fully staffed</value>
+  </data>
+
+  <!-- Command Palette Navigation (JS localization) -->
+  <data name="Nav_Requests" xml:space="preserve">
+    <value>Requests</value>
+  </data>
+  <data name="Nav_Analytics" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="Nav_Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Nav_Companies" xml:space="preserve">
+    <value>Companies</value>
+  </data>
+  <data name="Nav_Directors" xml:space="preserve">
+    <value>Directors</value>
+  </data>
+  <data name="Nav_Configuration" xml:space="preserve">
+    <value>Configuration</value>
+  </data>
+  <data name="Nav_ShiftTypes" xml:space="preserve">
+    <value>Shift Types</value>
+  </data>
+  <data name="Nav_TimeOff" xml:space="preserve">
+    <value>Time Off</value>
+  </data>
+  <data name="Nav_AuditLog" xml:space="preserve">
+    <value>Audit Log</value>
+  </data>
+  <data name="Nav_Chores" xml:space="preserve">
+    <value>Chores</value>
+  </data>
+  <data name="Nav_OnDuty" xml:space="preserve">
+    <value>On Duty</value>
+  </data>
+  <data name="Nav_ScheduleTable" xml:space="preserve">
+    <value>Schedule Table</value>
+  </data>
+  <data name="Nav_ScheduleTableDesc" xml:space="preserve">
+    <value>Operations console for shift assignments</value>
+  </data>
+  <data name="Nav_Blueprints" xml:space="preserve">
+    <value>Blueprints</value>
+  </data>
+  <data name="Nav_BlueprintsDesc" xml:space="preserve">
+    <value>Manage shift types with localized names</value>
+  </data>
+  <data name="Nav_Programs" xml:space="preserve">
+    <value>Programs</value>
+  </data>
+  <data name="Nav_ProgramsDesc" xml:space="preserve">
+    <value>Create weekly shift templates and generate instances</value>
+  </data>
+  <data name="Nav_MasterPrograms" xml:space="preserve">
+    <value>Master Programs</value>
+  </data>
+  <data name="Nav_MasterProgramsDesc" xml:space="preserve">
+    <value>Compose full weekly schedules from multiple programs</value>
+  </data>
+  <data name="Nav_MyRequests" xml:space="preserve">
+    <value>My Requests</value>
+  </data>
+  <data name="Nav_MyTeam" xml:space="preserve">
+    <value>My Team</value>
+  </data>
+  <data name="Nav_MyProfile" xml:space="preserve">
+    <value>My Profile</value>
+  </data>
+  <data name="Nav_Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="Nav_MonthView" xml:space="preserve">
+    <value>Month View</value>
+  </data>
+  <data name="Nav_WeekView" xml:space="preserve">
+    <value>Week View</value>
+  </data>
+  <data name="Nav_DayView" xml:space="preserve">
+    <value>Day View</value>
+  </data>
+
+  <!-- Roster Dock (JS localization) -->
+  <data name="Roster_Vacation" xml:space="preserve">
+    <value>Vacation</value>
+  </data>
+  <data name="Roster_OnShift" xml:space="preserve">
+    <value>On Shift</value>
+  </data>
+  <data name="Roster_HasChore" xml:space="preserve">
+    <value>Has Chore</value>
+  </data>
+  <data name="Roster_Available" xml:space="preserve">
+    <value>Available</value>
+  </data>
+  <data name="Roster_FailedToAssign" xml:space="preserve">
+    <value>Failed to assign employee</value>
+  </data>
+  <data name="Roster_AssignedSuccess" xml:space="preserve">
+    <value>Employee assigned successfully</value>
+  </data>
+  <data name="Roster_AssignmentFailed" xml:space="preserve">
+    <value>Assignment failed</value>
+  </data>
+
+  <!-- Modal Loader (JS localization) -->
+  <data name="FailedToLoadContent" xml:space="preserve">
+    <value>Failed to load content. Please try again.</value>
+  </data>
+  <data name="LoadingFailedTitle" xml:space="preserve">
+    <value>Loading Failed</value>
+  </data>
+
+  <!-- B-05: Onboarding Wizard -->
+  <data name="Onboarding_Title" xml:space="preserve">
+    <value>Welcome</value>
+  </data>
+  <data name="Onboarding_Welcome" xml:space="preserve">
+    <value>Welcome,</value>
+  </data>
+  <data name="Onboarding_WelcomeSubtitle" xml:space="preserve">
+    <value>Let's get you started with a quick tour of the system.</value>
+  </data>
+  <data name="Onboarding_Step1_Title" xml:space="preserve">
+    <value>What You Can Do</value>
+  </data>
+  <data name="Onboarding_Step1_Description" xml:space="preserve">
+    <value>Here are the key features available to you:</value>
+  </data>
+  <data name="Onboarding_Feature_Calendar" xml:space="preserve">
+    <value>Schedule Calendar</value>
+  </data>
+  <data name="Onboarding_Feature_CalendarDesc" xml:space="preserve">
+    <value>View your shifts, chores, and on-duty assignments in monthly, weekly, or daily views.</value>
+  </data>
+  <data name="Onboarding_Feature_Requests" xml:space="preserve">
+    <value>Requests &amp; Time Off</value>
+  </data>
+  <data name="Onboarding_Feature_RequestsDesc" xml:space="preserve">
+    <value>Submit time-off requests and shift swap requests for manager approval.</value>
+  </data>
+  <data name="Onboarding_Feature_Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="Onboarding_Feature_NotificationsDesc" xml:space="preserve">
+    <value>Get notified about schedule changes, approvals, and important updates.</value>
+  </data>
+  <data name="Onboarding_Feature_Profile" xml:space="preserve">
+    <value>Your Profile</value>
+  </data>
+  <data name="Onboarding_Feature_ProfileDesc" xml:space="preserve">
+    <value>Update your personal info, emergency contacts, and preferences.</value>
+  </data>
+  <data name="Onboarding_Step2_Title" xml:space="preserve">
+    <value>Quick Tips</value>
+  </data>
+  <data name="Onboarding_Step2_Description" xml:space="preserve">
+    <value>A few shortcuts to help you work faster:</value>
+  </data>
+  <data name="Onboarding_Tip_Keyboard" xml:space="preserve">
+    <value>Keyboard Shortcuts</value>
+  </data>
+  <data name="Onboarding_Tip_KeyboardDesc" xml:space="preserve">
+    <value>Press ? to see all available keyboard shortcuts.</value>
+  </data>
+  <data name="Onboarding_Tip_CommandPalette" xml:space="preserve">
+    <value>Quick Navigation</value>
+  </data>
+  <data name="Onboarding_Tip_CommandPaletteDesc" xml:space="preserve">
+    <value>Press Ctrl+K to open the command palette and jump to any page instantly.</value>
+  </data>
+  <data name="Onboarding_Tip_Help" xml:space="preserve">
+    <value>Help Center</value>
+  </data>
+  <data name="Onboarding_Tip_HelpDesc" xml:space="preserve">
+    <value>Visit the Help page anytime for answers to common questions.</value>
+  </data>
+  <data name="Onboarding_Step2_Tip" xml:space="preserve">
+    <value>You can always access these tips later from the Help page in the sidebar.</value>
+  </data>
+  <data name="Onboarding_Step3_Title" xml:space="preserve">
+    <value>You're All Set!</value>
+  </data>
+  <data name="Onboarding_Step3_Description" xml:space="preserve">
+    <value>You're ready to start using the system. Click the button below to go to your dashboard.</value>
+  </data>
+  <data name="Onboarding_Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="Onboarding_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="Onboarding_GetStarted" xml:space="preserve">
+    <value>Get Started</value>
+  </data>
+  <data name="Alert_Success" xml:space="preserve">
+    <value>✅ Success:</value>
+  </data>
+  <data name="Alert_Error" xml:space="preserve">
+    <value>❌ Error:</value>
+  </data>
+  <data name="Button_Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Programs_OverwriteExisting" xml:space="preserve">
+    <value>Overwrite existing shift instances?</value>
+  </data>
+  <data name="Programs_OverwriteHint" xml:space="preserve">
+    <value>If checked, will update existing instances. Otherwise, skips dates that already have shifts.</value>
+  </data>
+  <data name="MasterPrograms_Subtitle" xml:space="preserve">
+    <value>Compose complete weekly schedules from multiple programs</value>
+  </data>
+  <data name="MasterPrograms_CreateNew" xml:space="preserve">
+    <value>➕ Create New Master Program</value>
+  </data>
+  <data name="MasterPrograms_Name" xml:space="preserve">
+    <value>Master Program Name</value>
+  </data>
+  <data name="MasterPrograms_NamePlaceholder" xml:space="preserve">
+    <value>e.g., Standard Week Schedule</value>
+  </data>
+  <data name="MasterPrograms_Description" xml:space="preserve">
+    <value>Description (Optional)</value>
+  </data>
+  <data name="MasterPrograms_DescPlaceholder" xml:space="preserve">
+    <value>Description of this complete weekly schedule</value>
+  </data>
+  <data name="MasterPrograms_SelectPrograms" xml:space="preserve">
+    <value>Select Programs to Include</value>
+  </data>
+  <data name="MasterPrograms_NoProgramsAvailable" xml:space="preserve">
+    <value>No programs available.</value>
+  </data>
+  <data name="MasterPrograms_CreateProgramsFirst" xml:space="preserve">
+    <value>Create programs first.</value>
+  </data>
+  <data name="MasterPrograms_DaysPerWeek" xml:space="preserve">
+    <value>days/week</value>
+  </data>
+  <data name="MasterPrograms_Create" xml:space="preserve">
+    <value>➕ Create Master Program</value>
+  </data>
+  <data name="MasterPrograms_Existing" xml:space="preserve">
+    <value>📦 Existing Master Programs</value>
+  </data>
+  <data name="MasterPrograms_NoneYet" xml:space="preserve">
+    <value>No master programs defined yet. Create one above to get started.</value>
+  </data>
+  <data name="MasterPrograms_Programs" xml:space="preserve">
+    <value>programs</value>
+  </data>
+  <data name="MasterPrograms_IncludedPrograms" xml:space="preserve">
+    <value>Included Programs:</value>
+  </data>
+  <data name="MasterPrograms_Days" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="MasterPrograms_GenerateFullWeek" xml:space="preserve">
+    <value>Generate Full Week</value>
+  </data>
+  <data name="MasterPrograms_ConfirmDelete" xml:space="preserve">
+    <value>Are you sure you want to delete this master program? The individual programs will NOT be deleted.</value>
+  </data>
+  <data name="MasterPrograms_GenerateSchedule" xml:space="preserve">
+    <value>Generate Full Weekly Schedule</value>
+  </data>
+  <data name="MasterPrograms_GenerateNote" xml:space="preserve">
+    <value>This will apply ALL programs in this master program to the date range, creating a complete weekly schedule.</value>
+  </data>
+  <data name="FeatureFlags_Subtitle" xml:space="preserve">
+    <value>Toggle system features without redeploying</value>
+  </data>
+  <data name="FeatureFlags_CoreFeatures" xml:space="preserve">
+    <value>🔧 Core Features</value>
+  </data>
+  <data name="FeatureFlags_EnforceCompanyScope_Desc" xml:space="preserve">
+    <value>Enforce multi-tenant company scoping for data isolation</value>
+  </data>
+  <data name="FeatureFlags_Critical" xml:space="preserve">
+    <value>Critical</value>
+  </data>
+  <data name="FeatureFlags_EnableDirectorRole_Desc" xml:space="preserve">
+    <value>Enable Director role with cross-company permissions</value>
+  </data>
+  <data name="FeatureFlags_High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="FeatureFlags_AllowPublicSignup_Desc" xml:space="preserve">
+    <value>Allow users to self-register without invitation</value>
+  </data>
+  <data name="FeatureFlags_Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="FeatureFlags_EnableApiKeyManagement_Desc" xml:space="preserve">
+    <value>Allow users to generate and manage API keys</value>
+  </data>
+  <data name="FeatureFlags_ApiEndpoints" xml:space="preserve">
+    <value>🔌 API Endpoints</value>
+  </data>
+  <data name="Offline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="Blueprints_MigrationRequired" xml:space="preserve">
+    <value>⚠️ Migration Required:</value>
+  </data>
+  <data name="Blueprints_MigrationDesc" xml:space="preserve">
+    <value>Some shift types are missing NameKey values (required for localization).</value>
+  </data>
+  <data name="Blueprints_PopulateNameKeys" xml:space="preserve">
+    <value>Populate NameKeys Now</value>
+  </data>
+  <data name="Blueprints_ShiftKeyHint" xml:space="preserve">
+    <value>Uppercase, e.g., CUSTOM_DAY</value>
+  </data>
+  <data name="Blueprints_NoShiftTypes" xml:space="preserve">
+    <value>No shift types defined yet. Create one above to get started.</value>
+  </data>
+  <data name="Blueprints_EnglishName" xml:space="preserve">
+    <value>English Name</value>
+  </data>
+  <data name="Blueprints_HebrewName" xml:space="preserve">
+    <value>Hebrew Name</value>
+  </data>
+  <data name="Blueprints_TimeRange" xml:space="preserve">
+    <value>Time Range</value>
+  </data>
+  <data name="Blueprints_Custom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="Blueprints_Predefined" xml:space="preserve">
+    <value>Predefined</value>
+  </data>
+  <data name="Blueprints_EditName" xml:space="preserve">
+    <value>Edit Name</value>
+  </data>
+  <data name="Blueprints_EditTime" xml:space="preserve">
+    <value>Edit Time</value>
+  </data>
+  <data name="Blueprints_CheckingUsage" xml:space="preserve">
+    <value>Checking usage...</value>
+  </data>
+  <data name="Blueprints_CannotDelete" xml:space="preserve">
+    <value>⚠️ Cannot Delete</value>
+  </data>
+  <data name="Blueprints_UsedByPrograms_Before" xml:space="preserve">
+    <value>This shift type is used by </value>
+  </data>
+  <data name="Blueprints_UsedByPrograms_After" xml:space="preserve">
+    <value> program(s).</value>
+  </data>
+  <data name="Blueprints_RemoveFromProgramsFirst" xml:space="preserve">
+    <value>Please remove it from all programs first before deleting.</value>
+  </data>
+  <data name="Blueprints_UsedByInstances_Before" xml:space="preserve">
+    <value>This shift type is currently used by </value>
+  </data>
+  <data name="Blueprints_UsedByInstances_After" xml:space="preserve">
+    <value> shift instance(s).</value>
+  </data>
+  <data name="Blueprints_DeletionWarning" xml:space="preserve">
+    <value>Deleting it will NOT delete those shifts. Historical shift data will be preserved.</value>
+  </data>
+  <data name="Blueprints_SafeToDelete" xml:space="preserve">
+    <value>✓ Safe to Delete</value>
+  </data>
+  <data name="Blueprints_NotInUse" xml:space="preserve">
+    <value>This shift type is not currently in use.</value>
+  </data>
+  <data name="Blueprints_ConfirmDeleteQuestion" xml:space="preserve">
+    <value>Are you sure you want to delete this shift type?</value>
+  </data>
+  <data name="Programs_Title" xml:space="preserve">
+    <value>Programs</value>
+  </data>
+  <data name="Programs_WeeklyTemplates" xml:space="preserve">
+    <value>Weekly Templates</value>
+  </data>
+  <data name="Programs_Subtitle" xml:space="preserve">
+    <value>Define when shift types run each week and generate shift instances</value>
+  </data>
+  <data name="Programs_CreateNew" xml:space="preserve">
+    <value>Create New Program</value>
+  </data>
+  <data name="Programs_SelectShiftType" xml:space="preserve">
+    <value>-- Select Shift Type --</value>
+  </data>
+  <data name="Programs_ProgramName" xml:space="preserve">
+    <value>Program Name</value>
+  </data>
+  <data name="Programs_NamePlaceholder" xml:space="preserve">
+    <value>e.g., Morning Shifts Mon-Fri</value>
+  </data>
+  <data name="Programs_WeeklyMask" xml:space="preserve">
+    <value>Weekly Mask (Select Days)</value>
+  </data>
+  <data name="Programs_DefaultStaffing" xml:space="preserve">
+    <value>Default Staffing Required</value>
+  </data>
+  <data name="Programs_StaffingHint" xml:space="preserve">
+    <value>Number of people required per shift (can override per-day below)</value>
+  </data>
+  <data name="Programs_PerDayOverrides" xml:space="preserve">
+    <value>Per-Day Staffing Overrides (Optional)</value>
+  </data>
+  <data name="Programs_UseDefault" xml:space="preserve">
+    <value>Use default</value>
+  </data>
+  <data name="Programs_CreateProgram" xml:space="preserve">
+    <value>Create Program</value>
+  </data>
+  <data name="Programs_Existing" xml:space="preserve">
+    <value>Existing Programs</value>
+  </data>
+  <data name="Programs_NoneYet" xml:space="preserve">
+    <value>No programs defined yet. Create one above to get started.</value>
+  </data>
+  <data name="Programs_Time" xml:space="preserve">
+    <value>Time:</value>
+  </data>
+  <data name="Programs_DefaultStaffingLabel" xml:space="preserve">
+    <value>Default Staffing:</value>
+  </data>
+  <data name="Programs_People" xml:space="preserve">
+    <value>people</value>
+  </data>
+  <data name="Programs_RunsOn" xml:space="preserve">
+    <value>Runs On:</value>
+  </data>
+  <data name="Programs_PerDayOverridesLabel" xml:space="preserve">
+    <value>Per-Day Overrides:</value>
+  </data>
+  <data name="Programs_GenerateInstances" xml:space="preserve">
+    <value>Generate Instances</value>
+  </data>
+  <data name="Programs_ConfirmDelete" xml:space="preserve">
+    <value>Are you sure you want to delete this program? Existing shift instances will NOT be deleted.</value>
+  </data>
+  <data name="Programs_GenerateShiftInstances" xml:space="preserve">
+    <value>Generate Shift Instances</value>
+  </data>
+  <data name="Programs_GenerateNote" xml:space="preserve">
+    <value>This will create shift instances for all days in the range that match the Program's weekly mask.</value>
+  </data>
+  <data name="Griffin_SystemWideAuth" xml:space="preserve">
+    <value>System-Wide Authentication</value>
+  </data>
+  <data name="Griffin_SystemWideAuth_Desc" xml:space="preserve">
+    <value>Griffin ADFS is configured once at the &lt;strong&gt;owner level&lt;/strong&gt; and applies to &lt;strong&gt;all companies&lt;/strong&gt; in your system. Users from any company can authenticate using their domain credentials.</value>
+  </data>
+  <data name="Griffin_Subtitle" xml:space="preserve">
+    <value>Configure centralized domain authentication for all companies</value>
+  </data>
+  <data name="Griffin_ServiceConfig" xml:space="preserve">
+    <value>Griffin Service Configuration</value>
+  </data>
+  <data name="Griffin_ServerUrl" xml:space="preserve">
+    <value>Griffin Server URL</value>
+  </data>
+  <data name="Griffin_FindThis" xml:space="preserve">
+    <value>Find This</value>
+  </data>
+  <data name="Griffin_ServerUrl_Hint" xml:space="preserve">
+    <value>Griffin service endpoint for the entire system (e.g., http://griffin-auth.example.mil). Must include http:// or https://</value>
+  </data>
+  <data name="Griffin_CallbackUrl" xml:space="preserve">
+    <value>Application Callback URL</value>
+  </data>
+  <data name="Griffin_CallbackUrl_Hint" xml:space="preserve">
+    <value>Your application's callback URL where Griffin redirects after authentication. Must include http:// or https:// and end with /Auth/GriffinCallback</value>
+  </data>
+  <data name="Griffin_Timeout" xml:space="preserve">
+    <value>API Timeout (seconds)</value>
+  </data>
+  <data name="Griffin_Timeout_Purpose" xml:space="preserve">
+    <value>Maximum time to wait for Griffin API responses (validation, claims retrieval)</value>
+  </data>
+  <data name="Griffin_Recommendation" xml:space="preserve">
+    <value>Recommendation</value>
+  </data>
+  <data name="Griffin_Timeout_Recommendation" xml:space="preserve">
+    <value>10 seconds is recommended for most environments. Increase to 20-30 seconds if experiencing network latency in air-gapped environments.</value>
+  </data>
+  <data name="Griffin_Timeout_Hint" xml:space="preserve">
+    <value>Timeout for Griffin API calls (1-60 seconds). Recommended: 10 seconds</value>
+  </data>
+  <data name="Griffin_UserProvisioning" xml:space="preserve">
+    <value>👥 User Provisioning (System-Wide)</value>
+  </data>
+  <data name="Griffin_AutoProvision" xml:space="preserve">
+    <value>Auto-Provision New Users</value>
+  </data>
+  <data name="Griffin_AutoProvision_Hint" xml:space="preserve">
+    <value>Automatically create user accounts on first Griffin login. If disabled, users must be manually approved by administrators.</value>
+  </data>
+  <data name="Griffin_DefaultRole" xml:space="preserve">
+    <value>Default Role for Auto-Provisioned Users</value>
+  </data>
+  <data name="Griffin_DefaultRole_Hint" xml:space="preserve">
+    <value>Default role assigned to auto-provisioned users across all companies</value>
+  </data>
+  <data name="Griffin_SecurityNote_Title" xml:space="preserve">
+    <value>⚠️ Security Note:</value>
+  </data>
+  <data name="Griffin_SecurityNote_Text" xml:space="preserve">
+    <value>Auto-provisioning applies to &lt;strong&gt;all companies&lt;/strong&gt;. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.</value>
+  </data>
+  <data name="Griffin_SaveConfig" xml:space="preserve">
+    <value>Save Configuration</value>
+  </data>
+  <data name="Griffin_TestConnection" xml:space="preserve">
+    <value>Test Connection</value>
+  </data>
+  <data name="Griffin_RunDiagnostic" xml:space="preserve">
+    <value>Run Full Diagnostic</value>
+  </data>
+  <data name="Griffin_AboutTitle" xml:space="preserve">
+    <value>ℹ️ About Griffin ADFS</value>
+  </data>
+  <data name="Griffin_AboutDesc" xml:space="preserve">
+    <value>Griffin ADFS provides centralized domain authentication for air-gapped military/government environments.</value>
+  </data>
+  <data name="Griffin_KeyFeatures" xml:space="preserve">
+    <value>Key Features:</value>
+  </data>
+  <data name="Griffin_Feature1" xml:space="preserve">
+    <value>Users authenticate with their domain credentials (CAC/username and password)</value>
+  </data>
+  <data name="Griffin_Feature2" xml:space="preserve">
+    <value>Local username/password authentication always available as fallback</value>
+  </data>
+  <data name="Griffin_Feature3" xml:space="preserve">
+    <value>No client secret needed - Griffin service handles ADFS communication</value>
+  </data>
+  <data name="Griffin_SystemWideConfig" xml:space="preserve">
+    <value>System-Wide Configuration:</value>
+  </data>
+  <data name="Griffin_Config1" xml:space="preserve">
+    <value>&lt;strong&gt;Configured once&lt;/strong&gt; by the system owner</value>
+  </data>
+  <data name="Griffin_Config2" xml:space="preserve">
+    <value>&lt;strong&gt;Applies to all companies&lt;/strong&gt; in the system</value>
+  </data>
+  <data name="Griffin_Config3" xml:space="preserve">
+    <value>&lt;strong&gt;Single Griffin server&lt;/strong&gt; serves the entire deployment</value>
+  </data>
+  <data name="Griffin_Config4" xml:space="preserve">
+    <value>&lt;strong&gt;Consistent authentication&lt;/strong&gt; across all companies and users</value>
+  </data>
+  <data name="Griffin_NoteText" xml:space="preserve">
+    <value>Individual companies cannot override or disable ADFS authentication. If enabled here, all users across all companies will see the "Login with Griffin ADFS" option on the login page.</value>
+  </data>
+  <data name="LangMgmt_Title" xml:space="preserve">
+    <value>Language Management</value>
+  </data>
+  <data name="LangMgmt_Subtitle" xml:space="preserve">
+    <value>Configure languages and customize translations for your company</value>
+  </data>
+  <data name="LangMgmt_CompanySettings" xml:space="preserve">
+    <value>🎌 Company Language Settings</value>
+  </data>
+  <data name="LangMgmt_CompanySettings_Desc" xml:space="preserve">
+    <value>Configure which two languages are available for users to toggle between.</value>
+  </data>
+  <data name="LangMgmt_DefaultLanguage" xml:space="preserve">
+    <value>Default Language</value>
+  </data>
+  <data name="LangMgmt_DefaultLanguage_Hint" xml:space="preserve">
+    <value>Language shown to new users and as fallback</value>
+  </data>
+  <data name="LangMgmt_AlternateLanguage" xml:space="preserve">
+    <value>Alternate Language</value>
+  </data>
+  <data name="LangMgmt_AlternateLanguage_Hint" xml:space="preserve">
+    <value>Language available in toggle switch</value>
+  </data>
+  <data name="LangMgmt_SaveSettings" xml:space="preserve">
+    <value>Save Language Settings</value>
+  </data>
+  <data name="LangMgmt_TranslationEditor" xml:space="preserve">
+    <value>✏️ In-App Translation Editor</value>
+  </data>
+  <data name="LangMgmt_EditorDesc1" xml:space="preserve">
+    <value>Edit translations directly by clicking on text throughout the application.</value>
+  </data>
+  <data name="LangMgmt_EditorDesc2" xml:space="preserve">
+    <value>Navigate anywhere in the app and click on any localized text to edit it. Changes are saved as drafts until you click "Save &amp; Exit".</value>
+  </data>
+  <data name="LangMgmt_SelectCulture" xml:space="preserve">
+    <value>Select Culture to Edit</value>
+  </data>
+  <data name="LangMgmt_EnterEditMode" xml:space="preserve">
+    <value>Enter Edit Mode</value>
+  </data>
+  <data name="LangMgmt_Overrides" xml:space="preserve">
+    <value>📝 Translation Overrides</value>
+  </data>
+  <data name="LangMgmt_SearchPlaceholder" xml:space="preserve">
+    <value>Search by key or value...</value>
+  </data>
+  <data name="LangMgmt_AllLanguages" xml:space="preserve">
+    <value>All Languages</value>
+  </data>
+  <data name="LangMgmt_English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LangMgmt_Hebrew" xml:space="preserve">
+    <value>Hebrew</value>
+  </data>
+  <data name="LangMgmt_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="LangMgmt_ResourceKey" xml:space="preserve">
+    <value>Resource Key</value>
+  </data>
+  <data name="LangMgmt_Culture" xml:space="preserve">
+    <value>Culture</value>
+  </data>
+  <data name="LangMgmt_BaseValue" xml:space="preserve">
+    <value>Base Value</value>
+  </data>
+  <data name="LangMgmt_OverrideValue" xml:space="preserve">
+    <value>Override Value</value>
+  </data>
+  <data name="LangMgmt_LastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+  </data>
+  <data name="LangMgmt_ConfirmDeleteOverride" xml:space="preserve">
+    <value>Delete this override?</value>
+  </data>
+  <data name="LangMgmt_NoOverrides" xml:space="preserve">
+    <value>No translation overrides found.</value>
+  </data>
+  <data name="LangMgmt_ClearFilters" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="LangMgmt_AddOverride" xml:space="preserve">
+    <value>➕ Add Translation Override</value>
+  </data>
+  <data name="LangMgmt_ResourceKey_Hint" xml:space="preserve">
+    <value>Key from SharedResources (e.g., Button_Save, Dashboard_Title)</value>
+  </data>
+  <data name="LangMgmt_SelectCultureOption" xml:space="preserve">
+    <value>-- Select Culture --</value>
+  </data>
+  <data name="LangMgmt_OverrideValue_Hint" xml:space="preserve">
+    <value>Custom translation (preserve {0}, {1} placeholders if present)</value>
+  </data>
+  <data name="LangMgmt_AddOverrideBtn" xml:space="preserve">
+    <value>Add Override</value>
+  </data>
+  <data name="LangMgmt_SelectCompanyFirst" xml:space="preserve">
+    <value>Please select a company using the dropdown above to manage language settings.</value>
+  </data>
+  <data name="Blueprints_ShiftKeyPlaceholder" xml:space="preserve">
+    <value>e.g., CUSTOM_1</value>
+  </data>
+  <data name="Blueprints_EnglishNamePlaceholder" xml:space="preserve">
+    <value>Day Shift</value>
+  </data>
+  <data name="Blueprints_HebrewNamePlaceholder" xml:space="preserve">
+    <value>משמרת יום</value>
+  </data>
+  <data name="LangMgmt_FilterByLanguage" xml:space="preserve">
+    <value>Filter by language</value>
+  </data>
+  <data name="LangMgmt_ResourceKeyPlaceholder" xml:space="preserve">
+    <value>Button_Save</value>
+  </data>
+  <data name="LangMgmt_OverrideValuePlaceholder" xml:space="preserve">
+    <value>Custom translation text</value>
+  </data>
+  <data name="Director_AssignedCompanies" xml:space="preserve">
+    <value>Assigned Companies</value>
+  </data>
+  <data name="Director_FilterActive" xml:space="preserve">
+    <value>Filter Active</value>
+  </data>
+  <data name="Director_ManageCompanyFilter" xml:space="preserve">
+    <value>Manage Company Filter</value>
+  </data>
+  <data name="Calendar_NoShiftTypesConfigured" xml:space="preserve">
+    <value>No shift types configured.</value>
+  </data>
+  <data name="Calendar_ConfigureShiftTypes" xml:space="preserve">
+    <value>Configure shift types</value>
+  </data>
+  <data name="Calendar_CopyShiftAcrossDays" xml:space="preserve">
+    <value>Copy Shift Across Days</value>
+  </data>
+  <data name="Calendar_FillSource" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Calendar_FillTargetDays" xml:space="preserve">
+    <value>Target Days</value>
+  </data>
+  <data name="Calendar_CopyExact" xml:space="preserve">
+    <value>Copy Exact</value>
+  </data>
+  <data name="Calendar_CopyExactDesc" xml:space="preserve">
+    <value>Copy all assignments, trainees, and manual overrides to target days</value>
+  </data>
+  <data name="Calendar_CopyStaffingOnly" xml:space="preserve">
+    <value>Copy Staffing Only</value>
+  </data>
+  <data name="Calendar_CopyStaffingOnlyDesc" xml:space="preserve">
+    <value>Copy the number of required staff, but leave assignments empty</value>
+  </data>
+  <data name="Calendar_ApplyProgramDefaults" xml:space="preserve">
+    <value>Apply Program Defaults</value>
+  </data>
+  <data name="Calendar_ApplyProgramDefaultsDesc" xml:space="preserve">
+    <value>Create shifts from Program template (if linked to a Program)</value>
+  </data>
+  <data name="Calendar_ResetToProgramConfirm" xml:space="preserve">
+    <value>Reset this shift to Program defaults? This will restore staffing requirements and clear manual overrides.</value>
+  </data>
+  <data name="Calendar_LoadingEmployees" xml:space="preserve">
+    <value>Loading employees...</value>
+  </data>
+  <data name="Roster" xml:space="preserve">
+    <value>Roster</value>
+  </data>
+  <data name="Offline_NoPendingActions" xml:space="preserve">
+    <value>No pending actions</value>
+  </data>
+  <data name="ViewMode_Week" xml:space="preserve">
+    <value>Week</value>
+  </data>
+  <data name="ViewMode_2Weeks" xml:space="preserve">
+    <value>2 Weeks</value>
+  </data>
+  <data name="ViewMode_Month" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="Pagination_PageXofY" xml:space="preserve">
+    <value>Page {0} of {1}</value>
   </data>
 </root>

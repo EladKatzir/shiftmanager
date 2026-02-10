@@ -141,6 +141,12 @@
 
             var now = new Date();
             var diffMs = now - d;
+
+            // Future dates: fall back to friendly format instead of showing "Just now"
+            if (diffMs < 0) {
+                return this.friendly(date);
+            }
+
             var diffSecs = Math.floor(diffMs / 1000);
             var diffMins = Math.floor(diffMs / 60000);
             var diffHours = Math.floor(diffMs / 3600000);

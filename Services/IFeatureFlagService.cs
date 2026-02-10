@@ -51,8 +51,7 @@ public interface IFeatureFlagService
     Task DeleteFlagAsync(int flagId);
 
     /// <summary>
-    /// Invalidates the cache for a specific flag or all flags.
+    /// Invalidates the cache for a specific flag scope.
     /// </summary>
-    /// <param name="flagName">Optional flag name to invalidate. If null, invalidates all.</param>
-    void InvalidateCache(string? flagName = null);
+    void InvalidateCache(string flagName, int? companyId = null, int? userId = null);
 }

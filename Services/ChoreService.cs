@@ -473,7 +473,11 @@ public class ChoreService : IChoreService
                 return (false, "Shift assignment not found.", null);
             }
 
-            var assigneeId = shiftAssignment.UserId!.Value;
+            if (shiftAssignment.UserId == null)
+            {
+                return (false, "Shift assignment has no assigned user.", null);
+            }
+            var assigneeId = shiftAssignment.UserId.Value;
             var date = shiftAssignment.ShiftInstance!.WorkDate;
 
             // Validate permissions

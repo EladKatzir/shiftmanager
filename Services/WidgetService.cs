@@ -239,11 +239,11 @@ public class WidgetService : IWidgetService
         var friends = new List<FriendOnCallInfo>();
         var targetDate = DateOnly.FromDateTime(date ?? DateTime.Today);
 
-        // Get user's accepted friends from UserFriendships table
-        var friendIds = await _context.UserFriendships
-            .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Accepted)
-            .Select(f => f.FriendId)
+        // Get user's accepted friends from UserFriendships table (bidirectional)
+        var friendships = await _context.UserFriendships
+            .Where(f => (f.UserId == userId || f.FriendId == userId) && f.Status == FriendshipStatus.Accepted)
             .ToListAsync();
+        var friendIds = friendships.Select(f => f.UserId == userId ? f.FriendId : f.UserId).ToList();
 
         if (!friendIds.Any()) return friends;
 

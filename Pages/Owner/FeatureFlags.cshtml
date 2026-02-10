@@ -21,7 +21,7 @@
             <span class="page-icon">🚩</span>
             @Localizer["Owner_FeatureFlags"]
         </h1>
-        <p class="page-subtitle">Toggle system features without redeploying</p>
+        <p class="page-subtitle"><loc key="FeatureFlags_Subtitle" /></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Message))
@@ -34,13 +34,13 @@
     <form method="post">
         @* Core Features *@
         <div class="feature-category">
-            <h2>🔧 Core Features</h2>
+            <h2><loc key="FeatureFlags_CoreFeatures" /></h2>
             <div class="feature-flags-grid">
                 <div class="feature-flag-card">
                     <div class="flag-header">
                         <div>
                             <h3>EnforceCompanyScope</h3>
-                            <p>Enforce multi-tenant company scoping for data isolation</p>
+                            <p><loc key="FeatureFlags_EnforceCompanyScope_Desc" /></p>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" asp-for="EnforceCompanyScope" />
@@ -48,8 +48,8 @@
                         </label>
                     </div>
                     <div class="flag-meta">
-                        <span class="flag-status">@(Model.EnforceCompanyScope ? "✅ Enabled" : "❌ Disabled")</span>
-                        <span class="flag-impact impact-critical">Critical</span>
+                        <span class="flag-status">@(Model.EnforceCompanyScope ? Localizer["Status_Enabled"] : Localizer["Status_Disabled"])</span>
+                        <span class="flag-impact impact-critical">@Localizer["FeatureFlags_Critical"]</span>
                     </div>
                 </div>
 
@@ -57,7 +57,7 @@
                     <div class="flag-header">
                         <div>
                             <h3>EnableDirectorRole</h3>
-                            <p>Enable Director role with cross-company permissions</p>
+                            <p><loc key="FeatureFlags_EnableDirectorRole_Desc" /></p>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" asp-for="EnableDirectorRole" />
@@ -65,8 +65,8 @@
                         </label>
                     </div>
                     <div class="flag-meta">
-                        <span class="flag-status">@(Model.EnableDirectorRole ? "✅ Enabled" : "❌ Disabled")</span>
-                        <span class="flag-impact impact-high">High</span>
+                        <span class="flag-status">@(Model.EnableDirectorRole ? Localizer["Status_Enabled"] : Localizer["Status_Disabled"])</span>
+                        <span class="flag-impact impact-high">@Localizer["FeatureFlags_High"]</span>
                     </div>
                 </div>
 
@@ -74,7 +74,7 @@
                     <div class="flag-header">
                         <div>
                             <h3>AllowPublicSignup</h3>
-                            <p>Allow users to self-register without invitation</p>
+                            <p><loc key="FeatureFlags_AllowPublicSignup_Desc" /></p>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" asp-for="AllowPublicSignup" />
@@ -82,8 +82,8 @@
                         </label>
                     </div>
                     <div class="flag-meta">
-                        <span class="flag-status">@(Model.AllowPublicSignup ? "✅ Enabled" : "❌ Disabled")</span>
-                        <span class="flag-impact impact-medium">Medium</span>
+                        <span class="flag-status">@(Model.AllowPublicSignup ? Localizer["Status_Enabled"] : Localizer["Status_Disabled"])</span>
+                        <span class="flag-impact impact-medium">@Localizer["FeatureFlags_Medium"]</span>
                     </div>
                 </div>
 
@@ -91,7 +91,7 @@
                     <div class="flag-header">
                         <div>
                             <h3>EnableApiKeyManagement</h3>
-                            <p>Allow users to generate and manage API keys</p>
+                            <p><loc key="FeatureFlags_EnableApiKeyManagement_Desc" /></p>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" asp-for="EnableApiKeyManagement" />
@@ -99,8 +99,8 @@
                         </label>
                     </div>
                     <div class="flag-meta">
-                        <span class="flag-status">@(Model.EnableApiKeyManagement ? "✅ Enabled" : "❌ Disabled")</span>
-                        <span class="flag-impact impact-medium">Medium</span>
+                        <span class="flag-status">@(Model.EnableApiKeyManagement ? Localizer["Status_Enabled"] : Localizer["Status_Disabled"])</span>
+                        <span class="flag-impact impact-medium">@Localizer["FeatureFlags_Medium"]</span>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
 
         @* API Features *@
         <div class="feature-category">
-            <h2>🔌 API Endpoints</h2>
+            <h2><loc key="FeatureFlags_ApiEndpoints" /></h2>
             <div class="api-categories">
                 @foreach (var category in Model.ApiCategories)
                 {
@@ -132,8 +132,8 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
-            <button type="button" class="btn btn-ghost" onclick="location.reload()">🔄 Reset</button>
+            <button type="submit" class="btn btn-primary">💾 <loc key="Button_SaveChanges" /></button>
+            <button type="button" class="btn btn-ghost" onclick="location.reload()">🔄 <loc key="Button_Reset" /></button>
         </div>
     </form>
 </div>

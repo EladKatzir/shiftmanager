@@ -99,7 +99,7 @@
     var saved = sessionStorage.getItem('shifty_cache_version');
     if (saved) {
         var savedTime = parseInt(saved, 10);
-        if (savedTime > lastModified) {
+        if (!isNaN(savedTime) && savedTime > lastModified) {
             lastModified = savedTime;
         }
     }

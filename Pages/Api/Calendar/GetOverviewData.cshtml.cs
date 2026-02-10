@@ -60,9 +60,11 @@ public class GetOverviewDataModel : PageModel
                 return new JsonResult(new { success = false, message = "Invalid company" }) { StatusCode = 400 };
             }
 
-            // Get users in company (uses tenant filter)
+            // Get users in company (uses tenant filter, capped for memory safety)
             var users = await _db.Users
                 .Where(u => u.IsActive)
+                .OrderBy(u => u.DisplayName)
+                .Take(2000)
                 .Select(u => new { id = u.Id, name = u.DisplayName })
                 .ToListAsync();
 

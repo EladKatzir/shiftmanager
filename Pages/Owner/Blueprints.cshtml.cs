@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Services;
+using System.Security.Claims;
 
 namespace ShiftManager.Pages.Owner;
 
@@ -70,7 +71,7 @@ public class BlueprintsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate
             if (string.IsNullOrWhiteSpace(NewShiftKey))
@@ -140,7 +141,7 @@ public class BlueprintsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             var shiftType = await _db.ShiftTypes
                 .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
@@ -188,7 +189,7 @@ public class BlueprintsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             var shiftType = await _db.ShiftTypes
                 .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
@@ -273,7 +274,7 @@ public class BlueprintsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             _logger.LogInformation(
                 "DELETE ATTEMPT: ShiftTypeId={ShiftTypeId}, Confirmed={Confirmed}, CompanyId={CompanyId}, UserId={UserId}",
@@ -366,7 +367,7 @@ public class BlueprintsModel : PageModel
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             var shiftTypes = await _db.ShiftTypes
                 .Where(st => st.CompanyId == companyId)

@@ -6,13 +6,13 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Programs";
+    ViewData["Title"] = Localizer["Programs_Title"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
     new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
-    new BreadcrumbItem { Label = "Programs", IsActive = true }
+    new BreadcrumbItem { Label = Localizer["Programs_Title"], IsActive = true }
 })
 
 @* Owner Company Selector *@
@@ -22,34 +22,34 @@
     <div class="page-header">
         <h1>
             <span class="page-icon">⏰</span>
-            Programs (Weekly Templates)
+            <loc key="Programs_Title" /> (<loc key="Programs_WeeklyTemplates" />)
         </h1>
-        <p class="page-subtitle">Define when shift types run each week and generate shift instances</p>
+        <p class="page-subtitle"><loc key="Programs_Subtitle" /></p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.Success
+            <strong>@Localizer["Alert_Success"]</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-danger">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong>@Localizer["Alert_Error"]</strong> @Model.Error
         </div>
     }
 
     @* Create New Program Section *@
     <div class="feature-category">
-        <h2>➕ Create New Program</h2>
+        <h2>➕ <loc key="Programs_CreateNew" /></h2>
         <form method="post" asp-page-handler="CreateProgram">
             <div class="form-group-grid" style="grid-template-columns: 1fr 1fr;">
                 <div class="form-group">
-                    <label asp-for="ShiftTypeId">Shift Type</label>
+                    <label asp-for="ShiftTypeId">@Localizer["ShiftType"]</label>
                     <select asp-for="ShiftTypeId" class="form-control" required>
-                        <option value="">-- Select Shift Type --</option>
+                        <option value="">@Localizer["Programs_SelectShiftType"]</option>
                         @foreach (var st in Model.ShiftTypes)
                         {
                             <option value="@st.Id">
@@ -68,14 +68,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="ProgramName">Program Name</label>
+                    <label asp-for="ProgramName">@Localizer["Programs_ProgramName"]</label>
                     <input type="text" asp-for="ProgramName" class="form-control"
-                           placeholder="e.g., Morning Shifts Mon-Fri" required />
+                           placeholder="@Localizer["Programs_NamePlaceholder"]" required />
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Weekly Mask (Select Days)</label>
+                <label>@Localizer["Programs_WeeklyMask"]</label>
                 <div class="weekly-mask-selector">
                     @foreach (var day in Enum.GetValues<DayOfWeek>())
                     {
@@ -88,16 +88,16 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="DefaultStaffing">Default Staffing Required</label>
+                <label asp-for="DefaultStaffing">@Localizer["Programs_DefaultStaffing"]</label>
                 <input type="number" asp-for="DefaultStaffing" class="form-control"
                        min="1" max="50" value="1" required />
                 <small class="form-text text-muted">
-                    Number of people required per shift (can override per-day below)
+                    @Localizer["Programs_StaffingHint"]
                 </small>
             </div>
 
             <div class="form-group">
-                <label>Per-Day Staffing Overrides (Optional)</label>
+                <label>@Localizer["Programs_PerDayOverrides"]</label>
                 <div id="perDayStaffing" class="per-day-staffing-grid">
                     @foreach (var day in Enum.GetValues<DayOfWeek>())
                     {
@@ -108,7 +108,7 @@
                                    class="form-control per-day-input"
                                    min="1"
                                    max="50"
-                                   placeholder="Use default" />
+                                   placeholder="@Localizer["Programs_UseDefault"]" />
                         </div>
                     }
                 </div>
@@ -116,19 +116,19 @@
             </div>
 
             <button type="submit" class="btn btn-primary" onclick="collectPerDayStaffing()">
-                ➕ Create Program
+                ➕ <loc key="Programs_CreateProgram" />
             </button>
         </form>
     </div>
 
     @* Existing Programs List *@
     <div class="feature-category">
-        <h2>⏰ Existing Programs</h2>
+        <h2>⏰ <loc key="Programs_Existing" /></h2>
 
         @if (Model.Programs.Count == 0)
         {
             <div class="alert alert-info">
-                No programs defined yet. Create one above to get started.
+                <loc key="Programs_NoneYet" />
             </div>
         }
         else
@@ -153,17 +153,17 @@
 
                         <div class="program-details">
                             <div class="detail-row">
-                                <span class="detail-label">Time:</span>
+                                <span class="detail-label">@Localizer["Programs_Time"]</span>
                                 <span>@program.ShiftType.Start.ToString("HH:mm") - @program.ShiftType.End.ToString("HH:mm")</span>
                             </div>
 
                             <div class="detail-row">
-                                <span class="detail-label">Default Staffing:</span>
-                                <span>@program.DefaultStaffingRequired people</span>
+                                <span class="detail-label">@Localizer["Programs_DefaultStaffingLabel"]</span>
+                                <span>@program.DefaultStaffingRequired @Localizer["Programs_People"]</span>
                             </div>
 
                             <div class="detail-row">
-                                <span class="detail-label">Runs On:</span>
+                                <span class="detail-label">@Localizer["Programs_RunsOn"]</span>
                                 <div class="weekly-mask-display">
                                     @foreach (var day in Enum.GetValues<DayOfWeek>())
                                     {
@@ -177,7 +177,7 @@
                             @if (program.ProgramDays.Any(pd => pd.StaffingRequired.HasValue))
                             {
                                 <div class="detail-row">
-                                    <span class="detail-label">Per-Day Overrides:</span>
+                                    <span class="detail-label">@Localizer["Programs_PerDayOverridesLabel"]</span>
                                     <div class="per-day-overrides">
                                         @foreach (var pd in program.ProgramDays.Where(pd => pd.StaffingRequired.HasValue))
                                         {
@@ -195,15 +195,15 @@
                                     class="btn btn-sm btn-success generate-btn"
                                     data-program-id="@program.Id"
                                     data-program-name="@program.Name">
-                                📅 Generate Instances
+                                📅 @Localizer["Programs_GenerateInstances"]
                             </button>
 
                             <form method="post" asp-page-handler="DeleteProgram"
                                   style="display: inline;"
-                                  onsubmit="return confirm('Are you sure you want to delete this program? Existing shift instances will NOT be deleted.');">
+                                  onsubmit="return confirm('@Localizer["Programs_ConfirmDelete"]');">
                                 <input type="hidden" name="programId" value="@program.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
-                                    🗑️ Delete
+                                    🗑️ <loc key="Delete" />
                                 </button>
                             </form>
                         </div>
@@ -220,7 +220,7 @@
         <div class="modal-content">
             <form method="post" asp-page-handler="GenerateInstances">
                 <div class="modal-header">
-                    <h3>Generate Shift Instances</h3>
+                    <h3><loc key="Programs_GenerateShiftInstances" /></h3>
                     <button type="button" class="close-modal" onclick="closeGenerateModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -229,33 +229,32 @@
                     <p id="generateProgramName" class="text-muted"></p>
 
                     <div class="form-group">
-                        <label asp-for="GenerateStartDate">Start Date</label>
+                        <label asp-for="GenerateStartDate">@Localizer["Label_StartDate"]</label>
                         <input type="date" asp-for="GenerateStartDate" class="form-control" required />
                     </div>
 
                     <div class="form-group">
-                        <label asp-for="GenerateEndDate">End Date</label>
+                        <label asp-for="GenerateEndDate">@Localizer["Label_EndDate"]</label>
                         <input type="date" asp-for="GenerateEndDate" class="form-control" required />
                     </div>
 
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" asp-for="OverwriteExisting" />
-                            Overwrite existing shift instances?
+                            @Localizer["Programs_OverwriteExisting"]
                         </label>
                         <small class="form-text text-muted">
-                            If checked, will update existing instances. Otherwise, skips dates that already have shifts.
+                            @Localizer["Programs_OverwriteHint"]
                         </small>
                     </div>
 
                     <div class="alert alert-info">
-                        <strong>ℹ️ Note:</strong> This will create shift instances for all days in the range
-                        that match the Program's weekly mask.
+                        <strong>@Localizer["Note"]:</strong> @Localizer["Programs_GenerateNote"]
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()"><loc key="Button_Cancel">Cancel</loc></button>
-                    <button type="submit" class="btn btn-primary">📅 Generate Instances</button>
+                    <button type="submit" class="btn btn-primary">📅 @Localizer["Programs_GenerateInstances"]</button>
                 </div>
             </form>
         </div>

@@ -88,8 +88,9 @@ function formatWeekRange(startDateStr) {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
-    const dayNames = window.MyTeamLocalization.dayNamesShort;
-    const monthNames = window.MyTeamLocalization.monthNames;
+    const loc = window.MyTeamLocalization || {};
+    const dayNames = loc.dayNamesShort || ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const monthNames = loc.monthNames || ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     const startDay = dayNames[start.getDay()];
     const endDay = dayNames[end.getDay()];

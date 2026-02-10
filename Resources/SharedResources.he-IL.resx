@@ -8733,6 +8733,150 @@
   <data name="Help_NavLink" xml:space="preserve">
     <value>עזרה</value>
   </data>
+  <data name="Help_Section_Chores" xml:space="preserve">
+    <value>תורנויות ותורני יום</value>
+  </data>
+  <data name="Help_FAQ_ViewChores_Q" xml:space="preserve">
+    <value>איך אני רואה את התורנויות שלי?</value>
+  </data>
+  <data name="Help_FAQ_ViewChores_A" xml:space="preserve">
+    <value>נווט לדף התורנויות מהתפריט הראשי. תראה רשימה של כל התורנויות שהוקצו לך, מסודרות לפי תאריך. ניתן לסנן לפי סטטוס כדי לראות תורנויות ממתינות, שהושלמו או הכל.</value>
+  </data>
+  <data name="Help_FAQ_OnDuty_Q" xml:space="preserve">
+    <value>איך עובד לוח תורני היום?</value>
+  </data>
+  <data name="Help_FAQ_OnDuty_A" xml:space="preserve">
+    <value>לוח תורני היום מציג מי אחראי על תורנות כוננות לכל יום. המנהל שלך מקצה סיבובי תורנות. ניתן לצפות בתורנויות הנוכחיות והקרובות מדף תורני היום.</value>
+  </data>
+  <data name="Help_Section_Management" xml:space="preserve">
+    <value>ניהול</value>
+  </data>
+  <data name="Help_FAQ_CreateShift_Q" xml:space="preserve">
+    <value>איך אני יוצר משמרת חדשה?</value>
+  </data>
+  <data name="Help_FAQ_CreateShift_A" xml:space="preserve">
+    <value>עבור לדף לוח השנה ולחץ על התאריך שבו תרצה להוסיף משמרת. מלא את פרטי המשמרת כולל שעה, סוג תפקיד והערות. לחץ שמור כדי ליצור את המשמרת.</value>
+  </data>
+  <data name="Help_FAQ_AssignEmployee_Q" xml:space="preserve">
+    <value>איך אני מקצה עובד למשמרת?</value>
+  </data>
+  <data name="Help_FAQ_AssignEmployee_A" xml:space="preserve">
+    <value>פתח משמרת קיימת מלוח השנה, ואז השתמש בפאנל השיבוץ כדי לבחור עובד. ניתן גם לגרור ולשחרר עובדים מהרשימה הצדדית ישירות לתאי המשמרות.</value>
+  </data>
+  <data name="Help_FAQ_ApproveRequests_Q" xml:space="preserve">
+    <value>איך אני מאשר או דוחה בקשות עובדים?</value>
+  </data>
+  <data name="Help_FAQ_ApproveRequests_A" xml:space="preserve">
+    <value>עבור לדף הבקשות כדי לראות את כל הבקשות הממתינות. סקור כל בקשה ולחץ אשר או דחה. ניתן גם להוסיף הערה המסבירה את ההחלטה שלך.</value>
+  </data>
+  <data name="Help_FAQ_ManageUsers_Q" xml:space="preserve">
+    <value>איך אני מנהל משתמשים ותפקידים?</value>
+  </data>
+  <data name="Help_FAQ_ManageUsers_A" xml:space="preserve">
+    <value>נווט לניהול &gt; משתמשים כדי לצפות בכל העובדים. משם ניתן להוסיף משתמשים חדשים, לערוך משתמשים קיימים, לשנות תפקידים ולנהל שיוך מחלקות.</value>
+  </data>
+  <data name="Help_FAQ_ExportSchedule_Q" xml:space="preserve">
+    <value>איך אני מייצא את לוח המשמרות?</value>
+  </data>
+  <data name="Help_FAQ_ExportSchedule_A" xml:space="preserve">
+    <value>השתמש בכפתור הייצוא בדף לוח השנה או טבלת המשמרות. ניתן לייצא לפורמט Excel. בחר את טווח התאריכים והמחלקות שברצונך לכלול בייצוא.</value>
+  </data>
+  <data name="Help_FAQ_ScheduleTable_Q" xml:space="preserve">
+    <value>מהי תצוגת טבלת המשמרות?</value>
+  </data>
+  <data name="Help_FAQ_ScheduleTable_A" xml:space="preserve">
+    <value>טבלת המשמרות מספקת תצוגת רשת של כל המשמרות מסודרות לפי עובד ותאריך. היא שימושית לקבלת תמונה כללית של לוח הזמנים של הצוות ולזיהוי פערי כיסוי.</value>
+  </data>
+  <data name="Help_Section_Shortcuts" xml:space="preserve">
+    <value>קיצורי מקלדת</value>
+  </data>
+  <data name="Help_FAQ_KeyboardShortcuts_Q" xml:space="preserve">
+    <value>אילו קיצורי מקלדת זמינים?</value>
+  </data>
+  <data name="Help_FAQ_KeyboardShortcuts_A" xml:space="preserve">
+    <value>לחץ Shift+? בכל מקום באפליקציה כדי לראות רשימת כל קיצורי המקלדת הזמינים. קיצורים נפוצים כוללים ניווט בין דפים, פעולות מהירות ובקרות לוח שנה.</value>
+  </data>
+  <data name="Help_FAQ_CommandPalette_Q" xml:space="preserve">
+    <value>מהי לוח הפקודות?</value>
+  </data>
+  <data name="Help_FAQ_CommandPalette_A" xml:space="preserve">
+    <value>לוח הפקודות (Ctrl+K) מספק גישה מהירה לכל הדפים והפעולות. התחל להקליד כדי לחפש כל דף, תכונה או פעולה. לחץ Enter כדי לנווט ישירות לפריט שנבחר.</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>מנהל משמרות</value>
+  </data>
+  <data name="Auth_CompletingAuthentication" xml:space="preserve">
+    <value>משלים אימות...</value>
+  </data>
+  <data name="BrowserOutdated_Message" xml:space="preserve">
+    <value>הדפדפן שלך מיושן ועלול שלא להציג את היישום בצורה תקינה. אנא השתמש ב-Chrome 80+, Firefox 80+ או Edge 80+.</value>
+  </data>
+  <data name="Director_NoCompaniesAssigned" xml:space="preserve">
+    <value>עדיין לא שובצת לפלוגות.</value>
+  </data>
+  <data name="Director_ContactOwnerForCompanies" xml:space="preserve">
+    <value>פנה לבעלים כדי שישבץ אותך לפלוגות.</value>
+  </data>
+  <data name="Nav_DirectorHub" xml:space="preserve">
+    <value>מרכז מפקד</value>
+  </data>
+  <data name="Nav_AdminHub" xml:space="preserve">
+    <value>מרכז ניהול</value>
+  </data>
+  <data name="Swap_MyAssignment" xml:space="preserve">
+    <value>השיבוץ שלי</value>
+  </data>
+  <data name="Swap_ProposedToUser" xml:space="preserve">
+    <value>מוצע למשתמש</value>
+  </data>
+  <data name="Swap_ChooseShift" xml:space="preserve">
+    <value>-- בחר אחת מהמשמרות הקרובות שלך --</value>
+  </data>
+  <data name="Swap_ChooseUser" xml:space="preserve">
+    <value>-- בחר משתמש --</value>
+  </data>
+  <data name="ViewAs_ViewingAs" xml:space="preserve">
+    <value>צופה כמנהל של</value>
+  </data>
+  <data name="ViewAs_ExitViewMode" xml:space="preserve">
+    <value>צא ממצב צפייה</value>
+  </data>
+  <data name="FillHandle_DragToCopy" xml:space="preserve">
+    <value>גרור כדי להעתיק לימים נוספים</value>
+  </data>
+  <data name="FillHandle_InvalidSource" xml:space="preserve">
+    <value>משמרת מקור לא חוקית</value>
+  </data>
+  <data name="FillHandle_Applying" xml:space="preserve">
+    <value>מחיל פעולת מילוי...</value>
+  </data>
+  <data name="InlineEdit_CouldNotUndo" xml:space="preserve">
+    <value>לא ניתן לבטל</value>
+  </data>
+  <data name="Radar_Active" xml:space="preserve">
+    <value>רדאר (פעיל)</value>
+  </data>
+  <data name="Radar" xml:space="preserve">
+    <value>רדאר</value>
+  </data>
+  <data name="Radar_FailedToLoad" xml:space="preserve">
+    <value>שגיאה בטעינת נתוני התנגשויות</value>
+  </data>
+  <data name="Radar_ConflictDetected" xml:space="preserve">
+    <value>זוהתה התנגשות</value>
+  </data>
+  <data name="Offline_SavedOffline" xml:space="preserve">
+    <value>נשמר במצב לא מקוון</value>
+  </data>
+  <data name="Roster_Loading" xml:space="preserve">
+    <value>טוען עובדים...</value>
+  </data>
+  <data name="Roster_FailedToLoad" xml:space="preserve">
+    <value>שגיאה בטעינת עובדים. נסה שוב.</value>
+  </data>
+  <data name="Roster_NoEmployees" xml:space="preserve">
+    <value>לא נמצאו עובדים.</value>
+  </data>
   <data name="AuditSearch" xml:space="preserve">
     <value>חיפוש יומן ביקורת</value>
   </data>
@@ -10775,5 +10919,787 @@
   </data>
   <data name="Success_UserDeleted" xml:space="preserve">
     <value>המשתמש נמחק בהצלחה</value>
+  </data>
+  <data name="NotificationTraineeAddedTitle" xml:space="preserve">
+    <value>מתמחה נוסף למשמרת שלך</value>
+  </data>
+  <data name="NotificationTraineeAddedMessage" xml:space="preserve">
+    <value>{0} נוסף/ה כמתמחה למשמרת {1} שלך ב-{2} ({3} - {4})</value>
+  </data>
+  <data name="NotificationTraineeChangedTitle" xml:space="preserve">
+    <value>המתמחה במשמרת שלך שונה</value>
+  </data>
+  <data name="NotificationTraineeChangedMessage" xml:space="preserve">
+    <value>המתמחה שלך ב-{0} ב-{1} שונה מ-{2} ל-{3}</value>
+  </data>
+  <data name="NotificationTraineeRemovedTitle" xml:space="preserve">
+    <value>מתמחה הוסר מהמשמרת שלך</value>
+  </data>
+  <data name="NotificationTraineeRemovedMessage" xml:space="preserve">
+    <value>{0} הוסר/ה ממשמרת {1} שלך ב-{2}</value>
+  </data>
+  <data name="NotificationTraineeAssignmentRemovedTitle" xml:space="preserve">
+    <value>שיבוץ מתמחה הוסר</value>
+  </data>
+  <data name="NotificationTraineeAssignmentRemovedMessage" xml:space="preserve">
+    <value>אינך עוד מתמחה ב-{0} ב-{1}</value>
+  </data>
+  <data name="NotificationNewTraineeAssignmentTitle" xml:space="preserve">
+    <value>שיבוץ מתמחה חדש</value>
+  </data>
+  <data name="NotificationNewTraineeAssignmentMessage" xml:space="preserve">
+    <value>שובצת כמתמחה ב-{0} ב-{1}</value>
+  </data>
+  <data name="NotificationSlotRemovedTitle" xml:space="preserve">
+    <value>שיבוץ למשמרת הוסר</value>
+  </data>
+  <data name="NotificationSlotRemovedMessage" xml:space="preserve">
+    <value>משמרת {0} שלך ב-{1} ({2} - {3}) הוסרה. סיבה: {4}</value>
+  </data>
+  <data name="NotificationShiftModifiedTitle" xml:space="preserve">
+    <value>פרטי המשמרת שונו</value>
+  </data>
+  <data name="NotificationShiftModifiedMessage" xml:space="preserve">
+    <value>משמרת {0} שלך ב-{1} שונתה: {2}</value>
+  </data>
+  <data name="Error_ShiftFullyStaffed" xml:space="preserve">
+    <value>משמרת זו כבר מאוישת במלואה</value>
+  </data>
+
+  <!-- Command Palette Navigation (JS localization) -->
+  <data name="Nav_Requests" xml:space="preserve">
+    <value>בקשות</value>
+  </data>
+  <data name="Nav_Analytics" xml:space="preserve">
+    <value>אנליטיקה</value>
+  </data>
+  <data name="Nav_Users" xml:space="preserve">
+    <value>משתמשים</value>
+  </data>
+  <data name="Nav_Companies" xml:space="preserve">
+    <value>חברות</value>
+  </data>
+  <data name="Nav_Directors" xml:space="preserve">
+    <value>מנהלים</value>
+  </data>
+  <data name="Nav_Configuration" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
+  <data name="Nav_ShiftTypes" xml:space="preserve">
+    <value>סוגי משמרות</value>
+  </data>
+  <data name="Nav_TimeOff" xml:space="preserve">
+    <value>חופשות</value>
+  </data>
+  <data name="Nav_AuditLog" xml:space="preserve">
+    <value>יומן פעילות</value>
+  </data>
+  <data name="Nav_Chores" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="Nav_OnDuty" xml:space="preserve">
+    <value>כוננויות</value>
+  </data>
+  <data name="Nav_ScheduleTable" xml:space="preserve">
+    <value>טבלת שיבוצים</value>
+  </data>
+  <data name="Nav_ScheduleTableDesc" xml:space="preserve">
+    <value>קונסולת תפעול לשיבוץ משמרות</value>
+  </data>
+  <data name="Nav_Blueprints" xml:space="preserve">
+    <value>תבניות</value>
+  </data>
+  <data name="Nav_BlueprintsDesc" xml:space="preserve">
+    <value>ניהול סוגי משמרות עם שמות מתורגמים</value>
+  </data>
+  <data name="Nav_Programs" xml:space="preserve">
+    <value>תוכניות</value>
+  </data>
+  <data name="Nav_ProgramsDesc" xml:space="preserve">
+    <value>יצירת תבניות משמרות שבועיות והפקת מופעים</value>
+  </data>
+  <data name="Nav_MasterPrograms" xml:space="preserve">
+    <value>תוכניות ראשיות</value>
+  </data>
+  <data name="Nav_MasterProgramsDesc" xml:space="preserve">
+    <value>הרכבת לוחות שבועיים מלאים ממספר תוכניות</value>
+  </data>
+  <data name="Nav_MyRequests" xml:space="preserve">
+    <value>הבקשות שלי</value>
+  </data>
+  <data name="Nav_MyTeam" xml:space="preserve">
+    <value>הצוות שלי</value>
+  </data>
+  <data name="Nav_MyProfile" xml:space="preserve">
+    <value>הפרופיל שלי</value>
+  </data>
+  <data name="Nav_Notifications" xml:space="preserve">
+    <value>התראות</value>
+  </data>
+  <data name="Nav_MonthView" xml:space="preserve">
+    <value>תצוגה חודשית</value>
+  </data>
+  <data name="Nav_WeekView" xml:space="preserve">
+    <value>תצוגה שבועית</value>
+  </data>
+  <data name="Nav_DayView" xml:space="preserve">
+    <value>תצוגה יומית</value>
+  </data>
+
+  <!-- Roster Dock (JS localization) -->
+  <data name="Roster_Vacation" xml:space="preserve">
+    <value>בחופשה</value>
+  </data>
+  <data name="Roster_OnShift" xml:space="preserve">
+    <value>במשמרת</value>
+  </data>
+  <data name="Roster_HasChore" xml:space="preserve">
+    <value>בתורנות</value>
+  </data>
+  <data name="Roster_Available" xml:space="preserve">
+    <value>זמין</value>
+  </data>
+  <data name="Roster_FailedToAssign" xml:space="preserve">
+    <value>שיבוץ העובד נכשל</value>
+  </data>
+  <data name="Roster_AssignedSuccess" xml:space="preserve">
+    <value>העובד שובץ בהצלחה</value>
+  </data>
+  <data name="Roster_AssignmentFailed" xml:space="preserve">
+    <value>השיבוץ נכשל</value>
+  </data>
+
+  <!-- Modal Loader (JS localization) -->
+  <data name="FailedToLoadContent" xml:space="preserve">
+    <value>טעינת התוכן נכשלה. אנא נסה שוב.</value>
+  </data>
+  <data name="LoadingFailedTitle" xml:space="preserve">
+    <value>הטעינה נכשלה</value>
+  </data>
+
+  <!-- B-05: Onboarding Wizard -->
+  <data name="Onboarding_Title" xml:space="preserve">
+    <value>ברוכים הבאים</value>
+  </data>
+  <data name="Onboarding_Welcome" xml:space="preserve">
+    <value>ברוך הבא,</value>
+  </data>
+  <data name="Onboarding_WelcomeSubtitle" xml:space="preserve">
+    <value>בוא נעשה סיור קצר במערכת.</value>
+  </data>
+  <data name="Onboarding_Step1_Title" xml:space="preserve">
+    <value>מה אפשר לעשות</value>
+  </data>
+  <data name="Onboarding_Step1_Description" xml:space="preserve">
+    <value>הנה התכונות העיקריות הזמינות עבורך:</value>
+  </data>
+  <data name="Onboarding_Feature_Calendar" xml:space="preserve">
+    <value>לוח שנה</value>
+  </data>
+  <data name="Onboarding_Feature_CalendarDesc" xml:space="preserve">
+    <value>צפה במשמרות, תורנויות וכוננויות שלך בתצוגה חודשית, שבועית או יומית.</value>
+  </data>
+  <data name="Onboarding_Feature_Requests" xml:space="preserve">
+    <value>בקשות וחופשות</value>
+  </data>
+  <data name="Onboarding_Feature_RequestsDesc" xml:space="preserve">
+    <value>הגש בקשות חופשה ובקשות החלפת משמרות לאישור המנהל.</value>
+  </data>
+  <data name="Onboarding_Feature_Notifications" xml:space="preserve">
+    <value>התראות</value>
+  </data>
+  <data name="Onboarding_Feature_NotificationsDesc" xml:space="preserve">
+    <value>קבל התראות על שינויים בלוח, אישורים ועדכונים חשובים.</value>
+  </data>
+  <data name="Onboarding_Feature_Profile" xml:space="preserve">
+    <value>הפרופיל שלך</value>
+  </data>
+  <data name="Onboarding_Feature_ProfileDesc" xml:space="preserve">
+    <value>עדכן את הפרטים האישיים, אנשי קשר לחירום והעדפות.</value>
+  </data>
+  <data name="Onboarding_Step2_Title" xml:space="preserve">
+    <value>טיפים מהירים</value>
+  </data>
+  <data name="Onboarding_Step2_Description" xml:space="preserve">
+    <value>כמה קיצורים שיעזרו לך לעבוד מהר יותר:</value>
+  </data>
+  <data name="Onboarding_Tip_Keyboard" xml:space="preserve">
+    <value>קיצורי מקלדת</value>
+  </data>
+  <data name="Onboarding_Tip_KeyboardDesc" xml:space="preserve">
+    <value>לחץ ? כדי לראות את כל קיצורי המקלדת הזמינים.</value>
+  </data>
+  <data name="Onboarding_Tip_CommandPalette" xml:space="preserve">
+    <value>ניווט מהיר</value>
+  </data>
+  <data name="Onboarding_Tip_CommandPaletteDesc" xml:space="preserve">
+    <value>לחץ Ctrl+K כדי לפתוח את חלונית הפקודות ולקפוץ לכל עמוד מיד.</value>
+  </data>
+  <data name="Onboarding_Tip_Help" xml:space="preserve">
+    <value>מרכז עזרה</value>
+  </data>
+  <data name="Onboarding_Tip_HelpDesc" xml:space="preserve">
+    <value>בקר בעמוד העזרה בכל עת לתשובות לשאלות נפוצות.</value>
+  </data>
+  <data name="Onboarding_Step2_Tip" xml:space="preserve">
+    <value>תמיד תוכל לגשת לטיפים אלו מעמוד העזרה בתפריט הצדדי.</value>
+  </data>
+  <data name="Onboarding_Step3_Title" xml:space="preserve">
+    <value>הכל מוכן!</value>
+  </data>
+  <data name="Onboarding_Step3_Description" xml:space="preserve">
+    <value>אתה מוכן להתחיל להשתמש במערכת. לחץ על הכפתור למטה כדי לעבור ללוח הבקרה.</value>
+  </data>
+  <data name="Onboarding_Previous" xml:space="preserve">
+    <value>הקודם</value>
+  </data>
+  <data name="Onboarding_Next" xml:space="preserve">
+    <value>הבא</value>
+  </data>
+  <data name="Onboarding_GetStarted" xml:space="preserve">
+    <value>התחל</value>
+  </data>
+  <data name="Alert_Success" xml:space="preserve">
+    <value>✅ הצלחה:</value>
+  </data>
+  <data name="Alert_Error" xml:space="preserve">
+    <value>❌ שגיאה:</value>
+  </data>
+  <data name="Button_Reset" xml:space="preserve">
+    <value>איפוס</value>
+  </data>
+  <data name="Programs_OverwriteExisting" xml:space="preserve">
+    <value>לדרוס משמרות קיימות?</value>
+  </data>
+  <data name="Programs_OverwriteHint" xml:space="preserve">
+    <value>אם מסומן, יעדכן משמרות קיימות. אחרת, ידלג על תאריכים שכבר יש בהם משמרות.</value>
+  </data>
+  <data name="MasterPrograms_Subtitle" xml:space="preserve">
+    <value>הרכב לוחות זמנים שבועיים שלמים ממספר תוכניות</value>
+  </data>
+  <data name="MasterPrograms_CreateNew" xml:space="preserve">
+    <value>➕ צור תוכנית אב חדשה</value>
+  </data>
+  <data name="MasterPrograms_Name" xml:space="preserve">
+    <value>שם תוכנית אב</value>
+  </data>
+  <data name="MasterPrograms_NamePlaceholder" xml:space="preserve">
+    <value>לדוגמה, לוח זמנים שבועי סטנדרטי</value>
+  </data>
+  <data name="MasterPrograms_Description" xml:space="preserve">
+    <value>תיאור (אופציונלי)</value>
+  </data>
+  <data name="MasterPrograms_DescPlaceholder" xml:space="preserve">
+    <value>תיאור של לוח הזמנים השבועי המלא</value>
+  </data>
+  <data name="MasterPrograms_SelectPrograms" xml:space="preserve">
+    <value>בחר תוכניות לכלול</value>
+  </data>
+  <data name="MasterPrograms_NoProgramsAvailable" xml:space="preserve">
+    <value>אין תוכניות זמינות.</value>
+  </data>
+  <data name="MasterPrograms_CreateProgramsFirst" xml:space="preserve">
+    <value>צור תוכניות קודם</value>
+  </data>
+  <data name="MasterPrograms_DaysPerWeek" xml:space="preserve">
+    <value>ימים/שבוע</value>
+  </data>
+  <data name="MasterPrograms_Create" xml:space="preserve">
+    <value>➕ צור תוכנית אב</value>
+  </data>
+  <data name="MasterPrograms_Existing" xml:space="preserve">
+    <value>📦 תוכניות אב קיימות</value>
+  </data>
+  <data name="MasterPrograms_NoneYet" xml:space="preserve">
+    <value>אין תוכניות אב מוגדרות עדיין. צור אחת למעלה כדי להתחיל.</value>
+  </data>
+  <data name="MasterPrograms_Programs" xml:space="preserve">
+    <value>תוכניות</value>
+  </data>
+  <data name="MasterPrograms_IncludedPrograms" xml:space="preserve">
+    <value>תוכניות כלולות:</value>
+  </data>
+  <data name="MasterPrograms_Days" xml:space="preserve">
+    <value>ימים</value>
+  </data>
+  <data name="MasterPrograms_GenerateFullWeek" xml:space="preserve">
+    <value>ייצר שבוע מלא</value>
+  </data>
+  <data name="MasterPrograms_ConfirmDelete" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק תוכנית אב זו? התוכניות הבודדות לא יימחקו.</value>
+  </data>
+  <data name="MasterPrograms_GenerateSchedule" xml:space="preserve">
+    <value>ייצר לוח זמנים שבועי מלא</value>
+  </data>
+  <data name="MasterPrograms_GenerateNote" xml:space="preserve">
+    <value>פעולה זו תחיל את כל התוכניות בתוכנית האב על טווח התאריכים, וליצור לוח זמנים שבועי מלא.</value>
+  </data>
+  <data name="FeatureFlags_Subtitle" xml:space="preserve">
+    <value>הפעל/כבה תכונות מערכת ללא פריסה מחדש</value>
+  </data>
+  <data name="FeatureFlags_CoreFeatures" xml:space="preserve">
+    <value>🔧 תכונות ליבה</value>
+  </data>
+  <data name="FeatureFlags_EnforceCompanyScope_Desc" xml:space="preserve">
+    <value>אכוף הפרדת נתונים לפי חברה (מרובת דיירים)</value>
+  </data>
+  <data name="FeatureFlags_Critical" xml:space="preserve">
+    <value>קריטי</value>
+  </data>
+  <data name="FeatureFlags_EnableDirectorRole_Desc" xml:space="preserve">
+    <value>הפעל תפקיד מנהל עם הרשאות חוצות חברה</value>
+  </data>
+  <data name="FeatureFlags_High" xml:space="preserve">
+    <value>גבוה</value>
+  </data>
+  <data name="FeatureFlags_AllowPublicSignup_Desc" xml:space="preserve">
+    <value>אפשר למשתמשים להירשם ללא הזמנה</value>
+  </data>
+  <data name="FeatureFlags_Medium" xml:space="preserve">
+    <value>בינוני</value>
+  </data>
+  <data name="FeatureFlags_EnableApiKeyManagement_Desc" xml:space="preserve">
+    <value>אפשר למשתמשים ליצור ולנהל מפתחות API</value>
+  </data>
+  <data name="FeatureFlags_ApiEndpoints" xml:space="preserve">
+    <value>🔌 נקודות קצה API</value>
+  </data>
+  <data name="Offline" xml:space="preserve">
+    <value>לא מקוון</value>
+  </data>
+  <data name="Blueprints_MigrationRequired" xml:space="preserve">
+    <value>⚠️ נדרשת הגירה:</value>
+  </data>
+  <data name="Blueprints_MigrationDesc" xml:space="preserve">
+    <value>חלק מסוגי המשמרות חסרים ערכי NameKey (נדרש ללוקליזציה).</value>
+  </data>
+  <data name="Blueprints_PopulateNameKeys" xml:space="preserve">
+    <value>אכלס NameKeys עכשיו</value>
+  </data>
+  <data name="Blueprints_ShiftKeyHint" xml:space="preserve">
+    <value>אותיות גדולות, למשל CUSTOM_DAY</value>
+  </data>
+  <data name="Blueprints_NoShiftTypes" xml:space="preserve">
+    <value>אין סוגי משמרות מוגדרים עדיין. צור אחד למעלה כדי להתחיל.</value>
+  </data>
+  <data name="Blueprints_EnglishName" xml:space="preserve">
+    <value>שם באנגלית</value>
+  </data>
+  <data name="Blueprints_HebrewName" xml:space="preserve">
+    <value>שם בעברית</value>
+  </data>
+  <data name="Blueprints_TimeRange" xml:space="preserve">
+    <value>טווח זמנים</value>
+  </data>
+  <data name="Blueprints_Custom" xml:space="preserve">
+    <value>מותאם אישית</value>
+  </data>
+  <data name="Blueprints_Predefined" xml:space="preserve">
+    <value>מוגדר מראש</value>
+  </data>
+  <data name="Blueprints_EditName" xml:space="preserve">
+    <value>ערוך שם</value>
+  </data>
+  <data name="Blueprints_EditTime" xml:space="preserve">
+    <value>ערוך זמן</value>
+  </data>
+  <data name="Blueprints_CheckingUsage" xml:space="preserve">
+    <value>בודק שימוש...</value>
+  </data>
+  <data name="Blueprints_CannotDelete" xml:space="preserve">
+    <value>⚠️ לא ניתן למחוק</value>
+  </data>
+  <data name="Blueprints_UsedByPrograms_Before" xml:space="preserve">
+    <value>סוג משמרת זה בשימוש ב-</value>
+  </data>
+  <data name="Blueprints_UsedByPrograms_After" xml:space="preserve">
+    <value> תוכנית/ות.</value>
+  </data>
+  <data name="Blueprints_RemoveFromProgramsFirst" xml:space="preserve">
+    <value>אנא הסר אותו מכל התוכניות לפני המחיקה.</value>
+  </data>
+  <data name="Blueprints_UsedByInstances_Before" xml:space="preserve">
+    <value>סוג משמרת זה בשימוש כרגע ב-</value>
+  </data>
+  <data name="Blueprints_UsedByInstances_After" xml:space="preserve">
+    <value> מופע/י משמרת.</value>
+  </data>
+  <data name="Blueprints_DeletionWarning" xml:space="preserve">
+    <value>מחיקתו לא תמחק את המשמרות האלה. נתוני משמרות היסטוריים יישמרו.</value>
+  </data>
+  <data name="Blueprints_SafeToDelete" xml:space="preserve">
+    <value>✓ בטוח למחיקה</value>
+  </data>
+  <data name="Blueprints_NotInUse" xml:space="preserve">
+    <value>סוג משמרת זה אינו בשימוש כרגע.</value>
+  </data>
+  <data name="Blueprints_ConfirmDeleteQuestion" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק סוג משמרת זה?</value>
+  </data>
+  <data name="Programs_Title" xml:space="preserve">
+    <value>תוכניות</value>
+  </data>
+  <data name="Programs_WeeklyTemplates" xml:space="preserve">
+    <value>תבניות שבועיות</value>
+  </data>
+  <data name="Programs_Subtitle" xml:space="preserve">
+    <value>הגדר מתי סוגי משמרות פועלים בכל שבוע וייצר מופעי משמרות</value>
+  </data>
+  <data name="Programs_CreateNew" xml:space="preserve">
+    <value>צור תוכנית חדשה</value>
+  </data>
+  <data name="Programs_SelectShiftType" xml:space="preserve">
+    <value>-- בחר סוג משמרת --</value>
+  </data>
+  <data name="Programs_ProgramName" xml:space="preserve">
+    <value>שם תוכנית</value>
+  </data>
+  <data name="Programs_NamePlaceholder" xml:space="preserve">
+    <value>למשל, משמרות בוקר ראשון-חמישי</value>
+  </data>
+  <data name="Programs_WeeklyMask" xml:space="preserve">
+    <value>מסכה שבועית (בחר ימים)</value>
+  </data>
+  <data name="Programs_DefaultStaffing" xml:space="preserve">
+    <value>כוח אדם נדרש ברירת מחדל</value>
+  </data>
+  <data name="Programs_StaffingHint" xml:space="preserve">
+    <value>מספר אנשים נדרש למשמרת (ניתן לדרוס ליום למטה)</value>
+  </data>
+  <data name="Programs_PerDayOverrides" xml:space="preserve">
+    <value>דריסות כוח אדם ליום (אופציונלי)</value>
+  </data>
+  <data name="Programs_UseDefault" xml:space="preserve">
+    <value>ברירת מחדל</value>
+  </data>
+  <data name="Programs_CreateProgram" xml:space="preserve">
+    <value>צור תוכנית</value>
+  </data>
+  <data name="Programs_Existing" xml:space="preserve">
+    <value>תוכניות קיימות</value>
+  </data>
+  <data name="Programs_NoneYet" xml:space="preserve">
+    <value>אין תוכניות מוגדרות עדיין. צור אחת למעלה כדי להתחיל.</value>
+  </data>
+  <data name="Programs_Time" xml:space="preserve">
+    <value>זמן:</value>
+  </data>
+  <data name="Programs_DefaultStaffingLabel" xml:space="preserve">
+    <value>כוח אדם ברירת מחדל:</value>
+  </data>
+  <data name="Programs_People" xml:space="preserve">
+    <value>אנשים</value>
+  </data>
+  <data name="Programs_RunsOn" xml:space="preserve">
+    <value>פועל בימים:</value>
+  </data>
+  <data name="Programs_PerDayOverridesLabel" xml:space="preserve">
+    <value>דריסות ליום:</value>
+  </data>
+  <data name="Programs_GenerateInstances" xml:space="preserve">
+    <value>ייצר מופעים</value>
+  </data>
+  <data name="Programs_ConfirmDelete" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק תוכנית זו? מופעי משמרות קיימים לא יימחקו.</value>
+  </data>
+  <data name="Programs_GenerateShiftInstances" xml:space="preserve">
+    <value>ייצר מופעי משמרות</value>
+  </data>
+  <data name="Programs_GenerateNote" xml:space="preserve">
+    <value>פעולה זו תיצור מופעי משמרות לכל הימים בטווח שתואמים למסכה השבועית של התוכנית.</value>
+  </data>
+  <data name="Griffin_SystemWideAuth" xml:space="preserve">
+    <value>אימות כלל-מערכתי</value>
+  </data>
+  <data name="Griffin_SystemWideAuth_Desc" xml:space="preserve">
+    <value>Griffin ADFS מוגדר פעם אחת ברמת &lt;strong&gt;הבעלים&lt;/strong&gt; וחל על &lt;strong&gt;כל החברות&lt;/strong&gt; במערכת שלך. משתמשים מכל חברה יכולים להזדהות באמצעות אישורי הדומיין שלהם.</value>
+  </data>
+  <data name="Griffin_Subtitle" xml:space="preserve">
+    <value>הגדר אימות דומיין מרכזי לכל החברות</value>
+  </data>
+  <data name="Griffin_ServiceConfig" xml:space="preserve">
+    <value>הגדרות שירות Griffin</value>
+  </data>
+  <data name="Griffin_ServerUrl" xml:space="preserve">
+    <value>כתובת שרת Griffin</value>
+  </data>
+  <data name="Griffin_FindThis" xml:space="preserve">
+    <value>מצא זאת</value>
+  </data>
+  <data name="Griffin_ServerUrl_Hint" xml:space="preserve">
+    <value>נקודת קצה של שירות Griffin לכל המערכת (לדוגמה, http://griffin-auth.example.mil). חייב לכלול http:// או https://</value>
+  </data>
+  <data name="Griffin_CallbackUrl" xml:space="preserve">
+    <value>כתובת Callback של האפליקציה</value>
+  </data>
+  <data name="Griffin_CallbackUrl_Hint" xml:space="preserve">
+    <value>כתובת ה-Callback של האפליקציה שלך אליה Griffin מפנה לאחר האימות. חייבת לכלול http:// או https:// ולהסתיים ב-/Auth/GriffinCallback</value>
+  </data>
+  <data name="Griffin_Timeout" xml:space="preserve">
+    <value>זמן תפוגה API (שניות)</value>
+  </data>
+  <data name="Griffin_Timeout_Purpose" xml:space="preserve">
+    <value>זמן המתנה מרבי לתגובות API של Griffin (אימות, אחזור claims)</value>
+  </data>
+  <data name="Griffin_Recommendation" xml:space="preserve">
+    <value>המלצה</value>
+  </data>
+  <data name="Griffin_Timeout_Recommendation" xml:space="preserve">
+    <value>10 שניות מומלץ לרוב הסביבות. הגדל ל-20-30 שניות אם חווה השהיית רשת בסביבות מנותקות.</value>
+  </data>
+  <data name="Griffin_Timeout_Hint" xml:space="preserve">
+    <value>זמן תפוגה לקריאות API של Griffin (1-60 שניות). מומלץ: 10 שניות</value>
+  </data>
+  <data name="Griffin_UserProvisioning" xml:space="preserve">
+    <value>👥 הקצאת משתמשים (כלל-מערכתי)</value>
+  </data>
+  <data name="Griffin_AutoProvision" xml:space="preserve">
+    <value>הקצאה אוטומטית של משתמשים חדשים</value>
+  </data>
+  <data name="Griffin_AutoProvision_Hint" xml:space="preserve">
+    <value>צור חשבונות משתמשים אוטומטית בכניסה הראשונה דרך Griffin. אם מושבת, יש לאשר משתמשים ידנית על ידי מנהלים.</value>
+  </data>
+  <data name="Griffin_DefaultRole" xml:space="preserve">
+    <value>תפקיד ברירת מחדל למשתמשים מוקצים אוטומטית</value>
+  </data>
+  <data name="Griffin_DefaultRole_Hint" xml:space="preserve">
+    <value>תפקיד ברירת מחדל המוקצה למשתמשים מוקצים אוטומטית בכל החברות</value>
+  </data>
+  <data name="Griffin_SecurityNote_Title" xml:space="preserve">
+    <value>⚠️ הערת אבטחה:</value>
+  </data>
+  <data name="Griffin_SecurityNote_Text" xml:space="preserve">
+    <value>הקצאה אוטומטית חלה על &lt;strong&gt;כל החברות&lt;/strong&gt;. כל משתמש שמזדהה בהצלחה דרך ADFS יקבל אוטומטית חשבון במערכת. ודא ששרת Griffin ADFS שלך מוגדר כראוי לאפשר רק משתמשים מורשים.</value>
+  </data>
+  <data name="Griffin_SaveConfig" xml:space="preserve">
+    <value>שמור הגדרות</value>
+  </data>
+  <data name="Griffin_TestConnection" xml:space="preserve">
+    <value>בדוק חיבור</value>
+  </data>
+  <data name="Griffin_RunDiagnostic" xml:space="preserve">
+    <value>הפעל אבחון מלא</value>
+  </data>
+  <data name="Griffin_AboutTitle" xml:space="preserve">
+    <value>ℹ️ אודות Griffin ADFS</value>
+  </data>
+  <data name="Griffin_AboutDesc" xml:space="preserve">
+    <value>Griffin ADFS מספק אימות דומיין מרכזי לסביבות צבאיות/ממשלתיות מנותקות.</value>
+  </data>
+  <data name="Griffin_KeyFeatures" xml:space="preserve">
+    <value>תכונות עיקריות:</value>
+  </data>
+  <data name="Griffin_Feature1" xml:space="preserve">
+    <value>משתמשים מזדהים עם אישורי הדומיין שלהם (CAC/שם משתמש וסיסמה)</value>
+  </data>
+  <data name="Griffin_Feature2" xml:space="preserve">
+    <value>אימות מקומי בשם משתמש/סיסמה תמיד זמין כגיבוי</value>
+  </data>
+  <data name="Griffin_Feature3" xml:space="preserve">
+    <value>אין צורך ב-client secret - שירות Griffin מטפל בתקשורת ADFS</value>
+  </data>
+  <data name="Griffin_SystemWideConfig" xml:space="preserve">
+    <value>הגדרות כלל-מערכתיות:</value>
+  </data>
+  <data name="Griffin_Config1" xml:space="preserve">
+    <value>&lt;strong&gt;מוגדר פעם אחת&lt;/strong&gt; על ידי בעל המערכת</value>
+  </data>
+  <data name="Griffin_Config2" xml:space="preserve">
+    <value>&lt;strong&gt;חל על כל החברות&lt;/strong&gt; במערכת</value>
+  </data>
+  <data name="Griffin_Config3" xml:space="preserve">
+    <value>&lt;strong&gt;שרת Griffin יחיד&lt;/strong&gt; משרת את כל הפריסה</value>
+  </data>
+  <data name="Griffin_Config4" xml:space="preserve">
+    <value>&lt;strong&gt;אימות עקבי&lt;/strong&gt; בכל החברות והמשתמשים</value>
+  </data>
+  <data name="Griffin_NoteText" xml:space="preserve">
+    <value>חברות בודדות לא יכולות לדרוס או להשבית אימות ADFS. אם מופעל כאן, כל המשתמשים בכל החברות יראו את אפשרות "התחבר עם Griffin ADFS" בדף הכניסה.</value>
+  </data>
+  <data name="LangMgmt_Title" xml:space="preserve">
+    <value>ניהול שפות</value>
+  </data>
+  <data name="LangMgmt_Subtitle" xml:space="preserve">
+    <value>הגדר שפות והתאם תרגומים לחברה שלך</value>
+  </data>
+  <data name="LangMgmt_CompanySettings" xml:space="preserve">
+    <value>🎌 הגדרות שפת חברה</value>
+  </data>
+  <data name="LangMgmt_CompanySettings_Desc" xml:space="preserve">
+    <value>הגדר אילו שתי שפות זמינות למשתמשים למעבר ביניהן.</value>
+  </data>
+  <data name="LangMgmt_DefaultLanguage" xml:space="preserve">
+    <value>שפת ברירת מחדל</value>
+  </data>
+  <data name="LangMgmt_DefaultLanguage_Hint" xml:space="preserve">
+    <value>שפה המוצגת למשתמשים חדשים וכברירת מחדל</value>
+  </data>
+  <data name="LangMgmt_AlternateLanguage" xml:space="preserve">
+    <value>שפה חלופית</value>
+  </data>
+  <data name="LangMgmt_AlternateLanguage_Hint" xml:space="preserve">
+    <value>שפה זמינה במתג החלפה</value>
+  </data>
+  <data name="LangMgmt_SaveSettings" xml:space="preserve">
+    <value>שמור הגדרות שפה</value>
+  </data>
+  <data name="LangMgmt_TranslationEditor" xml:space="preserve">
+    <value>✏️ עורך תרגומים באפליקציה</value>
+  </data>
+  <data name="LangMgmt_EditorDesc1" xml:space="preserve">
+    <value>ערוך תרגומים ישירות על ידי לחיצה על טקסט ברחבי האפליקציה.</value>
+  </data>
+  <data name="LangMgmt_EditorDesc2" xml:space="preserve">
+    <value>נווט לכל מקום באפליקציה ולחץ על כל טקסט מתורגם כדי לערוך אותו. שינויים נשמרים כטיוטות עד שתלחץ "שמור וצא".</value>
+  </data>
+  <data name="LangMgmt_SelectCulture" xml:space="preserve">
+    <value>בחר תרבות לעריכה</value>
+  </data>
+  <data name="LangMgmt_EnterEditMode" xml:space="preserve">
+    <value>כנס למצב עריכה</value>
+  </data>
+  <data name="LangMgmt_Overrides" xml:space="preserve">
+    <value>📝 דריסות תרגום</value>
+  </data>
+  <data name="LangMgmt_SearchPlaceholder" xml:space="preserve">
+    <value>חפש לפי מפתח או ערך...</value>
+  </data>
+  <data name="LangMgmt_AllLanguages" xml:space="preserve">
+    <value>כל השפות</value>
+  </data>
+  <data name="LangMgmt_English" xml:space="preserve">
+    <value>אנגלית</value>
+  </data>
+  <data name="LangMgmt_Hebrew" xml:space="preserve">
+    <value>עברית</value>
+  </data>
+  <data name="LangMgmt_Search" xml:space="preserve">
+    <value>חיפוש</value>
+  </data>
+  <data name="LangMgmt_ResourceKey" xml:space="preserve">
+    <value>מפתח משאב</value>
+  </data>
+  <data name="LangMgmt_Culture" xml:space="preserve">
+    <value>תרבות</value>
+  </data>
+  <data name="LangMgmt_BaseValue" xml:space="preserve">
+    <value>ערך בסיס</value>
+  </data>
+  <data name="LangMgmt_OverrideValue" xml:space="preserve">
+    <value>ערך דריסה</value>
+  </data>
+  <data name="LangMgmt_LastUpdated" xml:space="preserve">
+    <value>עדכון אחרון</value>
+  </data>
+  <data name="LangMgmt_ConfirmDeleteOverride" xml:space="preserve">
+    <value>למחוק דריסה זו?</value>
+  </data>
+  <data name="LangMgmt_NoOverrides" xml:space="preserve">
+    <value>לא נמצאו דריסות תרגום.</value>
+  </data>
+  <data name="LangMgmt_ClearFilters" xml:space="preserve">
+    <value>נקה מסננים</value>
+  </data>
+  <data name="LangMgmt_AddOverride" xml:space="preserve">
+    <value>➕ הוסף דריסת תרגום</value>
+  </data>
+  <data name="LangMgmt_ResourceKey_Hint" xml:space="preserve">
+    <value>מפתח מ-SharedResources (לדוגמה, Button_Save, Dashboard_Title)</value>
+  </data>
+  <data name="LangMgmt_SelectCultureOption" xml:space="preserve">
+    <value>-- בחר תרבות --</value>
+  </data>
+  <data name="LangMgmt_OverrideValue_Hint" xml:space="preserve">
+    <value>תרגום מותאם (שמור על {0}, {1} placeholders אם קיימים)</value>
+  </data>
+  <data name="LangMgmt_AddOverrideBtn" xml:space="preserve">
+    <value>הוסף דריסה</value>
+  </data>
+  <data name="LangMgmt_SelectCompanyFirst" xml:space="preserve">
+    <value>אנא בחר חברה באמצעות התפריט למעלה כדי לנהל הגדרות שפה.</value>
+  </data>
+  <data name="Blueprints_ShiftKeyPlaceholder" xml:space="preserve">
+    <value>למשל, CUSTOM_1</value>
+  </data>
+  <data name="Blueprints_EnglishNamePlaceholder" xml:space="preserve">
+    <value>משמרת יום</value>
+  </data>
+  <data name="Blueprints_HebrewNamePlaceholder" xml:space="preserve">
+    <value>משמרת יום</value>
+  </data>
+  <data name="LangMgmt_FilterByLanguage" xml:space="preserve">
+    <value>סנן לפי שפה</value>
+  </data>
+  <data name="LangMgmt_ResourceKeyPlaceholder" xml:space="preserve">
+    <value>Button_Save</value>
+  </data>
+  <data name="LangMgmt_OverrideValuePlaceholder" xml:space="preserve">
+    <value>טקסט תרגום מותאם</value>
+  </data>
+  <data name="Director_AssignedCompanies" xml:space="preserve">
+    <value>חברות משויכות</value>
+  </data>
+  <data name="Director_FilterActive" xml:space="preserve">
+    <value>סינון פעיל</value>
+  </data>
+  <data name="Director_ManageCompanyFilter" xml:space="preserve">
+    <value>נהל סינון חברות</value>
+  </data>
+  <data name="Calendar_NoShiftTypesConfigured" xml:space="preserve">
+    <value>לא הוגדרו סוגי משמרות.</value>
+  </data>
+  <data name="Calendar_ConfigureShiftTypes" xml:space="preserve">
+    <value>הגדר סוגי משמרות</value>
+  </data>
+  <data name="Calendar_CopyShiftAcrossDays" xml:space="preserve">
+    <value>העתק משמרת לימים נוספים</value>
+  </data>
+  <data name="Calendar_FillSource" xml:space="preserve">
+    <value>מקור</value>
+  </data>
+  <data name="Calendar_FillTargetDays" xml:space="preserve">
+    <value>ימי יעד</value>
+  </data>
+  <data name="Calendar_CopyExact" xml:space="preserve">
+    <value>העתק מדויק</value>
+  </data>
+  <data name="Calendar_CopyExactDesc" xml:space="preserve">
+    <value>העתק את כל השיבוצים, החניכים והשינויים הידניים לימי היעד</value>
+  </data>
+  <data name="Calendar_CopyStaffingOnly" xml:space="preserve">
+    <value>העתק איוש בלבד</value>
+  </data>
+  <data name="Calendar_CopyStaffingOnlyDesc" xml:space="preserve">
+    <value>העתק את מספר העובדים הנדרשים, אך השאר את השיבוצים ריקים</value>
+  </data>
+  <data name="Calendar_ApplyProgramDefaults" xml:space="preserve">
+    <value>החל ברירות מחדל של תוכנית</value>
+  </data>
+  <data name="Calendar_ApplyProgramDefaultsDesc" xml:space="preserve">
+    <value>צור משמרות מתבנית תוכנית (אם מקושרת לתוכנית)</value>
+  </data>
+  <data name="Calendar_ResetToProgramConfirm" xml:space="preserve">
+    <value>לאפס משמרת זו לברירות מחדל של התוכנית? פעולה זו תשחזר דרישות איוש ותמחק שינויים ידניים.</value>
+  </data>
+  <data name="Calendar_LoadingEmployees" xml:space="preserve">
+    <value>טוען עובדים...</value>
+  </data>
+  <data name="Roster" xml:space="preserve">
+    <value>רשימה</value>
+  </data>
+  <data name="Offline_NoPendingActions" xml:space="preserve">
+    <value>אין פעולות ממתינות</value>
+  </data>
+  <data name="ViewMode_Week" xml:space="preserve">
+    <value>שבוע</value>
+  </data>
+  <data name="ViewMode_2Weeks" xml:space="preserve">
+    <value>שבועיים</value>
+  </data>
+  <data name="ViewMode_Month" xml:space="preserve">
+    <value>חודש</value>
+  </data>
+  <data name="Pagination_PageXofY" xml:space="preserve">
+    <value>עמוד {0} מתוך {1}</value>
   </data>
 </root>

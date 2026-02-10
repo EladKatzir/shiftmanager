@@ -166,10 +166,48 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_NotAuthorized");
         }
 
-        // Update the request
-        request.Status = RequestStatus.Approved;
-        request.ApproverId = approverId;
-        await _context.SaveChangesAsync();
+        // Wrap approval in transaction to prevent concurrent overlapping approvals
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Re-check status inside transaction (may have changed concurrently)
+            var freshRequest = await _context.TimeOffRequests
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+            if (freshRequest == null || freshRequest.Status != RequestStatus.Pending)
+            {
+                await transaction.RollbackAsync();
+                return (false, "VacationApproval_AlreadyProcessed");
+            }
+
+            // Check for overlapping APPROVED requests for the same user
+            var hasOverlap = await _context.TimeOffRequests
+                .AnyAsync(r => r.UserId == freshRequest.UserId
+                    && r.Id != requestId
+                    && r.Status == RequestStatus.Approved
+                    && r.StartDate <= freshRequest.EndDate
+                    && r.EndDate >= freshRequest.StartDate);
+
+            if (hasOverlap)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(
+                    "Cannot approve request {RequestId}: overlaps with an already-approved vacation for user {UserId}",
+                    requestId, freshRequest.UserId);
+                return (false, "VacationApproval_OverlappingApproved");
+            }
+
+            // Update the request
+            freshRequest.Status = RequestStatus.Approved;
+            freshRequest.ApproverId = approverId;
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to approve vacation request {RequestId}", requestId);
+            return (false, "VacationApproval_Error");
+        }
 
         _logger.LogInformation(
             "Request {RequestId} approved by user {ApproverId}",

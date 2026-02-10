@@ -172,7 +172,7 @@ public class TraineeService : ITraineeService
             return (false, "Shift assignment not found");
         }
 
-        if (assignment.UserId == 0 || assignment.UserId == traineeUserId)
+        if (!assignment.UserId.HasValue || assignment.UserId.Value == traineeUserId)
         {
             return (false, "Cannot assign trainee to this shift");
         }

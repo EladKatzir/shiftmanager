@@ -1,7 +1,12 @@
 // Dark mode toggle with system preference support
 document.addEventListener('DOMContentLoaded', function() {
   const root = document.documentElement;
-  const saved = localStorage.getItem('theme');
+
+  // Safe localStorage helpers (private browsing, quota exceeded, etc.)
+  function getStorage(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function setStorage(key, val) { try { localStorage.setItem(key, val); } catch (e) { /* unavailable */ } }
+
+  const saved = getStorage('theme');
 
   // Apply saved theme or detect system preference
   if (saved) {
@@ -19,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
       // Only auto-switch if user hasn't manually set a preference
-      if (!localStorage.getItem('theme')) {
+      if (!getStorage('theme')) {
         const newTheme = e.matches ? 'dark' : 'light';
         root.setAttribute('data-theme', newTheme);
         console.log('System theme changed to:', newTheme);
@@ -35,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const current = root.getAttribute('data-theme');
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
+      setStorage('theme', newTheme);
       console.log('Theme manually switched to:', newTheme);
     });
     console.log('Dark mode toggle initialized');
@@ -167,14 +172,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Enhanced staffing adjustments with better UX
-async function adjustStaffing(url, payload, onOk, onError) {
-  const button = event.target;
-  const originalText = button.textContent;
+async function adjustStaffing(url, payload, onOk, onError, evt) {
+  const button = (evt || window.event)?.target;
+  const originalText = button?.textContent;
 
   // Add loading state
-  button.disabled = true;
-  button.style.opacity = '0.6';
-  button.textContent = '⋯';
+  if (button) {
+    button.disabled = true;
+    button.style.opacity = '0.6';
+    button.textContent = '⋯';
+  }
 
   try {
     const res = await fetch(url, {
@@ -186,33 +193,38 @@ async function adjustStaffing(url, payload, onOk, onError) {
     // Try to parse as JSON, fallback to text if it fails
     let data;
     const contentType = res.headers.get('content-type');
+    const rawText = await res.text();
     try {
       data = contentType && contentType.includes('application/json')
-        ? await res.json()
-        : { message: await res.text() };
+        ? JSON.parse(rawText)
+        : { message: rawText };
     } catch (parseError) {
       console.warn('Failed to parse response, using text:', parseError);
-      data = { message: await res.text() };
+      data = { message: rawText };
     }
 
     if (res.ok) {
       // Success animation
-      button.style.background = '#2e7d32';
-      button.style.color = 'white';
-      setTimeout(() => {
-        button.style.background = '';
-        button.style.color = '';
-      }, 300);
+      if (button) {
+        button.style.background = '#2e7d32';
+        button.style.color = 'white';
+        setTimeout(() => {
+          button.style.background = '';
+          button.style.color = '';
+        }, 300);
+      }
 
       onOk(data);
     } else {
       // Error animation
-      button.style.background = '#dc3545';
-      button.style.color = 'white';
-      setTimeout(() => {
-        button.style.background = '';
-        button.style.color = '';
-      }, 300);
+      if (button) {
+        button.style.background = '#dc3545';
+        button.style.color = 'white';
+        setTimeout(() => {
+          button.style.background = '';
+          button.style.color = '';
+        }, 300);
+      }
 
       // Show toast notification instead of alert
       showToast(data.message || (window.AppLocalizer?.Error_OperationFailed || 'Operation failed'), 'error');
@@ -220,18 +232,22 @@ async function adjustStaffing(url, payload, onOk, onError) {
     }
   } catch (e) {
     console.error(e);
-    button.style.background = '#dc3545';
-    button.style.color = 'white';
-    setTimeout(() => {
-      button.style.background = '';
-      button.style.color = '';
-    }, 300);
+    if (button) {
+      button.style.background = '#dc3545';
+      button.style.color = 'white';
+      setTimeout(() => {
+        button.style.background = '';
+        button.style.color = '';
+      }, 300);
+    }
     showToast(window.AppLocalizer?.Error_NetworkError || 'Network error - please try again', 'error');
   } finally {
     // Reset button state
-    button.disabled = false;
-    button.style.opacity = '';
-    button.textContent = originalText;
+    if (button) {
+      button.disabled = false;
+      button.style.opacity = '';
+      button.textContent = originalText;
+    }
   }
 }
 
@@ -675,13 +691,14 @@ async function createShift() {
     // Try to parse as JSON, fallback to text if it fails
     let data;
     const contentType = res.headers.get('content-type');
+    const rawText = await res.text();
     try {
       data = contentType && contentType.includes('application/json')
-        ? await res.json()
-        : { message: await res.text() };
+        ? JSON.parse(rawText)
+        : { message: rawText };
     } catch (parseError) {
       console.warn('Failed to parse response, using text:', parseError);
-      data = { message: await res.text() };
+      data = { message: rawText };
     }
 
     if (!res.ok) {
@@ -859,6 +876,11 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
             })
         });
 
+        if (!response.ok) {
+            alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
+            return;
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -880,32 +902,32 @@ function getCommandPalettePages() {
   return [
     // Manager/Admin Pages
     { title: window.AppLocalizer.Home, subtitle: window.AppLocalizer.DashboardOverview, url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
-    { title: `${window.AppLocalizer.Calendar} - Month View`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
-    { title: `${window.AppLocalizer.Calendar} - Week View`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
-    { title: `${window.AppLocalizer.Calendar} - Day View`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
-    { title: 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
-    { title: 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
-    { title: 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
-    { title: 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
-    { title: 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_MonthView || 'Month View'}`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_WeekView || 'Week View'}`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_DayView || 'Day View'}`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_Requests || 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Analytics || 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Users || 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Companies || 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Directors || 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Configuration || 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_ShiftTypes || 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_TimeOff || 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_AuditLog || 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Chores || 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_OnDuty || 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
 
     // Ops Console Scheduler (NEW)
-    { title: 'Schedule Table', subtitle: 'Excel-density operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Blueprints', subtitle: 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
-    { title: 'Programs', subtitle: 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
-    { title: 'Master Programs', subtitle: 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_ScheduleTable || 'Schedule Table', subtitle: window.AppLocalizer?.Nav_ScheduleTableDesc || 'Operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Blueprints || 'Blueprints', subtitle: window.AppLocalizer?.Nav_BlueprintsDesc || 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Programs || 'Programs', subtitle: window.AppLocalizer?.Nav_ProgramsDesc || 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_MasterPrograms || 'Master Programs', subtitle: window.AppLocalizer?.Nav_MasterProgramsDesc || 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
 
     // Employee Pages
-    { title: 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
-    { title: 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
-    { title: 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
-    { title: 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
+    { title: window.AppLocalizer?.Nav_MyRequests || 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_MyTeam || 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_MyProfile || 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_Notifications || 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
   ];
 }
 
