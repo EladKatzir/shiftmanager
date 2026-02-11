@@ -279,10 +279,13 @@ public class MailService : IMailService
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Add("Apikey", apiKey!);
 
-            // Capture request headers for diagnostics
+            // Capture request headers for diagnostics (mask API key to prevent PII leak in DB logs)
+            var maskedKey = apiKey != null && apiKey.Length > 8
+                ? apiKey[..4] + "****" + apiKey[^4..]
+                : "****";
             requestHeaders = new Dictionary<string, string>
             {
-                { "Apikey", apiKey! },
+                { "Apikey", maskedKey },
                 { "Content-Type", "application/json" }
             };
 

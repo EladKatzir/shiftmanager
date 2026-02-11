@@ -69,7 +69,7 @@
 .shift-table .shift-name-col {
     background-color: var(--surface);
     font-weight: 600;
-    text-align: left;
+    text-align: start;
     position: sticky;
     left: 0;
     z-index: 5;
@@ -1872,12 +1872,17 @@ async function saveShiftMetadata(shiftTypeId) {
     }
 
     try {
+        const csrfToken1 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers1 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken1) headers1['RequestVerificationToken'] = csrfToken1;
+
         const response = await fetch('/Calendar/Table?handler=UpdateShiftMetadata', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers1,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 shiftTypeId: shiftTypeId,
                 name: name,
@@ -1922,12 +1927,17 @@ async function createCustomShiftRow() {
     }
 
     try {
+        const csrfToken2 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers2 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken2) headers2['RequestVerificationToken'] = csrfToken2;
+
         const response = await fetch('/Calendar/Table?handler=CreateCustomShiftType', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers2,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 name: name,
                 startTime: start,
@@ -2023,12 +2033,17 @@ async function createAssignmentSlots(forceRemoval = false) {
 
         if (currentInstanceId) {
             // Update existing shift instance
+            const csrfToken3 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const headers3 = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            if (csrfToken3) headers3['RequestVerificationToken'] = csrfToken3;
+
             response = await fetch('/Calendar/Table?handler=UpdateShiftStaffing', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                },
+                headers: headers3,
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     shiftInstanceId: currentInstanceId,
                     staffingRequired: currentAmount,
@@ -2037,12 +2052,17 @@ async function createAssignmentSlots(forceRemoval = false) {
             });
         } else {
             // Get-or-create shift instance (idempotent - no "already exists" error)
+            const csrfToken4 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const headers4 = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            if (csrfToken4) headers4['RequestVerificationToken'] = csrfToken4;
+
             response = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                },
+                headers: headers4,
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     shiftTypeId: parseInt(shiftTypeId),
                     date: date,
@@ -2203,12 +2223,17 @@ async function addTrainee(assignmentId, traineeId, traineeName) {
     contextMenu.classList.remove('show');
 
     try {
+        const csrfToken5 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers5 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken5) headers5['RequestVerificationToken'] = csrfToken5;
+
         const response = await fetch('/Calendar/Table?handler=AddTrainee', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers5,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 assignmentId: parseInt(assignmentId),
                 traineeUserId: traineeId
@@ -2269,12 +2294,17 @@ async function removeTrainee(event) {
     const assignmentId = currentSlot.getAttribute('data-assignment-id');
 
     try {
+        const csrfToken6 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers6 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken6) headers6['RequestVerificationToken'] = csrfToken6;
+
         const response = await fetch('/Calendar/Table?handler=RemoveTrainee', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers6,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 assignmentId: parseInt(assignmentId)
             })
@@ -2295,12 +2325,17 @@ async function removeTrainee(event) {
 
 async function assignUserToSlot(assignmentId, userId) {
     try {
+        const csrfToken7 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers7 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken7) headers7['RequestVerificationToken'] = csrfToken7;
+
         const response = await fetch('/Calendar/Table?handler=AssignUserToSlot', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers7,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 assignmentId: parseInt(assignmentId),
                 userId: userId
@@ -2322,12 +2357,17 @@ async function assignUserToSlot(assignmentId, userId) {
 
 async function changeUser(assignmentId, newUserId, newUserName) {
     try {
+        const csrfToken8 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers8 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken8) headers8['RequestVerificationToken'] = csrfToken8;
+
         const response = await fetch('/Calendar/Table?handler=ChangeUser', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers8,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 assignmentId: parseInt(assignmentId),
                 newUserId: newUserId
@@ -2360,12 +2400,17 @@ async function removeUser(event) {
     contextMenu.classList.remove('show');
 
     try {
+        const csrfToken9 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers9 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken9) headers9['RequestVerificationToken'] = csrfToken9;
+
         const response = await fetch('/Calendar/Table?handler=ClearAssignment', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers9,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 assignmentId: parseInt(assignmentId)
             })
@@ -2401,12 +2446,17 @@ async function confirmDeleteShift(instanceId, event) {
     }
 
     try {
+        const csrfToken10 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers10 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken10) headers10['RequestVerificationToken'] = csrfToken10;
+
         const response = await fetch('/Calendar/Table?handler=DeleteShiftInstance', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers10,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: instanceId
             })
@@ -2678,12 +2728,17 @@ async function resetToProgram(instanceId, event) {
     }
 
     try {
+        const csrfToken11 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers11 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken11) headers11['RequestVerificationToken'] = csrfToken11;
+
         const response = await fetch('/Calendar/Table?handler=ResetInstanceToProgram', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers11,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: instanceId
             })
@@ -2709,12 +2764,17 @@ async function resetToProgram(instanceId, event) {
  */
 async function detachFromProgram(instanceId, reason) {
     try {
+        const csrfToken12 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers12 = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (csrfToken12) headers12['RequestVerificationToken'] = csrfToken12;
+
         const response = await fetch('/Calendar/Table?handler=DetachInstance', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
+            headers: headers12,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: instanceId,
                 reason: reason

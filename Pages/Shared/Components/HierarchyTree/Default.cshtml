@@ -123,8 +123,8 @@
     </div>
 </div>
 
-@* SortableJS CDN *@
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+@* SortableJS (local bundle — CDN blocked by CSP) *@
+<script src="~/lib/sortable/Sortable.min.js" asp-append-version="true"></script>
 
 <script>
 (function() {
@@ -628,10 +628,23 @@
     };
 
     // API Calls
+    function getHierarchyHeaders() {
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        if (csrfToken) {
+            headers['RequestVerificationToken'] = csrfToken;
+        }
+        return headers;
+    }
+
     async function saveEntityName(entityType, entityId, name) {
         const response = await fetch('/Api/Hierarchy/Rename', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHierarchyHeaders(),
+            credentials: 'same-origin',
             body: JSON.stringify({ entityType, entityId, name })
         });
         return await response.json();
@@ -640,7 +653,8 @@
     async function saveReorder(entityType, orderedIds, parentId) {
         const response = await fetch('/Api/Hierarchy/Reorder', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHierarchyHeaders(),
+            credentials: 'same-origin',
             body: JSON.stringify({ entityType, orderedIds, parentId })
         });
         return await response.json();
@@ -649,7 +663,8 @@
     async function createEntity(entityType, name, parentId) {
         const response = await fetch('/Api/Hierarchy/Create', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHierarchyHeaders(),
+            credentials: 'same-origin',
             body: JSON.stringify({ entityType, name, parentId })
         });
         return await response.json();
@@ -658,7 +673,8 @@
     async function deleteEntity(entityType, entityId) {
         const response = await fetch('/Api/Hierarchy/Delete', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHierarchyHeaders(),
+            credentials: 'same-origin',
             body: JSON.stringify({ entityType, entityId })
         });
         return await response.json();
@@ -667,14 +683,18 @@
     async function moveEntity(entityType, entityId, newParentId) {
         const response = await fetch('/Api/Hierarchy/Move', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHierarchyHeaders(),
+            credentials: 'same-origin',
             body: JSON.stringify({ entityType, entityId, newParentId })
         });
         return await response.json();
     }
 
     async function getMoveTargets(entityType, entityId) {
-        const response = await fetch(`/Api/Hierarchy/MoveTargets?entityType=${entityType}&entityId=${entityId}`);
+        const response = await fetch(`/Api/Hierarchy/MoveTargets?entityType=${entityType}&entityId=${entityId}`, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
         const result = await response.json();
         return result.targets || [];
     }
@@ -985,7 +1005,7 @@
     padding: 0.5rem 1rem;
     background: none;
     border: none;
-    text-align: left;
+    text-align: start;
     font-size: 0.875rem;
     cursor: pointer;
     transition: background 0.15s;
@@ -1144,7 +1164,7 @@
     background: var(--surface-soft, #f8f9fa);
     border: 1px solid var(--border, #dee2e6);
     border-radius: 6px;
-    text-align: left;
+    text-align: start;
     cursor: pointer;
     transition: all 0.15s;
 }

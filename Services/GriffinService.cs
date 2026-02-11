@@ -219,7 +219,8 @@ public class GriffinService : IGriffinService
             new Claim("CompanyId", user.CompanyId.ToString()),
             new Claim("AuthMethod", "Griffin"),
             new Claim("Griffin:sAMAccountName", griffinClaims.sAMAccountName),
-            new Claim("Griffin:Token", token),
+            // HIGH-007 FIX: Store hashed token reference instead of raw token to prevent cookie theft
+            new Claim("Griffin:TokenHash", ComputeSHA256Hash(token)),
             new Claim("Griffin:AuthTime", griffinClaims.auth_time),
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o"))
         };

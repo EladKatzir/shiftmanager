@@ -59,7 +59,7 @@
                                 <strong>@entry.DisplayName</strong>
                                 @if (entry.IsCurrentUser)
                                 {
-                                    <span style="color: var(--primary); margin-left: 0.5rem;"><loc key="Game_You" /></span>
+                                    <span style="color: var(--primary); margin-inline-start: 0.5rem;"><loc key="Game_You" /></span>
                                 }
                             </td>
                             <td style="text-align: right; font-weight: 600;">
@@ -73,14 +73,14 @@
             @* Show user's best if not in top 10 *@
             @if (Model.UserBestAllTime != null && !Model.AllTimeLeaderboard.Any(l => l.IsCurrentUser))
             {
-                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-radius: 0.5rem; border-inline-start: 4px solid var(--primary);">
                     <h4 style="margin: 0 0 0.5rem 0; color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase;">
                         @Localizer["Game_YourBest"]
                     </h4>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <span style="font-weight: 600; color: var(--primary);">#@Model.UserBestAllTime.Rank</span>
-                            <span style="margin-left: 1rem;">@Model.UserBestAllTime.DisplayName</span>
+                            <span style="margin-inline-start: 1rem;">@Model.UserBestAllTime.DisplayName</span>
                         </div>
                         <span style="font-weight: 600; font-size: 1.125rem;">@Model.UserBestAllTime.Score.ToString("N0")</span>
                     </div>
@@ -134,7 +134,7 @@
                                 <strong>@entry.DisplayName</strong>
                                 @if (entry.IsCurrentUser)
                                 {
-                                    <span style="color: var(--primary); margin-left: 0.5rem;"><loc key="Game_You" /></span>
+                                    <span style="color: var(--primary); margin-inline-start: 0.5rem;"><loc key="Game_You" /></span>
                                 }
                             </td>
                             <td style="text-align: right; font-weight: 600;">
@@ -148,14 +148,14 @@
             @* Show user's best if not in top 10 *@
             @if (Model.UserBestMonthly != null && !Model.MonthlyLeaderboard.Any(l => l.IsCurrentUser))
             {
-                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-radius: 0.5rem; border-inline-start: 4px solid var(--primary);">
                     <h4 style="margin: 0 0 0.5rem 0; color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase;">
                         @Localizer["Game_YourBest"]
                     </h4>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <span style="font-weight: 600; color: var(--primary);">#@Model.UserBestMonthly.Rank</span>
-                            <span style="margin-left: 1rem;">@Model.UserBestMonthly.DisplayName</span>
+                            <span style="margin-inline-start: 1rem;">@Model.UserBestMonthly.DisplayName</span>
                         </div>
                         <span style="font-weight: 600; font-size: 1.125rem;">@Model.UserBestMonthly.Score.ToString("N0")</span>
                     </div>
@@ -220,7 +220,7 @@
 
         .highlight-row {
             background: var(--primary-bg) !important;
-            border-left: 4px solid var(--primary);
+            border-inline-start: 4px solid var(--primary);
         }
 
         .table {
@@ -234,7 +234,7 @@
 
         .table th {
             padding: 0.75rem 1rem;
-            text-align: left;
+            text-align: start;
             font-weight: 600;
             color: var(--text-muted);
             font-size: 0.875rem;

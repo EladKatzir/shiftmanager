@@ -517,19 +517,19 @@
 
                 @* Encoding Progression *@
                 <h3 style="color: var(--text); margin-top: 0;">@Localizer["Step1ReturnUrlEncoding"]</h3>
-                <div class="field" style="border-left-color: var(--text-muted);">
+                <div class="field" style="border-inline-start-color: var(--text-muted);">
                     <span class="field-label">@Localizer["TestReturnUrl0x"]</span>
                     <div class="field-value" style="font-size: 1rem;">@Model.TestReturnUrl</div>
                 </div>
-                <div class="field" style="border-left-color: var(--info);">
+                <div class="field" style="border-inline-start-color: var(--info);">
                     <span class="field-label">@Localizer["After1stEncoding"]</span>
                     <div class="field-value" style="font-size: 0.9rem; color: var(--accent);">@Model.ReturnUrlEncoded1x</div>
                 </div>
-                <div class="field" style="border-left-color: var(--accent);">
+                <div class="field" style="border-inline-start-color: var(--accent);">
                     <span class="field-label">@Localizer["After2ndEncoding"]</span>
                     <div class="field-value" style="font-size: 0.85rem; color: var(--accent);">@Model.ReturnUrlEncoded2x</div>
                 </div>
-                <div class="field" style="border-left-color: var(--success);">
+                <div class="field" style="border-inline-start-color: var(--success);">
                     <span class="field-label">@Localizer["After3rdEncoding"]</span>
                     <div class="field-value" style="font-size: 0.8rem; color: var(--success);">@Model.ReturnUrlEncoded3x</div>
                 </div>
@@ -538,7 +538,7 @@
 
                 @* OLD APPROACH (Current - FAILS) *@
                 <h3 style="color: var(--danger); margin-top: 0;">❌ @Localizer["OldApproachTitle"]</h3>
-                <div class="warning-box" style="border-left-color: var(--danger); background: var(--danger-soft);">
+                <div class="warning-box" style="border-inline-start-color: var(--danger); background: var(--danger-soft);">
                     <h4 style="margin: 0 0 1rem 0; color: var(--danger);">@Localizer["WhatWeEncoding"]:</h4>
                     <p style="color: var(--text);">@Localizer["EntireCallbackUrl2x"]</p>
 
@@ -567,7 +567,7 @@
 
                 @* NEW APPROACH (Proposed Fix - SHOULD WORK) *@
                 <h3 style="color: var(--success); margin-top: 0;">✅ @Localizer["NewApproachTitle"]</h3>
-                <div class="warning-box" style="border-left-color: var(--success); background: var(--success-soft);">
+                <div class="warning-box" style="border-inline-start-color: var(--success); background: var(--success-soft);">
                     <h4 style="margin: 0 0 1rem 0; color: var(--success);">@Localizer["WhatWeEncoding"]:</h4>
                     <p style="color: var(--text);">@Localizer["OnlyReturnUrl3x"]</p>
 
@@ -596,7 +596,7 @@
 
                 @* DOOF APPROACH (Reference - WORKS) *@
                 <h3 style="color: var(--info); margin-top: 0;">🔵 @Localizer["DoofApproachTitle"]</h3>
-                <div class="warning-box" style="border-left-color: var(--info); background: var(--info-soft);">
+                <div class="warning-box" style="border-inline-start-color: var(--info); background: var(--info-soft);">
                     <h4 style="margin: 0 0 1rem 0; color: var(--info);">@Localizer["WhatDoofEncodes"]:</h4>
                     <p style="color: var(--text);">@Localizer["OnlyDestinationPath3x"]</p>
 
@@ -625,10 +625,10 @@
                 <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
                     <thead>
                         <tr style="background: var(--surface-soft); color: var(--text);">
-                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["Approach"]</th>
-                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["WhatGetsEncoded"]</th>
-                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["UrlReadable"]</th>
-                            <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border-strong);">@Localizer["Result"]</th>
+                            <th style="padding: 0.75rem; text-align: start; border: 1px solid var(--border-strong);">@Localizer["Approach"]</th>
+                            <th style="padding: 0.75rem; text-align: start; border: 1px solid var(--border-strong);">@Localizer["WhatGetsEncoded"]</th>
+                            <th style="padding: 0.75rem; text-align: start; border: 1px solid var(--border-strong);">@Localizer["UrlReadable"]</th>
+                            <th style="padding: 0.75rem; text-align: start; border: 1px solid var(--border-strong);">@Localizer["Result"]</th>
                         </tr>
                     </thead>
                     <tbody style="background: var(--surface); color: var(--text-muted);">

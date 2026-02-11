@@ -43,7 +43,7 @@
                         <strong>@company.Name</strong>
                         @if (!string.IsNullOrEmpty(company.Slug))
                         {
-                            <span style="color: var(--muted); margin-left: 0.5rem;">
+                            <span style="color: var(--muted); margin-inline-start: 0.5rem;">
                                 (<code>@company.Slug</code>)
                             </span>
                         }
@@ -63,10 +63,10 @@
     </form>
 </div>
 
-<div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-left: 4px solid var(--primary); border-radius: 0.5rem;">
+<div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-inline-start: 4px solid var(--primary); border-radius: 0.5rem;">
     <small style="color: var(--muted);">
         <strong><loc key="Note" /></strong> @Localizer["CompanyFilterAppliesTo"]
-        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+        <ul style="margin: 0.5rem 0; padding-inline-start: 1.5rem;">
             <li><loc key="CalendarViewsOnlySelected" /></li>
             <li><loc key="RequestListsOnlySelected" /></li>
             <li><loc key="DashboardsAndReports" /></li>

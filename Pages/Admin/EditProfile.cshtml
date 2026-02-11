@@ -133,7 +133,7 @@
                         <span class="grants-summary__badge">@Model.GrantsCount</span>
                         @if (Model.GrantsCount > 0)
                         {
-                            <a href="/Admin/Organization/Grants?userId=@Model.UserId" class="grants-summary__link">@Localizer["ManageGrants"] →</a>
+                            <a href="/Admin/Organization/Grants?FilterUserId=@Model.UserId" class="grants-summary__link">@Localizer["ManageGrants"] →</a>
                         }
                     </div>
                 </div>
@@ -596,7 +596,7 @@
 .history-table th,
 .history-table td {
     padding: 0.75rem;
-    text-align: left;
+    text-align: start;
     border-bottom: 1px solid var(--border);
 }
 

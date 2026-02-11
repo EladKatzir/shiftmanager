@@ -22,12 +22,14 @@ public class SettingsModel : PageModel
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ILogger<SettingsModel> _logger;
 
-    public SettingsModel(AppDbContext db, ITenantResolver tenantResolver, IStringLocalizer<SharedResources> localizer)
+    public SettingsModel(AppDbContext db, ITenantResolver tenantResolver, IStringLocalizer<SharedResources> localizer, ILogger<SettingsModel> logger)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _localizer = localizer;
+        _logger = logger;
     }
 
     // Daily Notification Preferences
@@ -276,8 +278,9 @@ public class SettingsModel : PageModel
 
             return Page();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error saving user settings");
             ErrorMessage = _localizer["Error_SavingSettings"];
             PopulateRankOptions();
             await LoadAvailableOnDutyTypesAsync();

@@ -56,6 +56,14 @@ public class ApiAuthenticationMiddleware
                 return;
             }
 
+            // Telemetry API allows anonymous access (needed for login page metrics and error reporting)
+            // Has its own rate limiting (30 req/min per IP) and [IgnoreAntiforgeryToken]
+            if (context.Request.Path.StartsWithSegments("/Api/Telemetry", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
             // Other internal endpoints require authentication
             // If user is already authenticated via cookies, allow request
             if (context.User?.Identity?.IsAuthenticated == true)
@@ -297,6 +305,18 @@ public class ApiAuthenticationMiddleware
 
         // Schedule Export API - used by schedule export feature for PDF/Excel/CSV generation
         if (path.StartsWithSegments("/Api/ScheduleExport", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Hierarchy API - used by HierarchyTree component for org structure management
+        if (path.StartsWithSegments("/Api/Hierarchy", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // OnDuty API - used by OnDuty page for eligible users dropdown
+        if (path.StartsWithSegments("/Api/OnDuty", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

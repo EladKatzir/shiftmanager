@@ -298,7 +298,7 @@ public class LoginModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception during login for {Email}", Email);
+            _logger.LogError(ex, "Unhandled exception during login for {Email}", ShiftManager.Services.PiiMasker.MaskEmail(Email));
             Error = _localizer["Error_UnexpectedError"];
             return Page();
         }

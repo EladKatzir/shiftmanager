@@ -48,7 +48,7 @@
             <strong>@Localizer["Blueprints_MigrationRequired"]</strong>
             @Localizer["Blueprints_MigrationDesc"]
             <form method="post" asp-page-handler="PopulateNameKeys" style="display: inline;">
-                <button type="submit" class="btn btn-sm btn-warning" style="margin-left: 10px;">
+                <button type="submit" class="btn btn-sm btn-warning" style="margin-inline-start: 10px;">
                     🔧 <loc key="Blueprints_PopulateNameKeys" />
                 </button>
             </form>
@@ -288,19 +288,19 @@
                 <div id="deleteConfirmMessage" style="display: none;" data-content-ready="false">
                     <p><strong>@Localizer["ShiftType"]:</strong> <span id="deleteDisplayName"></span></p>
 
-                    <div id="programUsageWarning" style="display: none; background: var(--warning-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--warning);" role="alert">
+                    <div id="programUsageWarning" style="display: none; background: var(--warning-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-inline-start: 4px solid var(--warning);" role="alert">
                         <p><strong>@Localizer["Blueprints_CannotDelete"]</strong></p>
                         <p>@Localizer["Blueprints_UsedByPrograms_Before"]<strong><span id="programUsageCount"></span></strong> @Localizer["Blueprints_UsedByPrograms_After"]</p>
                         <p><loc key="Blueprints_RemoveFromProgramsFirst" /></p>
                     </div>
 
-                    <div id="instanceUsageWarning" style="display: none; background: var(--warning-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--warning);" role="alert">
+                    <div id="instanceUsageWarning" style="display: none; background: var(--warning-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-inline-start: 4px solid var(--warning);" role="alert">
                         <p><strong>@Localizer["Warning"]</strong></p>
                         <p>@Localizer["Blueprints_UsedByInstances_Before"]<strong><span id="instanceUsageCount"></span></strong> @Localizer["Blueprints_UsedByInstances_After"]</p>
                         <p>@Localizer["Blueprints_DeletionWarning"]</p>
                     </div>
 
-                    <div id="noUsageMessage" style="display: none; background: var(--success-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--success);" role="status">
+                    <div id="noUsageMessage" style="display: none; background: var(--success-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-inline-start: 4px solid var(--success);" role="status">
                         <p><strong>@Localizer["Blueprints_SafeToDelete"]</strong></p>
                         <p><loc key="Blueprints_NotInUse" /></p>
                     </div>
@@ -308,7 +308,7 @@
                     <p style="margin-top: 15px;"><strong>@Localizer["Blueprints_ConfirmDeleteQuestion"]</strong></p>
                 </div>
 
-                <div id="deleteErrorMessage" style="display: none; background: var(--danger-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid var(--danger);" role="alert" data-error-state="false">
+                <div id="deleteErrorMessage" style="display: none; background: var(--danger-soft); padding: 15px; margin: 15px 0; border-radius: 5px; border-inline-start: 4px solid var(--danger);" role="alert" data-error-state="false">
                     <p><strong>@Localizer["Error"]</strong></p>
                     <p id="deleteErrorText"></p>
                     <button type="button" class="btn btn-sm btn-secondary" onclick="retryCheckUsage()" style="margin-top: 10px;"><loc key="Button_Retry">Retry</loc></button>

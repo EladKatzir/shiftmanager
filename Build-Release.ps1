@@ -283,7 +283,8 @@
         $optionalScripts = @(
             'START_HERE.bat',
             'PRE_DEMO_CHECKLIST.txt',
-            'TROUBLESHOOT_DEMO.txt'
+            'TROUBLESHOOT_DEMO.txt',
+            'DIAGNOSE_GRIFFIN_ISSUE.bat'
         )
 
         $requiredAssets = @(

@@ -628,6 +628,20 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
+            // HIGH-004 FIX: Grant-based company scope check
+            var toggleUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(toggleUserIdClaim, out var toggleCurrentUserId))
+            {
+                var hasEditGrant = await _grantService.HasGrantForCompanyAsync(toggleCurrentUserId, "EditCompanyUsers", u.CompanyId);
+                if (!hasEditGrant)
+                {
+                    _logger.LogWarning("User {CurrentUserId} attempted to toggle user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                        toggleCurrentUserId, id, u.CompanyId);
+                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                    return RedirectToPage();
+                }
+            }
+
             u.IsActive = !u.IsActive;
             await _db.SaveChangesAsync();
         }
@@ -673,6 +687,16 @@ public class UsersModel : LocalizedPageModel
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
                 TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+                return RedirectToPage();
+            }
+
+            // HIGH-004 FIX: Grant-based company scope check
+            var hasRoleEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", u.CompanyId);
+            if (!hasRoleEditGrant)
+            {
+                _logger.LogWarning("User {CurrentUserId} attempted role change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                    currentUserId, id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
                 return RedirectToPage();
             }
 
@@ -793,6 +817,20 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        // HIGH-004 FIX: Grant-based company scope check
+        var jobTypeUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(jobTypeUserIdClaim, out var jobTypeCurrentUserId))
+        {
+            var hasJobTypeGrant = await _grantService.HasGrantForCompanyAsync(jobTypeCurrentUserId, "EditCompanyUsers", u.CompanyId);
+            if (!hasJobTypeGrant)
+            {
+                _logger.LogWarning("User {CurrentUserId} attempted job type change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                    jobTypeCurrentUserId, id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                return RedirectToPage();
+            }
+        }
+
         // Validate job type if specified
         string? jobTypeName = null;
         if (jobTypeId.HasValue)
@@ -866,6 +904,20 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
+            // HIGH-004 FIX: Grant-based company scope check
+            var resetUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(resetUserIdClaim, out var resetCurrentUserId))
+            {
+                var hasResetGrant = await _grantService.HasGrantForCompanyAsync(resetCurrentUserId, "EditCompanyUsers", u.CompanyId);
+                if (!hasResetGrant)
+                {
+                    _logger.LogWarning("User {CurrentUserId} attempted password reset on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                        resetCurrentUserId, id, u.CompanyId);
+                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                    return RedirectToPage();
+                }
+            }
+
             var (h, s) = PasswordHasher.CreateHash(newPassword);
             u.PasswordHash = h; u.PasswordSalt = s;
             await _db.SaveChangesAsync();
@@ -913,6 +965,16 @@ public class UsersModel : LocalizedPageModel
         if (targetUser == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_UserNotFound"];
+            return RedirectToPage();
+        }
+
+        // HIGH-004 FIX: Grant-based company scope check
+        var hasUnlockGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", targetUser.CompanyId);
+        if (!hasUnlockGrant)
+        {
+            _logger.LogWarning("User {CurrentUserId} attempted to unlock user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                currentUserId, id, targetUser.CompanyId);
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
             return RedirectToPage();
         }
 
@@ -1119,58 +1181,68 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Create the user account
-        var newUser = new AppUser
+        // HIGH-009 FIX: Wrap in try/catch to prevent unhandled exceptions
+        try
         {
-            Email = joinRequest.Email,
-            DisplayName = joinRequest.DisplayName,
-            PasswordHash = joinRequest.PasswordHash,
-            PasswordSalt = joinRequest.PasswordSalt,
-            CompanyId = joinRequest.CompanyId,
-            Role = joinRequest.RequestedRole,
-            IsActive = true
-        };
+            // Create the user account
+            var newUser = new AppUser
+            {
+                Email = joinRequest.Email,
+                DisplayName = joinRequest.DisplayName,
+                PasswordHash = joinRequest.PasswordHash,
+                PasswordSalt = joinRequest.PasswordSalt,
+                CompanyId = joinRequest.CompanyId,
+                Role = joinRequest.RequestedRole,
+                IsActive = true
+            };
 
-        _db.Users.Add(newUser);
+            _db.Users.Add(newUser);
 
-        // Update join request status
-        joinRequest.Status = JoinRequestStatus.Approved;
-        joinRequest.ReviewedBy = currentUserId;
-        joinRequest.ReviewedAt = DateTime.UtcNow;
+            // Update join request status
+            joinRequest.Status = JoinRequestStatus.Approved;
+            joinRequest.ReviewedBy = currentUserId;
+            joinRequest.ReviewedAt = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
-        // Link the created user to the join request
-        joinRequest.CreatedUserId = newUser.Id;
-        await _db.SaveChangesAsync();
+            // Link the created user to the join request
+            joinRequest.CreatedUserId = newUser.Id;
+            await _db.SaveChangesAsync();
 
-        // ✅ Onboarding: Assign role template grants
-        var roleTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole);
-        var grantScope = GrantScope.Company(joinRequest.CompanyId);
-        var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
-        _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
-            grantsAssigned, roleTemplateKey, newUser.Id);
+            // ✅ Onboarding: Assign role template grants
+            var roleTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole);
+            var grantScope = GrantScope.Company(joinRequest.CompanyId);
+            var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
+            _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
+                grantsAssigned, roleTemplateKey, newUser.Id);
 
-        // Send account approval email notification
-        _ = _mailService.SendAccountApprovedEmailAsync(
-            newUser.Email,
-            newUser.DisplayName,
-            newUser.Role.ToString(),
-            joinRequest.Company?.Name ?? "the company"
-        );
+            // Send account approval email notification
+            _ = _mailService.SendAccountApprovedEmailAsync(
+                newUser.Email,
+                newUser.DisplayName,
+                newUser.Role.ToString(),
+                joinRequest.Company?.Name ?? "the company"
+            );
 
-        // Create in-app notification for the new user
-        _ = _notificationService.CreateAccessRequestApprovedNotificationAsync(
-            newUser.Id,
-            joinRequest.Company?.Name ?? "the company",
-            newUser.Role.ToString()
-        );
+            // Create in-app notification for the new user
+            _ = _notificationService.CreateAccessRequestApprovedNotificationAsync(
+                newUser.Id,
+                joinRequest.Company?.Name ?? "the company",
+                newUser.Role.ToString()
+            );
 
-        _logger.LogInformation("Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) for company {CompanyId}",
-            id, currentUserId, newUser.Id, newUser.Email, joinRequest.CompanyId);
+            _logger.LogInformation("Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) for company {CompanyId}",
+                id, currentUserId, newUser.Id, newUser.Email, joinRequest.CompanyId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestApproved"], joinRequest.DisplayName, joinRequest.Email, joinRequest.RequestedRole, joinRequest.Company?.Name);
-        return RedirectToPage();
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestApproved"], joinRequest.DisplayName, joinRequest.Email, joinRequest.RequestedRole, joinRequest.Company?.Name);
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error approving join request {RequestId}", id);
+            TempData["ErrorMessage"] = _localizer["Error_ApprovingJoinRequest"];
+            return RedirectToPage();
+        }
     }
 
     public async Task<IActionResult> OnPostRejectJoinRequestAsync(int id, string? reason)
@@ -1223,19 +1295,29 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Update join request status
-        joinRequest.Status = JoinRequestStatus.Rejected;
-        joinRequest.ReviewedBy = currentUserId;
-        joinRequest.ReviewedAt = DateTime.UtcNow;
-        joinRequest.RejectionReason = reason;
+        // HIGH-010 FIX: Wrap in try/catch to prevent unhandled exceptions
+        try
+        {
+            // Update join request status
+            joinRequest.Status = JoinRequestStatus.Rejected;
+            joinRequest.ReviewedBy = currentUserId;
+            joinRequest.ReviewedAt = DateTime.UtcNow;
+            joinRequest.RejectionReason = reason;
 
-        await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Join request {RequestId} rejected by {ReviewerId}. Email: {Email}, Company: {CompanyId}",
-            id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
+            _logger.LogInformation("Join request {RequestId} rejected by {ReviewerId}. Email: {Email}, Company: {CompanyId}",
+                id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
-        return RedirectToPage();
+            TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rejecting join request {RequestId}", id);
+            TempData["ErrorMessage"] = _localizer["Error_RejectingJoinRequest"];
+            return RedirectToPage();
+        }
     }
 
     public async Task<IActionResult> OnPostBatchApproveJoinRequestsAsync()

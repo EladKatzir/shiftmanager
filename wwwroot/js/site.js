@@ -184,9 +184,17 @@ async function adjustStaffing(url, payload, onOk, onError, evt) {
   }
 
   try {
+    const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const fetchHeaders = {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
+    if (csrfToken) fetchHeaders['RequestVerificationToken'] = csrfToken;
+
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: fetchHeaders,
+      credentials: 'same-origin',
       body: JSON.stringify(payload)
     });
 
@@ -682,9 +690,17 @@ async function createShift() {
                      window.location.pathname.includes('Week') ? '/Calendar/Week?handler=Adjust' :
                      '/Calendar/Day?handler=Adjust';
 
+    const csrfToken2 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const createHeaders = {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
+    if (csrfToken2) createHeaders['RequestVerificationToken'] = csrfToken2;
+
     const res = await fetch(adjustUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createHeaders,
+      credentials: 'same-origin',
       body: JSON.stringify(payload)
     });
 
@@ -866,11 +882,17 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
     }
 
     try {
+        const delCsrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const delHeaders = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (delCsrfToken) delHeaders['RequestVerificationToken'] = delCsrfToken;
+
         const response = await fetch(`${pageUrl}?handler=DeleteShiftInstance`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: delHeaders,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: instanceId
             })

@@ -36,17 +36,11 @@ public class LogoutModel : PageModel
                 // Clear Griffin token cookie
                 Response.Cookies.Delete("griffin.token");
 
-                // Clear cache entry
-                var token = User.FindFirst("Griffin:Token")?.Value;
-                if (!string.IsNullOrEmpty(token))
+                // Clear cache entry using stored token hash (HIGH-007: raw token no longer in cookie)
+                var tokenHash = User.FindFirst("Griffin:TokenHash")?.Value;
+                if (!string.IsNullOrEmpty(tokenHash))
                 {
-                    // Compute SHA256 hash (same as GriffinService)
-                    using var sha256 = SHA256.Create();
-                    var tokenBytes = Encoding.UTF8.GetBytes(token);
-                    var hashBytes = sha256.ComputeHash(tokenBytes);
-                    var hashString = Convert.ToHexString(hashBytes);
-                    var cacheKey = $"griffin_claims_{hashString}";
-
+                    var cacheKey = $"griffin_claims_{tokenHash}";
                     _cache.Remove(cacheKey);
                 }
 

@@ -255,12 +255,14 @@ public class ShiftsModel : PageModel
     private async Task BuildShiftBasedCalendarAsync(int moleculeId, int jobTypeId)
     {
         // Get shift types for this molecule/job type
-        var shiftTypes = await _db.ShiftTypes
+        var shiftTypes = (await _db.ShiftTypes
             .IgnoreQueryFilters()
             .Where(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId)
             .OrderBy(st => st.Start)
+            .ToListAsync())
+            .OrderBy(st => st.Start)
             .ThenBy(st => st.Name)
-            .ToListAsync();
+            .ToList();
 
         // Get shift instances and assignments
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);

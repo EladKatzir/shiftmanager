@@ -418,7 +418,7 @@
         @Localizer["PendingTimeOffTab"]
         @if (Model.TimeOff.Any())
         {
-            <span class="count-badge" style="margin-left: 0.5rem;" aria-label="@Model.TimeOff.Count @Localizer["Requests"]">@Model.TimeOff.Count</span>
+            <span class="count-badge" style="margin-inline-start: 0.5rem;" aria-label="@Model.TimeOff.Count @Localizer["Requests"]">@Model.TimeOff.Count</span>
         }
     </button>
     <button class="tab-button"
@@ -431,7 +431,7 @@
         @Localizer["PendingSwapsTab"]
         @if (Model.Swaps.Any())
         {
-            <span class="count-badge" style="margin-left: 0.5rem;" aria-label="@Model.Swaps.Count @Localizer["Requests"]">@Model.Swaps.Count</span>
+            <span class="count-badge" style="margin-inline-start: 0.5rem;" aria-label="@Model.Swaps.Count @Localizer["Requests"]">@Model.Swaps.Count</span>
         }
     </button>
     <button class="tab-button"
@@ -444,7 +444,7 @@
         @Localizer["ApprovedTimeOffTab"]
         @if (Model.ApprovedTimeOffs.Any())
         {
-            <span class="count-badge" style="margin-left: 0.5rem;" aria-label="@Model.ApprovedTimeOffs.Count @Localizer["Requests"]">@Model.ApprovedTimeOffs.Count</span>
+            <span class="count-badge" style="margin-inline-start: 0.5rem;" aria-label="@Model.ApprovedTimeOffs.Count @Localizer["Requests"]">@Model.ApprovedTimeOffs.Count</span>
         }
     </button>
 </div>
@@ -704,7 +704,7 @@
                 </div>
             }
 
-            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-left: 4px solid var(--primary); border-radius: 8px;">
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-soft); border-inline-start: 4px solid var(--primary); border-radius: 8px;">
                 <div style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">
                     <strong style="color: var(--text);">@Localizer["Note"]:</strong> @Localizer["TimeOffDeletionNote"]
                 </div>

@@ -1190,6 +1190,35 @@
 }
 
 /* ----------------------------------------
+   Bottom Sheet Close Button RTL
+   ---------------------------------------- */
+[dir="rtl"] .bottom-sheet__close-btn {
+  right: auto;
+  left: 12px;
+}
+
+[dir="rtl"] .bottom-sheet__title {
+  text-align: right;
+}
+
+[dir="rtl"] .bottom-sheet__field-label {
+  text-align: right;
+}
+
+[dir="rtl"] .bottom-sheet__select {
+  background-position: left 0.75rem center;
+  padding-right: 0.75rem;
+  padding-left: 2.5rem;
+}
+
+/* ----------------------------------------
+   MyTeam Week Navigation RTL
+   ---------------------------------------- */
+[dir="rtl"] .week-nav {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
    Mobile Responsive RTL Adjustments
    ---------------------------------------- */
 @media (max-width: 768px) {

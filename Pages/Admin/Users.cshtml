@@ -157,7 +157,7 @@
 
         .data-table th {
             padding: 0.875rem;
-            text-align: left;
+            text-align: start;
             font-weight: 600;
             color: var(--text);
             border-bottom: 2px solid var(--border);
@@ -789,7 +789,7 @@
                     @if (u.IsLocked)
                     {
                         var lockoutTime = u.LockoutEnd.HasValue ? u.LockoutEnd.Value.ToLocalTime().ToString("HH:mm") : "";
-                        <span style="color: var(--danger); margin-left: 0.5rem;" title="@Localizer["LockedUntil", lockoutTime]">🔒</span>
+                        <span style="color: var(--danger); margin-inline-start: 0.5rem;" title="@Localizer["LockedUntil", lockoutTime]">🔒</span>
                     }
                 </td>
                 <td>@u.Email</td>

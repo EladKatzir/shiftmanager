@@ -258,6 +258,25 @@ public class ManageModel : LocalizedPageModel
 
         if (a != null)
         {
+            // SECURITY FIX (HIGH-001): Validate company scope to prevent IDOR
+            var removeUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(removeUserIdClaim, out var removeCurrentUserId))
+            {
+                var removeCurrentUser = await _db.Users.FindAsync(removeCurrentUserId);
+                if (removeCurrentUser != null && removeCurrentUser.Role != UserRole.Owner)
+                {
+                    var removeHasAccess = removeCurrentUser.Role == UserRole.Director
+                        ? await _directorService.IsDirectorOfAsync(a.CompanyId)
+                        : removeCurrentUser.CompanyId == a.CompanyId;
+                    if (!removeHasAccess)
+                    {
+                        _logger.LogWarning("User {UserId} attempted to remove assignment {AssignmentId} from company {CompanyId} without access",
+                            removeCurrentUserId, assignmentId, a.CompanyId);
+                        return RedirectToPage("/AccessDenied");
+                    }
+                }
+            }
+
             _logger.LogInformation("Removing assignment {AssignmentId} from shiftInstance {InstanceId}", assignmentId, a.ShiftInstanceId);
 
             // Send notification before removing (only if user is assigned)
@@ -294,6 +313,25 @@ public class ManageModel : LocalizedPageModel
             return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
         }
 
+        // SECURITY FIX (HIGH-002): Validate company scope to prevent IDOR
+        var traineeAssignment = await _db.ShiftAssignments.AsNoTracking().FirstOrDefaultAsync(sa => sa.Id == assignmentId);
+        if (traineeAssignment != null)
+        {
+            var traineeCurrentUser = await _db.Users.FindAsync(currentUserId);
+            if (traineeCurrentUser != null && traineeCurrentUser.Role != UserRole.Owner)
+            {
+                var traineeHasAccess = traineeCurrentUser.Role == UserRole.Director
+                    ? await _directorService.IsDirectorOfAsync(traineeAssignment.CompanyId)
+                    : traineeCurrentUser.CompanyId == traineeAssignment.CompanyId;
+                if (!traineeHasAccess)
+                {
+                    _logger.LogWarning("User {UserId} attempted trainee assignment on company {CompanyId} without access",
+                        currentUserId, traineeAssignment.CompanyId);
+                    return RedirectToPage("/AccessDenied");
+                }
+            }
+        }
+
         var success = await _traineeService.AssignTraineeToShiftAsync(assignmentId, traineeUserId, currentUserId);
 
         if (!success)
@@ -316,6 +354,25 @@ public class ManageModel : LocalizedPageModel
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
+        }
+
+        // SECURITY FIX (HIGH-002): Validate company scope to prevent IDOR
+        var removeTraineeAssignment = await _db.ShiftAssignments.AsNoTracking().FirstOrDefaultAsync(sa => sa.Id == assignmentId);
+        if (removeTraineeAssignment != null)
+        {
+            var removeTraineeCurrentUser = await _db.Users.FindAsync(currentUserId);
+            if (removeTraineeCurrentUser != null && removeTraineeCurrentUser.Role != UserRole.Owner)
+            {
+                var removeTraineeHasAccess = removeTraineeCurrentUser.Role == UserRole.Director
+                    ? await _directorService.IsDirectorOfAsync(removeTraineeAssignment.CompanyId)
+                    : removeTraineeCurrentUser.CompanyId == removeTraineeAssignment.CompanyId;
+                if (!removeTraineeHasAccess)
+                {
+                    _logger.LogWarning("User {UserId} attempted trainee removal on company {CompanyId} without access",
+                        currentUserId, removeTraineeAssignment.CompanyId);
+                    return RedirectToPage("/AccessDenied");
+                }
+            }
         }
 
         var success = await _traineeService.RemoveTraineeFromShiftAsync(assignmentId, "Manual", currentUserId);

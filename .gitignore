@@ -150,7 +150,10 @@ phase1-login-success.png
 qa-home.png
 qa-shifts.png
 shifts-caret-detail.png
-1]
+
+# QA test artifacts (screenshots, reports, playwright)
+ProductionReady/
+.playwright-mcp/
 
 # Visual regression snapshots (generated)
 qa-automation/tests/visual-regression.spec.js-snapshots/

@@ -201,18 +201,37 @@ public class SignupModel : LocalizedPageModel
             CreatedAt = DateTime.UtcNow
         };
 
-        _db.UserJoinRequests.Add(joinRequest);
-        await _db.SaveChangesAsync();
+        try
+        {
+            _db.UserJoinRequests.Add(joinRequest);
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save join request for {Email}", Email);
+            Error = _localizer["Error_AnErrorOccurred"];
+            return Page();
+        }
 
         _logger.LogInformation("New join request created: {Email} requesting {Role} at {Company}",
             Email, RequestedRole, selectedCompany.Name);
 
-        // Notify all owners about the new access request
-        _ = _notificationService.NotifyOwnersOfAccessRequestAsync(
-            DisplayName,
-            Email,
-            selectedCompany.Name,
-            joinRequest.Id);
+        // Notify all owners about the new access request (fire-and-forget with error handling)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _notificationService.NotifyOwnersOfAccessRequestAsync(
+                    DisplayName,
+                    Email,
+                    selectedCompany.Name,
+                    joinRequest.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to notify owners about join request {RequestId}", joinRequest.Id);
+            }
+        });
 
         PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, _localizer[RequestedRole.ToString()].Value];
 

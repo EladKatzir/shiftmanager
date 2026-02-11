@@ -67,7 +67,8 @@ public class DeleteModel : PageModel
                         return new JsonResult(new { success = false, message = "Project not found" }) { StatusCode = 404 };
                     }
                     // Check for children
-                    var projectHasAreas = await _db.Areas.IgnoreQueryFilters().AnyAsync(a => a.ProjectId == request.EntityId);
+                    // MED-011 FIX: Only check active children (deactivated entities shouldn't block deletion)
+                    var projectHasAreas = await _db.Areas.IgnoreQueryFilters().AnyAsync(a => a.ProjectId == request.EntityId && a.IsActive);
                     if (projectHasAreas)
                     {
                         return new JsonResult(new { success = false, message = "Cannot delete project with areas. Delete areas first." }) { StatusCode = 400 };
@@ -84,7 +85,8 @@ public class DeleteModel : PageModel
                         return new JsonResult(new { success = false, message = "Area not found" }) { StatusCode = 404 };
                     }
                     // Check for children
-                    var areaHasMolecules = await _db.Molecules.IgnoreQueryFilters().AnyAsync(m => m.AreaId == request.EntityId);
+                    // MED-011 FIX: Only check active children
+                    var areaHasMolecules = await _db.Molecules.IgnoreQueryFilters().AnyAsync(m => m.AreaId == request.EntityId && m.IsActive);
                     if (areaHasMolecules)
                     {
                         return new JsonResult(new { success = false, message = "Cannot delete area with molecules. Delete molecules first." }) { StatusCode = 400 };
@@ -101,8 +103,9 @@ public class DeleteModel : PageModel
                         return new JsonResult(new { success = false, message = "Molecule not found" }) { StatusCode = 404 };
                     }
                     // Check for children
+                    // MED-011 FIX: Only check active children
                     var moleculeHasCompanies = await _db.Companies.IgnoreQueryFilters().AnyAsync(c => c.MoleculeId == request.EntityId);
-                    var moleculeHasDepartments = await _db.Departments.IgnoreQueryFilters().AnyAsync(d => d.MoleculeId == request.EntityId);
+                    var moleculeHasDepartments = await _db.Departments.IgnoreQueryFilters().AnyAsync(d => d.MoleculeId == request.EntityId && d.IsActive);
                     if (moleculeHasCompanies || moleculeHasDepartments)
                     {
                         return new JsonResult(new { success = false, message = "Cannot delete molecule with companies or departments. Delete them first." }) { StatusCode = 400 };
@@ -119,7 +122,8 @@ public class DeleteModel : PageModel
                         return new JsonResult(new { success = false, message = "Company not found" }) { StatusCode = 404 };
                     }
                     // Check for users
-                    var companyHasUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.CompanyId == request.EntityId);
+                    // MED-011 FIX: Only check active users
+                    var companyHasUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.CompanyId == request.EntityId && u.IsActive);
                     if (companyHasUsers)
                     {
                         return new JsonResult(new { success = false, message = "Cannot delete company with users. Reassign or remove users first." }) { StatusCode = 400 };
@@ -145,7 +149,8 @@ public class DeleteModel : PageModel
                         return new JsonResult(new { success = false, message = "Department not found" }) { StatusCode = 404 };
                     }
                     // Check for users
-                    var departmentHasUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.DepartmentId == request.EntityId);
+                    // MED-011 FIX: Only check active users
+                    var departmentHasUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.DepartmentId == request.EntityId && u.IsActive);
                     if (departmentHasUsers)
                     {
                         return new JsonResult(new { success = false, message = "Cannot delete department with users. Reassign or remove users first." }) { StatusCode = 400 };

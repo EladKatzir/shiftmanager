@@ -617,10 +617,12 @@
                                 <span><loc key="UserMenu_Settings" /></span>
                             </a>
                             <div class="sidebar-user-menu__divider"></div>
-                            <a href="/Auth/Logout" class="sidebar-user-menu__item sidebar-user-menu__item--danger" role="menuitem">
-                                <span class="sidebar-user-menu__icon">🚪</span>
-                                <span><loc key="Logout" /></span>
-                            </a>
+                            <form method="post" action="/Auth/Logout" class="sidebar-user-menu__logout-form">
+                                <button type="submit" class="sidebar-user-menu__item sidebar-user-menu__item--danger" role="menuitem">
+                                    <span class="sidebar-user-menu__icon">🚪</span>
+                                    <span><loc key="Logout" /></span>
+                                </button>
+                            </form>
                         </div>
                     </div>
 
@@ -710,7 +712,7 @@
             {
                 <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid var(--warning-hover);">
                     ⚠️ @Localizer["ViewAs_ViewingAs"] <strong>@viewAsCompanyName</strong> —
-                    <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-left: 1rem;">@Localizer["ViewAs_ExitViewMode"]</a>
+                    <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-inline-start: 1rem;">@Localizer["ViewAs_ExitViewMode"]</a>
                 </div>
             }
 

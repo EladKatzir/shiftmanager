@@ -111,6 +111,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Api/Signup/GetSignupOptions");
     options.Conventions.AllowAnonymousToPage("/Public/Chores");
     options.Conventions.AllowAnonymousToPage("/Public/OnDuty");
+    options.Conventions.AllowAnonymousToPage("/Api/Telemetry");
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization();

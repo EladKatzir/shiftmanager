@@ -131,15 +131,11 @@ public class ForgotPasswordModel : LocalizedPageModel
                     await Task.Delay(minDelay - (int)elapsed);
 
                 // No match found - show error but don't reveal which field is wrong (security)
-                var errorMsg = _localizer["Error_EmailPhoneNoMatch"];
-                Error = errorMsg;
+                Error = _localizer["Error_EmailPhoneNoMatch"];
                 _logger.LogWarning("Failed password recovery attempt for email: {Email}", RedactEmail(Email));
 
-                return new JsonResult(new
-                {
-                    status = "error",
-                    message = errorMsg.ToString()
-                });
+                // MED-009 FIX: Return Page() consistently to prevent user enumeration via response type
+                return Page();
             }
 
             // User found - generate temporary password and update hash
