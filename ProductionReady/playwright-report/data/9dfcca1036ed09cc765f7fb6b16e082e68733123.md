@@ -1,0 +1,193 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e11]: אתה כרגע לא מחובר. חלק מהתכונות עשויות להיות לא זמינות.
+    - button "נסה שוב" [ref=e12] [cursor=pointer]
+  - link "דלג לתוכן הראשי" [ref=e13] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e15]: "CRITICAL: Disk space is critically low (6.9% free). Database may fail."
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - link "Shifty SHIFTY מנהל משמרות" [ref=e18] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]: SHIFTY
+          - generic [ref=e23]: מנהל משמרות
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: 📍
+          - generic [ref=e27]: צפייה נוכחית
+        - button "SystemAdmins" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: 🏢
+            - generic [ref=e31]: SystemAdmins
+          - generic [ref=e32]: ▼
+      - navigation [ref=e33]:
+        - generic [ref=e34]: 📅 השיפטי שלי
+        - link "🏠 בית" [ref=e35] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e36]: 🏠
+          - generic [ref=e37]: בית
+        - link "📅 לוח זמנים" [ref=e38] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e39]: 📅
+          - generic [ref=e40]: לוח זמנים
+        - link "📝 בקשות" [ref=e41] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e42]: 📝
+          - generic [ref=e43]: בקשות
+        - link "📊 אנליטיקה" [ref=e44] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e45]: 📊
+          - generic [ref=e46]: אנליטיקה
+        - link "🔍 יומן ביקורת" [ref=e47] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e48]: 🔍
+          - generic [ref=e49]: יומן ביקורת
+        - link "👥 אנשים" [ref=e50] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e51]: 👥
+          - generic [ref=e52]: אנשים
+        - link "🏢 חברות" [ref=e53] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e54]: 🏢
+          - generic [ref=e55]: חברות
+        - link "⚙️ הגדרות" [ref=e56] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e57]: ⚙️
+          - generic [ref=e58]: הגדרות
+        - generic [ref=e59]: 🔧 ניהול מערכת - בעלים
+        - link "🔧 ניהול מערכת - בעלים" [ref=e60] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e61]: 🔧
+          - generic [ref=e62]: ניהול מערכת - בעלים
+        - generic [ref=e63]: ⚙️ ניהול
+        - link "📊 משמרות הפקה וב\"ר" [ref=e64] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e65]: 📊
+          - generic [ref=e66]: משמרות הפקה וב"ר
+        - link "🗂️ מטלות" [ref=e67] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e68]: 🗂️
+          - generic [ref=e69]: מטלות
+        - link "🎯 משמרות רוחב" [ref=e70] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e71]: 🎯
+          - generic [ref=e72]: משמרות רוחב
+      - generic [ref=e73]:
+        - button "מ מנהל Owner ▼" [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: מ
+          - generic [ref=e77]:
+            - generic [ref=e78]: מנהל
+            - generic [ref=e79]: Owner
+          - generic [ref=e80]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e81]:
+          - generic [ref=e82]: ⌨️
+          - generic [ref=e83]: Ctrl
+          - generic [ref=e84]: +
+          - generic [ref=e85]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: ◀
+    - generic [ref=e88]:
+      - banner [ref=e89]:
+        - generic [ref=e90]:
+          - heading "לוח משמרות" [level=1] [ref=e92]
+          - generic [ref=e93]:
+            - link "✓" [ref=e95] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e96]: ✓
+            - link "🔔" [ref=e97] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e98]: 🔔
+            - button "Language" [ref=e100] [cursor=pointer]:
+              - generic [ref=e101]: 🌐
+              - generic [ref=e102]: עב
+            - button "Toggle dark mode" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: 🌓
+            - button "🚪 התנתקות" [ref=e106] [cursor=pointer]:
+              - generic [ref=e107]: 🚪
+              - generic [ref=e108]: התנתקות
+      - main [ref=e109]:
+        - navigation [ref=e110]:
+          - list [ref=e111]:
+            - listitem [ref=e112]:
+              - link "לוחות שנה" [ref=e113]:
+                - /url: /Calendar/Month
+            - listitem "לוח משמרות" [ref=e114]: ‹ לוח משמרות
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]:
+              - generic [ref=e118]:
+                - generic [ref=e119]: מולקולה
+                - combobox "מולקולה" [ref=e120] [cursor=pointer]:
+                  - option "מערכת" [selected]
+              - generic [ref=e121]:
+                - generic [ref=e122]: סוג עבודה
+                - combobox "סוג עבודה" [ref=e123] [cursor=pointer]:
+                  - option "אלחוט" [selected]
+                  - option "ב\"ר"
+                  - option "טקסט"
+                  - option "חק\"ם"
+              - generic [ref=e124]:
+                - generic [ref=e125]: תצוגה
+                - combobox "תצוגה" [ref=e126] [cursor=pointer]:
+                  - option "שבוע" [selected]
+                  - option "שבועיים"
+                  - option "חודש"
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - link "← קודם" [ref=e129] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-01&ViewMode=week&Mode=shift"
+                  - generic [ref=e130]: ←
+                  - generic [ref=e131]: קודם
+                - generic [ref=e132]:
+                  - textbox [ref=e133] [cursor=pointer]: 2026-02-08
+                  - generic [ref=e134] [cursor=pointer]: פבר׳ 08 - פבר׳ 14, 2026
+                - link "הבא →" [ref=e135] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-15&ViewMode=week&Mode=shift"
+                  - generic [ref=e136]: הבא
+                  - generic [ref=e137]: →
+              - button "🖶 הדפסה" [ref=e139] [cursor=pointer]:
+                - generic [ref=e140]: 🖶
+                - generic [ref=e141]: הדפסה
+            - generic [ref=e143]:
+              - generic [ref=e144]:
+                - link "לפי משמרות" [ref=e145] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=shift"
+                - link "לפי אנשים" [ref=e146] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=user"
+              - link "מצב קיבולת" [ref=e148] [cursor=pointer]:
+                - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=shift&CapacityMode=True"
+              - generic [ref=e149]:
+                - button "🔍 סינון" [ref=e150] [cursor=pointer]:
+                  - generic [ref=e151]: 🔍
+                  - text: סינון
+                - link "רק שלי" [ref=e152] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=shift&JustMine=True"
+          - generic [ref=e153]:
+            - img [ref=e155]
+            - heading "לא נמצאו משמרות" [level=3] [ref=e157]
+            - paragraph [ref=e158]: בחר סוג תפקיד כדי לראות משמרות למולקולה זו.
+      - generic [ref=e159]:
+        - button "▼ מידע מהיר" [expanded] [ref=e160] [cursor=pointer]:
+          - generic [ref=e161]: ▼
+          - generic [ref=e162]: מידע מהיר
+        - generic [ref=e164]:
+          - button "מידע מהיר" [expanded] [ref=e165] [cursor=pointer]:
+            - generic [ref=e166]:
+              - img [ref=e168]
+              - generic [ref=e170]: מידע מהיר
+            - img [ref=e172]
+          - generic [ref=e175]:
+            - img "אף אחד לא בכוננות כרגע" [ref=e178]
+            - paragraph [ref=e182]: אף אחד לא בכוננות כרגע
+            - paragraph [ref=e183]: זה חריג. פנה למפקד שלך במידת הצורך.
+  - region "Notifications"
+  - button "Print calendar" [ref=e184] [cursor=pointer]:
+    - generic [ref=e185]: 🖨️
+    - generic [ref=e186]: Print
+```

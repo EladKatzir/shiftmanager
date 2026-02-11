@@ -1,0 +1,212 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e11]: You are currently offline. Some features may be unavailable.
+    - button "Retry" [ref=e12] [cursor=pointer]
+  - link "Skip to main content" [ref=e13] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e15]: "CRITICAL: Disk space is critically low (7.0% free). Database may fail."
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e18] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]: SHIFTY
+          - generic [ref=e23]: Shift Manager
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: 📍
+          - generic [ref=e27]: Currently Viewing
+        - button "SystemAdmins" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: 🏢
+            - generic [ref=e31]: SystemAdmins
+          - generic [ref=e32]: ▼
+      - navigation [ref=e33]:
+        - generic [ref=e34]: 📅 My Shifty
+        - link "🏠 Home" [ref=e35] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e36]: 🏠
+          - generic [ref=e37]: Home
+        - link "📅 Schedule" [ref=e38] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e39]: 📅
+          - generic [ref=e40]: Schedule
+        - link "📝 Requests" [ref=e41] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e42]: 📝
+          - generic [ref=e43]: Requests
+        - link "📊 Analytics" [ref=e44] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e45]: 📊
+          - generic [ref=e46]: Analytics
+        - link "🔍 Audit Log" [ref=e47] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e48]: 🔍
+          - generic [ref=e49]: Audit Log
+        - link "👥 People" [ref=e50] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e51]: 👥
+          - generic [ref=e52]: People
+        - link "🏢 Companies" [ref=e53] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e54]: 🏢
+          - generic [ref=e55]: Companies
+        - link "⚙️ Settings" [ref=e56] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e57]: ⚙️
+          - generic [ref=e58]: Settings
+        - generic [ref=e59]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e60] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e61]: 🔧
+          - generic [ref=e62]: Owner Administration
+        - generic [ref=e63]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e64] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e65]: 📊
+          - generic [ref=e66]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e67] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e68]: 🗂️
+          - generic [ref=e69]: Chores
+        - link "🎯 Day Shifts" [ref=e70] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e71]: 🎯
+          - generic [ref=e72]: Day Shifts
+      - generic [ref=e73]:
+        - button "מ מנהל Owner ▼" [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: מ
+          - generic [ref=e77]:
+            - generic [ref=e78]: מנהל
+            - generic [ref=e79]: Owner
+          - generic [ref=e80]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e81]:
+          - generic [ref=e82]: ⌨️
+          - generic [ref=e83]: Ctrl
+          - generic [ref=e84]: +
+          - generic [ref=e85]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: ◀
+    - generic [ref=e88]:
+      - banner [ref=e89]:
+        - generic [ref=e90]:
+          - heading "Overview Calendar" [level=1] [ref=e92]
+          - generic [ref=e93]:
+            - link "✓" [ref=e95] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e96]: ✓
+            - link "🔔" [ref=e97] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e98]: 🔔
+            - button "Language" [ref=e100] [cursor=pointer]:
+              - generic [ref=e101]: 🌐
+              - generic [ref=e102]: En
+            - button "Toggle dark mode" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: 🌓
+            - button "🚪 Logout" [ref=e106] [cursor=pointer]:
+              - generic [ref=e107]: 🚪
+              - generic [ref=e108]: Logout
+      - main [ref=e109]:
+        - navigation [ref=e110]:
+          - list [ref=e111]:
+            - listitem [ref=e112]:
+              - link "Calendars" [ref=e113]:
+                - /url: /Calendar/Month
+            - listitem "Overview Calendar" [ref=e114]: › Overview Calendar
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]:
+              - generic [ref=e118]:
+                - generic [ref=e119]: מנהלי מערכת
+                - generic [ref=e120]: Company & Scope
+              - generic [ref=e121]:
+                - generic [ref=e122]: View
+                - combobox "View" [ref=e123] [cursor=pointer]:
+                  - option "Week" [selected]
+                  - option "Two Weeks"
+                  - option "Month"
+              - generic [ref=e124]:
+                - generic [ref=e125]: Users
+                - combobox "Users" [ref=e126] [cursor=pointer]:
+                  - option "Active Users" [selected]
+                  - option "Inactive Users"
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - link "← Previous" [ref=e129] [cursor=pointer]:
+                  - /url: "?Start=2026-02-01&ViewMode=week&UsersFilter=&JustMine=False"
+                  - generic [ref=e130]: ←
+                  - generic [ref=e131]: Previous
+                - generic [ref=e132]:
+                  - textbox [ref=e133] [cursor=pointer]: 2026-02-08
+                  - generic [ref=e134] [cursor=pointer]: Feb 08 - Feb 14, 2026
+                - link "Next →" [ref=e135] [cursor=pointer]:
+                  - /url: "?Start=2026-02-15&ViewMode=week&UsersFilter=&JustMine=False"
+                  - generic [ref=e136]: Next
+                  - generic [ref=e137]: →
+              - button "🖶 Print" [ref=e139] [cursor=pointer]:
+                - generic [ref=e140]: 🖶
+                - generic [ref=e141]: Print
+            - generic [ref=e143]:
+              - link "Just Mine" [ref=e145] [cursor=pointer]:
+                - /url: "?Start=2026-02-08&ViewMode=week&UsersFilter=&JustMine=True"
+              - generic [ref=e146]:
+                - generic "Vacation" [ref=e147]: Vacation
+                - generic "Shift" [ref=e149]: Shift
+                - generic "Chore" [ref=e151]: Chore
+                - generic "Day Shift" [ref=e153]: Day Shift
+          - generic [ref=e155]:
+            - generic [ref=e156]: Calendar_ReadOnlyMode
+            - grid [ref=e158]:
+              - rowgroup [ref=e159]:
+                - row "February 8, 2026 February 9, 2026 February 10, 2026 February 11, 2026 February 12, 2026 February 13, 2026 February 14, 2026" [ref=e160]:
+                  - columnheader [ref=e161]
+                  - columnheader "February 8, 2026" [ref=e162]
+                  - columnheader "February 9, 2026" [ref=e163]
+                  - columnheader "February 10, 2026" [ref=e164]
+                  - columnheader "February 11, 2026" [ref=e165]
+                  - columnheader "February 12, 2026" [ref=e166]
+                  - columnheader "February 13, 2026" [ref=e167]
+                  - columnheader "February 14, 2026" [ref=e168]
+              - rowgroup [ref=e169]:
+                - row "Test Director February 8, 2026 February 9, 2026 February 10, 2026 February 11, 2026 February 12, 2026 February 13, 2026 February 14, 2026" [ref=e170]:
+                  - gridcell "Test Director" [ref=e171]
+                  - gridcell "February 8, 2026" [ref=e172]
+                  - gridcell "February 9, 2026" [ref=e173]
+                  - gridcell "February 10, 2026" [ref=e174]
+                  - gridcell "February 11, 2026" [ref=e175]
+                  - gridcell "February 12, 2026" [ref=e176]
+                  - gridcell "February 13, 2026" [ref=e177]
+                  - gridcell "February 14, 2026" [ref=e178]
+                - row "מנהל מערכת February 8, 2026 February 9, 2026 February 10, 2026 February 11, 2026 February 12, 2026 February 13, 2026 February 14, 2026" [ref=e179]:
+                  - gridcell "מנהל מערכת" [ref=e180]
+                  - gridcell "February 8, 2026" [ref=e181]
+                  - gridcell "February 9, 2026" [ref=e182]
+                  - gridcell "February 10, 2026" [ref=e183]
+                  - gridcell "February 11, 2026" [ref=e184]
+                  - gridcell "February 12, 2026" [ref=e185]
+                  - gridcell "February 13, 2026" [ref=e186]
+                  - gridcell "February 14, 2026" [ref=e187]
+      - generic [ref=e188]:
+        - button "▼ Quick Info" [expanded] [ref=e189] [cursor=pointer]:
+          - generic [ref=e190]: ▼
+          - generic [ref=e191]: Quick Info
+        - generic [ref=e193]:
+          - button "Quick Info" [expanded] [ref=e194] [cursor=pointer]:
+            - generic [ref=e195]:
+              - img [ref=e197]
+              - generic [ref=e199]: Quick Info
+            - img [ref=e201]
+          - generic [ref=e204]:
+            - img "No one is on-call right now" [ref=e207]
+            - paragraph [ref=e211]: No one is on-call right now
+            - paragraph [ref=e212]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+  - button "Print calendar" [ref=e213] [cursor=pointer]:
+    - generic [ref=e214]: 🖨️
+    - generic [ref=e215]: Print
+```

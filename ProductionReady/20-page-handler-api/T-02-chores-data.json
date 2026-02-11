@@ -1,0 +1,4 @@
+{
+  "status": 200,
+  "body": "{\"success\":true,\"data\":{\"chores\":[],\"choreTypes\":[],\"users\":[{\"id\":9,\"name\":\"Test Owner\"},{\"id\":10,\"name\":\"Test Director\"},{\"id\":11,\"name\":\"Test Manager\"},{\"id\":12,\"name\":\"Test Member\"},{\"id\":13,\"name\":\"Test Assigner\"},{\"id\":14,\"name\":\"Test NoGrants\"},{\"id\":15,\"name\":\"Emp Tz Alhut\"},{\"id\":16,\"name\":\"Emp Tz Text\"},{\"id\":17,\"name\":\"Emp Tz BR\"},{\"id\":18,\"name\":\"Emp Tz Hakam\"},{\"id\":19,\"name\":\"Emp Hir Alhut\"},{\"id\":20,\"name\":\"Mgr Alhut Tz\"},{\"id\":21,\"name\":\"Trainee Alhut\"},{\"id\":22,\"name\":\"Locked User\"},{\"id\":23,\"name\":\"Deactivated User\"},{\"id\":24,\"name\":\"Concurrent User\"}],\"timestamp\":\"2026-02-09T00:13:14.3266241Z\"}}"
+}

@@ -1,0 +1,362 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - alert [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e11]: אתה כרגע לא מחובר. חלק מהתכונות עשויות להיות לא זמינות.
+    - button "נסה שוב" [ref=e12] [cursor=pointer]
+  - link "דלג לתוכן הראשי" [ref=e13] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e15]: "CRITICAL: Disk space is critically low (6.9% free). Database may fail."
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - link "Shifty SHIFTY מנהל משמרות" [ref=e18] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]: SHIFTY
+          - generic [ref=e23]: מנהל משמרות
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: 📍
+          - generic [ref=e27]: צפייה נוכחית
+        - button "SystemAdmins" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: 🏢
+            - generic [ref=e31]: SystemAdmins
+          - generic [ref=e32]: ▼
+      - navigation [ref=e33]:
+        - generic [ref=e34]: 📅 השיפטי שלי
+        - link "🏠 בית" [ref=e35] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e36]: 🏠
+          - generic [ref=e37]: בית
+        - link "📅 לוח זמנים" [ref=e38] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e39]: 📅
+          - generic [ref=e40]: לוח זמנים
+        - link "📝 בקשות" [ref=e41] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e42]: 📝
+          - generic [ref=e43]: בקשות
+        - link "📊 אנליטיקה" [ref=e44] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e45]: 📊
+          - generic [ref=e46]: אנליטיקה
+        - link "🔍 יומן ביקורת" [ref=e47] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e48]: 🔍
+          - generic [ref=e49]: יומן ביקורת
+        - link "👥 אנשים" [ref=e50] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e51]: 👥
+          - generic [ref=e52]: אנשים
+        - link "🏢 חברות" [ref=e53] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e54]: 🏢
+          - generic [ref=e55]: חברות
+        - link "⚙️ הגדרות" [ref=e56] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e57]: ⚙️
+          - generic [ref=e58]: הגדרות
+        - generic [ref=e59]: 🔧 ניהול מערכת - בעלים
+        - link "🔧 ניהול מערכת - בעלים" [ref=e60] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e61]: 🔧
+          - generic [ref=e62]: ניהול מערכת - בעלים
+        - generic [ref=e63]: ⚙️ ניהול
+        - link "📊 משמרות הפקה וב\"ר" [ref=e64] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e65]: 📊
+          - generic [ref=e66]: משמרות הפקה וב"ר
+        - link "🗂️ מטלות" [ref=e67] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e68]: 🗂️
+          - generic [ref=e69]: מטלות
+        - link "🎯 משמרות רוחב" [ref=e70] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e71]: 🎯
+          - generic [ref=e72]: משמרות רוחב
+      - generic [ref=e73]:
+        - button "מ מנהל Owner ▼" [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: מ
+          - generic [ref=e77]:
+            - generic [ref=e78]: מנהל
+            - generic [ref=e79]: Owner
+          - generic [ref=e80]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e81]:
+          - generic [ref=e82]: ⌨️
+          - generic [ref=e83]: Ctrl
+          - generic [ref=e84]: +
+          - generic [ref=e85]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: ◀
+    - generic [ref=e88]:
+      - banner [ref=e89]:
+        - generic [ref=e90]:
+          - heading "תבניות משמרות" [level=1] [ref=e92]
+          - generic [ref=e93]:
+            - link "🔔" [ref=e94] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e95]: 🔔
+            - button "Language" [ref=e97] [cursor=pointer]:
+              - generic [ref=e98]: 🌐
+              - generic [ref=e99]: עב
+            - button "Toggle dark mode" [ref=e100] [cursor=pointer]:
+              - generic [ref=e101]: 🌓
+            - button "🚪 התנתקות" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: 🚪
+              - generic [ref=e105]: התנתקות
+      - main [ref=e106]:
+        - navigation [ref=e107]:
+          - list [ref=e108]:
+            - listitem [ref=e109]:
+              - link "ניהול מערכת - בעלים" [ref=e110]:
+                - /url: /Owner/Index
+            - listitem "תבניות" [ref=e111]: ‹ תבניות
+        - generic [ref=e113]:
+          - generic [ref=e115]: 🏢
+          - combobox [ref=e116] [cursor=pointer]:
+            - option "'; DROP TABLE Companies;--" [selected]
+            - option "Camps"
+            - option "City"
+            - option "Element"
+            - option "GAP"
+            - option "Hamasa"
+            - option "Hir"
+            - option "Hitazmut"
+            - option "Inside"
+            - option "Kabah"
+            - option "Matot"
+            - option "MinimalCo_1770583465859"
+            - option "Multi Test A"
+            - option "Multi Test B"
+            - option "Out"
+            - option "Radio"
+            - option "SystemAdmins (בית)"
+            - option "Test Company"
+            - option "Test Company Empty"
+            - option "Test Company Full"
+            - option "TestCompany_1770583465327_1omafr"
+            - option "TestCompany_1770583476122_z4ryrq"
+            - option "TestCompany_1770583506164_4lhi8i"
+            - option "TestCompany_1770583529280_qz99i0"
+            - option "Tzafona"
+            - option "Yeadim"
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - heading "📋 תבניות משמרות" [level=1] [ref=e119]
+            - paragraph [ref=e120]: נהל הגדרות סוגי משמרות עם שמות דו-לשוניים
+          - generic [ref=e121]:
+            - strong [ref=e122]: "⚠️ Migration Required:"
+            - text: Some shift types are missing NameKey values (required for localization).
+            - button "🔧 Populate NameKeys Now" [ref=e124] [cursor=pointer]
+          - generic [ref=e125]:
+            - heading "➕ צור סוג משמרת חדש" [level=2] [ref=e126]
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - generic [ref=e129]:
+                  - generic [ref=e130]: מפתח משמרת
+                  - textbox "מפתח משמרת" [ref=e131]:
+                    - /placeholder: e.g., CUSTOM_1
+                  - text: Uppercase, e.g., CUSTOM_DAY
+                - generic [ref=e132]:
+                  - generic [ref=e133]: שם באנגלית
+                  - textbox "שם באנגלית" [ref=e134]:
+                    - /placeholder: Day Shift
+                - generic [ref=e135]:
+                  - generic [ref=e136]: שם בעברית
+                  - textbox "שם בעברית" [ref=e137]:
+                    - /placeholder: משמרת יום
+                - generic [ref=e138]:
+                  - generic [ref=e139]: שעת התחלה
+                  - textbox "שעת התחלה" [ref=e140]: 09:00
+                - generic [ref=e141]:
+                  - generic [ref=e142]: שעת סיום
+                  - textbox "שעת סיום" [ref=e143]: 17:00
+              - button "➕ צור סוג משמרת" [ref=e144] [cursor=pointer]:
+                - text: ➕
+                - generic [ref=e145]: צור סוג משמרת
+          - generic [ref=e146]:
+            - heading "📋 סוגי משמרות קיימים" [level=2] [ref=e147]
+            - table [ref=e148]:
+              - rowgroup [ref=e149]:
+                - row "Shift Type English Name Hebrew Name Time Range Type Actions" [ref=e150]:
+                  - columnheader "Shift Type" [ref=e151]
+                  - columnheader "English Name" [ref=e152]
+                  - columnheader "Hebrew Name" [ref=e153]
+                  - columnheader "Time Range" [ref=e154]
+                  - columnheader "Type" [ref=e155]
+                  - columnheader "Actions" [ref=e156]
+              - rowgroup [ref=e157]:
+                - row "MORNING 08:00 - 16:00 Predefined 🕐 Edit Time 🗑️ Delete" [ref=e158]:
+                  - cell "MORNING" [ref=e159]:
+                    - strong [ref=e160]: MORNING
+                  - cell [ref=e161]
+                  - cell [ref=e162]
+                  - cell "08:00 - 16:00" [ref=e163]
+                  - cell "Predefined" [ref=e164]:
+                    - generic [ref=e165]: Predefined
+                  - cell "🕐 Edit Time 🗑️ Delete" [ref=e166]:
+                    - button "🕐 Edit Time" [ref=e167] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e168] [cursor=pointer]
+                - row "MIDDLE 12:00 - 20:00 Predefined 🕐 Edit Time 🗑️ Delete" [ref=e169]:
+                  - cell "MIDDLE" [ref=e170]:
+                    - strong [ref=e171]: MIDDLE
+                  - cell [ref=e172]
+                  - cell [ref=e173]
+                  - cell "12:00 - 20:00" [ref=e174]
+                  - cell "Predefined" [ref=e175]:
+                    - generic [ref=e176]: Predefined
+                  - cell "🕐 Edit Time 🗑️ Delete" [ref=e177]:
+                    - button "🕐 Edit Time" [ref=e178] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e179] [cursor=pointer]
+                - row "NOON 16:00 - 00:00 Predefined 🕐 Edit Time 🗑️ Delete" [ref=e180]:
+                  - cell "NOON" [ref=e181]:
+                    - strong [ref=e182]: NOON
+                  - cell [ref=e183]
+                  - cell [ref=e184]
+                  - cell "16:00 - 00:00" [ref=e185]
+                  - cell "Predefined" [ref=e186]:
+                    - generic [ref=e187]: Predefined
+                  - cell "🕐 Edit Time 🗑️ Delete" [ref=e188]:
+                    - button "🕐 Edit Time" [ref=e189] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e190] [cursor=pointer]
+                - row "NIGHT 00:00 - 08:00 Predefined 🕐 Edit Time 🗑️ Delete" [ref=e191]:
+                  - cell "NIGHT" [ref=e192]:
+                    - strong [ref=e193]: NIGHT
+                  - cell [ref=e194]
+                  - cell [ref=e195]
+                  - cell "00:00 - 08:00" [ref=e196]
+                  - cell "Predefined" [ref=e197]:
+                    - generic [ref=e198]: Predefined
+                  - cell "🕐 Edit Time 🗑️ Delete" [ref=e199]:
+                    - button "🕐 Edit Time" [ref=e200] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e201] [cursor=pointer]
+                - row "AFTERNOON_ALH ShiftType_AFTERNOON_ALH_Name ShiftType_AFTERNOON_ALH_Name 14:00 - 22:00 Predefined ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e202]:
+                  - cell "AFTERNOON_ALH" [ref=e203]:
+                    - strong [ref=e204]: AFTERNOON_ALH
+                  - cell "ShiftType_AFTERNOON_ALH_Name" [ref=e205]:
+                    - generic [ref=e206] [cursor=pointer]: ShiftType_AFTERNOON_ALH_Name
+                  - cell "ShiftType_AFTERNOON_ALH_Name" [ref=e207]:
+                    - generic [ref=e208] [cursor=pointer]: ShiftType_AFTERNOON_ALH_Name
+                  - cell "14:00 - 22:00" [ref=e209]
+                  - cell "Predefined" [ref=e210]:
+                    - generic [ref=e211]: Predefined
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e212]:
+                    - button "✏️ Edit Name" [active] [ref=e213] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e214] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e215] [cursor=pointer]
+                - row "CUSTOM_1 ShiftType_CUSTOM_1_Name ShiftType_CUSTOM_1_Name 10:00 - 18:00 Custom ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e216]:
+                  - cell "CUSTOM_1" [ref=e217]:
+                    - strong [ref=e218]: CUSTOM_1
+                  - cell "ShiftType_CUSTOM_1_Name" [ref=e219]:
+                    - generic [ref=e220] [cursor=pointer]: ShiftType_CUSTOM_1_Name
+                  - cell "ShiftType_CUSTOM_1_Name" [ref=e221]:
+                    - generic [ref=e222] [cursor=pointer]: ShiftType_CUSTOM_1_Name
+                  - cell "10:00 - 18:00" [ref=e223]
+                  - cell "Custom" [ref=e224]:
+                    - generic [ref=e225]: Custom
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e226]:
+                    - button "✏️ Edit Name" [ref=e227] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e228] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e229] [cursor=pointer]
+                - row "MORNING_ALH ShiftType_MORNING_ALH_Name ShiftType_MORNING_ALH_Name 06:00 - 14:00 Predefined ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e230]:
+                  - cell "MORNING_ALH" [ref=e231]:
+                    - strong [ref=e232]: MORNING_ALH
+                  - cell "ShiftType_MORNING_ALH_Name" [ref=e233]:
+                    - generic [ref=e234] [cursor=pointer]: ShiftType_MORNING_ALH_Name
+                  - cell "ShiftType_MORNING_ALH_Name" [ref=e235]:
+                    - generic [ref=e236] [cursor=pointer]: ShiftType_MORNING_ALH_Name
+                  - cell "06:00 - 14:00" [ref=e237]
+                  - cell "Predefined" [ref=e238]:
+                    - generic [ref=e239]: Predefined
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e240]:
+                    - button "✏️ Edit Name" [ref=e241] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e242] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e243] [cursor=pointer]
+                - row "MORNING_BR ShiftType_MORNING_BR_Name ShiftType_MORNING_BR_Name 06:00 - 14:00 Predefined ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e244]:
+                  - cell "MORNING_BR" [ref=e245]:
+                    - strong [ref=e246]: MORNING_BR
+                  - cell "ShiftType_MORNING_BR_Name" [ref=e247]:
+                    - generic [ref=e248] [cursor=pointer]: ShiftType_MORNING_BR_Name
+                  - cell "ShiftType_MORNING_BR_Name" [ref=e249]:
+                    - generic [ref=e250] [cursor=pointer]: ShiftType_MORNING_BR_Name
+                  - cell "06:00 - 14:00" [ref=e251]
+                  - cell "Predefined" [ref=e252]:
+                    - generic [ref=e253]: Predefined
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e254]:
+                    - button "✏️ Edit Name" [ref=e255] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e256] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e257] [cursor=pointer]
+                - row "MORNING_HKM ShiftType_MORNING_HKM_Name ShiftType_MORNING_HKM_Name 06:00 - 14:00 Predefined ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e258]:
+                  - cell "MORNING_HKM" [ref=e259]:
+                    - strong [ref=e260]: MORNING_HKM
+                  - cell "ShiftType_MORNING_HKM_Name" [ref=e261]:
+                    - generic [ref=e262] [cursor=pointer]: ShiftType_MORNING_HKM_Name
+                  - cell "ShiftType_MORNING_HKM_Name" [ref=e263]:
+                    - generic [ref=e264] [cursor=pointer]: ShiftType_MORNING_HKM_Name
+                  - cell "06:00 - 14:00" [ref=e265]
+                  - cell "Predefined" [ref=e266]:
+                    - generic [ref=e267]: Predefined
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e268]:
+                    - button "✏️ Edit Name" [ref=e269] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e270] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e271] [cursor=pointer]
+                - row "MORNING_TXT ShiftType_MORNING_TXT_Name ShiftType_MORNING_TXT_Name 06:00 - 14:00 Predefined ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e272]:
+                  - cell "MORNING_TXT" [ref=e273]:
+                    - strong [ref=e274]: MORNING_TXT
+                  - cell "ShiftType_MORNING_TXT_Name" [ref=e275]:
+                    - generic [ref=e276] [cursor=pointer]: ShiftType_MORNING_TXT_Name
+                  - cell "ShiftType_MORNING_TXT_Name" [ref=e277]:
+                    - generic [ref=e278] [cursor=pointer]: ShiftType_MORNING_TXT_Name
+                  - cell "06:00 - 14:00" [ref=e279]
+                  - cell "Predefined" [ref=e280]:
+                    - generic [ref=e281]: Predefined
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e282]:
+                    - button "✏️ Edit Name" [ref=e283] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e284] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e285] [cursor=pointer]
+                - row "NIGHT_ALH ShiftType_NIGHT_ALH_Name ShiftType_NIGHT_ALH_Name 22:00 - 06:00 Predefined ✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e286]:
+                  - cell "NIGHT_ALH" [ref=e287]:
+                    - strong [ref=e288]: NIGHT_ALH
+                  - cell "ShiftType_NIGHT_ALH_Name" [ref=e289]:
+                    - generic [ref=e290] [cursor=pointer]: ShiftType_NIGHT_ALH_Name
+                  - cell "ShiftType_NIGHT_ALH_Name" [ref=e291]:
+                    - generic [ref=e292] [cursor=pointer]: ShiftType_NIGHT_ALH_Name
+                  - cell "22:00 - 06:00" [ref=e293]
+                  - cell "Predefined" [ref=e294]:
+                    - generic [ref=e295]: Predefined
+                  - cell "✏️ Edit Name 🕐 Edit Time 🗑️ Delete" [ref=e296]:
+                    - button "✏️ Edit Name" [ref=e297] [cursor=pointer]
+                    - button "🕐 Edit Time" [ref=e298] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e299] [cursor=pointer]
+                - row "OFFLINE Offline 00:00 - 00:00 Predefined 🕐 Edit Time 🗑️ Delete" [ref=e300]:
+                  - cell "OFFLINE Offline" [ref=e301]:
+                    - strong [ref=e302]: OFFLINE
+                    - generic [ref=e303]: Offline
+                  - cell [ref=e304]
+                  - cell [ref=e305]
+                  - cell "00:00 - 00:00" [ref=e306]
+                  - cell "Predefined" [ref=e307]:
+                    - generic [ref=e308]: Predefined
+                  - cell "🕐 Edit Time 🗑️ Delete" [ref=e309]:
+                    - button "🕐 Edit Time" [ref=e310] [cursor=pointer]
+                    - button "🗑️ Delete" [ref=e311] [cursor=pointer]
+      - generic [ref=e312]:
+        - button "▼ מידע מהיר" [expanded] [ref=e313] [cursor=pointer]:
+          - generic [ref=e314]: ▼
+          - generic [ref=e315]: מידע מהיר
+        - generic [ref=e317]:
+          - button "מידע מהיר" [expanded] [ref=e318] [cursor=pointer]:
+            - generic [ref=e319]:
+              - img [ref=e321]
+              - generic [ref=e323]: מידע מהיר
+            - img [ref=e325]
+          - generic [ref=e328]:
+            - img "אף אחד לא בכוננות כרגע" [ref=e331]
+            - paragraph [ref=e335]: אף אחד לא בכוננות כרגע
+            - paragraph [ref=e336]: זה חריג. פנה למפקד שלך במידת הצורך.
+  - region "Notifications"
+```

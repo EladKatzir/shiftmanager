@@ -8,7 +8,13 @@
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
-    "report": "npx playwright show-report"
+    "report": "npx playwright show-report",
+    "qa:production": "npx playwright test --config=playwright.production-qa.config.js",
+    "qa:production:headed": "npx playwright test --config=playwright.production-qa.config.js --headed",
+    "qa:production:debug": "npx playwright test --config=playwright.production-qa.config.js --debug",
+    "qa:production:module": "npx playwright test --config=playwright.production-qa.config.js --grep",
+    "qa:scorecard": "node generate-scorecard.js",
+    "qa:full": "npx playwright test --config=playwright.production-qa.config.js && node generate-scorecard.js"
   },
   "keywords": [
     "qa",

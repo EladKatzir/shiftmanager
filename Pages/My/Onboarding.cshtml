@@ -1,0 +1,169 @@
+@page
+@model ShiftManager.Pages.My.OnboardingModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Onboarding_Title"];
+}
+
+<style>
+    .onboarding { max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+    .onboarding__card { background: var(--card-bg, #fff); border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.08); overflow: hidden; }
+    .onboarding__header { background: var(--primary, #4f46e5); color: #fff; padding: 2rem; text-align: center; }
+    .onboarding__header h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+    .onboarding__header p { margin: 0; opacity: .9; font-size: .95rem; }
+    .onboarding__body { padding: 2rem; }
+    .onboarding__step { display: none; }
+    .onboarding__step.active { display: block; }
+    .onboarding__step h2 { font-size: 1.2rem; margin: 0 0 1rem; color: var(--heading-color, #1e293b); }
+    .onboarding__step p { color: var(--text-secondary, #64748b); line-height: 1.6; margin: 0 0 1rem; }
+    .onboarding__features { list-style: none; padding: 0; margin: 1rem 0; }
+    .onboarding__features li { padding: .75rem 0; border-bottom: 1px solid var(--border-color, #e2e8f0); display: flex; align-items: flex-start; gap: .75rem; }
+    .onboarding__features li:last-child { border-bottom: none; }
+    .onboarding__features .feature-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .onboarding__features .feature-text strong { display: block; color: var(--heading-color, #1e293b); margin-bottom: .15rem; }
+    .onboarding__features .feature-text span { font-size: .85rem; color: var(--text-secondary, #64748b); }
+    .onboarding__nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; border-top: 1px solid var(--border-color, #e2e8f0); }
+    .onboarding__dots { display: flex; gap: .5rem; }
+    .onboarding__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-color, #cbd5e1); transition: background .2s; }
+    .onboarding__dot.active { background: var(--primary, #4f46e5); width: 24px; border-radius: 4px; }
+    .onboarding__btn { padding: .6rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-size: .9rem; font-weight: 500; transition: background .2s; }
+    .onboarding__btn--primary { background: var(--primary, #4f46e5); color: #fff; }
+    .onboarding__btn--primary:hover { opacity: .9; }
+    .onboarding__btn--secondary { background: transparent; color: var(--text-secondary, #64748b); }
+    .onboarding__btn--secondary:hover { background: var(--hover-bg, #f1f5f9); }
+    .onboarding__tip { background: var(--info-bg, #eff6ff); border-radius: 8px; padding: 1rem; margin-top: 1rem; font-size: .85rem; color: var(--info-text, #1e40af); }
+</style>
+
+<div class="onboarding">
+    <div class="onboarding__card">
+        <div class="onboarding__header">
+            <h1><loc key="Onboarding_Welcome" /> @Model.UserDisplayName</h1>
+            <p><loc key="Onboarding_WelcomeSubtitle" /></p>
+        </div>
+
+        <div class="onboarding__body">
+            <!-- Step 1: Overview -->
+            <div class="onboarding__step active" data-step="1">
+                <h2><loc key="Onboarding_Step1_Title" /></h2>
+                <p><loc key="Onboarding_Step1_Description" /></p>
+                <ul class="onboarding__features">
+                    <li>
+                        <span class="feature-icon">📅</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Feature_Calendar" /></strong>
+                            <span><loc key="Onboarding_Feature_CalendarDesc" /></span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-icon">🔄</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Feature_Requests" /></strong>
+                            <span><loc key="Onboarding_Feature_RequestsDesc" /></span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-icon">🔔</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Feature_Notifications" /></strong>
+                            <span><loc key="Onboarding_Feature_NotificationsDesc" /></span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-icon">👤</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Feature_Profile" /></strong>
+                            <span><loc key="Onboarding_Feature_ProfileDesc" /></span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Step 2: Tips -->
+            <div class="onboarding__step" data-step="2">
+                <h2><loc key="Onboarding_Step2_Title" /></h2>
+                <p><loc key="Onboarding_Step2_Description" /></p>
+                <ul class="onboarding__features">
+                    <li>
+                        <span class="feature-icon">⌨️</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Tip_Keyboard" /></strong>
+                            <span><loc key="Onboarding_Tip_KeyboardDesc" /></span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-icon">🔍</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Tip_CommandPalette" /></strong>
+                            <span><loc key="Onboarding_Tip_CommandPaletteDesc" /></span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-icon">❓</span>
+                        <div class="feature-text">
+                            <strong><loc key="Onboarding_Tip_Help" /></strong>
+                            <span><loc key="Onboarding_Tip_HelpDesc" /></span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="onboarding__tip">
+                    <loc key="Onboarding_Step2_Tip" />
+                </div>
+            </div>
+
+            <!-- Step 3: Ready -->
+            <div class="onboarding__step" data-step="3">
+                <h2><loc key="Onboarding_Step3_Title" /></h2>
+                <p><loc key="Onboarding_Step3_Description" /></p>
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="font-size: 4rem;">🎉</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="onboarding__nav">
+            <button type="button" class="onboarding__btn onboarding__btn--secondary" id="onboardingPrev" style="visibility: hidden;" onclick="onboardingNav(-1)">
+                <loc key="Onboarding_Previous" />
+            </button>
+            <div class="onboarding__dots">
+                <div class="onboarding__dot active" data-dot="1"></div>
+                <div class="onboarding__dot" data-dot="2"></div>
+                <div class="onboarding__dot" data-dot="3"></div>
+            </div>
+            <button type="button" class="onboarding__btn onboarding__btn--primary" id="onboardingNext" onclick="onboardingNav(1)">
+                <loc key="Onboarding_Next" />
+            </button>
+            <form method="post" asp-page-handler="Complete" id="onboardingCompleteForm" style="display:none;">
+                <button type="submit" class="onboarding__btn onboarding__btn--primary">
+                    <loc key="Onboarding_GetStarted" />
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var currentStep = 1;
+    var totalSteps = 3;
+
+    function onboardingNav(dir) {
+        var next = currentStep + dir;
+        if (next < 1 || next > totalSteps) return;
+        document.querySelector('.onboarding__step[data-step="' + currentStep + '"]').classList.remove('active');
+        document.querySelector('.onboarding__step[data-step="' + next + '"]').classList.add('active');
+        document.querySelectorAll('.onboarding__dot').forEach(function(d) { d.classList.remove('active'); });
+        document.querySelector('.onboarding__dot[data-dot="' + next + '"]').classList.add('active');
+        currentStep = next;
+
+        document.getElementById('onboardingPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+        if (currentStep === totalSteps) {
+            document.getElementById('onboardingNext').style.display = 'none';
+            document.getElementById('onboardingCompleteForm').style.display = 'block';
+        } else {
+            document.getElementById('onboardingNext').style.display = '';
+            document.getElementById('onboardingCompleteForm').style.display = 'none';
+        }
+    }
+</script>

@@ -1,0 +1,273 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]: "CRITICAL: Disk space is critically low (7.0% free). Database may fail."
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e7] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e9]
+        - generic [ref=e10]:
+          - generic [ref=e11]: SHIFTY
+          - generic [ref=e12]: Shift Manager
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: 📍
+          - generic [ref=e16]: Currently Viewing
+        - button "Hir" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: 🏢
+            - generic [ref=e20]: Hir
+          - generic [ref=e21]: ▼
+      - navigation [ref=e22]:
+        - generic [ref=e23]: 📅 My Shifty
+        - link "🏠 Home" [ref=e24] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e25]: 🏠
+          - generic [ref=e26]: Home
+        - link "📅 Schedule" [ref=e27] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e28]: 📅
+          - generic [ref=e29]: Schedule
+        - link "📝 Requests" [ref=e30] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e31]: 📝
+          - generic [ref=e32]: Requests
+        - link "📊 Analytics" [ref=e33] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e34]: 📊
+          - generic [ref=e35]: Analytics
+        - link "🔍 Audit Log" [ref=e36] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e37]: 🔍
+          - generic [ref=e38]: Audit Log
+        - link "👥 People" [ref=e39] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e40]: 👥
+          - generic [ref=e41]: People
+        - link "🏢 Companies" [ref=e42] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e43]: 🏢
+          - generic [ref=e44]: Companies
+        - link "⚙️ Settings" [ref=e45] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e46]: ⚙️
+          - generic [ref=e47]: Settings
+        - generic [ref=e48]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e49] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e50]: 🔧
+          - generic [ref=e51]: Owner Administration
+        - generic [ref=e52]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e53] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e54]: 📊
+          - generic [ref=e55]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e56] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e57]: 🗂️
+          - generic [ref=e58]: Chores
+        - link "🎯 Day Shifts" [ref=e59] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e60]: 🎯
+          - generic [ref=e61]: Day Shifts
+      - generic [ref=e62]:
+        - button "מ מנהל Owner ▼" [ref=e64] [cursor=pointer]:
+          - generic [ref=e65]: מ
+          - generic [ref=e66]:
+            - generic [ref=e67]: מנהל
+            - generic [ref=e68]: Owner
+          - generic [ref=e69]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e70]:
+          - generic [ref=e71]: ⌨️
+          - generic [ref=e72]: Ctrl
+          - generic [ref=e73]: +
+          - generic [ref=e74]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e75] [cursor=pointer]:
+        - generic [ref=e76]: ◀
+    - generic [ref=e77]:
+      - banner [ref=e78]:
+        - generic [ref=e79]:
+          - heading "Owner Hub" [level=1] [ref=e81]
+          - generic [ref=e82]:
+            - link "🔔" [ref=e83] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e84]: 🔔
+            - button "Language" [ref=e86] [cursor=pointer]:
+              - generic [ref=e87]: 🌐
+              - generic [ref=e88]: En
+            - button "Toggle dark mode" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: 🌓
+            - button "🚪 Logout" [ref=e92] [cursor=pointer]:
+              - generic [ref=e93]: 🚪
+              - generic [ref=e94]: Logout
+      - main [ref=e95]:
+        - navigation [ref=e96]:
+          - list [ref=e97]:
+            - listitem "Owner Hub" [ref=e98]
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - heading "🏛 Owner Hub" [level=1] [ref=e101]:
+              - generic [ref=e102]: 🏛
+              - generic [ref=e103]: Owner Hub
+            - paragraph [ref=e104]: System-wide administration dashboard
+          - generic [ref=e105]:
+            - link "🏗 Hierarchy 1 projects 1 areas 9 molecules 26 companies Manage hierarchy →" [ref=e106] [cursor=pointer]:
+              - /url: /Admin/Organization/Hierarchy
+              - generic [ref=e107]:
+                - generic [ref=e108]: 🏗
+                - heading "Hierarchy" [level=2] [ref=e109]
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - generic [ref=e112]: "1"
+                  - generic [ref=e113]: projects
+                - generic [ref=e114]:
+                  - generic [ref=e115]: "1"
+                  - generic [ref=e116]: areas
+                - generic [ref=e117]:
+                  - generic [ref=e118]: "9"
+                  - generic [ref=e119]: molecules
+                - generic [ref=e120]:
+                  - generic [ref=e121]: "26"
+                  - generic [ref=e122]: companies
+              - generic [ref=e124]: Manage hierarchy →
+            - link "👥 People 34 total users 34 active 29 pending Manage users →" [ref=e125] [cursor=pointer]:
+              - /url: /Admin/Users
+              - generic [ref=e126]:
+                - generic [ref=e127]: 👥
+                - heading "People" [level=2] [ref=e128]
+              - generic [ref=e129]:
+                - generic [ref=e130]:
+                  - generic [ref=e131]: "34"
+                  - generic [ref=e132]: total users
+                - generic [ref=e133]:
+                  - generic [ref=e134]: "34"
+                  - generic [ref=e135]: active
+                - generic [ref=e136]:
+                  - generic [ref=e137]: "29"
+                  - generic [ref=e138]: pending
+              - generic [ref=e140]: Manage users →
+            - link "🔐 Grants 118 grant types 11 role templates 178 assignments Manage permissions →" [ref=e141] [cursor=pointer]:
+              - /url: /Owner/Hub/Grants
+              - generic [ref=e142]:
+                - generic [ref=e143]: 🔐
+                - heading "Grants" [level=2] [ref=e144]
+              - generic [ref=e145]:
+                - generic [ref=e146]:
+                  - generic [ref=e147]: "118"
+                  - generic [ref=e148]: grant types
+                - generic [ref=e149]:
+                  - generic [ref=e150]: "11"
+                  - generic [ref=e151]: role templates
+                - generic [ref=e152]:
+                  - generic [ref=e153]: "178"
+                  - generic [ref=e154]: assignments
+              - generic [ref=e156]: Manage permissions →
+            - link "📅 Scheduling 5 programs 55 blueprints 6 groupings Manage scheduling →" [ref=e157] [cursor=pointer]:
+              - /url: /Owner/Programs
+              - generic [ref=e158]:
+                - generic [ref=e159]: 📅
+                - heading "Scheduling" [level=2] [ref=e160]
+              - generic [ref=e161]:
+                - generic [ref=e162]:
+                  - generic [ref=e163]: "5"
+                  - generic [ref=e164]: programs
+                - generic [ref=e165]:
+                  - generic [ref=e166]: "55"
+                  - generic [ref=e167]: blueprints
+                - generic [ref=e168]:
+                  - generic [ref=e169]: "6"
+                  - generic [ref=e170]: groupings
+              - generic [ref=e172]: Manage scheduling →
+            - link "⚙ Settings ✗ Email ✗ ADFS 0 flags on Manage settings →" [ref=e173] [cursor=pointer]:
+              - /url: /Owner/FeatureFlags
+              - generic [ref=e174]:
+                - generic [ref=e175]: ⚙
+                - heading "Settings" [level=2] [ref=e176]
+              - generic [ref=e177]:
+                - generic [ref=e178]:
+                  - generic [ref=e179]: ✗
+                  - generic [ref=e180]: Email
+                - generic [ref=e181]:
+                  - generic [ref=e182]: ✗
+                  - generic [ref=e183]: ADFS
+                - generic [ref=e184]:
+                  - generic [ref=e185]: "0"
+                  - generic [ref=e186]: flags on
+              - generic [ref=e188]: Manage settings →
+            - link "📊 Analytics 48 total logs 48 this week View reports →" [ref=e189] [cursor=pointer]:
+              - /url: /Admin/Analytics
+              - generic [ref=e190]:
+                - generic [ref=e191]: 📊
+                - heading "Analytics" [level=2] [ref=e192]
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - generic [ref=e195]: "48"
+                  - generic [ref=e196]: total logs
+                - generic [ref=e197]:
+                  - generic [ref=e198]: "48"
+                  - generic [ref=e199]: this week
+              - generic [ref=e201]: View reports →
+            - link "🌱 Seed Data 139 seed entities ✗ data health Manage seed data →" [ref=e202] [cursor=pointer]:
+              - /url: /Owner/Hub/SeedData
+              - generic [ref=e203]:
+                - generic [ref=e204]: 🌱
+                - heading "Seed Data" [level=2] [ref=e205]
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e208]: "139"
+                  - generic [ref=e209]: seed entities
+                - generic [ref=e210]:
+                  - generic [ref=e211]: ✗
+                  - generic [ref=e212]: data health
+              - generic [ref=e214]: Manage seed data →
+          - generic [ref=e215]:
+            - heading "Quick Links" [level=3] [ref=e216]
+            - generic [ref=e217]:
+              - link "🔧 Legacy Owner Panel" [ref=e218] [cursor=pointer]:
+                - /url: /Owner/Index?handler=Legacy
+                - generic [ref=e219]: 🔧
+                - generic [ref=e220]: Legacy Owner Panel
+              - link "🏥 System Health" [ref=e221] [cursor=pointer]:
+                - /url: /Owner/SystemHealth
+                - generic [ref=e222]: 🏥
+                - generic [ref=e223]: System Health
+              - link "💾 Database Console" [ref=e224] [cursor=pointer]:
+                - /url: /Owner/DatabaseConsole
+                - generic [ref=e225]: 💾
+                - generic [ref=e226]: Database Console
+              - link "🔍 Audit Log" [ref=e227] [cursor=pointer]:
+                - /url: /Admin/AuditLog
+                - generic [ref=e228]: 🔍
+                - generic [ref=e229]: Audit Log
+              - link "🔎 Audit Log Search" [ref=e230] [cursor=pointer]:
+                - /url: /Owner/Hub/AuditSearch
+                - generic [ref=e231]: 🔎
+                - generic [ref=e232]: Audit Log Search
+              - link "💼 Backup" [ref=e233] [cursor=pointer]:
+                - /url: /Owner/Backup
+                - generic [ref=e234]: 💼
+                - generic [ref=e235]: Backup
+              - link "🌐 Languages" [ref=e236] [cursor=pointer]:
+                - /url: /Owner/LanguageManagement
+                - generic [ref=e237]: 🌐
+                - generic [ref=e238]: Languages
+      - generic [ref=e239]:
+        - button "▼ Quick Info" [expanded] [ref=e240] [cursor=pointer]:
+          - generic [ref=e241]: ▼
+          - generic [ref=e242]: Quick Info
+        - generic [ref=e244]:
+          - button "Quick Info" [expanded] [ref=e245] [cursor=pointer]:
+            - generic [ref=e246]:
+              - img [ref=e248]
+              - generic [ref=e250]: Quick Info
+            - img [ref=e252]
+          - generic [ref=e255]:
+            - img "No one is on-call right now" [ref=e258]
+            - paragraph [ref=e262]: No one is on-call right now
+            - paragraph [ref=e263]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+```

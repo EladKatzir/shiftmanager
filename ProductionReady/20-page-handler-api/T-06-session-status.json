@@ -1,0 +1,11 @@
+{
+  "authenticated": true,
+  "state": "ok",
+  "secondsRemaining": 604798,
+  "minutesRemaining": 10079,
+  "userId": 1,
+  "username": "מנהל מערכת",
+  "issuedAt": 1770596025,
+  "expiresAt": 1771200825,
+  "slidingExpirationTriggered": true
+}

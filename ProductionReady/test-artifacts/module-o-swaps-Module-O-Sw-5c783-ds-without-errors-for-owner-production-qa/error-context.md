@@ -1,0 +1,151 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e11]: You are currently offline. Some features may be unavailable.
+    - button "Retry" [ref=e12] [cursor=pointer]
+  - link "Skip to main content" [ref=e13] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e15]: "CRITICAL: Disk space is critically low (6.9% free). Database may fail."
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e18] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]: SHIFTY
+          - generic [ref=e23]: Shift Manager
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: 📍
+          - generic [ref=e27]: Currently Viewing
+        - button "SystemAdmins" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: 🏢
+            - generic [ref=e31]: SystemAdmins
+          - generic [ref=e32]: ▼
+      - navigation [ref=e33]:
+        - generic [ref=e34]: 📅 My Shifty
+        - link "🏠 Home" [ref=e35] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e36]: 🏠
+          - generic [ref=e37]: Home
+        - link "📅 Schedule" [ref=e38] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e39]: 📅
+          - generic [ref=e40]: Schedule
+        - link "📝 Requests" [ref=e41] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e42]: 📝
+          - generic [ref=e43]: Requests
+        - link "📊 Analytics" [ref=e44] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e45]: 📊
+          - generic [ref=e46]: Analytics
+        - link "🔍 Audit Log" [ref=e47] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e48]: 🔍
+          - generic [ref=e49]: Audit Log
+        - link "👥 People" [ref=e50] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e51]: 👥
+          - generic [ref=e52]: People
+        - link "🏢 Companies" [ref=e53] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e54]: 🏢
+          - generic [ref=e55]: Companies
+        - link "⚙️ Settings" [ref=e56] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e57]: ⚙️
+          - generic [ref=e58]: Settings
+        - generic [ref=e59]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e60] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e61]: 🔧
+          - generic [ref=e62]: Owner Administration
+        - generic [ref=e63]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e64] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e65]: 📊
+          - generic [ref=e66]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e67] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e68]: 🗂️
+          - generic [ref=e69]: Chores
+        - link "🎯 Day Shifts" [ref=e70] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e71]: 🎯
+          - generic [ref=e72]: Day Shifts
+      - generic [ref=e73]:
+        - button "מ מנהל Owner ▼" [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: מ
+          - generic [ref=e77]:
+            - generic [ref=e78]: מנהל
+            - generic [ref=e79]: Owner
+          - generic [ref=e80]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e81]:
+          - generic [ref=e82]: ⌨️
+          - generic [ref=e83]: Ctrl
+          - generic [ref=e84]: +
+          - generic [ref=e85]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: ◀
+    - generic [ref=e88]:
+      - banner [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - heading [level=1]
+          - generic [ref=e92]:
+            - link "✓" [ref=e94] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e95]: ✓
+            - link "🔔" [ref=e96] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e97]: 🔔
+            - button "Language" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: 🌐
+              - generic [ref=e101]: En
+            - button "Toggle dark mode" [ref=e102] [cursor=pointer]:
+              - generic [ref=e103]: 🌓
+            - button "🚪 Logout" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: 🚪
+              - generic [ref=e107]: Logout
+      - main [ref=e108]:
+        - navigation [ref=e109]:
+          - list [ref=e110]:
+            - listitem "Requests" [ref=e111]
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - heading "Requests" [level=1] [ref=e114]
+            - paragraph [ref=e115]: Review and approve time-off and shift swap requests from your team
+          - tablist "Requests" [ref=e116]:
+            - tab "Pending Time-Off" [selected] [ref=e117] [cursor=pointer]
+            - tab "Pending Swaps" [ref=e118] [cursor=pointer]
+            - tab "Approved Time-Off" [ref=e119] [cursor=pointer]
+          - tabpanel "Pending Time-Off" [ref=e120] [cursor=pointer]:
+            - generic [ref=e121]:
+              - heading "📅 Pending Time Off" [level=2] [ref=e123]:
+                - generic [ref=e124]: 📅
+                - generic [ref=e125]: Pending Time Off
+              - generic [ref=e126]:
+                - generic [ref=e127]: ✓
+                - generic [ref=e128]: No time off requests yet.
+                - generic [ref=e129]: You're all caught up! New notifications will appear here.
+      - generic [ref=e130]:
+        - button "▼ Quick Info" [expanded] [ref=e131] [cursor=pointer]:
+          - generic [ref=e132]: ▼
+          - generic [ref=e133]: Quick Info
+        - generic [ref=e135]:
+          - button "Quick Info" [expanded] [ref=e136] [cursor=pointer]:
+            - generic [ref=e137]:
+              - img [ref=e139]
+              - generic [ref=e141]: Quick Info
+            - img [ref=e143]
+          - generic [ref=e146]:
+            - img "No one is on-call right now" [ref=e149]
+            - paragraph [ref=e153]: No one is on-call right now
+            - paragraph [ref=e154]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+```

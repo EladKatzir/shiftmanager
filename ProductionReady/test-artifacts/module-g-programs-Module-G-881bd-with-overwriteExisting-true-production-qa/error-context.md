@@ -1,0 +1,362 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]: "CRITICAL: Disk space is critically low (7.0% free). Database may fail."
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e7] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e9]
+        - generic [ref=e10]:
+          - generic [ref=e11]: SHIFTY
+          - generic [ref=e12]: Shift Manager
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: 📍
+          - generic [ref=e16]: Currently Viewing
+        - button "SystemAdmins" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: 🏢
+            - generic [ref=e20]: SystemAdmins
+          - generic [ref=e21]: ▼
+      - navigation [ref=e22]:
+        - generic [ref=e23]: 📅 My Shifty
+        - link "🏠 Home" [ref=e24] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e25]: 🏠
+          - generic [ref=e26]: Home
+        - link "📅 Schedule" [ref=e27] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e28]: 📅
+          - generic [ref=e29]: Schedule
+        - link "📝 Requests" [ref=e30] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e31]: 📝
+          - generic [ref=e32]: Requests
+        - link "📊 Analytics" [ref=e33] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e34]: 📊
+          - generic [ref=e35]: Analytics
+        - link "🔍 Audit Log" [ref=e36] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e37]: 🔍
+          - generic [ref=e38]: Audit Log
+        - link "👥 People" [ref=e39] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e40]: 👥
+          - generic [ref=e41]: People
+        - link "🏢 Companies" [ref=e42] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e43]: 🏢
+          - generic [ref=e44]: Companies
+        - link "⚙️ Settings" [ref=e45] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e46]: ⚙️
+          - generic [ref=e47]: Settings
+        - generic [ref=e48]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e49] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e50]: 🔧
+          - generic [ref=e51]: Owner Administration
+        - generic [ref=e52]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e53] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e54]: 📊
+          - generic [ref=e55]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e56] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e57]: 🗂️
+          - generic [ref=e58]: Chores
+        - link "🎯 Day Shifts" [ref=e59] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e60]: 🎯
+          - generic [ref=e61]: Day Shifts
+      - generic [ref=e62]:
+        - button "מ מנהל Owner ▼" [ref=e64] [cursor=pointer]:
+          - generic [ref=e65]: מ
+          - generic [ref=e66]:
+            - generic [ref=e67]: מנהל
+            - generic [ref=e68]: Owner
+          - generic [ref=e69]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e70]:
+          - generic [ref=e71]: ⌨️
+          - generic [ref=e72]: Ctrl
+          - generic [ref=e73]: +
+          - generic [ref=e74]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e75] [cursor=pointer]:
+        - generic [ref=e76]: ◀
+    - generic [ref=e77]:
+      - banner [ref=e78]:
+        - generic [ref=e79]:
+          - heading "Programs" [level=1] [ref=e81]
+          - generic [ref=e82]:
+            - link "🔔" [ref=e83] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e84]: 🔔
+            - button "Language" [ref=e86] [cursor=pointer]:
+              - generic [ref=e87]: 🌐
+              - generic [ref=e88]: En
+            - button "Toggle dark mode" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: 🌓
+            - button "🚪 Logout" [ref=e92] [cursor=pointer]:
+              - generic [ref=e93]: 🚪
+              - generic [ref=e94]: Logout
+      - main [ref=e95]:
+        - navigation [ref=e96]:
+          - list [ref=e97]:
+            - listitem [ref=e98]:
+              - link "Owner Administration" [ref=e99]:
+                - /url: /Owner/Index
+            - listitem "Programs" [ref=e100]: › Programs
+        - generic [ref=e102]:
+          - generic [ref=e104]: 🏢
+          - combobox [ref=e105] [cursor=pointer]:
+            - option "'; DROP TABLE Companies;--" [selected]
+            - option "Camps"
+            - option "City"
+            - option "Element"
+            - option "GAP"
+            - option "Hamasa"
+            - option "Hir"
+            - option "Hitazmut"
+            - option "Inside"
+            - option "Kabah"
+            - option "Matot"
+            - option "MinimalCo_1770583465859"
+            - option "Multi Test A"
+            - option "Multi Test B"
+            - option "Out"
+            - option "Radio"
+            - option "SystemAdmins (Home)"
+            - option "Test Company"
+            - option "Test Company Empty"
+            - option "Test Company Full"
+            - option "TestCompany_1770583465327_1omafr"
+            - option "TestCompany_1770583476122_z4ryrq"
+            - option "TestCompany_1770583506164_4lhi8i"
+            - option "TestCompany_1770583529280_qz99i0"
+            - option "Tzafona"
+            - option "Yeadim"
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - heading "⏰ Programs (Weekly Templates)" [level=1] [ref=e108]
+            - paragraph [ref=e109]: Define when shift types run each week and generate shift instances
+          - generic [ref=e110]:
+            - heading "➕ Create New Program" [level=2] [ref=e111]
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - generic [ref=e114]:
+                  - text: Shift Type
+                  - combobox "Shift Type" [ref=e115] [cursor=pointer]:
+                    - option "-- Select Shift Type --" [selected]
+                    - option "Morning Shift (08:00 - 16:00)"
+                    - option "Mid Shift (12:00 - 20:00)"
+                    - option "Afternoon Shift (16:00 - 00:00)"
+                    - option "Night Shift (00:00 - 08:00)"
+                    - option "(14:00 - 22:00)"
+                    - option "(10:00 - 18:00)"
+                    - option "(06:00 - 14:00)"
+                    - option "(06:00 - 14:00)"
+                    - option "(06:00 - 14:00)"
+                    - option "(06:00 - 14:00)"
+                    - option "(22:00 - 06:00)"
+                    - option "Offline (00:00 - 00:00)"
+                - generic [ref=e116]:
+                  - text: Program Name
+                  - textbox "Program Name" [ref=e117]:
+                    - /placeholder: e.g., Morning Shifts Mon-Fri
+              - generic [ref=e118]:
+                - text: Weekly Mask (Select Days)
+                - generic [ref=e119]:
+                  - generic [ref=e120] [cursor=pointer]:
+                    - checkbox "Sun" [ref=e121]
+                    - generic [ref=e122]: Sun
+                  - generic [ref=e123] [cursor=pointer]:
+                    - checkbox "Mon" [ref=e124]
+                    - generic [ref=e125]: Mon
+                  - generic [ref=e126] [cursor=pointer]:
+                    - checkbox "Tue" [ref=e127]
+                    - generic [ref=e128]: Tue
+                  - generic [ref=e129] [cursor=pointer]:
+                    - checkbox "Wed" [ref=e130]
+                    - generic [ref=e131]: Wed
+                  - generic [ref=e132] [cursor=pointer]:
+                    - checkbox "Thu" [ref=e133]
+                    - generic [ref=e134]: Thu
+                  - generic [ref=e135] [cursor=pointer]:
+                    - checkbox "Fri" [ref=e136]
+                    - generic [ref=e137]: Fri
+                  - generic [ref=e138] [cursor=pointer]:
+                    - checkbox "Sat" [ref=e139]
+                    - generic [ref=e140]: Sat
+              - generic [ref=e141]:
+                - text: Default Staffing Required
+                - spinbutton "Default Staffing Required" [ref=e142]: "1"
+                - text: Number of people required per shift (can override per-day below)
+              - generic [ref=e143]:
+                - text: Per-Day Staffing Overrides (Optional)
+                - generic [ref=e144]:
+                  - generic [ref=e145]:
+                    - generic [ref=e146]: Sunday
+                    - spinbutton [ref=e147]
+                  - generic [ref=e148]:
+                    - generic [ref=e149]: Monday
+                    - spinbutton [ref=e150]
+                  - generic [ref=e151]:
+                    - generic [ref=e152]: Tuesday
+                    - spinbutton [ref=e153]
+                  - generic [ref=e154]:
+                    - generic [ref=e155]: Wednesday
+                    - spinbutton [ref=e156]
+                  - generic [ref=e157]:
+                    - generic [ref=e158]: Thursday
+                    - spinbutton [ref=e159]
+                  - generic [ref=e160]:
+                    - generic [ref=e161]: Friday
+                    - spinbutton [ref=e162]
+                  - generic [ref=e163]:
+                    - generic [ref=e164]: Saturday
+                    - spinbutton [ref=e165]
+              - button "➕ Create Program" [ref=e166] [cursor=pointer]
+          - generic [ref=e167]:
+            - heading "⏰ Existing Programs" [level=2] [ref=e168]
+            - generic [ref=e169]:
+              - generic [ref=e170]:
+                - generic [ref=e171]:
+                  - heading "Alhut Morning Sun-Thu" [level=3] [ref=e172]
+                  - generic [ref=e173]: Morning Shift
+                - generic [ref=e174]:
+                  - generic [ref=e175]:
+                    - generic [ref=e176]: "Time:"
+                    - generic [ref=e177]: 08:00 - 16:00
+                  - generic [ref=e178]:
+                    - generic [ref=e179]: "Default Staffing:"
+                    - generic [ref=e180]: 2 people
+                  - generic [ref=e181]:
+                    - generic [ref=e182]: "Runs On:"
+                    - generic [ref=e183]:
+                      - generic [ref=e184]: Sun
+                      - generic [ref=e185]: Mon
+                      - generic [ref=e186]: Tue
+                      - generic [ref=e187]: Wed
+                      - generic [ref=e188]: Thu
+                      - generic [ref=e189]: Fri
+                      - generic [ref=e190]: Sat
+                - generic [ref=e191]:
+                  - button "📅 Generate Instances" [active] [ref=e192] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e194] [cursor=pointer]
+              - generic [ref=e195]:
+                - generic [ref=e196]:
+                  - heading "BR Morning Sun-Thu" [level=3] [ref=e197]
+                  - generic [ref=e198]: Morning Shift
+                - generic [ref=e199]:
+                  - generic [ref=e200]:
+                    - generic [ref=e201]: "Time:"
+                    - generic [ref=e202]: 08:00 - 16:00
+                  - generic [ref=e203]:
+                    - generic [ref=e204]: "Default Staffing:"
+                    - generic [ref=e205]: 1 people
+                  - generic [ref=e206]:
+                    - generic [ref=e207]: "Runs On:"
+                    - generic [ref=e208]:
+                      - generic [ref=e209]: Sun
+                      - generic [ref=e210]: Mon
+                      - generic [ref=e211]: Tue
+                      - generic [ref=e212]: Wed
+                      - generic [ref=e213]: Thu
+                      - generic [ref=e214]: Fri
+                      - generic [ref=e215]: Sat
+                - generic [ref=e216]:
+                  - button "📅 Generate Instances" [ref=e217] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e219] [cursor=pointer]
+              - generic [ref=e220]:
+                - generic [ref=e221]:
+                  - heading "Hakam Morning Daily" [level=3] [ref=e222]
+                  - generic [ref=e223]: Morning Shift
+                - generic [ref=e224]:
+                  - generic [ref=e225]:
+                    - generic [ref=e226]: "Time:"
+                    - generic [ref=e227]: 08:00 - 16:00
+                  - generic [ref=e228]:
+                    - generic [ref=e229]: "Default Staffing:"
+                    - generic [ref=e230]: 1 people
+                  - generic [ref=e231]:
+                    - generic [ref=e232]: "Runs On:"
+                    - generic [ref=e233]:
+                      - generic [ref=e234]: Sun
+                      - generic [ref=e235]: Mon
+                      - generic [ref=e236]: Tue
+                      - generic [ref=e237]: Wed
+                      - generic [ref=e238]: Thu
+                      - generic [ref=e239]: Fri
+                      - generic [ref=e240]: Sat
+                - generic [ref=e241]:
+                  - button "📅 Generate Instances" [ref=e242] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e244] [cursor=pointer]
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - heading "Text Afternoon Sun-Fri" [level=3] [ref=e247]
+                  - generic [ref=e248]: Afternoon Shift
+                - generic [ref=e249]:
+                  - generic [ref=e250]:
+                    - generic [ref=e251]: "Time:"
+                    - generic [ref=e252]: 16:00 - 00:00
+                  - generic [ref=e253]:
+                    - generic [ref=e254]: "Default Staffing:"
+                    - generic [ref=e255]: 2 people
+                  - generic [ref=e256]:
+                    - generic [ref=e257]: "Runs On:"
+                    - generic [ref=e258]:
+                      - generic [ref=e259]: Sun
+                      - generic [ref=e260]: Mon
+                      - generic [ref=e261]: Tue
+                      - generic [ref=e262]: Wed
+                      - generic [ref=e263]: Thu
+                      - generic [ref=e264]: Fri
+                      - generic [ref=e265]: Sat
+                - generic [ref=e266]:
+                  - button "📅 Generate Instances" [ref=e267] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e269] [cursor=pointer]
+              - generic [ref=e270]:
+                - generic [ref=e271]:
+                  - heading "Alhut Night Sun-Thu" [level=3] [ref=e272]
+                  - generic [ref=e273]: Night Shift
+                - generic [ref=e274]:
+                  - generic [ref=e275]:
+                    - generic [ref=e276]: "Time:"
+                    - generic [ref=e277]: 00:00 - 08:00
+                  - generic [ref=e278]:
+                    - generic [ref=e279]: "Default Staffing:"
+                    - generic [ref=e280]: 1 people
+                  - generic [ref=e281]:
+                    - generic [ref=e282]: "Runs On:"
+                    - generic [ref=e283]:
+                      - generic [ref=e284]: Sun
+                      - generic [ref=e285]: Mon
+                      - generic [ref=e286]: Tue
+                      - generic [ref=e287]: Wed
+                      - generic [ref=e288]: Thu
+                      - generic [ref=e289]: Fri
+                      - generic [ref=e290]: Sat
+                - generic [ref=e291]:
+                  - button "📅 Generate Instances" [ref=e292] [cursor=pointer]
+                  - button "🗑️ Delete" [ref=e294] [cursor=pointer]
+      - generic [ref=e295]:
+        - button "▼ Quick Info" [expanded] [ref=e296] [cursor=pointer]:
+          - generic [ref=e297]: ▼
+          - generic [ref=e298]: Quick Info
+        - generic [ref=e300]:
+          - button "Quick Info" [expanded] [ref=e301] [cursor=pointer]:
+            - generic [ref=e302]:
+              - img [ref=e304]
+              - generic [ref=e306]: Quick Info
+            - img [ref=e308]
+          - generic [ref=e311]:
+            - img "No one is on-call right now" [ref=e314]
+            - paragraph [ref=e318]: No one is on-call right now
+            - paragraph [ref=e319]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+```

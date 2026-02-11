@@ -1,0 +1,219 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e11]: You are currently offline. Some features may be unavailable.
+    - button "Retry" [ref=e12] [cursor=pointer]
+  - link "Skip to main content" [ref=e13] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e15]: "CRITICAL: Disk space is critically low (6.9% free). Database may fail."
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e18] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]: SHIFTY
+          - generic [ref=e23]: Shift Manager
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: 📍
+          - generic [ref=e27]: Currently Viewing
+        - button "SystemAdmins" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: 🏢
+            - generic [ref=e31]: SystemAdmins
+          - generic [ref=e32]: ▼
+      - navigation [ref=e33]:
+        - generic [ref=e34]: 📅 My Shifty
+        - link "🏠 Home" [ref=e35] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e36]: 🏠
+          - generic [ref=e37]: Home
+        - link "📅 Schedule" [ref=e38] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e39]: 📅
+          - generic [ref=e40]: Schedule
+        - link "📝 Requests" [ref=e41] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e42]: 📝
+          - generic [ref=e43]: Requests
+        - link "📊 Analytics" [ref=e44] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e45]: 📊
+          - generic [ref=e46]: Analytics
+        - link "🔍 Audit Log" [ref=e47] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e48]: 🔍
+          - generic [ref=e49]: Audit Log
+        - link "👥 People" [ref=e50] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e51]: 👥
+          - generic [ref=e52]: People
+        - link "🏢 Companies" [ref=e53] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e54]: 🏢
+          - generic [ref=e55]: Companies
+        - link "⚙️ Settings" [ref=e56] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e57]: ⚙️
+          - generic [ref=e58]: Settings
+        - generic [ref=e59]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e60] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e61]: 🔧
+          - generic [ref=e62]: Owner Administration
+        - generic [ref=e63]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e64] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e65]: 📊
+          - generic [ref=e66]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e67] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e68]: 🗂️
+          - generic [ref=e69]: Chores
+        - link "🎯 Day Shifts" [ref=e70] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e71]: 🎯
+          - generic [ref=e72]: Day Shifts
+      - generic [ref=e73]:
+        - button "מ מנהל Owner ▼" [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: מ
+          - generic [ref=e77]:
+            - generic [ref=e78]: מנהל
+            - generic [ref=e79]: Owner
+          - generic [ref=e80]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e81]:
+          - generic [ref=e82]: ⌨️
+          - generic [ref=e83]: Ctrl
+          - generic [ref=e84]: +
+          - generic [ref=e85]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: ◀
+    - generic [ref=e88]:
+      - banner [ref=e89]:
+        - generic [ref=e90]:
+          - heading "Home" [level=1] [ref=e92]
+          - generic [ref=e93]:
+            - link "✓" [ref=e95] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e96]: ✓
+            - link "🔔" [ref=e97] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e98]: 🔔
+            - button "Language" [ref=e100] [cursor=pointer]:
+              - generic [ref=e101]: 🌐
+              - generic [ref=e102]: En
+            - button "Toggle dark mode" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: 🌓
+            - button "🚪 Logout" [ref=e106] [cursor=pointer]:
+              - generic [ref=e107]: 🚪
+              - generic [ref=e108]: Logout
+      - main [ref=e109]:
+        - navigation [ref=e110]:
+          - list [ref=e111]:
+            - listitem "Home" [ref=e112]
+        - generic [ref=e113]:
+          - heading "Good morning, מנהל!" [level=1] [ref=e114]
+          - paragraph [ref=e115]: Here's your schedule and shift information
+        - generic [ref=e116]:
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - heading "Next Shift" [level=3] [ref=e120]
+              - paragraph [ref=e122]: No upcoming shifts
+            - generic [ref=e123]:
+              - heading "This Week" [level=3] [ref=e125]
+              - generic [ref=e126]:
+                - generic [ref=e127]:
+                  - generic [ref=e128]:
+                    - generic [ref=e129]: Hours This Week
+                    - generic [ref=e130]: "0.0"
+                  - generic [ref=e131]:
+                    - generic [ref=e132]: Days with Shifts
+                    - generic [ref=e133]: "0"
+                  - generic [ref=e134]:
+                    - generic [ref=e135]: Days Off
+                    - generic [ref=e136]: "7"
+                - link "View Full Schedule" [ref=e137] [cursor=pointer]:
+                  - /url: /Calendar/Month
+            - generic [ref=e138]:
+              - heading "Notifications" [level=3] [ref=e140]
+              - paragraph [ref=e142]: No Notifications
+          - generic [ref=e143]:
+            - heading "Staffing Overview" [level=3] [ref=e144]:
+              - generic [ref=e145]: Staffing Overview
+            - generic [ref=e146]:
+              - generic [ref=e148]:
+                - generic [ref=e149]: "0"
+                - generic [ref=e150]: Unassigned Shifts
+              - generic [ref=e152]:
+                - generic [ref=e153]: "0"
+                - generic [ref=e154]: Understaffed Days
+            - link "Open Scheduling Workspace →" [ref=e155] [cursor=pointer]:
+              - /url: /Calendar/Month
+          - generic [ref=e156]:
+            - heading "Approvals" [level=3] [ref=e157]:
+              - generic [ref=e158]: Approvals
+            - generic [ref=e159]:
+              - generic [ref=e161]:
+                - generic [ref=e162]: "0"
+                - generic [ref=e163]: Pending Time Off
+              - generic [ref=e165]:
+                - generic [ref=e166]: "0"
+                - generic [ref=e167]: Pending Swaps
+            - link "Open Approvals →" [ref=e168] [cursor=pointer]:
+              - /url: /Requests/Index
+          - generic [ref=e169]:
+            - heading "Companies Overview" [level=3] [ref=e170]:
+              - generic [ref=e171]: Companies Overview
+            - generic [ref=e172]:
+              - generic [ref=e174]:
+                - generic [ref=e175]: "26"
+                - generic [ref=e176]: Total Companies
+              - generic [ref=e178]:
+                - generic [ref=e179]: "26"
+                - generic [ref=e180]: Active Companies
+            - link "Manage Companies →" [ref=e181] [cursor=pointer]:
+              - /url: /Admin/Companies
+          - generic [ref=e182]:
+            - heading "Analytics Summary" [level=3] [ref=e183]:
+              - generic [ref=e184]: Analytics Summary
+            - generic [ref=e185]:
+              - generic [ref=e187]:
+                - generic [ref=e188]: "34"
+                - generic [ref=e189]: Total Active Users
+              - generic [ref=e191]:
+                - generic [ref=e192]: "69"
+                - generic [ref=e193]: Shifts This Month
+              - generic [ref=e195]:
+                - generic [ref=e196]: 0.0%
+                - generic [ref=e197]: Average Staffing Rate
+            - link "View Full Analytics →" [ref=e198] [cursor=pointer]:
+              - /url: /Admin/Analytics
+          - generic [ref=e199]:
+            - heading "System Health" [level=3] [ref=e200]:
+              - generic [ref=e201]: System Health
+            - generic [ref=e203]:
+              - generic [ref=e204]:
+                - generic [ref=e205]: Diagnostics and Monitoring
+                - paragraph [ref=e206]: View system status, logs, and performance metrics
+              - link "Open Diagnostics →" [ref=e208] [cursor=pointer]:
+                - /url: /Diagnostic
+      - generic [ref=e209]:
+        - button "▼ Quick Info" [expanded] [ref=e210] [cursor=pointer]:
+          - generic [ref=e211]: ▼
+          - generic [ref=e212]: Quick Info
+        - generic [ref=e214]:
+          - button "Quick Info" [expanded] [ref=e215] [cursor=pointer]:
+            - generic [ref=e216]:
+              - img [ref=e218]
+              - generic [ref=e220]: Quick Info
+            - img [ref=e222]
+          - generic [ref=e225]:
+            - img "No one is on-call right now" [ref=e228]
+            - paragraph [ref=e232]: No one is on-call right now
+            - paragraph [ref=e233]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+```

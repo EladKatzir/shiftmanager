@@ -1,0 +1,189 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]: "CRITICAL: Disk space is critically low (7.0% free). Database may fail."
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e7] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e9]
+        - generic [ref=e10]:
+          - generic [ref=e11]: SHIFTY
+          - generic [ref=e12]: Shift Manager
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: 📍
+          - generic [ref=e16]: Currently Viewing
+        - button "SystemAdmins" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: 🏢
+            - generic [ref=e20]: SystemAdmins
+          - generic [ref=e21]: ▼
+      - navigation [ref=e22]:
+        - generic [ref=e23]: 📅 My Shifty
+        - link "🏠 Home" [ref=e24] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e25]: 🏠
+          - generic [ref=e26]: Home
+        - link "📅 Schedule" [ref=e27] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e28]: 📅
+          - generic [ref=e29]: Schedule
+        - link "📝 Requests" [ref=e30] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e31]: 📝
+          - generic [ref=e32]: Requests
+        - link "📊 Analytics" [ref=e33] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e34]: 📊
+          - generic [ref=e35]: Analytics
+        - link "🔍 Audit Log" [ref=e36] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e37]: 🔍
+          - generic [ref=e38]: Audit Log
+        - link "👥 People" [ref=e39] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e40]: 👥
+          - generic [ref=e41]: People
+        - link "🏢 Companies" [ref=e42] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e43]: 🏢
+          - generic [ref=e44]: Companies
+        - link "⚙️ Settings" [ref=e45] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e46]: ⚙️
+          - generic [ref=e47]: Settings
+        - generic [ref=e48]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e49] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e50]: 🔧
+          - generic [ref=e51]: Owner Administration
+        - generic [ref=e52]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e53] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e54]: 📊
+          - generic [ref=e55]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e56] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e57]: 🗂️
+          - generic [ref=e58]: Chores
+        - link "🎯 Day Shifts" [ref=e59] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e60]: 🎯
+          - generic [ref=e61]: Day Shifts
+      - generic [ref=e62]:
+        - button "מ מנהל Owner ▼" [ref=e64] [cursor=pointer]:
+          - generic [ref=e65]: מ
+          - generic [ref=e66]:
+            - generic [ref=e67]: מנהל
+            - generic [ref=e68]: Owner
+          - generic [ref=e69]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e70]:
+          - generic [ref=e71]: ⌨️
+          - generic [ref=e72]: Ctrl
+          - generic [ref=e73]: +
+          - generic [ref=e74]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e75] [cursor=pointer]:
+        - generic [ref=e76]: ◀
+    - generic [ref=e77]:
+      - banner [ref=e78]:
+        - generic [ref=e79]:
+          - heading "Shifts Calendar" [level=1] [ref=e81]
+          - generic [ref=e82]:
+            - link "✓" [ref=e84] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e85]: ✓
+            - link "🔔" [ref=e86] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e87]: 🔔
+            - button "Language" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: 🌐
+              - generic [ref=e91]: En
+            - button "Toggle dark mode" [ref=e92] [cursor=pointer]:
+              - generic [ref=e93]: 🌓
+            - button "🚪 Logout" [ref=e95] [cursor=pointer]:
+              - generic [ref=e96]: 🚪
+              - generic [ref=e97]: Logout
+      - main [ref=e98]:
+        - navigation [ref=e99]:
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - link "Calendars" [ref=e102]:
+                - /url: /Calendar/Month
+            - listitem "Shifts Calendar" [ref=e103]: › Shifts Calendar
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - generic [ref=e108]: Molecule
+                - combobox "Molecule" [ref=e109] [cursor=pointer]:
+                  - option "מערכת" [selected]
+              - generic [ref=e110]:
+                - generic [ref=e111]: Job Type
+                - combobox "Job Type" [ref=e112] [cursor=pointer]:
+                  - option "אלחוט" [selected]
+                  - option "ב\"ר"
+                  - option "טקסט"
+                  - option "חק\"ם"
+              - generic [ref=e113]:
+                - generic [ref=e114]: View
+                - combobox "View" [ref=e115] [cursor=pointer]:
+                  - option "Week" [selected]
+                  - option "Two Weeks"
+                  - option "Month"
+            - generic [ref=e116]:
+              - generic [ref=e117]:
+                - link "← Previous" [ref=e118] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-01&ViewMode=week&Mode=shift"
+                  - generic [ref=e119]: ←
+                  - generic [ref=e120]: Previous
+                - generic [ref=e121]:
+                  - textbox [ref=e122] [cursor=pointer]: 2026-02-08
+                  - generic [ref=e123] [cursor=pointer]: Feb 08 - Feb 14, 2026
+                - link "Next →" [ref=e124] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-15&ViewMode=week&Mode=shift"
+                  - generic [ref=e125]: Next
+                  - generic [ref=e126]: →
+              - button "🖶 Print" [ref=e128] [cursor=pointer]:
+                - generic [ref=e129]: 🖶
+                - generic [ref=e130]: Print
+            - generic [ref=e132]:
+              - generic [ref=e133]:
+                - link "By Shift" [ref=e134] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=shift"
+                - link "By User" [ref=e135] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=user"
+              - link "Capacity Mode" [ref=e137] [cursor=pointer]:
+                - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=shift&CapacityMode=True"
+              - generic [ref=e138]:
+                - button "🔍 Filter" [ref=e139] [cursor=pointer]:
+                  - generic [ref=e140]: 🔍
+                  - text: Filter
+                - link "Just Mine" [ref=e141] [cursor=pointer]:
+                  - /url: "?MoleculeId=9&JobTypeId=&Start=2026-02-08&ViewMode=week&Mode=shift&JustMine=True"
+          - generic [ref=e142]:
+            - img [ref=e144]
+            - heading "No Shifts Found" [level=3] [ref=e146]
+            - paragraph [ref=e147]: Select a job type to see shifts for this molecule.
+      - generic [ref=e148]:
+        - button "▼ Quick Info" [expanded] [ref=e149] [cursor=pointer]:
+          - generic [ref=e150]: ▼
+          - generic [ref=e151]: Quick Info
+        - generic [ref=e153]:
+          - button "Quick Info" [expanded] [ref=e154] [cursor=pointer]:
+            - generic [ref=e155]:
+              - img [ref=e157]
+              - generic [ref=e159]: Quick Info
+            - img [ref=e161]
+          - generic [ref=e164]:
+            - img "No one is on-call right now" [ref=e167]
+            - paragraph [ref=e171]: No one is on-call right now
+            - paragraph [ref=e172]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+  - button "Print calendar" [ref=e173] [cursor=pointer]:
+    - generic [ref=e174]: 🖨️
+    - generic [ref=e175]: Print
+```

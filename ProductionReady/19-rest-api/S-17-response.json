@@ -1,0 +1,21 @@
+{
+  "status": 401,
+  "body": "{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"status\":401,\"detail\":\"Missing X-API-Key header\",\"instance\":\"/api/v1/shifts/1\"}",
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "date": "Mon, 09 Feb 2026 00:13:00 GMT",
+    "server": "Kestrel",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "content-encoding": "br",
+    "expires": "0",
+    "pragma": "no-cache",
+    "transfer-encoding": "chunked",
+    "vary": "Accept-Encoding",
+    "x-correlation-id": "2149d93a8b0c",
+    "x-request-id": "2149d93a8b0c",
+    "x-frame-options": "DENY",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:; frame-ancestors 'none'"
+  }
+}

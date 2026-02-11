@@ -1,0 +1,173 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e11]: You are currently offline. Some features may be unavailable.
+    - button "Retry" [ref=e12] [cursor=pointer]
+  - link "Skip to main content" [ref=e13] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e14]:
+    - complementary [ref=e15]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e16] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e18]
+        - generic [ref=e19]:
+          - generic [ref=e20]: SHIFTY
+          - generic [ref=e21]: Shift Manager
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: 📍
+          - generic [ref=e25]: Currently Viewing
+        - generic [ref=e26]:
+          - generic [ref=e27]: 🏢
+          - generic [ref=e28]: Tzafona
+      - navigation [ref=e29]:
+        - link "🏠 Home" [ref=e30] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e31]: 🏠
+          - generic [ref=e32]: Home
+        - link "📅 Schedule" [ref=e33] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e34]: 📅
+          - generic [ref=e35]: Schedule
+        - link "📝 Requests" [ref=e36] [cursor=pointer]:
+          - /url: /My/Requests
+          - generic [ref=e37]: 📝
+          - generic [ref=e38]: Requests
+        - link "👥 My Team" [ref=e39] [cursor=pointer]:
+          - /url: /MyTeam/Index
+          - generic [ref=e40]: 👥
+          - generic [ref=e41]: My Team
+        - link "🗂️ Chores" [ref=e43] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e44]: 🗂️
+          - generic [ref=e45]: Chores
+        - link "🎯 Day Shift" [ref=e46] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e47]: 🎯
+          - generic [ref=e48]: Day Shift
+        - link "👤 My Profile" [ref=e49] [cursor=pointer]:
+          - /url: /My/Profile
+          - generic [ref=e50]: 👤
+          - generic [ref=e51]: My Profile
+        - link "❓ Help" [ref=e52] [cursor=pointer]:
+          - /url: /My/Help
+          - generic [ref=e53]: ❓
+          - generic [ref=e54]: Help
+        - link "⚙️ My Settings" [ref=e55] [cursor=pointer]:
+          - /url: /My/Settings
+          - generic [ref=e56]: ⚙️
+          - generic [ref=e57]: My Settings
+      - generic [ref=e58]:
+        - button "E Emp Employee ▼" [ref=e60] [cursor=pointer]:
+          - generic [ref=e61]: E
+          - generic [ref=e62]:
+            - generic [ref=e63]: Emp
+            - generic [ref=e64]: Employee
+          - generic [ref=e65]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e66]:
+          - generic [ref=e67]: ⌨️
+          - generic [ref=e68]: Ctrl
+          - generic [ref=e69]: +
+          - generic [ref=e70]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e71] [cursor=pointer]:
+        - generic [ref=e72]: ◀
+    - generic [ref=e73]:
+      - banner [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - heading [level=1]
+          - generic [ref=e77]:
+            - link "🔔" [ref=e78] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e79]: 🔔
+            - button "Language" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: 🌐
+              - generic [ref=e83]: En
+            - button "Toggle dark mode" [ref=e84] [cursor=pointer]:
+              - generic [ref=e85]: 🌓
+            - button "🚪 Logout" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: 🚪
+              - generic [ref=e89]: Logout
+      - main [ref=e90]:
+        - navigation [ref=e91]:
+          - list [ref=e92]:
+            - listitem "My Requests" [ref=e93]
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - heading "📋 My Requests" [level=1] [ref=e97]
+            - paragraph [ref=e98]: Manage your time-off requests and shift swaps
+          - generic [ref=e99]:
+            - heading "New Request" [level=2] [ref=e100]
+            - generic [ref=e101]:
+              - generic [ref=e102]:
+                - heading "📅 Request Time Off" [level=3] [ref=e104]:
+                  - text: 📅
+                  - generic [ref=e105]: Request Time Off
+                - generic [ref=e107]:
+                  - generic [ref=e108]:
+                    - generic [ref=e109]: Vacation Type
+                    - combobox [ref=e110] [cursor=pointer]:
+                      - option [selected]
+                      - option
+                    - paragraph [ref=e111]: Regular vacation starts at midnight, after-duty vacation starts at 4:00 PM
+                  - generic [ref=e112]:
+                    - generic [ref=e113]:
+                      - generic [ref=e114]: Start Date
+                      - textbox [ref=e115]: 2026-02-10
+                    - generic [ref=e116]:
+                      - generic [ref=e117]: End Date
+                      - textbox [ref=e118]: 2026-02-10
+                  - generic [ref=e119]:
+                    - generic [ref=e120]: Specific Approver (Optional)
+                    - combobox "Specific Approver (Optional)" [ref=e121] [cursor=pointer]:
+                      - option [selected]
+                      - option "Mgr Alhut Tz (Manager)"
+                    - paragraph [ref=e122]: Optionally select a specific manager to approve your request for privacy
+                  - generic [ref=e123]:
+                    - generic [ref=e124]: Reason
+                    - textbox "Reason" [ref=e125]:
+                      - /placeholder: Please provide a reason for your time off request...
+                  - button "📝 Submit Time Off Request" [ref=e126] [cursor=pointer]:
+                    - generic [ref=e127]: 📝
+                    - generic [ref=e128]: Submit Time Off Request
+              - generic [ref=e129]:
+                - heading "🔄 Request Shift Swap" [level=3] [ref=e131]:
+                  - text: 🔄
+                  - generic [ref=e132]: Request Shift Swap
+                - generic [ref=e134]:
+                  - generic [ref=e135]: 📅
+                  - paragraph [ref=e136]: You have no upcoming shifts available for swapping.
+          - generic [ref=e137]:
+            - heading "Request History" [level=2] [ref=e138]
+            - generic [ref=e139]:
+              - generic [ref=e140]:
+                - heading "My Time Off Requests" [level=3] [ref=e142]:
+                  - generic [ref=e143]: My Time Off Requests
+                - generic [ref=e145]:
+                  - generic [ref=e146]: 📋
+                  - paragraph [ref=e147]: No time off requests yet.
+              - generic [ref=e148]:
+                - heading "My Swap Requests" [level=3] [ref=e150]:
+                  - generic [ref=e151]: My Swap Requests
+                - generic [ref=e153]:
+                  - generic [ref=e154]: 🔄
+                  - paragraph [ref=e155]: No swap requests yet.
+      - generic [ref=e156]:
+        - button "▼ Quick Info" [expanded] [ref=e157] [cursor=pointer]:
+          - generic [ref=e158]: ▼
+          - generic [ref=e159]: Quick Info
+        - generic [ref=e161]:
+          - button "Quick Info" [expanded] [ref=e162] [cursor=pointer]:
+            - generic [ref=e163]:
+              - img [ref=e165]
+              - generic [ref=e167]: Quick Info
+            - img [ref=e169]
+          - generic [ref=e172]:
+            - img "No one is on-call right now" [ref=e175]
+            - paragraph [ref=e179]: No one is on-call right now
+            - paragraph [ref=e180]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+```
