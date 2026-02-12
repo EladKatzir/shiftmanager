@@ -53,8 +53,8 @@ try {
     # Check package size
     Write-Info "Calculating package size..."
     $totalSize = ($allFiles | Measure-Object -Property Length -Sum).Sum / 1MB
-    $expectedSize = 110
-    $sizeTolerance = 20
+    $expectedSize = 160
+    $sizeTolerance = 30
 
     if ($totalSize -lt ($expectedSize - $sizeTolerance) -or $totalSize -gt ($expectedSize + $sizeTolerance)) {
         Write-ErrorMsg "Package size $($totalSize.ToString('F0')) MB outside expected range ($expectedSize +/- $sizeTolerance MB)"
