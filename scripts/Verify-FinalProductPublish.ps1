@@ -63,13 +63,13 @@ if ([System.IO.Path]::IsPathRooted($Path)) {
 # Expectations (ALIGNED)
 # =========================
 
-# These ranges were in your original script and match what you already expect (~560-570).
-$ExpectedFileCountMin = 560
-$ExpectedFileCountMax = 570
+# Updated for v2.9.0 build output (~537 files, ~160 MB).
+$ExpectedFileCountMin = 520
+$ExpectedFileCountMax = 560
 
-# Size range from your original script.
-$ExpectedSizeMinMB = 110
-$ExpectedSizeMaxMB = 120
+# Size range updated for self-contained .NET 8.0 runtime (~160 MB).
+$ExpectedSizeMinMB = 140
+$ExpectedSizeMaxMB = 180
 
 # Critical binaries (as in your original script)
 $CriticalBinaries = @(

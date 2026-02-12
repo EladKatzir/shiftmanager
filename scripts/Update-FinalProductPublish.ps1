@@ -423,8 +423,8 @@ try {
 
     # Replace the old "lt 500" heuristic with an expected-range check using tolerance.
     # (still WARN-only; does not block)
-    $expectedMin = 560
-    $expectedMax = 570
+    $expectedMin = 530
+    $expectedMax = 550
     $minOk = $expectedMin - $FileCountTolerance
     $maxOk = $expectedMax + $FileCountTolerance
 

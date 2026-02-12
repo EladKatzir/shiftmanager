@@ -31,7 +31,7 @@ if exist SixLabors.ImageSharp.dll (
         echo   [INFO] Size: %%~zA bytes
     )
 ) else (
-    echo   [ERROR] SixLabors.ImageSharp.dll MISSING!
+    echo   [ERROR] SixLabors.ImageSharp.dll MISSING
     echo   [ERROR] This file is REQUIRED for image processing!
     set /a ERROR_COUNT+=1
 )
@@ -44,7 +44,7 @@ if exist ShiftManager.dll (
         echo   [INFO] Size: %%~zA bytes
     )
 ) else (
-    echo   [ERROR] ShiftManager.dll MISSING!
+    echo   [ERROR] ShiftManager.dll MISSING
     echo   [ERROR] This is the main application file!
     set /a ERROR_COUNT+=1
 )
@@ -57,7 +57,7 @@ if exist e_sqlite3.dll (
         echo   [INFO] Size: %%~zA bytes
     )
 ) else (
-    echo   [ERROR] e_sqlite3.dll MISSING!
+    echo   [ERROR] e_sqlite3.dll MISSING
     echo   [ERROR] This file is REQUIRED for database operations!
     set /a ERROR_COUNT+=1
 )
@@ -67,7 +67,7 @@ echo [4/5] Checking ShiftManager.exe...
 if exist ShiftManager.exe (
     echo   [OK] ShiftManager.exe found
 ) else (
-    echo   [ERROR] ShiftManager.exe MISSING!
+    echo   [ERROR] ShiftManager.exe MISSING
     echo   [ERROR] Cannot start application without this file!
     set /a ERROR_COUNT+=1
 )
@@ -77,7 +77,7 @@ echo [5/5] Checking Microsoft.EntityFrameworkCore.Sqlite.dll...
 if exist Microsoft.EntityFrameworkCore.Sqlite.dll (
     echo   [OK] Microsoft.EntityFrameworkCore.Sqlite.dll found
 ) else (
-    echo   [WARNING] Microsoft.EntityFrameworkCore.Sqlite.dll MISSING!
+    echo   [WARNING] Microsoft.EntityFrameworkCore.Sqlite.dll MISSING
     set /a WARNING_COUNT+=1
 )
 echo.
@@ -94,10 +94,10 @@ REM Count DLLs
 for /f %%A in ('dir /s /b *.dll 2^>nul ^| %SystemRoot%\System32\find.exe /c ".dll"') do set DLL_COUNT=%%A
 
 echo   Total DLL files found: %DLL_COUNT%
-echo   Expected range: 330-340 DLL files
+echo   Expected range: 340-370 DLL files
 echo.
 
-if %DLL_COUNT% LSS 330 (
+if %DLL_COUNT% LSS 340 (
     echo   [WARNING] DLL count is lower than expected!
     echo   [WARNING] Some files may be missing!
     set /a WARNING_COUNT+=1
@@ -170,7 +170,7 @@ echo ===========================================================================
 echo.
 
 if %ERROR_COUNT% GTR 0 (
-    echo   [FAILED] %ERROR_COUNT% critical error(s) found!
+    echo   [FAILED] %ERROR_COUNT% critical error(s) found.
     echo.
     echo   RECOMMENDATIONS:
     echo   1. Files appear to be missing or corrupted
