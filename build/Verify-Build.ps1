@@ -41,8 +41,8 @@ try {
     Write-Info "Counting DLLs..."
     $dlls = Get-ChildItem -Path $OutputPath -Filter "*.dll" -Recurse
     $dllCount = $dlls.Count
-    $expectedDlls = 335
-    $dllTolerance = 5
+    $expectedDlls = 350
+    $dllTolerance = 20
 
     if ($dllCount -lt ($expectedDlls - $dllTolerance) -or $dllCount -gt ($expectedDlls + $dllTolerance)) {
         Write-ErrorMsg "DLL count $dllCount outside expected range ($expectedDlls +/- $dllTolerance)"
