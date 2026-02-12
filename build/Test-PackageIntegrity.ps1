@@ -19,9 +19,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Write-Success { param([string]$Message) Write-Host "  ✅ " -ForegroundColor Green -NoNewline; Write-Host $Message }
-function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor Red -NoNewline; Write-Host $Message }
-function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor Blue -NoNewline; Write-Host $Message }
+function Write-Success { param([string]$Message) Write-Host "  [OK] " -ForegroundColor Green -NoNewline; Write-Host $Message }
+function Write-ErrorMsg { param([string]$Message) Write-Host "  [ERR] " -ForegroundColor Red -NoNewline; Write-Host $Message }
+function Write-Info { param([string]$Message) Write-Host "  [..] " -ForegroundColor Blue -NoNewline; Write-Host $Message }
 
 try {
     if (-not (Test-Path $OutputPath)) {
@@ -221,18 +221,18 @@ try {
 
     # Final summary
     Write-Host ""
-    Write-Host "✅ Package integrity verified" -ForegroundColor Green
+    Write-Host "[OK] Package integrity verified" -ForegroundColor Green
     Write-Host ""
     Write-Host "Package is ready for:"
-    Write-Host "  ✓ ZIP archiving"
-    Write-Host "  ✓ Git tagging"
-    Write-Host "  ✓ Distribution"
-    Write-Host "  ✓ Production deployment"
+    Write-Host "  * ZIP archiving"
+    Write-Host "  * Git tagging"
+    Write-Host "  * Distribution"
+    Write-Host "  * Production deployment"
 
     return $true
 
 } catch {
     Write-Host ""
-    Write-Host "❌ Package integrity check failed: $_" -ForegroundColor Red
+    Write-Host "[ERR] Package integrity check failed: $_" -ForegroundColor Red
     throw
 }

@@ -284,7 +284,12 @@
             'START_HERE.bat',
             'PRE_DEMO_CHECKLIST.txt',
             'TROUBLESHOOT_DEMO.txt',
-            'DIAGNOSE_GRIFFIN_ISSUE.bat'
+            'DIAGNOSE_GRIFFIN_ISSUE.bat',
+            'README.txt',
+            'QUICK_START.txt',
+            'DEPLOYMENT_GUIDE.txt',
+            'VERIFICATION_CHECKLIST.txt',
+            'UPGRADE_GUIDE.txt'
         )
 
         $requiredAssets = @(
