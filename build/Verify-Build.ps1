@@ -32,7 +32,7 @@ try {
     $tolerance = 150
 
     if ($fileCount -lt ($expectedFiles - $tolerance) -or $fileCount -gt ($expectedFiles + $tolerance)) {
-        Write-ErrorMsg "File count $fileCount outside expected range ($expectedFiles ± $tolerance)"
+        Write-ErrorMsg "File count $fileCount outside expected range ($expectedFiles +/- $tolerance)"
         throw "Unexpected file count"
     }
     Write-Success "File count: $fileCount files (expected: ~$expectedFiles)"
@@ -45,7 +45,7 @@ try {
     $dllTolerance = 5
 
     if ($dllCount -lt ($expectedDlls - $dllTolerance) -or $dllCount -gt ($expectedDlls + $dllTolerance)) {
-        Write-ErrorMsg "DLL count $dllCount outside expected range ($expectedDlls ± $dllTolerance)"
+        Write-ErrorMsg "DLL count $dllCount outside expected range ($expectedDlls +/- $dllTolerance)"
         throw "Unexpected DLL count"
     }
     Write-Success "DLL count: $dllCount DLLs (expected: ~$expectedDlls)"
@@ -57,7 +57,7 @@ try {
     $sizeTolerance = 20
 
     if ($totalSize -lt ($expectedSize - $sizeTolerance) -or $totalSize -gt ($expectedSize + $sizeTolerance)) {
-        Write-ErrorMsg "Package size $($totalSize.ToString('F0')) MB outside expected range ($expectedSize ± $sizeTolerance MB)"
+        Write-ErrorMsg "Package size $($totalSize.ToString('F0')) MB outside expected range ($expectedSize +/- $sizeTolerance MB)"
         throw "Unexpected package size"
     }
     Write-Success "Package size: $($totalSize.ToString('F0')) MB (expected: ~$expectedSize MB)"
@@ -113,7 +113,7 @@ try {
         $lines = Get-Content $manifestPath
         Write-Success "SHA256 manifest present: $($lines.Count) file hashes"
     } else {
-        Write-ErrorMsg "SHA256 manifest (SHA256SUMS.txt) not found — run Build-Release.ps1 to generate"
+        Write-ErrorMsg "SHA256 manifest (SHA256SUMS.txt) not found - run Build-Release.ps1 to generate"
     }
 
     Write-Host ""
