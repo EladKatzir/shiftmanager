@@ -16,6 +16,12 @@
      * Initialize Fill Handle functionality
      */
     function initFillHandle() {
+        // Disable fill handle on touch devices — touch targets too small, drag not reliable
+        if (isTouchDevice()) {
+            console.log('[Fill Handle] Disabled on touch device');
+            return;
+        }
+
         console.log('[Fill Handle] Initializing...');
 
         // Attach fill handles to cells with assignments
@@ -25,6 +31,15 @@
         observeCellUpdates();
 
         console.log('[Fill Handle] Initialized');
+    }
+
+    /**
+     * Detect touch-primary devices
+     */
+    function isTouchDevice() {
+        return ('ontouchstart' in window) ||
+               (navigator.maxTouchPoints > 0) ||
+               (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     }
 
     /**
@@ -52,7 +67,7 @@
 
         const handle = document.createElement('div');
         handle.className = 'fill-handle';
-        handle.title = 'Drag to copy across days';
+        handle.title = window.AppLocalizer?.FillHandle_DragToCopy || 'Drag to copy across days';
         handle.draggable = true;
 
         // Attach drag events
@@ -328,14 +343,14 @@
         const targetDates = targetCells.map(cell => cell.dataset.date);
 
         if (!sourceInstanceId) {
-            showToast('Invalid source shift', 'error');
+            showToast(window.AppLocalizer?.FillHandle_InvalidSource || 'Invalid source shift', 'error');
             return;
         }
 
         console.log(`[Fill Handle] Performing ${mode} fill from ${sourceCell.dataset.date} to ${targetDates.length} targets`);
 
         // Show loading indicator
-        const loadingToast = showToast('Applying fill operation...', 'info');
+        const loadingToast = showToast(window.AppLocalizer?.FillHandle_Applying || 'Applying fill operation...', 'info');
 
         try {
             const response = await fetch('/Calendar/Table?handler=FillRange', {

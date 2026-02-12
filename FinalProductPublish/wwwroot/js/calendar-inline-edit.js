@@ -132,6 +132,10 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                             })
                         });
 
+                        if (!retryResponse.ok) {
+                            showToast(window.AppLocalizer.ErrorCreatingChore, 'error');
+                            return;
+                        }
                         const retryResult = await retryResponse.json();
 
                         if (retryResult.success) {
@@ -158,6 +162,10 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                 }
                 return;
             }
+
+            // Other error (400, 500, etc.)
+            showToast(window.AppLocalizer.ErrorCreatingChore, 'error');
+            return;
         }
 
         const result = await response.json();
@@ -236,6 +244,10 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                             })
                         });
 
+                        if (!retryResponse.ok) {
+                            showToast(window.AppLocalizer.ErrorCreatingOnDuty, 'error');
+                            return;
+                        }
                         const retryResult = await retryResponse.json();
 
                         if (retryResult.success) {
@@ -262,6 +274,10 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                 }
                 return;
             }
+
+            // Other error (400, 500, etc.)
+            showToast(window.AppLocalizer.ErrorCreatingOnDuty, 'error');
+            return;
         }
 
         const result = await response.json();
@@ -279,16 +295,11 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
 }
 
 /**
- * Delete an item (chore or on-duty)
+ * Delete an item (chore or on-duty) with undo toast
  * @param {string} itemType - 'chore' or 'onduty'
  * @param {number} itemId - Entity ID to delete
  */
 async function deleteItem(itemType, itemId) {
-    // Confirm deletion with localized message
-    if (!confirm(getErrorMessage('confirmDelete'))) {
-        return;
-    }
-
     try {
         const endpoint = itemType === 'chore'
             ? '/Api/Calendar/DeleteChore'
@@ -304,26 +315,108 @@ async function deleteItem(itemType, itemId) {
             body: JSON.stringify({ id: parseInt(itemId) })
         });
 
-        // Check for auth/permission errors before parsing JSON
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
                 handleApiError(response);
                 return;
             }
+            showToast(window.AppLocalizer?.ErrorDeletingItem || 'Error deleting item', 'error');
+            return;
         }
 
         const result = await response.json();
 
         if (result.success) {
-            showToast(result.message || window.AppLocalizer.ItemDeletedSuccessfully, 'success');
-            // Reload the page to update the calendar
-            setTimeout(() => location.reload(), 500);
+            // Hide the deleted element visually
+            var deletedEl = document.querySelector(`[data-${itemType}-id="${itemId}"]`) ||
+                            document.querySelector(`[data-assignment-id="${itemId}"]`);
+            if (deletedEl) {
+                deletedEl.style.opacity = '0.3';
+                deletedEl.style.textDecoration = 'line-through';
+            }
+
+            // Show undo toast (chores support undo via restore)
+            if (itemType === 'chore') {
+                showUndoToast(itemId);
+            } else {
+                showToast(result.message || window.AppLocalizer?.ItemDeletedSuccessfully || 'Deleted', 'success');
+                setTimeout(() => location.reload(), 1500);
+            }
         } else {
-            showToast(result.message || window.AppLocalizer.ErrorDeletingItem, 'error');
+            showToast(result.message || window.AppLocalizer?.ErrorDeletingItem || 'Error', 'error');
         }
     } catch (error) {
         handleApiError(null, error);
     }
+}
+
+/**
+ * Show an undo toast with countdown for chore deletion
+ * @param {number} choreId - The deleted chore ID
+ */
+function showUndoToast(choreId) {
+    // Remove any existing undo toasts
+    document.querySelectorAll('.toast-undo').forEach(t => t.remove());
+
+    var culture = getCurrentCulture();
+    var undoLabel = culture === 'he-IL' ? 'בטל' : 'Undo';
+    var deletedLabel = culture === 'he-IL' ? 'התורנות נמחקה.' : 'Item deleted.';
+
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-undo show';
+    toast.innerHTML =
+        '<span class="toast-undo__text">' + deletedLabel + '</span>' +
+        '<button type="button" class="toast-undo__btn" data-chore-id="' + choreId + '">' + undoLabel + '</button>' +
+        '<span class="toast-undo__timer">5</span>';
+
+    document.body.appendChild(toast);
+
+    var seconds = 5;
+    var timerEl = toast.querySelector('.toast-undo__timer');
+    var undoBtn = toast.querySelector('.toast-undo__btn');
+    var undone = false;
+
+    var countdown = setInterval(function() {
+        seconds--;
+        if (timerEl) timerEl.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(countdown);
+            if (!undone) {
+                toast.classList.remove('show');
+                setTimeout(function() { toast.remove(); location.reload(); }, 300);
+            }
+        }
+    }, 1000);
+
+    undoBtn.addEventListener('click', async function() {
+        undone = true;
+        clearInterval(countdown);
+        undoBtn.disabled = true;
+        undoBtn.textContent = '...';
+
+        try {
+            var response = await fetch('/Api/Calendar/RestoreChore', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ id: parseInt(choreId) })
+            });
+            var data = await response.json();
+            if (data.success) {
+                toast.remove();
+                location.reload();
+            } else {
+                showToast(data.message || window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
+                toast.remove();
+            }
+        } catch (err) {
+            showToast(window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
+            toast.remove();
+        }
+    });
 }
 
 /**
@@ -454,5 +547,6 @@ window.quickAddChore = quickAddChore;
 window.quickAddOnDuty = quickAddOnDuty;
 window.deleteItem = deleteItem;
 window.showToast = showToast;
+window.showUndoToast = showUndoToast;
 window.toggleQuickAdd = toggleQuickAdd;
 window.submitQuickAdd = submitQuickAdd;

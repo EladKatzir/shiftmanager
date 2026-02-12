@@ -851,6 +851,12 @@
             childList: true,
             subtree: true
         });
+
+        // Clean up on page unload to prevent memory leaks
+        window.addEventListener('beforeunload', function() {
+            clearTimeout(observer._timeout);
+            observer.disconnect();
+        });
     }
 
     // ============= EXPOSE API =============

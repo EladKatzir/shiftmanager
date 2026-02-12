@@ -107,7 +107,7 @@
         }
 
         // Show loading state
-        employeeList.innerHTML = '<p class="loading-text">Loading employees...</p>';
+        employeeList.innerHTML = '<p class="loading-text">' + (window.AppLocalizer?.Roster_Loading || 'Loading employees...') + '</p>';
 
         try {
             // Use the new EmployeeAvailability endpoint for 7-day availability cubes
@@ -125,7 +125,7 @@
             renderEmployeeList(employees);
         } catch (error) {
             console.error('[Roster Dock] Error loading employees:', error);
-            employeeList.innerHTML = '<p class="error-text">Failed to load employees. Please try again.</p>';
+            employeeList.innerHTML = '<p class="error-text">' + (window.AppLocalizer?.Roster_FailedToLoad || 'Failed to load employees. Please try again.') + '</p>';
         }
     }
 
@@ -138,7 +138,7 @@
         if (!employeeList) return;
 
         if (employeesToRender.length === 0) {
-            employeeList.innerHTML = '<p class="empty-text">No employees found.</p>';
+            employeeList.innerHTML = '<p class="empty-text">' + (window.AppLocalizer?.Roster_NoEmployees || 'No employees found.') + '</p>';
             return;
         }
 
@@ -163,7 +163,7 @@
                 <div class="roster-employee-item"
                      draggable="true"
                      data-user-id="${emp.id}"
-                     data-user-name="${emp.name}">
+                     data-user-name="${escapeHtml(emp.name)}">
                     <div class="employee-avatar">${initials}</div>
                     <div class="employee-info">
                         <div class="employee-name">${escapeHtml(emp.name)}</div>
@@ -193,21 +193,32 @@
     /**
      * Get employee status text
      */
+    function getEmployeeStatusKey(emp) {
+        if (emp.onVacation) return 'vacation';
+        if (emp.hasShift) return 'shift';
+        if (emp.hasChore) return 'chore';
+        return 'available';
+    }
+
     function getEmployeeStatus(emp) {
-        if (emp.onVacation) return 'Vacation';
-        if (emp.hasShift) return 'On Shift';
-        if (emp.hasChore) return 'Has Chore';
-        return 'Available';
+        var key = getEmployeeStatusKey(emp);
+        var labels = {
+            vacation: window.AppLocalizer?.Roster_Vacation || 'Vacation',
+            shift: window.AppLocalizer?.Roster_OnShift || 'On Shift',
+            chore: window.AppLocalizer?.Roster_HasChore || 'Has Chore',
+            available: window.AppLocalizer?.Roster_Available || 'Available'
+        };
+        return labels[key];
     }
 
     /**
-     * Get CSS class for status
+     * Get CSS class for status key
      */
-    function getStatusClass(status) {
-        switch (status) {
-            case 'Vacation': return 'status-vacation';
-            case 'On Shift': return 'status-shift';
-            case 'Has Chore': return 'status-chore';
+    function getStatusClass(statusKey) {
+        switch (statusKey) {
+            case 'vacation': return 'status-vacation';
+            case 'shift': return 'status-shift';
+            case 'chore': return 'status-chore';
             default: return 'status-available';
         }
     }
@@ -343,7 +354,7 @@
 
         } catch (error) {
             console.error('[Roster Dock] Error handling drop:', error);
-            showToast('Failed to assign employee', 'error');
+            showToast(window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee', 'error');
         }
 
         highlightDropZones(false);
@@ -369,23 +380,23 @@
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to assign user');
+                throw new Error(errorData.error || (window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign user'));
             }
 
             const result = await response.json();
 
             if (result.success) {
-                showToast('Employee assigned successfully', 'success');
+                showToast(window.AppLocalizer?.Roster_AssignedSuccess || 'Employee assigned successfully', 'success');
 
                 // Reload the page to show the updated assignment
                 window.location.reload();
             } else {
-                throw new Error(result.error || 'Assignment failed');
+                throw new Error(result.error || (window.AppLocalizer?.Roster_AssignmentFailed || 'Assignment failed'));
             }
 
         } catch (error) {
             console.error('[Roster Dock] Assignment error:', error);
-            showToast(error.message || 'Failed to assign employee', 'error');
+            showToast(error.message || (window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee'), 'error');
         }
     }
 

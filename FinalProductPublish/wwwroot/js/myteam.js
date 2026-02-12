@@ -21,22 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupEventListeners() {
     // Week navigation
-    document.getElementById('btnPrevWeek').addEventListener('click', () => navigateWeek(-7));
-    document.getElementById('btnNextWeek').addEventListener('click', () => navigateWeek(7));
-    document.getElementById('btnThisWeek').addEventListener('click', () => {
+    document.getElementById('btnPrevWeek')?.addEventListener('click', () => navigateWeek(-7));
+    document.getElementById('btnNextWeek')?.addEventListener('click', () => navigateWeek(7));
+    document.getElementById('btnThisWeek')?.addEventListener('click', () => {
         currentWeekStart = getThisWeeksSunday();
         loadWeekView();
     });
 
     // Top bar actions
-    document.getElementById('btnSwitchCalendar').addEventListener('click', openSwitchCalendarModal);
-    document.getElementById('btnConfigureMembers').addEventListener('click', openConfigureMembersModal);
-    document.getElementById('btnNewCalendar').addEventListener('click', openNewCalendarModal);
+    document.getElementById('btnSwitchCalendar')?.addEventListener('click', openSwitchCalendarModal);
+    document.getElementById('btnConfigureMembers')?.addEventListener('click', openConfigureMembersModal);
+    document.getElementById('btnNewCalendar')?.addEventListener('click', openNewCalendarModal);
 
     // Modal actions
-    document.getElementById('btnSaveCalendar').addEventListener('click', saveCalendar);
-    document.getElementById('btnSaveMembers').addEventListener('click', saveMembers);
-    document.getElementById('btnConfirmDelete').addEventListener('click', confirmDeleteCalendar);
+    document.getElementById('btnSaveCalendar')?.addEventListener('click', saveCalendar);
+    document.getElementById('btnSaveMembers')?.addEventListener('click', saveMembers);
+    document.getElementById('btnConfirmDelete')?.addEventListener('click', confirmDeleteCalendar);
 
     // Close modals on background click
     document.querySelectorAll('.modal').forEach(modal => {
@@ -48,7 +48,7 @@ function setupEventListeners() {
     });
 
     // Enter key on calendar name input
-    document.getElementById('inputCalendarName').addEventListener('keypress', (e) => {
+    document.getElementById('inputCalendarName')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             saveCalendar();
         }
@@ -88,8 +88,9 @@ function formatWeekRange(startDateStr) {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
-    const dayNames = window.MyTeamLocalization.dayNamesShort;
-    const monthNames = window.MyTeamLocalization.monthNames;
+    const loc = window.MyTeamLocalization || {};
+    const dayNames = loc.dayNamesShort || ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const monthNames = loc.monthNames || ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     const startDay = dayNames[start.getDay()];
     const endDay = dayNames[end.getDay()];
@@ -106,12 +107,26 @@ function formatWeekRange(startDateStr) {
 async function apiCall(url, options = {}) {
     try {
         console.log('API Call:', url, options);
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...options.headers
+        };
+
+        // Add CSRF token for state-changing requests
+        const method = (options.method || 'GET').toUpperCase();
+        if (method !== 'GET' && method !== 'HEAD') {
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (csrfToken) {
+                headers['RequestVerificationToken'] = csrfToken;
+            }
+        }
+
         const response = await fetch(url, {
             ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
+            headers: headers,
+            credentials: 'same-origin'
         });
 
         console.log('API Response:', response.status, response.statusText);
@@ -146,23 +161,28 @@ async function loadCalendars() {
 
         if (calendars.length === 0) {
             // No calendars, prompt to create one
-            document.getElementById('calendarName').textContent = window.MyTeamLocalization.noCalendars;
-            document.getElementById('weekGridContainer').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <h3>${window.MyTeamLocalization.noTeamCalendars}</h3>
-                    <p>${window.MyTeamLocalization.createFirstCalendar}</p>
-                    <button class="btn btn-primary" onclick="document.getElementById('btnNewCalendar').click()">
-                        ${window.MyTeamLocalization.createCalendar}
-                    </button>
-                </div>
-            `;
+            const calNameEl = document.getElementById('calendarName');
+            if (calNameEl) calNameEl.textContent = window.MyTeamLocalization.noCalendars;
+            const weekGridEl = document.getElementById('weekGridContainer');
+            if (weekGridEl) {
+                weekGridEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>${window.MyTeamLocalization.noTeamCalendars}</h3>
+                        <p>${window.MyTeamLocalization.createFirstCalendar}</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('btnNewCalendar')?.click()">
+                            ${window.MyTeamLocalization.createCalendar}
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
 
         // Load first calendar by default
         currentCalendarId = calendars[0].id;
-        document.getElementById('calendarName').textContent = calendars[0].name;
+        const calNameDisplay = document.getElementById('calendarName');
+        if (calNameDisplay) calNameDisplay.textContent = calendars[0].name;
         loadWeekView();
     } catch (error) {
         console.error('Failed to load calendars:', error);
@@ -173,6 +193,7 @@ async function loadWeekView() {
     if (!currentCalendarId) return;
 
     const container = document.getElementById('weekGridContainer');
+    if (!container) return;
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
     try {
@@ -181,15 +202,18 @@ async function loadWeekView() {
         console.log('Week view data:', data);
 
         // Update week range display
-        document.getElementById('weekRange').textContent = formatWeekRange(currentWeekStart);
+        const weekRangeEl = document.getElementById('weekRange');
+        if (weekRangeEl) weekRangeEl.textContent = formatWeekRange(currentWeekStart);
 
         if (!data.members || data.members.length === 0) {
-            document.getElementById('emptyState').style.display = 'block';
+            const emptyEl = document.getElementById('emptyState');
+            if (emptyEl) emptyEl.style.display = 'block';
             container.innerHTML = '';
             return;
         }
 
-        document.getElementById('emptyState').style.display = 'none';
+        const emptyStateEl = document.getElementById('emptyState');
+        if (emptyStateEl) emptyStateEl.style.display = 'none';
         renderWeekGrid(data.members);
     } catch (error) {
         console.error('Failed to load week view:', error);
@@ -266,7 +290,8 @@ function renderWeekGrid(members) {
     html += `</div>`;
 
     console.log('Generated HTML:', html.substring(0, 500));
-    document.getElementById('weekGridContainer').innerHTML = html;
+    const gridContainer = document.getElementById('weekGridContainer');
+    if (gridContainer) gridContainer.innerHTML = html;
 }
 
 function renderDayCell(day, isMobile) {
@@ -377,6 +402,7 @@ function openSwitchCalendarModal() {
 
 function renderCalendarList() {
     const container = document.getElementById('calendarListContainer');
+    if (!container) return;
 
     if (calendars.length === 0) {
         container.innerHTML = `<div class="empty-state"><p>${window.MyTeamLocalization.noCalendarsAvailable}</p></div>`;
@@ -412,7 +438,8 @@ function switchToCalendar(calendarId) {
     currentCalendarId = calendarId;
     const calendar = calendars.find(c => c.id === calendarId);
     if (calendar) {
-        document.getElementById('calendarName').textContent = calendar.name;
+        const calNameEl = document.getElementById('calendarName');
+        if (calNameEl) calNameEl.textContent = calendar.name;
     }
     closeModal('modalSwitchCalendar');
     loadWeekView();
@@ -421,31 +448,41 @@ function switchToCalendar(calendarId) {
 function openNewCalendarModal() {
     calendarFormMode = 'create';
     renameCalendarId = null;
-    document.getElementById('calendarFormTitle').textContent = window.MyTeamLocalization.newCalendar;
-    document.getElementById('inputCalendarName').value = '';
-    openModal('modalCalendarForm');
-    document.getElementById('inputCalendarName').focus();
+    const formTitle = document.getElementById('calendarFormTitle');
+    if (formTitle) formTitle.textContent = window.MyTeamLocalization.newCalendar;
+    const inputName = document.getElementById('inputCalendarName');
+    if (inputName) {
+        inputName.value = '';
+        openModal('modalCalendarForm');
+        inputName.focus();
+    } else {
+        openModal('modalCalendarForm');
+    }
 }
 
 function openRenameCalendarModal(calendarId, currentName) {
     calendarFormMode = 'rename';
     renameCalendarId = calendarId;
-    document.getElementById('calendarFormTitle').textContent = window.MyTeamLocalization.renameCalendarTitle;
-    document.getElementById('inputCalendarName').value = currentName;
+    const formTitle = document.getElementById('calendarFormTitle');
+    if (formTitle) formTitle.textContent = window.MyTeamLocalization.renameCalendarTitle;
+    const inputName = document.getElementById('inputCalendarName');
+    if (inputName) inputName.value = currentName;
     openModal('modalCalendarForm');
     closeModal('modalSwitchCalendar');
-    document.getElementById('inputCalendarName').focus();
+    if (inputName) inputName.focus();
 }
 
 function openDeleteCalendarModal(calendarId, calendarName) {
     deleteCalendarId = calendarId;
-    document.getElementById('deleteCalendarName').textContent = calendarName;
+    const deleteNameEl = document.getElementById('deleteCalendarName');
+    if (deleteNameEl) deleteNameEl.textContent = calendarName;
     openModal('modalDeleteConfirm');
     closeModal('modalSwitchCalendar');
 }
 
 async function saveCalendar() {
-    const name = document.getElementById('inputCalendarName').value.trim();
+    const inputEl = document.getElementById('inputCalendarName');
+    const name = inputEl ? inputEl.value.trim() : '';
 
     if (!name) {
         alert(window.MyTeamLocalization.pleaseEnterCalendarName);
@@ -466,7 +503,8 @@ async function saveCalendar() {
 
             calendars.push(newCalendar);
             currentCalendarId = newCalendar.id;
-            document.getElementById('calendarName').textContent = newCalendar.name;
+            const newCalNameEl = document.getElementById('calendarName');
+            if (newCalNameEl) newCalNameEl.textContent = newCalendar.name;
             closeModal('modalCalendarForm');
             loadWeekView();
         } else {
@@ -479,7 +517,8 @@ async function saveCalendar() {
             if (calendar) {
                 calendar.name = name;
                 if (renameCalendarId === currentCalendarId) {
-                    document.getElementById('calendarName').textContent = name;
+                    const renameCalNameEl = document.getElementById('calendarName');
+                    if (renameCalNameEl) renameCalNameEl.textContent = name;
                 }
             }
 
@@ -508,8 +547,10 @@ async function confirmDeleteCalendar() {
                 switchToCalendar(calendars[0].id);
             } else {
                 currentCalendarId = null;
-                document.getElementById('calendarName').textContent = window.MyTeamLocalization.noCalendars;
-                document.getElementById('weekGridContainer').innerHTML = `<div class="empty-state"><h3>${window.MyTeamLocalization.noCalendars}</h3></div>`;
+                const delCalNameEl = document.getElementById('calendarName');
+                if (delCalNameEl) delCalNameEl.textContent = window.MyTeamLocalization.noCalendars;
+                const delGridEl = document.getElementById('weekGridContainer');
+                if (delGridEl) delGridEl.innerHTML = `<div class="empty-state"><h3>${window.MyTeamLocalization.noCalendars}</h3></div>`;
             }
         }
 
@@ -530,6 +571,7 @@ async function openConfigureMembersModal() {
 
     openModal('modalConfigureMembers');
     const container = document.getElementById('memberSelectorContainer');
+    if (!container) return;
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
     try {
@@ -548,6 +590,7 @@ async function openConfigureMembersModal() {
 
 function renderMemberSelector() {
     const container = document.getElementById('memberSelectorContainer');
+    if (!container) return;
 
     const html = `
         <div class="member-selector">
@@ -608,6 +651,7 @@ function toggleMember(userId) {
 function filterMembers(listType, searchTerm) {
     const listId = listType === 'current' ? 'currentMembersList' : 'availableMembersList';
     const list = document.getElementById(listId);
+    if (!list) return;
     const items = list.querySelectorAll('.member-item');
 
     const lowerSearch = searchTerm.toLowerCase();
@@ -644,11 +688,11 @@ async function saveMembers() {
 // ===== MODAL HELPERS =====
 
 function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
+    document.getElementById(modalId)?.classList.add('active');
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    document.getElementById(modalId)?.classList.remove('active');
 }
 
 // ===== UTILITY =====
@@ -738,7 +782,8 @@ function optimisticSwitchCalendar(calendarId) {
     const calendar = calendars.find(c => c.id === calendarId);
     if (calendar) {
         // Immediately update UI
-        document.getElementById('calendarName').textContent = calendar.name;
+        const optCalNameEl = document.getElementById('calendarName');
+        if (optCalNameEl) optCalNameEl.textContent = calendar.name;
 
         // Update active state in calendar list
         document.querySelectorAll('.calendar-card').forEach(card => {

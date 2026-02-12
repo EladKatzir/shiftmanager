@@ -143,6 +143,49 @@
             Must be a Tech-type molecule.
             </summary>
         </member>
+        <member name="T:ShiftManager.Controllers.Api.V1.AdminGrantsController">
+            <summary>
+            API controller for admin grant verification and management operations.
+            Allows checking and repairing user grants against expected role templates.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Controllers.Api.V1.AdminGrantsController.VerifyAllGrants">
+            <summary>
+            Verifies all users have expected grants based on their role templates.
+            Returns a list of users with missing or extra grants.
+            </summary>
+            <returns>List of grant verification results</returns>
+        </member>
+        <member name="M:ShiftManager.Controllers.Api.V1.AdminGrantsController.VerifyUserGrants(System.Int32)">
+            <summary>
+            Verifies a specific user's grants against their role template.
+            </summary>
+            <param name="userId">User ID to verify</param>
+            <returns>Grant verification result for the user</returns>
+        </member>
+        <member name="M:ShiftManager.Controllers.Api.V1.AdminGrantsController.RepairAllGrants">
+            <summary>
+            Repairs grants for all non-compliant users by adding missing grants.
+            </summary>
+            <returns>Repair summary</returns>
+        </member>
+        <member name="M:ShiftManager.Controllers.Api.V1.AdminGrantsController.RepairUserGrants(System.Int32)">
+            <summary>
+            Repairs grants for a specific user by adding missing grants.
+            </summary>
+            <param name="userId">User ID to repair</param>
+            <returns>Repair summary</returns>
+        </member>
+        <member name="T:ShiftManager.Controllers.Api.V1.GrantVerificationResponse">
+            <summary>
+            Response model for grant verification endpoint.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Controllers.Api.V1.GrantRepairResponse">
+            <summary>
+            Response model for grant repair endpoint.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Controllers.Api.V1.AnalyticsController">
             <summary>
             API controller for analytics and aggregate metrics.
@@ -615,6 +658,8 @@
             <summary>
             Seed data for initial feature flags.
             All flags are created as global (no CompanyId/UserId) and disabled by default.
+            Production recommended values are documented in appsettings.Production.json under "FeatureFlagDefaults".
+            After deployment, enable flags via OwnerHub > Feature Flags page.
             </summary>
         </member>
         <member name="M:ShiftManager.Data.SeedData.FeatureFlagSeed.GetFeatureFlags">
@@ -635,6 +680,23 @@
             
              System molecule contains SystemAdmins company for administrative users (Owner, etc.)
              </summary>
+        </member>
+        <member name="T:ShiftManager.Data.SeedData.TechShiftTypeSeed">
+            <summary>
+            Seed data for tech shift types (Hanava, Delta, Yekev, Moviltech).
+            These are department-scoped shift types used for technician scheduling.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetTechShiftTypes(System.Int32)">
+            <summary>
+            Gets the tech shift types to be seeded for a given company.
+            Each tech shift type maps to a department-scoped grant for eligibility filtering.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Data.SeedData.TechShiftTypeSeed.AllTechShiftTypeKeys">
+            <summary>
+            All known tech shift type keys.
+            </summary>
         </member>
         <member name="T:ShiftManager.Data.SeedData.TestDataSeed">
              <summary>
@@ -1110,6 +1172,71 @@
             <param name="maxLength">Maximum length before truncation (default: 30)</param>
             <returns>Truncated text with ellipsis if needed</returns>
         </member>
+        <member name="T:ShiftManager.Hubs.CalendarHub">
+            <summary>
+            SignalR hub for real-time calendar updates.
+            Clients join groups based on calendar scope (molecule+jobtype, area, company).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.JoinCalendarGroup(System.String)">
+            <summary>
+            Join a calendar group to receive updates for that scope.
+            Group names follow pattern: "{calendarType}-{scope}"
+            Examples: "shifts-5-3" (moleculeId=5, jobTypeId=3), "oncall-2" (areaId=2), "overview-7" (companyId=7)
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.LeaveCalendarGroup(System.String)">
+            <summary>
+            Leave a calendar group (e.g., when switching filters or leaving page).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.OnDisconnectedAsync(System.Exception)">
+            <summary>
+            Called when client disconnects - cleanup is automatic.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.OnConnectedAsync">
+            <summary>
+            Called when client connects - log for debugging.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.ValidateGroupAccessAsync(System.String)">
+            <summary>
+            Validates that the current user is authorized to join the requested group.
+            Prevents cross-tenant real-time data leaks by checking group scope against user's company.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.MoleculeBelongsToCompanyAsync(System.Int32,System.Int32)">
+            <summary>
+            Checks if the given molecule is associated with the user's company.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.AreaBelongsToCompanyAsync(System.Int32,System.Int32)">
+            <summary>
+            Checks if the given area is associated with the user's company (via molecule).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Hubs.CalendarAssignmentChangedEvent">
+            <summary>
+            DTOs for calendar events sent via SignalR.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarAssignmentChangedEvent.#ctor(System.Int32,System.Nullable{System.Int32},System.String,System.DateOnly,System.Int32,System.String,System.String)">
+            <summary>
+            DTOs for calendar events sent via SignalR.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Hubs.ICalendarNotificationService">
+            <summary>
+            Service for sending calendar updates to connected clients.
+            Inject this into services/controllers that modify calendar data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Hubs.CalendarGroups">
+            <summary>
+            Helper class for building calendar group names.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Middleware.ApiAuthenticationMiddleware">
             <summary>
             Authenticates API requests using X-API-Key header.
@@ -1128,9 +1255,10 @@
             These are Razor Page endpoints used by authenticated users in the browser.
             </summary>
         </member>
-        <member name="M:ShiftManager.Middleware.ApiAuthenticationMiddleware.HashApiKey(System.String)">
+        <member name="M:ShiftManager.Middleware.ApiAuthenticationMiddleware.HashApiKey(System.String,System.String)">
             <summary>
-            Hashes an API key using SHA256
+            Hashes an API key using HMAC-SHA256 with a server secret.
+            Prevents rainbow table attacks on DB compromise (fixes D-04).
             </summary>
         </member>
         <member name="M:ShiftManager.Middleware.ApiAuthenticationMiddleware.WriteUnauthorizedResponse(Microsoft.AspNetCore.Http.HttpContext,System.String)">
@@ -1216,6 +1344,13 @@
             Middleware that ensures CompanyContext is populated early in the request pipeline.
             This allows downstream middleware and handlers to access the company context.
             Multitenancy Phase 2: Context infrastructure
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Middleware.CorrelationIdMiddleware">
+            <summary>
+            Adds a correlation ID to each request for distributed tracing.
+            Checks for existing X-Correlation-Id header, generates one if missing.
+            Adds the ID to the response headers and log scope.
             </summary>
         </member>
         <member name="T:ShiftManager.Middleware.GriffinAuthenticationMiddleware">
@@ -1890,6 +2025,120 @@
         <member name="M:ShiftManager.Migrations.AddMoleculeIdToChore.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddAnnouncements">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAnnouncements.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAnnouncements.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAnnouncements.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddMilitaryRankToAppUser">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMilitaryRankToAppUser.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMilitaryRankToAppUser.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMilitaryRankToAppUser.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddRequiresOfficerRankToOnDutyTypeConfig">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddRequiresOfficerRankToOnDutyTypeConfig.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddRequiresOfficerRankToOnDutyTypeConfig.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddRequiresOfficerRankToOnDutyTypeConfig.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddExcelCalendarTables">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddExcelCalendarTables.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddExcelCalendarTables.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddExcelCalendarTables.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.ChangeShiftCapacityOverrideDeleteBehavior">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ChangeShiftCapacityOverrideDeleteBehavior.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ChangeShiftCapacityOverrideDeleteBehavior.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ChangeShiftCapacityOverrideDeleteBehavior.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddDutyRotationTables">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDutyRotationTables.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDutyRotationTables.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddVacationApprovalRules">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddVacationApprovalRules.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddVacationApprovalRules.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddCompanyIdToDutyRotation">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyIdToDutyRotation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyIdToDutyRotation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyIdToDutyRotation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddMustChangePasswordFlag">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMustChangePasswordFlag.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMustChangePasswordFlag.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMustChangePasswordFlag.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddOnboardingFlag">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddOnboardingFlag.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddOnboardingFlag.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddOnboardingFlag.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -1923,6 +2172,66 @@
         <member name="T:ShiftManager.Models.Analytics.TopSwapperDto">
             <summary>
             Top swap requester
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.AnnouncementScope">
+            <summary>
+            Announcement visibility scope enumeration
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Announcement">
+            <summary>
+            Company-wide announcement model for the announcements feed
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.Title">
+            <summary>
+            Announcement title/headline
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.Content">
+            <summary>
+            Full announcement content (supports markdown)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.CreatedBy">
+            <summary>
+            Who created the announcement
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.CreatedAt">
+            <summary>
+            When announcement was created
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.ExpiresAt">
+            <summary>
+            Optional expiration date (null = never expires)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.Scope">
+            <summary>
+            Visibility scope
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.TargetDepartmentId">
+            <summary>
+            Target department ID (when Scope = Department)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.TargetRole">
+            <summary>
+            Target role (when Scope = Role)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.IsPinned">
+            <summary>
+            Whether announcement is pinned to top
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Announcement.IsActive">
+            <summary>
+            Whether announcement is active
             </summary>
         </member>
         <member name="T:ShiftManager.Models.ApiErrorResponse">
@@ -2553,6 +2862,12 @@
             Helper method to create an internal server error problem
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.AppUser.Rank">
+            <summary>
+            User's military rank. Used for duty eligibility (e.g., Katzin requires officer rank).
+            Defaults to Turai (lowest enlisted rank) for backward compatibility.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.AuditLog">
             <summary>
             Audit log entry for tracking all significant actions in the system.
@@ -2634,6 +2949,11 @@
             <summary>
             The molecule this chore belongs to (for scoping).
             Nullable for legacy chores created before molecule scoping was added.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Chore.ChoreTypeId">
+            <summary>
+            The type of chore (for calendar categorization).
             </summary>
         </member>
         <member name="P:ShiftManager.Models.Chore.UserId">
@@ -2990,6 +3310,31 @@
         <member name="P:ShiftManager.Models.EmailTemplateCustomization.UpdatedBy">
             <summary>
             User ID who last updated this template.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Export.ScheduleExportRequest.DepartmentId">
+            <summary>
+            Optional: Filter by specific department
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Export.ScheduleExportRequest.JobTypeId">
+            <summary>
+            Optional: Filter by specific job type
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Export.ScheduleExportRequest.IncludeEmployeeNames">
+            <summary>
+            Include employee names or just counts
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Export.ScheduleExportRequest.IncludeChores">
+            <summary>
+            Include chores in export
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Export.ScheduleExportRequest.IncludeOnDuty">
+            <summary>
+            Include on-duty assignments
             </summary>
         </member>
         <member name="T:ShiftManager.Models.FeatureFlag">
@@ -3351,6 +3696,12 @@
             Whether this type is active
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.OnDutyTypeConfig.RequiresOfficerRank">
+            <summary>
+            If true, only officers (rank >= SegenMishne) can be assigned this duty type.
+            Used for Katzin duties.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.OnDutyTypeConfig.CreatedAt">
             <summary>
             Created timestamp
@@ -3527,6 +3878,17 @@
         <member name="P:ShiftManager.Models.Support.GriffinConnectionTestResult.ValidationErrors">
             <summary>
             List of validation errors (if URL format invalid, etc.)
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.MilitaryRank">
+            <summary>
+            IDF military rank system for eligibility checks.
+            Enlisted ranks are 0-8, Officers are 9+.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.MilitaryRankExtensions.GetBadgeClass(ShiftManager.Models.Support.MilitaryRank)">
+            <summary>
+            Returns CSS class name for rank badge styling.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Support.ShiftInstanceOverride">
@@ -4062,7 +4424,7 @@
             <summary>
             Admin Hub - Central dashboard for management and configuration.
             ✅ P2-1: Unified entry point for all administrative tasks.
-            Visible to Manager, Director, and Owner with role-based sections.
+            Visible to users with AccessAdminNavigation grant.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Admin.Organization.Hierarchy.IndexModel">
@@ -4071,10 +4433,29 @@
             Provides quick navigation and edit links for each level
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.CanModifyUserAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Check if current user has permission to modify a user with the specified role in the target company.
+            ✅ Grant-based: Uses EditCompanyUsers grant with company scope instead of role hierarchy.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.CanModifyUser(ShiftManager.Models.Support.UserRole)">
             <summary>
-            Check if current user has permission to modify a user with the specified role.
-            Uses the same role hierarchy as CanAssignRole.
+            Legacy synchronous check - kept for backward compatibility during migration.
+            Prefer CanModifyUserAsync for new code.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole)">
+            <summary>
+            Maps UserRole enum to the corresponding RoleTemplate key.
+            Used for grant assignment during onboarding.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.UsersModel.BulkImportFile">
+            <summary>
+            I-07: Bulk user import from CSV file.
+            Expected CSV format: Email,DisplayName,Password,Role,Phone,DepartmentName
+            First row is treated as header and skipped.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.DeleteChoreModel">
@@ -4087,6 +4468,27 @@
             ✅ PHASE 20: API endpoint to delete on-duty assignments from calendar views
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetChoresDataModel">
+            <summary>
+            API endpoint for shadow refresh of Chores calendar data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetOnCallDataModel">
+            <summary>
+            API endpoint for shadow refresh of On-Call (Day Shifts) calendar data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetOverviewDataModel">
+            <summary>
+            API endpoint for shadow refresh of Overview calendar data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetShiftsDataModel">
+            <summary>
+            API endpoint for shadow refresh of Shifts calendar data.
+            Returns cell-level data for the current view without requiring full page reload.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.QuickAddChoreModel">
             <summary>
             ✅ PHASE 20: API endpoint to quickly create chores from calendar views
@@ -4095,6 +4497,13 @@
         <member name="T:ShiftManager.Pages.Api.Calendar.QuickAddOnDutyModel">
             <summary>
             ✅ PHASE 20: API endpoint to quickly create on-duty assignments from calendar views
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.ShiftHistoryModel">
+            <summary>
+            Returns shift assignment history for a specific user or shift instance.
+            Pulls data from AuditLog entries related to shift assignments (QA Item 63 / I-02).
+            Used by calendar UI to show "what happened to my shifts" for support triage.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.Game.GetConfigurationModel">
@@ -4117,10 +4526,52 @@
             ✅ PHASE 19: API endpoint to save game scores to the leaderboard
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.Hierarchy.CreateModel">
+            <summary>
+            API endpoint to create new hierarchy entities.
+            POST /Api/Hierarchy/Create
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Hierarchy.DeleteModel">
+            <summary>
+            API endpoint to delete (soft-delete) hierarchy entities.
+            POST /Api/Hierarchy/Delete
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Hierarchy.MoveModel">
+            <summary>
+            API endpoint to move hierarchy entities to a new parent.
+            POST /Api/Hierarchy/Move
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Hierarchy.MoveTargetsModel">
+            <summary>
+            API endpoint to get valid move targets for a hierarchy entity.
+            GET /Api/Hierarchy/MoveTargets?entityType=area&amp;entityId=1
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Hierarchy.RenameModel">
+            <summary>
+            API endpoint to rename hierarchy entities (inline edit).
+            POST /Api/Hierarchy/Rename
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Hierarchy.ReorderModel">
+            <summary>
+            API endpoint to reorder hierarchy entities (drag-drop reordering).
+            POST /Api/Hierarchy/Reorder
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.LocalizationModel">
             <summary>
             API endpoint for client-side JavaScript localization
             Fetches localized strings for given keys, respecting current culture and company overrides
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.OnDuty.GetEligibleUsersModel">
+            <summary>
+            API endpoint to get eligible users for a specific on-duty type.
+            Returns users with their rank information for dropdown population.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.ScopeSwitcherModel">
@@ -4274,9 +4725,26 @@
             Simple rate limiting by IP address.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.TruncateField(System.String,System.Int32)">
+            <summary>
+            D-08: Truncate field to maximum length to prevent data stuffing / storage abuse.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Api.TelemetryModel.ParseBrowserInfo(System.String)">
             <summary>
             Parses browser information from user agent string.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Auth.ForgotPasswordModel.RedactEmail(System.String)">
+            <summary>
+            E-01: Redact email for safe logging. Shows first 2 chars + domain.
+            Example: "john.doe@army.mil" → "jo***@army.mil"
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.ChoresModel">
+            <summary>
+            Excel-style Chores Calendar page - Shows chore assignments by user across dates.
+            Chores are molecule-scoped (cross-company within molecule).
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Calendar.DayModel">
@@ -4315,10 +4783,28 @@
             Returns null if the date cannot be created.
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Calendar.IndexModel">
+            <summary>
+            Calendar landing page - entry point to all calendar types.
+            Displays premium cards for Shifts, Chores, On-Call, and Overview calendars.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Calendar.MonthModel">
             <summary>
             ✅ PHASE 20: Monthly calendar view - Read-only unified view of shifts, chores, and on-duty
             ✅ A-018: Scope switcher integration for filtering by mine/company/molecule/area
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.MonthModel.StartDate">
+            <summary>
+            Start date of the calendar grid (first visible date, may be in previous month)
+            Used for schedule export functionality
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.MonthModel.EndDate">
+            <summary>
+            End date of the calendar grid (last visible date, may be in next month)
+            Used for schedule export functionality
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.MonthModel.LoadShiftsAsync(System.Collections.Generic.List{System.Int32},System.Collections.Generic.List{System.DateOnly},System.Int32)">
@@ -4347,6 +4833,30 @@
             - Year boundaries (Dec -> Jan)
             - Invalid month/year values
             Returns null if the date cannot be created.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.OnCallModel">
+            <summary>
+            Excel-style On-Call (Day Shifts) Calendar page - Shows duty types as rows, dates as columns.
+            On-Duty assignments are global (cross-company), optionally filtered by area.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.OnCallModel.DutyTypeInfo">
+            <summary>
+            Info about a duty type (built-in or custom)
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.OverviewModel">
+            <summary>
+            Excel-style Overview Calendar page - View-only aggregation of all user data.
+            Company-scoped: shows users in current company as rows, days as columns.
+            Each cell shows aggregated status (vacations, shifts, chores, on-duty) plus notes.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.ShiftsModel">
+            <summary>
+            Excel-style Shifts Calendar page - Primary deliverable for Excel Calendars feature.
+            Supports shift-based and user-based view modes with molecule/job type filtering.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.OnPostDetachInstanceAsync(ShiftManager.Pages.Calendar.TableModel.DetachInstanceRequest)">
@@ -4427,7 +4937,14 @@
         </member>
         <member name="T:ShiftManager.Pages.Game.LeaderboardModel">
             <summary>
-            ✅ PHASE 19: Leaderboard page showing top game scores
+            Leaderboard page showing top game scores — company-scoped (E-08 fix)
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Game.LeaderboardModel.AbbreviateName(System.String,System.Boolean)">
+            <summary>
+            Abbreviates a name for OPSEC on public leaderboard (B-11).
+            Full names are not shown — only first name + last initial.
+            Current user sees their own full name.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.LocalizedPageModel">
@@ -4464,6 +4981,12 @@
         <member name="T:ShiftManager.Pages.Owner.BackupModel">
             <summary>
             Backup and Restore - Manage database backups.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.BackupModel.GetValidatedBackupPath(System.String)">
+            <summary>
+            Validates backup filename to prevent path traversal attacks.
+            Returns the safe full path or null if validation fails.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.BlueprintsModel">
@@ -4539,10 +5062,96 @@
             Game Configuration - Configure Shift Swap match-3 game settings
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Owner.Hub.AuditSearchModel">
+            <summary>
+            OwnerHub Audit Log Search - Cross-tenant audit log search with filtering and pagination.
+            Provides entity type, user, date range, and action type filtering with paginated results.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.AuditSearchModel.SanitizeCsvField(System.String)">
+            <summary>
+            Sanitizes a field value for CSV export to prevent formula injection.
+            Values starting with =, +, -, @, tab, or CR are prefixed with a single quote.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Owner.Hub.ExportUserDataModel">
+            <summary>
+            Exports all user data as JSON (GDPR-style data portability).
+            QA Item 65 / E-06.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Owner.Hub.GrantsModel">
+            <summary>
+            Grant Management UI - Unified page for managing grant types, role templates, and user grants.
+            Supports CanGive delegation with depth limiting.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnGetSearchUsersAsync(System.String)">
+            <summary>
+            Search users for grant assignment
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnGetUserGrantsAsync(System.Int32)">
+            <summary>
+            Get user's current grants
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnPostAssignGrantAsync(ShiftManager.Pages.Owner.Hub.GrantsModel.AssignGrantRequest)">
+            <summary>
+            Assign a grant to a user
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnPostRevokeGrantAsync(ShiftManager.Pages.Owner.Hub.GrantsModel.RevokeGrantRequest)">
+            <summary>
+            Revoke a grant from a user
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnPostUpdateGrantDelegationAsync(ShiftManager.Pages.Owner.Hub.GrantsModel.UpdateDelegationRequest)">
+            <summary>
+            Update CanGive on an existing grant
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnGetRoleTemplateAsync(System.Int32)">
+            <summary>
+            Get role template details with grants
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnPostAddRoleTemplateGrantAsync(ShiftManager.Pages.Owner.Hub.GrantsModel.AddRoleTemplateGrantRequest)">
+            <summary>
+            Add a grant to a role template
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnPostUpdateRoleTemplateGrantAsync(ShiftManager.Pages.Owner.Hub.GrantsModel.UpdateRoleTemplateGrantRequest)">
+            <summary>
+            Update a role template grant
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnPostRemoveRoleTemplateGrantAsync(ShiftManager.Pages.Owner.Hub.GrantsModel.RemoveRoleTemplateGrantRequest)">
+            <summary>
+            Remove a grant from a role template
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.Hub.GrantsModel.OnGetGrantTypeUsageAsync(System.Int32)">
+            <summary>
+            Get which role templates include a specific grant type
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Owner.Hub.IndexModel">
+            <summary>
+            OwnerHub - Consolidated dashboard for system-wide administration.
+            Provides 7 category cards: Hierarchy, People, Grants, Scheduling, Settings, Analytics, Seed Data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Owner.Hub.SeedDataModel">
+            <summary>
+            SeedData diagnostic page - Shows seed status, allows seeding, and displays diagnostic info.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Owner.IndexModel">
             <summary>
-            Owner Administration Panel - Main Dashboard
-            Provides overview and quick access to developer/owner tools
+            Owner Administration Panel - Legacy Dashboard
+            DEPRECATED: Redirects to new Owner Hub (/Owner/Hub)
+            Kept for backward compatibility with bookmarks and external links
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.LanguageEditModeModel">
@@ -4565,6 +5174,12 @@
         <member name="T:ShiftManager.Pages.Owner.SaveDraftsRequest">
             <summary>
             Request model for saving draft translations
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Owner.LockedUsersModel">
+            <summary>
+            Page for viewing and unlocking locked user accounts.
+            Fixes A-06, I-01, I-05.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.MasterProgramsModel">
@@ -4630,16 +5245,18 @@
             <summary>
             Page handler for Owner to select which company to manage.
             Sets cookie with selected company ID for multi-company management.
+            D-03: POST-only (no GET) to prevent CSRF via link. Rate-limited. IP logged.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Owner.SelectCompanyModel.OnGetAsync(System.Int32,System.String)">
+        <member name="M:ShiftManager.Pages.Owner.SelectCompanyModel.OnGet">
             <summary>
-            GET handler - allows company selection via URL (e.g., from context switcher).
+            D-03: GET removed — company switching is POST-only to prevent CSRF via link.
+            Redirect to Owner hub instead.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Owner.SelectCompanyModel.OnPostAsync(System.Int32,System.String)">
             <summary>
-            POST handler - allows company selection via form submission.
+            POST handler - allows company selection via form submission (anti-forgery token required).
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.SystemHealthModel">
@@ -4675,7 +5292,7 @@
         </member>
         <member name="M:ShiftManager.Services.ApiKeyService.HashApiKey(System.String)">
             <summary>
-            Hashes an API key using SHA256
+            Hashes an API key using HMAC-SHA256 with server secret (fixes D-04).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.Api.ChoreApiService">
@@ -4931,6 +5548,11 @@
             Returns (user, error) tuple - if error is not null, user will be null.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.Api.UserApiService.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole)">
+            <summary>
+            Maps UserRole enum to the corresponding RoleTemplate key.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.Api.UserApiService.UpdateUserAsync(System.Int32,System.Int32,System.String,System.String,System.Nullable{System.Boolean},System.String,System.String,System.String)">
             <summary>
             Updates an existing user via API.
@@ -5040,25 +5662,22 @@
         </member>
         <member name="M:ShiftManager.Services.ChoreService.CanUserManageChoresAsync(System.Int32)">
             <summary>
-            Check if current user can manage chores (Manager+, Assigner)
+            Check if current user can manage chores.
+            ✅ Grant-based: Uses AssignChores grant instead of role checks.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.CanUserManageChoreForAssigneeAsync(System.Int32,System.Int32)">
             <summary>
-            Check if manager can assign chore to a specific assignee
-            - Manager can assign to employees and other managers in their company
-            - Directors cannot be assigned chores
-            - Directors can assign across companies they manage
-            - Assigner can only assign within their own company
+            Check if manager can assign chore to a specific assignee.
+            ✅ Grant-based: Uses AssignChores grant with company scope instead of role checks.
+            Business rule: Directors cannot be assigned chores (enforced separately).
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.GetEligibleAssigneesAsync">
             <summary>
-            Get list of users eligible for chore assignment (excludes Directors, includes current user's scope)
-            </summary>
-            <summary>
-            Phase 8.1: Fixed to show all active users in dropdown (Director filter removed)
-            Business rule "Directors cannot be assigned chores" is enforced at assignment time in CanUserManageChoreForAssigneeAsync
+            Get list of users eligible for chore assignment.
+            ✅ Grant-based: Uses AssignChores grant scope to determine visible users.
+            Business rule "Directors cannot be assigned chores" is enforced at assignment time in CanUserManageChoreForAssigneeAsync.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.HasActiveChoreOnDateAsync(System.Int32,System.DateOnly)">
@@ -5204,11 +5823,53 @@
         <member name="M:ShiftManager.Services.ConcurrencyService.SaveWithConcurrencyHandlingAsync(System.Func{System.Threading.Tasks.Task{System.Int32}},System.String,System.Nullable{System.Int32})">
             <inheritdoc />
         </member>
+        <member name="M:ShiftManager.Services.ConflictChecker.MergeAndSumHours(System.Collections.Generic.List{System.ValueTuple{System.DateTime,System.DateTime}})">
+            <summary>
+            A-02: Merges overlapping time windows and sums total unique hours.
+            Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
+            should count as 8hr, not 16hr).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ConflictChecker.LogAndFail(System.Int32,System.Int32,System.String,System.String)">
+            <summary>
+            F-01: Log every conflict failure with structured data for metrics/monitoring.
+            Use grep for "ConflictBlocked" to count and categorize failures.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.DailyNotificationJob">
             <summary>
             Phase 6: Background service that sends daily digest emails to users based on their preferences.
             Runs every 15 minutes to check for users whose preferred time matches the current time.
             Can be disabled via configuration flag: Features:EnableDailyNotifications
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.DatabaseBackupService">
+            <summary>
+            Background service that automatically backs up the SQLite database.
+            - Runs backup on startup
+            - Daily scheduled backups (configurable time)
+            - 7-day rotation (configurable retention)
+            - Logs every backup with file size and SHA256 checksum
+            Fixes: C-02 (no automated backup), E-07 (backup Owner-only dependency)
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DatabaseBackupService.PerformBackupAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Performs a backup of the SQLite database file.
+            Can be called externally for manual/on-demand backups.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DatabaseBackupService.CleanupOldAuditLogsAsync(System.Threading.CancellationToken)">
+            <summary>
+            E-02: Remove audit log entries older than configured retention period.
+            Anonymizes PII in old entries before deletion for compliance.
+            Config: AuditLog:RetentionDays (default 365)
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DatabaseBackupService.EncryptFileAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            D-10: Encrypt a file with AES-256-CBC using PBKDF2-derived key.
+            File format: [16-byte salt][16-byte IV][encrypted data]
             </summary>
         </member>
         <member name="T:ShiftManager.Services.EmailApiLogService">
@@ -5232,6 +5893,39 @@
             <summary>
             Serializes an object to JSON string.
             Returns null if serialization fails.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.EmailBackgroundProcessor">
+            <summary>
+            Background service that processes queued emails from the EmailBackgroundQueue.
+            Creates a new DI scope per email to properly resolve scoped services (IEmailConfigService, etc.).
+            Falls back to appsettings.json config when no tenant context is available.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.QueuedEmail">
+            <summary>
+            Queued email item containing all data needed for sending.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.QueuedEmail.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Queued email item containing all data needed for sending.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.EmailBackgroundQueue">
+            <summary>
+            Singleton bounded channel for background email delivery.
+            Emails are enqueued by MailService.SendMailAsync and processed by EmailBackgroundProcessor.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.EmailBackgroundQueue.Enqueue(ShiftManager.Services.QueuedEmail)">
+            <summary>
+            Enqueues an email for background delivery. Returns false if the queue is full.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.EmailBackgroundQueue.Reader">
+            <summary>
+            Reader for the background processor to consume queued emails.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.EmailConfigService">
@@ -5323,12 +6017,21 @@
         <member name="M:ShiftManager.Services.FeatureFlagService.DeleteFlagAsync(System.Int32)">
             <inheritdoc/>
         </member>
-        <member name="M:ShiftManager.Services.FeatureFlagService.InvalidateCache(System.String)">
+        <member name="M:ShiftManager.Services.FeatureFlagService.InvalidateCache(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
             <inheritdoc/>
         </member>
         <member name="M:ShiftManager.Services.FeatureFlagService.BuildCacheKey(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
             <summary>
             Builds a cache key for a specific flag/scope combination.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.GracefulShutdownService">
+            <summary>
+            Handles graceful shutdown to prevent SQLite corruption during IIS app pool recycling.
+            - Drains active requests via cancellation token
+            - Flushes pending WAL writes via PRAGMA wal_checkpoint(TRUNCATE)
+            - Logs shutdown sequence for diagnostics
+            Fixes: C-08 (no graceful shutdown handling)
             </summary>
         </member>
         <member name="M:ShiftManager.Services.GrantService.CanUserGrantAsync(System.Int32,System.Int32,ShiftManager.Services.GrantScope)">
@@ -5342,6 +6045,37 @@
             <summary>
             Determines if a grant's scope covers (is same or broader than) the target scope.
             Broader scopes cover narrower scopes: Project > Area > Molecule > Company/Department
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantService.AssignRoleTemplateGrantsAsync(System.Int32,System.String,ShiftManager.Services.GrantScope,System.Nullable{System.Int32})">
+            <summary>
+            Assigns grants to a user based on a role template key.
+            This is the primary method for onboarding users with the correct grants.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantService.VerifyUserGrantsAsync(System.Int32)">
+            <summary>
+            Verifies a user's grants against their expected grants from role template.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantService.VerifyAllUserGrantsAsync">
+            <summary>
+            Verifies grants for all users in the system.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantService.RepairUserGrantsAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Repairs a user's grants by adding any missing grants from their role template.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantService.RepairAllUserGrantsAsync(System.Nullable{System.Int32})">
+            <summary>
+            Repairs grants for all users in the system.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantService.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole)">
+            <summary>
+            Maps UserRole enum to the corresponding RoleTemplate key.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.GriffinApiLogService">
@@ -5365,6 +6099,19 @@
             <summary>
             Serializes an object to JSON string.
             Returns null if serialization fails.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.DiskSpaceHealthCheck">
+            <summary>
+            F-02: Checks available disk space where app.db resides.
+            Warn at less than 20% free (Degraded), fail at less than 10% free (Unhealthy).
+            Also checks WAL file size — warn if WAL exceeds 100MB (indicates checkpoint issues).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.MemoryHealthCheck">
+            <summary>
+            Checks application memory usage.
+            Reports unhealthy if working set exceeds 800MB.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IApiKeyService">
@@ -5756,6 +6503,12 @@
             A general database error occurred.
             </summary>
         </member>
+        <member name="P:ShiftManager.Services.ConflictResult.ErrorCode">
+            <summary>
+            B-03: Error code for UI localization. The Reasons list contains English defaults.
+            UI should check ErrorCode first and use localized string if available.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IDirectorService">
             <summary>
             Service for checking Director permissions
@@ -5994,11 +6747,10 @@
             </summary>
             <param name="flagId">The ID of the flag to delete</param>
         </member>
-        <member name="M:ShiftManager.Services.IFeatureFlagService.InvalidateCache(System.String)">
+        <member name="M:ShiftManager.Services.IFeatureFlagService.InvalidateCache(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
             <summary>
-            Invalidates the cache for a specific flag or all flags.
+            Invalidates the cache for a specific flag scope.
             </summary>
-            <param name="flagName">Optional flag name to invalidate. If null, invalidates all.</param>
         </member>
         <member name="M:ShiftManager.Services.IFriendshipService.GetFriendsAsync(System.Int32)">
             <summary>
@@ -6048,6 +6800,11 @@
         <member name="M:ShiftManager.Services.IFriendshipService.SearchUsersAsync(System.Int32,System.String,System.Int32)">
             <summary>
             Searches for users that can be added as friends.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.GrantVerificationResult">
+            <summary>
+            Result of grant verification for a user.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.GrantScope">
@@ -6302,12 +7059,19 @@
         </member>
         <member name="M:ShiftManager.Services.IMailService.SendMailAsync(System.String,System.String,System.String)">
             <summary>
-            Send an email notification asynchronously.
+            Enqueue an email for background delivery.
+            Returns true if successfully queued, false if the queue is full.
             </summary>
             <param name="recipient">Email address of the recipient</param>
             <param name="subject">Email subject line</param>
             <param name="htmlBody">HTML-formatted email body</param>
-            <returns>True if email sent successfully, false otherwise</returns>
+            <returns>True if email queued successfully, false otherwise</returns>
+        </member>
+        <member name="M:ShiftManager.Services.IMailService.SendMailDirectAsync(System.String,System.String,System.String)">
+            <summary>
+            Send an email directly (synchronous HTTP call). Used by the background processor.
+            Do not call from HTTP request handlers — use SendMailAsync instead.
+            </summary>
         </member>
         <member name="M:ShiftManager.Services.IMailService.SendShiftAssignedEmailAsync(System.String,System.String,System.String,System.DateOnly,System.TimeOnly,System.TimeOnly)">
             <summary>
@@ -6587,6 +7351,41 @@
             Resets the rate limit counter for a given key (e.g., after successful action)
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.IScheduleExportService">
+            <summary>
+            Service for exporting schedule data to various formats (PDF, Excel, CSV).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IScheduleExportService.CollectExportDataAsync(ShiftManager.Models.Export.ScheduleExportRequest)">
+            <summary>
+            Collects schedule data for the specified date range and filters.
+            </summary>
+            <param name="request">Export request containing date range and filter options.</param>
+            <returns>Collected export data ready for formatting.</returns>
+        </member>
+        <member name="M:ShiftManager.Services.IScheduleExportService.GeneratePdfAsync(ShiftManager.Models.Export.ScheduleExportData)">
+            <summary>
+            Generates a PDF document from the collected export data.
+            Uses QuestPDF for document generation.
+            </summary>
+            <param name="data">The export data to render as PDF.</param>
+            <returns>PDF file bytes.</returns>
+        </member>
+        <member name="M:ShiftManager.Services.IScheduleExportService.GenerateExcelAsync(ShiftManager.Models.Export.ScheduleExportData)">
+            <summary>
+            Generates an Excel workbook from the collected export data.
+            Uses ClosedXML for workbook generation.
+            </summary>
+            <param name="data">The export data to render as Excel.</param>
+            <returns>Excel file bytes (.xlsx).</returns>
+        </member>
+        <member name="M:ShiftManager.Services.IScheduleExportService.GenerateCsvAsync(ShiftManager.Models.Export.ScheduleExportData)">
+            <summary>
+            Generates a CSV file from the collected export data.
+            </summary>
+            <param name="data">The export data to render as CSV.</param>
+            <returns>CSV file bytes (UTF-8 encoded).</returns>
+        </member>
         <member name="T:ShiftManager.Services.IScopeFilterService">
             <summary>
             Service for resolving scope-based filtering of calendar data.
@@ -6749,6 +7548,13 @@
             Unassigns a user from a shift instance.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IShiftCalendarService.GetCapacitiesBatchAsync(System.Int32,System.Int32,System.DateOnly,System.DateOnly)">
+            <summary>
+            Batch load capacity overrides for all shift types within a molecule/jobType/date range.
+            Eliminates N+1 queries when loading capacity for many shift instances.
+            Returns a dictionary keyed by (ShiftTypeId, Date) with the effective capacity.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IShiftProgramService">
             <summary>
             Service for managing ShiftPrograms (weekly templates) and generating ShiftInstances.
@@ -6833,6 +7639,22 @@
             <summary>
             Gets all ShiftInstances that were generated from a specific Program.
             Used for "Show all Operations from this Program" view.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ITechShiftService.GetEligibleUsersForTechShiftAsync(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Gets all users eligible for a specific tech shift type, based on their grants.
+            For example, "HANAVA" returns users who have the "CanBeAssignedHanava" grant.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ITechShiftService.IsUserEligibleForTechShiftAsync(System.Int32,System.String)">
+            <summary>
+            Checks whether a specific user is eligible for a given tech shift type.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ITechShiftService.GetTechShiftTypesAsync">
+            <summary>
+            Gets all known tech shift type keys (HANAVA, DELTA, YEKEV, MOVILTECH).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ITenantResolver">
@@ -6938,6 +7760,14 @@
             <param name="input">The string to validate</param>
             <returns>True if safe, false otherwise</returns>
         </member>
+        <member name="M:ShiftManager.Services.IValidationService.NormalizeForSearch(System.String)">
+            <summary>
+            Normalizes input text for safe comparison and search.
+            Applies Unicode NFC normalization to handle Hebrew niqqud consistently.
+            </summary>
+            <param name="input">The string to normalize</param>
+            <returns>NFC-normalized, trimmed string</returns>
+        </member>
         <member name="M:ShiftManager.Services.IValidationService.IsValidUrl(System.String)">
             <summary>
             Validates a URL format.
@@ -6989,7 +7819,7 @@
             Follows ShiftManager architecture patterns with dependency injection and structured logging.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.MailService.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{ShiftManager.Services.MailService},Microsoft.Extensions.Configuration.IConfiguration,ShiftManager.Services.IEmailConfigService,ShiftManager.Services.IEmailApiLogService,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.IEmailTemplateService)">
+        <member name="M:ShiftManager.Services.MailService.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{ShiftManager.Services.MailService},Microsoft.Extensions.Configuration.IConfiguration,ShiftManager.Services.IEmailConfigService,ShiftManager.Services.IEmailApiLogService,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.IEmailTemplateService,ShiftManager.Services.EmailBackgroundQueue)">
             <summary>
             Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
             </summary>
@@ -7011,12 +7841,14 @@
         </member>
         <member name="M:ShiftManager.Services.MailService.SendMailAsync(System.String,System.String,System.String)">
             <summary>
-            Send an email notification asynchronously with retry logic and error handling.
+            Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
             </summary>
-            <param name="recipient">Email address of the recipient</param>
-            <param name="subject">Email subject line</param>
-            <param name="htmlBody">HTML-formatted email body</param>
-            <returns>True if email sent successfully, false otherwise</returns>
+        </member>
+        <member name="M:ShiftManager.Services.MailService.SendMailDirectAsync(System.String,System.String,System.String)">
+            <summary>
+            Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
+            Do not call from HTTP request handlers — use SendMailAsync instead.
+            </summary>
         </member>
         <member name="M:ShiftManager.Services.MailService.SendShiftAssignedEmailAsync(System.String,System.String,System.String,System.DateOnly,System.TimeOnly,System.TimeOnly)">
             <summary>
@@ -7129,6 +7961,21 @@
              See TERMINOLOGY.md for UI vs. code terminology mapping.
              </summary>
         </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.GetEligibleUsersForDutyAsync(ShiftManager.Models.Support.OnDutyType,System.Boolean)">
+            <summary>
+            Get users eligible for a specific duty type, optionally requiring officer rank.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.IsUserEligibleForDutyAsync(System.Int32,ShiftManager.Models.Support.OnDutyType,System.Boolean)">
+            <summary>
+            Check if a specific user is eligible for a duty type.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.RequiresOfficerForDutyTypeAsync(ShiftManager.Models.Support.OnDutyType)">
+            <summary>
+            Check if a duty type requires officer rank.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.OnDutyService">
              <summary>
              Service for managing "Day Shifts" (user-facing term: "משמרות יומיות" / "Day Shifts").
@@ -7148,14 +7995,16 @@
         </member>
         <member name="M:ShiftManager.Services.OnDutyService.CanUserManageOnDutyAsync(System.Int32)">
             <summary>
-            Check if current user can manage on-duty assignments (Manager+, NOT Assigner)
-            Assigner role can only manage Chores, not OnDuty
+            Check if current user can manage on-duty assignments.
+            ✅ Grant-based: Uses AssignHakamDuties or AssignKatzinDuties grants instead of role checks.
+            Note: Assigner role does not receive these grants by default.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.OnDutyService.GetEligibleAssigneesAsync">
             <summary>
-            Get list of users eligible for on-duty assignment (all active users across all companies)
-            Directors can be assigned OnDuty (unlike Chores)
+            Get list of users eligible for on-duty assignment.
+            ✅ Grant-based: Uses AssignHakamDuties/AssignKatzinDuties grant scopes to determine visible users.
+            Directors can be assigned OnDuty (unlike Chores).
             </summary>
         </member>
         <member name="M:ShiftManager.Services.OnDutyService.HasActiveOnDutyOnDateAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType)">
@@ -7195,10 +8044,37 @@
             Get an on-duty assignment by ID
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.OnDutyService.GetEligibleUsersForDutyAsync(ShiftManager.Models.Support.OnDutyType,System.Boolean)">
+            <summary>
+            Get users eligible for a specific duty type, optionally requiring officer rank.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.OnDutyService.RequiresOfficerForDutyTypeAsync(ShiftManager.Models.Support.OnDutyType)">
+            <summary>
+            Check if a duty type requires officer rank.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.OnDutyService.IsUserEligibleForDutyAsync(System.Int32,ShiftManager.Models.Support.OnDutyType,System.Boolean)">
+            <summary>
+            Check if a specific user is eligible for a duty type.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.OwnerCompanySelectorService">
             <summary>
             Implementation of Owner company selector service.
             Manages cookie-based company selection for Owner role with 12-hour expiry.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.PiiMasker">
+            <summary>
+            Utility for masking PII (Personally Identifiable Information) in log output.
+            Fixes E-02: PII in logs.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.PiiMasker.MaskEmail(System.String)">
+            <summary>
+            Masks an email address for log output.
+            "user@domain.com" becomes "u***@d***.com"
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IProfileService">
@@ -7212,9 +8088,21 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Services.PurgeService">
-            <summary>
-            Service for purging historical data with safety mechanisms
-            </summary>
+             <summary>
+             Service for purging historical data with safety mechanisms.
+            
+             E-03: Deletion Strategy Reference
+             - ShiftInstance / ShiftAssignment: HARD DELETE during purge (cascade). No soft-delete.
+             - Chore: Soft-delete via CanceledAt in normal ops. HARD DELETE during purge.
+             - OnDuty: Soft-delete via CanceledAt in normal ops. HARD DELETE during purge.
+             - TimeOffRequest: HARD DELETE during purge. No soft-delete.
+             - SwapRequest: HARD DELETE during purge. No soft-delete.
+             - DirectorCompany: Soft-delete via IsDeleted/DeletedAt.
+             - TeamCalendar: Soft-delete via IsDeleted.
+             - AuditLog: HARD DELETE via retention policy (E-02). Never soft-deleted.
+            
+             All purge operations MUST be preceded by a verified archive (E-04).
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.PurgeService.ValidateConfirmation(System.String,System.String,System.DateOnly)">
             <summary>
@@ -7248,8 +8136,44 @@
         </member>
         <member name="T:ShiftManager.Services.RateLimitingService">
             <summary>
-            In-memory rate limiting service to prevent brute force attacks
-            Note: For multi-server deployments, use Redis or similar distributed cache
+            In-memory rate limiting service to prevent brute force attacks.
+            Uses periodic timer-based cleanup to prevent memory leaks.
+            Note: For multi-server deployments, use Redis or similar distributed cache.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.ScheduleExportService">
+            <summary>
+            Service for exporting schedule data to PDF, Excel, and CSV formats.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Services.ScheduleExportService.MaxExportDays">
+            <summary>Maximum export date range to prevent OOM (C-09).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.CollectExportDataAsync(ShiftManager.Models.Export.ScheduleExportRequest)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.GeneratePdfAsync(ShiftManager.Models.Export.ScheduleExportData)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.GenerateExcelAsync(ShiftManager.Models.Export.ScheduleExportData)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.GenerateCsvAsync(ShiftManager.Models.Export.ScheduleExportData)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.FormatTimeRange(System.TimeOnly,System.TimeOnly)">
+            <summary>
+            Formats a time range for display.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.FormatOnDutyType(ShiftManager.Models.Support.OnDutyType)">
+            <summary>
+            Formats an OnDutyType enum value for display.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ScheduleExportService.EscapeCsvField(System.String)">
+            <summary>
+            Escapes a field for CSV output.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ScopeFilterService">
@@ -7398,10 +8322,34 @@
             Efficient for the "Save Changes" operation in the member manager.
             </summary>
         </member>
+        <member name="F:ShiftManager.Services.TechShiftService.TechShiftGrantMap">
+            <summary>
+            Maps tech shift type key to the corresponding grant key that controls eligibility.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.TenantResolver">
             <summary>
             Resolves tenant from user's CompanyId claim
             Phase 2: Single-tenant behavior maintained via user claims
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.TimeHelpers.Hours(ShiftManager.Models.ShiftType,System.DateOnly)">
+            <summary>
+            Returns DST-aware shift duration for a specific date.
+            On DST transition dates (2 per year), duration may differ from the nominal value
+            (e.g., a NIGHT shift spanning spring-forward loses 1 hour, fall-back gains 1 hour).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.TimeHelpers.WeekStart(System.DateOnly,System.DayOfWeek)">
+            <summary>
+            A-05: Configurable week start day. IDF units may use Sunday as week start.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.UserDataExportService">
+            <summary>
+            Exports all data related to a specific user in JSON format.
+            GDPR-style data portability (QA Item 65 / E-06).
+            Accessible only to Owner via OwnerHub.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.UserPreferenceService">
@@ -7416,9 +8364,91 @@
             Managers/Directors/Owners: false (show all items)
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.GetApprovalRouteAsync(System.Int32)">
+            <summary>
+            Determines the approval route for a given time-off request.
+            Finds matching VacationApprovalRule by JobTypeId and CompanyId,
+            handles auto-approve for short leaves, and flags extended leave for second approval.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.SubmitForApprovalAsync(System.Int32,System.Int32)">
+            <summary>
+            Submits a time-off request for approval. Handles auto-approve when applicable.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.ApproveAsync(System.Int32,System.Int32,System.String)">
+            <summary>
+            Approves a time-off request. Verifies the approver has the required grant.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.DeclineAsync(System.Int32,System.Int32,System.String)">
+            <summary>
+            Declines a time-off request. Verifies the decliner has the required grant.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.CanUserApproveAsync(System.Int32,System.Int32)">
+            <summary>
+            Checks whether a user can approve a specific request.
+            If the rule defines a specific ApproverUserId, only that user can approve.
+            Otherwise, any user with the ApproverGrantKey for the request's company can approve.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.GetPendingApprovalsForUserAsync(System.Int32)">
+            <summary>
+            Gets all pending time-off requests that a user can approve.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.GetRulesForCompanyAsync(System.Int32)">
+            <summary>
+            Gets all approval rules for a company.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.CreateRuleAsync(ShiftManager.Models.VacationApprovalRule)">
+            <summary>
+            Creates a new approval rule.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.UpdateRuleAsync(ShiftManager.Models.VacationApprovalRule)">
+            <summary>
+            Updates an existing approval rule.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.DeleteRuleAsync(System.Int32)">
+            <summary>
+            Deletes an approval rule.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.CancelRequestAsync(System.Int32,System.Int32)">
+            <summary>
+            Allows a user to cancel their own pending request.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.DetectOrphanedRulesAsync(System.Int32)">
+            <summary>
+            Detects approval rules that have no active users who can fulfill them.
+            Returns warnings for admin display.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.GetApprovalStatusAsync(System.Int32)">
+            <summary>
+            Gets the current approval pipeline status for a request,
+            including current stage, approver info, and whether it's orphaned.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.GetMatchingRuleAsync(ShiftManager.Models.TimeOffRequest)">
+            <summary>
+            Gets the matching approval rule for a request (helper method).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.ValidationService">
             <summary>
             Implementation of input validation service with regex patterns and security checks.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ValidationService.NormalizeForSearch(System.String)">
+            <summary>
+            Normalizes input text for safe comparison and search.
+            Applies Unicode NFC normalization to handle Hebrew niqqud consistently (fixes A-13).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IWidgetService">
@@ -7878,6 +8908,25 @@
             Whether to show the close button
             </summary>
         </member>
+        <member name="T:ShiftManager.ViewComponents.HierarchyTreeViewComponent">
+            <summary>
+            ViewComponent for the interactive Hierarchy Tree with drag-drop reordering.
+            Shows Project > Area > Molecule > Company/Department structure with
+            expand/collapse, inline editing, context menu, and drag-drop reordering.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.ViewComponents.HierarchyTreeViewComponent.InvokeAsync(System.String,System.Boolean)">
+            <summary>
+            Invokes the Hierarchy Tree component.
+            </summary>
+            <param name="mode">Display mode: "full" (all levels) or "readonly" (no editing)</param>
+            <param name="expandedByDefault">Whether nodes are expanded by default</param>
+        </member>
+        <member name="T:ShiftManager.ViewComponents.HierarchyNodeViewModel">
+            <summary>
+            ViewModel for individual node partial views
+            </summary>
+        </member>
         <member name="T:ShiftManager.ViewComponents.LanguageEditModeBannerViewComponent">
             <summary>
             ViewComponent for displaying the language edit mode banner.
@@ -8069,6 +9118,13 @@
         <member name="T:ShiftManager.ViewComponents.ShowMyItemsToggleViewComponent">
             <summary>
             ✅ PHASE 20: ViewComponent for toggling "Show My Items Only" preference
+            </summary>
+        </member>
+        <member name="T:ShiftManager.ViewComponents.SystemAlertsViewComponent">
+            <summary>
+            F-07: Shows critical system alerts as a banner on admin/owner pages.
+            Checks for: disk space, backup failures, notification failures, security warnings.
+            Results are cached for 15 minutes to avoid per-request overhead.
             </summary>
         </member>
     </members>

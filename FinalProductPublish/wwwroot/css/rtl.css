@@ -141,6 +141,13 @@
   flex-direction: row-reverse;
 }
 
+/* Form select dropdown caret - flip to left side in RTL */
+[dir="rtl"] .form-select {
+  background-position: left 0.75rem center;
+  padding-right: 0.75rem;
+  padding-left: 2.5rem;
+}
+
 /* Form validation icons - flip to left side in RTL */
 [dir="rtl"] .form-control.valid,
 [dir="rtl"] .form-select.valid,
@@ -1179,6 +1186,35 @@
    Widget Loading RTL
    ---------------------------------------- */
 [dir="rtl"] .widget-loading__item {
+  flex-direction: row-reverse;
+}
+
+/* ----------------------------------------
+   Bottom Sheet Close Button RTL
+   ---------------------------------------- */
+[dir="rtl"] .bottom-sheet__close-btn {
+  right: auto;
+  left: 12px;
+}
+
+[dir="rtl"] .bottom-sheet__title {
+  text-align: right;
+}
+
+[dir="rtl"] .bottom-sheet__field-label {
+  text-align: right;
+}
+
+[dir="rtl"] .bottom-sheet__select {
+  background-position: left 0.75rem center;
+  padding-right: 0.75rem;
+  padding-left: 2.5rem;
+}
+
+/* ----------------------------------------
+   MyTeam Week Navigation RTL
+   ---------------------------------------- */
+[dir="rtl"] .week-nav {
   flex-direction: row-reverse;
 }
 

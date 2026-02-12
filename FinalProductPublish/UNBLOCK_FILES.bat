@@ -51,8 +51,8 @@ if exist streams.exe (
 echo [INFO] streams.exe not available
 echo.
 
-REM Method 3: Manual alternative data stream deletion for critical DLLs
-echo [Method 3] Attempting manual unblock of critical DLL files...
+REM Method 3: Pure cmd.exe approach — delete Zone.Identifier ADS without PowerShell (G-08 fix)
+echo [Method 3] Attempting pure cmd unblock of critical DLL files...
 echo.
 
 REM List of critical DLLs that must be unblocked
@@ -60,16 +60,21 @@ set CRITICAL_DLLS=SixLabors.ImageSharp.dll ShiftManager.dll e_sqlite3.dll Micros
 
 for %%D in (%CRITICAL_DLLS%) do (
     if exist "%%D" (
-        REM Try to delete Zone.Identifier using PowerShell
-        powershell.exe -ExecutionPolicy Bypass -Command "if (Test-Path '%%D:Zone.Identifier') { Remove-Item '%%D:Zone.Identifier' -Force }" 2>nul
-        if %ERRORLEVEL% EQU 0 (
-            echo   [OK] Unblocked %%D
-        ) else (
-            echo   [WARNING] Could not unblock %%D
-        )
+        REM G-08: Use cmd-native ADS deletion — works even when PowerShell is blocked by Group Policy
+        echo. > "%%D:Zone.Identifier" 2>nul
+        del /f "%%D:Zone.Identifier" 2>nul
+        echo   [OK] Processed %%D
     ) else (
         echo   [WARNING] %%D not found
     )
+)
+
+REM Also try to unblock all DLLs in directory using cmd approach
+echo.
+echo Attempting to unblock all DLL files...
+for /r %%F in (*.dll) do (
+    echo. > "%%F:Zone.Identifier" 2>nul
+    del /f "%%F:Zone.Identifier" 2>nul
 )
 
 echo.

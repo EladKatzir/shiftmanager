@@ -124,7 +124,7 @@
                     window.AppLocalizer?.LoadingFailedTitle || 'Loading Failed'
                 );
             } else {
-                alert('Failed to load content. Please try again.');
+                alert(window.AppLocalizer?.FailedToLoadContent || 'Failed to load content. Please try again.');
             }
         } finally {
             // Reset trigger state
@@ -232,13 +232,16 @@
             }
         });
 
-        // Escape key handler
+        // Escape key handler — remove previous listener before adding new one to prevent leak
+        if (modal._escapeHandler) {
+            document.removeEventListener('keydown', modal._escapeHandler);
+        }
         const escapeHandler = (e) => {
             if (e.key === 'Escape' && modal.classList.contains('modal--open')) {
                 closeModal(modalId);
-                document.removeEventListener('keydown', escapeHandler);
             }
         };
+        modal._escapeHandler = escapeHandler;
         document.addEventListener('keydown', escapeHandler);
     }
 
@@ -249,6 +252,12 @@
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
+
+        // Clean up escape handler to prevent listener leak
+        if (modal._escapeHandler) {
+            document.removeEventListener('keydown', modal._escapeHandler);
+            modal._escapeHandler = null;
+        }
 
         if (window.ModalFocus) {
             ModalFocus.close(modal);

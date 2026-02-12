@@ -39,10 +39,14 @@
    * @returns {boolean|null} True if collapsed, false if expanded, null if not set
    */
   function getCollapsedState(widgetId) {
-    const key = getStorageKey(widgetId);
-    const value = localStorage.getItem(key);
-    if (value === null) return null;
-    return value === 'true';
+    try {
+      const key = getStorageKey(widgetId);
+      const value = localStorage.getItem(key);
+      if (value === null) return null;
+      return value === 'true';
+    } catch (e) {
+      return null;
+    }
   }
 
   /**
@@ -51,8 +55,12 @@
    * @param {boolean} isCollapsed - Whether the widget is collapsed
    */
   function saveCollapsedState(widgetId, isCollapsed) {
-    const key = getStorageKey(widgetId);
-    localStorage.setItem(key, isCollapsed.toString());
+    try {
+      const key = getStorageKey(widgetId);
+      localStorage.setItem(key, isCollapsed.toString());
+    } catch (e) {
+      // localStorage unavailable (private browsing, quota exceeded, etc.)
+    }
   }
 
   /**

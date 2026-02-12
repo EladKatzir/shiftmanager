@@ -1,7 +1,12 @@
 // Dark mode toggle with system preference support
 document.addEventListener('DOMContentLoaded', function() {
   const root = document.documentElement;
-  const saved = localStorage.getItem('theme');
+
+  // Safe localStorage helpers (private browsing, quota exceeded, etc.)
+  function getStorage(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function setStorage(key, val) { try { localStorage.setItem(key, val); } catch (e) { /* unavailable */ } }
+
+  const saved = getStorage('theme');
 
   // Apply saved theme or detect system preference
   if (saved) {
@@ -19,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
       // Only auto-switch if user hasn't manually set a preference
-      if (!localStorage.getItem('theme')) {
+      if (!getStorage('theme')) {
         const newTheme = e.matches ? 'dark' : 'light';
         root.setAttribute('data-theme', newTheme);
         console.log('System theme changed to:', newTheme);
@@ -35,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const current = root.getAttribute('data-theme');
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
+      setStorage('theme', newTheme);
       console.log('Theme manually switched to:', newTheme);
     });
     console.log('Dark mode toggle initialized');
@@ -167,71 +172,90 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Enhanced staffing adjustments with better UX
-async function adjustStaffing(url, payload, onOk, onError) {
-  const button = event.target;
-  const originalText = button.textContent;
+async function adjustStaffing(url, payload, onOk, onError, evt) {
+  const button = (evt || window.event)?.target;
+  const originalText = button?.textContent;
 
   // Add loading state
-  button.disabled = true;
-  button.style.opacity = '0.6';
-  button.textContent = '⋯';
+  if (button) {
+    button.disabled = true;
+    button.style.opacity = '0.6';
+    button.textContent = '⋯';
+  }
 
   try {
+    const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const fetchHeaders = {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
+    if (csrfToken) fetchHeaders['RequestVerificationToken'] = csrfToken;
+
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: fetchHeaders,
+      credentials: 'same-origin',
       body: JSON.stringify(payload)
     });
 
     // Try to parse as JSON, fallback to text if it fails
     let data;
     const contentType = res.headers.get('content-type');
+    const rawText = await res.text();
     try {
       data = contentType && contentType.includes('application/json')
-        ? await res.json()
-        : { message: await res.text() };
+        ? JSON.parse(rawText)
+        : { message: rawText };
     } catch (parseError) {
       console.warn('Failed to parse response, using text:', parseError);
-      data = { message: await res.text() };
+      data = { message: rawText };
     }
 
     if (res.ok) {
       // Success animation
-      button.style.background = '#2e7d32';
-      button.style.color = 'white';
-      setTimeout(() => {
-        button.style.background = '';
-        button.style.color = '';
-      }, 300);
+      if (button) {
+        button.style.background = '#2e7d32';
+        button.style.color = 'white';
+        setTimeout(() => {
+          button.style.background = '';
+          button.style.color = '';
+        }, 300);
+      }
 
       onOk(data);
     } else {
       // Error animation
+      if (button) {
+        button.style.background = '#dc3545';
+        button.style.color = 'white';
+        setTimeout(() => {
+          button.style.background = '';
+          button.style.color = '';
+        }, 300);
+      }
+
+      // Show toast notification instead of alert
+      showToast(data.message || (window.AppLocalizer?.Error_OperationFailed || 'Operation failed'), 'error');
+      onError && onError(data);
+    }
+  } catch (e) {
+    console.error(e);
+    if (button) {
       button.style.background = '#dc3545';
       button.style.color = 'white';
       setTimeout(() => {
         button.style.background = '';
         button.style.color = '';
       }, 300);
-
-      // Show toast notification instead of alert
-      showToast(data.message || 'Operation failed', 'error');
-      onError && onError(data);
     }
-  } catch (e) {
-    console.error(e);
-    button.style.background = '#dc3545';
-    button.style.color = 'white';
-    setTimeout(() => {
-      button.style.background = '';
-      button.style.color = '';
-    }, 300);
-    showToast('Network error - please try again', 'error');
+    showToast(window.AppLocalizer?.Error_NetworkError || 'Network error - please try again', 'error');
   } finally {
     // Reset button state
-    button.disabled = false;
-    button.style.opacity = '';
-    button.textContent = originalText;
+    if (button) {
+      button.disabled = false;
+      button.style.opacity = '';
+      button.textContent = originalText;
+    }
   }
 }
 
@@ -666,22 +690,31 @@ async function createShift() {
                      window.location.pathname.includes('Week') ? '/Calendar/Week?handler=Adjust' :
                      '/Calendar/Day?handler=Adjust';
 
+    const csrfToken2 = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const createHeaders = {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
+    if (csrfToken2) createHeaders['RequestVerificationToken'] = csrfToken2;
+
     const res = await fetch(adjustUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createHeaders,
+      credentials: 'same-origin',
       body: JSON.stringify(payload)
     });
 
     // Try to parse as JSON, fallback to text if it fails
     let data;
     const contentType = res.headers.get('content-type');
+    const rawText = await res.text();
     try {
       data = contentType && contentType.includes('application/json')
-        ? await res.json()
-        : { message: await res.text() };
+        ? JSON.parse(rawText)
+        : { message: rawText };
     } catch (parseError) {
       console.warn('Failed to parse response, using text:', parseError);
-      data = { message: await res.text() };
+      data = { message: rawText };
     }
 
     if (!res.ok) {
@@ -849,15 +882,26 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
     }
 
     try {
+        const delCsrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const delHeaders = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        if (delCsrfToken) delHeaders['RequestVerificationToken'] = delCsrfToken;
+
         const response = await fetch(`${pageUrl}?handler=DeleteShiftInstance`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: delHeaders,
+            credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: instanceId
             })
         });
+
+        if (!response.ok) {
+            alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
+            return;
+        }
 
         const result = await response.json();
 
@@ -865,11 +909,11 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
             // Reload page to show updated state
             location.reload();
         } else {
-            alert('Error: ' + result.error);
+            alert((window.AppLocalizer?.Error_Prefix || 'Error: ') + result.error);
         }
     } catch (error) {
         console.error('Error deleting shift instance:', error);
-        alert('Failed to delete shift. Please try again.');
+        alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
     }
 }
 
@@ -880,32 +924,32 @@ function getCommandPalettePages() {
   return [
     // Manager/Admin Pages
     { title: window.AppLocalizer.Home, subtitle: window.AppLocalizer.DashboardOverview, url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
-    { title: `${window.AppLocalizer.Calendar} - Month View`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
-    { title: `${window.AppLocalizer.Calendar} - Week View`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
-    { title: `${window.AppLocalizer.Calendar} - Day View`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
-    { title: 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
-    { title: 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
-    { title: 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
-    { title: 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
-    { title: 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_MonthView || 'Month View'}`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_WeekView || 'Week View'}`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_DayView || 'Day View'}`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_Requests || 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Analytics || 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Users || 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Companies || 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Directors || 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Configuration || 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_ShiftTypes || 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_TimeOff || 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_AuditLog || 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Chores || 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_OnDuty || 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
 
     // Ops Console Scheduler (NEW)
-    { title: 'Schedule Table', subtitle: 'Excel-density operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
-    { title: 'Blueprints', subtitle: 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
-    { title: 'Programs', subtitle: 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
-    { title: 'Master Programs', subtitle: 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_ScheduleTable || 'Schedule Table', subtitle: window.AppLocalizer?.Nav_ScheduleTableDesc || 'Operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Blueprints || 'Blueprints', subtitle: window.AppLocalizer?.Nav_BlueprintsDesc || 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Programs || 'Programs', subtitle: window.AppLocalizer?.Nav_ProgramsDesc || 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_MasterPrograms || 'Master Programs', subtitle: window.AppLocalizer?.Nav_MasterProgramsDesc || 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
 
     // Employee Pages
-    { title: 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
-    { title: 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
-    { title: 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
-    { title: 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
+    { title: window.AppLocalizer?.Nav_MyRequests || 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_MyTeam || 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_MyProfile || 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_Notifications || 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
   ];
 }
 
@@ -940,6 +984,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Escape to close
     if (e.key === 'Escape' && commandPaletteState.isOpen) {
       closeCommandPalette();
+    }
+
+    // B-06: ? key opens keyboard shortcuts help (when not in input)
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT' &&
+        !e.target.isContentEditable) {
+      e.preventDefault();
+      toggleShortcutsHelp();
     }
 
     // Arrow navigation when palette is open
@@ -1218,3 +1270,46 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// ============= B-06: KEYBOARD SHORTCUTS HELP DIALOG =============
+function toggleShortcutsHelp() {
+  let dialog = document.getElementById('shortcutsHelpDialog');
+  if (dialog) {
+    dialog.remove();
+    return;
+  }
+  const shortcuts = [
+    { keys: 'Ctrl+K', desc: window.AppLocalizer?.CommandPalette || 'Command Palette' },
+    { keys: '?', desc: window.AppLocalizer?.KeyboardShortcuts || 'Keyboard Shortcuts' },
+    { keys: 'Esc', desc: window.AppLocalizer?.CloseDialog || 'Close Dialog' },
+    { keys: '\u2190 / h', desc: window.AppLocalizer?.PreviousMonth || 'Previous Month (Calendar)' },
+    { keys: '\u2192 / l', desc: window.AppLocalizer?.NextMonth || 'Next Month (Calendar)' },
+    { keys: 't / Home', desc: window.AppLocalizer?.TodayCalendar || 'Today (Calendar)' },
+  ];
+  dialog = document.createElement('div');
+  dialog.id = 'shortcutsHelpDialog';
+  dialog.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  dialog.innerHTML = `
+    <div style="background:var(--surface,#fff);border-radius:0.75rem;padding:1.5rem;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;font-size:1.125rem;">${window.AppLocalizer?.KeyboardShortcuts || 'Keyboard Shortcuts'}</h3>
+        <button onclick="document.getElementById('shortcutsHelpDialog').remove()" style="background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--text-muted,#666);">&times;</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        ${shortcuts.map(s => `<tr style="border-bottom:1px solid var(--border,#eee);">
+          <td style="padding:0.5rem 0;"><kbd style="background:var(--surface-soft,#f4f4f4);padding:0.15rem 0.5rem;border-radius:0.25rem;font-size:0.85rem;border:1px solid var(--border,#ddd);">${s.keys}</kbd></td>
+          <td style="padding:0.5rem 0;padding-left:1rem;color:var(--text-muted,#666);font-size:0.875rem;">${s.desc}</td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  dialog.addEventListener('click', function(e) { if (e.target === dialog) dialog.remove(); });
+  document.body.appendChild(dialog);
+}
+
+// ============= LOCALIZATION BRIDGE =============
+// This file cannot use Razor's @Localizer since it's a standalone .js file.
+// All user-facing strings reference window.AppLocalizer.KeyName with English fallbacks.
+// The window.AppLocalizer object is populated server-side in _LocalizationScript.cshtml
+// (rendered in _Layout.cshtml), which uses @Localizer to emit localized values as JSON.
+// To add a new localized string: 1) Add the key to _LocalizationScript.cshtml,
+// 2) Add the resource to SharedResources.resx, 3) Reference as window.AppLocalizer?.KeyName || 'fallback'.
