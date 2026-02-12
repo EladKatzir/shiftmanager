@@ -14,9 +14,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Write-Success { param([string]$Message) Write-Host "  ✅ " -ForegroundColor Green -NoNewline; Write-Host $Message }
-function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor Red -NoNewline; Write-Host $Message }
-function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor Blue -NoNewline; Write-Host $Message }
+function Write-Success { param([string]$Message) Write-Host "  [OK] " -ForegroundColor Green -NoNewline; Write-Host $Message }
+function Write-ErrorMsg { param([string]$Message) Write-Host "  [ERR] " -ForegroundColor Red -NoNewline; Write-Host $Message }
+function Write-Info { param([string]$Message) Write-Host "  [..] " -ForegroundColor Blue -NoNewline; Write-Host $Message }
 
 try {
     if (-not (Test-Path $OutputPath)) {
@@ -117,11 +117,11 @@ try {
     }
 
     Write-Host ""
-    Write-Host "✅ Build output verified successfully" -ForegroundColor Green
+    Write-Host "[PASS] Build output verified successfully" -ForegroundColor Green
     return $true
 
 } catch {
     Write-Host ""
-    Write-Host "❌ Build verification failed: $_" -ForegroundColor Red
+    Write-Host "[FAIL] Build verification failed: $_" -ForegroundColor Red
     throw
 }
