@@ -1,0 +1,246 @@
+================================================================================
+              SHIFTMANAGER v2.9.0 UPGRADE GUIDE
+              Air-Gapped Deployment Instructions
+================================================================================
+
+This guide is for the person transferring ShiftManager v2.9.0 to the
+air-gapped (offline) environment. Follow these steps exactly.
+
+================================================================================
+WHAT'S NEW IN v2.9.0 (QA Audit Release)
+================================================================================
+
+This release includes 67+ fixes from a comprehensive QA audit:
+
+  * Security: Fixed authentication bypasses, hardened API middleware
+  * CSP Fix: SortableJS library now bundled locally (no CDN needed)
+  * Telemetry: Fixed 401/403 errors on telemetry endpoint
+  * RTL/Hebrew: Fixed layout issues in MyTeam, bottom sheets, buttons
+  * JavaScript: Fixed error handling across all pages
+  * Localization: Completed missing translations
+  * Build: Updated to latest .NET 8.0 runtime
+
+IMPORTANT: All JavaScript libraries are now fully local. No internet
+connection is needed for any functionality including the Hierarchy page.
+
+================================================================================
+STEP-BY-STEP UPGRADE PROCESS
+================================================================================
+
+STEP 1: PREPARE ON THE DEVELOPMENT MACHINE
+-------------------------------------------
+
+  1. Ensure you have the latest code with the FinalProductPublish folder
+     updated to v2.9.0 (already done if you're reading this file).
+
+  2. The FinalProductPublish folder IS the deployment package.
+     It contains everything needed - approximately 472 files, ~160 MB.
+
+  3. Copy the entire FinalProductPublish folder to a USB drive:
+
+     xcopy FinalProductPublish\ E:\ShiftManager-v2.9.0\ /E /I /H
+
+     (Replace E: with your USB drive letter)
+
+
+STEP 2: STOP THE RUNNING APPLICATION (on the air-gapped machine)
+-----------------------------------------------------------------
+
+  CRITICAL: You MUST stop the old version before copying files.
+
+  Option A - If running as a console app:
+    1. Find the command prompt window running ShiftManager
+    2. Press Ctrl+C or close the window
+
+  Option B - If running as a Windows Service:
+    1. Open Services (Win+R, type services.msc)
+    2. Find "ShiftManager" service
+    3. Right-click > Stop
+    4. Wait until status shows "Stopped"
+
+  Option C - Force kill (if the above don't work):
+    1. Open Task Manager (Ctrl+Shift+Esc)
+    2. Find ShiftManager.exe
+    3. Right-click > End Task
+
+
+STEP 3: BACKUP THE CURRENT VERSION (on the air-gapped machine)
+---------------------------------------------------------------
+
+  Before replacing anything, back up what you have:
+
+  1. Navigate to the ShiftManager installation folder
+     (e.g., C:\ShiftManager\)
+
+  2. Create a backup:
+
+     mkdir C:\ShiftManager-BACKUP-v2.8.4
+     xcopy C:\ShiftManager\* C:\ShiftManager-BACKUP-v2.8.4\ /E /I /H
+
+  3. CRITICAL: Also backup the database separately:
+
+     copy C:\ShiftManager\app.db C:\ShiftManager-BACKUP-v2.8.4\app.db
+
+
+STEP 4: COPY NEW FILES FROM USB (on the air-gapped machine)
+------------------------------------------------------------
+
+  1. Insert the USB drive
+
+  2. IMPORTANT: Before extracting, right-click each file on the USB
+     and check Properties > Unblock (if the checkbox appears)
+
+  3. Delete all files EXCEPT app.db and appsettings.json:
+
+     FOR SAFETY: Do NOT delete app.db (your database) or
+     appsettings.json (your configuration)
+
+     Recommended approach:
+     a. Move app.db to a safe temporary location:
+        move C:\ShiftManager\app.db C:\Temp\app.db
+
+     b. Move appsettings.json to a safe temporary location:
+        move C:\ShiftManager\appsettings.json C:\Temp\appsettings.json
+
+     c. Delete everything else in the installation folder:
+        del /Q C:\ShiftManager\*.*
+        rmdir /S /Q C:\ShiftManager\wwwroot
+        rmdir /S /Q C:\ShiftManager\he-IL
+        (and any other subdirectories)
+
+     d. Copy new files from USB:
+        xcopy E:\ShiftManager-v2.9.0\* C:\ShiftManager\ /E /I /H
+
+     e. Restore your database and config:
+        move C:\Temp\app.db C:\ShiftManager\app.db
+        move C:\Temp\appsettings.json C:\ShiftManager\appsettings.json
+
+
+STEP 5: UNBLOCK ALL FILES (CRITICAL for air-gapped machines)
+-------------------------------------------------------------
+
+  Windows marks USB-transferred files as "blocked". This WILL cause
+  DLL loading errors if not addressed.
+
+  Run the unblock script:
+
+    cd C:\ShiftManager
+    UNBLOCK_FILES.bat
+
+  This removes the Zone.Identifier alternate data streams from all files.
+
+  If UNBLOCK_FILES.bat is not available, run this PowerShell command:
+
+    powershell -Command "Get-ChildItem -Path 'C:\ShiftManager' -Recurse | Unblock-File"
+
+
+STEP 6: VERIFY THE INSTALLATION
+---------------------------------
+
+  Run the verification script:
+
+    cd C:\ShiftManager
+    VERIFY_FILES.bat
+
+  Expected output:
+    - All 5 critical DLL checks should show [OK]
+    - DLL count should be 340-370
+    - No files should be blocked
+
+  If verification fails, re-run UNBLOCK_FILES.bat and try again.
+
+
+STEP 7: START THE APPLICATION
+------------------------------
+
+  Option A - Quick start:
+    Double-click START_HERE.bat
+
+  Option B - Manual start:
+    cd C:\ShiftManager
+    ShiftManager.exe
+
+  The application will:
+    1. Detect the existing app.db database
+    2. Apply any pending database migrations automatically
+    3. Start listening on the configured port (default: http://localhost:5000)
+
+
+STEP 8: VERIFY THE APPLICATION IS WORKING
+-------------------------------------------
+
+  1. Open a browser on the machine
+  2. Navigate to http://localhost:5000
+  3. Log in with your credentials
+  4. Check these pages to confirm the update:
+
+     - Home page: Should load without errors
+     - Calendar/Shifts: Real-time updates should work
+     - Admin > Organization > Hierarchy: Drag-and-drop should work
+       (This specifically tests the SortableJS fix)
+     - Switch to Hebrew: RTL layout should be correct
+
+  5. If using Griffin ADFS authentication and encountering issues:
+     Run DIAGNOSE_GRIFFIN_ISSUE.bat for troubleshooting
+
+
+================================================================================
+ROLLBACK PROCEDURE (if something goes wrong)
+================================================================================
+
+  If the new version has issues:
+
+  1. Stop ShiftManager (Ctrl+C or stop the service)
+  2. Delete the current installation files
+  3. Copy back from your backup:
+
+     xcopy C:\ShiftManager-BACKUP-v2.8.4\* C:\ShiftManager\ /E /I /H
+
+  4. Start the old version
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+  ERROR: "Could not load file or assembly"
+  FIX:   Run UNBLOCK_FILES.bat (files are Windows-blocked)
+
+  ERROR: Database migration failed
+  FIX:   Restore app.db from backup, contact development team
+
+  ERROR: Hierarchy page drag-and-drop not working
+  FIX:   Check browser console (F12). If CSP error, ensure
+         wwwroot\lib\sortable\Sortable.min.js exists
+
+  ERROR: 403 on telemetry / pages not loading
+  FIX:   Clear browser cache (Ctrl+Shift+Delete) and reload
+
+  ERROR: Griffin ADFS redirect issues
+  FIX:   Run DIAGNOSE_GRIFFIN_ISSUE.bat for detailed analysis
+
+  For all other issues, see DEPLOYMENT_GUIDE.txt and TROUBLESHOOT_DEMO.txt
+
+
+================================================================================
+FILE CHECKLIST
+================================================================================
+
+  After copying, verify these critical files exist:
+
+  [  ] ShiftManager.exe          - Main application
+  [  ] ShiftManager.dll          - Application library (~12 MB)
+  [  ] e_sqlite3.dll             - SQLite database engine
+  [  ] app.db                    - Your database (preserved from v2.8.4)
+  [  ] appsettings.json          - Your configuration (preserved)
+  [  ] wwwroot\lib\sortable\Sortable.min.js  - NEW in v2.9.0
+  [  ] wwwroot\lib\signalr\signalr.min.js    - Real-time updates
+  [  ] wwwroot\lib\lucide\lucide.min.js      - Icon library
+  [  ] he-IL\ShiftManager.resources.dll      - Hebrew translation
+  [  ] START_HERE.bat            - Quick start script
+  [  ] VERIFY_FILES.bat          - Verification script
+  [  ] UNBLOCK_FILES.bat         - File unblocking script
+
+================================================================================
+END OF UPGRADE GUIDE
+================================================================================
