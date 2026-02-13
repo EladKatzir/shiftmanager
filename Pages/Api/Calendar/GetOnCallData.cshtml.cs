@@ -76,7 +76,9 @@ public class GetOnCallDataModel : PageModel
 
             // Get on-duties for the date range (global table, filter by user company)
             // OnDuty is global but we filter by users in the area's companies
+            // IgnoreQueryFilters: companyIds already scoped — tenant filter would break multi-company views
             var onDuties = await _db.OnDuties
+                .IgnoreQueryFilters()
                 .Include(o => o.User)
                 .Where(o => o.Date >= start
                     && o.Date <= end

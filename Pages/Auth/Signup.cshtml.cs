@@ -155,14 +155,18 @@ public class SignupModel : LocalizedPageModel
         }
 
         // Check if user already exists
-        if (await _db.Users.AnyAsync(u => u.Email == Email))
+        // IgnoreQueryFilters: anonymous user has no tenant context (CompanyId=0),
+        // so the query filter would skip all real users — check across all companies
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == Email))
         {
             Error = _localizer["Error_Signup_EmailExists"];
             return Page();
         }
 
         // Check for existing pending request with same email, company, and role
+        // IgnoreQueryFilters: same reason — anonymous user has no tenant context
         var existingPendingRequest = await _db.UserJoinRequests
+            .IgnoreQueryFilters()
             .Include(jr => jr.Company)
             .FirstOrDefaultAsync(jr =>
                 jr.Email == Email &&

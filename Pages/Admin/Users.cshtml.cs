@@ -190,7 +190,10 @@ public class UsersModel : LocalizedPageModel
         }
 
         // Load join requests with filters and scoping
+        // IgnoreQueryFilters: tenant filter would restrict to admin's own company,
+        // but join requests need cross-company visibility scoped by accessibleCompanyIds
         var joinRequestsQuery = _db.UserJoinRequests
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(jr => accessibleCompanyIds.Contains(jr.CompanyId))
             .Where(jr => jr.Status == FilterStatus);
@@ -471,7 +474,7 @@ public class UsersModel : LocalizedPageModel
         // Validate role string and permission to assign
         if (!Enum.TryParse<UserRole>(NewRole, ignoreCase: true, out var targetRole))
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
             return RedirectToPage();
         }
 
@@ -486,7 +489,7 @@ public class UsersModel : LocalizedPageModel
         var userIdClaimForCompany = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaimForCompany, out var currentUserIdForCompany))
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
 
@@ -496,7 +499,7 @@ public class UsersModel : LocalizedPageModel
             var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserIdForCompany, "EditCompanyUsers", NewUserCompanyId.Value);
             if (!hasEditGrant)
             {
-                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                 return RedirectToPage();
             }
 
@@ -507,7 +510,7 @@ public class UsersModel : LocalizedPageModel
 
             if (company == null)
             {
-                TempData["ErrorMessage"] = _localizer["Error_InvalidCompanySelected"];
+                TempData["ErrorMessage"] = _localizer["Error_InvalidCompanySelected"].Value;
                 return RedirectToPage();
             }
 
@@ -526,7 +529,7 @@ public class UsersModel : LocalizedPageModel
                 .FirstOrDefaultAsync(jt => jt.Id == NewJobTypeId.Value && jt.IsActive);
             if (jobType == null)
             {
-                TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"];
+                TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"].Value;
                 return RedirectToPage();
             }
         }
@@ -614,7 +617,7 @@ public class UsersModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
             return RedirectToPage();
         }
 
@@ -637,7 +640,7 @@ public class UsersModel : LocalizedPageModel
                 {
                     _logger.LogWarning("User {CurrentUserId} attempted to toggle user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
                         toggleCurrentUserId, id, u.CompanyId);
-                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                     return RedirectToPage();
                 }
             }
@@ -653,20 +656,20 @@ public class UsersModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
             return RedirectToPage();
         }
 
         if (string.IsNullOrWhiteSpace(role) || role.Length > 50)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
             return RedirectToPage();
         }
 
         // Validate role string and permission to assign
         if (!Enum.TryParse<UserRole>(role, ignoreCase: true, out var targetRole))
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
             return RedirectToPage();
         }
 
@@ -686,7 +689,7 @@ public class UsersModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
 
@@ -696,7 +699,7 @@ public class UsersModel : LocalizedPageModel
             {
                 _logger.LogWarning("User {CurrentUserId} attempted role change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
                     currentUserId, id, u.CompanyId);
-                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                 return RedirectToPage();
             }
 
@@ -799,14 +802,14 @@ public class UsersModel : LocalizedPageModel
         // SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
             return RedirectToPage();
         }
 
         var u = await _db.Users.FindAsync(id);
         if (u == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -826,7 +829,7 @@ public class UsersModel : LocalizedPageModel
             {
                 _logger.LogWarning("User {CurrentUserId} attempted job type change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
                     jobTypeCurrentUserId, id, u.CompanyId);
-                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                 return RedirectToPage();
             }
         }
@@ -840,7 +843,7 @@ public class UsersModel : LocalizedPageModel
                 .FirstOrDefaultAsync(jt => jt.Id == jobTypeId.Value && jt.IsActive);
             if (jobType == null)
             {
-                TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"];
+                TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"].Value;
                 return RedirectToPage();
             }
             jobTypeName = jobType.DisplayName;
@@ -913,7 +916,7 @@ public class UsersModel : LocalizedPageModel
                 {
                     _logger.LogWarning("User {CurrentUserId} attempted password reset on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
                         resetCurrentUserId, id, u.CompanyId);
-                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                     return RedirectToPage();
                 }
             }
@@ -957,14 +960,14 @@ public class UsersModel : LocalizedPageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
             _logger.LogError("Invalid or missing NameIdentifier claim");
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
 
         var targetUser = await _db.Users.FindAsync(id);
         if (targetUser == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -974,7 +977,7 @@ public class UsersModel : LocalizedPageModel
         {
             _logger.LogWarning("User {CurrentUserId} attempted to unlock user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
                 currentUserId, id, targetUser.CompanyId);
-            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"];
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
             return RedirectToPage();
         }
 
@@ -1017,7 +1020,7 @@ public class UsersModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
 
@@ -1128,7 +1131,7 @@ public class UsersModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRequestId"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRequestId"].Value;
             return RedirectToPage();
         }
 
@@ -1143,12 +1146,13 @@ public class UsersModel : LocalizedPageModel
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         var joinRequest = await _db.UserJoinRequests
+            .IgnoreQueryFilters()
             .Include(jr => jr.Company)
             .FirstOrDefaultAsync(jr => jr.Id == id);
 
         if (joinRequest == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_JoinRequestNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_JoinRequestNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -1157,20 +1161,20 @@ public class UsersModel : LocalizedPageModel
 
         if (!hasPermission)
         {
-            TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveJoinRequest"];
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveJoinRequest"].Value;
             return RedirectToPage();
         }
 
         if (joinRequest.Status != JoinRequestStatus.Pending)
         {
-            TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyReviewed"];
+            TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyReviewed"].Value;
             return RedirectToPage();
         }
 
         // Check if user with this email already exists
         if (await _db.Users.AnyAsync(u => u.Email == joinRequest.Email))
         {
-            TempData["ErrorMessage"] = _localizer["Error_UserEmailAlreadyExists"];
+            TempData["ErrorMessage"] = _localizer["Error_UserEmailAlreadyExists"].Value;
             return RedirectToPage();
         }
 
@@ -1240,7 +1244,7 @@ public class UsersModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error approving join request {RequestId}", id);
-            TempData["ErrorMessage"] = _localizer["Error_ApprovingJoinRequest"];
+            TempData["ErrorMessage"] = _localizer["Error_ApprovingJoinRequest"].Value;
             return RedirectToPage();
         }
     }
@@ -1250,13 +1254,13 @@ public class UsersModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRequestId"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRequestId"].Value;
             return RedirectToPage();
         }
 
         if (!string.IsNullOrWhiteSpace(reason) && reason.Length > 1000)
         {
-            TempData["ErrorMessage"] = _localizer["Error_RejectionReasonTooLong"];
+            TempData["ErrorMessage"] = _localizer["Error_RejectionReasonTooLong"].Value;
             return RedirectToPage();
         }
 
@@ -1271,12 +1275,13 @@ public class UsersModel : LocalizedPageModel
         var currentUser = await _db.Users.FindAsync(currentUserId);
 
         var joinRequest = await _db.UserJoinRequests
+            .IgnoreQueryFilters()
             .Include(jr => jr.Company)
             .FirstOrDefaultAsync(jr => jr.Id == id);
 
         if (joinRequest == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_JoinRequestNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_JoinRequestNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -1285,13 +1290,13 @@ public class UsersModel : LocalizedPageModel
 
         if (!hasPermission)
         {
-            TempData["ErrorMessage"] = _localizer["Error_NoPermissionRejectRequest"];
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionRejectRequest"].Value;
             return RedirectToPage();
         }
 
         if (joinRequest.Status != JoinRequestStatus.Pending)
         {
-            TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyReviewed"];
+            TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyReviewed"].Value;
             return RedirectToPage();
         }
 
@@ -1315,7 +1320,7 @@ public class UsersModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error rejecting join request {RequestId}", id);
-            TempData["ErrorMessage"] = _localizer["Error_RejectingJoinRequest"];
+            TempData["ErrorMessage"] = _localizer["Error_RejectingJoinRequest"].Value;
             return RedirectToPage();
         }
     }
@@ -1334,7 +1339,7 @@ public class UsersModel : LocalizedPageModel
 
         if (SelectedRequests == null || !SelectedRequests.Any())
         {
-            TempData["ErrorMessage"] = _localizer["Error_NoRequestsSelected"];
+            TempData["ErrorMessage"] = _localizer["Error_NoRequestsSelected"].Value;
             return RedirectToPage();
         }
 
@@ -1361,7 +1366,10 @@ public class UsersModel : LocalizedPageModel
 
             // ✅ SECURITY FIX (DEFECT-019): Validate request IDs before processing
             // Get all selected join requests
+            // IgnoreQueryFilters: tenant filter would hide cross-company requests;
+            // grant-based permission check below enforces proper authorization
             var joinRequests = await _db.UserJoinRequests
+                .IgnoreQueryFilters()
                 .Include(jr => jr.Company)
                 .Where(jr => SelectedRequests.Contains(jr.Id))
                 .ToListAsync();
@@ -1379,7 +1387,7 @@ public class UsersModel : LocalizedPageModel
             var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
             if (!accessibleCompanyIds.Any())
             {
-                TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveRequests"];
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveRequests"].Value;
                 return RedirectToPage();
             }
 
@@ -1483,7 +1491,7 @@ public class UsersModel : LocalizedPageModel
 
             if (errors.Any())
             {
-                TempData["ErrorMessage"] = _localizer["Error_SomeRequestsHadIssues"] + ": " + string.Join("; ", errors.Take(3));
+                TempData["ErrorMessage"] = _localizer["Error_SomeRequestsHadIssues"].Value + ": " + string.Join("; ", errors.Take(3));
             }
 
             return RedirectToPage();
@@ -1492,7 +1500,7 @@ public class UsersModel : LocalizedPageModel
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error during batch approval of join requests");
-            TempData["ErrorMessage"] = _localizer["Error_BatchApprovalFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_BatchApprovalFailed"].Value;
             return RedirectToPage();
         }
     }
@@ -1562,7 +1570,7 @@ public class UsersModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"];
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
 
@@ -1642,7 +1650,7 @@ public class UsersModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting users to CSV");
-            TempData["ErrorMessage"] = _localizer["Error_ExportingUsers"];
+            TempData["ErrorMessage"] = _localizer["Error_ExportingUsers"].Value;
             return RedirectToPage();
         }
     }

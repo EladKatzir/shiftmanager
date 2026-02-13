@@ -49,8 +49,9 @@ public class NotificationHubModel : PageModel
             return;
 
         // Get recent notifications across all assigned companies
-        var notificationsQuery = await (from n in _db.UserNotifications
-                                        join c in _db.Companies on n.CompanyId equals c.Id
+        // IgnoreQueryFilters: Director manages multiple companies — tenant filter restricts to home company
+        var notificationsQuery = await (from n in _db.UserNotifications.IgnoreQueryFilters()
+                                        join c in _db.Companies.IgnoreQueryFilters() on n.CompanyId equals c.Id
                                         where companyIds.Contains(n.CompanyId)
                                         orderby n.CreatedAt descending
                                         select new NotificationVM(
@@ -67,9 +68,10 @@ public class NotificationHubModel : PageModel
         RecentNotifications = notificationsQuery;
 
         // Get pending time-off requests
-        var timeOffQuery = await (from t in _db.TimeOffRequests
-                                  join u in _db.Users on t.UserId equals u.Id
-                                  join c in _db.Companies on t.CompanyId equals c.Id
+        // IgnoreQueryFilters: Director manages multiple companies — tenant filter restricts to home company
+        var timeOffQuery = await (from t in _db.TimeOffRequests.IgnoreQueryFilters()
+                                  join u in _db.Users.IgnoreQueryFilters() on t.UserId equals u.Id
+                                  join c in _db.Companies.IgnoreQueryFilters() on t.CompanyId equals c.Id
                                   where companyIds.Contains(t.CompanyId) && t.Status == Models.Support.RequestStatus.Pending
                                   orderby t.StartDate
                                   select new PendingRequestVM(
@@ -85,11 +87,12 @@ public class NotificationHubModel : PageModel
         PendingTimeOffRequests = timeOffQuery;
 
         // Get pending swap requests
-        var swapQuery = await (from s in _db.SwapRequests
-                               join sa in _db.ShiftAssignments on s.FromAssignmentId equals sa.Id
-                               join fromUser in _db.Users on sa.UserId equals fromUser.Id
-                               join toUser in _db.Users on s.ToUserId equals toUser.Id
-                               join c in _db.Companies on s.CompanyId equals c.Id
+        // IgnoreQueryFilters: Director manages multiple companies — tenant filter restricts to home company
+        var swapQuery = await (from s in _db.SwapRequests.IgnoreQueryFilters()
+                               join sa in _db.ShiftAssignments.IgnoreQueryFilters() on s.FromAssignmentId equals sa.Id
+                               join fromUser in _db.Users.IgnoreQueryFilters() on sa.UserId equals fromUser.Id
+                               join toUser in _db.Users.IgnoreQueryFilters() on s.ToUserId equals toUser.Id
+                               join c in _db.Companies.IgnoreQueryFilters() on s.CompanyId equals c.Id
                                where companyIds.Contains(s.CompanyId) && s.Status == Models.Support.RequestStatus.Pending
                                orderby s.CreatedAt descending
                                select new PendingRequestVM(

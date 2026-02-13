@@ -80,7 +80,8 @@ public class IndexModel : LocalizedPageModel
             if (currentUser.Role == UserRole.Owner)
             {
                 // Owner sees all companies
-                accessibleCompanyIds = await _db.Users.Select(u => u.CompanyId).Distinct().ToListAsync();
+                // IgnoreQueryFilters: Owner needs ALL company IDs, not just their tenant
+                accessibleCompanyIds = await _db.Users.IgnoreQueryFilters().Select(u => u.CompanyId).Distinct().ToListAsync();
             }
             else if (currentUser.Role == UserRole.Director)
             {
@@ -95,8 +96,9 @@ public class IndexModel : LocalizedPageModel
 
             // Phase 8.2.1: Load pending time-off requests with company filtering
             _logger.LogInformation("Loading pending time off requests");
-            var pendingTO = await (from r in _db.TimeOffRequests
-                                   join u in _db.Users on r.UserId equals u.Id
+            // IgnoreQueryFilters: accessibleCompanyIds already scoped — tenant filter breaks multi-company views
+            var pendingTO = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
+                                   join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
                                    where r.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u.CompanyId)
                                    orderby r.CreatedAt
                                    select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason)).ToListAsync();
@@ -105,12 +107,13 @@ public class IndexModel : LocalizedPageModel
 
             // Phase 8.2.1: Load pending swap requests with company filtering
             _logger.LogInformation("Loading pending swap requests");
-            var pendingSwaps = await (from s in _db.SwapRequests
-                                      join a in _db.ShiftAssignments on s.FromAssignmentId equals a.Id
-                                      join u1 in _db.Users on a.UserId equals u1.Id
-                                      join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
-                                      join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
-                                      join u2 in _db.Users on s.ToUserId equals u2.Id into toUserJoin
+            // IgnoreQueryFilters: all joined tables have tenant filters that break multi-company views
+            var pendingSwaps = await (from s in _db.SwapRequests.IgnoreQueryFilters()
+                                      join a in _db.ShiftAssignments.IgnoreQueryFilters() on s.FromAssignmentId equals a.Id
+                                      join u1 in _db.Users.IgnoreQueryFilters() on a.UserId equals u1.Id
+                                      join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
+                                      join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
+                                      join u2 in _db.Users.IgnoreQueryFilters() on s.ToUserId equals u2.Id into toUserJoin
                                       from u2 in toUserJoin.DefaultIfEmpty()
                                       where s.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u1.CompanyId)
                                       orderby s.CreatedAt
@@ -128,8 +131,9 @@ public class IndexModel : LocalizedPageModel
             // ✅ Phase 18: Load approved time-off requests
             // Phase 8.2.1: Simplified to reuse accessibleCompanyIds from above
             _logger.LogInformation("Loading approved time off requests");
-            ApprovedTimeOffs = await (from r in _db.TimeOffRequests
-                                     join u in _db.Users on r.UserId equals u.Id
+            // IgnoreQueryFilters: same multi-company scope as pending queries above
+            ApprovedTimeOffs = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
+                                     join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
                                      where r.Status == RequestStatus.Approved && accessibleCompanyIds.Contains(u.CompanyId)
                                      orderby r.StartDate descending
                                      select new ApprovedTimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt)).ToListAsync();
@@ -155,7 +159,8 @@ public class IndexModel : LocalizedPageModel
         }
 
         // ✅ SECURITY FIX: Validate authorization before approving request
-        var r = await _db.TimeOffRequests.FindAsync(id);
+        // IgnoreQueryFilters: request may be in a different company than current tenant
+        var r = await _db.TimeOffRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (r == null)
         {
             _logger.LogWarning("Time off request {RequestId} not found", id);
@@ -171,7 +176,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
         var hasAccess = await ValidateAccessToRequestAsync(currentUser!, r.CompanyId);
         if (!hasAccess)
         {
@@ -195,8 +200,9 @@ public class IndexModel : LocalizedPageModel
         r.Status = RequestStatus.Approved;
 
         // Remove existing assignments in the approved window
-        var assignments = await (from a in _db.ShiftAssignments
-                                 join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
+        // IgnoreQueryFilters: assignments may be in a different company
+        var assignments = await (from a in _db.ShiftAssignments.IgnoreQueryFilters()
+                                 join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
                                  where a.UserId == r.UserId && si.WorkDate >= r.StartDate && si.WorkDate <= r.EndDate
                                  select a).ToListAsync();
         if (assignments.Any())
@@ -205,7 +211,7 @@ public class IndexModel : LocalizedPageModel
         }
 
         // Cancel trainee shadowing assignments if user is a trainee
-        var user = await _db.Users.FindAsync(r.UserId);
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == r.UserId);
         if (user != null && user.Role == UserRole.Trainee)
         {
             var startDate = r.StartDate.ToDateTime(TimeOnly.MinValue);
@@ -231,7 +237,8 @@ public class IndexModel : LocalizedPageModel
         }
 
         // ✅ SECURITY FIX: Validate authorization before declining request
-        var r = await _db.TimeOffRequests.FindAsync(id);
+        // IgnoreQueryFilters: request may be in a different company than current tenant
+        var r = await _db.TimeOffRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (r == null)
         {
             _logger.LogWarning("Time off request {RequestId} not found", id);
@@ -247,7 +254,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
         var hasAccess = await ValidateAccessToRequestAsync(currentUser!, r.CompanyId);
         if (!hasAccess)
         {
@@ -289,7 +296,8 @@ public class IndexModel : LocalizedPageModel
         using var trx = await _db.Database.BeginTransactionAsync();
 
         // ✅ SECURITY FIX: Validate authorization before approving swap
-        var s = await _db.SwapRequests.FindAsync(id);
+        // IgnoreQueryFilters: request may be in a different company than current tenant
+        var s = await _db.SwapRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (s == null)
         {
             _logger.LogWarning("Swap request {RequestId} not found", id);
@@ -306,7 +314,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
         var hasAccess = await ValidateAccessToRequestAsync(currentUser!, s.CompanyId);
         if (!hasAccess)
         {
@@ -329,13 +337,14 @@ public class IndexModel : LocalizedPageModel
             return Page();
         }
 
-        var assign = await _db.ShiftAssignments.FindAsync(s.FromAssignmentId);
+        // IgnoreQueryFilters: these entities may belong to a different company than current tenant
+        var assign = await _db.ShiftAssignments.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == s.FromAssignmentId);
         if (assign == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
-        var si = await _db.ShiftInstances.FindAsync(assign.ShiftInstanceId);
+        var si = await _db.ShiftInstances.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == assign.ShiftInstanceId);
         if (si == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
-        var shiftType = await _db.ShiftTypes.FindAsync(si.ShiftTypeId);
+        var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == si.ShiftTypeId);
         if (shiftType == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
 
         if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
@@ -378,7 +387,8 @@ public class IndexModel : LocalizedPageModel
         }
 
         // ✅ SECURITY FIX: Validate authorization before declining swap
-        var s = await _db.SwapRequests.FindAsync(id);
+        // IgnoreQueryFilters: request may be in a different company than current tenant
+        var s = await _db.SwapRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (s == null)
         {
             _logger.LogWarning("Swap request {RequestId} not found", id);
@@ -394,7 +404,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var currentUser = await _db.Users.FindAsync(currentUserId);
+        var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
         var hasAccess = await ValidateAccessToRequestAsync(currentUser!, s.CompanyId);
         if (!hasAccess)
         {
@@ -416,10 +426,11 @@ public class IndexModel : LocalizedPageModel
         }
 
         // Get shift information for notification before declining
-        var shiftInfo = await (from sr in _db.SwapRequests
-                              join assign in _db.ShiftAssignments on sr.FromAssignmentId equals assign.Id
-                              join si in _db.ShiftInstances on assign.ShiftInstanceId equals si.Id
-                              join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
+        // IgnoreQueryFilters: all joined entities may be in a different company
+        var shiftInfo = await (from sr in _db.SwapRequests.IgnoreQueryFilters()
+                              join assign in _db.ShiftAssignments.IgnoreQueryFilters() on sr.FromAssignmentId equals assign.Id
+                              join si in _db.ShiftInstances.IgnoreQueryFilters() on assign.ShiftInstanceId equals si.Id
+                              join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
                               where sr.Id == id
                               select new { assign.UserId, ShiftInfo = $"{st.Name} on {si.WorkDate:MMM dd, yyyy} ({st.Start:HH:mm} - {st.End:HH:mm})" })
                               .FirstOrDefaultAsync();
@@ -452,7 +463,8 @@ public class IndexModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
-            var currentUser = await _db.Users.FindAsync(currentUserId);
+            // IgnoreQueryFilters: Owner/Director may be viewing a different company
+            var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
             if (currentUser == null)
             {
                 Error = _localizer["Error_UserNotFound"];
@@ -460,7 +472,9 @@ public class IndexModel : LocalizedPageModel
             }
 
             // Load the time-off request and user for validation
+            // IgnoreQueryFilters: request may be in a different company than current tenant
             var request = await _db.TimeOffRequests
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (request == null)
@@ -471,7 +485,7 @@ public class IndexModel : LocalizedPageModel
                 return Page();
             }
 
-            var user = await _db.Users.FindAsync(request.UserId);
+            var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
             if (user == null)
             {
                 Error = _localizer["Error_UserNotFound"];

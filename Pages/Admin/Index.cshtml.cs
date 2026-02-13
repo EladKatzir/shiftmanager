@@ -70,11 +70,12 @@ public class IndexModel : PageModel
             else if (IsDirector && _directorService != null)
             {
                 // Director sees assigned companies
+                // IgnoreQueryFilters: Director manages multiple companies — tenant filter restricts to home company
                 var companyIds = await _directorService.GetDirectorCompanyIdsAsync();
-                TotalUsers = await _db.Users.CountAsync(u => u.IsActive && companyIds.Contains(u.CompanyId));
-                TotalShifts = await _db.ShiftInstances.CountAsync(si => companyIds.Contains(si.CompanyId));
-                TotalChores = await _db.Chores.CountAsync(c => companyIds.Contains(c.CompanyId));
-                TotalAssignments = await _db.ShiftAssignments.CountAsync(sa => companyIds.Contains(sa.CompanyId));
+                TotalUsers = await _db.Users.IgnoreQueryFilters().CountAsync(u => u.IsActive && companyIds.Contains(u.CompanyId));
+                TotalShifts = await _db.ShiftInstances.IgnoreQueryFilters().CountAsync(si => companyIds.Contains(si.CompanyId));
+                TotalChores = await _db.Chores.IgnoreQueryFilters().CountAsync(c => companyIds.Contains(c.CompanyId));
+                TotalAssignments = await _db.ShiftAssignments.IgnoreQueryFilters().CountAsync(sa => companyIds.Contains(sa.CompanyId));
             }
             else
             {

@@ -108,7 +108,7 @@ public class EmailTemplatesModel : LocalizedPageModel
                 IsEnabled,
                 userId);
 
-            TempData["SuccessMessage"] = _localizer["Success_EmailTemplateSaved"];
+            TempData["SuccessMessage"] = _localizer["Success_EmailTemplateSaved"].Value;
             return RedirectToPage();
         }
         catch (Exception ex)
@@ -139,7 +139,7 @@ public class EmailTemplatesModel : LocalizedPageModel
                 false,
                 userId);
 
-            TempData["SuccessMessage"] = _localizer["Success_EmailTemplateReset"];
+            TempData["SuccessMessage"] = _localizer["Success_EmailTemplateReset"].Value;
             return RedirectToPage();
         }
         catch (Exception ex)

@@ -97,20 +97,20 @@ public class IndexModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(JobTypeName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_JobTypeNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_JobTypeNameRequired"].Value;
             return RedirectToPage();
         }
 
         if (SelectedAreaId <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaRequired"].Value;
             return RedirectToPage();
         }
 
         var area = await _db.Areas.FindAsync(SelectedAreaId);
         if (area == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -140,7 +140,7 @@ public class IndexModel : LocalizedPageModel
         var jobType = await _db.JobTypes.FindAsync(id);
         if (jobType == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -165,14 +165,14 @@ public class IndexModel : LocalizedPageModel
 
         if (userCount > 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteJobTypeWithUsers"];
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteJobTypeWithUsers"].Value;
             return RedirectToPage();
         }
 
         var jobType = await _db.JobTypes.FindAsync(id);
         if (jobType == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
             return RedirectToPage();
         }
 

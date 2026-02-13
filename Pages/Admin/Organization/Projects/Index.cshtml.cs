@@ -48,7 +48,7 @@ public class IndexModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(ProjectName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_ProjectNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_ProjectNameRequired"].Value;
             return RedirectToPage();
         }
 
@@ -73,7 +73,7 @@ public class IndexModel : LocalizedPageModel
         var project = await _db.Projects.FindAsync(id);
         if (project == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_ProjectNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_ProjectNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -92,13 +92,13 @@ public class IndexModel : LocalizedPageModel
         var project = await _db.Projects.Include(p => p.Areas).FirstOrDefaultAsync(p => p.Id == id);
         if (project == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_ProjectNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_ProjectNotFound"].Value;
             return RedirectToPage();
         }
 
         if (project.Areas.Any())
         {
-            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteProjectWithAreas"];
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteProjectWithAreas"].Value;
             return RedirectToPage();
         }
 

@@ -119,26 +119,26 @@ public class AnnouncementsModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(Title))
         {
-            TempData["ErrorMessage"] = _localizer["Error_TitleRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_TitleRequired"].Value;
             return RedirectToPage();
         }
 
         if (string.IsNullOrWhiteSpace(AnnouncementContent))
         {
-            TempData["ErrorMessage"] = _localizer["Error_ContentRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_ContentRequired"].Value;
             return RedirectToPage();
         }
 
         // Validate scope-specific fields
         if (Scope == AnnouncementScope.Department && !TargetDepartmentId.HasValue)
         {
-            TempData["ErrorMessage"] = _localizer["Error_DepartmentRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentRequired"].Value;
             return RedirectToPage();
         }
 
         if (Scope == AnnouncementScope.Role && string.IsNullOrWhiteSpace(TargetRole))
         {
-            TempData["ErrorMessage"] = _localizer["Error_RoleRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_RoleRequired"].Value;
             return RedirectToPage();
         }
 
@@ -158,7 +158,7 @@ public class AnnouncementsModel : LocalizedPageModel
         _logger.LogInformation("Announcement {AnnouncementId} created by user {UserId}: {Title}",
             announcement.Id, _currentUserService.UserId, announcement.Title);
 
-        TempData["SuccessMessage"] = _localizer["Success_AnnouncementCreated"];
+        TempData["SuccessMessage"] = _localizer["Success_AnnouncementCreated"].Value;
         return RedirectToPage();
     }
 
@@ -167,7 +167,7 @@ public class AnnouncementsModel : LocalizedPageModel
         var announcement = await _announcementService.GetByIdAsync(id);
         if (announcement == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AnnouncementNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AnnouncementNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -189,7 +189,7 @@ public class AnnouncementsModel : LocalizedPageModel
         var announcement = await _announcementService.GetByIdAsync(id);
         if (announcement == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AnnouncementNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AnnouncementNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -198,7 +198,7 @@ public class AnnouncementsModel : LocalizedPageModel
         _logger.LogInformation("Announcement {AnnouncementId} deleted by user {UserId}: {Title}",
             id, _currentUserService.UserId, announcement.Title);
 
-        TempData["SuccessMessage"] = _localizer["Success_AnnouncementDeleted"];
+        TempData["SuccessMessage"] = _localizer["Success_AnnouncementDeleted"].Value;
         return RedirectToPage();
     }
 }

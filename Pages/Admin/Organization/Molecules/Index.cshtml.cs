@@ -87,20 +87,20 @@ public class IndexModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(MoleculeName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_MoleculeNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNameRequired"].Value;
             return RedirectToPage();
         }
 
         if (SelectedAreaId <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaRequired"].Value;
             return RedirectToPage();
         }
 
         var area = await _db.Areas.FindAsync(SelectedAreaId);
         if (area == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -130,7 +130,7 @@ public class IndexModel : LocalizedPageModel
         var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == id);
         if (molecule == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -158,14 +158,14 @@ public class IndexModel : LocalizedPageModel
 
         if (molecule == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;
             return RedirectToPage();
         }
 
         // Check for dependencies
         if (molecule.Companies.Any() || molecule.Departments.Any())
         {
-            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteMoleculeWithDependencies"];
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteMoleculeWithDependencies"].Value;
             return RedirectToPage();
         }
 

@@ -20,18 +20,21 @@ public class ConflictChecker : IConflictChecker
 
     public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
     {
-        var user = await _db.Users.FindAsync(new object?[] { userId }, ct);
+        // IgnoreQueryFilters: conflict checks may involve users/shifts from different companies
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId, ct);
         if (user == null || !user.IsActive)
             return LogAndFail(userId, instance.Id, "User inactive or not found.", "CONFLICT_USER_INACTIVE");
 
-        var t = await _db.ShiftTypes.FindAsync(new object?[] { instance.ShiftTypeId }, ct);
+        var t = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == instance.ShiftTypeId, ct);
         if (t is null) return LogAndFail(userId, instance.Id, "Shift type missing.", "CONFLICT_SHIFT_TYPE_MISSING");
 
         // OFFLINE shifts can coexist with other shifts - show warning but allow
         bool isOfflineShift = t.IsOffline;
 
         // Approved Time off blocks
+        // IgnoreQueryFilters: user's time-off may be in a different company than current tenant
         bool hasTimeOff = await _db.TimeOffRequests
+            .IgnoreQueryFilters()
             .AnyAsync(r => r.UserId == userId
                         && r.Status == RequestStatus.Approved
                         && instance.WorkDate >= r.StartDate
@@ -45,9 +48,10 @@ public class ConflictChecker : IConflictChecker
         var weekStart = TimeHelpers.WeekStart(instance.WorkDate).AddDays(-1);
         var weekEnd = weekStart.AddDays(8);
 
-        var relevantAssignments = await (from a in _db.ShiftAssignments
-                                         join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
-                                         join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
+        // IgnoreQueryFilters: assignments may span companies in cross-company scenarios
+        var relevantAssignments = await (from a in _db.ShiftAssignments.IgnoreQueryFilters()
+                                         join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
+                                         join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
                                          where a.UserId == userId
                                             && si.WorkDate >= weekStart && si.WorkDate <= weekEnd
                                          select new
@@ -55,7 +59,7 @@ public class ConflictChecker : IConflictChecker
                                              si.WorkDate,
                                              st.Start,
                                              st.End,
-                                             st.IsOffline
+                                             IsOffline = st.Key == ShiftType.KEY_OFFLINE
                                          }).ToListAsync(ct);
 
         foreach (var ra in relevantAssignments)
@@ -105,9 +109,9 @@ public class ConflictChecker : IConflictChecker
         var weekStartDay = await GetConfigIntAsync(instance.CompanyId, "WeekStartDay", 0, ct);
         var weekStart2 = TimeHelpers.WeekStart(instance.WorkDate, (DayOfWeek)Math.Clamp(weekStartDay, 0, 6));
         var weekEnd2 = weekStart2.AddDays(6);
-        var weekAssignments = await (from a in _db.ShiftAssignments
-                                     join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
-                                     join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
+        var weekAssignments = await (from a in _db.ShiftAssignments.IgnoreQueryFilters()
+                                     join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
+                                     join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
                                      where a.UserId == userId
                                         && si.WorkDate >= weekStart2 && si.WorkDate <= weekEnd2
                                      select new { si.WorkDate, st.Start, st.End })

@@ -111,13 +111,13 @@ public class IndexModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(GroupingName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_GroupingNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_GroupingNameRequired"].Value;
             return RedirectToPage();
         }
 
         if (SelectedMoleculeId <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_MoleculeRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeRequired"].Value;
             return RedirectToPage();
         }
 
@@ -131,7 +131,7 @@ public class IndexModel : LocalizedPageModel
 
         if (grouping == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_GroupingCreationFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_GroupingCreationFailed"].Value;
             return RedirectToPage();
         }
 
@@ -147,7 +147,7 @@ public class IndexModel : LocalizedPageModel
         var grouping = await _db.ShiftGroupings.FindAsync(id);
         if (grouping == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_GroupingNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_GroupingNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -174,7 +174,7 @@ public class IndexModel : LocalizedPageModel
         var grouping = await _db.ShiftGroupings.FindAsync(id);
         if (grouping == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_GroupingNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_GroupingNotFound"].Value;
             return RedirectToPage();
         }
 

@@ -100,7 +100,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -108,11 +108,11 @@ public class IndexModel : LocalizedPageModel
 
         if (result)
         {
-            TempData["SuccessMessage"] = _localizer["Success_TaskCompleted"];
+            TempData["SuccessMessage"] = _localizer["Success_TaskCompleted"].Value;
         }
         else
         {
-            TempData["ErrorMessage"] = _localizer["Error_TaskNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_TaskNotFound"].Value;
         }
 
         return RedirectToPage(new { ViewMode, FilterMoleculeId });
@@ -123,7 +123,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -131,11 +131,11 @@ public class IndexModel : LocalizedPageModel
 
         if (result)
         {
-            TempData["SuccessMessage"] = _localizer["Success_TaskSkipped"];
+            TempData["SuccessMessage"] = _localizer["Success_TaskSkipped"].Value;
         }
         else
         {
-            TempData["ErrorMessage"] = _localizer["Error_TaskNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_TaskNotFound"].Value;
         }
 
         return RedirectToPage(new { ViewMode, FilterMoleculeId });
@@ -146,7 +146,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -154,11 +154,11 @@ public class IndexModel : LocalizedPageModel
 
         if (result)
         {
-            TempData["SuccessMessage"] = _localizer["Success_TaskStarted"];
+            TempData["SuccessMessage"] = _localizer["Success_TaskStarted"].Value;
         }
         else
         {
-            TempData["ErrorMessage"] = _localizer["Error_TaskNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_TaskNotFound"].Value;
         }
 
         return RedirectToPage(new { ViewMode, FilterMoleculeId });

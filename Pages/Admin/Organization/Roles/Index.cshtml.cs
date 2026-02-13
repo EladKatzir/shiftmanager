@@ -149,7 +149,7 @@ public class IndexModel : LocalizedPageModel
 
         if (assignment == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_RoleAssignmentNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_RoleAssignmentNotFound"].Value;
             return RedirectToPage(new { ViewMode = "assignments" });
         }
 

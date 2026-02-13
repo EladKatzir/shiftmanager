@@ -290,18 +290,7 @@ th { text-align: left; color: var(--text) !important; }
   background: var(--bg);
 }
 
-.app-sidebar {
-  width: 260px;
-  background: var(--surface-elevated);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
+/* .app-sidebar is defined in navigation.css — no duplicate needed here */
 
 .app-sidebar-brand {
   padding: 1.5rem 1.25rem;
@@ -465,7 +454,6 @@ th { text-align: left; color: var(--text) !important; }
 .app-content {
   flex: 1;
   padding: 1.5rem;
-  max-width: 1400px;
   width: 100%;
   margin: 0;
 }

@@ -60,20 +60,20 @@ public class AreaConfigModel : PageModel
     {
         if (EditAreaId <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidArea"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidArea"].Value;
             return RedirectToPage();
         }
 
         // Validate inputs
         if (DefaultRestHours < 0 || DefaultRestHours > 24)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRestHours"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRestHours"].Value;
             return RedirectToPage();
         }
 
         if (DefaultWeeklyCap < 0 || DefaultWeeklyCap > 168)
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidWeeklyCap"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidWeeklyCap"].Value;
             return RedirectToPage();
         }
 
@@ -83,7 +83,7 @@ public class AreaConfigModel : PageModel
 
         if (area == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
             return RedirectToPage();
         }
 

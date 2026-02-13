@@ -139,7 +139,7 @@ public class IndexModel : LocalizedPageModel
 
         if (grant == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_GrantNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_GrantNotFound"].Value;
             return RedirectToPage(new { ViewMode = "grants" });
         }
 

@@ -57,6 +57,9 @@ public class CompaniesModel : LocalizedPageModel
             Success = successMsg;
         }
 
+        // Auto-generate slugs for legacy companies that don't have one
+        await BackfillMissingSlugsAsync();
+
         // First, get user counts per company using IgnoreQueryFilters
         var userCountsByCompany = await _db.Users
             .IgnoreQueryFilters()
@@ -313,7 +316,7 @@ public class CompaniesModel : LocalizedPageModel
     {
         if (RenameCompanyId <= 0 || string.IsNullOrWhiteSpace(NewCompanyName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidCompanyIdOrName"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidCompanyIdOrName"].Value;
             return RedirectToPage();
         }
 
@@ -328,14 +331,14 @@ public class CompaniesModel : LocalizedPageModel
         // Validate field length
         if (NewCompanyName.Length > 200)
         {
-            TempData["ErrorMessage"] = _localizer["Error_CompanyNameOrSlugTooLong"];
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNameOrSlugTooLong"].Value;
             return RedirectToPage();
         }
 
         var company = await _db.Companies.FindAsync(RenameCompanyId);
         if (company == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -382,20 +385,78 @@ public class CompaniesModel : LocalizedPageModel
         return false;
     }
 
+    /// <summary>
+    /// Auto-generates slugs for legacy companies that were created without one.
+    /// Generates from company Name: lowercase, non-alphanumeric → hyphens, deduped.
+    /// </summary>
+    private async Task BackfillMissingSlugsAsync()
+    {
+        var companiesWithoutSlug = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Slug == null || c.Slug == "")
+            .ToListAsync();
+
+        if (!companiesWithoutSlug.Any()) return;
+
+        // Get all existing slugs to ensure uniqueness
+        var existingSlugs = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Slug != null && c.Slug != "")
+            .Select(c => c.Slug!)
+            .ToListAsync();
+
+        var usedSlugs = new HashSet<string>(existingSlugs, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var company in companiesWithoutSlug)
+        {
+            var baseSlug = GenerateSlug(company.Name);
+            var slug = baseSlug;
+            var counter = 2;
+            while (usedSlugs.Contains(slug))
+            {
+                slug = $"{baseSlug}-{counter}";
+                counter++;
+            }
+
+            company.Slug = slug;
+            usedSlugs.Add(slug);
+            _logger.LogInformation("Auto-generated slug '{Slug}' for company '{CompanyName}' (ID: {CompanyId})",
+                slug, company.Name, company.Id);
+        }
+
+        await _db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Generates a URL-safe slug from a name: lowercase, non-alphanumeric chars → hyphens, trimmed.
+    /// </summary>
+    private static string GenerateSlug(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "company";
+
+        // Lowercase and replace non-alphanumeric with hyphens
+        var slug = Regex.Replace(name.Trim().ToLowerInvariant(), @"[^a-z0-9]+", "-");
+        // Trim leading/trailing hyphens
+        slug = slug.Trim('-');
+        // Fallback if slug is empty (e.g., all non-latin chars)
+        return string.IsNullOrEmpty(slug) ? "company" : slug;
+    }
+
     public async Task<IActionResult> OnPostDeleteCompanyAsync(int id)
     {
         var company = await _db.Companies.FindAsync(id);
         if (company == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
             return RedirectToPage();
         }
 
         // CRITICAL: Check if any Owner users belong to this company
-        var hasOwnerUsers = await _db.Users.AnyAsync(u => u.CompanyId == id && u.Role == UserRole.Owner);
+        // IgnoreQueryFilters: admin may be in a different tenant than the company being deleted
+        var hasOwnerUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.CompanyId == id && u.Role == UserRole.Owner);
         if (hasOwnerUsers)
         {
-            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteCompanyWithOwners"];
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteCompanyWithOwners"].Value;
             _logger.LogWarning("Attempted to delete company {CompanyId} with Owner users still assigned", id);
             return RedirectToPage();
         }
@@ -407,35 +468,37 @@ public class CompaniesModel : LocalizedPageModel
             // Delete all related data for this company using ExecuteDeleteAsync for better performance
             // This avoids loading all entities into memory before deletion
 
+            // IgnoreQueryFilters on all: admin's tenant may differ from the company being deleted;
+            // ExecuteDeleteAsync respects global query filters, so we must bypass them explicitly
             // 1. Delete all swap requests
-            await _db.SwapRequests.Where(sr => sr.CompanyId == id).ExecuteDeleteAsync();
+            await _db.SwapRequests.IgnoreQueryFilters().Where(sr => sr.CompanyId == id).ExecuteDeleteAsync();
 
             // 2. Delete all time-off requests
-            await _db.TimeOffRequests.Where(tor => tor.CompanyId == id).ExecuteDeleteAsync();
+            await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.CompanyId == id).ExecuteDeleteAsync();
 
             // 3. Delete all shift assignments
-            await _db.ShiftAssignments.Where(sa => sa.CompanyId == id).ExecuteDeleteAsync();
+            await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.CompanyId == id).ExecuteDeleteAsync();
 
             // 4. Delete all shift instances
-            await _db.ShiftInstances.Where(si => si.CompanyId == id).ExecuteDeleteAsync();
+            await _db.ShiftInstances.IgnoreQueryFilters().Where(si => si.CompanyId == id).ExecuteDeleteAsync();
 
             // 5. Delete all shift types
-            await _db.ShiftTypes.Where(st => st.CompanyId == id).ExecuteDeleteAsync();
+            await _db.ShiftTypes.IgnoreQueryFilters().Where(st => st.CompanyId == id).ExecuteDeleteAsync();
 
             // 6. Delete all configs
-            await _db.Configs.Where(c => c.CompanyId == id).ExecuteDeleteAsync();
+            await _db.Configs.IgnoreQueryFilters().Where(c => c.CompanyId == id).ExecuteDeleteAsync();
 
             // 7. Delete all director assignments
             await _db.DirectorCompanies.Where(dc => dc.CompanyId == id).ExecuteDeleteAsync();
 
             // 8. Delete all user notifications
-            await _db.UserNotifications.Where(n => n.CompanyId == id).ExecuteDeleteAsync();
+            await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.CompanyId == id).ExecuteDeleteAsync();
 
             // 9. Delete all join requests
-            await _db.UserJoinRequests.Where(jr => jr.CompanyId == id).ExecuteDeleteAsync();
+            await _db.UserJoinRequests.IgnoreQueryFilters().Where(jr => jr.CompanyId == id).ExecuteDeleteAsync();
 
             // 10. Deactivate all non-Owner users (soft-delete preserves audit trail integrity)
-            await _db.Users.Where(u => u.CompanyId == id && u.Role != UserRole.Owner)
+            await _db.Users.IgnoreQueryFilters().Where(u => u.CompanyId == id && u.Role != UserRole.Owner)
                 .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsActive, false));
 
             // 11. Finally, delete the company itself
@@ -453,7 +516,7 @@ public class CompaniesModel : LocalizedPageModel
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error deleting company {CompanyId}", id);
-            TempData["ErrorMessage"] = _localizer["Error_CompanyDeletionFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_CompanyDeletionFailed"].Value;
             return RedirectToPage();
         }
     }

@@ -275,8 +275,10 @@ public class MonthModel : PageModel
         if (!companyIds.Any())
             return items;
 
-        // Load shift instances
+        // IgnoreQueryFilters: companyIds already scoped by ScopeFilterService —
+        // EF tenant filter would restrict to single company, breaking molecule/area scopes
         var instancesQuery = _db.ShiftInstances
+            .IgnoreQueryFilters()
             .Include(si => si.ShiftType)
             .Where(si => companyIds.Contains(si.CompanyId) && si.WorkDate >= dates.First() && si.WorkDate <= dates.Last());
 
@@ -296,9 +298,9 @@ public class MonthModel : PageModel
 
         var instanceIds = instances.Select(i => i.Id).ToList();
 
-        // Load assignments with user names
-        var assignments = await (from a in _db.ShiftAssignments
-                                join u in _db.Users on a.UserId equals u.Id
+        // IgnoreQueryFilters on both tables: assignments and users may belong to different companies
+        var assignments = await (from a in _db.ShiftAssignments.IgnoreQueryFilters()
+                                join u in _db.Users.IgnoreQueryFilters() on a.UserId equals u.Id
                                 where instanceIds.Contains(a.ShiftInstanceId)
                                 select new { a.ShiftInstanceId, a.UserId, UserName = u.DisplayName, a.TraineeUserId })
                                 .ToListAsync();
@@ -370,7 +372,9 @@ public class MonthModel : PageModel
         if (!companyIds.Any())
             return new List<CalendarItemViewModel>();
 
+        // IgnoreQueryFilters: companyIds already scoped — tenant filter would break multi-company views
         var chores = await _db.Chores
+            .IgnoreQueryFilters()
             .Include(c => c.User)
             .Where(c => companyIds.Contains(c.CompanyId)
                      && c.Date >= dates.First()

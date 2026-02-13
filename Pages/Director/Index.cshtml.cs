@@ -58,9 +58,13 @@ public class IndexModel : PageModel
 
         try
         {
-            TotalUsers = await _db.Users.CountAsync(u => u.IsActive && targetCompanyIds.Contains(u.CompanyId));
-            TotalShifts = await _db.ShiftInstances.CountAsync(si => targetCompanyIds.Contains(si.CompanyId));
-            TotalRequests = await _db.TimeOffRequests
+            // IgnoreQueryFilters: Director manages multiple companies but tenant filter
+            // restricts to their own CompanyId — explicit targetCompanyIds handles scoping
+            TotalUsers = await _db.Users.IgnoreQueryFilters()
+                .CountAsync(u => u.IsActive && targetCompanyIds.Contains(u.CompanyId));
+            TotalShifts = await _db.ShiftInstances.IgnoreQueryFilters()
+                .CountAsync(si => targetCompanyIds.Contains(si.CompanyId));
+            TotalRequests = await _db.TimeOffRequests.IgnoreQueryFilters()
                 .CountAsync(r => r.Status == RequestStatus.Pending && targetCompanyIds.Contains(r.CompanyId));
         }
         catch

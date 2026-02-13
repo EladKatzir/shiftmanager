@@ -426,7 +426,10 @@ public class NotificationService : INotificationService
         try
         {
             // Get owner users (capped for safety — typically 1-5 per company)
+            // IgnoreQueryFilters: called from anonymous signup context where tenant=0,
+            // which would filter out ALL users. Owners across all companies need notification.
             var owners = await _db.Users
+                .IgnoreQueryFilters()
                 .Where(u => u.Role == UserRole.Owner && u.IsActive)
                 .Take(100)
                 .ToListAsync();

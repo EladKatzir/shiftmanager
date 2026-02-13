@@ -92,10 +92,12 @@ public class ScheduleExportService : IScheduleExportService
                 .Where(si => si.ShiftType.JobTypeId == request.JobTypeId.Value);
         }
 
-        var shiftInstances = await shiftInstancesQuery
+        var shiftInstances = (await shiftInstancesQuery
+            .OrderBy(si => si.WorkDate)
+            .ToListAsync())
             .OrderBy(si => si.WorkDate)
             .ThenBy(si => si.ShiftType.SortOrder)
-            .ToListAsync();
+            .ToList();
 
         // Get assignments for these shift instances
         var shiftInstanceIds = shiftInstances.Select(si => si.Id).ToList();

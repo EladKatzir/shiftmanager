@@ -29,7 +29,9 @@ public class VacationApprovalService : IVacationApprovalService
     public async Task<(int? ApproverId, string ApproverGrantKey, bool RequiresSecondApproval)> GetApprovalRouteAsync(int requestId)
     {
         // 1. Load the TimeOffRequest with user info
+        // IgnoreQueryFilters: request/user/rules may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -38,12 +40,13 @@ public class VacationApprovalService : IVacationApprovalService
             return (null, "ApproveVacations", false);
         }
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
+        var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
         int? userJobTypeId = user?.JobTypeId;
 
         // 2. Find matching VacationApprovalRule
         //    Order by Priority desc, JobTypeId-specific first, then default (null JobTypeId)
         var rules = await _context.VacationApprovalRules
+            .IgnoreQueryFilters()
             .Where(r => r.CompanyId == request.CompanyId && r.IsActive)
             .OrderByDescending(r => r.Priority)
             .ThenByDescending(r => r.JobTypeId != null ? 1 : 0)  // JobType-specific rules first
@@ -86,7 +89,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<(bool Success, string Message)> SubmitForApprovalAsync(int requestId, int submittedBy)
     {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -143,7 +148,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<(bool Success, string Message)> ApproveAsync(int requestId, int approverId, string? notes = null)
     {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -172,6 +179,7 @@ public class VacationApprovalService : IVacationApprovalService
         {
             // Re-check status inside transaction (may have changed concurrently)
             var freshRequest = await _context.TimeOffRequests
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(r => r.Id == requestId);
             if (freshRequest == null || freshRequest.Status != RequestStatus.Pending)
             {
@@ -181,6 +189,7 @@ public class VacationApprovalService : IVacationApprovalService
 
             // Check for overlapping APPROVED requests for the same user
             var hasOverlap = await _context.TimeOffRequests
+                .IgnoreQueryFilters()
                 .AnyAsync(r => r.UserId == freshRequest.UserId
                     && r.Id != requestId
                     && r.Status == RequestStatus.Approved
@@ -221,7 +230,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<(bool Success, string Message)> DeclineAsync(int requestId, int declinerId, string? reason = null)
     {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -261,7 +272,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<bool> CanUserApproveAsync(int userId, int requestId)
     {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -301,7 +314,9 @@ public class VacationApprovalService : IVacationApprovalService
             return new List<TimeOffRequest>();
 
         // Get pending requests in those companies
+        // IgnoreQueryFilters: allCompanyIds may span multiple companies
         var pendingRequests = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .Where(r => r.Status == RequestStatus.Pending
                      && allCompanyIds.Contains(r.CompanyId))
             .OrderByDescending(r => r.CreatedAt)
@@ -335,7 +350,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<List<VacationApprovalRule>> GetRulesForCompanyAsync(int companyId)
     {
+        // IgnoreQueryFilters: rules may be in a different company than current tenant
         return await _context.VacationApprovalRules
+            .IgnoreQueryFilters()
             .Where(r => r.CompanyId == companyId)
             .OrderByDescending(r => r.Priority)
             .ThenByDescending(r => r.JobTypeId != null ? 1 : 0)
@@ -362,7 +379,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<bool> UpdateRuleAsync(VacationApprovalRule rule)
     {
+        // IgnoreQueryFilters: rule may be in a different company than current tenant
         var existing = await _context.VacationApprovalRules
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == rule.Id);
 
         if (existing == null)
@@ -390,7 +409,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<bool> DeleteRuleAsync(int ruleId)
     {
+        // IgnoreQueryFilters: rule may be in a different company than current tenant
         var rule = await _context.VacationApprovalRules
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == ruleId);
 
         if (rule == null)
@@ -409,7 +430,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<(bool Success, string Message)> CancelRequestAsync(int requestId, int userId)
     {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -489,7 +512,9 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     public async Task<ApprovalPipelineStatus> GetApprovalStatusAsync(int requestId)
     {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
         var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Id == requestId);
 
         if (request == null)
@@ -558,10 +583,12 @@ public class VacationApprovalService : IVacationApprovalService
     /// </summary>
     private async Task<VacationApprovalRule?> GetMatchingRuleAsync(TimeOffRequest request)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
+        // IgnoreQueryFilters: user and rules may be in a different company than current tenant
+        var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
         int? userJobTypeId = user?.JobTypeId;
 
         var rules = await _context.VacationApprovalRules
+            .IgnoreQueryFilters()
             .Where(r => r.CompanyId == request.CompanyId && r.IsActive)
             .OrderByDescending(r => r.Priority)
             .ThenByDescending(r => r.JobTypeId != null ? 1 : 0)

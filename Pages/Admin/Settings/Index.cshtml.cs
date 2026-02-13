@@ -81,13 +81,13 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
         if (!SelectedId.HasValue)
         {
-            TempData["ErrorMessage"] = _localizer["Error_NoEntitySelected"];
+            TempData["ErrorMessage"] = _localizer["Error_NoEntitySelected"].Value;
             return RedirectToPage(new { Level });
         }
 
@@ -98,7 +98,7 @@ public class IndexModel : LocalizedPageModel
             case "area":
                 if (!EditRestHours.HasValue || !EditWeeklyCap.HasValue)
                 {
-                    TempData["ErrorMessage"] = _localizer["Error_AreaSettingsRequired"];
+                    TempData["ErrorMessage"] = _localizer["Error_AreaSettingsRequired"].Value;
                     return RedirectToPage(new { Level, SelectedId });
                 }
                 result = await _settingsService.UpdateAreaSettingsAsync(
@@ -131,11 +131,11 @@ public class IndexModel : LocalizedPageModel
 
         if (result)
         {
-            TempData["SuccessMessage"] = _localizer["Success_SettingsSaved"];
+            TempData["SuccessMessage"] = _localizer["Success_SettingsSaved"].Value;
         }
         else
         {
-            TempData["ErrorMessage"] = _localizer["Error_FailedToSaveSettings"];
+            TempData["ErrorMessage"] = _localizer["Error_FailedToSaveSettings"].Value;
         }
 
         return RedirectToPage(new { Level, SelectedId });

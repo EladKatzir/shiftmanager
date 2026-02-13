@@ -64,9 +64,9 @@ public class SystemAlertsViewComponent : ViewComponent
             var dbPath = Path.Combine(AppContext.BaseDirectory, "app.db");
             var driveInfo = new DriveInfo(Path.GetPathRoot(dbPath) ?? "C");
             var freePercent = (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize * 100;
-            if (freePercent < 10)
+            if (freePercent < 5)
                 alerts.Add($"CRITICAL: Disk space is critically low ({freePercent:F1}% free). Database may fail.");
-            else if (freePercent < 20)
+            else if (freePercent < 10)
                 alerts.Add($"WARNING: Disk space is low ({freePercent:F1}% free).");
         }
         catch { /* Ignore disk check errors */ }

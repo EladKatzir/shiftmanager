@@ -261,7 +261,7 @@ public class ShiftsModel : PageModel
             .OrderBy(st => st.Start)
             .ToListAsync())
             .OrderBy(st => st.Start)
-            .ThenBy(st => st.Name)
+            .ThenBy(st => st.CustomName ?? st.Key)
             .ToList();
 
         // Get shift instances and assignments

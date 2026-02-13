@@ -93,26 +93,26 @@ public class IndexModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(DepartmentName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_DepartmentNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentNameRequired"].Value;
             return RedirectToPage();
         }
 
         if (SelectedMoleculeId <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_MoleculeRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeRequired"].Value;
             return RedirectToPage();
         }
 
         var molecule = await _db.Molecules.FindAsync(SelectedMoleculeId);
         if (molecule == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;
             return RedirectToPage();
         }
 
         if (molecule.Type != MoleculeType.Tech)
         {
-            TempData["ErrorMessage"] = _localizer["Error_DepartmentsOnlyForTechMolecules"];
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentsOnlyForTechMolecules"].Value;
             return RedirectToPage();
         }
 
@@ -141,7 +141,7 @@ public class IndexModel : LocalizedPageModel
         var department = await _db.Departments.IgnoreQueryFilters().FirstOrDefaultAsync(d => d.Id == id);
         if (department == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -168,13 +168,13 @@ public class IndexModel : LocalizedPageModel
 
         if (department == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
             return RedirectToPage();
         }
 
         if (department.Users.Any(u => u.IsActive))
         {
-            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteDepartmentWithUsers"];
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteDepartmentWithUsers"].Value;
             return RedirectToPage();
         }
 

@@ -66,7 +66,7 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -74,7 +74,7 @@ public class IndexModel : PageModel
 
         if (result.Success)
         {
-            TempData["SuccessMessage"] = _localizer["Success_RequestSent"];
+            TempData["SuccessMessage"] = _localizer["Success_RequestSent"].Value;
         }
         else
         {
@@ -89,7 +89,7 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -97,7 +97,7 @@ public class IndexModel : PageModel
 
         if (result.Success)
         {
-            TempData["SuccessMessage"] = _localizer["Success_RequestAccepted"];
+            TempData["SuccessMessage"] = _localizer["Success_RequestAccepted"].Value;
         }
         else
         {
@@ -112,7 +112,7 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -120,7 +120,7 @@ public class IndexModel : PageModel
 
         if (result.Success)
         {
-            TempData["SuccessMessage"] = _localizer["Success_RequestRejected"];
+            TempData["SuccessMessage"] = _localizer["Success_RequestRejected"].Value;
         }
         else
         {
@@ -135,7 +135,7 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -143,7 +143,7 @@ public class IndexModel : PageModel
 
         if (result.Success)
         {
-            TempData["SuccessMessage"] = _localizer["Success_FriendRemoved"];
+            TempData["SuccessMessage"] = _localizer["Success_FriendRemoved"].Value;
         }
         else
         {
@@ -158,7 +158,7 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"];
+            TempData["ErrorMessage"] = _localizer["Error_NotAuthenticated"].Value;
             return RedirectToPage();
         }
 
@@ -167,7 +167,7 @@ public class IndexModel : PageModel
 
         if (result.Success)
         {
-            TempData["SuccessMessage"] = _localizer["Success_RequestCanceled"];
+            TempData["SuccessMessage"] = _localizer["Success_RequestCanceled"].Value;
         }
         else
         {

@@ -114,7 +114,9 @@ public class OnCallWidgetViewComponent : ViewComponent
     {
         // First, get the IDs of Hakam shift types
         // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        // IgnoreQueryFilters: Hakam shift types, instances, and users may be in different companies
         var hakamShiftTypeIds = await _context.ShiftTypes
+            .IgnoreQueryFilters()
             .Where(st => (st.CustomName != null && st.CustomName.Contains("Hakam")) || st.Key.Contains("Hakam"))
             .Select(st => st.Id)
             .ToListAsync();
@@ -123,15 +125,16 @@ public class OnCallWidgetViewComponent : ViewComponent
 
         // Now query shift instances with those IDs
         var hakamData = await _context.ShiftInstances
+            .IgnoreQueryFilters()
             .Where(si => si.WorkDate == date && hakamShiftTypeIds.Contains(si.ShiftTypeId))
             .Join(
-                _context.ShiftAssignments.Where(sa => sa.UserId != null),
+                _context.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId != null),
                 si => si.Id,
                 sa => sa.ShiftInstanceId,
                 (si, sa) => new { si, sa.UserId }
             )
             .Join(
-                _context.Users.Where(u => u.IsActive),
+                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
                 x => x.UserId,
                 u => u.Id,
                 (x, u) => new
@@ -172,7 +175,9 @@ public class OnCallWidgetViewComponent : ViewComponent
 
         // First, get the IDs of BR/Katzin shift types
         // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        // IgnoreQueryFilters: shift types, instances, and users may be in different companies
         var brShiftTypes = await _context.ShiftTypes
+            .IgnoreQueryFilters()
             .Where(st => (st.CustomName != null && (st.CustomName.Contains("BR") || st.CustomName.Contains("Katzin")))
                       || st.Key.Contains("BR") || st.Key.Contains("Katzin"))
             .Select(st => new { st.Id, Name = st.CustomName ?? st.Key })
@@ -185,15 +190,16 @@ public class OnCallWidgetViewComponent : ViewComponent
 
         // Now query shift instances with those IDs
         var brData = await _context.ShiftInstances
+            .IgnoreQueryFilters()
             .Where(si => si.WorkDate == date && si.CompanyId == companyId && brShiftTypeIds.Contains(si.ShiftTypeId))
             .Join(
-                _context.ShiftAssignments.Where(sa => sa.UserId != null && sa.CompanyId == companyId),
+                _context.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId != null && sa.CompanyId == companyId),
                 si => si.Id,
                 sa => sa.ShiftInstanceId,
                 (si, sa) => new { si.ShiftTypeId, sa.UserId }
             )
             .Join(
-                _context.Users.Where(u => u.IsActive),
+                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
                 x => x.UserId,
                 u => u.Id,
                 (x, u) => new

@@ -59,12 +59,12 @@ public class IndexModel : LocalizedPageModel
     {
         if (string.IsNullOrWhiteSpace(AreaName))
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaNameRequired"].Value;
             return RedirectToPage();
         }
         if (SelectedProjectId <= 0)
         {
-            TempData["ErrorMessage"] = _localizer["Error_ProjectRequired"];
+            TempData["ErrorMessage"] = _localizer["Error_ProjectRequired"].Value;
             return RedirectToPage();
         }
 
@@ -91,7 +91,7 @@ public class IndexModel : LocalizedPageModel
         var area = await _db.Areas.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == id);
         if (area == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
             return RedirectToPage();
         }
 
@@ -111,13 +111,13 @@ public class IndexModel : LocalizedPageModel
         var area = await _db.Areas.IgnoreQueryFilters().Include(a => a.Molecules).Include(a => a.JobTypes).FirstOrDefaultAsync(a => a.Id == id);
         if (area == null)
         {
-            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"];
+            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
             return RedirectToPage();
         }
 
         if (area.Molecules.Any() || area.JobTypes.Any())
         {
-            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteAreaWithDependencies"];
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteAreaWithDependencies"].Value;
             return RedirectToPage();
         }
 

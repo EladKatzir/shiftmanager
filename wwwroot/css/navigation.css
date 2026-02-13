@@ -8,23 +8,19 @@
    ======================================== */
 
 .app-sidebar {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
   width: var(--sidebar-width);
   height: 100vh;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
   background-color: var(--sidebar-bg);
   border-inline-end: 1px solid var(--sidebar-border);
   z-index: var(--z-sticky);
   transition: width var(--duration-slow) var(--ease-in-out),
               transform var(--duration-slow) var(--ease-in-out);
-}
-
-[dir="rtl"] .app-sidebar {
-  left: auto;
-  right: 0;
 }
 
 /* Collapsed State */
@@ -69,7 +65,7 @@
 }
 
 .sidebar-initially-collapsed .app-main {
-  margin-inline-start: var(--sidebar-width-collapsed);
+  /* No margin needed — sticky sidebar handles spacing via flex layout */
 }
 
 /* Disable transitions during initial page load to prevent animation flash */
@@ -1227,23 +1223,12 @@
 }
 
 /* ========================================
-   11. MAIN CONTENT OFFSET
+   11. MAIN CONTENT AREA
    ======================================== */
 
 .app-main {
-  margin-inline-start: var(--sidebar-width);
   min-height: 100vh;
-  transition: margin var(--duration-slow) var(--ease-in-out);
-}
-
-.app-sidebar.is-collapsed ~ .app-main {
-  margin-inline-start: var(--sidebar-width-collapsed);
-}
-
-@media (max-width: 768px) {
-  .app-main {
-    margin-inline-start: 0;
-  }
+  /* No margin-inline-start needed — sticky sidebar occupies flex space directly */
 }
 
 /* ========================================

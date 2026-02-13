@@ -55,7 +55,9 @@ public class DirectorsModel : LocalizedPageModel
 
         // Load related entities
         var userIds = directorCompanies.SelectMany(dc => new[] { dc.UserId, dc.GrantedBy }).Distinct().ToList();
+        // IgnoreQueryFilters: directors and granters may be in different companies
         var users = await _db.Users
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id);
@@ -86,7 +88,9 @@ public class DirectorsModel : LocalizedPageModel
             .ToList();
 
         // Load all users with Director role
+        // IgnoreQueryFilters: directors may be in any company
         AvailableDirectors = await _db.Users
+            .IgnoreQueryFilters()
             .Where(u => u.Role == UserRole.Director && u.IsActive)
             .OrderBy(u => u.DisplayName)
             .ToListAsync();

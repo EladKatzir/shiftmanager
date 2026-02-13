@@ -265,7 +265,8 @@ public class ShiftGroupingService : IShiftGroupingService
         var jobTypeIds = grouping.JobTypes.Select(jt => jt.JobTypeId).ToList();
 
         // Users must be in one of the grouping's companies AND have one of the grouping's job types
-        var query = _db.Users.Where(u => u.IsActive);
+        // IgnoreQueryFilters: grouping spans multiple companies — tenant filter would restrict to one
+        var query = _db.Users.IgnoreQueryFilters().Where(u => u.IsActive);
 
         if (companyIds.Any())
             query = query.Where(u => companyIds.Contains(u.CompanyId));
