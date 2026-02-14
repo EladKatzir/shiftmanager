@@ -120,24 +120,33 @@ public static class TestDataSeed
             context, TestCompanies.MultiCompanyBName,
             TestCompanies.MultiCompanyBSlug, molecule.Id, logger);
 
+        // Get a default JobType for test users (first job type in the molecule's area)
+        int? defaultJobTypeId = null;
+        if (molecule != null)
+        {
+            var jobType = await context.JobTypes
+                .FirstOrDefaultAsync(jt => jt.AreaId == molecule.AreaId);
+            defaultJobTypeId = jobType?.Id;
+        }
+
         // Create test users in appropriate companies
         await CreateTestUserAsync(context, TestUsers.OwnerEmail, TestUsers.OwnerPassword,
-            UserRole.Owner, TestUsers.OwnerDisplayName, fullCalendarCompany.Id, logger);
+            UserRole.Owner, TestUsers.OwnerDisplayName, fullCalendarCompany.Id, logger, defaultJobTypeId);
 
         await CreateTestUserAsync(context, TestUsers.DirectorEmail, TestUsers.DirectorPassword,
-            UserRole.Director, TestUsers.DirectorDisplayName, multiCompanyA.Id, logger);
+            UserRole.Director, TestUsers.DirectorDisplayName, multiCompanyA.Id, logger, defaultJobTypeId);
 
         await CreateTestUserAsync(context, TestUsers.ManagerEmail, TestUsers.ManagerPassword,
-            UserRole.Manager, TestUsers.ManagerDisplayName, fullCalendarCompany.Id, logger);
+            UserRole.Manager, TestUsers.ManagerDisplayName, fullCalendarCompany.Id, logger, defaultJobTypeId);
 
         await CreateTestUserAsync(context, TestUsers.MemberEmail, TestUsers.MemberPassword,
-            UserRole.Employee, TestUsers.MemberDisplayName, fullCalendarCompany.Id, logger);
+            UserRole.Employee, TestUsers.MemberDisplayName, fullCalendarCompany.Id, logger, defaultJobTypeId);
 
         await CreateTestUserAsync(context, TestUsers.AssignerEmail, TestUsers.AssignerPassword,
-            UserRole.Assigner, TestUsers.AssignerDisplayName, fullCalendarCompany.Id, logger);
+            UserRole.Assigner, TestUsers.AssignerDisplayName, fullCalendarCompany.Id, logger, defaultJobTypeId);
 
         await CreateTestUserAsync(context, TestUsers.NoGrantsEmail, TestUsers.NoGrantsPassword,
-            UserRole.Trainee, TestUsers.NoGrantsDisplayName, emptyCalendarCompany.Id, logger);
+            UserRole.Trainee, TestUsers.NoGrantsDisplayName, emptyCalendarCompany.Id, logger, defaultJobTypeId);
 
         // Set up Director with multi-company access
         await SetupDirectorMultiCompanyAccessAsync(context, multiCompanyA.Id, multiCompanyB.Id, logger);
@@ -265,7 +274,7 @@ public static class TestDataSeed
 
     private static async Task CreateTestUserAsync(
         AppDbContext context, string email, string password, UserRole role,
-        string displayName, int companyId, ILogger logger)
+        string displayName, int companyId, ILogger logger, int? jobTypeId = null)
     {
         var existingUser = await context.Users
             .IgnoreQueryFilters()
@@ -273,11 +282,13 @@ public static class TestDataSeed
 
         if (existingUser != null)
         {
-            // Update password in case it changed
+            // Update password and job type in case they changed
             var (hash, salt) = PasswordHasher.CreateHash(password);
             existingUser.PasswordHash = hash;
             existingUser.PasswordSalt = salt;
             existingUser.IsActive = true;
+            if (jobTypeId.HasValue && existingUser.JobTypeId == null)
+                existingUser.JobTypeId = jobTypeId.Value;
             await context.SaveChangesAsync();
             logger.LogInformation("Updated test user: {Email}", email);
             return;
@@ -291,6 +302,7 @@ public static class TestDataSeed
             CompanyId = companyId,
             Role = role,
             IsActive = true,
+            JobTypeId = jobTypeId,
             PasswordHash = newHash,
             PasswordSalt = newSalt
         };
@@ -348,6 +360,29 @@ public static class TestDataSeed
 
     private static async Task SeedFullCalendarDataAsync(AppDbContext context, int companyId, ILogger logger)
     {
+        // Get the company's molecule to properly scope shift types
+        var company = await context.Companies
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+        {
+            logger.LogWarning("Company {CompanyId} not found for calendar seeding", companyId);
+            return;
+        }
+
+        // Get a JobType from the same area as the molecule (needed for Calendar/Shifts page filtering)
+        var molecule = await context.Molecules
+            .FirstOrDefaultAsync(m => m.Id == company.MoleculeId);
+
+        int? jobTypeId = null;
+        if (molecule != null)
+        {
+            var jobType = await context.JobTypes
+                .FirstOrDefaultAsync(jt => jt.AreaId == molecule.AreaId);
+            jobTypeId = jobType?.Id;
+        }
+
         // Check if shift types exist for this company
         var shiftTypes = await context.ShiftTypes
             .IgnoreQueryFilters()
@@ -356,10 +391,13 @@ public static class TestDataSeed
 
         if (!shiftTypes.Any())
         {
-            // Create basic shift types using the correct model properties
+            // Create basic shift types with proper molecule/jobType scoping
+            // so they appear in the Calendar/Shifts page dropdown filters
             var morningShift = new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = company.MoleculeId,
+                JobTypeId = jobTypeId,
                 Key = ShiftType.KEY_MORNING,
                 CustomName = "Morning Shift",
                 Start = new TimeOnly(6, 0),
@@ -369,6 +407,8 @@ public static class TestDataSeed
             var afternoonShift = new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = company.MoleculeId,
+                JobTypeId = jobTypeId,
                 Key = ShiftType.KEY_AFTERNOON,
                 CustomName = "Afternoon Shift",
                 Start = new TimeOnly(14, 0),
@@ -378,6 +418,8 @@ public static class TestDataSeed
             var nightShift = new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = company.MoleculeId,
+                JobTypeId = jobTypeId,
                 Key = ShiftType.KEY_NIGHT,
                 CustomName = "Night Shift",
                 Start = new TimeOnly(22, 0),

@@ -116,7 +116,7 @@
                                         <form method="post" asp-page-handler="Revoke" style="display: inline;">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="keyId" value="@key.Id" />
-                                            <button type="submit" onclick="return confirm('@Localizer["ConfirmRevokeKey"]')" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                            <button type="submit" onclick="return confirm('@Localizer["ConfirmRevokeKey"].Value.Trim()')" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
                                                 @Localizer["Revoke"]
                                             </button>
                                         </form>
@@ -294,10 +294,10 @@
                             </div>
 
                             <div style="display: flex; gap: 1rem;">
-                                <button type="button" onclick="showApproveModal(@request.Id, '@request.Name', '@request.RequestedScopes')" style="flex: 1; background: var(--success); color: var(--success-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                                <button type="button" data-request-name="@request.Name" data-request-scopes="@request.RequestedScopes" onclick="showApproveModal(@request.Id, this.dataset.requestName, this.dataset.requestScopes)" style="flex: 1; background: var(--success); color: var(--success-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                                     ✓ @Localizer["Approve"]
                                 </button>
-                                <button type="button" onclick="showRejectModal(@request.Id, '@request.Name')" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+                                <button type="button" data-request-name="@request.Name" onclick="showRejectModal(@request.Id, this.dataset.requestName)" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                                     ✗ @Localizer["Reject"]
                                 </button>
                             </div>
@@ -369,7 +369,7 @@
                                             @key.CreatedAt.ToString("MMM dd, yyyy")
                                         </td>
                                         <td style="padding: 1rem;">
-                                            <button type="button" onclick="showRevokeAdminModal(@key.Id, '@key.Name')" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                            <button type="button" data-key-name="@key.Name" onclick="showRevokeAdminModal(@key.Id, this.dataset.keyName)" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
                                                 @Localizer["Revoke"]
                                             </button>
                                         </td>
@@ -610,7 +610,7 @@
 
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(function() {
-            alert('@Localizer["CopiedToClipboard"]');
+            alert('@Localizer["CopiedToClipboard"].Value.Trim()');
         }, function(err) {
             console.error('Failed to copy: ', err);
         });

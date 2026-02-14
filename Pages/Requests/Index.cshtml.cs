@@ -22,6 +22,7 @@ public class IndexModel : LocalizedPageModel
     private readonly ITraineeService _traineeService;
     private readonly ILogger<IndexModel> _logger;
     private readonly IDirectorService _directorService;
+    private readonly IGrantService _grantService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
@@ -30,7 +31,8 @@ public class IndexModel : LocalizedPageModel
         INotificationService notificationService,
         ITraineeService traineeService,
         ILogger<IndexModel> logger,
-        IDirectorService directorService)
+        IDirectorService directorService,
+        IGrantService grantService)
         : base(localizer)
     {
         _db = db;
@@ -39,6 +41,7 @@ public class IndexModel : LocalizedPageModel
         _traineeService = traineeService;
         _logger = logger;
         _directorService = directorService;
+        _grantService = grantService;
     }
 
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
@@ -75,23 +78,29 @@ public class IndexModel : LocalizedPageModel
                 return;
             }
 
-            // Phase 8.2.1: Determine accessible company IDs based on role
+            // Determine accessible company IDs based on grants (not role)
             List<int> accessibleCompanyIds;
-            if (currentUser.Role == UserRole.Owner)
+            var isAdmin = await _grantService.HasGrantAsync(currentUser.Id, "AdminAccess");
+            if (isAdmin)
             {
-                // Owner sees all companies
-                // IgnoreQueryFilters: Owner needs ALL company IDs, not just their tenant
+                // Admin sees all companies
+                // IgnoreQueryFilters: Admin needs ALL company IDs, not just their tenant
                 accessibleCompanyIds = await _db.Users.IgnoreQueryFilters().Select(u => u.CompanyId).Distinct().ToListAsync();
-            }
-            else if (currentUser.Role == UserRole.Director)
-            {
-                // Director sees companies they manage
-                accessibleCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUser.Id);
             }
             else
             {
-                // Manager sees only their own company
-                accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+                // Get director companies + own company
+                var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUser.Id);
+                if (directorCompanyIds.Any())
+                {
+                    // Director sees companies they manage + their own company (union)
+                    accessibleCompanyIds = directorCompanyIds.Union(new[] { currentUser.CompanyId }).ToList();
+                }
+                else
+                {
+                    // Regular user sees only their own company
+                    accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+                }
             }
 
             // Phase 8.2.1: Load pending time-off requests with company filtering
@@ -552,23 +561,27 @@ public class IndexModel : LocalizedPageModel
 
     /// <summary>
     /// Validates that the current user has access to manage requests for the specified company.
+    /// Grant-based authorization check (not role-based).
     /// </summary>
     private async Task<bool> ValidateAccessToRequestAsync(AppUser currentUser, int targetCompanyId)
     {
-        if (currentUser.Role == UserRole.Owner)
+        var isAdmin = await _grantService.HasGrantAsync(currentUser.Id, "AdminAccess");
+        if (isAdmin)
         {
-            return true; // Owner has access to all companies
-        }
-        else if (currentUser.Role == UserRole.Director)
-        {
-            var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUser.Id);
-            return directorCompanyIds.Contains(targetCompanyId);
-        }
-        else if (currentUser.Role == UserRole.Manager)
-        {
-            return currentUser.CompanyId == targetCompanyId;
+            return true; // Admin has access to all companies
         }
 
-        return false; // Employees and trainees cannot manage requests
+        var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUser.Id);
+        if (directorCompanyIds.Contains(targetCompanyId))
+        {
+            return true; // Director has access to companies they manage
+        }
+
+        if (currentUser.CompanyId == targetCompanyId)
+        {
+            return true; // User has access to their own company
+        }
+
+        return false;
     }
 }

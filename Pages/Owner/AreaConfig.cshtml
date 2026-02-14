@@ -82,7 +82,7 @@
                     }
 
                     <div class="area-card__actions">
-                        <button class="btn btn-secondary btn-sm" onclick="openEditModal(@area.Id, '@area.Name', @area.DefaultRestHours, @area.DefaultWeeklyCap)">
+                        <button class="btn btn-secondary btn-sm" data-area-name="@area.Name" onclick="openEditModal(@area.Id, this.dataset.areaName, @area.DefaultRestHours, @area.DefaultWeeklyCap)">
                             ✏️ <loc key="EditSettings" />
                         </button>
                     </div>

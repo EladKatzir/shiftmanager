@@ -209,7 +209,7 @@
                                     </button>
                                 </form>
                                 <form method="post" asp-page-handler="Delete" style="display:inline"
-                                      onsubmit="return confirm('@Localizer["ConfirmDeleteGrouping"]');">
+                                      onsubmit="return confirm('@Localizer["ConfirmDeleteGrouping"].Value.Trim()');">
                                     <input type="hidden" name="id" value="@sg.Id" />
                                     <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
                                 </form>

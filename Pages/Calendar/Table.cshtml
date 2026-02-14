@@ -1867,7 +1867,7 @@ async function saveShiftMetadata(shiftTypeId) {
     const end = document.getElementById(`end-${shiftTypeId}`).value;
 
     if (!name || !start || !end) {
-        alert('@Localizer["Error_PleaseFillAllFields"]');
+        alert('@Localizer["Error_PleaseFillAllFields"].Value.Trim()');
         return;
     }
 
@@ -1896,11 +1896,11 @@ async function saveShiftMetadata(shiftTypeId) {
         if (result.success) {
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error updating shift metadata:', error);
-        alert('@Localizer["Error_FailedToUpdateShiftMetadata"]');
+        alert('@Localizer["Error_FailedToUpdateShiftMetadata"].Value.Trim()');
     }
 }
 
@@ -1922,7 +1922,7 @@ async function createCustomShiftRow() {
     const end = document.getElementById('newShiftEnd').value;
 
     if (!name || !start || !end) {
-        alert('@Localizer["Error_PleaseFillAllFields"]');
+        alert('@Localizer["Error_PleaseFillAllFields"].Value.Trim()');
         return;
     }
 
@@ -1951,11 +1951,11 @@ async function createCustomShiftRow() {
             closeAddShiftRowModal();
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error creating custom shift row:', error);
-        alert('@Localizer["Error_FailedToCreateShiftRow"]');
+        alert('@Localizer["Error_FailedToCreateShiftRow"].Value.Trim()');
     }
 }
 
@@ -2083,11 +2083,11 @@ async function createAssignmentSlots(forceRemoval = false) {
                 await createAssignmentSlots(true);
             }
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error updating shift slots:', error);
-        alert('@Localizer["Error_FailedToUpdateShiftSlots"]');
+        alert('@Localizer["Error_FailedToUpdateShiftSlots"].Value.Trim()');
     }
 }
 
@@ -2275,7 +2275,7 @@ async function addTrainee(assignmentId, traineeId, traineeName) {
                 document.getElementById('removeTraineeItem').style.display = 'block';
             }
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error adding trainee:', error);
@@ -2315,7 +2315,7 @@ async function removeTrainee(event) {
         if (result.success) {
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error removing trainee:', error);
@@ -2347,11 +2347,11 @@ async function assignUserToSlot(assignmentId, userId) {
         if (result.success) {
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error assigning user to slot:', error);
-        alert('@Localizer["Error_FailedToAssignUser"]');
+        alert('@Localizer["Error_FailedToAssignUser"].Value.Trim()');
     }
 }
 
@@ -2379,7 +2379,7 @@ async function changeUser(assignmentId, newUserId, newUserName) {
         if (result.success) {
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error changing user:', error);
@@ -2430,7 +2430,7 @@ async function removeUser(event) {
             const content = currentSlot.querySelector('.assignment-slot-content');
             content.innerHTML = `<div>${i18n.selectEmployee}</div><div class="slot-actions">👤</div>`;
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error removing user:', error);
@@ -2468,7 +2468,7 @@ async function confirmDeleteShift(instanceId, event) {
             // Reload page to show updated state
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error deleting shift instance:', error);
@@ -2750,11 +2750,11 @@ async function resetToProgram(instanceId, event) {
             // Reload page to show updated state
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"]' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
         }
     } catch (error) {
         console.error('Error resetting shift to Program:', error);
-        alert('@Localizer["Error_FailedToResetShift"]');
+        alert('@Localizer["Error_FailedToResetShift"].Value.Trim()');
     }
 }
 

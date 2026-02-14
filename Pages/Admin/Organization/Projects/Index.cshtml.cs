@@ -70,7 +70,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var project = await _db.Projects.FindAsync(id);
+        var project = await _db.Projects.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
         if (project == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_ProjectNotFound"].Value;

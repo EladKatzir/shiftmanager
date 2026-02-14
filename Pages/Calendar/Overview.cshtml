@@ -293,16 +293,16 @@
                     closeNoteModal();
                     location.reload(); // Refresh to show updated note
                 } else {
-                    alert('@Localizer["SaveNoteFailed"]: ' + (result.error || '@Localizer["UnknownError"]'));
+                    alert('@Localizer["SaveNoteFailed"].Value.Trim(): ' + (result.error || '@Localizer["UnknownError"].Value.Trim()'));
                 }
             } catch (err) {
                 console.error('Error saving note:', err);
-                alert('@Localizer["SaveNoteFailed"]');
+                alert('@Localizer["SaveNoteFailed"].Value.Trim()');
             }
         }
 
         async function deleteNote() {
-            if (!confirm('@Localizer["DeleteNoteConfirm"]')) return;
+            if (!confirm('@Localizer["DeleteNoteConfirm"].Value.Trim()')) return;
 
             // Save with empty note to delete
             document.getElementById('noteText').value = '';

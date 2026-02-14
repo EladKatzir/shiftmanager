@@ -211,7 +211,7 @@
                                 @if (jt.UserCount == 0)
                                 {
                                     <form method="post" asp-page-handler="Delete" style="display:inline"
-                                          onsubmit="return confirm('@Localizer["ConfirmDeleteJobType"]');">
+                                          onsubmit="return confirm('@Localizer["ConfirmDeleteJobType"].Value.Trim()');">
                                         <input type="hidden" name="id" value="@jt.Id" />
                                         <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
                                     </form>

@@ -126,7 +126,7 @@
                             <div class="table-actions">
                                 @if (!g.IsAutoGrant)
                                 {
-                                    <form method="post" asp-page-handler="Revoke" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmRevokeGrant"]');">
+                                    <form method="post" asp-page-handler="Revoke" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmRevokeGrant"].Value.Trim()');">
                                         <input type="hidden" name="id" value="@g.Id" />
                                         <button type="submit" class="btn btn-danger"><loc key="Revoke" /></button>
                                     </form>

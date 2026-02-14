@@ -496,7 +496,8 @@ public class UsersModel : LocalizedPageModel
         if (NewUserCompanyId.HasValue)
         {
             // User selected a company - verify they have EditCompanyUsers grant for it
-            var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserIdForCompany, "EditCompanyUsers", NewUserCompanyId.Value);
+            var isAdmin = await _grantService.HasGrantAsync(currentUserIdForCompany, "AdminAccess");
+            var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserIdForCompany, "EditCompanyUsers", NewUserCompanyId.Value);
             if (!hasEditGrant)
             {
                 TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
@@ -621,28 +622,26 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var u = await _db.Users.FindAsync(id);
+        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (u != null)
         {
-            // Check if current user has permission to modify this user
-            if (!CanModifyUser(u.Role))
+            // Grant-based company scope check
+            var toggleUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(toggleUserIdClaim, out var toggleCurrentUserId))
             {
-                TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionModifyUser"], u.Role);
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
 
-            // HIGH-004 FIX: Grant-based company scope check
-            var toggleUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(toggleUserIdClaim, out var toggleCurrentUserId))
+            var isAdmin = await _grantService.HasGrantAsync(toggleCurrentUserId, "AdminAccess");
+            var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(toggleCurrentUserId, "EditCompanyUsers", u.CompanyId);
+            if (!hasEditGrant)
             {
-                var hasEditGrant = await _grantService.HasGrantForCompanyAsync(toggleCurrentUserId, "EditCompanyUsers", u.CompanyId);
-                if (!hasEditGrant)
-                {
-                    _logger.LogWarning("User {CurrentUserId} attempted to toggle user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                        toggleCurrentUserId, id, u.CompanyId);
-                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
-                    return RedirectToPage();
-                }
+                _logger.LogWarning("User {CurrentUserId} attempted to toggle user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                    toggleCurrentUserId, id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+                return RedirectToPage();
             }
 
             u.IsActive = !u.IsActive;
@@ -679,7 +678,7 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var u = await _db.Users.FindAsync(id);
+        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (u != null)
         {
             var oldRole = u.Role;
@@ -694,7 +693,8 @@ public class UsersModel : LocalizedPageModel
             }
 
             // HIGH-004 FIX: Grant-based company scope check
-            var hasRoleEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", u.CompanyId);
+            var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+            var hasRoleEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", u.CompanyId);
             if (!hasRoleEditGrant)
             {
                 _logger.LogWarning("User {CurrentUserId} attempted role change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
@@ -806,32 +806,30 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var u = await _db.Users.FindAsync(id);
+        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (u == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
             return RedirectToPage();
         }
 
-        // Check if current user has permission to modify this user
-        if (!CanModifyUser(u.Role))
+        // Grant-based company scope check
+        var jobTypeUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(jobTypeUserIdClaim, out var jobTypeCurrentUserId))
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionModifyUser"], u.Role);
+            _logger.LogError("Invalid or missing NameIdentifier claim");
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
 
-        // HIGH-004 FIX: Grant-based company scope check
-        var jobTypeUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (int.TryParse(jobTypeUserIdClaim, out var jobTypeCurrentUserId))
+        var isAdmin = await _grantService.HasGrantAsync(jobTypeCurrentUserId, "AdminAccess");
+        var hasJobTypeGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(jobTypeCurrentUserId, "EditCompanyUsers", u.CompanyId);
+        if (!hasJobTypeGrant)
         {
-            var hasJobTypeGrant = await _grantService.HasGrantForCompanyAsync(jobTypeCurrentUserId, "EditCompanyUsers", u.CompanyId);
-            if (!hasJobTypeGrant)
-            {
-                _logger.LogWarning("User {CurrentUserId} attempted job type change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                    jobTypeCurrentUserId, id, u.CompanyId);
-                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
-                return RedirectToPage();
-            }
+            _logger.LogWarning("User {CurrentUserId} attempted job type change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                jobTypeCurrentUserId, id, u.CompanyId);
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+            return RedirectToPage();
         }
 
         // Validate job type if specified
@@ -897,28 +895,25 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var u = await _db.Users.FindAsync(id);
+        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (u != null)
         {
-            // Check if current user has permission to modify this user
-            if (!CanModifyUser(u.Role))
+            // Grant-based company scope check
+            var resetUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(resetUserIdClaim, out var resetCurrentUserId))
             {
-                TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionResetPassword"], u.Role);
+                _logger.LogError("Invalid or missing NameIdentifier claim during password reset authorization");
                 return RedirectToPage();
             }
 
-            // HIGH-004 FIX: Grant-based company scope check
-            var resetUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(resetUserIdClaim, out var resetCurrentUserId))
+            var isAdmin = await _grantService.HasGrantAsync(resetCurrentUserId, "AdminAccess");
+            var hasResetGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(resetCurrentUserId, "EditCompanyUsers", u.CompanyId);
+            if (!hasResetGrant)
             {
-                var hasResetGrant = await _grantService.HasGrantForCompanyAsync(resetCurrentUserId, "EditCompanyUsers", u.CompanyId);
-                if (!hasResetGrant)
-                {
-                    _logger.LogWarning("User {CurrentUserId} attempted password reset on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                        resetCurrentUserId, id, u.CompanyId);
-                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
-                    return RedirectToPage();
-                }
+                _logger.LogWarning("User {CurrentUserId} attempted password reset on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
+                    resetCurrentUserId, id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+                return RedirectToPage();
             }
 
             var (h, s) = PasswordHasher.CreateHash(newPassword);
@@ -964,27 +959,21 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var targetUser = await _db.Users.FindAsync(id);
+        var targetUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (targetUser == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
             return RedirectToPage();
         }
 
-        // HIGH-004 FIX: Grant-based company scope check
-        var hasUnlockGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", targetUser.CompanyId);
+        // Grant-based company scope check
+        var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+        var hasUnlockGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", targetUser.CompanyId);
         if (!hasUnlockGrant)
         {
             _logger.LogWarning("User {CurrentUserId} attempted to unlock user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
                 currentUserId, id, targetUser.CompanyId);
             TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
-            return RedirectToPage();
-        }
-
-        // Check if current user has permission to unlock this user
-        if (!CanModifyUser(targetUser.Role))
-        {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionToUnlock"], targetUser.Role);
             return RedirectToPage();
         }
 
@@ -1033,7 +1022,7 @@ public class UsersModel : LocalizedPageModel
                 return Page();
             }
 
-            var user = await _db.Users.FindAsync(id);
+            var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
                 _logger.LogWarning("User {UserId} not found for deletion", id);
@@ -1042,8 +1031,10 @@ public class UsersModel : LocalizedPageModel
                 return Page();
             }
 
-            // ✅ Grant-based: Check if user has EditCompanyUsers grant for target user's company
-            var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", user.CompanyId);
+            // Grant-based: Check if user has EditCompanyUsers grant for target user's company
+            // AdminAccess holders can manage users across all companies
+            var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+            var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", user.CompanyId);
             if (!hasEditGrant)
             {
                 _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
@@ -1053,22 +1044,15 @@ public class UsersModel : LocalizedPageModel
                 return Page();
             }
 
-            // Check if current user has permission to delete this user based on role hierarchy (legacy check)
-            if (!CanModifyUser(user.Role))
-            {
-                _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} with higher role {TargetRole}",
-                    currentUserId, id, user.Role);
-                TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionDeleteUser"], user.Role);
-                return RedirectToPage();
-            }
-
             _logger.LogInformation("Starting deletion of user {UserId} ({UserName}) by admin {CurrentUserId}", id, user.DisplayName, currentUserId);
 
+            // IgnoreQueryFilters: target user's related data may be in a different company
             // Get count of shift assignments for logging before deletion
-            var shiftAssignmentCount = await _db.ShiftAssignments.Where(sa => sa.UserId == id).CountAsync();
+            var shiftAssignmentCount = await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId == id).CountAsync();
 
             // Get shift assignment IDs for swap request deletion
             var userAssignmentIds = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Where(sa => sa.UserId == id)
                 .Select(sa => sa.Id)
                 .ToListAsync();
@@ -1076,6 +1060,7 @@ public class UsersModel : LocalizedPageModel
             // 1. Delete all swap requests (both from and to this user)
             // Must do this first before deleting shift assignments due to foreign key
             var swapRequestsCount = await _db.SwapRequests
+                .IgnoreQueryFilters()
                 .Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId) || sr.ToUserId == id)
                 .CountAsync();
 
@@ -1083,6 +1068,7 @@ public class UsersModel : LocalizedPageModel
             {
                 _logger.LogInformation("Deleting {Count} swap requests related to user {UserId}", swapRequestsCount, id);
                 await _db.SwapRequests
+                    .IgnoreQueryFilters()
                     .Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId) || sr.ToUserId == id)
                     .ExecuteDeleteAsync();
             }
@@ -1091,15 +1077,15 @@ public class UsersModel : LocalizedPageModel
             if (shiftAssignmentCount > 0)
             {
                 _logger.LogInformation("Removing {Count} shift assignments for user {UserId}", shiftAssignmentCount, id);
-                await _db.ShiftAssignments.Where(sa => sa.UserId == id).ExecuteDeleteAsync();
+                await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId == id).ExecuteDeleteAsync();
             }
 
             // 3. Delete all time-off requests
-            var timeOffRequestCount = await _db.TimeOffRequests.Where(tor => tor.UserId == id).CountAsync();
+            var timeOffRequestCount = await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.UserId == id).CountAsync();
             if (timeOffRequestCount > 0)
             {
                 _logger.LogInformation("Deleting {Count} time-off requests for user {UserId}", timeOffRequestCount, id);
-                await _db.TimeOffRequests.Where(tor => tor.UserId == id).ExecuteDeleteAsync();
+                await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.UserId == id).ExecuteDeleteAsync();
             }
 
             // 4. Deactivate the user (soft-delete to preserve audit trail integrity)
@@ -1157,7 +1143,8 @@ public class UsersModel : LocalizedPageModel
         }
 
         // ✅ Grant-based: Verify user has permission to approve this request
-        var hasPermission = await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
+        var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+        var hasPermission = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
 
         if (!hasPermission)
         {
@@ -1286,7 +1273,8 @@ public class UsersModel : LocalizedPageModel
         }
 
         // ✅ Grant-based: Verify user has permission to reject this request
-        var hasPermission = await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
+        var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+        var hasPermission = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
 
         if (!hasPermission)
         {
@@ -1383,12 +1371,25 @@ public class UsersModel : LocalizedPageModel
                     currentUserId, string.Join(", ", invalidIds));
             }
 
-            // ✅ Grant-based: Get accessible company IDs for permission check
-            var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
-            if (!accessibleCompanyIds.Any())
+            // Grant-based: AdminAccess bypasses company-scoped grant check
+            var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+            List<int> accessibleCompanyIds;
+            if (isAdmin)
             {
-                TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveRequests"].Value;
-                return RedirectToPage();
+                // Admin has access to all companies
+                accessibleCompanyIds = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Select(c => c.Id)
+                    .ToListAsync();
+            }
+            else
+            {
+                accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
+                if (!accessibleCompanyIds.Any())
+                {
+                    TempData["ErrorMessage"] = _localizer["Error_NoPermissionApproveRequests"].Value;
+                    return RedirectToPage();
+                }
             }
 
             foreach (var joinRequest in joinRequests)
@@ -1505,62 +1506,6 @@ public class UsersModel : LocalizedPageModel
         }
     }
 
-    /// <summary>
-    /// Check if current user has permission to modify a user with the specified role in the target company.
-    /// ✅ Grant-based: Uses EditCompanyUsers grant with company scope instead of role hierarchy.
-    /// </summary>
-    private async Task<bool> CanModifyUserAsync(int currentUserId, int targetUserId, int targetCompanyId)
-    {
-        // Check if current user has EditCompanyUsers grant for the target user's company
-        var hasEditGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", targetCompanyId);
-
-        if (!hasEditGrant)
-            return false;
-
-        // Additional check: prevent self-modification through this method
-        if (currentUserId == targetUserId)
-            return false;
-
-        return true;
-    }
-
-    /// <summary>
-    /// Legacy synchronous check - kept for backward compatibility during migration.
-    /// Prefer CanModifyUserAsync for new code.
-    /// </summary>
-    private bool CanModifyUser(UserRole targetUserRole)
-    {
-        var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (string.IsNullOrEmpty(currentUserRole))
-            return false;
-
-        // Owner can modify anyone
-        if (currentUserRole == nameof(UserRole.Owner))
-            return true;
-
-        // ✅ PHASE 18: Director can modify Employee, Manager, Director, Trainee, Assigner (but NOT Owner)
-        if (currentUserRole == nameof(UserRole.Director))
-        {
-            return targetUserRole == UserRole.Employee
-                || targetUserRole == UserRole.Manager
-                || targetUserRole == UserRole.Director
-                || targetUserRole == UserRole.Trainee
-                || targetUserRole == UserRole.Assigner;
-        }
-
-        // ✅ PHASE 18: Manager can modify Employee, Trainee, and Assigner (NOT Owner, Director, or other Managers)
-        if (currentUserRole == nameof(UserRole.Manager))
-        {
-            return targetUserRole == UserRole.Employee
-                || targetUserRole == UserRole.Trainee
-                || targetUserRole == UserRole.Assigner;
-        }
-
-        // Employees, Trainees, and Assigners cannot modify anyone
-        return false;
-    }
-
     public async Task<IActionResult> OnGetExportCsvAsync()
     {
         try
@@ -1581,19 +1526,32 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
-            // ✅ Grant-based: Determine accessible company IDs via ManageJoinRequests grant scope
-            var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
+            // ✅ Grant-based: AdminAccess sees all users; others use ManageJoinRequests scope
+            var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
 
-            // Fall back to user's own company if no grants found
-            if (!accessibleCompanyIds.Any())
+            IQueryable<AppUser> usersQuery;
+            if (isAdmin)
             {
-                accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+                // Admin sees all users across all companies (matches OnGetAsync behavior)
+                usersQuery = _db.Users
+                    .IgnoreQueryFilters()
+                    .AsNoTracking();
             }
+            else
+            {
+                var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
 
-            // Load ALL users (without pagination) respecting filters
-            var usersQuery = _db.Users
-                .AsNoTracking()
-                .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
+                // Fall back to user's own company if no grants found
+                if (!accessibleCompanyIds.Any())
+                {
+                    accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+                }
+
+                usersQuery = _db.Users
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
+            }
 
             // Apply filters (same as OnGetAsync)
             if (UserFilterRole.HasValue)

@@ -387,7 +387,7 @@
         const newName = input.value.trim();
 
         if (!newName) {
-            alert('@Localizer["NameRequired"]');
+            alert('@Localizer["NameRequired"].Value.Trim()');
             return;
         }
 
@@ -405,12 +405,12 @@
                     }
                     cancelInlineEdit();
                 } else {
-                    alert(result.message || '@Localizer["ErrorSaving"]');
+                    alert(result.message || '@Localizer["ErrorSaving"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error saving:', err);
-                alert('@Localizer["ErrorSaving"]');
+                alert('@Localizer["ErrorSaving"].Value.Trim()');
             });
     }
 
@@ -483,12 +483,12 @@
                     if (evt.oldIndex !== evt.newIndex) {
                         evt.from.insertBefore(node, evt.from.children[evt.oldIndex]);
                     }
-                    alert(result.message || '@Localizer["ErrorReordering"]');
+                    alert(result.message || '@Localizer["ErrorReordering"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error reordering:', err);
-                alert('@Localizer["ErrorReordering"]');
+                alert('@Localizer["ErrorReordering"].Value.Trim()');
             });
     }
 
@@ -521,7 +521,7 @@
                 return;
         }
 
-        const name = prompt('@Localizer["EnterName"]');
+        const name = prompt('@Localizer["EnterName"].Value.Trim()');
         if (!name) return;
 
         createEntity(childType, name, entityId)
@@ -530,17 +530,17 @@
                     // Reload the page to show new entity
                     window.location.reload();
                 } else {
-                    alert(result.message || '@Localizer["ErrorCreating"]');
+                    alert(result.message || '@Localizer["ErrorCreating"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error creating:', err);
-                alert('@Localizer["ErrorCreating"]');
+                alert('@Localizer["ErrorCreating"].Value.Trim()');
             });
     }
 
     HierarchyTree.addProject = function() {
-        const name = prompt('@Localizer["EnterProjectName"]');
+        const name = prompt('@Localizer["EnterProjectName"].Value.Trim()');
         if (!name) return;
 
         createEntity('project', name, null)
@@ -548,12 +548,12 @@
                 if (result.success) {
                     window.location.reload();
                 } else {
-                    alert(result.message || '@Localizer["ErrorCreating"]');
+                    alert(result.message || '@Localizer["ErrorCreating"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error creating:', err);
-                alert('@Localizer["ErrorCreating"]');
+                alert('@Localizer["ErrorCreating"].Value.Trim()');
             });
     };
 
@@ -563,7 +563,7 @@
         const entityId = parseInt(node.dataset.entityId);
         const name = node.querySelector('.htree-node__label')?.textContent || entityType;
 
-        const confirmMsg = '@Localizer["ConfirmDelete"]'.replace('{name}', name);
+        const confirmMsg = '@Localizer["ConfirmDelete"].Value.Trim()'.replace('{name}', name);
         if (!confirm(confirmMsg)) {
             return;
         }
@@ -573,12 +573,12 @@
                 if (result.success) {
                     node.remove();
                 } else {
-                    alert(result.message || '@Localizer["ErrorDeleting"]');
+                    alert(result.message || '@Localizer["ErrorDeleting"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error deleting:', err);
-                alert('@Localizer["ErrorDeleting"]');
+                alert('@Localizer["ErrorDeleting"].Value.Trim()');
             });
     }
 
@@ -596,7 +596,7 @@
             .then(targets => {
                 targetsContainer.innerHTML = '';
                 if (targets.length === 0) {
-                    targetsContainer.innerHTML = '<p>@Localizer["NoMoveTargets"]</p>';
+                    targetsContainer.innerHTML = '<p>@Localizer["NoMoveTargets"].Value.Trim()</p>';
                 } else {
                     targets.forEach(target => {
                         const btn = document.createElement('button');
@@ -609,7 +609,7 @@
                                     if (result.success) {
                                         window.location.reload();
                                     } else {
-                                        alert(result.message || '@Localizer["ErrorMoving"]');
+                                        alert(result.message || '@Localizer["ErrorMoving"].Value.Trim()');
                                     }
                                 });
                         };

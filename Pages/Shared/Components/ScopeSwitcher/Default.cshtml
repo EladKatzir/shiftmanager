@@ -111,7 +111,7 @@
             const selectedButton = container.querySelector(`[data-scope="${scope}"]`);
             if (selectedButton) {
                 const label = selectedButton.querySelector('.scope-switcher__btn-label')?.textContent || scope;
-                announcer.textContent = '@Localizer["ScopeSwitcher_ViewLabel"]'.replace(':', '') + ': ' + label;
+                announcer.textContent = '@Localizer["ScopeSwitcher_ViewLabel"].Value.Trim()'.replace(':', '') + ': ' + label;
             }
         }
 

@@ -107,7 +107,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var area = await _db.Areas.FindAsync(SelectedAreaId);
+        var area = await _db.Areas.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == SelectedAreaId);
         if (area == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
@@ -137,7 +137,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var jobType = await _db.JobTypes.FindAsync(id);
+        var jobType = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(jt => jt.Id == id);
         if (jobType == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;

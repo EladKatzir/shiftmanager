@@ -303,11 +303,11 @@
                 const moleculeId = this.value;
 
                 // Reset dependent dropdowns
-                companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"]</option>';
+                companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"].Value.Trim()</option>';
                 companySelect.disabled = true;
 
                 if (jobTypeSelect) {
-                    jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>';
+                    jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_ChooseJobTypeFirst"].Value.Trim()</option>';
                     jobTypeSelect.disabled = true;
                 }
 
@@ -323,7 +323,7 @@
                     const data = await response.json();
 
                     if (data.companies && data.companies.length > 0) {
-                        companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"]</option>';
+                        companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"].Value.Trim()</option>';
                         data.companies.forEach(company => {
                             const option = document.createElement('option');
                             option.value = company.id;
@@ -332,11 +332,11 @@
                         });
                         companySelect.disabled = false;
                     } else {
-                        companySelect.innerHTML = '<option value="">@Localizer["Auth_NoCompaniesAvailable"]</option>';
+                        companySelect.innerHTML = '<option value="">@Localizer["Auth_NoCompaniesAvailable"].Value.Trim()</option>';
                     }
                 } catch (error) {
                     console.error('Error fetching companies:', error);
-                    companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"]</option>';
+                    companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
                 } finally {
                     companyLoading.style.display = 'none';
                 }
@@ -349,7 +349,7 @@
                         const data = await response.json();
 
                         if (data.jobTypes && data.jobTypes.length > 0) {
-                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_SelectJobType"]</option>';
+                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_SelectJobType"].Value.Trim()</option>';
                             data.jobTypes.forEach(jobType => {
                                 const option = document.createElement('option');
                                 option.value = jobType.id;
@@ -361,11 +361,11 @@
                             });
                             jobTypeSelect.disabled = false;
                         } else {
-                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_NoJobTypesAvailable"]</option>';
+                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_NoJobTypesAvailable"].Value.Trim()</option>';
                         }
                     } catch (error) {
                         console.error('Error fetching job types:', error);
-                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"]</option>';
+                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
                     } finally {
                         jobTypeLoading.style.display = 'none';
                     }

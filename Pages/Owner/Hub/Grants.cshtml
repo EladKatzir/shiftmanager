@@ -111,7 +111,7 @@
                         <div class="grant-type-cards">
                             @foreach (var gt in categoryGroup.Value)
                             {
-                                <div class="grant-type-card" data-id="@gt.Id" data-key="@gt.Key.ToLower()" data-name="@Localizer[gt.NameKey].ToString().ToLower()">
+                                <div class="grant-type-card" data-id="@gt.Id" data-key="@gt.Key.ToLower()" data-name="@Localizer[gt.NameKey].Value.Trim().ToLower()">
                                     <div class="grant-type-header">
                                         <span class="grant-type-name">@Localizer[gt.NameKey]</span>
                                         @if (gt.IsSystem)
@@ -1316,7 +1316,7 @@ document.getElementById('user-search').addEventListener('input', (e) => {
             `).join('');
             resultsDiv.classList.add('visible');
         } else {
-            resultsDiv.innerHTML = '<div class="user-result-item">@Localizer["NoResultsFound"]</div>';
+            resultsDiv.innerHTML = '<div class="user-result-item">@Localizer["NoResultsFound"].Value.Trim()</div>';
             resultsDiv.classList.add('visible');
         }
     }, 300);
@@ -1348,7 +1348,7 @@ async function loadUserGrants(userId) {
     const listDiv = document.getElementById('user-grants-list');
 
     if (grants.length === 0) {
-        listDiv.innerHTML = '<p class="empty-state">@Localizer["NoGrantsFound"]</p>';
+        listDiv.innerHTML = '<p class="empty-state">@Localizer["NoGrantsFound"].Value.Trim()</p>';
         return;
     }
 
@@ -1358,7 +1358,7 @@ async function loadUserGrants(userId) {
         if (g.scope.areaName) scopeParts.push(g.scope.areaName);
         if (g.scope.moleculeName) scopeParts.push(g.scope.moleculeName);
         if (g.scope.companyName) scopeParts.push(g.scope.companyName);
-        const scopeStr = scopeParts.length > 0 ? scopeParts.join(' > ') : '@Localizer["Self"]';
+        const scopeStr = scopeParts.length > 0 ? scopeParts.join(' > ') : '@Localizer["Self"].Value.Trim()';
 
         return `
             <div class="user-grant-item">
@@ -1367,18 +1367,18 @@ async function loadUserGrants(userId) {
                     <div class="grant-scope">${escapeHtml(scopeStr)}</div>
                     <div class="grant-meta">
                         <span class="badge badge-${g.category.toLowerCase()}">${g.category}</span>
-                        ${g.isAutoGrant ? '<span class="badge badge-auto">@Localizer["Auto"]</span>' : '<span class="badge badge-manual">@Localizer["Manual"]</span>'}
+                        ${g.isAutoGrant ? '<span class="badge badge-auto">@Localizer["Auto"].Value.Trim()</span>' : '<span class="badge badge-manual">@Localizer["Manual"].Value.Trim()</span>'}
                         ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
                         ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
-                        ${g.grantedByName ? `<span>@Localizer["GrantedBy"]: ${escapeHtml(g.grantedByName)}</span>` : ''}
+                        ${g.grantedByName ? `<span>@Localizer["GrantedBy"].Value.Trim(): ${escapeHtml(g.grantedByName)}</span>` : ''}
                     </div>
                 </div>
                 <div class="grant-actions">
                     ${!g.isAutoGrant ? `
                         <button class="toggle-delegation ${g.canGive ? 'active' : ''}" onclick="toggleDelegation(${g.id}, ${!g.canGive})">
-                            ${g.canGive ? '@Localizer["DisableCanGive"]' : '@Localizer["EnableCanGive"]'}
+                            ${g.canGive ? '@Localizer["DisableCanGive"].Value.Trim()' : '@Localizer["EnableCanGive"].Value.Trim()'}
                         </button>
-                        <button class="btn-revoke" onclick="revokeGrant(${g.id})">@Localizer["Revoke"]</button>
+                        <button class="btn-revoke" onclick="revokeGrant(${g.id})">@Localizer["Revoke"].Value.Trim()</button>
                     ` : ''}
                 </div>
             </div>
@@ -1403,7 +1403,7 @@ async function toggleDelegation(grantId, canGive) {
 
 // Revoke grant
 async function revokeGrant(grantId) {
-    if (!confirm('@Localizer["ConfirmRevokeGrant"]')) return;
+    if (!confirm('@Localizer["ConfirmRevokeGrant"].Value.Trim()')) return;
     const response = await fetch('?handler=RevokeGrant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
@@ -1433,9 +1433,9 @@ document.getElementById('scope-project').addEventListener('change', (e) => {
     const moleculeSelect = document.getElementById('scope-molecule');
     const companySelect = document.getElementById('scope-company');
 
-    areaSelect.innerHTML = '<option value="">-- @Localizer["SelectArea"] --</option>';
-    moleculeSelect.innerHTML = '<option value="">-- @Localizer["SelectMolecule"] --</option>';
-    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"] --</option>';
+    areaSelect.innerHTML = '<option value="">-- @Localizer["SelectArea"].Value.Trim() --</option>';
+    moleculeSelect.innerHTML = '<option value="">-- @Localizer["SelectMolecule"].Value.Trim() --</option>';
+    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"].Value.Trim() --</option>';
 
     if (projectId) {
         const project = hierarchyData.find(p => p.id == projectId);
@@ -1458,8 +1458,8 @@ document.getElementById('scope-area').addEventListener('change', (e) => {
     const moleculeSelect = document.getElementById('scope-molecule');
     const companySelect = document.getElementById('scope-company');
 
-    moleculeSelect.innerHTML = '<option value="">-- @Localizer["SelectMolecule"] --</option>';
-    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"] --</option>';
+    moleculeSelect.innerHTML = '<option value="">-- @Localizer["SelectMolecule"].Value.Trim() --</option>';
+    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"].Value.Trim() --</option>';
 
     if (areaId && projectId) {
         const project = hierarchyData.find(p => p.id == projectId);
@@ -1482,7 +1482,7 @@ document.getElementById('scope-molecule').addEventListener('change', (e) => {
     const areaId = document.getElementById('scope-area').value;
     const companySelect = document.getElementById('scope-company');
 
-    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"] --</option>';
+    companySelect.innerHTML = '<option value="">-- @Localizer["SelectCompany"].Value.Trim() --</option>';
 
     if (moleculeId && areaId && projectId) {
         const project = hierarchyData.find(p => p.id == projectId);
@@ -1513,7 +1513,7 @@ async function submitAddGrant() {
     };
 
     if (!data.grantTypeId) {
-        alert('@Localizer["PleaseSelectGrantType"]');
+        alert('@Localizer["PleaseSelectGrantType"].Value.Trim()');
         return;
     }
 
@@ -1599,7 +1599,7 @@ async function selectRoleTemplate(templateId) {
 // Show add role grant modal
 function showAddRoleGrantModal() {
     isEditingRoleGrant = false;
-    document.getElementById('role-grant-modal-title').textContent = '@Localizer["AddGrantToRoleTemplate"]';
+    document.getElementById('role-grant-modal-title').textContent = '@Localizer["AddGrantToRoleTemplate"].Value.Trim()';
     document.getElementById('role-grant-type-group').style.display = 'block';
     document.getElementById('btn-remove-role-grant').style.display = 'none';
     document.getElementById('role-grant-form').reset();
@@ -1611,7 +1611,7 @@ function showAddRoleGrantModal() {
 // Edit role template grant
 function editRoleTemplateGrant(grantId, grantTypeId, canOwn, canGive, scopeMode) {
     isEditingRoleGrant = true;
-    document.getElementById('role-grant-modal-title').textContent = '@Localizer["EditRoleTemplateGrant"]';
+    document.getElementById('role-grant-modal-title').textContent = '@Localizer["EditRoleTemplateGrant"].Value.Trim()';
     document.getElementById('role-grant-type-group').style.display = 'none';
     document.getElementById('btn-remove-role-grant').style.display = 'block';
     document.getElementById('role-grant-id').value = grantId;
@@ -1673,7 +1673,7 @@ async function submitRoleTemplateGrant() {
 
 // Remove role template grant
 async function removeRoleTemplateGrant() {
-    if (!confirm('@Localizer["ConfirmRemoveGrant"]')) return;
+    if (!confirm('@Localizer["ConfirmRemoveGrant"].Value.Trim()')) return;
     const grantId = parseInt(document.getElementById('role-grant-id').value);
     const response = await fetch('?handler=RemoveRoleTemplateGrant', {
         method: 'POST',

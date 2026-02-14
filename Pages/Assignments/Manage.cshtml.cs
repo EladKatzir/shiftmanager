@@ -25,8 +25,9 @@ public class ManageModel : LocalizedPageModel
     private readonly IDirectorService _directorService;
     private readonly ITraineeService _traineeService;
     private readonly IBusyUserService _busyUserService;
+    private readonly IGrantService _grantService;
 
-    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService)
+    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService)
         : base(localizer)
     {
         _db = db;
@@ -37,6 +38,7 @@ public class ManageModel : LocalizedPageModel
         _directorService = directorService;
         _traineeService = traineeService;
         _busyUserService = busyUserService;
+        _grantService = grantService;
     }
 
 
@@ -87,19 +89,9 @@ public class ManageModel : LocalizedPageModel
             return RedirectToPage("/Error");
         }
 
-        bool hasAccess = false;
-        if (currentUser!.Role == UserRole.Owner)
-        {
-            hasAccess = true;
-        }
-        else if (currentUser.Role == UserRole.Director)
-        {
-            hasAccess = await _directorService.IsDirectorOfAsync(companyId);
-        }
-        else if (currentUser.Role == UserRole.Manager)
-        {
-            hasAccess = currentUser.CompanyId == companyId;
-        }
+        // Check access via grants (not role)
+        var isAdmin = await _grantService.HasGrantAsync(currentUser.Id, "AdminAccess");
+        bool hasAccess = isAdmin || await _directorService.IsDirectorOfAsync(companyId) || currentUser.CompanyId == companyId;
 
         if (!hasAccess)
         {
@@ -263,16 +255,18 @@ public class ManageModel : LocalizedPageModel
             if (int.TryParse(removeUserIdClaim, out var removeCurrentUserId))
             {
                 var removeCurrentUser = await _db.Users.FindAsync(removeCurrentUserId);
-                if (removeCurrentUser != null && removeCurrentUser.Role != UserRole.Owner)
+                if (removeCurrentUser != null)
                 {
-                    var removeHasAccess = removeCurrentUser.Role == UserRole.Director
-                        ? await _directorService.IsDirectorOfAsync(a.CompanyId)
-                        : removeCurrentUser.CompanyId == a.CompanyId;
-                    if (!removeHasAccess)
+                    var isAdmin = await _grantService.HasGrantAsync(removeCurrentUserId, "AdminAccess");
+                    if (!isAdmin)
                     {
-                        _logger.LogWarning("User {UserId} attempted to remove assignment {AssignmentId} from company {CompanyId} without access",
-                            removeCurrentUserId, assignmentId, a.CompanyId);
-                        return RedirectToPage("/AccessDenied");
+                        var removeHasAccess = await _directorService.IsDirectorOfAsync(a.CompanyId) || removeCurrentUser.CompanyId == a.CompanyId;
+                        if (!removeHasAccess)
+                        {
+                            _logger.LogWarning("User {UserId} attempted to remove assignment {AssignmentId} from company {CompanyId} without access",
+                                removeCurrentUserId, assignmentId, a.CompanyId);
+                            return RedirectToPage("/AccessDenied");
+                        }
                     }
                 }
             }
@@ -318,16 +312,18 @@ public class ManageModel : LocalizedPageModel
         if (traineeAssignment != null)
         {
             var traineeCurrentUser = await _db.Users.FindAsync(currentUserId);
-            if (traineeCurrentUser != null && traineeCurrentUser.Role != UserRole.Owner)
+            if (traineeCurrentUser != null)
             {
-                var traineeHasAccess = traineeCurrentUser.Role == UserRole.Director
-                    ? await _directorService.IsDirectorOfAsync(traineeAssignment.CompanyId)
-                    : traineeCurrentUser.CompanyId == traineeAssignment.CompanyId;
-                if (!traineeHasAccess)
+                var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+                if (!isAdmin)
                 {
-                    _logger.LogWarning("User {UserId} attempted trainee assignment on company {CompanyId} without access",
-                        currentUserId, traineeAssignment.CompanyId);
-                    return RedirectToPage("/AccessDenied");
+                    var traineeHasAccess = await _directorService.IsDirectorOfAsync(traineeAssignment.CompanyId) || traineeCurrentUser.CompanyId == traineeAssignment.CompanyId;
+                    if (!traineeHasAccess)
+                    {
+                        _logger.LogWarning("User {UserId} attempted trainee assignment on company {CompanyId} without access",
+                            currentUserId, traineeAssignment.CompanyId);
+                        return RedirectToPage("/AccessDenied");
+                    }
                 }
             }
         }
@@ -361,16 +357,18 @@ public class ManageModel : LocalizedPageModel
         if (removeTraineeAssignment != null)
         {
             var removeTraineeCurrentUser = await _db.Users.FindAsync(currentUserId);
-            if (removeTraineeCurrentUser != null && removeTraineeCurrentUser.Role != UserRole.Owner)
+            if (removeTraineeCurrentUser != null)
             {
-                var removeTraineeHasAccess = removeTraineeCurrentUser.Role == UserRole.Director
-                    ? await _directorService.IsDirectorOfAsync(removeTraineeAssignment.CompanyId)
-                    : removeTraineeCurrentUser.CompanyId == removeTraineeAssignment.CompanyId;
-                if (!removeTraineeHasAccess)
+                var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+                if (!isAdmin)
                 {
-                    _logger.LogWarning("User {UserId} attempted trainee removal on company {CompanyId} without access",
-                        currentUserId, removeTraineeAssignment.CompanyId);
-                    return RedirectToPage("/AccessDenied");
+                    var removeTraineeHasAccess = await _directorService.IsDirectorOfAsync(removeTraineeAssignment.CompanyId) || removeTraineeCurrentUser.CompanyId == removeTraineeAssignment.CompanyId;
+                    if (!removeTraineeHasAccess)
+                    {
+                        _logger.LogWarning("User {UserId} attempted trainee removal on company {CompanyId} without access",
+                            currentUserId, removeTraineeAssignment.CompanyId);
+                        return RedirectToPage("/AccessDenied");
+                    }
                 }
             }
         }

@@ -570,8 +570,8 @@
                             <span class="type-badge type-badge-custom" style="background: @type.Color; color: var(--primary-contrast);">
                                 @Localizer["Custom"]
                             </span>
-                            <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;"
-                                  onsubmit="return confirm('@Localizer["ConfirmDeleteOnDutyType", type.NameEn]');">
+                            <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;" data-type-name="@type.NameEn" data-confirm-msg="@Localizer["ConfirmDeleteOnDutyType"].Value.Trim()"
+                                  onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.typeName));">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="typeId" value="@type.Id" />
                                 <button type="submit" class="btn btn-danger">

@@ -584,20 +584,20 @@
 // Stats data
 const statsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stats, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
 const localizer = {
-    vacations: '@Localizer["Vacations"]',
-    onDuty: '@Localizer["OnDuty"]',
-    shifts: '@Localizer["Shifts"]',
-    chores: '@Localizer["Chores"]',
-    count: '@Localizer["Count"]',
-    hours: '@Localizer["Hours"]',
-    details: '@Localizer["Details"]',
-    date: '@Localizer["Date"]',
-    title: '@Localizer["Title"]',
-    time: '@Localizer["Time"]',
-    metadata: '@Localizer["Metadata"]',
-    conflict: '@Localizer["Conflict"]',
-    day: '@Localizer["Day"]',
-    days: '@Localizer["Days"]'
+    vacations: '@Localizer["Vacations"].Value.Trim()',
+    onDuty: '@Localizer["OnDuty"].Value.Trim()',
+    shifts: '@Localizer["Shifts"].Value.Trim()',
+    chores: '@Localizer["Chores"].Value.Trim()',
+    count: '@Localizer["Count"].Value.Trim()',
+    hours: '@Localizer["Hours"].Value.Trim()',
+    details: '@Localizer["Details"].Value.Trim()',
+    date: '@Localizer["Date"].Value.Trim()',
+    title: '@Localizer["Title"].Value.Trim()',
+    time: '@Localizer["Time"].Value.Trim()',
+    metadata: '@Localizer["Metadata"].Value.Trim()',
+    conflict: '@Localizer["Conflict"].Value.Trim()',
+    day: '@Localizer["Day"].Value.Trim()',
+    days: '@Localizer["Days"].Value.Trim()'
 };
 
 // Filter functionality

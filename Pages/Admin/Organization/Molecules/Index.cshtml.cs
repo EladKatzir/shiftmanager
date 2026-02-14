@@ -97,7 +97,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var area = await _db.Areas.FindAsync(SelectedAreaId);
+        var area = await _db.Areas.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == SelectedAreaId);
         if (area == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;

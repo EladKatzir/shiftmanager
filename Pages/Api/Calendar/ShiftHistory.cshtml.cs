@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models.Support;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Api.Calendar;
 
@@ -19,10 +20,14 @@ namespace ShiftManager.Pages.Api.Calendar;
 public class ShiftHistoryModel : PageModel
 {
     private readonly AppDbContext _db;
+    private readonly IGrantService _grantService;
+    private readonly IDirectorService _directorService;
 
-    public ShiftHistoryModel(AppDbContext db)
+    public ShiftHistoryModel(AppDbContext db, IGrantService grantService, IDirectorService directorService)
     {
         _db = db;
+        _grantService = grantService;
+        _directorService = directorService;
     }
 
     public async Task<IActionResult> OnGetAsync(int? userId, int? instanceId, int limit = 50)
@@ -61,10 +66,25 @@ public class ShiftHistoryModel : PageModel
                 || al.EntityType == "Chore"
                 || al.EntityType == "OnDuty");
 
-        // Tenant scoping: non-Owner users can only see their own company's logs
-        if (currentUser.Role != UserRole.Owner && currentUser.Role != UserRole.Director)
+        // Tenant scoping: scope audit logs based on user's access level
+        var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+        if (!isAdmin)
         {
-            query = query.Where(al => al.CompanyId == currentUser.CompanyId);
+            var isDirector = await _grantService.HasGrantAsync(currentUserId, "DirectorHubAccess");
+            if (isDirector)
+            {
+                // Directors see only their managed companies' logs (not all companies)
+                var directorCompanyIds = await _directorService.GetDirectorCompanyIdsAsync(currentUserId);
+                // Include their own company too
+                if (!directorCompanyIds.Contains(currentUser.CompanyId))
+                    directorCompanyIds.Add(currentUser.CompanyId);
+                query = query.Where(al => directorCompanyIds.Contains(al.CompanyId));
+            }
+            else
+            {
+                // Regular users see only their own company's logs
+                query = query.Where(al => al.CompanyId == currentUser.CompanyId);
+            }
         }
 
         if (userId.HasValue)

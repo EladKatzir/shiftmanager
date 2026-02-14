@@ -249,7 +249,7 @@
                     // Show visual warning banner
                     var warning = document.createElement('div');
                     warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:var(--danger);color:var(--danger-text);padding:12px;text-align:center;z-index:9999;font-family:system-ui;font-size:14px';
-                    warning.textContent = '@Localizer["Warning_CSSLoadingIssue"]';
+                    warning.textContent = '@Localizer["Warning_CSSLoadingIssue"].Value.Trim()';
                     document.body.insertBefore(warning, document.body.firstChild);
                 } else {
                     console.log('[OK] Sidebar CSS loaded correctly (display: flex)');

@@ -688,7 +688,7 @@ async function updateEligibleAssignees(dutyType) {
 
     // Reset selection when duty type changes
     document.getElementById('selectedOnDutyAssigneeId').value = '';
-    document.getElementById('selectedOnDutyAssigneeName').textContent = '@Localizer["SelectAssignee"]';
+    document.getElementById('selectedOnDutyAssigneeName').textContent = '@Localizer["SelectAssignee"].Value.Trim()';
 
     // Show loading state
     loadingIndicator.style.display = 'block';

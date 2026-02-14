@@ -165,8 +165,8 @@
                             <td>@assignment.GrantedByName</td>
                             <td>@assignment.GrantedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
-                                <form method="post" asp-page-handler="Revoke" style="display:inline"
-                                      onsubmit="return confirm('@Localizer["ConfirmRevokeDirectorAccess"]'.replace('{0}', '@assignment.DirectorName').replace('{1}', '@assignment.CompanyName'));">
+                                <form method="post" asp-page-handler="Revoke" style="display:inline" data-director-name="@assignment.DirectorName" data-company-name="@assignment.CompanyName" data-confirm-msg="@Localizer["ConfirmRevokeDirectorAccess"].Value.Trim()"
+                                      onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.directorName).replace('{1}', this.dataset.companyName));">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@assignment.Id" />
                                     <button type="submit" class="btn btn-danger">

@@ -433,13 +433,13 @@
                 // Show all
                 hiddenItems.classList.add('is-visible');
                 button.classList.add('expanded');
-                btnText.textContent = '@Localizer["Calendar_ShowLess"]';
+                btnText.textContent = '@Localizer["Calendar_ShowLess"].Value.Trim()';
             } else {
                 // Hide extra items
                 hiddenItems.classList.remove('is-visible');
                 button.classList.remove('expanded');
                 const hiddenCount = hiddenItems.querySelectorAll('.calendar-item').length;
-                btnText.textContent = `+${hiddenCount} @Localizer["Calendar_MoreItems"]`;
+                btnText.textContent = `+${hiddenCount} @Localizer["Calendar_MoreItems"].Value.Trim()`;
             }
         }
     </script>

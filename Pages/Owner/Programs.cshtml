@@ -200,7 +200,7 @@
 
                             <form method="post" asp-page-handler="DeleteProgram"
                                   style="display: inline;"
-                                  onsubmit="return confirm('@Localizer["Programs_ConfirmDelete"]');">
+                                  onsubmit="return confirm('@Localizer["Programs_ConfirmDelete"].Value.Trim()');">
                                 <input type="hidden" name="programId" value="@program.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     🗑️ <loc key="Delete" />
@@ -283,7 +283,7 @@
                 const programName = this.dataset.programName;
 
                 document.getElementById('generateProgramId').value = programId;
-                document.getElementById('generateProgramName').textContent = '@Localizer["Program_Prefix"]' + programName;
+                document.getElementById('generateProgramName').textContent = '@Localizer["Program_Prefix"].Value.Trim()' + programName;
 
                 document.getElementById('generateModal').style.display = 'block';
             });

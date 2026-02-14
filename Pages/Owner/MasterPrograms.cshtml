@@ -169,7 +169,7 @@
 
                             <form method="post" asp-page-handler="DeleteMasterProgram"
                                   style="display: inline;"
-                                  onsubmit="return confirm('@Localizer["MasterPrograms_ConfirmDelete"]');">
+                                  onsubmit="return confirm('@Localizer["MasterPrograms_ConfirmDelete"].Value.Trim()');">
                                 <input type="hidden" name="masterProgramId" value="@masterProgram.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     🗑️ <loc key="Delete" />
@@ -241,8 +241,8 @@
                 const programCount = this.dataset.programCount;
 
                 document.getElementById('generateMasterProgramId').value = masterId;
-                document.getElementById('generateMasterProgramName').textContent = '@Localizer["MasterProgram_Prefix"]' + masterName;
-                document.getElementById('generateMasterProgramCount').textContent = '@Localizer["MasterProgram_WillApplyPrefix"]' + programCount + ' @Localizer["MasterProgram_WillApplySuffix"]';
+                document.getElementById('generateMasterProgramName').textContent = '@Localizer["MasterProgram_Prefix"].Value.Trim()' + masterName;
+                document.getElementById('generateMasterProgramCount').textContent = '@Localizer["MasterProgram_WillApplyPrefix"].Value.Trim()' + programCount + ' @Localizer["MasterProgram_WillApplySuffix"].Value.Trim()';
 
                 document.getElementById('generateMasterModal').style.display = 'block';
             });

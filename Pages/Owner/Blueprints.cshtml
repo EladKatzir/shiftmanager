@@ -193,8 +193,8 @@
                                 </button>
 
                                 @* ✅ P1-4: Allow deleting ALL shift types with usage warning *@
-                                <button type="button" class="btn btn-sm btn-danger"
-                                        onclick="confirmDeleteShiftType(@shiftType.Id, '@shiftType.Name')">
+                                <button type="button" class="btn btn-sm btn-danger" data-shift-name="@shiftType.Name"
+                                        onclick="confirmDeleteShiftType(@shiftType.Id, this.dataset.shiftName)">
                                     🗑️ <loc key="Delete" />
                                 </button>
                             </td>
@@ -364,7 +364,7 @@
             const nameHe = document.getElementById('editNameHe').value;
 
             if (!nameEn || !nameHe) {
-                alert('@Localizer["Error_BothNamesRequired"]');
+                alert('@Localizer["Error_BothNamesRequired"].Value.Trim()');
                 return;
             }
 
@@ -384,11 +384,11 @@
                     closeEditNameModal();
                     location.reload(); // Refresh to show updated names
                 } else {
-                    alert('@Localizer["Error_Prefix"]' + (result.error || '@Localizer["Error_FailedToUpdate"]'));
+                    alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || '@Localizer["Error_FailedToUpdate"].Value.Trim()'));
                 }
             } catch (err) {
                 console.error('Failed to save shift name', err);
-                alert('@Localizer["Error_FailedToSaveShiftName"]');
+                alert('@Localizer["Error_FailedToSaveShiftName"].Value.Trim()');
             }
         }
 
@@ -417,7 +417,7 @@
             const endTime = document.getElementById('editEndTime').value;
 
             if (!startTime || !endTime) {
-                alert('@Localizer["Error_BothTimesRequired"]');
+                alert('@Localizer["Error_BothTimesRequired"].Value.Trim()');
                 return;
             }
 
@@ -437,11 +437,11 @@
                     closeEditTimeModal();
                     location.reload(); // Refresh to show updated times
                 } else {
-                    alert('@Localizer["Error_Prefix"]' + (result.error || '@Localizer["Error_FailedToUpdate"]'));
+                    alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || '@Localizer["Error_FailedToUpdate"].Value.Trim()'));
                 }
             } catch (err) {
                 console.error('Failed to save shift times', err);
-                alert('@Localizer["Error_FailedToSaveShiftTimes"]');
+                alert('@Localizer["Error_FailedToSaveShiftTimes"].Value.Trim()');
             }
         }
 
@@ -623,7 +623,7 @@
                 // Update UI to show submitting state
                 modal.setAttribute('data-modal-state', 'submitting');
                 confirmButton.disabled = true;
-                confirmButton.textContent = '@Localizer["Deleting"]';
+                confirmButton.textContent = '@Localizer["Deleting"].Value.Trim()';
 
                 // Verify we have the anti-forgery token
                 if (!cachedAntiForgeryToken) {
@@ -672,7 +672,7 @@
 
                 // Re-enable button
                 confirmButton.disabled = false;
-                confirmButton.textContent = '@Localizer["ConfirmDelete"]';
+                confirmButton.textContent = '@Localizer["ConfirmDelete"].Value.Trim()';
             }
         }
     </script>

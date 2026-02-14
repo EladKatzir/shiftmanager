@@ -96,7 +96,7 @@
                                             <button type="submit"
                                                     class="btn-action btn-restore"
                                                     loc-title="Owner_Backup_Restore"
-                                                    onclick="return confirm('@Localizer["Owner_Backup_RestoreConfirm"]')">
+                                                    onclick="return confirm('@Localizer["Owner_Backup_RestoreConfirm"].Value.Trim()')">
                                                 ♻️
                                             </button>
                                         </form>
@@ -105,7 +105,7 @@
                                             <button type="submit"
                                                     class="btn-action btn-delete"
                                                     loc-title="Owner_Backup_Delete"
-                                                    onclick="return confirm('@Localizer["Owner_Backup_DeleteConfirm"]')">
+                                                    onclick="return confirm('@Localizer["Owner_Backup_DeleteConfirm"].Value.Trim()')">
                                                 🗑️
                                             </button>
                                         </form>

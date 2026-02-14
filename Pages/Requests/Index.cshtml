@@ -676,8 +676,8 @@
                         <div class="request-actions">
                             @if (isFuture)
                             {
-                                <form method="post" asp-page-handler="DeleteTimeOff" style="margin: 0;"
-                                      onsubmit="return confirm('@Localizer["ConfirmDeleteTimeOff"]'.replace('{0}', '@timeOff.UserName'));">
+                                <form method="post" asp-page-handler="DeleteTimeOff" style="margin: 0;" data-user-name="@timeOff.UserName" data-confirm-msg="@Localizer["ConfirmDeleteTimeOff"].Value.Trim()"
+                                      onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.userName));">
                                     <input type="hidden" name="id" value="@timeOff.Id" />
                                     <button type="submit" class="btn btn-decline">
                                         <span>🗑️</span>

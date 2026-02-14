@@ -88,7 +88,7 @@
                     <td>
                         <div class="table-actions">
                             <form method="post" asp-page-handler="ToggleActive" style="display:inline"><input type="hidden" name="id" value="@p.Id" /><button type="submit" class="btn btn-ghost">@(p.IsActive ? Localizer["Deactivate"] : Localizer["Activate"])</button></form>
-                            @if (p.AreaCount == 0) { <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmDeleteProject"]');"><input type="hidden" name="id" value="@p.Id" /><button type="submit" class="btn btn-danger"><loc key="Delete" /></button></form> }
+                            @if (p.AreaCount == 0) { <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmDeleteProject"].Value.Trim()');"><input type="hidden" name="id" value="@p.Id" /><button type="submit" class="btn btn-danger"><loc key="Delete" /></button></form> }
                         </div>
                     </td>
                 </tr>

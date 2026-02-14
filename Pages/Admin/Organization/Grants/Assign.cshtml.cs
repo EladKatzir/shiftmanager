@@ -87,7 +87,7 @@ public class AssignModel : LocalizedPageModel
         if (UserId.HasValue)
         {
             SelectedUserId = UserId.Value;
-            var user = await _db.Users.FindAsync(UserId.Value);
+            var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == UserId.Value);
             if (user != null)
             {
                 SelectedUserName = user.DisplayName;
@@ -112,7 +112,7 @@ public class AssignModel : LocalizedPageModel
         }
 
         // Verify user exists
-        var user = await _db.Users.FindAsync(SelectedUserId);
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == SelectedUserId);
         if (user == null)
         {
             Error = _localizer["Error_UserNotFound"];

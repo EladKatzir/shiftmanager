@@ -156,7 +156,7 @@
                                         <td>@o.UpdatedAt.ToString("g")</td>
                                         <td>
                                             <form method="post" asp-page-handler="DeleteOverride" asp-route-id="@o.Id" style="display:inline;">
-                                                <button type="submit" class="btn-delete" onclick="return confirm('@Localizer["LangMgmt_ConfirmDeleteOverride"]');" title="Delete">🗑️</button>
+                                                <button type="submit" class="btn-delete" onclick="return confirm('@Localizer["LangMgmt_ConfirmDeleteOverride"].Value.Trim()');" title="Delete">🗑️</button>
                                             </form>
                                         </td>
                                     </tr>

@@ -100,7 +100,7 @@
                     <td>
                         <div class="table-actions">
                             <form method="post" asp-page-handler="ToggleActive" style="display:inline"><input type="hidden" name="id" value="@a.Id" /><button type="submit" class="btn btn-ghost">@(a.IsActive ? Localizer["Deactivate"] : Localizer["Activate"])</button></form>
-                            @if (a.MoleculeCount == 0 && a.JobTypeCount == 0) { <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmDeleteArea"]');"><input type="hidden" name="id" value="@a.Id" /><button type="submit" class="btn btn-danger"><loc key="Delete" /></button></form> }
+                            @if (a.MoleculeCount == 0 && a.JobTypeCount == 0) { <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmDeleteArea"].Value.Trim()');"><input type="hidden" name="id" value="@a.Id" /><button type="submit" class="btn btn-danger"><loc key="Delete" /></button></form> }
                         </div>
                     </td>
                 </tr>

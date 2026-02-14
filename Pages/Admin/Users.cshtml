@@ -544,7 +544,7 @@
                 <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchApprovalForm" style="margin: 0;">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-primary" id="batchApproveBtn" disabled
-                            onclick="return confirm('@Localizer["ConfirmBatchApproval"]');">
+                            onclick="return confirm('@(Localizer["ConfirmBatchApproval"].Value.Trim())');">
                         ✓ @Localizer["ApproveSelected"]
                     </button>
                 </form>
@@ -596,7 +596,8 @@
                                         ✓
                                     </button>
                                     <button class="btn btn-danger btn-sm" type="button"
-                                            onclick="rejectSingleRequest(@request.Id, '@request.DisplayName')"
+                                            data-display-name="@request.DisplayName"
+                                            onclick="rejectSingleRequest(@request.Id, this.dataset.displayName)"
                                             aria-label="@Localizer["Reject"] @request.DisplayName">
                                         ✗
                                     </button>
@@ -873,7 +874,9 @@
                         @if (u.IsLocked)
                         {
                             <form method="post" asp-page-handler="UnlockAccount" style="display:inline; margin: 0;"
-                                  onsubmit="return confirm('@Localizer["ConfirmUnlockAccount"]'.replace('{0}', '@u.DisplayName'));">
+                                  data-display-name="@u.DisplayName"
+                                  data-confirm-msg="@(Localizer["ConfirmUnlockAccount"].Value.Trim())"
+                                  onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.displayName));">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@u.Id" />
                                 <button type="submit" class="btn btn-warning btn-sm" title="@Localizer["UnlockAccount"]">
@@ -885,7 +888,9 @@
                             ✏️
                         </a>
                         <form method="post" asp-page-handler="DeleteUser" style="display:inline; margin: 0;"
-                              onsubmit="return confirm('@Localizer["ConfirmDeleteUser"]'.replace('{0}', '@u.DisplayName'));">
+                              data-display-name="@u.DisplayName"
+                              data-confirm-msg="@(Localizer["ConfirmDeleteUser"].Value.Trim())"
+                              onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.displayName));">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
                             <button type="submit" class="btn btn-danger btn-sm">
@@ -1036,7 +1041,7 @@
 
 @section Scripts {
     <script>
-        const selectedText = '@Localizer["Selected"]';
+        const selectedText = '@(Localizer["Selected"].Value.Trim())';
 
         function toggleAllRequests(selectAllCheckbox) {
             const checkboxes = document.querySelectorAll('.request-checkbox');
@@ -1082,7 +1087,7 @@
         }
 
         function rejectSingleRequest(requestId, displayName) {
-            const confirmMsg = '@Localizer["ConfirmRejectJoinRequest"]'.replace('{0}', displayName);
+            const confirmMsg = '@(Localizer["ConfirmRejectJoinRequest"].Value.Trim())'.replace('{0}', displayName);
             if (!confirm(confirmMsg)) return;
 
             const form = document.createElement('form');

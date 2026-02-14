@@ -144,7 +144,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var grouping = await _db.ShiftGroupings.FindAsync(id);
+        var grouping = await _db.ShiftGroupings.IgnoreQueryFilters().FirstOrDefaultAsync(sg => sg.Id == id);
         if (grouping == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_GroupingNotFound"].Value;
@@ -171,7 +171,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        var grouping = await _db.ShiftGroupings.FindAsync(id);
+        var grouping = await _db.ShiftGroupings.IgnoreQueryFilters().FirstOrDefaultAsync(sg => sg.Id == id);
         if (grouping == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_GroupingNotFound"].Value;

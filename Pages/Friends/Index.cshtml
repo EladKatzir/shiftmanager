@@ -150,7 +150,7 @@
                 </div>
                 <div class="friend-actions">
                     <form method="post" asp-page-handler="CancelRequest" style="display:inline"
-                          onsubmit="return confirm('@Localizer["ConfirmCancelRequest"]');">
+                          onsubmit="return confirm('@Localizer["ConfirmCancelRequest"].Value.Trim()');">
                         <input type="hidden" name="id" value="@request.FriendshipId" />
                         <button type="submit" class="btn btn-ghost"><loc key="Cancel" /></button>
                     </form>
@@ -182,7 +182,7 @@
                 </div>
                 <div class="friend-actions">
                     <form method="post" asp-page-handler="Remove" style="display:inline"
-                          onsubmit="return confirm('@Localizer["ConfirmRemoveFriend"]');">
+                          onsubmit="return confirm('@Localizer["ConfirmRemoveFriend"].Value.Trim()');">
                         <input type="hidden" name="id" value="@friend.FriendshipId" />
                         <button type="submit" class="btn btn-danger"><loc key="Remove" /></button>
                     </form>

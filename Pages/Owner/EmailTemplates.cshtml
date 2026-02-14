@@ -111,7 +111,7 @@
                     </button>
                     @if (template.IsEnabled)
                     {
-                        <form method="post" asp-page-handler="ResetTemplate" class="d-inline" onsubmit="return confirm('@Localizer["Confirm_ResetTemplate"]');">
+                        <form method="post" asp-page-handler="ResetTemplate" class="d-inline" onsubmit="return confirm('@Localizer["Confirm_ResetTemplate"].Value.Trim()');">
                             <input type="hidden" name="templateType" value="@((int)template.Type)" />
                             <button type="submit" class="btn btn-outline-secondary btn-sm">
                                 <loc key="Action_ResetToDefault" />

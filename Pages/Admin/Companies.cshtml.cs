@@ -80,6 +80,8 @@ public class CompaniesModel : LocalizedPageModel
             .ToListAsync();
 
         // Load all Director users
+        // TODO: Replace with DirectorCompanyAssignment-based query or grant-based query when available
+        // Currently filtering by Director role as a proxy for users with director capabilities
         AvailableDirectors = await _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.Role == UserRole.Director)
@@ -192,6 +194,8 @@ public class CompaniesModel : LocalizedPageModel
         else
         {
             // Validate that the selected Director exists
+            // TODO: Consider grant-based validation when available
+            // Currently validating Director role as a proxy for director capabilities
             var directorExists = await _db.Users.AnyAsync(u => u.Id == SelectedDirectorId!.Value && u.Role == UserRole.Director);
             if (!directorExists)
             {
@@ -335,7 +339,7 @@ public class CompaniesModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var company = await _db.Companies.FindAsync(RenameCompanyId);
+        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == RenameCompanyId);
         if (company == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
@@ -444,7 +448,7 @@ public class CompaniesModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteCompanyAsync(int id)
     {
-        var company = await _db.Companies.FindAsync(id);
+        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
         if (company == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;

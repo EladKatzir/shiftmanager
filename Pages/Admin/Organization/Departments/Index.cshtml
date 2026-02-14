@@ -189,7 +189,7 @@
                                 @if (d.UserCount == 0)
                                 {
                                     <form method="post" asp-page-handler="Delete" style="display:inline"
-                                          onsubmit="return confirm('@Localizer["ConfirmDeleteDepartment"]');">
+                                          onsubmit="return confirm('@Localizer["ConfirmDeleteDepartment"].Value.Trim()');">
                                         <input type="hidden" name="id" value="@d.Id" />
                                         <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
                                     </form>

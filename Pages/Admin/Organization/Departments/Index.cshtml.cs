@@ -103,7 +103,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var molecule = await _db.Molecules.FindAsync(SelectedMoleculeId);
+        var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == SelectedMoleculeId);
         if (molecule == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;

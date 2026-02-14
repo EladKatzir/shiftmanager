@@ -124,7 +124,7 @@
                             <div class="table-actions">
                                 @if (ur.IsActive)
                                 {
-                                    <form method="post" asp-page-handler="Revoke" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmRevokeRole"]');">
+                                    <form method="post" asp-page-handler="Revoke" style="display:inline" onsubmit="return confirm('@Localizer["ConfirmRevokeRole"].Value.Trim()');">
                                         <input type="hidden" name="id" value="@ur.Id" />
                                         <button type="submit" class="btn btn-danger"><loc key="Revoke" /></button>
                                     </form>

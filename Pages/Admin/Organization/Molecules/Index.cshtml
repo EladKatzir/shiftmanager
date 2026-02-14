@@ -185,7 +185,7 @@
                                 @if (m.CompanyCount == 0 && m.DepartmentCount == 0)
                                 {
                                     <form method="post" asp-page-handler="Delete" style="display:inline"
-                                          onsubmit="return confirm('@Localizer["ConfirmDeleteMolecule"]');">
+                                          onsubmit="return confirm('@Localizer["ConfirmDeleteMolecule"].Value.Trim()');">
                                         <input type="hidden" name="id" value="@m.Id" />
                                         <button type="submit" class="btn btn-danger"><loc key="Delete" /></button>
                                     </form>

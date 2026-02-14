@@ -120,7 +120,7 @@ public class DirectorsModel : LocalizedPageModel
         }
 
         // Check if director user exists and has Director role
-        var director = await _db.Users.FindAsync(DirectorUserId);
+        var director = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == DirectorUserId);
         if (director == null || director.Role != UserRole.Director)
         {
             TempData["ErrorMessage"] = _localizer["Error_SelectedUserNotDirector"].Value;
@@ -128,7 +128,7 @@ public class DirectorsModel : LocalizedPageModel
         }
 
         // Check if company exists
-        var company = await _db.Companies.FindAsync(CompanyId);
+        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == CompanyId);
         if (company == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;

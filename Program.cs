@@ -1082,7 +1082,9 @@ app.Use(async (context, next) =>
     var config = context.RequestServices.GetRequiredService<IConfiguration>();
     var excelCalendarsEnabled = config.GetValue<bool>("Features:ExcelCalendars");
 
-    if (excelCalendarsEnabled)
+    // Only redirect GET requests — POST requests must reach the original page's handlers
+    // for CRUD operations (e.g., Calendar/Table POST handlers for shift assignment)
+    if (excelCalendarsEnabled && HttpMethods.IsGet(context.Request.Method))
     {
         var path = context.Request.Path.Value?.ToLowerInvariant();
         string? redirectTo = null;

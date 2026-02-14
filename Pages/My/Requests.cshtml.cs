@@ -126,6 +126,8 @@ public class RequestsModel : LocalizedPageModel
             var currentUser = await _db.Users.FindAsync(userId);
             if (currentUser != null)
             {
+                // TODO: Replace role filter with grant-based query when IGrantService supports IQueryable
+                // Currently filtering by management roles as a proxy for users with approval capabilities
                 AvailableApprovers = await _db.Users
                     .Where(u => u.CompanyId == currentUser.CompanyId &&
                                u.IsActive &&
@@ -194,6 +196,8 @@ public class RequestsModel : LocalizedPageModel
             if (TimeOffRequest.ApproverId.HasValue && TimeOffRequest.ApproverId.Value > 0)
             {
                 var approver = await _db.Users.FindAsync(TimeOffRequest.ApproverId.Value);
+                // TODO: Replace role validation with grant-based check when grant-based querying is available
+                // Currently validating management roles as a proxy for users with approval capabilities
                 if (approver == null || !approver.IsActive ||
                     (approver.Role != UserRole.Manager && approver.Role != UserRole.Director && approver.Role != UserRole.Owner))
                 {
