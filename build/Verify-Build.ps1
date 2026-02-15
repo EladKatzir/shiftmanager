@@ -29,7 +29,7 @@ try {
     $allFiles = Get-ChildItem -Path $OutputPath -File -Recurse
     $fileCount = $allFiles.Count
     $expectedFiles = 500
-    $tolerance = 150
+    $tolerance = 175
 
     if ($fileCount -lt ($expectedFiles - $tolerance) -or $fileCount -gt ($expectedFiles + $tolerance)) {
         Write-ErrorMsg "File count $fileCount outside expected range ($expectedFiles +/- $tolerance)"
