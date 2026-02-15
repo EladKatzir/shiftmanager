@@ -157,3 +157,9 @@ ProductionReady/
 
 # Visual regression snapshots (generated)
 qa-automation/tests/visual-regression.spec.js-snapshots/
+
+# Manual test artifacts
+test-screenshots/
+test-scripts/
+test-tmp/
+MANUAL_TESTING_LOG.md
