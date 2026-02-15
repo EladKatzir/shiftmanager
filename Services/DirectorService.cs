@@ -115,6 +115,17 @@ public class DirectorService : IDirectorService
         if (CurrentUserId == null)
             return false;
 
+        // Check AdminAccess first — it's a superset permission that implies all others
+        // (Owner template may not include the specific AssignRoles grant)
+        var hasAdminAccess = _grantService.HasGrantAsync(CurrentUserId.Value, AdminAccessGrant)
+            .GetAwaiter().GetResult();
+
+        if (hasAdminAccess)
+        {
+            // Admin can assign any role including Owner
+            return true;
+        }
+
         // Check if user has AssignRoles grant
         var hasAssignRolesGrant = _grantService.HasGrantAsync(CurrentUserId.Value, AssignRolesGrant)
             .GetAwaiter().GetResult();
@@ -124,17 +135,6 @@ public class DirectorService : IDirectorService
 
         // Get the user's grants to determine their scope/level
         // Users can only assign roles at or below their permission level
-
-        // Check if user has AdminAccess (project-level, full admin permissions)
-        // AdminAccess at project scope = Owner-level, can assign any role
-        var hasAdminAccess = _grantService.HasGrantAsync(CurrentUserId.Value, AdminAccessGrant)
-            .GetAwaiter().GetResult();
-
-        if (hasAdminAccess)
-        {
-            // Admin can assign any role including Owner
-            return true;
-        }
 
         // Check if user has DirectorHubAccess (director-level permissions)
         var hasDirectorAccess = _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)

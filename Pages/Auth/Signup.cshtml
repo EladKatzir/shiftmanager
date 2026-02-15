@@ -172,9 +172,11 @@
                             <select id="JobTypeId"
                                     name="JobTypeId"
                                     class="auth-field__select"
-                                    disabled>
+                                    disabled
+                                    required>
                                 <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
                             </select>
+                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
                             <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
                                 <loc key="Loading" />...
                             </div>

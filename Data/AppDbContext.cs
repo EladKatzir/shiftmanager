@@ -304,6 +304,12 @@ public class AppDbContext : DbContext
             .HasForeignKey(jr => jr.CreatedUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<UserJoinRequest>()
+            .HasOne(jr => jr.JobType)
+            .WithMany()
+            .HasForeignKey(jr => jr.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configure RoleAssignmentAudit
         modelBuilder.Entity<RoleAssignmentAudit>()
             .HasIndex(ra => new { ra.CompanyId, ra.TargetUserId, ra.Timestamp });

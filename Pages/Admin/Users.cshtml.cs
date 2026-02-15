@@ -56,7 +56,7 @@ public class UsersModel : LocalizedPageModel
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? DepartmentName, int GrantsCount);
-    public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, DateTime CreatedAt, JoinRequestStatus Status);
+    public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, DateTime CreatedAt, JoinRequestStatus Status);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName);
 
@@ -213,6 +213,7 @@ public class UsersModel : LocalizedPageModel
 
         // Apply pagination
         var joinRequestData = await joinRequestsQuery
+            .Include(jr => jr.JobType)
             .OrderBy(jr => jr.CreatedAt)
             .Skip((JoinRequestsPage - 1) * JoinRequestsPageSize)
             .Take(JoinRequestsPageSize)
@@ -232,6 +233,7 @@ public class UsersModel : LocalizedPageModel
                 jr.DisplayName,
                 companies.TryGetValue(jr.CompanyId, out var company) ? company.Name : $"Company #{jr.CompanyId}",
                 jr.RequestedRole.ToString(),
+                jr.JobType?.DisplayName,
                 jr.CreatedAt,
                 jr.Status
             ))
@@ -550,9 +552,15 @@ public class UsersModel : LocalizedPageModel
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
 
-        // ✅ Onboarding: Assign role template grants
-        var roleTemplateKey = MapUserRoleToRoleTemplateKey(targetRole);
-        var grantScope = GrantScope.Company(targetCompanyId);
+        // ✅ Onboarding: Assign role template grants with JobType-aware mapping
+        string? jobTypeName = null;
+        if (NewJobTypeId.HasValue)
+        {
+            var jt = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(j => j.Id == NewJobTypeId.Value);
+            jobTypeName = jt?.Name;
+        }
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(targetRole, jobTypeName);
+        var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, targetCompanyId, NewJobTypeId);
         var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserIdForCompany);
         _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to new user {UserId}",
             grantsAssigned, roleTemplateKey, newUser.Id);
@@ -1134,6 +1142,7 @@ public class UsersModel : LocalizedPageModel
         var joinRequest = await _db.UserJoinRequests
             .IgnoreQueryFilters()
             .Include(jr => jr.Company)
+            .Include(jr => jr.JobType)
             .FirstOrDefaultAsync(jr => jr.Id == id);
 
         if (joinRequest == null)
@@ -1175,7 +1184,7 @@ public class UsersModel : LocalizedPageModel
         // HIGH-009 FIX: Wrap in try/catch to prevent unhandled exceptions
         try
         {
-            // Create the user account
+            // Create the user account with JobTypeId from join request
             var newUser = new AppUser
             {
                 Email = joinRequest.Email,
@@ -1183,6 +1192,7 @@ public class UsersModel : LocalizedPageModel
                 PasswordHash = joinRequest.PasswordHash,
                 PasswordSalt = joinRequest.PasswordSalt,
                 CompanyId = joinRequest.CompanyId,
+                JobTypeId = joinRequest.JobTypeId,
                 Role = joinRequest.RequestedRole,
                 IsActive = true
             };
@@ -1200,9 +1210,9 @@ public class UsersModel : LocalizedPageModel
             joinRequest.CreatedUserId = newUser.Id;
             await _db.SaveChangesAsync();
 
-            // ✅ Onboarding: Assign role template grants
-            var roleTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole);
-            var grantScope = GrantScope.Company(joinRequest.CompanyId);
+            // ✅ Onboarding: Assign role template grants with JobType-aware mapping
+            var roleTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
+            var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, joinRequest.CompanyId, joinRequest.JobTypeId);
             var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
             _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
                 grantsAssigned, roleTemplateKey, newUser.Id);
@@ -1359,6 +1369,7 @@ public class UsersModel : LocalizedPageModel
             var joinRequests = await _db.UserJoinRequests
                 .IgnoreQueryFilters()
                 .Include(jr => jr.Company)
+                .Include(jr => jr.JobType)
                 .Where(jr => SelectedRequests.Contains(jr.Id))
                 .ToListAsync();
 
@@ -1433,7 +1444,7 @@ public class UsersModel : LocalizedPageModel
                     continue;
                 }
 
-                // Create the user account
+                // Create the user account with JobTypeId from join request
                 var newUser = new AppUser
                 {
                     Email = joinRequest.Email,
@@ -1441,6 +1452,7 @@ public class UsersModel : LocalizedPageModel
                     PasswordHash = joinRequest.PasswordHash,
                     PasswordSalt = joinRequest.PasswordSalt,
                     CompanyId = joinRequest.CompanyId,
+                    JobTypeId = joinRequest.JobTypeId,
                     Role = assignedRole,
                     IsActive = true
                 };
@@ -1457,9 +1469,9 @@ public class UsersModel : LocalizedPageModel
                 // Link the created user to the join request
                 joinRequest.CreatedUserId = newUser.Id;
 
-                // ✅ Onboarding: Assign role template grants
-                var roleTemplateKey = MapUserRoleToRoleTemplateKey(assignedRole);
-                var grantScope = GrantScope.Company(joinRequest.CompanyId);
+                // ✅ Onboarding: Assign role template grants with JobType-aware mapping
+                var roleTemplateKey = MapUserRoleToRoleTemplateKey(assignedRole, joinRequest.JobType?.Name);
+                var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, joinRequest.CompanyId, joinRequest.JobTypeId);
                 var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
 
                 _logger.LogInformation(
@@ -1629,20 +1641,75 @@ public class UsersModel : LocalizedPageModel
     }
 
     /// <summary>
-    /// Maps UserRole enum to the corresponding RoleTemplate key.
-    /// Used for grant assignment during onboarding.
+    /// Maps UserRole enum + JobType name to the correct RoleTemplate key.
+    /// JobType-aware: Directors/Managers get different templates based on their specialization.
     /// </summary>
-    private static string MapUserRoleToRoleTemplateKey(UserRole role)
+    private static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName)
     {
         return role switch
         {
             UserRole.Owner => "Owner",
-            UserRole.Director => "BRDirector",
-            UserRole.Manager => "MoleculeAdmin",
+            UserRole.Director => jobTypeName switch
+            {
+                "Alhut" => "AlhutDirector",
+                "Text" => "TextDirector",
+                _ => "MoleculeAdmin" // BR, Hakam, null, and any unknown default to MoleculeAdmin
+            },
+            UserRole.Manager => jobTypeName switch
+            {
+                "Alhut" => "AlhutLead",
+                "Text" => "TextLead",
+                _ => "BRDirector" // BR, Hakam, null, and any unknown default to BRDirector
+            },
             UserRole.Employee => "Employee",
             UserRole.Trainee => "Employee",
             UserRole.Assigner => "Assigner",
             _ => "Employee"
+        };
+    }
+
+    /// <summary>
+    /// Builds the correct GrantScope based on the role template key.
+    /// Looks up the company → molecule → area → project hierarchy to populate the right scope parameters.
+    /// </summary>
+    private async Task<GrantScope> BuildGrantScopeForTemplateAsync(string roleTemplateKey, int companyId, int? jobTypeId)
+    {
+        // Load hierarchy: Company → Molecule → Area → Project (single query via Include chain)
+        var company = await _db.Companies
+            .IgnoreQueryFilters()
+            .Include(c => c.Molecule)
+                .ThenInclude(m => m!.Area)
+                    .ThenInclude(a => a!.Project)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+            return GrantScope.Company(companyId); // Fallback
+
+        return roleTemplateKey switch
+        {
+            // Company-scoped templates
+            "BRDirector" => GrantScope.Company(companyId),
+            "Employee" => GrantScope.Company(companyId),
+
+            // CompanyJobType-scoped templates (need CompanyId + JobTypeId)
+            "AlhutLead" or "TextLead" => new GrantScope(CompanyId: companyId, JobTypeId: jobTypeId),
+
+            // Molecule-scoped templates
+            "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
+                ? GrantScope.Molecule(company.MoleculeId.Value)
+                : GrantScope.Company(companyId),
+
+            // MoleculeJobType-scoped templates (need MoleculeId + JobTypeId)
+            "AlhutDirector" or "TextDirector" => company.MoleculeId.HasValue
+                ? new GrantScope(MoleculeId: company.MoleculeId.Value, JobTypeId: jobTypeId)
+                : GrantScope.Company(companyId),
+
+            // Project-scoped templates
+            "Owner" => company.Molecule?.Area?.ProjectId != null
+                ? GrantScope.Project(company.Molecule.Area.ProjectId)
+                : GrantScope.Company(companyId),
+
+            _ => GrantScope.Company(companyId)
         };
     }
 

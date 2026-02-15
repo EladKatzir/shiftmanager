@@ -6568,6 +6568,68 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>A-015 - Role name for trainee</comment>
   </data>
 
+  <!-- Role Template Names (used by RoleTemplate.NameKey) -->
+  <data name="Role_BRDirector" xml:space="preserve">
+    <value>BR Director</value>
+  </data>
+  <data name="Role_BRDirector_Desc" xml:space="preserve">
+    <value>Manages BR shifts and company-wide operations</value>
+  </data>
+  <data name="Role_AlhutLead" xml:space="preserve">
+    <value>Alhut Lead</value>
+  </data>
+  <data name="Role_AlhutLead_Desc" xml:space="preserve">
+    <value>Manages Alhut shifts within a single company</value>
+  </data>
+  <data name="Role_TextLead" xml:space="preserve">
+    <value>Text Lead</value>
+  </data>
+  <data name="Role_TextLead_Desc" xml:space="preserve">
+    <value>Manages Text shifts within a single company</value>
+  </data>
+  <data name="Role_AlhutDirector" xml:space="preserve">
+    <value>Alhut Director</value>
+  </data>
+  <data name="Role_AlhutDirector_Desc" xml:space="preserve">
+    <value>Manages all Alhut shifts across the entire molecule</value>
+  </data>
+  <data name="Role_TextDirector" xml:space="preserve">
+    <value>Text Director</value>
+  </data>
+  <data name="Role_TextDirector_Desc" xml:space="preserve">
+    <value>Manages all Text shifts across the entire molecule</value>
+  </data>
+  <data name="Role_MoleculeAdmin" xml:space="preserve">
+    <value>Molecule Admin</value>
+  </data>
+  <data name="Role_MoleculeAdmin_Desc" xml:space="preserve">
+    <value>Full administration of the molecule including all companies</value>
+  </data>
+  <data name="Role_DepartmentLead" xml:space="preserve">
+    <value>Department Lead</value>
+  </data>
+  <data name="Role_DepartmentLead_Desc" xml:space="preserve">
+    <value>Manages a technical department within a molecule</value>
+  </data>
+  <data name="Role_AreaAdmin" xml:space="preserve">
+    <value>Area Admin</value>
+  </data>
+  <data name="Role_AreaAdmin_Desc" xml:space="preserve">
+    <value>Administrates an entire area including all molecules</value>
+  </data>
+  <data name="Role_Assigner" xml:space="preserve">
+    <value>Assigner</value>
+  </data>
+  <data name="Role_Assigner_Desc" xml:space="preserve">
+    <value>Assigns chores within the molecule</value>
+  </data>
+  <data name="Role_Employee_Desc" xml:space="preserve">
+    <value>Standard employee with basic view and request permissions</value>
+  </data>
+  <data name="Role_Owner_Desc" xml:space="preserve">
+    <value>System owner with full administrative access</value>
+  </data>
+
   <!-- A-015: Button Text -->
   <data name="Button_SaveChanges" xml:space="preserve">
     <value>Save Changes</value>
@@ -7098,19 +7160,19 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Role</value>
   </data>
   <data name="Auth_SelectMolecule" xml:space="preserve">
-    <value>Select Unit</value>
+    <value>Select a molecule</value>
   </data>
   <data name="Auth_ChooseMolecule" xml:space="preserve">
-    <value>Choose a unit...</value>
+    <value>Choose a molecule...</value>
   </data>
   <data name="Auth_ChooseCompanyFirst" xml:space="preserve">
     <value>Select a unit first</value>
   </data>
   <data name="Auth_SelectJobType" xml:space="preserve">
-    <value>Job Type (Optional)</value>
+    <value>Job Type</value>
   </data>
   <data name="Auth_ChooseJobTypeFirst" xml:space="preserve">
-    <value>Select a unit first</value>
+    <value>Select a molecule first</value>
   </data>
   <data name="Auth_NoCompaniesAvailable" xml:space="preserve">
     <value>No companies available in this unit</value>

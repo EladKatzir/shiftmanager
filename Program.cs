@@ -903,6 +903,33 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "An error occurred while seeding E2E test data");
     }
+
+    // Repair grants for test users (seeder creates users but doesn't assign role template grants)
+    try
+    {
+        var grantService = scope.ServiceProvider.GetRequiredService<IGrantService>();
+        var testEmails = new[]
+        {
+            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.OwnerEmail,
+            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.DirectorEmail,
+            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.ManagerEmail,
+            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.AssignerEmail,
+        };
+        foreach (var email in testEmails)
+        {
+            var user = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+            if (user != null)
+            {
+                var repaired = await grantService.RepairUserGrantsAsync(user.Id);
+                if (repaired > 0)
+                    logger.LogInformation("Repaired {Count} grants for test user {Email}", repaired, email);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while repairing test user grants");
+    }
 }
 
 // C-08: Log startup duration for diagnostics

@@ -561,6 +561,7 @@
                             <th>@Localizer["Email"]</th>
                             <th>@Localizer["Company"]</th>
                             <th>@Localizer["RequestedRole"]</th>
+                            <th>@Localizer["JobType"]</th>
                             <th>@Localizer["AssignRole"]</th>
                             <th style="width:1%">@Localizer["Actions"]</th>
                         </tr>
@@ -578,6 +579,7 @@
                             <td>@request.Email</td>
                             <td>@request.CompanyName</td>
                             <td style="color: var(--text-muted);">@request.RequestedRole</td>
+                            <td>@(request.JobTypeName ?? "-")</td>
                             <td>
                                 <select name="RequestRoles[@request.Id]" class="form-input" style="min-width: 120px;">
                                     @foreach (var role in Model.AssignableRoles)
@@ -620,6 +622,7 @@
                         <th>@Localizer["Email"]</th>
                         <th>@Localizer["Company"]</th>
                         <th>@Localizer["RequestedRole"]</th>
+                        <th>@Localizer["JobType"]</th>
                         <th>@Localizer["Status"]</th>
                     </tr>
                 </thead>
@@ -632,6 +635,7 @@
                         <td>@request.Email</td>
                         <td>@request.CompanyName</td>
                         <td>@request.RequestedRole</td>
+                        <td>@(request.JobTypeName ?? "-")</td>
                         <td>
                             @if (request.Status == JoinRequestStatus.Approved)
                             {

@@ -52,8 +52,8 @@ public class SignupModel : LocalizedPageModel
     [BindProperty, Required]
     public int CompanyId { get; set; }
 
-    [BindProperty]
-    public int? JobTypeId { get; set; }
+    [BindProperty, Required]
+    public int JobTypeId { get; set; }
 
     [BindProperty, Required]
     public UserRole RequestedRole { get; set; } = UserRole.Employee;
@@ -200,6 +200,7 @@ public class SignupModel : LocalizedPageModel
             PasswordHash = hash,
             PasswordSalt = salt,
             CompanyId = CompanyId,
+            JobTypeId = JobTypeId,
             RequestedRole = RequestedRole,
             Status = JoinRequestStatus.Pending,
             CreatedAt = DateTime.UtcNow

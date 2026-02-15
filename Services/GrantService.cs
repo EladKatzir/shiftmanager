@@ -619,7 +619,9 @@ public class GrantService : IGrantService
     public async Task<GrantVerificationResult> VerifyUserGrantsAsync(int userId)
     {
         // SECURITY-AUDITED: SAFE — scoped by specific userId; admin diagnostic operation
-        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _db.Users.IgnoreQueryFilters()
+            .Include(u => u.JobType)
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
         {
             return new GrantVerificationResult
@@ -638,8 +640,8 @@ public class GrantService : IGrantService
             UserRole = user.Role.ToString()
         };
 
-        // Get role template for user's role
-        var roleTemplateKey = MapUserRoleToRoleTemplateKey(user.Role);
+        // Get role template for user's role + job type
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
         var roleTemplate = await _db.RoleTemplates
             .Include(rt => rt.AutoGrants)
             .ThenInclude(ag => ag.GrantType)
@@ -698,14 +700,50 @@ public class GrantService : IGrantService
     public async Task<int> RepairUserGrantsAsync(int userId, int? repairedByUserId = null)
     {
         // SECURITY-AUDITED: SAFE — scoped by specific userId; admin repair operation
-        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _db.Users.IgnoreQueryFilters()
+            .Include(u => u.JobType)
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return 0;
 
-        var roleTemplateKey = MapUserRoleToRoleTemplateKey(user.Role);
-        var scope = GrantScope.Company(user.CompanyId);
+        var roleTemplateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
+        var scope = await BuildGrantScopeForUserAsync(user, roleTemplateKey);
 
         return await AssignRoleTemplateGrantsAsync(userId, roleTemplateKey, scope, repairedByUserId);
+    }
+
+    /// <summary>
+    /// Builds the correct GrantScope based on role template key and user's hierarchy context.
+    /// Loads company hierarchy to resolve molecule/area/project scope.
+    /// </summary>
+    private async Task<GrantScope> BuildGrantScopeForUserAsync(AppUser user, string roleTemplateKey)
+    {
+        // Load hierarchy for scope resolution
+        var company = await _db.Companies
+            .IgnoreQueryFilters()
+            .Include(c => c.Molecule)
+                .ThenInclude(m => m!.Area)
+                    .ThenInclude(a => a!.Project)
+            .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+
+        if (company == null)
+            return GrantScope.Company(user.CompanyId);
+
+        return roleTemplateKey switch
+        {
+            "BRDirector" or "Employee" => GrantScope.Company(user.CompanyId),
+            "AlhutLead" or "TextLead" => new GrantScope(CompanyId: user.CompanyId, JobTypeId: user.JobTypeId),
+            "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
+                ? GrantScope.Molecule(company.MoleculeId.Value)
+                : GrantScope.Company(user.CompanyId),
+            "AlhutDirector" or "TextDirector" => company.MoleculeId.HasValue
+                ? new GrantScope(MoleculeId: company.MoleculeId.Value, JobTypeId: user.JobTypeId)
+                : GrantScope.Company(user.CompanyId),
+            "Owner" => company.Molecule?.Area?.ProjectId != null
+                ? GrantScope.Project(company.Molecule.Area.ProjectId)
+                : GrantScope.Company(user.CompanyId),
+            _ => GrantScope.Company(user.CompanyId)
+        };
     }
 
     /// <summary>
@@ -728,17 +766,28 @@ public class GrantService : IGrantService
     }
 
     /// <summary>
-    /// Maps UserRole enum to the corresponding RoleTemplate key.
+    /// Maps UserRole enum + JobType name to the correct RoleTemplate key.
+    /// JobType-aware: Directors/Managers get different templates based on their specialization.
     /// </summary>
-    private static string MapUserRoleToRoleTemplateKey(Models.Support.UserRole role)
+    private static string MapUserRoleToRoleTemplateKey(Models.Support.UserRole role, string? jobTypeName)
     {
         return role switch
         {
             Models.Support.UserRole.Owner => "Owner",
-            Models.Support.UserRole.Director => "BRDirector", // Directors typically get BR Director template
-            Models.Support.UserRole.Manager => "MoleculeAdmin", // Managers get molecule admin template
+            Models.Support.UserRole.Director => jobTypeName switch
+            {
+                "Alhut" => "AlhutDirector",
+                "Text" => "TextDirector",
+                _ => "MoleculeAdmin"
+            },
+            Models.Support.UserRole.Manager => jobTypeName switch
+            {
+                "Alhut" => "AlhutLead",
+                "Text" => "TextLead",
+                _ => "BRDirector"
+            },
             Models.Support.UserRole.Employee => "Employee",
-            Models.Support.UserRole.Trainee => "Employee", // Trainees get employee-level grants
+            Models.Support.UserRole.Trainee => "Employee",
             Models.Support.UserRole.Assigner => "Assigner",
             _ => "Employee"
         };

@@ -6056,6 +6056,68 @@
     <comment>A-015 - Role name for trainee</comment>
   </data>
 
+  <!-- Role Template Names (used by RoleTemplate.NameKey) -->
+  <data name="Role_BRDirector" xml:space="preserve">
+    <value>קב"ר</value>
+  </data>
+  <data name="Role_BRDirector_Desc" xml:space="preserve">
+    <value>מנהל משמרות בר ופעילות כלל-חברתית</value>
+  </data>
+  <data name="Role_AlhutLead" xml:space="preserve">
+    <value>מפקד צוות אלחוט</value>
+  </data>
+  <data name="Role_AlhutLead_Desc" xml:space="preserve">
+    <value>מנהל משמרות אלחוט בחברה אחת</value>
+  </data>
+  <data name="Role_TextLead" xml:space="preserve">
+    <value>מפקד צוות טקסט</value>
+  </data>
+  <data name="Role_TextLead_Desc" xml:space="preserve">
+    <value>מנהל משמרות טקסט בחברה אחת</value>
+  </data>
+  <data name="Role_AlhutDirector" xml:space="preserve">
+    <value>מפקד מחלקת אלחוט</value>
+  </data>
+  <data name="Role_AlhutDirector_Desc" xml:space="preserve">
+    <value>מנהל את כל משמרות האלחוט בכל החברות במולקולה</value>
+  </data>
+  <data name="Role_TextDirector" xml:space="preserve">
+    <value>מפקד מחלקת טקסט</value>
+  </data>
+  <data name="Role_TextDirector_Desc" xml:space="preserve">
+    <value>מנהל את כל משמרות הטקסט בכל החברות במולקולה</value>
+  </data>
+  <data name="Role_MoleculeAdmin" xml:space="preserve">
+    <value>מפקד מולקולה</value>
+  </data>
+  <data name="Role_MoleculeAdmin_Desc" xml:space="preserve">
+    <value>ניהול מלא של המולקולה כולל כל החברות</value>
+  </data>
+  <data name="Role_DepartmentLead" xml:space="preserve">
+    <value>מפקד מחלקה טכנית</value>
+  </data>
+  <data name="Role_DepartmentLead_Desc" xml:space="preserve">
+    <value>מנהל מחלקה טכנית במולקולה</value>
+  </data>
+  <data name="Role_AreaAdmin" xml:space="preserve">
+    <value>מנהל אזור</value>
+  </data>
+  <data name="Role_AreaAdmin_Desc" xml:space="preserve">
+    <value>מנהל אזור שלם כולל כל המולקולות</value>
+  </data>
+  <data name="Role_Assigner" xml:space="preserve">
+    <value>משבץ</value>
+  </data>
+  <data name="Role_Assigner_Desc" xml:space="preserve">
+    <value>משבץ תורנויות במולקולה</value>
+  </data>
+  <data name="Role_Employee_Desc" xml:space="preserve">
+    <value>עובד רגיל עם הרשאות צפייה ובקשות בסיסיות</value>
+  </data>
+  <data name="Role_Owner_Desc" xml:space="preserve">
+    <value>בעלי המערכת עם גישה מנהלתית מלאה</value>
+  </data>
+
   <!-- A-015: Button Text -->
   <data name="Button_SaveChanges" xml:space="preserve">
     <value>שמור שינויים</value>
@@ -6595,7 +6657,7 @@
     <value>בחר מולקולה קודם</value>
   </data>
   <data name="Auth_SelectJobType" xml:space="preserve">
-    <value>סוג תפקיד (אופציונלי)</value>
+    <value>סוג תפקיד</value>
   </data>
   <data name="Auth_ChooseJobTypeFirst" xml:space="preserve">
     <value>בחר מולקולה קודם</value>

@@ -41,6 +41,12 @@ public class UserJoinRequest
     public UserRole RequestedRole { get; set; }
 
     /// <summary>
+    /// Job type selected by the user during signup (e.g., Alhut, Text, BR).
+    /// Used to determine the correct role template during approval.
+    /// </summary>
+    public int? JobTypeId { get; set; }
+
+    /// <summary>
     /// Current status of the request
     /// </summary>
     public JoinRequestStatus Status { get; set; } = JoinRequestStatus.Pending;
@@ -72,6 +78,7 @@ public class UserJoinRequest
 
     // Navigation properties
     public Company? Company { get; set; }
+    public JobType? JobType { get; set; }
     public AppUser? ReviewedByUser { get; set; }
     public AppUser? CreatedUser { get; set; }
 }
