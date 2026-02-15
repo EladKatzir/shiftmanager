@@ -196,6 +196,17 @@ function Assert-FileCountMatchWithTolerance {
     }
 }
 
+# Directories that should never be copied into FinalProductPublish.
+# These accumulate in ProjectPublish from QA runs, rollbacks, and manual testing.
+$Script:ExcludeDirs = @(
+    'ProductionReady',
+    'qa-automation',
+    'test-screenshots',
+    'test-tmp',
+    'test-scripts',
+    'ProjectPublish_BACKUP_*'
+)
+
 function Copy-Folder {
     param(
         [string]$From,
@@ -217,6 +228,12 @@ function Copy-Folder {
             '/NJH', '/NJS'
         )
 
+        # Exclude known junk directories
+        foreach ($dir in $Script:ExcludeDirs) {
+            $args += '/XD'
+            $args += $dir
+        }
+
         Push-Location $RepoRoot
         try {
             & robocopy @args | Out-Null
@@ -229,7 +246,20 @@ function Copy-Folder {
             throw ("robocopy failed with code {0}" -f $rc)
         }
     } else {
-        Copy-Item -LiteralPath (Join-Path $From '*') -Destination $To -Recurse -Force -ErrorAction Stop
+        # Fallback: copy with directory exclusion via Get-ChildItem filtering
+        $excludePatterns = $Script:ExcludeDirs | ForEach-Object { $_.Replace('*', '.*') }
+        $items = Get-ChildItem -LiteralPath $From -Force
+        foreach ($item in $items) {
+            $skip = $false
+            if ($item.PSIsContainer) {
+                foreach ($pattern in $excludePatterns) {
+                    if ($item.Name -match ('^' + $pattern + '$')) { $skip = $true; break }
+                }
+            }
+            if (-not $skip) {
+                Copy-Item -LiteralPath $item.FullName -Destination $To -Recurse -Force -ErrorAction Stop
+            }
+        }
     }
 }
 
