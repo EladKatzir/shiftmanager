@@ -2139,6 +2139,18 @@
         <member name="M:ShiftManager.Migrations.AddOnboardingFlag.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddJobTypeIdToUserJoinRequest">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJobTypeIdToUserJoinRequest.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJobTypeIdToUserJoinRequest.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJobTypeIdToUserJoinRequest.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -4271,6 +4283,12 @@
             Role requested by the user
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.UserJoinRequest.JobTypeId">
+            <summary>
+            Job type selected by the user during signup (e.g., Alhut, Text, BR).
+            Used to determine the correct role template during approval.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.UserJoinRequest.Status">
             <summary>
             Current status of the request
@@ -4420,6 +4438,17 @@
             Detects potentially dangerous content like script tags, HTML tags, and JavaScript event handlers
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.CompaniesModel.BackfillMissingSlugsAsync">
+            <summary>
+            Auto-generates slugs for legacy companies that were created without one.
+            Generates from company Name: lowercase, non-alphanumeric → hyphens, deduped.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.CompaniesModel.GenerateSlug(System.String)">
+            <summary>
+            Generates a URL-safe slug from a name: lowercase, non-alphanumeric chars → hyphens, trimmed.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Admin.IndexModel">
             <summary>
             Admin Hub - Central dashboard for management and configuration.
@@ -4433,22 +4462,16 @@
             Provides quick navigation and edit links for each level
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Admin.UsersModel.CanModifyUserAsync(System.Int32,System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
-            Check if current user has permission to modify a user with the specified role in the target company.
-            ✅ Grant-based: Uses EditCompanyUsers grant with company scope instead of role hierarchy.
+            Maps UserRole enum + JobType name to the correct RoleTemplate key.
+            JobType-aware: Directors/Managers get different templates based on their specialization.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Admin.UsersModel.CanModifyUser(ShiftManager.Models.Support.UserRole)">
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.BuildGrantScopeForTemplateAsync(System.String,System.Int32,System.Nullable{System.Int32})">
             <summary>
-            Legacy synchronous check - kept for backward compatibility during migration.
-            Prefer CanModifyUserAsync for new code.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole)">
-            <summary>
-            Maps UserRole enum to the corresponding RoleTemplate key.
-            Used for grant assignment during onboarding.
+            Builds the correct GrantScope based on the role template key.
+            Looks up the company → molecule → area → project hierarchy to populate the right scope parameters.
             </summary>
         </member>
         <member name="P:ShiftManager.Pages.Admin.UsersModel.BulkImportFile">
@@ -5267,6 +5290,7 @@
         <member name="M:ShiftManager.Pages.Requests.IndexModel.ValidateAccessToRequestAsync(ShiftManager.Models.AppUser,System.Int32)">
             <summary>
             Validates that the current user has access to manage requests for the specified company.
+            Grant-based authorization check (not role-based).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IAnalyticsService">
@@ -6068,14 +6092,21 @@
             Repairs a user's grants by adding any missing grants from their role template.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.GrantService.BuildGrantScopeForUserAsync(ShiftManager.Models.AppUser,System.String)">
+            <summary>
+            Builds the correct GrantScope based on role template key and user's hierarchy context.
+            Loads company hierarchy to resolve molecule/area/project scope.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.GrantService.RepairAllUserGrantsAsync(System.Nullable{System.Int32})">
             <summary>
             Repairs grants for all users in the system.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.GrantService.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole)">
+        <member name="M:ShiftManager.Services.GrantService.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
-            Maps UserRole enum to the corresponding RoleTemplate key.
+            Maps UserRole enum + JobType name to the correct RoleTemplate key.
+            JobType-aware: Directors/Managers get different templates based on their specialization.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.GriffinApiLogService">

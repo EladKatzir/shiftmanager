@@ -1,6 +1,6 @@
 ﻿================================================================================
                     DEPLOYMENT VERIFICATION CHECKLIST
-                           Version 2.8.4
+                           Version 2.9.5
 ================================================================================
 
 This checklist confirms that the ProjectPublish package has been verified
@@ -10,15 +10,15 @@ and is ready for deployment to your air-gapped Windows Server 2022 environment.
 BUILD INFORMATION
 ================================================================================
 
-Version:        v2.8.4
-Build Date:     2026-02-02 06:04:13 UTC
-Git Commit:     913e606
-Git Branch:     release
+Version:        v2.9.5
+Build Date:     2026-02-15 19:03:19 UTC
+Git Commit:     0edaeee
+Git Branch:     merged-canonical
 
 Package Stats:
-  Total Files:  487
-  DLL Count:    340
-  Package Size: 125 MB
+  Total Files:  649
+  DLL Count:    351
+  Package Size: 170 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
 
 ================================================================================
@@ -52,7 +52,7 @@ FILE STRUCTURE VERIFICATION
    âœ“ he-IL/ (Hebrew resources)
 
 âœ… Runtime Dependencies:
-   âœ“ 340 DLL files (includes .NET 8.0 runtime)
+   âœ“ 351 DLL files (includes .NET 8.0 runtime)
 
 ================================================================================
 AUTOMATED TESTING RESULTS
@@ -66,9 +66,9 @@ AUTOMATED TESTING RESULTS
    âœ“ Disk space sufficient
 
 âœ… Build Verification:
-   âœ“ File count in expected range (487 files, expected ~370)
-   âœ“ DLL count in expected range (340 DLLs, expected ~335)
-   âœ“ Package size in expected range (125 MB, expected ~110 MB)
+   âœ“ File count in expected range (649 files, expected ~370)
+   âœ“ DLL count in expected range (351 DLLs, expected ~335)
+   âœ“ Package size in expected range (170 MB, expected ~110 MB)
    âœ“ All critical files present
    âœ“ No test artifacts in package
    âœ“ Razor views precompiled
@@ -179,12 +179,12 @@ This ProjectPublish package has been:
    âœ… Tested automatically
    âœ… Verified for completeness
    âœ… Documented comprehensively
-   âœ… Tagged in git (v2.8.4)
+   âœ… Tagged in git (v2.9.5)
 
 Package is READY FOR PRODUCTION DEPLOYMENT.
 
 Verified by: ShiftManager Automated Release Builder v1.0.0
-Date: 2026-02-02 06:04:13 UTC
-Git Commit: 913e606
+Date: 2026-02-15 19:03:19 UTC
+Git Commit: 0edaeee
 
 ================================================================================
