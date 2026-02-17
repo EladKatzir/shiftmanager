@@ -14,6 +14,7 @@ public class RateLimitingService : IRateLimitingService, IDisposable
     private readonly Timer _cleanupTimer;
     private const int CleanupIntervalMinutes = 5;
     private const int EntryExpiryMinutes = 60;
+    private const int MaxEntries = 10000;
 
     public RateLimitingService(ILogger<RateLimitingService> logger)
     {
@@ -30,6 +31,21 @@ public class RateLimitingService : IRateLimitingService, IDisposable
     {
         var now = DateTime.UtcNow;
         var windowStart = now.AddMinutes(-windowMinutes);
+
+        // SECURITY: Memory cap to prevent DoS via dictionary exhaustion
+        if (_attempts.Count > MaxEntries && !_attempts.ContainsKey(key))
+        {
+            // Emergency cleanup of expired entries
+            CleanupExpiredEntries();
+
+            // If still over limit after cleanup, reject as rate-limited
+            if (_attempts.Count > MaxEntries)
+            {
+                _logger.LogWarning("Rate limiter memory cap reached ({Count} entries). Rejecting new key: {Key}",
+                    _attempts.Count, key);
+                return false;
+            }
+        }
 
         var entry = _attempts.GetOrAdd(key, _ => new RateLimitEntry());
 

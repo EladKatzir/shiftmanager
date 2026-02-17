@@ -1,0 +1,250 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.RoleTemplates.CreateModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.Support
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["RoleTemplates_Create"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = Localizer["RoleTemplates_Title"], Url = "/Owner/Hub/RoleTemplates" },
+    new BreadcrumbItem { Label = Localizer["RoleTemplates_Create"], IsActive = true }
+})
+
+<div class="create-template-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x2728;</span>
+            <loc key="RoleTemplates_Create">Create Custom Role</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="RoleTemplates_CreateSubtitle">Define a new role template with permissions</loc></p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" class="template-form">
+        <div class="form-card">
+            <h2><loc key="RoleTemplates_BasicInfo">Basic Information</loc></h2>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="Key"><loc key="RoleTemplates_Key">Key</loc> *</label>
+                    <input type="text" id="Key" asp-for="Key" required
+                           pattern="[A-Za-z_][A-Za-z0-9_]*" maxlength="50"
+                           placeholder="e.g. SeniorOperator" />
+                    <span class="form-hint"><loc key="RoleTemplates_KeyHint">Unique identifier (letters, numbers, underscores)</loc></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="DerivedUserRole"><loc key="RoleTemplates_DerivedRole">Derived Role</loc> *</label>
+                    <select id="DerivedUserRole" asp-for="DerivedUserRole">
+                        @foreach (var role in Enum.GetValues<UserRole>())
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                    <span class="form-hint"><loc key="RoleTemplates_DerivedRoleHint">Determines base authorization tier</loc></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="DisplayNameEN"><loc key="RoleTemplates_DisplayNameEN">Display Name (English)</loc></label>
+                    <input type="text" id="DisplayNameEN" asp-for="DisplayNameEN" maxlength="100"
+                           placeholder="e.g. Senior Operator" />
+                </div>
+
+                <div class="form-group">
+                    <label for="DisplayNameHE"><loc key="RoleTemplates_DisplayNameHE">Display Name (Hebrew)</loc></label>
+                    <input type="text" id="DisplayNameHE" asp-for="DisplayNameHE" maxlength="100"
+                           placeholder="" dir="rtl" />
+                </div>
+
+                <div class="form-group">
+                    <label for="ScopeLevel"><loc key="RoleTemplates_Scope">Scope Level</loc></label>
+                    <select id="ScopeLevel" asp-for="ScopeLevel">
+                        @foreach (var scope in Enum.GetValues<RoleScopeLevel>())
+                        {
+                            <option value="@scope">@scope</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="SortOrder"><loc key="RoleTemplates_SortOrder">Sort Order</loc></label>
+                    <input type="number" id="SortOrder" asp-for="SortOrder" min="0" max="9999" />
+                </div>
+            </div>
+
+            <div class="form-row-checkboxes">
+                <label class="checkbox-label">
+                    <input type="checkbox" asp-for="CanBeAssignedByDefault" />
+                    <loc key="RoleTemplates_CanBeAssigned">Can be assigned by default</loc>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" asp-for="IsVisibleInSignup" />
+                    <loc key="RoleTemplates_VisibleInSignup">Visible in public signup</loc>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h2><loc key="RoleTemplates_JobTypeLabels">Job Type Labels</loc></h2>
+            <p class="section-desc"><loc key="RoleTemplates_JobTypeLabelsDesc">Override the display name per job type (e.g. "Mapotz" for Alhut)</loc></p>
+
+            <div id="labelsContainer">
+                <!-- Dynamic rows added via JS -->
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="addLabelRow()">
+                + <loc key="RoleTemplates_AddLabel">Add Label</loc>
+            </button>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><loc key="RoleTemplates_CreateButton">Create Template</loc></button>
+            <a href="/Owner/Hub/RoleTemplates" class="btn btn-outline"><loc key="Cancel">Cancel</loc></a>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+<style>
+.create-template-container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem 0; font-size: 2rem; }
+.page-icon { font-size: 2.5rem; }
+.page-subtitle { color: var(--muted); margin: 0; }
+
+.form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.form-card h2 { margin: 0 0 1rem 0; font-size: 1.1rem; }
+.section-desc { color: var(--muted); font-size: 0.85rem; margin: -0.5rem 0 1rem 0; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+@@media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+.form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.form-group label { font-size: 0.85rem; font-weight: 600; }
+.form-group input, .form-group select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    font-size: 0.9rem;
+}
+.form-hint { font-size: 0.75rem; color: var(--muted); }
+
+.form-row-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+.checkbox-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; }
+
+.label-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 0.5rem;
+    align-items: end;
+    margin-bottom: 0.5rem;
+}
+@@media (max-width: 768px) { .label-row { grid-template-columns: 1fr; } }
+.label-row select, .label-row input {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: var(--background);
+}
+
+.form-actions { display: flex; gap: 0.75rem; }
+
+.btn {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.5rem 1rem; border-radius: 8px;
+    font-size: 0.875rem; font-weight: 500; text-decoration: none;
+    border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease;
+}
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-outline { background: transparent; color: var(--text); border-color: var(--border); }
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+.btn-danger { background: transparent; color: var(--danger, #ef4444); border-color: var(--danger, #ef4444); }
+.btn-danger:hover { background: var(--danger, #ef4444); color: white; }
+
+.alert { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+.alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+</style>
+}
+
+@section Scripts {
+<script>
+var availableJobTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.AvailableJobTypes.Select(jt => new { jt.Id, Name = jt.DisplayName ?? jt.Name })));
+
+function addLabelRow() {
+    var container = document.getElementById('labelsContainer');
+    var idx = container.children.length;
+    var row = document.createElement('div');
+    row.className = 'label-row';
+
+    var select = document.createElement('select');
+    select.name = 'LabelJobTypeIds';
+    var defaultOpt = document.createElement('option');
+    defaultOpt.value = '0';
+    defaultOpt.textContent = '-- Select Job Type --';
+    select.appendChild(defaultOpt);
+    availableJobTypes.forEach(function(jt) {
+        var opt = document.createElement('option');
+        opt.value = jt.id;
+        opt.textContent = jt.name;
+        select.appendChild(opt);
+    });
+
+    var inputEN = document.createElement('input');
+    inputEN.type = 'text';
+    inputEN.name = 'LabelDisplayNamesEN';
+    inputEN.placeholder = 'English name';
+    inputEN.maxLength = 100;
+
+    var inputHE = document.createElement('input');
+    inputHE.type = 'text';
+    inputHE.name = 'LabelDisplayNamesHE';
+    inputHE.placeholder = 'Hebrew name';
+    inputHE.maxLength = 100;
+    inputHE.dir = 'rtl';
+
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-danger btn-sm';
+    removeBtn.textContent = 'X';
+    removeBtn.onclick = function() { row.remove(); };
+
+    row.appendChild(select);
+    row.appendChild(inputEN);
+    row.appendChild(inputHE);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+}
+</script>
+}

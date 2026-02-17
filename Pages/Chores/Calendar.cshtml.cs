@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Chores;
 
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class CalendarModel : LocalizedPageModel
 {
     private readonly IChoreService _choreService;

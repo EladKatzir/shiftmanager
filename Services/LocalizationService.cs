@@ -63,21 +63,13 @@ namespace ShiftManager.Services
 
         public string FormatNumber(int number)
         {
-            if (IsHebrew)
-            {
-                // Hebrew uses Arabic numerals but with different thousand separators
-                return number.ToString("N0", CurrentCulture);
-            }
+            // Both Hebrew and English use the same format string; CurrentCulture handles locale-specific separators
             return number.ToString("N0", CurrentCulture);
         }
 
         public string FormatDecimal(decimal number)
         {
-            if (IsHebrew)
-            {
-                // Hebrew decimal format
-                return number.ToString("N2", CurrentCulture);
-            }
+            // Both Hebrew and English use the same format string; CurrentCulture handles locale-specific separators
             return number.ToString("N2", CurrentCulture);
         }
 
@@ -125,6 +117,9 @@ namespace ShiftManager.Services
 
         public string FormatRelativeTime(DateTime dateTime)
         {
+            if (dateTime.Kind == DateTimeKind.Local)
+                dateTime = dateTime.ToUniversalTime();
+
             var now = DateTime.UtcNow;
             var diff = now - dateTime;
 

@@ -12,7 +12,9 @@ namespace ShiftManager.Pages.Admin;
 /// ✅ P2-1: Unified entry point for all administrative tasks.
 /// Visible to users with AccessAdminNavigation grant.
 /// </summary>
-[Authorize(Policy = "IsManagerOrAdmin")]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManagerHomeAccess policy;
+// cross-company queries scoped by accessible companyIds from caller's Director hierarchy; aggregate counts only
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;

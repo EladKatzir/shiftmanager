@@ -99,7 +99,7 @@
         if (typeof str !== 'string') return str;
         const div = document.createElement('div');
         div.textContent = str;
-        return div.innerHTML;
+        return div.innerHTML.replace(/'/g, '&#39;');
     }
 
     // ================================

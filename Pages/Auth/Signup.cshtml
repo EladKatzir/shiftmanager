@@ -85,11 +85,11 @@
                         </div>
                         <div class="auth-step" data-step="2">
                             <span class="auth-step__number">2</span>
-                            <span><loc key="Auth_StepOrganization" /></span>
+                            <span><loc key="Auth_StepRole" /></span>
                         </div>
                         <div class="auth-step" data-step="3">
                             <span class="auth-step__number">3</span>
-                            <span><loc key="Auth_StepRole" /></span>
+                            <span><loc key="Auth_StepOrganization" /></span>
                         </div>
                     </div>
 
@@ -135,7 +135,37 @@
                                    required />
                         </div>
 
-                        <!-- Step 2: Organization (Cascading Dropdowns) -->
+                        <!-- Step 2: Role + Job Type -->
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
+                            <select id="RequestedRole"
+                                    name="RequestedRole"
+                                    class="auth-field__select"
+                                    required>
+                                <option value="">@Localizer["Loading"]...</option>
+                            </select>
+                            <input type="hidden" id="RequestedRoleTemplateId" name="RequestedRoleTemplateId" value="@Model.RequestedRoleTemplateId" />
+                            <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
+                                <loc key="RequestNeedsApproval" />
+                            </small>
+                        </div>
+
+                        <div class="auth-field" id="jobTypeField">
+                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
+                            <select id="JobTypeId"
+                                    name="JobTypeId"
+                                    class="auth-field__select"
+                                    disabled
+                                    required>
+                                <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
+                            </select>
+                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
+                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Organization (Cascading Dropdowns) -->
                         <div class="auth-field" id="moleculeField">
                             <label class="auth-field__label" for="MoleculeId"><loc key="Auth_SelectMolecule" /></label>
                             <select id="MoleculeId"
@@ -167,37 +197,8 @@
                             </div>
                         </div>
 
-                        <div class="auth-field" id="jobTypeField">
-                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
-                            <select id="JobTypeId"
-                                    name="JobTypeId"
-                                    class="auth-field__select"
-                                    disabled
-                                    required>
-                                <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
-                            </select>
-                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
-                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
-                                <loc key="Loading" />...
-                            </div>
-                        </div>
-
-                        <!-- Step 3: Role Selection -->
-                        <div class="auth-field">
-                            <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
-                            <select id="RequestedRole"
-                                    name="RequestedRole"
-                                    class="auth-field__select"
-                                    required>
-                                <option value="@((int)UserRole.Employee)" selected="@(Model.RequestedRole == UserRole.Employee)">@Localizer["Employee"]</option>
-                                <option value="@((int)UserRole.Trainee)" selected="@(Model.RequestedRole == UserRole.Trainee)">@Localizer["Trainee"]</option>
-                                <option value="@((int)UserRole.Manager)" selected="@(Model.RequestedRole == UserRole.Manager)">@Localizer["Manager"]</option>
-                                <option value="@((int)UserRole.Director)" selected="@(Model.RequestedRole == UserRole.Director)">@Localizer["Director"]</option>
-                                <option value="@((int)UserRole.Assigner)" selected="@(Model.RequestedRole == UserRole.Assigner)">@Localizer["Assigner"]</option>
-                            </select>
-                            <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
-                                <loc key="RequestNeedsApproval" />
-                            </small>
+                        <div id="directorHqHint" class="auth-field" style="display: none; color: var(--info); font-size: var(--text-small);">
+                            @Localizer["Auth_DirectorAutoHQ"]
                         </div>
 
                         <button type="submit" class="auth-submit">
@@ -232,7 +233,8 @@
         (function() {
             const emailInput = document.getElementById('Email');
             const suggestionDiv = document.getElementById('emailSuggestion');
-            const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
+            // SECURITY FIX: Use Json.Serialize for proper JS-context escaping (prevents XSS via localization overrides)
+            const suggestionText = @Html.Raw(Json.Serialize(Localizer["EmailDomainSuggestion"].Value));
 
             if (emailInput && suggestionDiv) {
                 emailInput.addEventListener('input', function(e) {
@@ -255,21 +257,106 @@
             }
         })();
 
-        // Cascading dropdowns
+        // Cascading dropdowns with Director-aware company handling
         (function() {
+            const roleSelect = document.getElementById('RequestedRole');
+            const templateIdInput = document.getElementById('RequestedRoleTemplateId');
             const moleculeSelect = document.getElementById('MoleculeId');
             const companySelect = document.getElementById('CompanyId');
+            const companyField = document.getElementById('companyField');
             const jobTypeSelect = document.getElementById('JobTypeId');
             const companyLoading = document.getElementById('companyLoading');
             const jobTypeLoading = document.getElementById('jobTypeLoading');
+            const directorHqHint = document.getElementById('directorHqHint');
             const steps = document.querySelectorAll('.auth-step');
 
-            if (!moleculeSelect || !companySelect) return;
+            if (!moleculeSelect || !companySelect || !roleSelect) return;
+
+            const DIRECTOR_VALUE = '@((int)UserRole.Director)';
+            const AREAADMIN_VALUE = '@((int)UserRole.AreaAdmin)';
+            const isHebrew = document.documentElement.lang === 'he';
+            const savedRole = '@((int)Model.RequestedRole)';
+            const savedTemplateId = '@(Model.RequestedRoleTemplateId?.ToString() ?? "")';
+
+            // Load role templates dynamically from API
+            fetch('/Api/Signup/GetSignupOptions?handler=RoleTemplates', { credentials: 'same-origin' })
+                .then(function(r) {
+                    if (!r.ok) throw new Error('Request failed: ' + r.status);
+                    return r.json();
+                })
+                .then(function(data) {
+                    if (!data.roleTemplates || data.roleTemplates.length === 0) return;
+                    roleSelect.innerHTML = '';
+                    data.roleTemplates.forEach(function(rt) {
+                        var opt = document.createElement('option');
+                        opt.value = rt.derivedUserRole !== null ? rt.derivedUserRole.toString() : '';
+                        opt.setAttribute('data-template-id', rt.id);
+                        // Priority: DisplayName (localized) → NameKey fallback → Key
+                        var name = isHebrew ? (rt.displayNameHE || rt.displayNameEN) : (rt.displayNameEN || rt.displayNameHE);
+                        opt.textContent = name || rt.nameKey || rt.key;
+                        // Restore selection from form post-back
+                        if (savedTemplateId && rt.id.toString() === savedTemplateId) {
+                            opt.selected = true;
+                        } else if (!savedTemplateId && rt.derivedUserRole !== null && rt.derivedUserRole.toString() === savedRole) {
+                            opt.selected = true;
+                        }
+                        roleSelect.appendChild(opt);
+                    });
+                    // Sync template ID on initial load
+                    syncTemplateId();
+                    // Trigger role change handler to update UI state
+                    roleSelect.dispatchEvent(new Event('change'));
+                })
+                .catch(function() {
+                    // Fallback: keep current state (page will have empty dropdown)
+                });
+
+            // Sync hidden RequestedRoleTemplateId when role selection changes
+            function syncTemplateId() {
+                var selected = roleSelect.options[roleSelect.selectedIndex];
+                if (selected && templateIdInput) {
+                    templateIdInput.value = selected.getAttribute('data-template-id') || '';
+                }
+            }
+            roleSelect.addEventListener('change', function() { syncTemplateId(); });
+
+            function isDirectorOrAreaAdmin() {
+                return roleSelect.value === DIRECTOR_VALUE || roleSelect.value === AREAADMIN_VALUE;
+            }
+
+            // Role label map for job-type-specific role names
+            var roleLabelMap = {
+                'Manager_Alhut': @Html.Raw(Json.Serialize(Localizer["Manager_Alhut"].Value.Trim())),
+                'Manager_Text': @Html.Raw(Json.Serialize(Localizer["Manager_Text"].Value.Trim())),
+                'Manager_BR': @Html.Raw(Json.Serialize(Localizer["Manager_BR"].Value.Trim())),
+                'Manager_Hakam': @Html.Raw(Json.Serialize(Localizer["Manager_Hakam"].Value.Trim())),
+                'Director_Alhut': @Html.Raw(Json.Serialize(Localizer["Director_Alhut"].Value.Trim())),
+                'Director_Text': @Html.Raw(Json.Serialize(Localizer["Director_Text"].Value.Trim())),
+                'Director_BR': @Html.Raw(Json.Serialize(Localizer["Director_BR"].Value.Trim())),
+                'Director_Hakam': @Html.Raw(Json.Serialize(Localizer["Director_Hakam"].Value.Trim())),
+                'Manager': @Html.Raw(Json.Serialize(Localizer["Manager"].Value.Trim())),
+                'Director': @Html.Raw(Json.Serialize(Localizer["Director"].Value.Trim()))
+            };
+            var MANAGER_VALUE = '@((int)UserRole.Manager)';
+
+            function updateRoleLabels(jobTypeKey) {
+                var options = roleSelect.options;
+                for (var i = 0; i < options.length; i++) {
+                    var opt = options[i];
+                    if (opt.value === MANAGER_VALUE) {
+                        var key = jobTypeKey ? ('Manager_' + jobTypeKey) : 'Manager';
+                        opt.textContent = roleLabelMap[key] || roleLabelMap['Manager'];
+                    } else if (opt.value === DIRECTOR_VALUE) {
+                        var key = jobTypeKey ? ('Director_' + jobTypeKey) : 'Director';
+                        opt.textContent = roleLabelMap[key] || roleLabelMap['Director'];
+                    }
+                }
+            }
 
             // Update step indicators
             function updateSteps(currentStep) {
-                steps.forEach((step, index) => {
-                    const stepNum = index + 1;
+                steps.forEach(function(step, index) {
+                    var stepNum = index + 1;
                     step.classList.remove('is-active', 'is-complete');
                     if (stepNum < currentStep) {
                         step.classList.add('is-complete');
@@ -280,54 +367,121 @@
             }
 
             // Track form progress
-            const emailInput = document.getElementById('Email');
-            const displayNameInput = document.getElementById('DisplayName');
-            const passwordInput = document.getElementById('Password');
+            var emailInput = document.getElementById('Email');
+            var displayNameInput = document.getElementById('DisplayName');
+            var passwordInput = document.getElementById('Password');
 
-            function checkAccountProgress() {
-                const hasEmail = emailInput && emailInput.value.includes('@@');
-                const hasName = displayNameInput && displayNameInput.value.length >= 2;
-                const hasPassword = passwordInput && passwordInput.value.length >= 6;
+            function checkProgress() {
+                var hasEmail = emailInput && emailInput.value.includes('@@');
+                var hasName = displayNameInput && displayNameInput.value.length >= 2;
+                var hasPassword = passwordInput && passwordInput.value.length >= 6;
 
-                if (hasEmail && hasName && hasPassword) {
-                    updateSteps(2);
-                } else {
+                if (!hasEmail || !hasName || !hasPassword) {
                     updateSteps(1);
-                }
-            }
-
-            if (emailInput) emailInput.addEventListener('input', checkAccountProgress);
-            if (displayNameInput) displayNameInput.addEventListener('input', checkAccountProgress);
-            if (passwordInput) passwordInput.addEventListener('input', checkAccountProgress);
-
-            // Molecule change -> Load companies and job types
-            moleculeSelect.addEventListener('change', async function() {
-                const moleculeId = this.value;
-
-                // Reset dependent dropdowns
-                companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"].Value.Trim()</option>';
-                companySelect.disabled = true;
-
-                if (jobTypeSelect) {
-                    jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_ChooseJobTypeFirst"].Value.Trim()</option>';
-                    jobTypeSelect.disabled = true;
+                    return;
                 }
 
-                if (!moleculeId) {
+                // Step 2: Role + JobType
+                var hasRole = roleSelect.value !== '';
+                var hasJobType = jobTypeSelect && jobTypeSelect.value !== '';
+                if (!hasRole || !hasJobType) {
                     updateSteps(2);
                     return;
                 }
 
-                // Fetch companies
+                // Step 3: Organization
+                var hasMolecule = moleculeSelect.value !== '';
+                var hasCompany = isDirectorOrAreaAdmin() || (companySelect.value !== '');
+                if (!hasMolecule || !hasCompany) {
+                    updateSteps(3);
+                    return;
+                }
+
+                updateSteps(4); // All complete
+            }
+
+            if (emailInput) emailInput.addEventListener('input', checkProgress);
+            if (displayNameInput) displayNameInput.addEventListener('input', checkProgress);
+            if (passwordInput) passwordInput.addEventListener('input', checkProgress);
+
+            // Load job types on page load (all share the same area)
+            (async function loadJobTypes() {
+                if (!jobTypeSelect) return;
+                jobTypeLoading.style.display = 'block';
+                try {
+                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=AllJobTypes', { credentials: 'same-origin' });
+                    if (!response.ok) throw new Error('Request failed: ' + response.status);
+                    var data = await response.json();
+
+                    if (data.jobTypes && data.jobTypes.length > 0) {
+                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_SelectJobType"].Value.Trim()</option>';
+                        data.jobTypes.forEach(function(jobType) {
+                            var option = document.createElement('option');
+                            option.value = jobType.id;
+                            option.textContent = jobType.name;
+                            if (jobType.key) {
+                                option.dataset.key = jobType.key;
+                            }
+                            if (jobType.color) {
+                                option.style.color = jobType.color;
+                            }
+                            jobTypeSelect.appendChild(option);
+                        });
+                        jobTypeSelect.disabled = false;
+                    } else {
+                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_NoJobTypesAvailable"].Value.Trim()</option>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching job types:', error);
+                    jobTypeSelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
+                } finally {
+                    jobTypeLoading.style.display = 'none';
+                }
+            })();
+
+            // Role change -> toggle company field visibility
+            roleSelect.addEventListener('change', function() {
+                if (isDirectorOrAreaAdmin()) {
+                    companyField.style.display = 'none';
+                    companySelect.required = false;
+                    companySelect.value = '';
+                    if (directorHqHint) directorHqHint.style.display = 'block';
+                } else {
+                    companyField.style.display = '';
+                    companySelect.required = true;
+                    if (directorHqHint) directorHqHint.style.display = 'none';
+                    // If molecule already selected, re-fetch companies
+                    if (moleculeSelect.value) {
+                        moleculeSelect.dispatchEvent(new Event('change'));
+                    }
+                }
+                checkProgress();
+            });
+
+            // Molecule change -> Load companies (only if not Director)
+            moleculeSelect.addEventListener('change', async function() {
+                var moleculeId = this.value;
+
+                // Reset company dropdown
+                companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"].Value.Trim()</option>';
+                companySelect.disabled = true;
+
+                if (!moleculeId || isDirectorOrAreaAdmin()) {
+                    checkProgress();
+                    return;
+                }
+
+                // Fetch companies (HQ already filtered by API)
                 companyLoading.style.display = 'block';
                 try {
-                    const response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId);
-                    const data = await response.json();
+                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId, { credentials: 'same-origin' });
+                    if (!response.ok) throw new Error('Request failed: ' + response.status);
+                    var data = await response.json();
 
                     if (data.companies && data.companies.length > 0) {
                         companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"].Value.Trim()</option>';
-                        data.companies.forEach(company => {
-                            const option = document.createElement('option');
+                        data.companies.forEach(function(company) {
+                            var option = document.createElement('option');
                             option.value = company.id;
                             option.textContent = company.name;
                             companySelect.appendChild(option);
@@ -343,47 +497,23 @@
                     companyLoading.style.display = 'none';
                 }
 
-                // Fetch job types
-                if (jobTypeSelect) {
-                    jobTypeLoading.style.display = 'block';
-                    try {
-                        const response = await fetch('/Api/Signup/GetSignupOptions?handler=JobTypes&moleculeId=' + moleculeId);
-                        const data = await response.json();
-
-                        if (data.jobTypes && data.jobTypes.length > 0) {
-                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_SelectJobType"].Value.Trim()</option>';
-                            data.jobTypes.forEach(jobType => {
-                                const option = document.createElement('option');
-                                option.value = jobType.id;
-                                option.textContent = jobType.name;
-                                if (jobType.color) {
-                                    option.style.color = jobType.color;
-                                }
-                                jobTypeSelect.appendChild(option);
-                            });
-                            jobTypeSelect.disabled = false;
-                        } else {
-                            jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_NoJobTypesAvailable"].Value.Trim()</option>';
-                        }
-                    } catch (error) {
-                        console.error('Error fetching job types:', error);
-                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
-                    } finally {
-                        jobTypeLoading.style.display = 'none';
-                    }
-                }
-
-                updateSteps(2);
+                checkProgress();
             });
 
-            // Company change -> Update step indicator
+            // Company change -> Update progress
             companySelect.addEventListener('change', function() {
-                if (this.value) {
-                    updateSteps(3);
-                } else {
-                    updateSteps(2);
-                }
+                checkProgress();
             });
+
+            // JobType change -> Update progress and role labels
+            if (jobTypeSelect) {
+                jobTypeSelect.addEventListener('change', function() {
+                    var selectedOption = jobTypeSelect.options[jobTypeSelect.selectedIndex];
+                    var jobTypeKey = selectedOption ? selectedOption.dataset.key : null;
+                    updateRoleLabels(jobTypeKey);
+                    checkProgress();
+                });
+            }
         })();
     </script>
 </body>

@@ -5,6 +5,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — conflict checks require cross-company visibility
+// to detect overlapping shifts/assignments; lookups scoped by explicit userId and shiftInstanceId parameters
 public class ConflictChecker : IConflictChecker
 {
     private readonly AppDbContext _db;

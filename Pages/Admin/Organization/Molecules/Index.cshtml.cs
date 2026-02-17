@@ -114,11 +114,27 @@ public class IndexModel : LocalizedPageModel
             CreatedAt = DateTime.UtcNow
         };
 
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
         _db.Molecules.Add(molecule);
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Created molecule {MoleculeId}: {MoleculeName} (Type: {Type}) in Area {AreaId}",
-            molecule.Id, molecule.Name, molecule.Type, molecule.AreaId);
+        // Auto-create HQ company for Director assignments
+        var hqCompany = new Company
+        {
+            Name = "HQ",
+            DisplayName = _localizer["HQ_AllTeams"].Value,
+            Slug = $"hq-{molecule.Name.ToLowerInvariant()}",
+            MoleculeId = molecule.Id,
+            IsHeadquarters = true
+        };
+        _db.Companies.Add(hqCompany);
+        await _db.SaveChangesAsync();
+
+        await transaction.CommitAsync();
+
+        _logger.LogInformation("Created molecule {MoleculeId}: {MoleculeName} (Type: {Type}) in Area {AreaId} with HQ company {HQCompanyId}",
+            molecule.Id, molecule.Name, molecule.Type, molecule.AreaId, hqCompany.Id);
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeCreated"], molecule.DisplayName);
         return RedirectToPage();

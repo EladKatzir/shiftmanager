@@ -8,16 +8,21 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner;
 
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — Owner page requires Grant:AdminAccess (all 107 grants);
+// cross-company SSO config management by design
 [Authorize(Policy = "Grant:AdminAccess")]
 public class GriffinConfigModel : LocalizedPageModel
 {
     private readonly IGriffinConfigService _griffinConfigService;
     private readonly IGriffinApiLogService _griffinApiLogService;
     private readonly IAuditLogService _auditLogService;
+    private readonly AppDbContext _db;
     private readonly ILogger<GriffinConfigModel> _logger;
 
     [BindProperty] public bool Enabled { get; set; }
@@ -25,6 +30,7 @@ public class GriffinConfigModel : LocalizedPageModel
     [BindProperty] public string TokenConsumerUrl { get; set; } = string.Empty;
     [BindProperty] public bool AutoProvisionUsers { get; set; }
     [BindProperty] public UserRole DefaultProvisionedRole { get; set; } = UserRole.Employee;
+    [BindProperty] public int? DefaultProvisionedRoleTemplateId { get; set; }
     [BindProperty] public int TimeoutSeconds { get; set; } = 10;
 
     public string? SuccessMessage { get; set; }
@@ -40,31 +46,34 @@ public class GriffinConfigModel : LocalizedPageModel
     public List<GriffinApiLog> RecentFailures { get; set; } = new();
 
     public SelectList RoleOptions { get; set; } = null!;
+    public List<RoleTemplate> AvailableRoleTemplates { get; set; } = new();
 
     public GriffinConfigModel(
         IStringLocalizer<SharedResources> localizer,
         IGriffinConfigService griffinConfigService,
         IGriffinApiLogService griffinApiLogService,
         IAuditLogService auditLogService,
+        AppDbContext db,
         ILogger<GriffinConfigModel> logger)
         : base(localizer)
     {
         _griffinConfigService = griffinConfigService;
         _griffinApiLogService = griffinApiLogService;
         _auditLogService = auditLogService;
+        _db = db;
         _logger = logger;
     }
 
     public async Task OnGetAsync()
     {
         await LoadConfigAsync();
-        LoadRoleOptions();
+        await LoadRoleOptionsAsync();
         await LoadRecentLogsAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        LoadRoleOptions();
+        await LoadRoleOptionsAsync();
 
         // Validate
         var validationError = ValidateInputs();
@@ -84,6 +93,7 @@ public class GriffinConfigModel : LocalizedPageModel
                 TokenConsumerUrl,
                 AutoProvisionUsers,
                 DefaultProvisionedRole,
+                DefaultProvisionedRoleTemplateId,
                 TimeoutSeconds,
                 userName);
 
@@ -111,7 +121,7 @@ public class GriffinConfigModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostTestConnectionAsync()
     {
-        LoadRoleOptions();
+        await LoadRoleOptionsAsync();
         await LoadRecentLogsAsync(); // Load logs for display
 
         // ✅ CRITICAL FIX: Validate before testing
@@ -136,6 +146,7 @@ public class GriffinConfigModel : LocalizedPageModel
                 TokenConsumerUrl,
                 AutoProvisionUsers,
                 DefaultProvisionedRole,
+                DefaultProvisionedRoleTemplateId,
                 TimeoutSeconds,
                 userName);
 
@@ -186,8 +197,8 @@ public class GriffinConfigModel : LocalizedPageModel
             _logger.LogError(ex, "Griffin connection test failed with exception");
             TestConnectionResult = false;
             LastTestSuccess = false;
-            LastTestError = ex.Message;
-            ErrorMessage = $"Connection test failed: {ex.Message}";
+            LastTestError = "An unexpected error occurred during the connection test.";
+            ErrorMessage = "Connection test failed. Please check your configuration and try again.";
         }
 
         return Page();
@@ -204,13 +215,19 @@ public class GriffinConfigModel : LocalizedPageModel
             TokenConsumerUrl = config.TokenConsumerUrl ?? string.Empty;
             AutoProvisionUsers = config.AutoProvisionUsers;
             DefaultProvisionedRole = config.DefaultProvisionedRole;
+            DefaultProvisionedRoleTemplateId = config.DefaultProvisionedRoleTemplateId;
             TimeoutSeconds = config.TimeoutSeconds;
         }
     }
 
-    private void LoadRoleOptions()
+    private async Task LoadRoleOptionsAsync()
     {
         RoleOptions = new SelectList(Enum.GetValues(typeof(UserRole)).Cast<UserRole>());
+        AvailableRoleTemplates = await _db.RoleTemplates
+            .IgnoreQueryFilters()
+            .Where(rt => rt.IsActive)
+            .OrderBy(rt => rt.SortOrder)
+            .ToListAsync();
     }
 
     private string? ValidateInputs()

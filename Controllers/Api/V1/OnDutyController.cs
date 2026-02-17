@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Models.Api;
@@ -11,6 +12,7 @@ namespace ShiftManager.Controllers.Api.V1;
 /// All endpoints require API key authentication via X-API-Key header.
 /// NOTE: On-duty assignments are global (not company-scoped).
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/v1/on-duty")]
 [Produces("application/json")]

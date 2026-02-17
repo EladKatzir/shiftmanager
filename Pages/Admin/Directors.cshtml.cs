@@ -87,11 +87,14 @@ public class DirectorsModel : LocalizedPageModel
             .ThenBy(a => a.DirectorName)
             .ToList();
 
-        // Load all users with Director role
+        // Load all users whose RoleTemplate derives to Director (or legacy Director role)
         // IgnoreQueryFilters: directors may be in any company
         AvailableDirectors = await _db.Users
             .IgnoreQueryFilters()
-            .Where(u => u.Role == UserRole.Director && u.IsActive)
+            .Include(u => u.RoleTemplate)
+            .Where(u => u.IsActive &&
+                (u.Role == UserRole.Director
+                || (u.RoleTemplate != null && u.RoleTemplate.DerivedUserRole == UserRole.Director)))
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
 
@@ -119,9 +122,13 @@ public class DirectorsModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Check if director user exists and has Director role
-        var director = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == DirectorUserId);
-        if (director == null || director.Role != UserRole.Director)
+        // Check if director user exists and has Director-tier role
+        var director = await _db.Users.IgnoreQueryFilters()
+            .Include(u => u.RoleTemplate)
+            .FirstOrDefaultAsync(u => u.Id == DirectorUserId);
+        if (director == null ||
+            (director.Role != UserRole.Director &&
+            !(director.RoleTemplate != null && director.RoleTemplate.DerivedUserRole == UserRole.Director)))
         {
             TempData["ErrorMessage"] = _localizer["Error_SelectedUserNotDirector"].Value;
             return RedirectToPage();

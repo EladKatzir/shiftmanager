@@ -103,7 +103,7 @@ public class BackupModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating database backup");
-            Error = $"Error creating backup: {ex.Message}";
+            Error = "An unexpected error occurred. Please try again.";
             LoadBackups();
             return Page();
         }
@@ -169,7 +169,7 @@ public class BackupModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error restoring database backup");
-            Error = $"Error restoring backup: {ex.Message}";
+            Error = "An unexpected error occurred. Please try again.";
             LoadBackups();
             return Page();
         }
@@ -216,7 +216,7 @@ public class BackupModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting backup");
-            Error = $"Error deleting backup: {ex.Message}";
+            Error = "An unexpected error occurred. Please try again.";
             LoadBackups();
             return Page();
         }

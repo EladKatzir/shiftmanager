@@ -404,6 +404,9 @@ function showUndoToast(choreId) {
                 credentials: 'same-origin',
                 body: JSON.stringify({ id: parseInt(choreId) })
             });
+            if (!response.ok) {
+                throw new Error('Request failed: ' + response.status);
+            }
             var data = await response.json();
             if (data.success) {
                 toast.remove();

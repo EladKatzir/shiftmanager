@@ -17,12 +17,14 @@ public class CreateModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
+    private readonly IGrantService _grantService;
 
-    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext)
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService)
         : base(localizer)
     {
         _db = db;
         _companyContext = companyContext;
+        _grantService = grantService;
     }
 
     public record AssignmentVM(int AssignmentId, string Label);
@@ -41,9 +43,9 @@ public class CreateModel : LocalizedPageModel
             return RedirectToPage("/Auth/Login");
         }
 
-        // Block trainees from creating swap requests
-        var currentUser = await _db.Users.FindAsync(userId);
-        if (currentUser?.Role == UserRole.Trainee)
+        // Block users without RequestSwap grant (e.g., trainees)
+        var hasSwapGrant = await _grantService.HasGrantAsync(userId, "RequestSwap");
+        if (!hasSwapGrant)
         {
             return RedirectToPage("/AccessDenied");
         }
@@ -70,9 +72,9 @@ public class CreateModel : LocalizedPageModel
             return RedirectToPage("/Auth/Login");
         }
 
-        // Block trainees from creating swap requests
-        var currentUser = await _db.Users.FindAsync(userId);
-        if (currentUser?.Role == UserRole.Trainee)
+        // Block users without RequestSwap grant (e.g., trainees)
+        var hasSwapGrant = await _grantService.HasGrantAsync(userId, "RequestSwap");
+        if (!hasSwapGrant)
         {
             return RedirectToPage("/AccessDenied");
         }

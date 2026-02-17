@@ -178,7 +178,7 @@ public class GrantsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error applying owner grants");
-            ErrorMessage = $"Error: {ex.Message}";
+            ErrorMessage = "An unexpected error occurred. Please try again.";
         }
 
         return RedirectToPage();
@@ -246,7 +246,7 @@ public class GrantsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error applying user management grants");
-            ErrorMessage = $"Error: {ex.Message}";
+            ErrorMessage = "An unexpected error occurred. Please try again.";
         }
 
         return RedirectToPage();
@@ -409,7 +409,8 @@ public class GrantsModel : PageModel
         }
         catch (UnauthorizedAccessException ex)
         {
-            return new JsonResult(new { success = false, error = ex.Message });
+            _logger.LogWarning(ex, "Unauthorized access while assigning grant");
+            return new JsonResult(new { success = false, error = "You do not have permission to perform this action." });
         }
         catch (Exception ex)
         {

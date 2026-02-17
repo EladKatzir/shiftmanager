@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
@@ -9,6 +10,7 @@ namespace ShiftManager.Controllers.Api.V1;
 /// API controller for analytics and aggregate metrics.
 /// All endpoints require API key authentication via X-API-Key header.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/v1/analytics")]
 [Produces("application/json")]

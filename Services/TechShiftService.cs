@@ -5,6 +5,8 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — tech shift queries are molecule-scoped;
+// lookups scoped by explicit moleculeId/shiftTypeKey parameters; called only from authorized endpoints
 public class TechShiftService : ITechShiftService
 {
     private readonly AppDbContext _db;

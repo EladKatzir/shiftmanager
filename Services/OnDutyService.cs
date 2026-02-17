@@ -54,6 +54,8 @@ public interface IOnDutyService
 ///
 /// See TERMINOLOGY.md for complete terminology mapping.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OnDuty is cross-company by design;
+// lookups scoped by explicit userId/date/type parameters; called only from authorized endpoints
 public class OnDutyService : IOnDutyService
 {
     private readonly AppDbContext _db;

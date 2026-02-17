@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner;
 /// Language Management - Configure company languages and manage translation overrides
 /// </summary>
 [Authorize(Policy = "Grant:AdminAccess")]
-[IgnoreAntiforgeryToken]
+[IgnoreAntiforgeryToken] // SECURITY-AUDITED: JSON POST from JS fetch; protected by SameSite=Lax cookies + Authorize policy
 public class LanguageManagementModel : PageModel
 {
     private readonly ILanguageManagementService _languageManagementService;
@@ -141,7 +141,7 @@ public class LanguageManagementModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving language settings");
-            Error = $"Failed to save language settings: {ex.Message}";
+            Error = "Failed to save language settings. Please try again.";
             await OnGetAsync();
             return Page();
         }
@@ -176,7 +176,7 @@ public class LanguageManagementModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save override");
-            Error = $"Failed to save override: {ex.Message}";
+            Error = "Failed to save override. Please try again.";
             await OnGetAsync();
             return Page();
         }
@@ -211,7 +211,7 @@ public class LanguageManagementModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete override");
-            Error = $"Failed to delete override: {ex.Message}";
+            Error = "Failed to delete override. Please try again.";
             return RedirectToPage();
         }
     }
@@ -259,7 +259,7 @@ public class LanguageManagementModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save draft translations");
-            return new JsonResult(new { success = false, message = $"Server error: {ex.Message}" });
+            return new JsonResult(new { success = false, message = "An unexpected error occurred. Please try again." });
         }
     }
 

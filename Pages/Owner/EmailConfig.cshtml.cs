@@ -196,7 +196,7 @@ public class EmailConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending test email");
-            Error = string.Format(_localizer["Error_FailedToSendTestEmail"], ex.Message);
+            Error = "Failed to send test email. Please check your configuration and try again.";
             await OnGetAsync();
             return Page();
         }

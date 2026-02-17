@@ -59,10 +59,10 @@ public class ContextSwitcherViewComponent : ViewComponent
             var contexts = new List<ContextOption>();
 
             // Context switching is based on organizational membership (not functional grants)
-            // Owner = system-wide access, Director = assigned companies, Regular = own company
+            // Owner = system-wide access, Director/AreaAdmin = assigned companies, Regular = own company
             // This is intentionally role-based as it reflects organizational structure, not permissions
             var isOwner = user.IsInRole("Owner");
-            var isDirector = user.IsInRole("Director");
+            var isDirector = user.IsInRole("Director") || user.IsInRole("AreaAdmin");
 
             if (isOwner)
             {

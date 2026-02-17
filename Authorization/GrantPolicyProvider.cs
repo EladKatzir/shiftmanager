@@ -34,7 +34,9 @@ public class GrantPolicyProvider : IAuthorizationPolicyProvider
         {
             var grantKey = policyName.Substring(GrantPrefix.Length);
 
+            // SECURITY FIX: RequireAuthenticatedUser for defense-in-depth (handler also checks, but this prevents future regressions)
             var policy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
                 .AddRequirements(new GrantRequirement(grantKey))
                 .Build();
 

@@ -202,9 +202,10 @@ public class OnCallModel : PageModel
             return;
         }
 
-        if (user.Role >= UserRole.Director)
+        var canViewAllAreas = await _grantService.HasGrantAsync(userId, "ViewAllAreas");
+        if (canViewAllAreas)
         {
-            // Directors and above see all active areas
+            // Users with ViewAllAreas grant see all active areas
             AvailableAreas = await _db.Areas
                 .Where(a => a.IsActive)
                 .OrderBy(a => a.DisplayName)

@@ -4,6 +4,8 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — hierarchy settings are global configuration;
+// lookups scoped by explicit companyId/moleculeId/areaId parameters; no sensitive user data exposed
 public class HierarchySettingsService : IHierarchySettingsService
 {
     private readonly AppDbContext _db;

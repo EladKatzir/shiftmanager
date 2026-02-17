@@ -219,11 +219,10 @@ public class SwapRequestApiService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Re-check no other pending swap was approved for the same assignments
+            // Re-check no other swap was already approved for the same assignments
             var conflictingApproved = await _context.SwapRequests
                 .AnyAsync(sr => sr.Id != requestId
                     && sr.Status == RequestStatus.Approved
-                    && sr.ReviewedAt > DateTime.UtcNow.AddMinutes(-5)
                     && (sr.FromAssignmentId == swapRequest.FromAssignmentId
                         || sr.ToAssignmentId == swapRequest.FromAssignmentId
                         || (swapRequest.ToAssignmentId.HasValue &&

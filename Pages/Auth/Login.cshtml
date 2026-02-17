@@ -206,7 +206,8 @@
         (function() {
             const emailInput = document.getElementById('Email');
             const suggestionDiv = document.getElementById('emailSuggestion');
-            const suggestionText = '@Html.Raw(Localizer["EmailDomainSuggestion"].Value.Replace("@", "@@"))';
+            // SECURITY FIX: Use Json.Serialize for proper JS-context escaping (prevents XSS via localization overrides)
+            const suggestionText = @Html.Raw(Json.Serialize(Localizer["EmailDomainSuggestion"].Value));
 
             if (emailInput && suggestionDiv) {
                 emailInput.addEventListener('input', function(e) {

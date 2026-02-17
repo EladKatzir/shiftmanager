@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
@@ -23,7 +24,7 @@ public interface INotificationService
     Task CreateTimeOffDeletedNotificationAsync(int userId, DateOnly startDate, DateOnly endDate);
 
     // Access Request Notifications
-    Task NotifyOwnersOfAccessRequestAsync(string requesterName, string requesterEmail, string companyName, int requestId);
+    Task NotifyOwnersOfAccessRequestAsync(string requesterName, string requesterEmail, string companyName, int requestId, int companyId);
     Task CreateAccessRequestApprovedNotificationAsync(int userId, string companyName, string assignedRole);
 
     // Phase 6: Daily Digest Methods
@@ -45,6 +46,8 @@ public interface INotificationService
     Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription);
 }
 
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — used only in NotifyOwnersOfAccessRequestAsync
+// to find Owner users across companies when no tenant context exists (anonymous signup flow); scoped by Role filter
 public class NotificationService : INotificationService
 {
     private readonly AppDbContext _db;
@@ -421,16 +424,16 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Notify all owner users about a new access request and send them emails.
     /// </summary>
-    public async Task NotifyOwnersOfAccessRequestAsync(string requesterName, string requesterEmail, string companyName, int requestId)
+    public async Task NotifyOwnersOfAccessRequestAsync(string requesterName, string requesterEmail, string companyName, int requestId, int companyId)
     {
         try
         {
-            // Get owner users (capped for safety — typically 1-5 per company)
+            // Get owner users scoped to the target company (capped for safety — typically 1-5 per company)
             // IgnoreQueryFilters: called from anonymous signup context where tenant=0,
-            // which would filter out ALL users. Owners across all companies need notification.
+            // which would filter out ALL users. Scoped by companyId to prevent cross-company notification leak.
             var owners = await _db.Users
                 .IgnoreQueryFilters()
-                .Where(u => u.Role == UserRole.Owner && u.IsActive)
+                .Where(u => u.CompanyId == companyId && u.Role == UserRole.Owner && u.IsActive)
                 .Take(100)
                 .ToListAsync();
 
@@ -577,17 +580,17 @@ public class NotificationService : INotificationService
 
             var digestParts = new List<string>();
 
-            // Phase 2C: Parallelize digest data queries using Task.WhenAll
-            Task<List<ShiftAssignment>>? upcomingShiftsTask = null;
-            Task<List<TimeOffRequest>>? pendingTimeOffTask = null;
-            Task<List<SwapRequest>>? pendingSwapsTask = null;
-            Task<List<Chore>>? upcomingChoresTask = null;
-            Task<List<OnDuty>>? upcomingOnDutyTask = null;
+            // Execute digest data queries sequentially (DbContext is NOT thread-safe)
+            List<ShiftAssignment>? upcomingShifts = null;
+            List<TimeOffRequest>? pendingTimeOff = null;
+            List<SwapRequest>? pendingSwaps = null;
+            List<Chore>? upcomingChores = null;
+            List<OnDuty>? upcomingOnDuty = null;
 
             // Upcoming Shifts (next 7 days)
             if (preference.IncludeUpcomingShifts)
             {
-                upcomingShiftsTask = _db.ShiftAssignments
+                upcomingShifts = await _db.ShiftAssignments
                     .Include(sa => sa.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                     .Where(sa => sa.UserId == userId
@@ -603,7 +606,7 @@ public class NotificationService : INotificationService
             // Pending Time-Off and Swap Requests
             if (preference.IncludePendingRequests)
             {
-                pendingTimeOffTask = _db.TimeOffRequests
+                pendingTimeOff = await _db.TimeOffRequests
                     .Where(r => r.UserId == userId
                              && r.CompanyId == companyId
                              && r.Status == RequestStatus.Pending)
@@ -611,7 +614,7 @@ public class NotificationService : INotificationService
                     .Take(5)
                     .ToListAsync();
 
-                pendingSwapsTask = _db.SwapRequests
+                pendingSwaps = await _db.SwapRequests
                     .Include(sr => sr.FromAssignment)
                     .ThenInclude(sa => sa!.ShiftInstance)
                     .ThenInclude(si => si!.ShiftType)
@@ -626,7 +629,7 @@ public class NotificationService : INotificationService
             // Assigned Chores (next 7 days)
             if (preference.IncludeChores)
             {
-                upcomingChoresTask = _db.Chores
+                upcomingChores = await _db.Chores
                     .Where(c => c.UserId == userId
                              && c.CompanyId == companyId
                              && c.Date >= today
@@ -640,7 +643,7 @@ public class NotificationService : INotificationService
             // OnDuty Assignments (next 7 days)
             if (preference.IncludeOnDuty)
             {
-                upcomingOnDutyTask = _db.OnDuties
+                upcomingOnDuty = await _db.OnDuties
                     .Where(od => od.UserId == userId
                               && od.Date >= today
                               && od.Date <= nextWeek
@@ -650,30 +653,16 @@ public class NotificationService : INotificationService
                     .ToListAsync();
             }
 
-            // Wait for all queries to complete in parallel
-            var tasks = new List<Task>();
-            if (upcomingShiftsTask != null) tasks.Add(upcomingShiftsTask);
-            if (pendingTimeOffTask != null) tasks.Add(pendingTimeOffTask);
-            if (pendingSwapsTask != null) tasks.Add(pendingSwapsTask);
-            if (upcomingChoresTask != null) tasks.Add(upcomingChoresTask);
-            if (upcomingOnDutyTask != null) tasks.Add(upcomingOnDutyTask);
-
-            if (tasks.Any())
-            {
-                await Task.WhenAll(tasks);
-            }
-
             // Build digest content from results
-            if (upcomingShiftsTask != null)
+            if (upcomingShifts != null)
             {
-                var upcomingShifts = await upcomingShiftsTask;
                 if (upcomingShifts.Any())
                 {
                     var shiftsHtml = $"<h3>{_localizer["Email_UpcomingShifts"]}</h3><ul>";
                     foreach (var shift in upcomingShifts)
                     {
                         shiftsHtml += $"<li><strong>{shift.ShiftInstance.WorkDate:MMM dd, yyyy}</strong> - " +
-                                    $"{shift.ShiftInstance.ShiftType.Name} " +
+                                    $"{WebUtility.HtmlEncode(shift.ShiftInstance.ShiftType.Name)} " +
                                     $"({shift.ShiftInstance.ShiftType.Start:HH:mm} - {shift.ShiftInstance.ShiftType.End:HH:mm})</li>";
                     }
                     shiftsHtml += "</ul>";
@@ -681,19 +670,19 @@ public class NotificationService : INotificationService
                 }
             }
 
-            if (pendingTimeOffTask != null || pendingSwapsTask != null)
+            if (pendingTimeOff != null || pendingSwaps != null)
             {
-                var pendingTimeOff = pendingTimeOffTask != null ? await pendingTimeOffTask : new List<TimeOffRequest>();
-                var pendingSwaps = pendingSwapsTask != null ? await pendingSwapsTask : new List<SwapRequest>();
+                var pendingTimeOffList = pendingTimeOff ?? new List<TimeOffRequest>();
+                var pendingSwapsList = pendingSwaps ?? new List<SwapRequest>();
 
-                if (pendingTimeOff.Any() || pendingSwaps.Any())
+                if (pendingTimeOffList.Any() || pendingSwapsList.Any())
                 {
                     var requestsHtml = $"<h3>{_localizer["Email_PendingRequests"]}</h3>";
 
-                    if (pendingTimeOff.Any())
+                    if (pendingTimeOffList.Any())
                     {
                         requestsHtml += $"<h4>{_localizer["Email_TimeOffRequests"]}</h4><ul>";
-                        foreach (var request in pendingTimeOff)
+                        foreach (var request in pendingTimeOffList)
                         {
                             var dateRange = request.StartDate == request.EndDate
                                 ? request.StartDate.ToString("MMM dd, yyyy")
@@ -703,14 +692,14 @@ public class NotificationService : INotificationService
                         requestsHtml += "</ul>";
                     }
 
-                    if (pendingSwaps.Any())
+                    if (pendingSwapsList.Any())
                     {
                         requestsHtml += $"<h4>{_localizer["Email_SwapRequests"]}</h4><ul>";
-                        foreach (var swap in pendingSwaps)
+                        foreach (var swap in pendingSwapsList)
                         {
                             var shiftInstance = swap.FromAssignment?.ShiftInstance;
                             var shiftInfo = shiftInstance != null
-                                ? $"{shiftInstance.WorkDate:MMM dd, yyyy} - {shiftInstance.ShiftType?.Name ?? "Unknown"}"
+                                ? $"{shiftInstance.WorkDate:MMM dd, yyyy} - {WebUtility.HtmlEncode(shiftInstance.ShiftType?.Name ?? "Unknown")}"
                                 : "Unknown shift";
                             requestsHtml += $"<li>{shiftInfo} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
@@ -721,24 +710,22 @@ public class NotificationService : INotificationService
                 }
             }
 
-            if (upcomingChoresTask != null)
+            if (upcomingChores != null)
             {
-                var upcomingChores = await upcomingChoresTask;
                 if (upcomingChores.Any())
                 {
                     var choresHtml = $"<h3>{_localizer["Email_AssignedChores"]}</h3><ul>";
                     foreach (var chore in upcomingChores)
                     {
-                        choresHtml += $"<li><strong>{chore.Date:MMM dd, yyyy}</strong> - {chore.Title}</li>";
+                        choresHtml += $"<li><strong>{chore.Date:MMM dd, yyyy}</strong> - {WebUtility.HtmlEncode(chore.Title)}</li>";
                     }
                     choresHtml += "</ul>";
                     digestParts.Add(choresHtml);
                 }
             }
 
-            if (upcomingOnDutyTask != null)
+            if (upcomingOnDuty != null)
             {
-                var upcomingOnDuty = await upcomingOnDutyTask;
                 if (upcomingOnDuty.Any())
                 {
                     var onDutyHtml = $"<h3>{_localizer["Email_OnDutyAssignments"]}</h3><ul>";
@@ -797,8 +784,8 @@ public class NotificationService : INotificationService
                         // Format: "Today's Hakam is John Doe"
                         var baseUrl = _configuration["App:BaseUrl"] ?? "http://localhost:5000";
                         var todaysRole = string.Format(_localizer["Email_TodaysRole"],
-                                        $"<strong>{roleName}</strong>",
-                                        $"<a href='{baseUrl}/My/Profile?userId={od.UserId}'>{od.User?.DisplayName ?? "Unknown"}</a>");
+                                        $"<strong>{WebUtility.HtmlEncode(roleName)}</strong>",
+                                        $"<a href='{WebUtility.HtmlEncode(baseUrl)}/My/Profile?userId={od.UserId}'>{WebUtility.HtmlEncode(od.User?.DisplayName ?? "Unknown")}</a>");
                         todayHtml += $"<li>{todaysRole}</li>";
                     }
                     todayHtml += "</ul>";
@@ -831,7 +818,7 @@ public class NotificationService : INotificationService
     </style>
 </head>
 <body>
-    <h2>{string.Format(_localizer["Email_DailyDigestTitle"], user.DisplayName)}</h2>
+    <h2>{string.Format(_localizer["Email_DailyDigestTitle"], WebUtility.HtmlEncode(user.DisplayName))}</h2>
     <p>{_localizer["Email_DailyDigestIntro"]}</p>
     {string.Join("\n", digestParts)}
     <div class='footer'>
@@ -912,7 +899,7 @@ public class NotificationService : INotificationService
                         var shiftTypeName = shiftType?.Name ?? _localizer["Email_Shift"];
                         var startTime = shiftType?.Start.ToString("HH:mm") ?? "--:--";
                         var endTime = shiftType?.End.ToString("HH:mm") ?? "--:--";
-                        shiftsHtml += $"<li><strong>{shiftTypeName}</strong> - {startTime} to {endTime}</li>";
+                        shiftsHtml += $"<li><strong>{WebUtility.HtmlEncode(shiftTypeName)}</strong> - {startTime} to {endTime}</li>";
                     }
                     shiftsHtml += "</ul>";
                     reminderParts.Add(shiftsHtml);
@@ -935,7 +922,7 @@ public class NotificationService : INotificationService
                     var choresHtml = $"<h3 style='color: #10b981;'>{_localizer["Email_ChoresAssignedTomorrow"]}</h3><ul>";
                     foreach (var chore in tomorrowChores)
                     {
-                        choresHtml += $"<li>{chore.Title}</li>";
+                        choresHtml += $"<li>{WebUtility.HtmlEncode(chore.Title)}</li>";
                     }
                     choresHtml += "</ul>";
                     reminderParts.Add(choresHtml);
@@ -976,7 +963,7 @@ public class NotificationService : INotificationService
                         else
                             roleName = _localizer["Email_UnknownRole"];
 
-                        onDutyHtml += $"<li><strong>{roleName}</strong></li>";
+                        onDutyHtml += $"<li><strong>{WebUtility.HtmlEncode(roleName)}</strong></li>";
                     }
                     onDutyHtml += "</ul>";
                     reminderParts.Add(onDutyHtml);
@@ -1008,7 +995,7 @@ public class NotificationService : INotificationService
 </head>
 <body>
     <h2>{_localizer["Email_ReminderTitle"]}</h2>
-    <p>{string.Format(_localizer["Email_ReminderIntro"], user.DisplayName, tomorrow.ToString("MMM dd, yyyy"))}</p>
+    <p>{string.Format(_localizer["Email_ReminderIntro"], WebUtility.HtmlEncode(user.DisplayName), tomorrow.ToString("MMM dd, yyyy"))}</p>
     {string.Join("\n", reminderParts)}
     <div class='footer'>
         <p>{_localizer["Email_ReminderFooter"]}</p>

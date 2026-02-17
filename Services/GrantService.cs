@@ -5,6 +5,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — grant system requires cross-company visibility
+// for Directors managing hierarchies; lookups scoped by explicit userId/grantTypeId parameters
 public class GrantService : IGrantService
 {
     private readonly AppDbContext _db;
@@ -363,11 +365,21 @@ public class GrantService : IGrantService
         return true;
     }
 
-    public async Task<bool> RevokeAllUserGrantsAsync(int userId)
+    public async Task<bool> RevokeAllUserGrantsAsync(int userId, int? revokedByUserId = null)
     {
         var grants = await _db.Grants.Where(g => g.UserId == userId).ToListAsync();
+        var grantCount = grants.Count;
         _db.Grants.RemoveRange(grants);
         await _db.SaveChangesAsync();
+
+        // Audit trail for bulk grant revocation
+        if (revokedByUserId.HasValue && grantCount > 0)
+        {
+            await _auditLogService.LogUserActionAsync(revokedByUserId.Value, "AllGrantsRevoked", "Grant", null,
+                $"Revoked all {grantCount} grants from user {userId}",
+                $"TargetUserId={userId}, GrantCount={grantCount}");
+        }
+
         return true;
     }
 
@@ -767,29 +779,8 @@ public class GrantService : IGrantService
 
     /// <summary>
     /// Maps UserRole enum + JobType name to the correct RoleTemplate key.
-    /// JobType-aware: Directors/Managers get different templates based on their specialization.
+    /// Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
     /// </summary>
     private static string MapUserRoleToRoleTemplateKey(Models.Support.UserRole role, string? jobTypeName)
-    {
-        return role switch
-        {
-            Models.Support.UserRole.Owner => "Owner",
-            Models.Support.UserRole.Director => jobTypeName switch
-            {
-                "Alhut" => "AlhutDirector",
-                "Text" => "TextDirector",
-                _ => "MoleculeAdmin"
-            },
-            Models.Support.UserRole.Manager => jobTypeName switch
-            {
-                "Alhut" => "AlhutLead",
-                "Text" => "TextLead",
-                _ => "BRDirector"
-            },
-            Models.Support.UserRole.Employee => "Employee",
-            Models.Support.UserRole.Trainee => "Employee",
-            Models.Support.UserRole.Assigner => "Assigner",
-            _ => "Employee"
-        };
-    }
+        => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role, jobTypeName);
 }

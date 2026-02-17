@@ -129,8 +129,9 @@ public class ScopeFilterService : IScopeFilterService
         if (userId == null)
             return false;
 
+        // Organizational identity checks — determines data scope, not authorization
         var isOwner = CurrentUser?.IsInRole("Owner") ?? false;
-        var isDirector = CurrentUser?.IsInRole("Director") ?? false;
+        var isDirector = (CurrentUser?.IsInRole("Director") ?? false) || (CurrentUser?.IsInRole("AreaAdmin") ?? false);
 
         switch (scopeType.ToLowerInvariant())
         {

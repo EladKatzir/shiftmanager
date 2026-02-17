@@ -272,7 +272,9 @@ public class SystemHealthModel : PageModel
     {
         // Check for default owner credentials (fixes D-01, B-06)
         var ownerUser = await _db.Users.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(u => u.Role == ShiftManager.Models.Support.UserRole.Owner);
+            .Include(u => u.RoleTemplate)
+            .FirstOrDefaultAsync(u => u.Role == ShiftManager.Models.Support.UserRole.Owner
+                || (u.RoleTemplate != null && u.RoleTemplate.DerivedUserRole == ShiftManager.Models.Support.UserRole.Owner));
 
         if (ownerUser != null)
         {

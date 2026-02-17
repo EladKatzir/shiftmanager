@@ -12,7 +12,7 @@ using System.Text;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class AnalyticsModel : LocalizedPageModel
 {
     private readonly IAnalyticsService _analyticsService;

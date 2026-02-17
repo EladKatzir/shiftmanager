@@ -7,6 +7,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — friendships are cross-company by design;
+// queries scoped by explicit userId parameters; called only from authorized endpoints
 public class FriendshipService : IFriendshipService
 {
     private readonly AppDbContext _db;

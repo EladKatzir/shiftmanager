@@ -14,7 +14,7 @@
     var startOfWeek = firstDay.AddDays(-(int)firstDay.DayOfWeek + (firstDay.DayOfWeek == DayOfWeek.Sunday ? -6 : 1));
     var currentDate = startOfWeek;
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    var canEdit = (await AuthorizationService.AuthorizeAsync(User, "CanEditChores")).Succeeded;
+    var canEdit = (await AuthorizationService.AuthorizeAsync(User, "Grant:AssignChores")).Succeeded;
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>

@@ -365,6 +365,9 @@ namespace ShiftManager.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("RoleTemplateId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Skills")
                         .HasColumnType("TEXT");
 
@@ -376,6 +379,8 @@ namespace ShiftManager.Migrations
                         .IsUnique();
 
                     b.HasIndex("JobTypeId");
+
+                    b.HasIndex("RoleTemplateId");
 
                     b.ToTable("Users");
                 });
@@ -622,6 +627,9 @@ namespace ShiftManager.Migrations
 
                     b.Property<string>("DisplayName")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsHeadquarters")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int?>("MoleculeId")
                         .HasColumnType("INTEGER");
@@ -1481,6 +1489,9 @@ namespace ShiftManager.Migrations
                     b.Property<int>("DefaultProvisionedRole")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("DefaultProvisionedRoleTemplateId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
@@ -1499,6 +1510,8 @@ namespace ShiftManager.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
+
+                    b.HasIndex("DefaultProvisionedRoleTemplateId");
 
                     b.ToTable("GriffinConfigs");
                 });
@@ -1903,6 +1916,9 @@ namespace ShiftManager.Migrations
                     b.Property<int?>("FromRole")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("FromRoleTemplateId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TargetUserId")
                         .HasColumnType("INTEGER");
 
@@ -1912,7 +1928,14 @@ namespace ShiftManager.Migrations
                     b.Property<int>("ToRole")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("ToRoleTemplateId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("FromRoleTemplateId");
+
+                    b.HasIndex("ToRoleTemplateId");
 
                     b.HasIndex("ChangedBy", "Timestamp");
 
@@ -1927,17 +1950,32 @@ namespace ShiftManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("CanBeAssignedByDefault")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("DerivedUserRole")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("DescriptionKey")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayNameEN")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayNameHE")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSystem")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsVisibleInSignup")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Key")
@@ -1994,6 +2032,36 @@ namespace ShiftManager.Migrations
                         .IsUnique();
 
                     b.ToTable("RoleTemplateGrants");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.RoleTemplateJobTypeLabel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DisplayNameEN")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayNameHE")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("JobTypeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleTemplateId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobTypeId");
+
+                    b.HasIndex("RoleTemplateId", "JobTypeId")
+                        .IsUnique();
+
+                    b.ToTable("RoleTemplateJobTypeLabels");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.SetupTask", b =>
@@ -2816,6 +2884,9 @@ namespace ShiftManager.Migrations
                     b.Property<int>("RequestedRole")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("RequestedRoleTemplateId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("TEXT");
 
@@ -2830,6 +2901,8 @@ namespace ShiftManager.Migrations
                     b.HasIndex("CreatedUserId");
 
                     b.HasIndex("JobTypeId");
+
+                    b.HasIndex("RequestedRoleTemplateId");
 
                     b.HasIndex("ReviewedBy");
 
@@ -3088,9 +3161,16 @@ namespace ShiftManager.Migrations
                         .HasForeignKey("JobTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ShiftManager.Models.RoleTemplate", "RoleTemplate")
+                        .WithMany()
+                        .HasForeignKey("RoleTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Department");
 
                     b.Navigation("JobType");
+
+                    b.Navigation("RoleTemplate");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.Area", b =>
@@ -3589,6 +3669,11 @@ namespace ShiftManager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ShiftManager.Models.RoleTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("DefaultProvisionedRoleTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Company");
                 });
 
@@ -3724,6 +3809,19 @@ namespace ShiftManager.Migrations
                     b.Navigation("Program");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.RoleAssignmentAudit", b =>
+                {
+                    b.HasOne("ShiftManager.Models.RoleTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("FromRoleTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShiftManager.Models.RoleTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("ToRoleTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("ShiftManager.Models.RoleTemplateGrant", b =>
                 {
                     b.HasOne("ShiftManager.Models.GrantType", "GrantType")
@@ -3739,6 +3837,25 @@ namespace ShiftManager.Migrations
                         .IsRequired();
 
                     b.Navigation("GrantType");
+
+                    b.Navigation("RoleTemplate");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.RoleTemplateJobTypeLabel", b =>
+                {
+                    b.HasOne("ShiftManager.Models.JobType", "JobType")
+                        .WithMany()
+                        .HasForeignKey("JobTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.RoleTemplate", "RoleTemplate")
+                        .WithMany("JobTypeLabels")
+                        .HasForeignKey("RoleTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobType");
 
                     b.Navigation("RoleTemplate");
                 });
@@ -4112,6 +4229,11 @@ namespace ShiftManager.Migrations
                         .HasForeignKey("JobTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ShiftManager.Models.RoleTemplate", "RequestedRoleTemplate")
+                        .WithMany()
+                        .HasForeignKey("RequestedRoleTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ShiftManager.Models.AppUser", "ReviewedByUser")
                         .WithMany()
                         .HasForeignKey("ReviewedBy")
@@ -4122,6 +4244,8 @@ namespace ShiftManager.Migrations
                     b.Navigation("CreatedUser");
 
                     b.Navigation("JobType");
+
+                    b.Navigation("RequestedRoleTemplate");
 
                     b.Navigation("ReviewedByUser");
                 });
@@ -4288,6 +4412,8 @@ namespace ShiftManager.Migrations
             modelBuilder.Entity("ShiftManager.Models.RoleTemplate", b =>
                 {
                     b.Navigation("AutoGrants");
+
+                    b.Navigation("JobTypeLabels");
 
                     b.Navigation("UserRoles");
                 });

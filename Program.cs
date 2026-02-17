@@ -166,29 +166,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("IsManagerOrAdmin",
-        policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director)));
-    options.AddPolicy("IsAdmin", policy => policy.RequireRole(nameof(UserRole.Owner)));
-    options.AddPolicy("IsDirector", policy => policy.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Director)));
-    options.AddPolicy("IsOwnerOrDirector", policy => policy.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Director)));
+    // Grant-based policies are handled dynamically by GrantPolicyProvider (Grant:* prefix).
+    // Only auth-only policies remain here.
 
-    // Public section policies
-    // View policies - all authenticated users can view
+    // Public section policies — all authenticated users can view
     options.AddPolicy("CanViewChores", policy => policy.RequireAuthenticatedUser());
     options.AddPolicy("CanViewOnDuty", policy => policy.RequireAuthenticatedUser());
-
-    // Edit policies - only admin roles can edit
-    options.AddPolicy("CanEditChores",
-        policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director), nameof(UserRole.Assigner)));
-    options.AddPolicy("CanEditOnDuty",
-        policy => policy.RequireRole(nameof(UserRole.Manager), nameof(UserRole.Owner), nameof(UserRole.Director)));
-
-    // Announcements management policy
-    options.AddPolicy("CanManageAnnouncements", policy =>
-        policy.RequireAssertion(context =>
-            context.User.IsInRole(nameof(UserRole.Owner)) ||
-            context.User.IsInRole(nameof(UserRole.Director)) ||
-            context.User.HasClaim("Grant", "ManageAnnouncements")));
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
@@ -976,36 +959,7 @@ app.UseResponseCompression();
 // WebOptimizer middleware — minifies JS/CSS on-the-fly (C-04)
 app.UseWebOptimizer();
 
-// Configure static file serving with explicit MIME types for offline reliability
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = ctx =>
-    {
-        // Ensure correct MIME types for CSS and JS files
-        if (ctx.File.Name.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
-        {
-            ctx.Context.Response.ContentType = "text/css; charset=utf-8";
-        }
-        else if (ctx.File.Name.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
-        {
-            ctx.Context.Response.ContentType = "application/javascript; charset=utf-8";
-        }
-
-        // Cache control: versioned assets (asp-append-version) can be cached longer
-        // Non-versioned assets require revalidation
-        var hasVersion = ctx.Context.Request.QueryString.HasValue &&
-                         ctx.Context.Request.QueryString.Value?.Contains("v=") == true;
-        ctx.Context.Response.Headers["Cache-Control"] = hasVersion
-            ? "public, max-age=604800, immutable"  // 7 days for versioned assets
-            : "public, must-revalidate, max-age=0";
-    }
-});
-app.UseRouting();
-
-// Add request logging middleware (must be after routing, before auth)
-app.UseRequestLogging();
-
-// Security headers middleware
+// Security headers middleware — placed BEFORE UseStaticFiles so static files also get security headers
 app.Use(async (context, next) =>
 {
     // Prevent clickjacking attacks
@@ -1034,6 +988,35 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+// Configure static file serving with explicit MIME types for offline reliability
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Ensure correct MIME types for CSS and JS files
+        if (ctx.File.Name.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.ContentType = "text/css; charset=utf-8";
+        }
+        else if (ctx.File.Name.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.ContentType = "application/javascript; charset=utf-8";
+        }
+
+        // Cache control: versioned assets (asp-append-version) can be cached longer
+        // Non-versioned assets require revalidation
+        var hasVersion = ctx.Context.Request.QueryString.HasValue &&
+                         ctx.Context.Request.QueryString.Value?.Contains("v=") == true;
+        ctx.Context.Response.Headers["Cache-Control"] = hasVersion
+            ? "public, max-age=604800, immutable"  // 7 days for versioned assets
+            : "public, must-revalidate, max-age=0";
+    }
+});
+app.UseRouting();
+
+// Add request logging middleware (must be after routing, before auth)
+app.UseRequestLogging();
 
 // Add request localization middleware
 app.UseRequestLocalization();
@@ -1086,8 +1069,8 @@ if (!string.IsNullOrEmpty(hmacSecret))
 }
 else if (!app.Environment.IsDevelopment())
 {
-    // D-02: Warn loudly if default HMAC secret is used in production
-    app.Logger.LogCritical(
+    // SECURITY FIX: Refuse to start with default HMAC secret in production (prevents cross-deployment API key forgery)
+    throw new InvalidOperationException(
         "SECURITY: ApiKeyHmacSecret is not configured. Using default HMAC secret in non-development environment " +
         "allows cross-deployment API key forgery. Set 'ApiKeyHmacSecret' in appsettings.Production.json.");
 }
@@ -1098,6 +1081,9 @@ app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>(); // API key-based rate limiting
 app.MapControllers(); // Map API controllers
+
+// NOTE: CORS not configured — app is deployed air-gapped; browser same-origin policy is sufficient.
+// If deployment moves to public network, configure explicit CORS policy.
 
 // ============================================================
 // EXCEL CALENDAR REDIRECTS (when feature flags enabled)
@@ -1186,7 +1172,7 @@ app.MapGet("/api/v1/version", () =>
     {
         version = buildVersion ?? assemblyVersion,
         assemblyVersion,
-        environment = app.Environment.EnvironmentName
+        environment = app.Environment.IsDevelopment() ? app.Environment.EnvironmentName : "Production"
     });
 }).AllowAnonymous();
 

@@ -14,7 +14,7 @@ namespace ShiftManager.Pages.Owner;
 /// "Blueprints" are the foundational templates that Programs reference.
 /// ✅ P1-1: Expanded access from Owner-only to Manager+Director+Owner
 /// </summary>
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class BlueprintsModel : PageModel
 {
     private readonly AppDbContext _db;

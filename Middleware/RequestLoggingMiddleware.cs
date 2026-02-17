@@ -187,6 +187,9 @@ public class RequestLoggingMiddleware
     /// <summary>
     /// Gets the client IP address, respecting X-Forwarded-For header for proxied requests.
     /// </summary>
+    // NOTE: X-Forwarded-For is trusted without validation. This is acceptable for air-gapped IIS deployment
+    // where only the IIS reverse proxy sets this header. If deployment moves to public network, configure
+    // ASP.NET Core ForwardedHeadersMiddleware with known proxy IPs instead.
     private static string GetClientIpAddress(HttpContext context)
     {
         var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();

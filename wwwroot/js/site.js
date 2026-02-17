@@ -1,3 +1,13 @@
+/**
+ * Shared HTML escape utility — escapes <, >, &, ", and ' for safe insertion into HTML/attribute contexts.
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML.replace(/'/g, '&#39;');
+}
+
 // Dark mode toggle with system preference support
 document.addEventListener('DOMContentLoaded', function() {
   const root = document.documentElement;
@@ -944,6 +954,7 @@ function getCommandPalettePages() {
     { title: window.AppLocalizer?.Nav_Blueprints || 'Blueprints', subtitle: window.AppLocalizer?.Nav_BlueprintsDesc || 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
     { title: window.AppLocalizer?.Nav_Programs || 'Programs', subtitle: window.AppLocalizer?.Nav_ProgramsDesc || 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
     { title: window.AppLocalizer?.Nav_MasterPrograms || 'Master Programs', subtitle: window.AppLocalizer?.Nav_MasterProgramsDesc || 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_RoleTemplates || 'Role Templates', subtitle: window.AppLocalizer?.Nav_RoleTemplatesDesc || 'Manage system and custom role templates', url: '/Owner/Hub/RoleTemplates', icon: '👤', roles: ['Owner'] },
 
     // Employee Pages
     { title: window.AppLocalizer?.Nav_MyRequests || 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
@@ -1131,10 +1142,10 @@ function renderCommandPaletteResults(showingRecent) {
     }
 
     item.innerHTML = `
-      <div class="command-palette-item-icon">${page.icon}</div>
+      <div class="command-palette-item-icon">${escapeHtml(page.icon)}</div>
       <div class="command-palette-item-content">
-        <div class="command-palette-item-title">${page.title}</div>
-        <div class="command-palette-item-subtitle">${page.subtitle}</div>
+        <div class="command-palette-item-title">${escapeHtml(page.title)}</div>
+        <div class="command-palette-item-subtitle">${escapeHtml(page.subtitle)}</div>
       </div>
     `;
 
@@ -1229,27 +1240,18 @@ function canAccessPage(page, userRole) {
 }
 
 function getUserRole() {
-  // Try to determine user role from page context
-  // This is a simplified implementation - adjust based on your needs
-  const body = document.body;
-  const sidebar = document.querySelector('.app-sidebar-nav');
+  // Read role from body data attribute (set by _Layout.cshtml)
+  var body = document.body;
+  var role = body.getAttribute('data-role');
+  if (role) return role;
 
+  // Fallback: infer from sidebar links
+  var sidebar = document.querySelector('.app-sidebar-nav');
   if (!sidebar) return null;
 
-  // Check for Owner-specific links
-  if (sidebar.querySelector('a[href*="/Admin/Companies"]')) {
-    return 'Owner';
-  }
-
-  // Check for Manager/Director links
-  if (sidebar.querySelector('a[href*="/Admin/Users"]')) {
-    return 'Manager';
-  }
-
-  // Check for Employee links
-  if (sidebar.querySelector('a[href*="/My/Profile"]')) {
-    return 'Employee';
-  }
+  if (sidebar.querySelector('a[href*="/Admin/Companies"]')) return 'Owner';
+  if (sidebar.querySelector('a[href*="/Admin/Users"]')) return 'Manager';
+  if (sidebar.querySelector('a[href*="/My/Profile"]')) return 'Employee';
 
   return null;
 }

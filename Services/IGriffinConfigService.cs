@@ -27,6 +27,7 @@ public interface IGriffinConfigService
         string? tokenConsumerUrl,
         bool autoProvisionUsers,
         UserRole defaultProvisionedRole,
+        int? defaultProvisionedRoleTemplateId,
         int timeoutSeconds,
         string updatedBy);
 

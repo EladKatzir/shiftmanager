@@ -7,7 +7,8 @@ public enum UserRole
     Employee = 2,
     Director = 3,
     Trainee = 4,
-    Assigner = 5  // Can edit Chores only, not On-Duty
+    Assigner = 5,  // Can edit Chores only, not On-Duty
+    AreaAdmin = 6  // Area-level admin, same as Director for authorization
 }
 
 public enum RequestStatus

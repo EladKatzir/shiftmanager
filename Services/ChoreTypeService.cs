@@ -4,6 +4,8 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — chore types are molecule-scoped configuration;
+// queries scoped by explicit moleculeId parameter; called only from authorized service layer
 public class ChoreTypeService : IChoreTypeService
 {
     private readonly AppDbContext _db;

@@ -11,6 +11,8 @@ namespace ShiftManager.Services.Api;
 /// Handles all on-duty CRUD operations for the API layer.
 /// NOTE: OnDuty assignments are global (not company-scoped).
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OnDuty is cross-company by design;
+// queries scoped by explicit date/areaId/userId parameters; called only from authorized API endpoints
 public class OnDutyApiService
 {
     private readonly AppDbContext _context;

@@ -7,6 +7,8 @@ namespace ShiftManager.Services;
 /// <summary>
 /// Service for managing email configuration settings with encryption support
 /// </summary>
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — email config lookup scoped by explicit companyId;
+// called only from Owner/Admin-protected configuration pages
 public class EmailConfigService : IEmailConfigService
 {
     private readonly AppDbContext _context;

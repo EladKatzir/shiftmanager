@@ -13,7 +13,9 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Requests;
 
-[Authorize(Policy = "IsManagerOrAdmin")]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManagerHomeAccess policy;
+// cross-company queries by design — managers/Directors view requests across accessible companies in hierarchy
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

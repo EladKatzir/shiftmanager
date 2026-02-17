@@ -9,6 +9,8 @@ using System.Security.Claims;
 
 namespace ShiftManager.ViewComponents;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OnDuty is cross-company by design;
+// queries scoped by explicit companyId/areaId parameters; ViewComponent used only on [Authorize]-protected pages
 public class OnCallWidgetViewComponent : ViewComponent
 {
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -69,8 +71,9 @@ public class OnCallWidgetViewComponent : ViewComponent
             .Distinct()
             .ToList();
 
-        // Always include current company if user is a manager or above
-        if (companyId > 0 && (user.IsInRole("Manager") || user.IsInRole("Director") || user.IsInRole("Owner")))
+        // Always include current company if user has manager-level access
+        var hasManagerAccess = await _grantService.HasGrantAsync(userId, "ManagerHomeAccess");
+        if (companyId > 0 && hasManagerAccess)
         {
             if (!companyIds.Contains(companyId))
             {

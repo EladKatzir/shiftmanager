@@ -85,12 +85,13 @@ public class AppDbContext : DbContext
     public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
     public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
 
-    // Grant System (107 built-in grants, 11 role templates)
+    // Grant System (107 built-in grants, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
     public DbSet<Grant> Grants => Set<Grant>();
     public DbSet<RoleTemplate> RoleTemplates => Set<RoleTemplate>();
     public DbSet<RoleTemplateGrant> RoleTemplateGrants => Set<RoleTemplateGrant>();
     public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
+    public DbSet<RoleTemplateJobTypeLabel> RoleTemplateJobTypeLabels => Set<RoleTemplateJobTypeLabel>();
 
     // Settings Hierarchy (Area → Molecule → Company cascade)
     public DbSet<AreaSettings> AreaSettings => Set<AreaSettings>();
@@ -135,11 +136,11 @@ public class AppDbContext : DbContext
     {
         var dateConverter = new ValueConverter<DateOnly, string>(
             v => v.ToString("yyyy-MM-dd"),
-            v => DateOnly.Parse(v));
+            v => SafeParseDateOnly(v));
 
         var timeConverter = new ValueConverter<TimeOnly, string>(
             v => v.ToString("HH:mm"),
-            v => TimeOnly.Parse(v));
+            v => SafeParseTimeOnly(v));
 
         modelBuilder.Entity<ShiftType>()
             .Property(p => p.Start).HasConversion(timeConverter);
@@ -235,19 +236,19 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<DailyNotificationPreference>()
             .HasIndex(p => new { p.CompanyId, p.UserId })
             .IsUnique()
-            .HasFilter("[IsActive] = 1"); // Unique only for active records
+            .HasFilter("IsActive = 1"); // Unique only for active records
 
         // OnDutyRoleSubscription - unique subscription per user per role type
         modelBuilder.Entity<OnDutyRoleSubscription>()
             .HasIndex(s => new { s.CompanyId, s.UserId, s.OnDutyTypeValue })
             .IsUnique()
-            .HasFilter("[IsActive] = 1");
+            .HasFilter("IsActive = 1");
 
         // Director role: Configure DirectorCompany mappings
         modelBuilder.Entity<DirectorCompany>()
             .HasIndex(dc => new { dc.UserId, dc.CompanyId })
             .IsUnique()
-            .HasFilter("[IsDeleted] = 0"); // Unique only for active records
+            .HasFilter("IsDeleted = 0"); // Unique only for active records
 
         modelBuilder.Entity<DirectorCompany>()
             .HasIndex(dc => dc.CompanyId); // For querying directors of a company
@@ -381,7 +382,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Chore>()
             .HasIndex(c => new { c.CompanyId, c.UserId, c.Date, c.CanceledAt })
             .IsUnique()
-            .HasFilter("[CanceledAt] IS NULL");
+            .HasFilter("CanceledAt IS NULL");
 
         // Configure relationships
         modelBuilder.Entity<Chore>()
@@ -429,8 +430,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ChoreType>(entity =>
         {
             entity.HasKey(e => e.Id);
+            // SECURITY FIX: Use WithMany(m => m.ChoreTypes) to prevent shadow FK MoleculeId1
             entity.HasOne(e => e.Molecule)
-                .WithMany()
+                .WithMany(m => m.ChoreTypes)
                 .HasForeignKey(e => e.MoleculeId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.CreatedByUser)
@@ -444,6 +446,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShiftCapacityOverride>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Date).HasConversion(dateConverter);
             entity.HasIndex(e => new { e.ShiftTypeId, e.MoleculeId, e.JobTypeId, e.Date }).IsUnique();
             entity.HasOne(e => e.ShiftType).WithMany().HasForeignKey(e => e.ShiftTypeId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.Molecule).WithMany().HasForeignKey(e => e.MoleculeId).OnDelete(DeleteBehavior.Restrict);
@@ -534,7 +537,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OnDuty>()
             .HasIndex(o => new { o.UserId, o.Date, o.Type, o.CanceledAt })
             .IsUnique()
-            .HasFilter("[CanceledAt] IS NULL");
+            .HasFilter("CanceledAt IS NULL");
 
         // Configure relationships
         modelBuilder.Entity<OnDuty>()
@@ -641,6 +644,22 @@ public class AppDbContext : DbContext
 
             // Vacation Approval Rules: Query filter for tenant scoping
             modelBuilder.Entity<VacationApprovalRule>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // SECURITY FIX: Add missing query filters for entities with CompanyId + IBelongsToCompany
+            modelBuilder.Entity<GriffinConfig>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<GriffinApiLog>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<EmailTemplateCustomization>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<OnDutyRoleSubscription>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<DailyNotificationPreference>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
@@ -774,7 +793,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<TeamCalendar>()
             .HasIndex(tc => new { tc.CompanyId, tc.OwnerId, tc.Name })
             .IsUnique()
-            .HasFilter("[IsDeleted] = 0"); // Unique name per owner when not deleted
+            .HasFilter("IsDeleted = 0"); // Unique name per owner when not deleted
 
         modelBuilder.Entity<TeamCalendar>()
             .HasIndex(tc => new { tc.CompanyId, tc.OwnerId, tc.CreatedAt });
@@ -924,7 +943,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShiftGrouping>()
             .HasIndex(sg => new { sg.MoleculeId, sg.JobTypeId, sg.Name })
             .IsUnique()
-            .HasFilter("[JobTypeId] IS NOT NULL");
+            .HasFilter("JobTypeId IS NOT NULL");
 
         // ShiftGroupingCompany: Composite primary key
         modelBuilder.Entity<ShiftGroupingCompany>()
@@ -1065,6 +1084,63 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RoleTemplateGrant>()
             .HasIndex(rtg => new { rtg.RoleTemplateId, rtg.GrantTypeId })
             .IsUnique();
+
+        // AppUser → RoleTemplate relationship
+        modelBuilder.Entity<AppUser>()
+            .HasOne(u => u.RoleTemplate)
+            .WithMany()
+            .HasForeignKey(u => u.RoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // UserJoinRequest → RoleTemplate relationship
+        modelBuilder.Entity<UserJoinRequest>()
+            .HasOne(jr => jr.RequestedRoleTemplate)
+            .WithMany()
+            .HasForeignKey(jr => jr.RequestedRoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // RoleTemplateJobTypeLabel relationships
+        modelBuilder.Entity<RoleTemplateJobTypeLabel>()
+            .HasOne(rtjl => rtjl.RoleTemplate)
+            .WithMany(rt => rt.JobTypeLabels)
+            .HasForeignKey(rtjl => rtjl.RoleTemplateId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RoleTemplateJobTypeLabel>()
+            .HasOne(rtjl => rtjl.JobType)
+            .WithMany()
+            .HasForeignKey(rtjl => rtjl.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // RoleTemplateJobTypeLabel composite index for lookup performance
+        modelBuilder.Entity<RoleTemplateJobTypeLabel>()
+            .HasIndex(rtjl => new { rtjl.RoleTemplateId, rtjl.JobTypeId })
+            .IsUnique();
+
+        // GriffinConfig → RoleTemplate relationship (DefaultProvisionedRoleTemplateId)
+        modelBuilder.Entity<GriffinConfig>()
+            .HasOne<RoleTemplate>()
+            .WithMany()
+            .HasForeignKey(gc => gc.DefaultProvisionedRoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // RoleAssignmentAudit → RoleTemplate relationships (From/To audit trail)
+        modelBuilder.Entity<RoleAssignmentAudit>()
+            .HasOne<RoleTemplate>()
+            .WithMany()
+            .HasForeignKey(ra => ra.FromRoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<RoleAssignmentAudit>()
+            .HasOne<RoleTemplate>()
+            .WithMany()
+            .HasForeignKey(ra => ra.ToRoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         // UserRoleAssignment relationships
         modelBuilder.Entity<UserRoleAssignment>()
@@ -1454,5 +1530,23 @@ public class AppDbContext : DbContext
             .HasIndex(r => new { r.CompanyId, r.JobTypeId, r.Priority });
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    /// <summary>
+    /// Safe DateOnly parser for EF value converter. Returns DateOnly.MinValue on invalid input
+    /// instead of throwing FormatException (which would crash on corrupted DB data).
+    /// </summary>
+    private static DateOnly SafeParseDateOnly(string value)
+    {
+        return DateOnly.TryParse(value, out var d) ? d : DateOnly.MinValue;
+    }
+
+    /// <summary>
+    /// Safe TimeOnly parser for EF value converter. Returns TimeOnly.MinValue on invalid input
+    /// instead of throwing FormatException (which would crash on corrupted DB data).
+    /// </summary>
+    private static TimeOnly SafeParseTimeOnly(string value)
+    {
+        return TimeOnly.TryParse(value, out var t) ? t : TimeOnly.MinValue;
     }
 }

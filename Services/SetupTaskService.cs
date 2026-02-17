@@ -7,6 +7,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — setup tasks are cross-company configuration;
+// queries scoped by explicit moleculeId/companyId parameters; called only from Grant:SystemConfiguration-protected pages
 public class SetupTaskService : ISetupTaskService
 {
     private readonly AppDbContext _db;

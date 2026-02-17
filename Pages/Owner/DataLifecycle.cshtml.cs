@@ -142,7 +142,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating preview");
-            Error = $"Failed to generate preview: {ex.Message}";
+            Error = "Failed to generate preview. Please try again.";
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -178,7 +178,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating archive");
-            Error = $"Failed to create archive: {ex.Message}";
+            Error = "Failed to create archive. Please try again.";
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -217,7 +217,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading CSV archive");
-            Error = $"Failed to download archive: {ex.Message}";
+            Error = "Failed to download archive. Please try again.";
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -256,7 +256,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading NDJSON archive");
-            Error = $"Failed to download archive: {ex.Message}";
+            Error = "Failed to download archive. Please try again.";
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -303,7 +303,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during purge");
-            Error = $"Purge failed: {ex.Message}";
+            Error = "Purge failed. Please try again.";
             ActiveTab = "purge";
             await OnGetAsync();
             return Page();
@@ -371,7 +371,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating archive");
-            Error = $"Failed to validate archive: {ex.Message}";
+            Error = "Failed to validate archive. Please try again.";
             ActiveTab = "import";
             await OnGetAsync();
             return Page();
@@ -441,7 +441,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during import");
-            Error = $"Import failed: {ex.Message}";
+            Error = "Import failed. Please try again.";
             ActiveTab = "import";
             await OnGetAsync();
             return Page();

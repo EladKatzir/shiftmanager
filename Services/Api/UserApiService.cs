@@ -11,6 +11,8 @@ namespace ShiftManager.Services.Api;
 /// Wrapper service for User API operations.
 /// Isolates API logic from existing UserService to maintain zero regression.
 /// </summary>
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — used only for cross-company email uniqueness check;
+// called from authorized API endpoints; no sensitive data returned
 public class UserApiService
 {
     private readonly AppDbContext _context;
@@ -180,20 +182,10 @@ public class UserApiService
 
     /// <summary>
     /// Maps UserRole enum to the corresponding RoleTemplate key.
+    /// Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
     /// </summary>
     private static string MapUserRoleToRoleTemplateKey(UserRole role)
-    {
-        return role switch
-        {
-            UserRole.Owner => "Owner",
-            UserRole.Director => "BRDirector",
-            UserRole.Manager => "MoleculeAdmin",
-            UserRole.Employee => "Employee",
-            UserRole.Trainee => "Employee",
-            UserRole.Assigner => "Assigner",
-            _ => "Employee"
-        };
-    }
+        => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role);
 
     /// <summary>
     /// Updates an existing user via API.

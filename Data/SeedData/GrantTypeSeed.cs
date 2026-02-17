@@ -5,6 +5,8 @@ namespace ShiftManager.Data.SeedData;
 
 public static class GrantTypeSeed
 {
+    // WARNING: GrantType IDs are assigned sequentially via id++. NEVER insert new entries in the middle —
+    // always append at the end. RoleTemplateSeed references grants by numeric ID.
     public static List<GrantType> GetGrantTypes()
     {
         var grants = new List<GrantType>();
@@ -259,6 +261,15 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ManageJoinRequests", NameKey = "Grant_ManageJoinRequests", DescriptionKey = "Grant_ManageJoinRequests_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ViewCompanyUsers", NameKey = "Grant_ViewCompanyUsers", DescriptionKey = "Grant_ViewCompanyUsers_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "EditCompanyUsers", NameKey = "Grant_EditCompanyUsers", DescriptionKey = "Grant_EditCompanyUsers_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+
+        // ============================================
+        // DYNAMIC ROLE TEMPLATE GRANTS (Category.System / Category.Duty)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageAnnouncements", NameKey = "Grant_ManageAnnouncements", DescriptionKey = "Grant_ManageAnnouncements_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewSystemAlerts", NameKey = "Grant_ViewSystemAlerts", DescriptionKey = "Grant_ViewSystemAlerts_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewAllAreas", NameKey = "Grant_ViewAllAreas", DescriptionKey = "Grant_ViewAllAreas_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ManageOnDuty", NameKey = "Grant_ManageOnDuty", DescriptionKey = "Grant_ManageOnDuty_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
         return grants;
     }

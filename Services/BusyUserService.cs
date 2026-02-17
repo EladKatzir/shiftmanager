@@ -16,6 +16,17 @@ public interface IBusyUserService
         TimeOnly start,
         TimeOnly end,
         int? excludeShiftTypeId = null);
+
+    /// <summary>
+    /// Get busy status for all users across a date range in a single batch query.
+    /// Returns a dictionary keyed by date, each containing the per-user busy status.
+    /// This avoids N+1 queries when checking multiple dates (e.g., month view).
+    /// </summary>
+    Task<Dictionary<DateOnly, Dictionary<int, BusyStatus>>> GetBusyUsersByDateRangeAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        TimeOnly start,
+        TimeOnly end);
 }
 
 public class BusyStatus
@@ -156,6 +167,142 @@ public class BusyUserService : IBusyUserService
             {
                 result[userId] = status;
             }
+        }
+
+        return result;
+    }
+
+    public async Task<Dictionary<DateOnly, Dictionary<int, BusyStatus>>> GetBusyUsersByDateRangeAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        TimeOnly start,
+        TimeOnly end)
+    {
+        var companyId = _companyContext.GetCompanyIdOrThrow();
+        var result = new Dictionary<DateOnly, Dictionary<int, BusyStatus>>();
+
+        // Guard against excessive date ranges to prevent memory exhaustion
+        var rangeDays = endDate.DayNumber - startDate.DayNumber;
+        if (rangeDays > 366)
+            throw new ArgumentException("Date range cannot exceed 366 days");
+
+        // Initialize empty dictionaries for each date in the range
+        var allDates = new List<DateOnly>();
+        for (var d = startDate; d <= endDate; d = d.AddDays(1))
+        {
+            allDates.Add(d);
+            result[d] = new Dictionary<int, BusyStatus>();
+        }
+
+        if (allDates.Count == 0)
+            return result;
+
+        // Get all active user IDs for this company (single query)
+        var users = await _db.Users
+            .Where(u => u.IsActive && u.CompanyId == companyId)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        var userSet = new HashSet<int>(users);
+
+        // --- Vacations: single query for the entire range ---
+        // Widen by 1 day on each side to account for time-based vacation boundaries
+        var vacRangeStart = startDate.AddDays(-1);
+        var vacRangeEnd = endDate.AddDays(1);
+
+        var potentialVacations = await _db.TimeOffRequests
+            .Where(r => r.Status == RequestStatus.Approved
+                     && r.CompanyId == companyId
+                     && r.StartDate <= vacRangeEnd
+                     && r.EndDate >= vacRangeStart)
+            .ToListAsync();
+
+        // Pre-compute actual date/time boundaries for each vacation
+        var vacationRanges = potentialVacations.Select(r => new
+        {
+            r.UserId,
+            ActualStart = r.GetActualStartDateTime(),
+            ActualEnd = r.GetActualEndDateTime()
+        }).ToList();
+
+        // --- Shifts: single query for the entire date range ---
+        var shiftData = await (from a in _db.ShiftAssignments
+                               join si in _db.ShiftInstances on a.ShiftInstanceId equals si.Id
+                               join st in _db.ShiftTypes on si.ShiftTypeId equals st.Id
+                               where si.CompanyId == companyId &&
+                                     si.WorkDate >= startDate &&
+                                     si.WorkDate <= endDate &&
+                                     a.UserId != null &&
+                                     st.Key != ShiftType.KEY_OFFLINE &&
+                                     st.Start < end && start < st.End
+                               select new { Date = si.WorkDate, UserId = a.UserId!.Value })
+                               .ToListAsync();
+
+        // Group shift users by date
+        var shiftUsersByDate = shiftData
+            .GroupBy(x => x.Date)
+            .ToDictionary(g => g.Key, g => new HashSet<int>(g.Select(x => x.UserId)));
+
+        // --- Chores: single query for the entire date range ---
+        var choreData = await _db.Chores
+            .Where(c => c.CompanyId == companyId &&
+                        c.Date >= startDate &&
+                        c.Date <= endDate &&
+                        c.CanceledAt == null)
+            .Select(c => new { c.Date, c.UserId })
+            .ToListAsync();
+
+        // Group chore users by date
+        var choreUsersByDate = choreData
+            .GroupBy(x => x.Date)
+            .ToDictionary(g => g.Key, g => new HashSet<int>(g.Select(x => x.UserId)));
+
+        // --- Build per-date status dictionaries ---
+        foreach (var date in allDates)
+        {
+            var checkDateTime = date.ToDateTime(start);
+            var checkEndDateTime = date.ToDateTime(end);
+
+            // Find users on vacation for this specific date
+            var vacationUsers = new HashSet<int>(
+                vacationRanges
+                    .Where(v => checkDateTime < v.ActualEnd && checkEndDateTime > v.ActualStart)
+                    .Select(v => v.UserId));
+
+            shiftUsersByDate.TryGetValue(date, out var shiftUsers);
+            choreUsersByDate.TryGetValue(date, out var choreUsers);
+
+            var dateResult = new Dictionary<int, BusyStatus>();
+
+            foreach (var userId in users)
+            {
+                var status = new BusyStatus();
+
+                if (vacationUsers.Contains(userId))
+                {
+                    status.HasVacation = true;
+                    status.Reasons.Add("vacation");
+                }
+
+                if (shiftUsers != null && shiftUsers.Contains(userId))
+                {
+                    status.HasShift = true;
+                    status.Reasons.Add("shift");
+                }
+
+                if (choreUsers != null && choreUsers.Contains(userId))
+                {
+                    status.HasChore = true;
+                    status.Reasons.Add("chore");
+                }
+
+                if (status.IsBusy)
+                {
+                    dateResult[userId] = status;
+                }
+            }
+
+            result[date] = dateResult;
         }
 
         return result;

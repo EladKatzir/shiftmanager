@@ -845,6 +845,8 @@ public class ImportService : IImportService
         }
     }
 
+    // NOTE: OnDuty is intentionally NOT company-scoped (global, supports cross-company assignments).
+    // No CompanyId is set on the entity — this is by design per the OnDuty model.
     private async Task ImportOnDutyAsync(
         JsonElement dataElement,
         Dictionary<string, int> userLookup,

@@ -29,8 +29,11 @@ public class OwnerCompanySelectorService : IOwnerCompanySelectorService
 
     public bool IsOwner()
     {
+        // Identity check via claims — no database I/O needed.
+        // This checks organizational identity (who is this user?), not authorization (can they do X?).
+        // Per design doc Section 11, identity checks stay on AppUser.Role / claims.
         var user = _httpContextAccessor.HttpContext?.User;
-        return user?.IsInRole(nameof(UserRole.Owner)) ?? false;
+        return user?.IsInRole("Owner") == true;
     }
 
     public int? GetSelectedCompanyId()

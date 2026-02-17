@@ -19,8 +19,9 @@
     <script>
         // Phase 8.5: Removed accessDenied=true parameter to prevent cascade redirects
         // Automatically redirect after 2 seconds
+        // SECURITY FIX: Use Json.Serialize to properly escape for JS context (prevents XSS via crafted returnUrl paths)
         setTimeout(() => {
-            window.location.href = '@Model.ReturnUrl';
+            window.location.href = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ReturnUrl));
         }, 2000);
     </script>
 </head>

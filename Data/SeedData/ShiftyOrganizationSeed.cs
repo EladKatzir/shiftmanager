@@ -21,6 +21,10 @@ public static class ShiftyOrganizationSeed
             return;
         }
 
+        using var transaction = await db.Database.BeginTransactionAsync();
+        try
+        {
+
         // ============================================================
         // PROJECT
         // ============================================================
@@ -141,6 +145,20 @@ public static class ShiftyOrganizationSeed
         // --- System Company (for admin users) ---
         var systemAdmins = new Company { Name = "SystemAdmins", DisplayName = "מנהלי מערכת", MoleculeId = system.Id };
         db.Companies.Add(systemAdmins);
+
+        // --- HQ Companies (for Director auto-assignment per molecule) ---
+        var hqMolecules = new[] { oren, ella, harava, shaked, gefen, shikma, noc, shiklut };
+        foreach (var mol in hqMolecules)
+        {
+            db.Companies.Add(new Company
+            {
+                Name = "HQ",
+                DisplayName = "כלל צוותי",
+                Slug = $"hq-{mol.Name.ToLowerInvariant()}",
+                MoleculeId = mol.Id,
+                IsHeadquarters = true
+            });
+        }
 
         await db.SaveChangesAsync();
 
@@ -297,5 +315,13 @@ public static class ShiftyOrganizationSeed
         };
         db.AreaSettings.Add(areaSettings);
         await db.SaveChangesAsync();
+
+        await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }

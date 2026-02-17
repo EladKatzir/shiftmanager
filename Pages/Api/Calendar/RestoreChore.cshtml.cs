@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Api.Calendar;
 
-[Authorize(Policy = "CanEditChores")]
+[Authorize(Policy = "Grant:AssignChores")]
 [IgnoreAntiforgeryToken]
 public class RestoreChoreModel : PageModel
 {

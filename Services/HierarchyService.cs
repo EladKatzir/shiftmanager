@@ -5,6 +5,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — hierarchy lookup by explicit companyId;
+// used to resolve company-to-molecule-to-area chain; called only from authorized service layer
 public class HierarchyService : IHierarchyService
 {
     private readonly AppDbContext _db;

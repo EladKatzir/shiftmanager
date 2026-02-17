@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 
 namespace ShiftManager.Pages.Auth;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — anonymous auth flow before tenant context established;
+// scoped by explicit email parameter; user lookup for authentication only
 [AllowAnonymous]
 public class LoginModel : LocalizedPageModel
 {
@@ -174,6 +176,8 @@ public class LoginModel : LocalizedPageModel
             // SECURITY-AUDITED: SAFE — login must search across all companies to authenticate users
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow login across all companies
+                .Include(u => u.RoleTemplate)
+                .Include(u => u.JobType)
                 .FirstOrDefaultAsync(u => u.Email == Email && u.IsActive);
 
             // ✅ SECURITY FIX: Account lockout protection
@@ -243,6 +247,22 @@ public class LoginModel : LocalizedPageModel
             _rateLimiting.Reset(ipRateLimitKey);
             _rateLimiting.Reset($"login:account:{normalizedEmail}");
 
+            // Login-time backfill safety net: if user has no RoleTemplate, derive from Role + JobType
+            if (user.RoleTemplateId == null)
+            {
+                var templateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
+                var template = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
+                if (template != null)
+                {
+                    user.RoleTemplateId = template.Id;
+                    user.RoleTemplate = template;
+                    if (template.DerivedUserRole.HasValue)
+                        user.Role = template.DerivedUserRole.Value;
+                    await _db.SaveChangesAsync();
+                    _logger.LogInformation("Backfilled RoleTemplateId={TemplateId} for user {UserId} at login", template.Id, user.Id);
+                }
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -250,6 +270,12 @@ public class LoginModel : LocalizedPageModel
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim("CompanyId", user.CompanyId.ToString())
             };
+
+            // RoleTemplateKey claim for display and grant resolution
+            if (user.RoleTemplate != null)
+            {
+                claims.Add(new Claim("RoleTemplateKey", user.RoleTemplate.Key));
+            }
 
             // v3.0 Organizational Hierarchy claims
             var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
@@ -262,7 +288,10 @@ public class LoginModel : LocalizedPageModel
                 claims.Add(new Claim("IsTech", hierarchyContext.IsTech.ToString()));
 
                 if (hierarchyContext.JobType != null)
+                {
                     claims.Add(new Claim("JobTypeId", hierarchyContext.JobType.Id.ToString()));
+                    claims.Add(new Claim("JobTypeName", hierarchyContext.JobType.Name));
+                }
 
                 if (hierarchyContext.Path.Department != null)
                     claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
@@ -436,4 +465,11 @@ public class LoginModel : LocalizedPageModel
         // Redirect to Griffin
         return Redirect(authUrl);
     }
+
+    /// <summary>
+    /// Maps legacy UserRole + JobType to RoleTemplate key for login-time backfill.
+    /// Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
+    /// </summary>
+    private static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName)
+        => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role, jobTypeName);
 }

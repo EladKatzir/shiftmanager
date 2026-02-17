@@ -22,6 +22,12 @@ public class ScheduleExportModel : PageModel
         if (request == null)
             return BadRequest("Invalid export request");
 
+        // Validate date range to prevent excessive resource consumption
+        if ((request.EndDate - request.StartDate).Days > 365)
+        {
+            return new JsonResult(new { success = false, message = "ScheduleExport_DateRangeExceeded" }) { StatusCode = 400 };
+        }
+
         var data = await _exportService.CollectExportDataAsync(request);
 
         byte[] fileBytes;

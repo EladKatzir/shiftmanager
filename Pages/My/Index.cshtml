@@ -649,12 +649,12 @@ function openDrawer(itemData) {
     title.textContent = itemData.title;
 
     let html = '';
-    html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${localizer.date}</div><div class="drawer-detail-value">${itemData.date}${itemData.endDate ? ' - ' + itemData.endDate : ''}</div></div>`;
+    html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${escapeHtml(localizer.date)}</div><div class="drawer-detail-value">${escapeHtml(itemData.date)}${itemData.endDate ? ' - ' + escapeHtml(itemData.endDate) : ''}</div></div>`;
     if (itemData.timeRange) {
-        html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${localizer.time}</div><div class="drawer-detail-value">${itemData.timeRange}</div></div>`;
+        html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${escapeHtml(localizer.time)}</div><div class="drawer-detail-value">${escapeHtml(itemData.timeRange)}</div></div>`;
     }
     if (itemData.metadata) {
-        html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${localizer.metadata}</div><div class="drawer-detail-value">${itemData.metadata}</div></div>`;
+        html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${escapeHtml(localizer.metadata)}</div><div class="drawer-detail-value">${escapeHtml(itemData.metadata)}</div></div>`;
     }
     if (itemData.conflict) {
         html += `<div class="drawer-detail-row"><div class="drawer-detail-label">${localizer.conflict}</div><div class="drawer-detail-value" style="color: var(--warning);">⚠ ${localizer.conflict}</div></div>`;

@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Calendar;
 
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class TableModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -162,12 +162,11 @@ public class TableModel : PageModel
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
 
-        // Load busy user status per date (not aggregated)
-        // This will show if users are busy on each specific date
-        foreach (var date in Dates)
+        // Load busy user status for all dates in a single batch query (avoids N+1)
+        if (Dates.Count > 0)
         {
-            var busyForDate = await _busyUserService.GetBusyUsersAsync(date, TimeOnly.MinValue, TimeOnly.MaxValue);
-            BusyUsersByDate[date] = busyForDate;
+            BusyUsersByDate = await _busyUserService.GetBusyUsersByDateRangeAsync(
+                Dates.First(), Dates.Last(), TimeOnly.MinValue, TimeOnly.MaxValue);
         }
 
         // instances already loaded above - Load all assignments for these instances (including trainee information)
@@ -239,30 +238,42 @@ public class TableModel : PageModel
                     return new JsonResult(new { success = false, error = "Shift type not found" });
                 }
 
-                // Create new instance
-                instance = new ShiftInstance
+                // Transaction: create instance + assignment slots atomically
+                using var transaction = await _db.Database.BeginTransactionAsync();
+                try
                 {
-                    CompanyId = companyId,
-                    ShiftTypeId = request.ShiftTypeId,
-                    WorkDate = request.Date,
-                    StaffingRequired = request.StaffingRequired,
-                    Concurrency = 0
-                };
-                _db.ShiftInstances.Add(instance);
-                await _db.SaveChangesAsync();
-
-                // Create empty assignment slots
-                for (int i = 0; i < request.StaffingRequired; i++)
-                {
-                    var assignment = new ShiftAssignment
+                    // Create new instance
+                    instance = new ShiftInstance
                     {
                         CompanyId = companyId,
-                        ShiftInstanceId = instance.Id,
-                        UserId = null // Unassigned slot
+                        ShiftTypeId = request.ShiftTypeId,
+                        WorkDate = request.Date,
+                        StaffingRequired = request.StaffingRequired,
+                        Concurrency = 0
                     };
-                    _db.ShiftAssignments.Add(assignment);
+                    _db.ShiftInstances.Add(instance);
+                    await _db.SaveChangesAsync();
+
+                    // Create empty assignment slots
+                    for (int i = 0; i < request.StaffingRequired; i++)
+                    {
+                        var assignment = new ShiftAssignment
+                        {
+                            CompanyId = companyId,
+                            ShiftInstanceId = instance.Id,
+                            UserId = null // Unassigned slot
+                        };
+                        _db.ShiftAssignments.Add(assignment);
+                    }
+                    await _db.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
                 }
-                await _db.SaveChangesAsync();
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
             }
             else
             {
@@ -324,37 +335,49 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Shift type not found" });
             }
 
-            // Create shift instance with staffing requirement
-            var instance = new ShiftInstance
+            // Transaction: create instance + assignment slots atomically
+            using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                CompanyId = companyId,
-                ShiftTypeId = request.ShiftTypeId,
-                WorkDate = request.Date,
-                StaffingRequired = request.StaffingRequired,
-                Concurrency = 0
-            };
-            _db.ShiftInstances.Add(instance);
-            await _db.SaveChangesAsync();
-
-            // Create empty assignment slots
-            for (int i = 0; i < request.StaffingRequired; i++)
-            {
-                var assignment = new ShiftAssignment
+                // Create shift instance with staffing requirement
+                var instance = new ShiftInstance
                 {
                     CompanyId = companyId,
-                    ShiftInstanceId = instance.Id,
-                    UserId = null // Unassigned slot
+                    ShiftTypeId = request.ShiftTypeId,
+                    WorkDate = request.Date,
+                    StaffingRequired = request.StaffingRequired,
+                    Concurrency = 0
                 };
-                _db.ShiftAssignments.Add(assignment);
-            }
-            await _db.SaveChangesAsync();
+                _db.ShiftInstances.Add(instance);
+                await _db.SaveChangesAsync();
 
-            return new JsonResult(new
+                // Create empty assignment slots
+                for (int i = 0; i < request.StaffingRequired; i++)
+                {
+                    var assignment = new ShiftAssignment
+                    {
+                        CompanyId = companyId,
+                        ShiftInstanceId = instance.Id,
+                        UserId = null // Unassigned slot
+                    };
+                    _db.ShiftAssignments.Add(assignment);
+                }
+                await _db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return new JsonResult(new
+                {
+                    success = true,
+                    instanceId = instance.Id,
+                    staffingRequired = instance.StaffingRequired
+                });
+            }
+            catch
             {
-                success = true,
-                instanceId = instance.Id,
-                staffingRequired = instance.StaffingRequired
-            });
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
         catch (Exception ex)
         {
@@ -1128,22 +1151,23 @@ public class TableModel : PageModel
                 })
                 .ToListAsync();
 
-            // Check busy status across the entire date range
+            // Check busy status across the entire date range in a single batch query (avoids N+1)
             var employeeStatusMap = new Dictionary<int, (bool hasVacation, bool hasShift, bool hasChore)>();
 
-            for (var date = start; date <= end; date = date.AddDays(1))
-            {
-                var busyInfo = await _busyUserService.GetBusyUsersAsync(date, TimeOnly.MinValue, TimeOnly.MaxValue);
+            var busyByDate = await _busyUserService.GetBusyUsersByDateRangeAsync(
+                start, end, TimeOnly.MinValue, TimeOnly.MaxValue);
 
+            foreach (var (date, busyInfo) in busyByDate)
+            {
                 foreach (var emp in employees)
                 {
-                    if (busyInfo.ContainsKey(emp.Id))
+                    if (busyInfo.TryGetValue(emp.Id, out var busyStatus))
                     {
                         var status = employeeStatusMap.GetValueOrDefault(emp.Id);
                         employeeStatusMap[emp.Id] = (
-                            status.hasVacation || busyInfo[emp.Id].HasVacation,
-                            status.hasShift || busyInfo[emp.Id].HasShift,
-                            status.hasChore || busyInfo[emp.Id].HasChore
+                            status.hasVacation || busyStatus.HasVacation,
+                            status.hasShift || busyStatus.HasShift,
+                            status.hasChore || busyStatus.HasChore
                         );
                     }
                 }

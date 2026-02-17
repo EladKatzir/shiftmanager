@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,8 @@ public class TelemetryModel : PageModel
     private readonly ILogger<TelemetryModel> _logger;
 
     // Rate limiting: max requests per minute per IP
-    private static readonly Dictionary<string, Queue<DateTime>> _rateLimitTracker = new();
+    // ConcurrentDictionary for thread-safe key access; lock still needed for Queue operations
+    private static readonly ConcurrentDictionary<string, Queue<DateTime>> _rateLimitTracker = new();
     private static readonly object _rateLimitLock = new();
     private const int MaxRequestsPerMinute = 30;
     private const int MaxTrackedIps = 1000;
@@ -322,16 +324,11 @@ public class TelemetryModel : PageModel
                     .Select(kvp => kvp.Key)
                     .ToList();
                 foreach (var key in staleKeys)
-                    _rateLimitTracker.Remove(key);
+                    _rateLimitTracker.TryRemove(key, out _);
                 _lastCleanup = now;
             }
 
-            if (!_rateLimitTracker.ContainsKey(ip))
-            {
-                _rateLimitTracker[ip] = new Queue<DateTime>();
-            }
-
-            var queue = _rateLimitTracker[ip];
+            var queue = _rateLimitTracker.GetOrAdd(ip, _ => new Queue<DateTime>());
 
             // Remove old entries (older than 1 minute)
             while (queue.Count > 0 && (now - queue.Peek()).TotalMinutes > 1)

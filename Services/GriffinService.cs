@@ -11,6 +11,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — SSO auth flow requires cross-company user search
+// before tenant context is established; scoped by explicit email/companyId parameters
 public class GriffinService : IGriffinService
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -62,6 +64,9 @@ public class GriffinService : IGriffinService
             using var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
+            // SECURITY NOTE: Token passed as query parameter per Griffin API protocol.
+            // Risk: token may appear in Griffin server access logs. Acceptable for air-gapped deployment.
+            // If Griffin API supports it in the future, prefer passing token via Authorization header.
             var url = $"{griffinBaseUrl.TrimEnd('/')}/authorization/validate?token={Uri.EscapeDataString(token)}";
 
             _logger.LogDebug("Validating Griffin token (masked: ***)");
@@ -95,6 +100,8 @@ public class GriffinService : IGriffinService
             using var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
+            // SECURITY NOTE: Token passed as query parameter per Griffin API protocol.
+            // Risk: token may appear in Griffin server access logs. Acceptable for air-gapped deployment.
             var url = $"{griffinBaseUrl.TrimEnd('/')}/authorization/getClaims?token={Uri.EscapeDataString(token)}";
 
             _logger.LogDebug("Fetching Griffin claims (token masked: ***)");
@@ -155,10 +162,10 @@ public class GriffinService : IGriffinService
             return null;
         }
 
-        // Cache with 8-hour TTL
+        // Cache with 2-hour TTL (reduced from 8h for security — limits stale credential window)
         _cache.Set(cacheKey, claims, new MemoryCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(8),
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2),
             Priority = CacheItemPriority.Normal
         });
 
@@ -186,6 +193,8 @@ public class GriffinService : IGriffinService
         // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email/UPN
         var user = await _dbContext.Users
             .IgnoreQueryFilters() // Search across all companies
+            .Include(u => u.RoleTemplate)
+            .Include(u => u.JobType)
             .FirstOrDefaultAsync(u => u.Email.ToLower() == griffinClaims.UPN.ToLower() && u.IsActive);
 
         // Handle user provisioning
@@ -207,6 +216,22 @@ public class GriffinService : IGriffinService
             }
         }
 
+        // Login-time backfill safety net: if user has no RoleTemplate, derive from Role + JobType
+        if (user.RoleTemplateId == null)
+        {
+            var templateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
+            var template = await _dbContext.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
+            if (template != null)
+            {
+                user.RoleTemplateId = template.Id;
+                user.RoleTemplate = template;
+                if (template.DerivedUserRole.HasValue)
+                    user.Role = template.DerivedUserRole.Value;
+                await _dbContext.SaveChangesAsync();
+                _logger.LogInformation("Backfilled RoleTemplateId={TemplateId} for Griffin user {UserId}", template.Id, user.Id);
+            }
+        }
+
         // Build ClaimsPrincipal
         var claims = new List<Claim>
         {
@@ -225,6 +250,12 @@ public class GriffinService : IGriffinService
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o"))
         };
 
+        // RoleTemplateKey claim for display and grant resolution
+        if (user.RoleTemplate != null)
+        {
+            claims.Add(new Claim("RoleTemplateKey", user.RoleTemplate.Key));
+        }
+
         // v3.0 Organizational Hierarchy claims
         var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
         if (hierarchyContext != null)
@@ -236,7 +267,10 @@ public class GriffinService : IGriffinService
             claims.Add(new Claim("IsTech", hierarchyContext.IsTech.ToString()));
 
             if (hierarchyContext.JobType != null)
+            {
                 claims.Add(new Claim("JobTypeId", hierarchyContext.JobType.Id.ToString()));
+                claims.Add(new Claim("JobTypeName", hierarchyContext.JobType.Name));
+            }
 
             if (hierarchyContext.Path.Department != null)
                 claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
@@ -260,15 +294,26 @@ public class GriffinService : IGriffinService
                 Email = griffinClaims.UPN,
                 DisplayName = griffinClaims.DisplayName,
                 Role = config.DefaultProvisionedRole,
+                RoleTemplateId = config.DefaultProvisionedRoleTemplateId,
                 IsActive = true,
                 PasswordHash = Array.Empty<byte>(), // No password for Griffin users
                 PasswordSalt = Array.Empty<byte>()
             };
 
+            // Sync Role from RoleTemplate if available
+            if (config.DefaultProvisionedRoleTemplateId.HasValue)
+            {
+                var template = await _dbContext.RoleTemplates.FindAsync(config.DefaultProvisionedRoleTemplateId.Value);
+                if (template?.DerivedUserRole.HasValue == true)
+                {
+                    user.Role = template.DerivedUserRole.Value;
+                }
+            }
+
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            _logger.LogInformation("Auto-provisioned Griffin user: {Email} with role {Role}", user.Email, user.Role);
+            _logger.LogInformation("Auto-provisioned Griffin user: {Email} with role {Role}, template {TemplateId}", user.Email, user.Role, user.RoleTemplateId);
             _logger.LogWarning("Griffin auto-provisioned user {Email} has no molecule/hierarchy placement. " +
                 "Owner or Manager must assign placement before user can access operational features (D-06).",
                 user.Email);
@@ -289,6 +334,13 @@ public class GriffinService : IGriffinService
             return null;
         }
     }
+
+    /// <summary>
+    /// Maps legacy UserRole + JobType to RoleTemplate key for login-time backfill.
+    /// Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
+    /// </summary>
+    private static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName)
+        => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role, jobTypeName);
 
     private string ComputeSHA256Hash(string input)
     {

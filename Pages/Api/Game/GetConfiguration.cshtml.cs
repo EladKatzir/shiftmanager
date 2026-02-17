@@ -27,8 +27,8 @@ public class GetConfigurationModel : PageModel
     {
         try
         {
-            // Get company ID from authenticated user, or use first company if not authenticated
-            int companyId = 1; // Default to first company
+            // Get company ID from authenticated user
+            int? companyId = null;
 
             if (User.Identity?.IsAuthenticated == true)
             {
@@ -39,9 +39,34 @@ public class GetConfigurationModel : PageModel
                 }
             }
 
-            // Load configuration from database
+            // For anonymous users, return sensible defaults without loading from any company's data.
+            // Game config is cosmetic (scoring, grid size, milestones) so defaults are safe.
+            if (!companyId.HasValue)
+            {
+                return new JsonResult(new
+                {
+                    enabled = true,
+                    gridSize = 6,
+                    scoring = new
+                    {
+                        points3Match = 40,
+                        points4Match = 100,
+                        points5PlusMatch = 200
+                    },
+                    megaCombo = new
+                    {
+                        multiplier = 2,
+                        min3MatchLines = 0,
+                        min4MatchLines = 2,
+                        min5MatchLines = 0
+                    },
+                    milestones = new[] { 1000, 2500, 5000, 7500, 10000, 15000, 20000 }
+                });
+            }
+
+            // Load configuration from database for authenticated user's company
             var configs = await _db.Configs
-                .Where(c => c.CompanyId == companyId)
+                .Where(c => c.CompanyId == companyId.Value)
                 .Where(c => c.Key.StartsWith("Game"))
                 .ToDictionaryAsync(c => c.Key, c => c.Value);
 

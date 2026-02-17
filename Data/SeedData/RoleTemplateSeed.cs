@@ -17,7 +17,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_Employee_Desc",
                 ScopeLevel = RoleScopeLevel.Implicit,
                 IsSystem = true,
-                SortOrder = 100
+                SortOrder = 100,
+                DerivedUserRole = UserRole.Employee,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -27,7 +30,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_BRDirector_Desc",
                 ScopeLevel = RoleScopeLevel.Company,
                 IsSystem = true,
-                SortOrder = 10
+                SortOrder = 10,
+                DerivedUserRole = UserRole.Manager,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -37,7 +43,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_AlhutLead_Desc",
                 ScopeLevel = RoleScopeLevel.CompanyJobType,
                 IsSystem = true,
-                SortOrder = 20
+                SortOrder = 20,
+                DerivedUserRole = UserRole.Manager,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -47,7 +56,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_TextLead_Desc",
                 ScopeLevel = RoleScopeLevel.CompanyJobType,
                 IsSystem = true,
-                SortOrder = 21
+                SortOrder = 21,
+                DerivedUserRole = UserRole.Manager,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -57,7 +69,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_AlhutDirector_Desc",
                 ScopeLevel = RoleScopeLevel.MoleculeJobType,
                 IsSystem = true,
-                SortOrder = 5
+                SortOrder = 5,
+                DerivedUserRole = UserRole.Director,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -67,7 +82,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_TextDirector_Desc",
                 ScopeLevel = RoleScopeLevel.MoleculeJobType,
                 IsSystem = true,
-                SortOrder = 6
+                SortOrder = 6,
+                DerivedUserRole = UserRole.Director,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -77,7 +95,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_MoleculeAdmin_Desc",
                 ScopeLevel = RoleScopeLevel.Molecule,
                 IsSystem = true,
-                SortOrder = 3
+                SortOrder = 3,
+                DerivedUserRole = UserRole.Manager,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -87,7 +108,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_Assigner_Desc",
                 ScopeLevel = RoleScopeLevel.Molecule,
                 IsSystem = true,
-                SortOrder = 30
+                SortOrder = 30,
+                DerivedUserRole = UserRole.Assigner,
+                IsVisibleInSignup = false,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -97,7 +121,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_DepartmentLead_Desc",
                 ScopeLevel = RoleScopeLevel.Department,
                 IsSystem = true,
-                SortOrder = 25
+                SortOrder = 25,
+                DerivedUserRole = UserRole.Manager,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -107,7 +134,10 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_AreaAdmin_Desc",
                 ScopeLevel = RoleScopeLevel.Area,
                 IsSystem = true,
-                SortOrder = 2
+                SortOrder = 2,
+                DerivedUserRole = UserRole.AreaAdmin,
+                IsVisibleInSignup = true,
+                CanBeAssignedByDefault = true
             },
             new RoleTemplate
             {
@@ -117,7 +147,23 @@ public static class RoleTemplateSeed
                 DescriptionKey = "Role_Owner_Desc",
                 ScopeLevel = RoleScopeLevel.Project,
                 IsSystem = true,
-                SortOrder = 1
+                SortOrder = 1,
+                DerivedUserRole = UserRole.Owner,
+                IsVisibleInSignup = false,
+                CanBeAssignedByDefault = true
+            },
+            new RoleTemplate
+            {
+                Id = 12,
+                Key = "Trainee",
+                NameKey = "Role_Trainee",
+                DescriptionKey = "Role_Trainee_Desc",
+                ScopeLevel = RoleScopeLevel.Implicit,
+                IsSystem = true,
+                SortOrder = 101,
+                DerivedUserRole = UserRole.Trainee,
+                IsVisibleInSignup = false,
+                CanBeAssignedByDefault = true
             }
         };
     }
@@ -283,6 +329,48 @@ public static class RoleTemplateSeed
 
         // BR Director (Role 2) - Company scope for join request management
         grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 115, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageJoinRequests
+
+        // ============================================
+        // DYNAMIC ROLE TEMPLATE GRANTS (IDs 119-122)
+        // ManageAnnouncements (119), ViewSystemAlerts (120), ViewAllAreas (121), ManageOnDuty (122)
+        // ============================================
+
+        // Trainee (Role 12) - Basic view grants (subset of Employee — explicitly NO RequestSwap)
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 1, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewShifts
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 17, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewChores
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 21, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewVacations
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 22, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // RequestVacation
+
+        // Owner (Role 11) - ManageAnnouncements, ViewSystemAlerts, ViewAllAreas, ManageOnDuty
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 119, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 120, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 121, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 122, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ManageOnDuty
+
+        // AreaAdmin (Role 10) - ManageAnnouncements, ViewAllAreas, ManageOnDuty
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 121, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 122, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageOnDuty
+
+        // AlhutDirector (Role 5) - ManageAnnouncements, ViewAllAreas
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 121, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
+
+        // TextDirector (Role 6) - ManageAnnouncements, ViewAllAreas
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 121, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
+
+        // MoleculeAdmin (Role 7) - ManageAnnouncements
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
+
+        // BRDirector (Role 2) - ViewSystemAlerts
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 120, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
+
+        // AlhutLead (Role 3) - ViewSystemAlerts
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 120, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
+
+        // TextLead (Role 4) - ViewSystemAlerts
+        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 120, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
 
         return grants;
     }

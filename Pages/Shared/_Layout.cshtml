@@ -11,6 +11,10 @@
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
     var role = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    var roleTemplateKey = user?.FindFirst("RoleTemplateKey")?.Value;
+    var jobTypeName = user?.FindFirst("JobTypeName")?.Value;
+    var roleDisplay = string.IsNullOrEmpty(role) ? ""
+        : ShiftManager.Helpers.RoleDisplayHelper.GetRoleDisplayName(Localizer, roleTemplateKey ?? role, jobTypeName);
     // All authorization now uses grant-based <require-grant> tag helpers
     var firstName = name.Split(' ').FirstOrDefault() ?? name;
     var currentCulture = CultureInfo.CurrentUICulture.Name;
@@ -273,7 +277,7 @@
     })();
     </script>
 </head>
-<body>
+<body data-role="@role" data-role-template="@roleTemplateKey">
     @* B-02: noscript fallback for JS-disabled browsers - Critical for air-gapped military networks *@
     <noscript>
         <div style="background-color:#FFC107;background-image:linear-gradient(135deg,#FFD700 0%,#FFA500 100%);color:#333333;padding:1.5rem 1rem;text-align:center;font-size:1rem;font-weight:bold;border-bottom:3px solid #FF8C00;direction:auto;box-shadow:0 2px 4px rgba(0,0,0,0.15);">
@@ -603,7 +607,7 @@
                             <div class="sidebar-user__avatar">@firstName.Substring(0, 1).ToUpper()</div>
                             <div class="sidebar-user__info">
                                 <div class="sidebar-user__name">@firstName</div>
-                                <div class="sidebar-user__role">@role</div>
+                                <div class="sidebar-user__role">@roleDisplay</div>
                             </div>
                             <span class="sidebar-user__menu-icon">▼</span>
                         </div>

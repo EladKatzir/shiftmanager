@@ -12,7 +12,7 @@ namespace ShiftManager.Pages.Owner;
 /// A MasterProgram is a convenience wrapper for applying multiple Programs at once.
 /// ✅ P1-3: Expanded access from Owner-only to Manager+Director+Owner
 /// </summary>
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class MasterProgramsModel : PageModel
 {
     private readonly IMasterProgramService _masterProgramService;
@@ -103,7 +103,7 @@ public class MasterProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create MasterProgram");
-            return RedirectToPage(new { error = "Failed to create master program: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to create master program. Please try again." });
         }
     }
 
@@ -152,7 +152,7 @@ public class MasterProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update MasterProgram");
-            return RedirectToPage(new { error = "Failed to update master program: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to update master program. Please try again." });
         }
     }
 
@@ -186,7 +186,7 @@ public class MasterProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete MasterProgram");
-            return RedirectToPage(new { error = "Failed to delete master program: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to delete master program. Please try again." });
         }
     }
 
@@ -236,7 +236,7 @@ public class MasterProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate instances from MasterProgram");
-            return RedirectToPage(new { error = "Failed to generate instances: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to generate instances. Please try again." });
         }
     }
 }

@@ -570,7 +570,7 @@
     <value>מנהל</value>
   </data>
   <data name="Employee" xml:space="preserve">
-    <value>עובד</value>
+    <value>חייל</value>
   </data>
 
   
@@ -1510,7 +1510,7 @@
     <value>משמרת</value>
   </data>
   <data name="Trainee" xml:space="preserve">
-    <value>מתלמד</value>
+    <value>נחפף</value>
   </data>
   <data name="ClickToAssign" xml:space="preserve">
     <value>לחץ לשיבוץ</value>
@@ -3616,6 +3616,12 @@
   </data>
   <data name="Error_UnexpectedError" xml:space="preserve">
     <value>שגיאה בלתי צפויה. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_RoleTemplate_InvalidKey" xml:space="preserve">
+    <value>המפתח חייב להכיל רק אותיות, מספרים וקווים תחתונים, ולהתחיל באות.</value>
+  </data>
+  <data name="Error_RoleTemplate_KeyExists" xml:space="preserve">
+    <value>תבנית תפקיד עם המפתח '{0}' כבר קיימת.</value>
   </data>
   <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
     <value>אימות ADFS לא מוגדר. אנא השתמש בהתחברות מקומית או פנה למנהל המערכת.</value>
@@ -7160,6 +7166,9 @@
   <data name="Error_ExportFailed" xml:space="preserve">
     <value>הייצוא נכשל:</value>
   </data>
+  <data name="ScheduleExport_DateRangeExceeded" xml:space="preserve">
+    <value>טווח תאריכים לא יכול לחרוג מ-365 ימים</value>
+  </data>
   <data name="Error_FailedToCopyPassword" xml:space="preserve">
     <value>העתקת סיסמה נכשלה. נא לבחור ולהעתיק ידנית.</value>
   </data>
@@ -8384,6 +8393,9 @@
   </data>
   <data name="VacationApproval_NotAuthorized" xml:space="preserve">
     <value>אינך מורשה לאשר בקשה זו</value>
+  </data>
+  <data name="VacationApproval_CannotApproveSelf" xml:space="preserve">
+    <value>אינך יכול לאשר את בקשת החופשה שלך</value>
   </data>
   <data name="VacationApproval_AlreadyProcessed" xml:space="preserve">
     <value>בקשה זו כבר טופלה</value>
@@ -10919,6 +10931,9 @@
   <data name="Success_MoleculeCreated" xml:space="preserve">
     <value>המולקולה נוצרה בהצלחה</value>
   </data>
+  <data name="HQ_AllTeams" xml:space="preserve">
+    <value>כלל צוותי</value>
+  </data>
   <data name="Success_MoleculeDeactivated" xml:space="preserve">
     <value>המולקולה הושבתה בהצלחה</value>
   </data>
@@ -11763,5 +11778,186 @@
   </data>
   <data name="Pagination_PageXofY" xml:space="preserve">
     <value>עמוד {0} מתוך {1}</value>
+  </data>
+  <data name="Auth_DirectorAutoHQ" xml:space="preserve">
+    <value>כמפקד/ת, תשובצ/י אוטומטית לצוות מטה המולקולה</value>
+  </data>
+  <data name="Error_Signup_SelectMolecule" xml:space="preserve">
+    <value>נא לבחור מולקולה</value>
+  </data>
+  <data name="Error_Signup_HQNotFound" xml:space="preserve">
+    <value>חברת מטה לא נמצאה למולקולה זו. פנה לתמיכה.</value>
+  </data>
+  <data name="AreaAdmin" xml:space="preserve">
+    <value>קב"ב</value>
+  </data>
+  <data name="Manager_Alhut" xml:space="preserve">
+    <value>מפ"צ</value>
+  </data>
+  <data name="Manager_Text" xml:space="preserve">
+    <value>מפ"צ</value>
+  </data>
+  <data name="Manager_BR" xml:space="preserve">
+    <value>קב"ר</value>
+  </data>
+  <data name="Manager_Hakam" xml:space="preserve">
+    <value>קב"ר</value>
+  </data>
+  <data name="Director_Alhut" xml:space="preserve">
+    <value>מ"מ</value>
+  </data>
+  <data name="Director_Text" xml:space="preserve">
+    <value>מ"מ</value>
+  </data>
+  <data name="Director_BR" xml:space="preserve">
+    <value>מפק"מ</value>
+  </data>
+  <data name="Director_Hakam" xml:space="preserve">
+    <value>מפק"מ</value>
+  </data>
+  <!-- Role Templates Pages -->
+  <data name="RoleTemplates_Title" xml:space="preserve">
+    <value>תבניות תפקידים</value>
+  </data>
+  <data name="RoleTemplates_Subtitle" xml:space="preserve">
+    <value>ניהול תבניות תפקיד מערכתיות ומותאמות אישית</value>
+  </data>
+  <data name="RoleTemplates_Create" xml:space="preserve">
+    <value>יצירת תפקיד מותאם</value>
+  </data>
+  <data name="RoleTemplates_CreateSubtitle" xml:space="preserve">
+    <value>הגדרת תבנית תפקיד חדשה עם הרשאות</value>
+  </data>
+  <data name="RoleTemplates_CreateNew" xml:space="preserve">
+    <value>יצירת תפקיד מותאם</value>
+  </data>
+  <data name="RoleTemplates_CreateButton" xml:space="preserve">
+    <value>יצירת תבנית</value>
+  </data>
+  <data name="RoleTemplates_ManageGrants" xml:space="preserve">
+    <value>ניהול הרשאות</value>
+  </data>
+  <data name="RoleTemplates_Total" xml:space="preserve">
+    <value>סה"כ</value>
+  </data>
+  <data name="RoleTemplates_System" xml:space="preserve">
+    <value>מערכתי</value>
+  </data>
+  <data name="RoleTemplates_Custom" xml:space="preserve">
+    <value>מותאם</value>
+  </data>
+  <data name="RoleTemplates_UsersAssigned" xml:space="preserve">
+    <value>משתמשים משויכים</value>
+  </data>
+  <data name="RoleTemplates_Key" xml:space="preserve">
+    <value>מפתח</value>
+  </data>
+  <data name="RoleTemplates_DisplayName" xml:space="preserve">
+    <value>שם תצוגה</value>
+  </data>
+  <data name="RoleTemplates_DerivedRole" xml:space="preserve">
+    <value>תפקיד נגזר</value>
+  </data>
+  <data name="RoleTemplates_DerivedRoleHint" xml:space="preserve">
+    <value>קובע את רמת ההרשאה הבסיסית</value>
+  </data>
+  <data name="RoleTemplates_Scope" xml:space="preserve">
+    <value>היקף</value>
+  </data>
+  <data name="RoleTemplates_Grants" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="RoleTemplates_Users" xml:space="preserve">
+    <value>משתמשים</value>
+  </data>
+  <data name="RoleTemplates_Labels" xml:space="preserve">
+    <value>תוויות</value>
+  </data>
+  <data name="RoleTemplates_Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="RoleTemplates_Actions" xml:space="preserve">
+    <value>פעולות</value>
+  </data>
+  <data name="RoleTemplates_DisplayNameEN" xml:space="preserve">
+    <value>שם תצוגה (אנגלית)</value>
+  </data>
+  <data name="RoleTemplates_DisplayNameHE" xml:space="preserve">
+    <value>שם תצוגה (עברית)</value>
+  </data>
+  <data name="RoleTemplates_SortOrder" xml:space="preserve">
+    <value>סדר מיון</value>
+  </data>
+  <data name="RoleTemplates_CanBeAssigned" xml:space="preserve">
+    <value>ניתן לשיוך כברירת מחדל</value>
+  </data>
+  <data name="RoleTemplates_VisibleInSignup" xml:space="preserve">
+    <value>מוצג בהרשמה ציבורית</value>
+  </data>
+  <data name="RoleTemplates_Active" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
+  <data name="RoleTemplates_KeyHint" xml:space="preserve">
+    <value>מזהה ייחודי (אותיות, מספרים, קו תחתון)</value>
+  </data>
+  <data name="RoleTemplates_KeyImmutable" xml:space="preserve">
+    <value>לא ניתן לשנות את המפתח לאחר יצירה</value>
+  </data>
+  <data name="RoleTemplates_JobTypeLabels" xml:space="preserve">
+    <value>תוויות לפי סוג תפקיד</value>
+  </data>
+  <data name="RoleTemplates_JobTypeLabelsDesc" xml:space="preserve">
+    <value>דריסת שם התצוגה לפי סוג תפקיד</value>
+  </data>
+  <data name="RoleTemplates_AddLabel" xml:space="preserve">
+    <value>הוספת תווית</value>
+  </data>
+  <data name="RoleTemplates_NotFound" xml:space="preserve">
+    <value>תבנית לא נמצאה.</value>
+  </data>
+  <data name="RoleTemplates_SystemBadge" xml:space="preserve">
+    <value>מערכתי</value>
+  </data>
+  <data name="RoleTemplates_Tab_Metadata" xml:space="preserve">
+    <value>מידע</value>
+  </data>
+  <data name="RoleTemplates_Tab_Grants" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="RoleTemplates_Tab_Labels" xml:space="preserve">
+    <value>תוויות סוג תפקיד</value>
+  </data>
+  <data name="RoleTemplates_AssignedGrants" xml:space="preserve">
+    <value>הרשאות משויכות</value>
+  </data>
+  <data name="RoleTemplates_SelectGrant" xml:space="preserve">
+    <value>בחר הרשאה</value>
+  </data>
+  <data name="RoleTemplates_GrantKey" xml:space="preserve">
+    <value>הרשאה</value>
+  </data>
+  <data name="RoleTemplates_Category" xml:space="preserve">
+    <value>קטגוריה</value>
+  </data>
+  <data name="RoleTemplates_CanOwn" xml:space="preserve">
+    <value>בעלות</value>
+  </data>
+  <data name="RoleTemplates_CanGive" xml:space="preserve">
+    <value>העברה</value>
+  </data>
+  <data name="RoleTemplates_ScopeMode" xml:space="preserve">
+    <value>היקף</value>
+  </data>
+  <data name="RoleTemplates_NoGrants" xml:space="preserve">
+    <value>אין הרשאות משויכות לתבנית זו.</value>
+  </data>
+  <data name="OwnerHub_RoleTemplatesLink" xml:space="preserve">
+    <value>תבניות תפקידים</value>
+  </data>
+  <data name="Nav_RoleTemplates" xml:space="preserve">
+    <value>תבניות תפקידים</value>
+  </data>
+  <data name="Nav_RoleTemplatesDesc" xml:space="preserve">
+    <value>ניהול תבניות תפקיד מערכתיות ומותאמות אישית</value>
   </data>
 </root>

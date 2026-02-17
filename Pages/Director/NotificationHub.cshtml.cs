@@ -7,7 +7,9 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Director;
 
-[Authorize(Policy = "IsDirector")]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:DirectorHubAccess policy;
+// cross-company queries by design — Directors view notifications/requests across their hierarchy
+[Authorize(Policy = "Grant:DirectorHubAccess")]
 public class NotificationHubModel : PageModel
 {
     private readonly AppDbContext _db;

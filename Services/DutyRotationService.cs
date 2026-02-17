@@ -5,6 +5,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OnDuty is cross-company by design;
+// lookups scoped by explicit userId/date parameters; called only from authorized service layer
 public class DutyRotationService : IDutyRotationService
 {
     private readonly AppDbContext _db;

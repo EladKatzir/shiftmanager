@@ -54,7 +54,8 @@ public class CompanyIdInterceptor : SaveChangesInterceptor
         // Check feature flag for enforcement mode
         var enforceCompanyScope = _configuration.GetValue<bool>("Features:EnforceCompanyScope", false);
 
-        // Resolve ITenantResolver from the current scope
+        // NOTE: Creates new scope per SaveChanges because this interceptor is registered as Singleton.
+        // Cannot inject ITenantResolver directly as it is scoped (depends on HttpContext).
         using var scope = _serviceProvider.CreateScope();
         var tenantResolver = scope.ServiceProvider.GetService<ITenantResolver>();
 

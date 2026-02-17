@@ -155,16 +155,15 @@ public class SessionStatusModel : PageModel
             _logger.LogInformation("SessionStatus: Returning state '{State}' for user {UserId} ({Username}), {Minutes} minutes remaining",
                 state, userId, User.Identity?.Name ?? "", (int)timeRemaining.TotalMinutes);
 
+            // Minimized response: removed userId, username, issuedAt, expiresAt
+            // to avoid leaking user/session details. Frontend (session-check.js) only
+            // uses authenticated, state, secondsRemaining, and minutesRemaining.
             return new JsonResult(new
             {
                 authenticated = true,
                 state = state,
                 secondsRemaining = (int)timeRemaining.TotalSeconds,
                 minutesRemaining = (int)timeRemaining.TotalMinutes,
-                userId = userId,
-                username = User.Identity?.Name ?? "",
-                issuedAt = issuedUtc?.ToUnixTimeSeconds(),
-                expiresAt = expiresUtc?.ToUnixTimeSeconds(),
                 slidingExpirationTriggered = true // This request extends the session
             });
         }

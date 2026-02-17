@@ -45,12 +45,10 @@ public class DirectorService : IDirectorService
         if (CurrentUserId == null)
             return false;
 
-        // Check if user has DirectorHubAccess grant
-        // Note: We use GetAwaiter().GetResult() here because the interface is synchronous.
+        // TECH DEBT: Sync-over-async via GetAwaiter().GetResult(). Works in current Kestrel thread pool model.
+        // TODO: Convert to async interface when callers can be made async.
         // Converting IsDirector() and CanAssignRole() to async would require updating
         // IDirectorService and all call sites (Razor pages, middleware, authorization handlers).
-        // This is a known sync-over-async pattern; acceptable here since these are short-lived
-        // grant lookups, but should be refactored when callers are migrated to async.
         return _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)
             .GetAwaiter().GetResult();
     }
@@ -110,6 +108,10 @@ public class DirectorService : IDirectorService
         return false;
     }
 
+    /// <remarks>
+    /// This method checks role TYPE permission only. Scope validation (whether the target user
+    /// belongs to a company the caller manages) must be performed at the call site.
+    /// </remarks>
     public bool CanAssignRole(UserRole targetRole)
     {
         if (CurrentUserId == null)
@@ -117,6 +119,8 @@ public class DirectorService : IDirectorService
 
         // Check AdminAccess first — it's a superset permission that implies all others
         // (Owner template may not include the specific AssignRoles grant)
+        // TECH DEBT: Sync-over-async via GetAwaiter().GetResult(). Works in current Kestrel thread pool model.
+        // TODO: Convert to async interface when callers can be made async.
         var hasAdminAccess = _grantService.HasGrantAsync(CurrentUserId.Value, AdminAccessGrant)
             .GetAwaiter().GetResult();
 

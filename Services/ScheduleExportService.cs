@@ -15,6 +15,8 @@ namespace ShiftManager.Services;
 /// <summary>
 /// Service for exporting schedule data to PDF, Excel, and CSV formats.
 /// </summary>
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — export queries scoped by explicit moleculeId/companyId;
+// called only from authorized calendar export endpoints
 public class ScheduleExportService : IScheduleExportService
 {
     private readonly AppDbContext _db;

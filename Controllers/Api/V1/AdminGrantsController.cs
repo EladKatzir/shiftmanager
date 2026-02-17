@@ -11,7 +11,7 @@ namespace ShiftManager.Controllers.Api.V1;
 [ApiController]
 [Route("api/admin/verify-grants")]
 [Produces("application/json")]
-[Authorize(Policy = "IsOwner")] // Only owners can use this endpoint
+[Authorize(Policy = "Grant:AdminAccess")] // Requires AdminAccess grant (Owner/Manager with admin privileges)
 public class AdminGrantsController : ControllerBase
 {
     private readonly IGrantService _grantService;

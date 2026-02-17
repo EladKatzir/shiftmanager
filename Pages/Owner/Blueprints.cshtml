@@ -378,6 +378,10 @@
                     body: JSON.stringify({ shiftTypeId: shiftId, nameEn, nameHe })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Request failed: ${response.status}`);
+                }
+
                 const result = await response.json();
 
                 if (result.success) {
@@ -430,6 +434,10 @@
                     },
                     body: JSON.stringify({ shiftTypeId: shiftId, startTime, endTime })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`Request failed: ${response.status}`);
+                }
 
                 const result = await response.json();
 

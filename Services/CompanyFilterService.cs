@@ -104,8 +104,8 @@ public class CompanyFilterService : ICompanyFilterService
             return await _db.Companies.Select(c => c.Id).ToListAsync();
         }
 
-        // Director can access their assigned companies
-        if (_directorService.IsDirector())
+        // Director/AreaAdmin can access their assigned companies (organizational identity check)
+        if (_directorService.IsDirector() || (CurrentUser?.IsInRole(nameof(UserRole.AreaAdmin)) ?? false))
         {
             return await _directorService.GetDirectorCompanyIdsAsync();
         }

@@ -23,6 +23,7 @@ public class ShiftAssignment : IBelongsToCompany
     /// <summary>
     /// Row version for optimistic concurrency control.
     /// Automatically managed by SQL Server - do not modify manually.
+    /// NOTE: [Timestamp] is a no-op on SQLite (no rowversion support). Kept for SQL Server migration compatibility.
     /// </summary>
     [System.ComponentModel.DataAnnotations.Timestamp]
     public byte[]? RowVersion { get; set; }

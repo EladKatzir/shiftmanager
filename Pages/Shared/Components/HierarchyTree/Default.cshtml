@@ -647,6 +647,7 @@
             credentials: 'same-origin',
             body: JSON.stringify({ entityType, entityId, name })
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         return await response.json();
     }
 
@@ -657,6 +658,7 @@
             credentials: 'same-origin',
             body: JSON.stringify({ entityType, orderedIds, parentId })
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         return await response.json();
     }
 
@@ -667,6 +669,7 @@
             credentials: 'same-origin',
             body: JSON.stringify({ entityType, name, parentId })
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         return await response.json();
     }
 
@@ -677,6 +680,7 @@
             credentials: 'same-origin',
             body: JSON.stringify({ entityType, entityId })
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         return await response.json();
     }
 
@@ -687,6 +691,7 @@
             credentials: 'same-origin',
             body: JSON.stringify({ entityType, entityId, newParentId })
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         return await response.json();
     }
 
@@ -695,6 +700,7 @@
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const result = await response.json();
         return result.targets || [];
     }

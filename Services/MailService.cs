@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -408,11 +409,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ShiftAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftAssignedBody"]}</p>
 
             <div class='shift-details'>
-                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftTypeName)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
                 <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
@@ -473,17 +474,17 @@ public class MailService : IMailService
             <h2>⚠️ {_localizer["Email_ShiftChangedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftChangedBody"]}</p>
 
             <div class='shift-details'>
-                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftTypeName)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
                 <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
 
             <div class='change-notice'>
-                <p><strong>{_localizer["Email_ChangeDetails"]}:</strong> {changeDescription}</p>
+                <p><strong>{_localizer["Email_ChangeDetails"]}:</strong> {WebUtility.HtmlEncode(changeDescription)}</p>
             </div>
 
             <p>{_localizer["Email_ShiftChangedReviewPrompt"]}</p>
@@ -540,11 +541,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ShiftDeletedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftDeletedBody"]}</p>
 
             <div class='shift-details'>
-                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{shiftTypeName}</span></p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftTypeName)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
                 <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
@@ -601,11 +602,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ChoreAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ChoreAssignedBody"]}</p>
 
             <div class='chore-details'>
-                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{choreTitle}</span></p>
+                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(choreTitle)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
             </div>
 
@@ -661,11 +662,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ChoreCanceledTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ChoreCanceledBody"]}</p>
 
             <div class='chore-details'>
-                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{choreTitle}</span></p>
+                <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(choreTitle)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
             </div>
 
@@ -743,15 +744,15 @@ public class MailService : IMailService
         </div>
         <div class='content'>
             <div class='welcome-box'>
-                <h3>{string.Format(_localizer["Email_WelcomeToCompany"], companyName)}</h3>
+                <h3>{string.Format(_localizer["Email_WelcomeToCompany"], WebUtility.HtmlEncode(companyName))}</h3>
             </div>
 
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{userName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(userName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='account-details'>
-                <p><strong>{_localizer["Email_Company"]}:</strong> <span class='highlight'>{companyName}</span></p>
-                <p><strong>{_localizer["Email_AssignedRole"]}:</strong> <span class='highlight'>{assignedRole}</span></p>
+                <p><strong>{_localizer["Email_Company"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(companyName)}</span></p>
+                <p><strong>{_localizer["Email_AssignedRole"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(assignedRole)}</span></p>
                 <p><strong>{_localizer["Email_AccountStatus"]}:</strong> <span class='highlight'>{_localizer["Email_Active"]}</span></p>
             </div>
 
@@ -831,7 +832,7 @@ public class MailService : IMailService
             <h2>✓ {_localizer["Email_TimeOffApprovedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='timeoff-details'>
@@ -913,7 +914,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_TimeOffDeclinedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='timeoff-details'>
@@ -995,7 +996,7 @@ public class MailService : IMailService
             <h2>⚠️ {_localizer["Email_TimeOffDeletedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='timeoff-details'>
@@ -1070,11 +1071,11 @@ public class MailService : IMailService
             <h2>✓ {_localizer["Email_SwapRequestApprovedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='swap-details'>
-                <p><strong>{_localizer["Email_Shift"]}:</strong> <span class='highlight'>{shiftInfo}</span></p>
+                <p><strong>{_localizer["Email_Shift"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftInfo)}</span></p>
                 <p><strong>{_localizer["Email_Status"]}:</strong> <span class='highlight'>{_localizer["Email_Approved"]}</span></p>
             </div>
 
@@ -1146,11 +1147,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_SwapRequestDeclinedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='swap-details'>
-                <p><strong>{_localizer["Email_Shift"]}:</strong> <span class='highlight'>{shiftInfo}</span></p>
+                <p><strong>{_localizer["Email_Shift"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftInfo)}</span></p>
                 <p><strong>{_localizer["Email_Status"]}:</strong> <span class='highlight'>{_localizer["Email_Declined"]}</span></p>
             </div>
 
@@ -1224,11 +1225,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_OnDutyAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='onduty-details'>
-                <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{onDutyTypeName}</span></p>
+                <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(onDutyTypeName)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {onDutyDate:dddd, MMMM dd, yyyy}</p>
             </div>
 
@@ -1302,11 +1303,11 @@ public class MailService : IMailService
             <h2>⚠️ {_localizer["Email_OnDutyCanceledTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{employeeName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='onduty-details'>
-                <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{onDutyTypeName}</span></p>
+                <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(onDutyTypeName)}</span></p>
                 <p><strong>{_localizer["Date"]}:</strong> {onDutyDate:dddd, MMMM dd, yyyy}</p>
             </div>
 
@@ -1383,13 +1384,13 @@ public class MailService : IMailService
             <h2>{_localizer["Email_AccessRequestSubmittedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{ownerName}</strong>")},</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(ownerName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='request-details'>
-                <p><strong>{_localizer["Email_RequesterName"]}:</strong> <span class='highlight'>{requesterName}</span></p>
-                <p><strong>{_localizer["Email_RequesterEmail"]}:</strong> {requesterEmail}</p>
-                <p><strong>{_localizer["Email_Company"]}:</strong> {companyName}</p>
+                <p><strong>{_localizer["Email_RequesterName"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(requesterName)}</span></p>
+                <p><strong>{_localizer["Email_RequesterEmail"]}:</strong> {WebUtility.HtmlEncode(requesterEmail)}</p>
+                <p><strong>{_localizer["Email_Company"]}:</strong> {WebUtility.HtmlEncode(companyName)}</p>
             </div>
 
             <div class='action-box'>
@@ -1433,15 +1434,15 @@ public class MailService : IMailService
             <h2>👤 Trainee Added to Your Shift</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
+            <p>Hello <strong>{WebUtility.HtmlEncode(employeeName)}</strong>,</p>
             <p>A trainee has been added to your shift assignment:</p>
 
             <div class='highlight'>
-                <strong>{traineeName}</strong> will be joining you as a trainee
+                <strong>{WebUtility.HtmlEncode(traineeName)}</strong> will be joining you as a trainee
             </div>
 
             <div class='details'>
-                <p><strong>Shift Type:</strong> {shiftTypeName}</p>
+                <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
                 <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
                 <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
@@ -1482,17 +1483,17 @@ public class MailService : IMailService
             <h2>⚠️ Shift Assignment Removed</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
+            <p>Hello <strong>{WebUtility.HtmlEncode(employeeName)}</strong>,</p>
             <p>Your shift assignment has been removed from the schedule:</p>
 
             <div class='details'>
-                <p><strong>Shift Type:</strong> {shiftTypeName}</p>
+                <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
                 <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
                 <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
             </div>
 
             <div class='alert-box'>
-                <p><strong>Reason:</strong> {reason}</p>
+                <p><strong>Reason:</strong> {WebUtility.HtmlEncode(reason)}</p>
             </div>
 
             <p>If you have any questions about this change, please contact your manager.</p>
@@ -1531,16 +1532,16 @@ public class MailService : IMailService
             <h2>🔄 Your Shift Has Been Modified</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{employeeName}</strong>,</p>
+            <p>Hello <strong>{WebUtility.HtmlEncode(employeeName)}</strong>,</p>
             <p>Your shift assignment has been updated:</p>
 
             <div class='details'>
-                <p><strong>Shift Type:</strong> {shiftTypeName}</p>
+                <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
                 <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
             </div>
 
             <div class='change-box'>
-                <p><strong>Changes:</strong> {changeDescription}</p>
+                <p><strong>Changes:</strong> {WebUtility.HtmlEncode(changeDescription)}</p>
             </div>
 
             <p>Please review the updated shift details and contact your manager if you have any questions.</p>

@@ -75,12 +75,12 @@ public class AuditLogService : IAuditLogService
     {
         try
         {
-            // Fetch user details
+            // Fetch user details — still create audit entry even if user was deleted
             var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                _logger.LogWarning("User {UserId} not found for audit log", userId);
-                return;
+                _logger.LogWarning("User {UserId} not found for audit log — creating log with placeholder", userId);
+                user = new AppUser { Id = userId, Email = $"deleted-user-{userId}", DisplayName = $"User #{userId} (deleted)" };
             }
 
             var httpContext = _httpContextAccessor.HttpContext;
@@ -153,7 +153,9 @@ public class AuditLogService : IAuditLogService
     }
 
     /// <summary>
-    /// Get recent audit logs for dashboard display
+    /// Get recent audit logs for dashboard display.
+    /// TENANT-SAFE: AuditLog has a global query filter (CompanyId == currentTenantId) in AppDbContext,
+    /// so this query automatically scopes to the current tenant without explicit WHERE.
     /// </summary>
     public async Task<List<AuditLog>> GetRecentLogsAsync(int count = 10)
     {

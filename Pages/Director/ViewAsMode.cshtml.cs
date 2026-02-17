@@ -10,7 +10,7 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Director;
 
-[Authorize(Policy = "IsDirector")]
+[Authorize(Policy = "Grant:DirectorHubAccess")]
 public class ViewAsModeModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

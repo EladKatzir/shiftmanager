@@ -3,6 +3,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @using ShiftManager.Models.Support
+@using ShiftManager.Helpers
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
@@ -509,13 +510,10 @@
                 <label for="filterRole">@Localizer["Role"]</label>
                 <select class="filter-select" name="FilterRole" id="filterRole" onchange="this.form.submit()">
                     <option value="">@Localizer["AllRoles"]</option>
-                    <option value="2" selected="@(Model.FilterRole == UserRole.Employee)">@Localizer["Employee"]</option>
-                    <option value="1" selected="@(Model.FilterRole == UserRole.Manager)">@Localizer["Manager"]</option>
-                    <option value="3" selected="@(Model.FilterRole == UserRole.Director)">@Localizer["Director"]</option>
-                    <option value="0" selected="@(Model.FilterRole == UserRole.Owner)">@Localizer["Owner"]</option>
-                    <option value="4" selected="@(Model.FilterRole == UserRole.Trainee)">@Localizer["Trainee"]</option>
-                    @* ✅ PHASE 18: Add Assigner role filter option *@
-                    <option value="5" selected="@(Model.FilterRole == UserRole.Assigner)">@Localizer["Assigner"]</option>
+                    @foreach (var role in Enum.GetValues<UserRole>())
+                    {
+                        <option value="@((int)role)" selected="@(Model.FilterRole == role)">@Localizer[role.ToString()]</option>
+                    }
                 </select>
             </div>
 
@@ -578,14 +576,17 @@
                             <td>@request.DisplayName</td>
                             <td>@request.Email</td>
                             <td>@request.CompanyName</td>
-                            <td style="color: var(--text-muted);">@request.RequestedRole</td>
+                            <td style="color: var(--text-muted);">@RoleDisplayHelper.GetRoleDisplayName(Localizer, request.RequestedRole, request.JobTypeKey)</td>
                             <td>@(request.JobTypeName ?? "-")</td>
                             <td>
-                                <select name="RequestRoles[@request.Id]" class="form-input" style="min-width: 120px;">
-                                    @foreach (var role in Model.AssignableRoles)
+                                <select name="RequestTemplateIds[@request.Id]" class="form-input" style="min-width: 120px;">
+                                    @foreach (var rt in Model.AssignableRoleTemplates)
                                     {
-                                        <option value="@((int)role)" selected="@(role.ToString() == request.RequestedRole)">
-                                            @Localizer[role.ToString()]
+                                        var isSelected = request.RequestedRoleTemplateId.HasValue
+                                            ? rt.Id == request.RequestedRoleTemplateId.Value
+                                            : rt.DerivedUserRole.HasValue && rt.DerivedUserRole.Value.ToString() == request.RequestedRole;
+                                        <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole" selected="@isSelected">
+                                            @RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)
                                         </option>
                                     }
                                 </select>
@@ -634,7 +635,7 @@
                         <td>@request.DisplayName</td>
                         <td>@request.Email</td>
                         <td>@request.CompanyName</td>
-                        <td>@request.RequestedRole</td>
+                        <td>@RoleDisplayHelper.GetRoleDisplayName(Localizer, request.RequestedRole, request.JobTypeKey)</td>
                         <td>@(request.JobTypeName ?? "-")</td>
                         <td>
                             @if (request.Status == JoinRequestStatus.Approved)
@@ -728,13 +729,10 @@
                 <label>@Localizer["Role"]</label>
                 <select class="filter-select" name="UserFilterRole" onchange="this.form.submit()">
                     <option value="">@Localizer["AllRoles"]</option>
-                    <option value="2" selected="@(Model.UserFilterRole == UserRole.Employee)">@Localizer["Employee"]</option>
-                    <option value="1" selected="@(Model.UserFilterRole == UserRole.Manager)">@Localizer["Manager"]</option>
-                    <option value="3" selected="@(Model.UserFilterRole == UserRole.Director)">@Localizer["Director"]</option>
-                    <option value="0" selected="@(Model.UserFilterRole == UserRole.Owner)">@Localizer["Owner"]</option>
-                    <option value="4" selected="@(Model.UserFilterRole == UserRole.Trainee)">@Localizer["Trainee"]</option>
-                    @* ✅ PHASE 18: Add Assigner role filter option *@
-                    <option value="5" selected="@(Model.UserFilterRole == UserRole.Assigner)">@Localizer["Assigner"]</option>
+                    @foreach (var role in Enum.GetValues<UserRole>())
+                    {
+                        <option value="@((int)role)" selected="@(Model.UserFilterRole == role)">@Localizer[role.ToString()]</option>
+                    }
                 </select>
             </div>
 
@@ -825,7 +823,7 @@
                 <td>@(u.DepartmentName ?? "-")</td>
                 <td class="editable-cell" data-cell-type="role" data-user-id="@u.Id">
                     <div class="cell-display">
-                        <span class="cell-display__value">@Localizer[u.Role]</span>
+                        <span class="cell-display__value">@RoleDisplayHelper.GetRoleDisplayName(Localizer, u.Role, u.JobTypeKey)</span>
                         <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["EditRole"]" aria-label="@Localizer["EditRole"]">
                             ⚙️
                         </button>
@@ -834,10 +832,14 @@
                         <form method="post" asp-page-handler="Role" style="display:inline; margin: 0;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
-                            <select class="form-input cell-edit__select" name="role" data-original-value="@u.Role">
-                                @foreach (var role in Model.AssignableRoles)
+                            <select class="form-input cell-edit__select" name="roleTemplateId" data-original-value="@(u.RoleTemplateId?.ToString() ?? "")">
+                                @if (!u.RoleTemplateId.HasValue)
                                 {
-                                    <option value="@role" selected="@(u.Role == role.ToString())">@Localizer[role.ToString()]</option>
+                                    <option value="" selected>-</option>
+                                }
+                                @foreach (var rt in Model.AssignableRoleTemplates)
+                                {
+                                    <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole" selected="@(u.RoleTemplateId == rt.Id)">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
                                 }
                             </select>
                             <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
@@ -976,16 +978,16 @@
             </div>
             <div class="filter-group">
                 <label>@Localizer["Role"]</label>
-                <select class="form-input" asp-for="NewRole">
-                    @foreach (var role in Model.AssignableRoles)
+                <select class="form-input" asp-for="NewRoleTemplateId">
+                    @foreach (var rt in Model.AssignableRoleTemplates)
                     {
-                        <option value="@role">@Localizer[role.ToString()]</option>
+                        <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
                     }
                 </select>
             </div>
             @if (Model.IsOwner)
             {
-                <div class="filter-group">
+                <div class="filter-group" id="addUserCompanyField">
                     <label>@Localizer["Company"]</label>
                     <select asp-for="NewUserCompanyId" class="form-input" required>
                         <option value="">-- @Localizer["SelectCompany"] --</option>
@@ -995,14 +997,24 @@
                         }
                     </select>
                 </div>
+                <div class="filter-group" id="addUserMoleculeField" style="display:none;">
+                    <label>@Localizer["Molecule"]</label>
+                    <select asp-for="NewMoleculeId" class="form-input">
+                        <option value="">-- @Localizer["SelectMolecule"] --</option>
+                        @foreach (var mol in Model.AvailableMolecules)
+                        {
+                            <option value="@mol.Id">@mol.Name</option>
+                        }
+                    </select>
+                </div>
             }
             <div class="filter-group">
                 <label>@Localizer["JobType"]</label>
-                <select asp-for="NewJobTypeId" class="form-input">
+                <select asp-for="NewJobTypeId" class="form-input" id="addUserJobType">
                     <option value="">-- @Localizer["SelectJobType"] --</option>
                     @foreach (var jobType in Model.AvailableJobTypes)
                     {
-                        <option value="@jobType.Id">@jobType.AreaName - @jobType.Name</option>
+                        <option value="@jobType.Id" data-key="@jobType.Key">@jobType.AreaName - @jobType.Name</option>
                     }
                 </select>
             </div>
@@ -1086,6 +1098,17 @@
 
             form.appendChild(tokenInput);
             form.appendChild(idInput);
+
+            // Pass the admin-selected template ID from the row's dropdown
+            var templateSelect = document.querySelector('select[name="RequestTemplateIds[' + requestId + ']"]');
+            if (templateSelect && templateSelect.value) {
+                var templateInput = document.createElement('input');
+                templateInput.type = 'hidden';
+                templateInput.name = 'roleTemplateId';
+                templateInput.value = templateSelect.value;
+                form.appendChild(templateInput);
+            }
+
             document.body.appendChild(form);
             form.submit();
         }
@@ -1165,5 +1188,63 @@
                 }
             }
         });
+
+        // Role label map for job-type-specific role names in Add User form
+        (function() {
+            var roleLabelMap = {
+                'Manager_Alhut': @Html.Raw(Json.Serialize(Localizer["Manager_Alhut"].Value.Trim())),
+                'Manager_Text': @Html.Raw(Json.Serialize(Localizer["Manager_Text"].Value.Trim())),
+                'Manager_BR': @Html.Raw(Json.Serialize(Localizer["Manager_BR"].Value.Trim())),
+                'Manager_Hakam': @Html.Raw(Json.Serialize(Localizer["Manager_Hakam"].Value.Trim())),
+                'Director_Alhut': @Html.Raw(Json.Serialize(Localizer["Director_Alhut"].Value.Trim())),
+                'Director_Text': @Html.Raw(Json.Serialize(Localizer["Director_Text"].Value.Trim())),
+                'Director_BR': @Html.Raw(Json.Serialize(Localizer["Director_BR"].Value.Trim())),
+                'Director_Hakam': @Html.Raw(Json.Serialize(Localizer["Director_Hakam"].Value.Trim())),
+                'Manager': @Html.Raw(Json.Serialize(Localizer["Manager"].Value.Trim())),
+                'Director': @Html.Raw(Json.Serialize(Localizer["Director"].Value.Trim()))
+            };
+            var addUserJobType = document.getElementById('addUserJobType');
+            var addUserRoleSelect = document.querySelector('[name="NewRoleTemplateId"]');
+            if (addUserJobType && addUserRoleSelect) {
+                addUserJobType.addEventListener('change', function() {
+                    var selectedOption = this.options[this.selectedIndex];
+                    var jobTypeKey = selectedOption ? selectedOption.dataset.key : null;
+                    var options = addUserRoleSelect.options;
+                    for (var i = 0; i < options.length; i++) {
+                        var opt = options[i];
+                        var derivedRole = opt.dataset.derivedRole;
+                        if (derivedRole === 'Manager') {
+                            var key = jobTypeKey ? ('Manager_' + jobTypeKey) : 'Manager';
+                            opt.textContent = roleLabelMap[key] || roleLabelMap['Manager'];
+                        } else if (derivedRole === 'Director') {
+                            var key = jobTypeKey ? ('Director_' + jobTypeKey) : 'Director';
+                            opt.textContent = roleLabelMap[key] || roleLabelMap['Director'];
+                        }
+                    }
+                });
+            }
+        })();
+
+        // Director/AreaAdmin-aware company/molecule toggle for Add User form
+        (function() {
+            const addUserRoleSelect = document.querySelector('[name="NewRoleTemplateId"]');
+            const addUserCompanyField = document.getElementById('addUserCompanyField');
+            const addUserMoleculeField = document.getElementById('addUserMoleculeField');
+
+            if (addUserRoleSelect) {
+                addUserRoleSelect.addEventListener('change', function() {
+                    const selectedOpt = this.options[this.selectedIndex];
+                    const derivedRole = selectedOpt ? selectedOpt.dataset.derivedRole : '';
+                    const isDirectorOrAreaAdmin = (derivedRole === 'Director' || derivedRole === 'AreaAdmin');
+                    if (addUserCompanyField) addUserCompanyField.style.display = isDirectorOrAreaAdmin ? 'none' : '';
+                    if (addUserMoleculeField) addUserMoleculeField.style.display = isDirectorOrAreaAdmin ? '' : 'none';
+                    // Toggle required attributes
+                    const companySelect = addUserCompanyField ? addUserCompanyField.querySelector('select') : null;
+                    const moleculeSelect = addUserMoleculeField ? addUserMoleculeField.querySelector('select') : null;
+                    if (companySelect) companySelect.required = !isDirectorOrAreaAdmin;
+                    if (moleculeSelect) moleculeSelect.required = isDirectorOrAreaAdmin;
+                });
+            }
+        })();
     </script>
 }

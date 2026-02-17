@@ -7,11 +7,14 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Helpers;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "CanManageAnnouncements")]
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — requires Grant:ManageAnnouncements policy;
+// cross-company query by design for Directors viewing announcements across their hierarchy
+[Authorize(Policy = "Grant:ManageAnnouncements")]
 public class AnnouncementsModel : LocalizedPageModel
 {
     private readonly IAnnouncementService _announcementService;
@@ -104,9 +107,16 @@ public class AnnouncementsModel : LocalizedPageModel
             .Select(d => new DepartmentOption(d.Id, d.DisplayName, d.Molecule.DisplayName))
             .ToListAsync();
 
-        // Build role dropdown from UserRole enum
-        Roles = Enum.GetValues<UserRole>()
-            .Select(r => new SelectListItem(_localizer[r.ToString()], r.ToString()))
+        // Build role dropdown from active RoleTemplates
+        var roleTemplates = await _db.RoleTemplates
+            .IgnoreQueryFilters()
+            .Where(rt => rt.IsActive)
+            .OrderBy(rt => rt.SortOrder)
+            .ToListAsync();
+        Roles = roleTemplates
+            .Select(rt => new SelectListItem(
+                Helpers.RoleDisplayHelper.GetRoleDisplayName(_localizer, rt),
+                rt.Key))
             .ToList();
 
         // Build scope dropdown

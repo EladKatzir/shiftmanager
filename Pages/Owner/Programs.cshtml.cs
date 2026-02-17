@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner;
 /// Programs define WHEN a specific shift type runs each week.
 /// ✅ P1-2: Expanded access from Owner-only to Manager+Director+Owner
 /// </summary>
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class ProgramsModel : PageModel
 {
     private readonly AppDbContext _db;
@@ -141,7 +141,7 @@ public class ProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create Program");
-            return RedirectToPage(new { error = "Failed to create program: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to create program. Please try again." });
         }
     }
 
@@ -212,7 +212,7 @@ public class ProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update Program");
-            return RedirectToPage(new { error = "Failed to update program: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to update program. Please try again." });
         }
     }
 
@@ -246,7 +246,7 @@ public class ProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete Program");
-            return RedirectToPage(new { error = "Failed to delete program: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to delete program. Please try again." });
         }
     }
 
@@ -294,7 +294,7 @@ public class ProgramsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate instances");
-            return RedirectToPage(new { error = "Failed to generate instances: " + ex.Message });
+            return RedirectToPage(new { error = "Failed to generate instances. Please try again." });
         }
     }
 }

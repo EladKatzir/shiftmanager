@@ -15,9 +15,9 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Admin;
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires IsManagerOrAdmin policy;
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManagerHomeAccess policy;
 // hierarchy lookups (Companies, JobTypes, Departments, Grants) are reference data for profile editing
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class EditProfileModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
@@ -91,6 +91,9 @@ public class EditProfileModel : LocalizedPageModel
     public UserRole Role { get; set; }
 
     [BindProperty]
+    public int? RoleTemplateId { get; set; }
+
+    [BindProperty]
     public bool IsActive { get; set; }
 
     [BindProperty]
@@ -115,6 +118,7 @@ public class EditProfileModel : LocalizedPageModel
     public string? ErrorMessage { get; set; }
 
     public List<ProfileChangeAudit> RecentChanges { get; set; } = new();
+    public List<RoleTemplate> AvailableRoleTemplates { get; set; } = new();
 
     // v3.0 Dropdown options
     public record JobTypeOption(int Id, string Name, string AreaName);
@@ -423,6 +427,19 @@ public class EditProfileModel : LocalizedPageModel
         targetUser.JobTypeId = JobTypeId;
         targetUser.DepartmentId = DepartmentId;
 
+        // Sync RoleTemplate — if RoleTemplateId was submitted, update and sync Role
+        if (RoleTemplateId.HasValue && RoleTemplateId != targetUser.RoleTemplateId)
+        {
+            var newTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(rt => rt.Id == RoleTemplateId.Value);
+            if (newTemplate != null)
+            {
+                targetUser.RoleTemplateId = newTemplate.Id;
+                if (newTemplate.DerivedUserRole.HasValue)
+                    targetUser.Role = newTemplate.DerivedUserRole.Value;
+            }
+        }
+
         // Update military rank (validate enum value first)
         if (Enum.IsDefined(typeof(MilitaryRank), Rank))
         {
@@ -519,6 +536,7 @@ public class EditProfileModel : LocalizedPageModel
         EmergencyContactPhone = user.EmergencyContactPhone;
         EmergencyContactRelation = user.EmergencyContactRelation;
         Role = user.Role;
+        RoleTemplateId = user.RoleTemplateId;
         IsActive = user.IsActive;
         JobTypeId = user.JobTypeId;
         DepartmentId = user.DepartmentId;
@@ -588,6 +606,13 @@ public class EditProfileModel : LocalizedPageModel
         GrantsCount = await _db.Grants
             .IgnoreQueryFilters()
             .CountAsync(g => g.UserId == user.Id);
+
+        // Load available role templates for dropdown
+        AvailableRoleTemplates = await _db.RoleTemplates
+            .IgnoreQueryFilters()
+            .Where(rt => rt.IsActive && rt.CanBeAssignedByDefault)
+            .OrderBy(rt => rt.SortOrder)
+            .ToListAsync();
     }
 
     private List<string> ParseJsonArray(string? json)

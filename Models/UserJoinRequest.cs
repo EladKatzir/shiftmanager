@@ -6,7 +6,7 @@ namespace ShiftManager.Models;
 /// Represents a pending request from a user to join a company with a specific role.
 /// Requires approval from authorized personnel before user account is created.
 /// </summary>
-public class UserJoinRequest
+public class UserJoinRequest : IBelongsToCompany
 {
     public int Id { get; set; }
 
@@ -76,9 +76,15 @@ public class UserJoinRequest
     /// </summary>
     public int? CreatedUserId { get; set; }
 
+    /// <summary>
+    /// The role template the applicant selected during signup.
+    /// </summary>
+    public int? RequestedRoleTemplateId { get; set; }
+
     // Navigation properties
     public Company? Company { get; set; }
     public JobType? JobType { get; set; }
+    public RoleTemplate? RequestedRoleTemplate { get; set; }
     public AppUser? ReviewedByUser { get; set; }
     public AppUser? CreatedUser { get; set; }
 }

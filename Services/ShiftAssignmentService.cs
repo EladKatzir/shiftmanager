@@ -6,6 +6,8 @@ using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — shift assignments are molecule-scoped by design;
+// queries scoped by explicit shiftInstanceId/moleculeId parameters; called only from authorized endpoints
 public class ShiftAssignmentService : IShiftAssignmentService
 {
     private readonly AppDbContext _db;

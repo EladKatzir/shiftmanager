@@ -6,6 +6,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — shift calendar is molecule-scoped by design;
+// queries scoped by explicit moleculeId/jobTypeId parameters; called only from authorized calendar pages
 public class ShiftCalendarService : IShiftCalendarService
 {
     private readonly AppDbContext _db;

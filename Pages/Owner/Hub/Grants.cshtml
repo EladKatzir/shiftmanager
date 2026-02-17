@@ -1304,6 +1304,7 @@ document.getElementById('user-search').addEventListener('input', (e) => {
     }
     searchTimeout = setTimeout(async () => {
         const response = await fetch(`?handler=SearchUsers&query=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const users = await response.json();
         const resultsDiv = document.getElementById('user-search-results');
         if (users.length > 0) {
@@ -1343,47 +1344,53 @@ async function selectUser(userId, displayName, email) {
 
 // Load user grants
 async function loadUserGrants(userId) {
-    const response = await fetch(`?handler=UserGrants&userId=${userId}`);
-    const grants = await response.json();
     const listDiv = document.getElementById('user-grants-list');
+    try {
+        const response = await fetch(`?handler=UserGrants&userId=${userId}`);
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        const grants = await response.json();
 
-    if (grants.length === 0) {
-        listDiv.innerHTML = '<p class="empty-state">@Localizer["NoGrantsFound"].Value.Trim()</p>';
-        return;
-    }
+        if (grants.length === 0) {
+            listDiv.innerHTML = '<p class="empty-state">@Localizer["NoGrantsFound"].Value.Trim()</p>';
+            return;
+        }
 
-    listDiv.innerHTML = grants.map(g => {
-        const scopeParts = [];
-        if (g.scope.projectName) scopeParts.push(g.scope.projectName);
-        if (g.scope.areaName) scopeParts.push(g.scope.areaName);
-        if (g.scope.moleculeName) scopeParts.push(g.scope.moleculeName);
-        if (g.scope.companyName) scopeParts.push(g.scope.companyName);
-        const scopeStr = scopeParts.length > 0 ? scopeParts.join(' > ') : '@Localizer["Self"].Value.Trim()';
+        listDiv.innerHTML = grants.map(g => {
+            const scopeParts = [];
+            if (g.scope.projectName) scopeParts.push(g.scope.projectName);
+            if (g.scope.areaName) scopeParts.push(g.scope.areaName);
+            if (g.scope.moleculeName) scopeParts.push(g.scope.moleculeName);
+            if (g.scope.companyName) scopeParts.push(g.scope.companyName);
+            const scopeStr = scopeParts.length > 0 ? scopeParts.join(' > ') : '@Localizer["Self"].Value.Trim()';
 
-        return `
-            <div class="user-grant-item">
-                <div class="grant-info">
-                    <div class="grant-name">${g.grantTypeKey}</div>
-                    <div class="grant-scope">${escapeHtml(scopeStr)}</div>
-                    <div class="grant-meta">
-                        <span class="badge badge-${g.category.toLowerCase()}">${g.category}</span>
-                        ${g.isAutoGrant ? '<span class="badge badge-auto">@Localizer["Auto"].Value.Trim()</span>' : '<span class="badge badge-manual">@Localizer["Manual"].Value.Trim()</span>'}
-                        ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
-                        ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
-                        ${g.grantedByName ? `<span>@Localizer["GrantedBy"].Value.Trim(): ${escapeHtml(g.grantedByName)}</span>` : ''}
+            return `
+                <div class="user-grant-item">
+                    <div class="grant-info">
+                        <div class="grant-name">${escapeHtml(g.grantTypeKey)}</div>
+                        <div class="grant-scope">${escapeHtml(scopeStr)}</div>
+                        <div class="grant-meta">
+                            <span class="badge badge-${escapeHtml(g.category.toLowerCase())}">${escapeHtml(g.category)}</span>
+                            ${g.isAutoGrant ? '<span class="badge badge-auto">@Localizer["Auto"].Value.Trim()</span>' : '<span class="badge badge-manual">@Localizer["Manual"].Value.Trim()</span>'}
+                            ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
+                            ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
+                            ${g.grantedByName ? `<span>@Localizer["GrantedBy"].Value.Trim(): ${escapeHtml(g.grantedByName)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="grant-actions">
+                        ${!g.isAutoGrant ? `
+                            <button class="toggle-delegation ${g.canGive ? 'active' : ''}" onclick="toggleDelegation(${g.id}, ${!g.canGive})">
+                                ${g.canGive ? '@Localizer["DisableCanGive"].Value.Trim()' : '@Localizer["EnableCanGive"].Value.Trim()'}
+                            </button>
+                            <button class="btn-revoke" onclick="revokeGrant(${g.id})">@Localizer["Revoke"].Value.Trim()</button>
+                        ` : ''}
                     </div>
                 </div>
-                <div class="grant-actions">
-                    ${!g.isAutoGrant ? `
-                        <button class="toggle-delegation ${g.canGive ? 'active' : ''}" onclick="toggleDelegation(${g.id}, ${!g.canGive})">
-                            ${g.canGive ? '@Localizer["DisableCanGive"].Value.Trim()' : '@Localizer["EnableCanGive"].Value.Trim()'}
-                        </button>
-                        <button class="btn-revoke" onclick="revokeGrant(${g.id})">@Localizer["Revoke"].Value.Trim()</button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Failed to load user grants:', error);
+        listDiv.innerHTML = '<p class="empty-state" style="color: var(--danger);">@Localizer["AnErrorOccurred"].Value.Trim()</p>';
+    }
 }
 
 // Toggle delegation
@@ -1393,6 +1400,7 @@ async function toggleDelegation(grantId, canGive) {
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
         body: JSON.stringify({ grantId, canGive })
     });
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const result = await response.json();
     if (result.success) {
         await loadUserGrants(selectedUserId);
@@ -1409,6 +1417,7 @@ async function revokeGrant(grantId) {
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
         body: JSON.stringify({ grantId })
     });
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const result = await response.json();
     if (result.success) {
         await loadUserGrants(selectedUserId);
@@ -1522,6 +1531,7 @@ async function submitAddGrant() {
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
         body: JSON.stringify(data)
     });
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const result = await response.json();
     if (result.success) {
         closeModal('add-grant-modal');
@@ -1533,67 +1543,80 @@ async function submitAddGrant() {
 
 // Grant type usage
 async function showGrantTypeUsage(grantTypeId, grantKey) {
-    const response = await fetch(`?handler=GrantTypeUsage&grantTypeId=${grantTypeId}`);
-    const data = await response.json();
     const contentDiv = document.getElementById('grant-usage-content');
+    try {
+        const response = await fetch(`?handler=GrantTypeUsage&grantTypeId=${grantTypeId}`);
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        const data = await response.json();
 
-    let html = `<h4>${grantKey}</h4>`;
-    html += `<p><strong>@Localizer["AssignedToUsers"]:</strong> ${data.userCount}</p>`;
+        let html = `<h4>${escapeHtml(grantKey)}</h4>`;
+        html += `<p><strong>@Localizer["AssignedToUsers"]:</strong> ${data.userCount}</p>`;
 
-    if (data.roleTemplates.length > 0) {
-        html += '<h5>@Localizer["IncludedInRoleTemplates"]:</h5><ul>';
-        data.roleTemplates.forEach(rt => {
-            html += `<li><strong>${rt.key}</strong> - CanOwn: ${rt.canOwn ? 'Yes' : 'No'}, CanGive: ${rt.canGive ? 'Yes' : 'No'}, Scope: ${rt.scopeMode}</li>`;
-        });
-        html += '</ul>';
-    } else {
-        html += '<p>@Localizer["NotIncludedInAnyRoleTemplate"]</p>';
+        if (data.roleTemplates.length > 0) {
+            html += '<h5>@Localizer["IncludedInRoleTemplates"]:</h5><ul>';
+            data.roleTemplates.forEach(rt => {
+                html += `<li><strong>${escapeHtml(rt.key)}</strong> - CanOwn: ${rt.canOwn ? 'Yes' : 'No'}, CanGive: ${rt.canGive ? 'Yes' : 'No'}, Scope: ${escapeHtml(rt.scopeMode)}</li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<p>@Localizer["NotIncludedInAnyRoleTemplate"]</p>';
+        }
+
+        contentDiv.innerHTML = html;
+        openModal('grant-usage-modal');
+    } catch (error) {
+        console.error('Failed to load grant type usage:', error);
+        contentDiv.innerHTML = '<p class="empty-state" style="color: var(--danger);">@Localizer["AnErrorOccurred"].Value.Trim()</p>';
+        openModal('grant-usage-modal');
     }
-
-    contentDiv.innerHTML = html;
-    openModal('grant-usage-modal');
 }
 
 // Role template selection
 async function selectRoleTemplate(templateId) {
     selectedRoleTemplateId = templateId;
     document.querySelectorAll('.role-template-card').forEach(c => c.classList.remove('selected'));
-    document.querySelector(`.role-template-card[data-id="${templateId}"]`).classList.add('selected');
+    document.querySelector(`.role-template-card[data-id="${templateId}"]`)?.classList.add('selected');
 
-    const response = await fetch(`?handler=RoleTemplate&templateId=${templateId}`);
-    const template = await response.json();
     const editorDiv = document.getElementById('role-template-editor');
+    try {
+        const response = await fetch(`?handler=RoleTemplate&templateId=${templateId}`);
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        const template = await response.json();
 
-    let html = `
-        <div class="role-editor-header">
-            <h3 class="role-editor-title">${template.key}</h3>
-            <button class="btn btn-primary" onclick="showAddRoleGrantModal()">+ @Localizer["AddGrant"]</button>
-        </div>
-        <div class="role-editor-grants">
-    `;
+        let html = `
+            <div class="role-editor-header">
+                <h3 class="role-editor-title">${escapeHtml(template.key)}</h3>
+                <button class="btn btn-primary" onclick="showAddRoleGrantModal()">+ @Localizer["AddGrant"]</button>
+            </div>
+            <div class="role-editor-grants">
+        `;
 
-    if (template.grants.length === 0) {
-        html += '<p class="empty-state">@Localizer["NoGrantsInTemplate"]</p>';
-    } else {
-        template.grants.forEach(g => {
-            html += `
-                <div class="role-grant-item" onclick="editRoleTemplateGrant(${g.id}, ${g.grantTypeId}, ${g.canOwn}, ${g.canGive}, '${g.scopeMode}')">
-                    <div class="role-grant-info">
-                        <div class="role-grant-name">${g.key}</div>
-                        <div class="role-grant-meta">
-                            <span class="badge">${g.category}</span>
-                            ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
-                            ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
-                            <span class="scope-badge">${g.scopeMode}</span>
+        if (template.grants.length === 0) {
+            html += '<p class="empty-state">@Localizer["NoGrantsInTemplate"]</p>';
+        } else {
+            template.grants.forEach(g => {
+                html += `
+                    <div class="role-grant-item" onclick="editRoleTemplateGrant(${g.id}, ${g.grantTypeId}, ${g.canOwn}, ${g.canGive}, '${escapeHtml(g.scopeMode)}')">
+                        <div class="role-grant-info">
+                            <div class="role-grant-name">${escapeHtml(g.key)}</div>
+                            <div class="role-grant-meta">
+                                <span class="badge">${escapeHtml(g.category)}</span>
+                                ${g.canOwn ? '<span class="badge">CanOwn</span>' : ''}
+                                ${g.canGive ? '<span class="badge badge-can-give">CanGive</span>' : ''}
+                                <span class="scope-badge">${escapeHtml(g.scopeMode)}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-        });
-    }
+                `;
+            });
+        }
 
-    html += '</div>';
-    editorDiv.innerHTML = html;
+        html += '</div>';
+        editorDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Failed to load role template:', error);
+        editorDiv.innerHTML = '<p class="empty-state" style="color: var(--danger);">@Localizer["AnErrorOccurred"].Value.Trim()</p>';
+    }
 }
 
 // Show add role grant modal
@@ -1641,6 +1664,7 @@ async function submitRoleTemplateGrant() {
             headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
             body: JSON.stringify(data)
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const result = await response.json();
         if (result.success) {
             closeModal('role-grant-modal');
@@ -1661,6 +1685,7 @@ async function submitRoleTemplateGrant() {
             headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
             body: JSON.stringify(data)
         });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const result = await response.json();
         if (result.success) {
             closeModal('role-grant-modal');
@@ -1680,6 +1705,7 @@ async function removeRoleTemplateGrant() {
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
         body: JSON.stringify({ grantId })
     });
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     const result = await response.json();
     if (result.success) {
         closeModal('role-grant-modal');
@@ -1703,7 +1729,7 @@ function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
-    return div.innerHTML;
+    return div.innerHTML.replace(/'/g, '&#39;');
 }
 
 function getAntiForgeryToken() {

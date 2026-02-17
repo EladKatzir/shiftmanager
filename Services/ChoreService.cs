@@ -24,6 +24,8 @@ public interface IChoreService
     Task<List<AppUser>> GetEligibleAssigneesAsync();
 }
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — chore queries are molecule-scoped by design;
+// lookups scoped by explicit moleculeId/userId parameters; called only from authorized endpoints
 public class ChoreService : IChoreService
 {
     private readonly AppDbContext _db;

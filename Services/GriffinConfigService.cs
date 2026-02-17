@@ -48,7 +48,9 @@ public class GriffinConfigService : IGriffinConfigService
     public async Task<GriffinConfig?> GetGriffinConfigByCompanyIdAsync(int companyId)
     {
         // Try database first
+        // SECURITY-AUDITED: IgnoreQueryFilters needed — method called during SSO auth before tenant context exists; scoped by explicit companyId
         var dbConfig = await _dbContext.GriffinConfigs
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 
         if (dbConfig != null)
@@ -89,12 +91,15 @@ public class GriffinConfigService : IGriffinConfigService
         string? tokenConsumerUrl,
         bool autoProvisionUsers,
         UserRole defaultProvisionedRole,
+        int? defaultProvisionedRoleTemplateId,
         int timeoutSeconds,
         string updatedBy)
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
 
+        // SECURITY-AUDITED: IgnoreQueryFilters — SaveAsync called from Owner page (already tenant-scoped); explicit companyId filter
         var config = await _dbContext.GriffinConfigs
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 
         if (config == null)
@@ -108,6 +113,7 @@ public class GriffinConfigService : IGriffinConfigService
                 TokenConsumerUrl = tokenConsumerUrl,
                 AutoProvisionUsers = autoProvisionUsers,
                 DefaultProvisionedRole = defaultProvisionedRole,
+                DefaultProvisionedRoleTemplateId = defaultProvisionedRoleTemplateId,
                 TimeoutSeconds = timeoutSeconds,
                 LastUpdated = DateTime.UtcNow,
                 LastUpdatedBy = updatedBy
@@ -130,6 +136,7 @@ public class GriffinConfigService : IGriffinConfigService
             config.TokenConsumerUrl = tokenConsumerUrl;
             config.AutoProvisionUsers = autoProvisionUsers;
             config.DefaultProvisionedRole = defaultProvisionedRole;
+            config.DefaultProvisionedRoleTemplateId = defaultProvisionedRoleTemplateId;
             config.TimeoutSeconds = timeoutSeconds;
             config.LastUpdated = DateTime.UtcNow;
             config.LastUpdatedBy = updatedBy;

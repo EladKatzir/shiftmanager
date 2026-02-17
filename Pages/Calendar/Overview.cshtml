@@ -288,6 +288,10 @@
                     body: JSON.stringify({ userId, date, note })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Request failed: ${response.status}`);
+                }
+
                 const result = await response.json();
                 if (result.success) {
                     closeNoteModal();

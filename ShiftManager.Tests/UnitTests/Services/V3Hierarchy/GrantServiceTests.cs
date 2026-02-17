@@ -885,8 +885,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 118 grants: 107 original + 3 calendar grants + 4 navigation grants + 3 join request grants + 1 ExportUserData grant
-        grantTypes.Should().HaveCount(118, "Should have exactly 118 grant types including calendar, navigation, join request, and export grants");
+        // Assert - 122 grants: 107 original + 3 calendar grants + 4 navigation grants + 3 join request grants + 1 ExportUserData grant + 4 dynamic role grants (ManageAnnouncements, ViewSystemAlerts, ViewAllAreas, ManageOnDuty)
+        grantTypes.Should().HaveCount(122, "Should have exactly 122 grant types including calendar, navigation, join request, export, and dynamic role grants");
     }
 
     [Fact]

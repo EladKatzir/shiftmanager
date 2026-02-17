@@ -5,6 +5,8 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — vacation approval requires cross-company visibility
+// for Directors managing multiple companies; all queries scoped by explicit requestId/userId/companyId parameters
 public class VacationApprovalService : IVacationApprovalService
 {
     private readonly AppDbContext _context;
@@ -161,6 +163,15 @@ public class VacationApprovalService : IVacationApprovalService
         if (request.Status != RequestStatus.Pending)
         {
             return (false, "VacationApproval_AlreadyProcessed");
+        }
+
+        // SECURITY: Prevent self-approval of vacation requests
+        if (request.UserId == approverId)
+        {
+            _logger.LogWarning(
+                "User {UserId} attempted to approve their own vacation request {RequestId}",
+                approverId, requestId);
+            return (false, "VacationApproval_CannotApproveSelf");
         }
 
         // Verify approver has the required grant
@@ -444,6 +455,8 @@ public class VacationApprovalService : IVacationApprovalService
         if (request.Status != RequestStatus.Pending)
             return (false, "VacationApproval_AlreadyProcessed");
 
+        // NOTE: Uses Declined status for self-cancellations since RequestStatus has no Canceled value.
+        // Distinguish from admin-declined by checking if ApproverId is null (self-cancel) vs set (admin-declined).
         request.Status = RequestStatus.Declined;
         await _context.SaveChangesAsync();
 
@@ -482,8 +495,6 @@ public class VacationApprovalService : IVacationApprovalService
             }
 
             // Check if any active user has the required grant for this company
-            var companyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(0, rule.ApproverGrantKey);
-            // The above won't work for checking "any user" — use direct query instead
             // SECURITY-AUDITED: SAFE — scoped by grantKey + companyId; admin diagnostic returns boolean only
             var hasAnyApprover = await _context.Grants
                 .IgnoreQueryFilters()

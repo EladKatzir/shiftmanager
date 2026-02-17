@@ -11,7 +11,9 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "IsManagerOrAdmin")]
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — requires Grant:ManagerHomeAccess policy;
+// config lookup scoped by explicit companyId from caller's hierarchy context
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class ConfigModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

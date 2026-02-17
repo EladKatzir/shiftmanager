@@ -9,6 +9,8 @@ namespace ShiftManager.Services;
 /// Service for managing feature flags with memory caching.
 /// Cache entries expire after 1 minute to ensure flag changes take effect quickly.
 /// </summary>
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — feature flags are global configuration;
+// queries scoped by explicit companyId parameter; no sensitive user data exposed
 public class FeatureFlagService : IFeatureFlagService
 {
     private readonly AppDbContext _context;

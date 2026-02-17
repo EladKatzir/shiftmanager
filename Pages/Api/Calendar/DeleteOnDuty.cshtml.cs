@@ -10,7 +10,7 @@ namespace ShiftManager.Pages.Api.Calendar;
 /// <summary>
 /// ✅ PHASE 20: API endpoint to delete on-duty assignments from calendar views
 /// </summary>
-[Authorize(Policy = "CanEditOnDuty")]
+[Authorize(Policy = "Grant:ManageOnDuty")]
 [IgnoreAntiforgeryToken]
 public class DeleteOnDutyModel : PageModel
 {

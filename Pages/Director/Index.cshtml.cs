@@ -12,7 +12,9 @@ namespace ShiftManager.Pages.Director;
 /// Director Landing Page - Central hub for cross-company management.
 /// ✅ P2-2: Provides company selection and quick access to management tools.
 /// </summary>
-[Authorize(Policy = "IsDirector")]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:DirectorHubAccess policy;
+// cross-company queries by design — Directors view aggregate stats across companies in their hierarchy
+[Authorize(Policy = "Grant:DirectorHubAccess")]
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;

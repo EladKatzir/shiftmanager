@@ -10,7 +10,7 @@ namespace ShiftManager.Pages.Api.Calendar;
 /// <summary>
 /// ✅ PHASE 20: API endpoint to quickly create chores from calendar views
 /// </summary>
-[Authorize(Policy = "CanEditChores")]
+[Authorize(Policy = "Grant:AssignChores")]
 [IgnoreAntiforgeryToken]
 public class QuickAddChoreModel : PageModel
 {

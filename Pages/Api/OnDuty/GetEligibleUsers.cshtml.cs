@@ -10,7 +10,7 @@ namespace ShiftManager.Pages.Api.OnDuty;
 /// API endpoint to get eligible users for a specific on-duty type.
 /// Returns users with their rank information for dropdown population.
 /// </summary>
-[Authorize(Policy = "CanEditOnDuty")]
+[Authorize(Policy = "Grant:ManageOnDuty")]
 [IgnoreAntiforgeryToken]
 public class GetEligibleUsersModel : PageModel
 {

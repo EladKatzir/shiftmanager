@@ -1,0 +1,311 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.RoleTemplates.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Helpers
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["RoleTemplates_Title"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = Localizer["RoleTemplates_Title"], IsActive = true }
+})
+
+<div class="role-templates-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F464;</span>
+            <loc key="RoleTemplates_Title">Role Templates</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="RoleTemplates_Subtitle">Manage system and custom role templates</loc></p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F4CB;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalTemplates</div>
+                <div class="stat-label"><loc key="RoleTemplates_Total">Total</loc></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F512;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.SystemTemplates</div>
+                <div class="stat-label"><loc key="RoleTemplates_System">System</loc></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#x2728;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.CustomTemplates</div>
+                <div class="stat-label"><loc key="RoleTemplates_Custom">Custom</loc></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#x1F465;</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalUsers</div>
+                <div class="stat-label"><loc key="RoleTemplates_UsersAssigned">Users Assigned</loc></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="page-actions">
+        <a href="/Owner/Hub/RoleTemplates/Create" class="btn btn-primary">
+            + <loc key="RoleTemplates_CreateNew">Create Custom Role</loc>
+        </a>
+        <a href="/Owner/Hub/Grants" class="btn btn-outline">
+            <loc key="RoleTemplates_ManageGrants">Manage Grants</loc>
+        </a>
+    </div>
+
+    <!-- Templates Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><loc key="RoleTemplates_Key">Key</loc></th>
+                    <th><loc key="RoleTemplates_DisplayName">Display Name</loc></th>
+                    <th><loc key="RoleTemplates_DerivedRole">Derived Role</loc></th>
+                    <th><loc key="RoleTemplates_Scope">Scope</loc></th>
+                    <th><loc key="RoleTemplates_Grants">Grants</loc></th>
+                    <th><loc key="RoleTemplates_Users">Users</loc></th>
+                    <th><loc key="RoleTemplates_Labels">Labels</loc></th>
+                    <th><loc key="RoleTemplates_Status">Status</loc></th>
+                    <th><loc key="RoleTemplates_Actions">Actions</loc></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Templates)
+                {
+                    <tr class="@(!t.IsActive ? "row-inactive" : "")">
+                        <td>
+                            <span class="template-key">@t.Key</span>
+                            @if (t.IsSystem)
+                            {
+                                <span class="badge badge-system" title="System template">S</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(t.DisplayNameEN))
+                            {
+                                <span>@t.DisplayNameEN</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">@Localizer[t.NameKey]</span>
+                            }
+                        </td>
+                        <td>
+                            @if (t.DerivedUserRole.HasValue)
+                            {
+                                <span class="badge badge-role badge-role-@t.DerivedUserRole.Value.ToString().ToLower()">
+                                    @t.DerivedUserRole.Value
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td><span class="badge badge-scope">@t.ScopeLevel</span></td>
+                        <td><span class="count-badge">@t.GrantCount</span></td>
+                        <td><span class="count-badge">@t.UserCount</span></td>
+                        <td>
+                            @if (t.JobTypeLabelCount > 0)
+                            {
+                                <span class="count-badge">@t.JobTypeLabelCount</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (t.IsActive)
+                            {
+                                <span class="status-dot status-active"></span>
+                            }
+                            else
+                            {
+                                <span class="status-dot status-inactive"></span>
+                            }
+                            @if (t.IsVisibleInSignup)
+                            {
+                                <span class="mini-badge" title="Visible in signup">S</span>
+                            }
+                            @if (t.CanBeAssignedByDefault)
+                            {
+                                <span class="mini-badge" title="Assignable by default">A</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="/Owner/Hub/RoleTemplates/Edit?id=@t.Id" class="btn btn-sm btn-outline">
+                                <loc key="Edit">Edit</loc>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.role-templates-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header { margin-bottom: 2rem; }
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+.page-icon { font-size: 2.5rem; }
+.page-subtitle { color: var(--muted); margin: 0; }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+@@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.stat-icon { font-size: 1.5rem; }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 0.75rem; color: var(--muted); }
+
+.page-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.table-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th, .data-table td {
+    padding: 0.75rem 1rem;
+    text-align: start;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+}
+.data-table th {
+    background: var(--background);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+}
+.row-inactive { opacity: 0.5; }
+.template-key { font-family: monospace; font-weight: 600; }
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+.badge-system { background: var(--primary-light, #dbeafe); color: var(--primary); }
+.badge-scope { background: var(--background); border: 1px solid var(--border); color: var(--text); }
+.badge-role { color: white; }
+.badge-role-owner { background: #7c3aed; }
+.badge-role-manager { background: #2563eb; }
+.badge-role-employee { background: #059669; }
+.badge-role-director { background: #d97706; }
+.badge-role-trainee { background: #6b7280; }
+.badge-role-assigner { background: #0891b2; }
+.badge-role-areaadmin { background: #dc2626; }
+
+.count-badge {
+    display: inline-block;
+    min-width: 1.5rem;
+    text-align: center;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-inline-end: 0.25rem;
+}
+.status-active { background: var(--success, #22c55e); }
+.status-inactive { background: var(--muted); }
+
+.mini-badge {
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    line-height: 1.25rem;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+
+.text-muted { color: var(--muted); }
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-outline { background: transparent; color: var(--text); border-color: var(--border); }
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+</style>
+}

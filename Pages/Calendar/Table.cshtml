@@ -1582,9 +1582,9 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 0.25rem; margin-top: 0.5rem;">
-                            <button class="shift-edit-btn" id="edit-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, true)">✏️ Edit</button>
-                            <button class="shift-edit-btn" id="save-btn-@shiftType.Id" onclick="saveShiftMetadata(@shiftType.Id)" style="display: none;">💾 Save</button>
-                            <button class="shift-edit-btn" id="cancel-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, false)" style="display: none;">❌ Cancel</button>
+                            <button class="shift-edit-btn" id="edit-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, true)">✏️ @Localizer["Edit"]</button>
+                            <button class="shift-edit-btn" id="save-btn-@shiftType.Id" onclick="saveShiftMetadata(@shiftType.Id)" style="display: none;">💾 @Localizer["Save"]</button>
+                            <button class="shift-edit-btn" id="cancel-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, false)" style="display: none;">❌ @Localizer["Cancel"]</button>
                         </div>
                     </td>
                     @foreach (var date in Model.Dates)
@@ -1816,26 +1816,26 @@ const MIN_AMOUNT = 1;
 // Busy users data per date (serialized from server)
 const busyUsersByDate = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BusyUsersByDate));
 
-// Localized strings (using Html.Raw to prevent HTML encoding of Hebrew/special characters)
+// Localized strings — SECURITY FIX: Use Json.Serialize for proper JS-context escaping (prevents XSS via admin localization overrides)
 const i18n = {
-    numberOfPeopleNeeded: '@Html.Raw(Localizer["NumberOfPeopleNeeded"])',
-    adjustRequiredHeadcount: '@Html.Raw(Localizer["AdjustRequiredHeadcount"])',
-    addTrainee: '@Html.Raw(Localizer["AddTrainee"])',
-    changeTrainee: '@Html.Raw(Localizer["ChangeTrainee"])',
-    selectEmployee: '@Html.Raw(Localizer["SelectEmployee"])',
-    assignEmployeeToSlot: '@Html.Raw(Localizer["AssignEmployeeToSlot"])',
-    failedToAddTrainee: '@Html.Raw(Localizer["FailedToAddTrainee"])',
-    removeTraineeConfirm: '@Html.Raw(Localizer["RemoveTraineeConfirm"])',
-    failedToRemoveTrainee: '@Html.Raw(Localizer["FailedToRemoveTrainee"])',
-    failedToChangeUser: '@Html.Raw(Localizer["FailedToChangeUser"])',
-    removeUserConfirm: '@Html.Raw(Localizer["RemoveUserConfirm"])',
-    failedToRemoveUser: '@Html.Raw(Localizer["FailedToRemoveUser"])',
-    deleteShift: '@Html.Raw(Localizer["DeleteShift"])',
-    deleteShiftConfirm: '@Html.Raw(Localizer["DeleteShiftConfirm"])',
-    failedToDeleteShift: '@Html.Raw(Localizer["FailedToDeleteShift"])',
-    resetToProgramConfirm: '@Html.Raw(Localizer["Calendar_ResetToProgramConfirm"])',
-    loadingEmployees: '@Html.Raw(Localizer["Calendar_LoadingEmployees"])',
-    roster: '@Html.Raw(Localizer["Roster"])'
+    numberOfPeopleNeeded: @Html.Raw(Json.Serialize(Localizer["NumberOfPeopleNeeded"].Value)),
+    adjustRequiredHeadcount: @Html.Raw(Json.Serialize(Localizer["AdjustRequiredHeadcount"].Value)),
+    addTrainee: @Html.Raw(Json.Serialize(Localizer["AddTrainee"].Value)),
+    changeTrainee: @Html.Raw(Json.Serialize(Localizer["ChangeTrainee"].Value)),
+    selectEmployee: @Html.Raw(Json.Serialize(Localizer["SelectEmployee"].Value)),
+    assignEmployeeToSlot: @Html.Raw(Json.Serialize(Localizer["AssignEmployeeToSlot"].Value)),
+    failedToAddTrainee: @Html.Raw(Json.Serialize(Localizer["FailedToAddTrainee"].Value)),
+    removeTraineeConfirm: @Html.Raw(Json.Serialize(Localizer["RemoveTraineeConfirm"].Value)),
+    failedToRemoveTrainee: @Html.Raw(Json.Serialize(Localizer["FailedToRemoveTrainee"].Value)),
+    failedToChangeUser: @Html.Raw(Json.Serialize(Localizer["FailedToChangeUser"].Value)),
+    removeUserConfirm: @Html.Raw(Json.Serialize(Localizer["RemoveUserConfirm"].Value)),
+    failedToRemoveUser: @Html.Raw(Json.Serialize(Localizer["FailedToRemoveUser"].Value)),
+    deleteShift: @Html.Raw(Json.Serialize(Localizer["DeleteShift"].Value)),
+    deleteShiftConfirm: @Html.Raw(Json.Serialize(Localizer["DeleteShiftConfirm"].Value)),
+    failedToDeleteShift: @Html.Raw(Json.Serialize(Localizer["FailedToDeleteShift"].Value)),
+    resetToProgramConfirm: @Html.Raw(Json.Serialize(Localizer["Calendar_ResetToProgramConfirm"].Value)),
+    loadingEmployees: @Html.Raw(Json.Serialize(Localizer["Calendar_LoadingEmployees"].Value)),
+    roster: @Html.Raw(Json.Serialize(Localizer["Roster"].Value))
 };
 
 // Shift Row Editing Functions
@@ -1891,6 +1891,10 @@ async function saveShiftMetadata(shiftTypeId) {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -1944,6 +1948,10 @@ async function createCustomShiftRow() {
                 endTime: end
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
 
         const result = await response.json();
 
@@ -2069,6 +2077,10 @@ async function createAssignmentSlots(forceRemoval = false) {
                     staffingRequired: currentAmount
                 })
             });
+        }
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
         }
 
         const result = await response.json();
@@ -2240,6 +2252,10 @@ async function addTrainee(assignmentId, traineeId, traineeName) {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -2310,6 +2326,10 @@ async function removeTrainee(event) {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -2342,6 +2362,10 @@ async function assignUserToSlot(assignmentId, userId) {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -2373,6 +2397,10 @@ async function changeUser(assignmentId, newUserId, newUserName) {
                 newUserId: newUserId
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
 
         const result = await response.json();
 
@@ -2415,6 +2443,10 @@ async function removeUser(event) {
                 assignmentId: parseInt(assignmentId)
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
 
         const result = await response.json();
 
@@ -2461,6 +2493,10 @@ async function confirmDeleteShift(instanceId, event) {
                 shiftInstanceId: instanceId
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
 
         const result = await response.json();
 
@@ -2744,6 +2780,10 @@ async function resetToProgram(instanceId, event) {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -2780,6 +2820,10 @@ async function detachFromProgram(instanceId, reason) {
                 reason: reason
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
 
         const result = await response.json();
 

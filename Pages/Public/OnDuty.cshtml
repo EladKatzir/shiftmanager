@@ -15,7 +15,7 @@
     var startOfWeek = firstDay.AddDays(-(int)firstDay.DayOfWeek + (firstDay.DayOfWeek == DayOfWeek.Sunday ? -6 : 1));
     var currentDate = startOfWeek;
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    var canEdit = (await AuthorizationService.AuthorizeAsync(User, "CanEditOnDuty")).Succeeded;
+    var canEdit = (await AuthorizationService.AuthorizeAsync(User, "Grant:ManageOnDuty")).Succeeded;
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
@@ -699,6 +699,9 @@ async function updateEligibleAssignees(dutyType) {
     try {
         const url = dutyType ? `/Api/OnDuty/GetEligibleUsers?dutyType=${dutyType}` : '/Api/OnDuty/GetEligibleUsers';
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
         const data = await response.json();
 
         if (!data.success) {

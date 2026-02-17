@@ -282,13 +282,15 @@ public static class TestDataSeed
 
         if (existingUser != null)
         {
-            // Update password and job type in case they changed
+            // Update password, job type, and role template in case they changed
             var (hash, salt) = PasswordHasher.CreateHash(password);
             existingUser.PasswordHash = hash;
             existingUser.PasswordSalt = salt;
             existingUser.IsActive = true;
             if (jobTypeId.HasValue && existingUser.JobTypeId == null)
                 existingUser.JobTypeId = jobTypeId.Value;
+            if (existingUser.RoleTemplateId == null)
+                existingUser.RoleTemplateId = await MapRoleToTemplateIdAsync(context, role, jobTypeId);
             await context.SaveChangesAsync();
             logger.LogInformation("Updated test user: {Email}", email);
             return;
@@ -303,6 +305,7 @@ public static class TestDataSeed
             Role = role,
             IsActive = true,
             JobTypeId = jobTypeId,
+            RoleTemplateId = await MapRoleToTemplateIdAsync(context, role, jobTypeId),
             PasswordHash = newHash,
             PasswordSalt = newSalt
         };
@@ -468,6 +471,52 @@ public static class TestDataSeed
         context.ShiftInstances.AddRange(instances);
         await context.SaveChangesAsync();
         logger.LogInformation("Created {Count} shift instances for test company", instances.Count);
+    }
+
+    /// <summary>
+    /// Maps a UserRole + optional JobTypeId to the correct RoleTemplate ID.
+    /// Uses the same logic as the migration backfill SQL.
+    /// </summary>
+    private static async Task<int?> MapRoleToTemplateIdAsync(AppDbContext context, UserRole role, int? jobTypeId)
+    {
+        string templateKey = role switch
+        {
+            UserRole.Owner => "Owner",
+            UserRole.Assigner => "Assigner",
+            UserRole.AreaAdmin => "AreaAdmin",
+            UserRole.Employee => "Employee",
+            UserRole.Trainee => "Trainee",
+            UserRole.Manager => await GetManagerTemplateKeyAsync(context, jobTypeId),
+            UserRole.Director => await GetDirectorTemplateKeyAsync(context, jobTypeId),
+            _ => "Employee"
+        };
+
+        var template = await context.RoleTemplates.FirstOrDefaultAsync(rt => rt.Key == templateKey);
+        return template?.Id;
+    }
+
+    private static async Task<string> GetManagerTemplateKeyAsync(AppDbContext context, int? jobTypeId)
+    {
+        if (jobTypeId == null) return "BRDirector";
+        var jobType = await context.JobTypes.FirstOrDefaultAsync(jt => jt.Id == jobTypeId);
+        return jobType?.Name switch
+        {
+            "Alhut" => "AlhutLead",
+            "Text" => "TextLead",
+            _ => "BRDirector"
+        };
+    }
+
+    private static async Task<string> GetDirectorTemplateKeyAsync(AppDbContext context, int? jobTypeId)
+    {
+        if (jobTypeId == null) return "MoleculeAdmin";
+        var jobType = await context.JobTypes.FirstOrDefaultAsync(jt => jt.Id == jobTypeId);
+        return jobType?.Name switch
+        {
+            "Alhut" => "AlhutDirector",
+            "Text" => "TextDirector",
+            _ => "MoleculeAdmin"
+        };
     }
 
     #endregion

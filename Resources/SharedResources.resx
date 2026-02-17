@@ -3792,6 +3792,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_UnexpectedError" xml:space="preserve">
     <value>Unexpected error. Please try again.</value>
   </data>
+  <data name="Error_RoleTemplate_InvalidKey" xml:space="preserve">
+    <value>Key must contain only letters, numbers, and underscores, starting with a letter.</value>
+  </data>
+  <data name="Error_RoleTemplate_KeyExists" xml:space="preserve">
+    <value>A role template with key '{0}' already exists.</value>
+  </data>
   <data name="Error_Login_AdfsNotConfigured" xml:space="preserve">
     <value>ADFS authentication is not configured. Please use local login or contact your administrator.</value>
   </data>
@@ -7672,6 +7678,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_ExportFailed" xml:space="preserve">
     <value>Export failed: </value>
   </data>
+  <data name="ScheduleExport_DateRangeExceeded" xml:space="preserve">
+    <value>Date range cannot exceed 365 days</value>
+  </data>
   <data name="Error_FailedToCopyPassword" xml:space="preserve">
     <value>Failed to copy password. Please select and copy manually.</value>
   </data>
@@ -8418,6 +8427,9 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="VacationApproval_NotAuthorized" xml:space="preserve">
     <value>You are not authorized to approve this request</value>
+  </data>
+  <data name="VacationApproval_CannotApproveSelf" xml:space="preserve">
+    <value>You cannot approve your own vacation request</value>
   </data>
   <data name="VacationApproval_AlreadyProcessed" xml:space="preserve">
     <value>This request has already been processed</value>
@@ -10953,6 +10965,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Success_MoleculeCreated" xml:space="preserve">
     <value>Molecule created successfully</value>
   </data>
+  <data name="HQ_AllTeams" xml:space="preserve">
+    <value>All Teams</value>
+  </data>
   <data name="Success_MoleculeDeactivated" xml:space="preserve">
     <value>Molecule deactivated successfully</value>
   </data>
@@ -11797,5 +11812,186 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Pagination_PageXofY" xml:space="preserve">
     <value>Page {0} of {1}</value>
+  </data>
+  <data name="Auth_DirectorAutoHQ" xml:space="preserve">
+    <value>As a director, you'll be assigned to your molecule's HQ team</value>
+  </data>
+  <data name="Error_Signup_SelectMolecule" xml:space="preserve">
+    <value>Please select a molecule</value>
+  </data>
+  <data name="Error_Signup_HQNotFound" xml:space="preserve">
+    <value>HQ company not found for this molecule. Contact support.</value>
+  </data>
+  <data name="AreaAdmin" xml:space="preserve">
+    <value>Area Admin</value>
+  </data>
+  <data name="Manager_Alhut" xml:space="preserve">
+    <value>Mapotz</value>
+  </data>
+  <data name="Manager_Text" xml:space="preserve">
+    <value>Mapotz</value>
+  </data>
+  <data name="Manager_BR" xml:space="preserve">
+    <value>Kavar</value>
+  </data>
+  <data name="Manager_Hakam" xml:space="preserve">
+    <value>Kavar</value>
+  </data>
+  <data name="Director_Alhut" xml:space="preserve">
+    <value>Mem-Mem</value>
+  </data>
+  <data name="Director_Text" xml:space="preserve">
+    <value>Mem-Mem</value>
+  </data>
+  <data name="Director_BR" xml:space="preserve">
+    <value>Mapkam</value>
+  </data>
+  <data name="Director_Hakam" xml:space="preserve">
+    <value>Mapkam</value>
+  </data>
+  <!-- Role Templates Pages -->
+  <data name="RoleTemplates_Title" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="RoleTemplates_Subtitle" xml:space="preserve">
+    <value>Manage system and custom role templates</value>
+  </data>
+  <data name="RoleTemplates_Create" xml:space="preserve">
+    <value>Create Custom Role</value>
+  </data>
+  <data name="RoleTemplates_CreateSubtitle" xml:space="preserve">
+    <value>Define a new role template with permissions</value>
+  </data>
+  <data name="RoleTemplates_CreateNew" xml:space="preserve">
+    <value>Create Custom Role</value>
+  </data>
+  <data name="RoleTemplates_CreateButton" xml:space="preserve">
+    <value>Create Template</value>
+  </data>
+  <data name="RoleTemplates_ManageGrants" xml:space="preserve">
+    <value>Manage Grants</value>
+  </data>
+  <data name="RoleTemplates_Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="RoleTemplates_System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="RoleTemplates_Custom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="RoleTemplates_UsersAssigned" xml:space="preserve">
+    <value>Users Assigned</value>
+  </data>
+  <data name="RoleTemplates_Key" xml:space="preserve">
+    <value>Key</value>
+  </data>
+  <data name="RoleTemplates_DisplayName" xml:space="preserve">
+    <value>Display Name</value>
+  </data>
+  <data name="RoleTemplates_DerivedRole" xml:space="preserve">
+    <value>Derived Role</value>
+  </data>
+  <data name="RoleTemplates_DerivedRoleHint" xml:space="preserve">
+    <value>Determines base authorization tier</value>
+  </data>
+  <data name="RoleTemplates_Scope" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="RoleTemplates_Grants" xml:space="preserve">
+    <value>Grants</value>
+  </data>
+  <data name="RoleTemplates_Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="RoleTemplates_Labels" xml:space="preserve">
+    <value>Labels</value>
+  </data>
+  <data name="RoleTemplates_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="RoleTemplates_Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="RoleTemplates_DisplayNameEN" xml:space="preserve">
+    <value>Display Name (English)</value>
+  </data>
+  <data name="RoleTemplates_DisplayNameHE" xml:space="preserve">
+    <value>Display Name (Hebrew)</value>
+  </data>
+  <data name="RoleTemplates_SortOrder" xml:space="preserve">
+    <value>Sort Order</value>
+  </data>
+  <data name="RoleTemplates_CanBeAssigned" xml:space="preserve">
+    <value>Can be assigned by default</value>
+  </data>
+  <data name="RoleTemplates_VisibleInSignup" xml:space="preserve">
+    <value>Visible in public signup</value>
+  </data>
+  <data name="RoleTemplates_Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="RoleTemplates_KeyHint" xml:space="preserve">
+    <value>Unique identifier (letters, numbers, underscores)</value>
+  </data>
+  <data name="RoleTemplates_KeyImmutable" xml:space="preserve">
+    <value>Key cannot be changed after creation</value>
+  </data>
+  <data name="RoleTemplates_JobTypeLabels" xml:space="preserve">
+    <value>Job Type Labels</value>
+  </data>
+  <data name="RoleTemplates_JobTypeLabelsDesc" xml:space="preserve">
+    <value>Override the display name per job type</value>
+  </data>
+  <data name="RoleTemplates_AddLabel" xml:space="preserve">
+    <value>Add Label</value>
+  </data>
+  <data name="RoleTemplates_NotFound" xml:space="preserve">
+    <value>Template not found.</value>
+  </data>
+  <data name="RoleTemplates_SystemBadge" xml:space="preserve">
+    <value>SYSTEM</value>
+  </data>
+  <data name="RoleTemplates_Tab_Metadata" xml:space="preserve">
+    <value>Metadata</value>
+  </data>
+  <data name="RoleTemplates_Tab_Grants" xml:space="preserve">
+    <value>Grants</value>
+  </data>
+  <data name="RoleTemplates_Tab_Labels" xml:space="preserve">
+    <value>Job Type Labels</value>
+  </data>
+  <data name="RoleTemplates_AssignedGrants" xml:space="preserve">
+    <value>Assigned Grants</value>
+  </data>
+  <data name="RoleTemplates_SelectGrant" xml:space="preserve">
+    <value>Select Grant</value>
+  </data>
+  <data name="RoleTemplates_GrantKey" xml:space="preserve">
+    <value>Grant</value>
+  </data>
+  <data name="RoleTemplates_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="RoleTemplates_CanOwn" xml:space="preserve">
+    <value>CanOwn</value>
+  </data>
+  <data name="RoleTemplates_CanGive" xml:space="preserve">
+    <value>CanGive</value>
+  </data>
+  <data name="RoleTemplates_ScopeMode" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="RoleTemplates_NoGrants" xml:space="preserve">
+    <value>No grants assigned to this template.</value>
+  </data>
+  <data name="OwnerHub_RoleTemplatesLink" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="Nav_RoleTemplates" xml:space="preserve">
+    <value>Role Templates</value>
+  </data>
+  <data name="Nav_RoleTemplatesDesc" xml:space="preserve">
+    <value>Manage system and custom role templates</value>
   </data>
 </root>

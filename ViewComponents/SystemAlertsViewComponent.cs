@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using ShiftManager.Models.Support;
+using ShiftManager.Services;
 
 namespace ShiftManager.ViewComponents;
 
@@ -14,20 +15,22 @@ public class SystemAlertsViewComponent : ViewComponent
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
+    private readonly IGrantService _grantService;
     private const string CacheKey = "SystemAlerts";
 
-    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env)
+    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env, IGrantService grantService)
     {
         _cache = cache;
         _configuration = configuration;
         _env = env;
+        _grantService = grantService;
     }
 
-    public IViewComponentResult Invoke()
+    public async Task<IViewComponentResult> InvokeAsync()
     {
-        // Only show for Owner/Admin roles
-        if (!HttpContext.User.IsInRole(nameof(UserRole.Owner)) &&
-            !HttpContext.User.IsInRole(nameof(UserRole.Manager)))
+        // Only show for users with ViewSystemAlerts grant
+        var userIdClaim = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId) || !await _grantService.HasGrantAsync(userId, "ViewSystemAlerts"))
         {
             return Content(string.Empty);
         }

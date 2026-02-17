@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ShiftManager.Models;
 
-public class ShiftInstance
+public class ShiftInstance : IBelongsToCompany
 {
     public int Id { get; set; }
     public int CompanyId { get; set; }
@@ -25,6 +25,7 @@ public class ShiftInstance
     /// Row version for optimistic concurrency control (B-018).
     /// Automatically managed by SQL Server - do not modify manually.
     /// Used to detect concurrent edit conflicts.
+    /// NOTE: [Timestamp] is a no-op on SQLite (no rowversion support). Kept for SQL Server migration compatibility.
     /// </summary>
     [Timestamp]
     public byte[]? RowVersion { get; set; }

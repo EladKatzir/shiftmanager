@@ -45,7 +45,7 @@
             <div style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); font-family: monospace; word-break: break-all; margin-bottom: 1rem;">
                 @Model.GeneratedApiKey
             </div>
-            <button type="button" onclick="copyToClipboard('@Model.GeneratedApiKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
+            <button type="button" onclick="copyToClipboard(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.GeneratedApiKey)))" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
                 @Localizer["CopyToClipboard"]
             </button>
         </div>
@@ -83,7 +83,7 @@
                                         <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
                                             <span style="user-select: all;">@key.PlainTextKey</span>
                                             <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
-                                                📋 Copy
+                                                📋 @Localizer["CopyToClipboard"]
                                             </button>
                                         </div>
                                     }
@@ -343,7 +343,7 @@
                                                 <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
                                                     <span style="user-select: all; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@key.PlainTextKey</span>
                                                     <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;">
-                                                        📋 Copy
+                                                        📋 @Localizer["CopyToClipboard"]
                                                     </button>
                                                 </div>
                                             }

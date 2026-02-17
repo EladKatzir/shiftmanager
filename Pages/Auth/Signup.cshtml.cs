@@ -12,6 +12,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ShiftManager.Pages.Auth;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — anonymous auth flow before tenant context established;
+// scoped by explicit email/companyId parameters; email uniqueness check and company lookup only
 [AllowAnonymous]
 public class SignupModel : LocalizedPageModel
 {
@@ -20,6 +22,7 @@ public class SignupModel : LocalizedPageModel
     private readonly IConfiguration _configuration;
     private readonly IValidationService _validation;
     private readonly INotificationService _notificationService;
+    private readonly IRateLimitingService _rateLimiting;
 
     public SignupModel(
         AppDbContext db,
@@ -27,7 +30,8 @@ public class SignupModel : LocalizedPageModel
         IStringLocalizer<SharedResources> localizer,
         IConfiguration configuration,
         IValidationService validation,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IRateLimitingService rateLimiting)
         : base(localizer)
     {
         _db = db;
@@ -35,6 +39,7 @@ public class SignupModel : LocalizedPageModel
         _configuration = configuration;
         _validation = validation;
         _notificationService = notificationService;
+        _rateLimiting = rateLimiting;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -49,7 +54,7 @@ public class SignupModel : LocalizedPageModel
     [BindProperty]
     public int? MoleculeId { get; set; }
 
-    [BindProperty, Required]
+    [BindProperty]
     public int CompanyId { get; set; }
 
     [BindProperty, Required]
@@ -57,6 +62,9 @@ public class SignupModel : LocalizedPageModel
 
     [BindProperty, Required]
     public UserRole RequestedRole { get; set; } = UserRole.Employee;
+
+    [BindProperty]
+    public int? RequestedRoleTemplateId { get; set; }
 
     public List<Company> AvailableCompanies { get; set; } = new();
     public List<Molecule> AvailableMolecules { get; set; } = new();
@@ -76,8 +84,9 @@ public class SignupModel : LocalizedPageModel
                 .OrderBy(m => m.DisplayName ?? m.Name)
                 .ToListAsync();
 
-            // Also load companies for backward compatibility / server-side fallback
+            // Also load companies for backward compatibility / server-side fallback (exclude HQ)
             AvailableCompanies = await _db.Companies
+                .Where(c => !c.IsHeadquarters)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -91,6 +100,17 @@ public class SignupModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // SECURITY FIX: Rate limiting — per-IP, 5 attempts per 15 minutes
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ipRateLimitKey = $"signup:ip:{ipAddress}";
+
+        if (!_rateLimiting.IsAllowed(ipRateLimitKey, 5, 15))
+        {
+            _logger.LogWarning("Signup rate limit exceeded for IP: {IP}", ipAddress);
+            Error = _localizer["Error_Login_RateLimitExceeded"];
+            return Page();
+        }
+
         // SECURITY FIX: Only allow if public signup is explicitly enabled
         IsPublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
         if (IsPublicSignupEnabled)
@@ -101,6 +121,7 @@ public class SignupModel : LocalizedPageModel
                 .ToListAsync();
 
             AvailableCompanies = await _db.Companies
+                .Where(c => !c.IsHeadquarters)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -139,6 +160,38 @@ public class SignupModel : LocalizedPageModel
         {
             Error = _localizer["Error_Signup_PasswordTooLong"];
             return Page();
+        }
+
+        // Resolve role template if provided
+        RoleTemplate? signupTemplate = null;
+        if (RequestedRoleTemplateId.HasValue)
+        {
+            signupTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(rt => rt.Id == RequestedRoleTemplateId.Value && rt.IsVisibleInSignup);
+            if (signupTemplate?.DerivedUserRole.HasValue == true)
+                RequestedRole = signupTemplate.DerivedUserRole.Value;
+        }
+
+        // Director/AreaAdmin HQ auto-resolve: get assigned to the molecule's HQ company
+        if (RequestedRole == UserRole.Director || RequestedRole == UserRole.AreaAdmin)
+        {
+            if (!MoleculeId.HasValue || MoleculeId.Value <= 0)
+            {
+                Error = _localizer["Error_Signup_SelectMolecule"];
+                return Page();
+            }
+
+            var hqCompany = await _db.Companies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.MoleculeId == MoleculeId.Value && c.IsHeadquarters);
+
+            if (hqCompany == null)
+            {
+                Error = _localizer["Error_Signup_HQNotFound"];
+                return Page();
+            }
+
+            CompanyId = hqCompany.Id;
         }
 
         if (CompanyId <= 0)
@@ -202,6 +255,7 @@ public class SignupModel : LocalizedPageModel
             CompanyId = CompanyId,
             JobTypeId = JobTypeId,
             RequestedRole = RequestedRole,
+            RequestedRoleTemplateId = signupTemplate?.Id ?? RequestedRoleTemplateId,
             Status = JoinRequestStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -230,7 +284,8 @@ public class SignupModel : LocalizedPageModel
                     DisplayName,
                     Email,
                     selectedCompany.Name,
-                    joinRequest.Id);
+                    joinRequest.Id,
+                    selectedCompany.Id);
             }
             catch (Exception ex)
             {

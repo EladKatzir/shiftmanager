@@ -37,6 +37,11 @@ public class GriffinConfig : IBelongsToCompany
     public UserRole DefaultProvisionedRole { get; set; } = UserRole.Employee;
 
     /// <summary>
+    /// Template for auto-provisioned SSO users (replaces DefaultProvisionedRole enum).
+    /// </summary>
+    public int? DefaultProvisionedRoleTemplateId { get; set; }
+
+    /// <summary>
     /// Timeout for Griffin API calls in seconds
     /// </summary>
     public int TimeoutSeconds { get; set; } = 10;

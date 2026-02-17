@@ -2,6 +2,7 @@
 @model ShiftManager.Pages.Admin.EditProfileModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.Helpers
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
@@ -112,13 +113,15 @@
 
                     <div class="form-group">
                         <label class="form-label">@Localizer["Label_Role"] *</label>
-                        <select asp-for="Role" class="form-input" required>
-                            <option value="@UserRole.Employee">@Localizer["Role_Employee"]</option>
-                            <option value="@UserRole.Manager">@Localizer["Role_Manager"]</option>
-                            <option value="@UserRole.Owner">@Localizer["Role_Owner"]</option>
-                            <option value="@UserRole.Director">@Localizer["Role_Director"]</option>
-                            <option value="@UserRole.Trainee">@Localizer["Role_Trainee"]</option>
+                        <select asp-for="RoleTemplateId" class="form-input" required>
+                            @foreach (var rt in Model.AvailableRoleTemplates)
+                            {
+                                <option value="@rt.Id" selected="@(rt.Id == Model.RoleTemplateId)">
+                                    @RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)
+                                </option>
+                            }
                         </select>
+                        <input type="hidden" asp-for="Role" />
                     </div>
 
                     <div class="form-group">

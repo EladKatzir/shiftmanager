@@ -64,7 +64,14 @@ public class AppUser : IBelongsToCompany
     public int? JobTypeId { get; set; }    // Workforce molecules only
     public int? DepartmentId { get; set; }  // Tech molecules only
 
+    // Dynamic Role Template — source of truth for user's role
+    /// <summary>
+    /// User's primary role template. When set, AppUser.Role is auto-derived from RoleTemplate.DerivedUserRole.
+    /// </summary>
+    public int? RoleTemplateId { get; set; }
+
     // Navigation
     public JobType? JobType { get; set; }
     public Department? Department { get; set; }
+    public RoleTemplate? RoleTemplate { get; set; }
 }

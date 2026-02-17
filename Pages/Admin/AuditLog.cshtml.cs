@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class AuditLogModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;

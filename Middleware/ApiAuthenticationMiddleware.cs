@@ -171,6 +171,23 @@ public class ApiAuthenticationMiddleware
         if ((DateTime.UtcNow - lastUpdated).TotalSeconds > 60)
         {
             _lastUsedCache[apiKey.Id] = DateTime.UtcNow;
+
+            // Periodic cleanup: every 100 updates, check if cache exceeds 1000 entries
+            // and remove entries older than 24 hours to prevent unbounded growth
+            var updates = System.Threading.Interlocked.Increment(ref _updatesSinceLastCleanupCheck);
+            if (updates % 100 == 0 && _lastUsedCache.Count > 1000)
+            {
+                var cutoff = DateTime.UtcNow.AddHours(-24);
+                var staleKeys = _lastUsedCache
+                    .Where(kvp => kvp.Value < cutoff)
+                    .Select(kvp => kvp.Key)
+                    .ToList();
+                foreach (var staleKey in staleKeys)
+                    _lastUsedCache.TryRemove(staleKey, out _);
+
+                _logger.LogDebug("Cleaned up {Count} stale entries from API key LastUsedAt cache", staleKeys.Count);
+            }
+
             _ = Task.Run(async () =>
             {
                 try
@@ -321,6 +338,12 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // Admin grant verification/repair API - used by Owner pages for grant management
+        if (path.StartsWithSegments("/api/admin/verify-grants", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -342,6 +365,7 @@ public class ApiAuthenticationMiddleware
 
     // A-09: Debounce cache for LastUsedAt updates — prevents SQLITE_BUSY from concurrent writes
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, DateTime> _lastUsedCache = new();
+    private static int _updatesSinceLastCleanupCheck = 0;
 
     /// <summary>
     /// Writes a 401 Unauthorized response
@@ -370,6 +394,9 @@ public class ApiAuthenticationMiddleware
     /// <summary>
     /// Gets the client IP address, handling proxies
     /// </summary>
+    // NOTE: X-Forwarded-For is trusted without validation. This is acceptable for air-gapped IIS deployment
+    // where only the IIS reverse proxy sets this header. If deployment moves to public network, configure
+    // ASP.NET Core ForwardedHeadersMiddleware with known proxy IPs instead.
     private string GetClientIpAddress(HttpContext context)
     {
         // Check X-Forwarded-For header first (for proxies/load balancers)

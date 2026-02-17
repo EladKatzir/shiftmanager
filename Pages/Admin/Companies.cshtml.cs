@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
+using ShiftManager.Helpers;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -79,12 +80,12 @@ public class CompaniesModel : LocalizedPageModel
             ))
             .ToListAsync();
 
-        // Load all Director users
-        // TODO: Replace with DirectorCompanyAssignment-based query or grant-based query when available
-        // Currently filtering by Director role as a proxy for users with director capabilities
+        // Load all users whose RoleTemplate derives to Director (or legacy Director role)
         AvailableDirectors = await _db.Users
             .IgnoreQueryFilters()
-            .Where(u => u.Role == UserRole.Director)
+            .Include(u => u.RoleTemplate)
+            .Where(u => u.Role == UserRole.Director
+                || (u.RoleTemplate != null && u.RoleTemplate.DerivedUserRole == UserRole.Director))
             .OrderBy(u => u.DisplayName)
             .Select(u => new DirectorVM(u.Id, u.DisplayName, u.Email))
             .ToListAsync();
@@ -194,9 +195,9 @@ public class CompaniesModel : LocalizedPageModel
         else
         {
             // Validate that the selected Director exists
-            // TODO: Consider grant-based validation when available
-            // Currently validating Director role as a proxy for director capabilities
-            var directorExists = await _db.Users.AnyAsync(u => u.Id == SelectedDirectorId!.Value && u.Role == UserRole.Director);
+            // Validate that selected user has Director role (synced from DerivedUserRole)
+            var directorExists = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Id == SelectedDirectorId!.Value
+                && (u.Role == UserRole.Director || (u.RoleTemplate != null && u.RoleTemplate.DerivedUserRole == UserRole.Director)));
             if (!directorExists)
             {
                 Error = _localizer["Error_SelectedDirectorNotFound"];
@@ -253,14 +254,18 @@ public class CompaniesModel : LocalizedPageModel
             }
             else
             {
-                // Create the manager user for this company
+                // Create the manager user for this company with RoleTemplate
                 var (hash, salt) = PasswordHasher.CreateHash(ManagerPassword);
+                var managerTemplateKey = RoleTemplateMapper.MapUserRoleToRoleTemplateKey(UserRole.Manager);
+                var managerTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(rt => rt.Key == managerTemplateKey);
                 var manager = new AppUser
                 {
                     CompanyId = company.Id,
                     Email = ManagerEmail,
                     DisplayName = ManagerDisplayName,
-                    Role = UserRole.Manager,
+                    Role = managerTemplate?.DerivedUserRole ?? UserRole.Manager,
+                    RoleTemplateId = managerTemplate?.Id,
                     IsActive = true,
                     PasswordHash = hash,
                     PasswordSalt = salt
@@ -457,7 +462,8 @@ public class CompaniesModel : LocalizedPageModel
 
         // CRITICAL: Check if any Owner users belong to this company
         // IgnoreQueryFilters: admin may be in a different tenant than the company being deleted
-        var hasOwnerUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.CompanyId == id && u.Role == UserRole.Owner);
+        var hasOwnerUsers = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.CompanyId == id
+            && (u.Role == UserRole.Owner || (u.RoleTemplate != null && u.RoleTemplate.DerivedUserRole == UserRole.Owner)));
         if (hasOwnerUsers)
         {
             TempData["ErrorMessage"] = _localizer["Error_CannotDeleteCompanyWithOwners"].Value;

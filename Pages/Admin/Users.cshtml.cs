@@ -15,10 +15,10 @@ using System.Text;
 
 namespace ShiftManager.Pages.Admin;
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires IsManagerOrAdmin policy;
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManagerHomeAccess policy;
 // Owner-only paths are gated by AdminAccess grant check; grant-scoped queries enforce per-company access;
 // hierarchy data (Molecules, JobTypes, Companies) is reference data for dropdowns, not sensitive
-[Authorize(Policy = "IsManagerOrAdmin")]
+[Authorize(Policy = "Grant:ManagerHomeAccess")]
 public class UsersModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
@@ -55,10 +55,10 @@ public class UsersModel : LocalizedPageModel
         _grantService = grantService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? DepartmentName, int GrantsCount);
-    public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, DateTime CreatedAt, JoinRequestStatus Status);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId);
+    public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId);
     public record MoleculeOption(int Id, string Name, string AreaName);
-    public record JobTypeOption(int Id, string Name, string AreaName);
+    public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
 
     // Batch approval support
     public class BatchApprovalItem
@@ -88,7 +88,7 @@ public class UsersModel : LocalizedPageModel
     public int TotalJoinRequests { get; set; }
     public int TotalJoinRequestsPages => (int)Math.Ceiling(TotalJoinRequests / (double)JoinRequestsPageSize);
 
-    // Expose assignable roles for UI filtering
+    // Expose assignable roles for UI filtering (legacy enum-based)
     public List<UserRole> AssignableRoles
     {
         get
@@ -99,11 +99,14 @@ public class UsersModel : LocalizedPageModel
             if (_directorService.CanAssignRole(UserRole.Director)) roles.Add(UserRole.Director);
             if (_directorService.CanAssignRole(UserRole.Owner)) roles.Add(UserRole.Owner);
             if (_directorService.CanAssignRole(UserRole.Trainee)) roles.Add(UserRole.Trainee);
-            // ✅ PHASE 18: Add Assigner role to assignable roles
             if (_directorService.CanAssignRole(UserRole.Assigner)) roles.Add(UserRole.Assigner);
+            if (_directorService.CanAssignRole(UserRole.AreaAdmin)) roles.Add(UserRole.AreaAdmin);
             return roles;
         }
     }
+
+    // Template-based assignable roles (dynamic from DB)
+    public List<RoleTemplate> AssignableRoleTemplates { get; set; } = new();
 
     // Filter parameters for join requests
     [BindProperty(SupportsGet = true)]
@@ -132,6 +135,7 @@ public class UsersModel : LocalizedPageModel
     [BindProperty] public string NewDisplayName { get; set; } = string.Empty;
     [BindProperty] public string NewPassword { get; set; } = string.Empty;
     [BindProperty] public string NewRole { get; set; } = "Employee";
+    [BindProperty] public int? NewRoleTemplateId { get; set; }
 
     // Owner cross-company user management
     [BindProperty]
@@ -140,6 +144,10 @@ public class UsersModel : LocalizedPageModel
     // Job type for new user
     [BindProperty]
     public int? NewJobTypeId { get; set; }
+
+    // Molecule for Director HQ auto-assignment
+    [BindProperty]
+    public int? NewMoleculeId { get; set; }
 
     public List<Company> Companies { get; set; } = new();
 
@@ -150,6 +158,7 @@ public class UsersModel : LocalizedPageModel
     public List<int> SelectedRequests { get; set; } = new();
 
     public Dictionary<int, UserRole> RequestRoles { get; set; } = new();
+    public Dictionary<int, int> RequestTemplateIds { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -171,11 +180,12 @@ public class UsersModel : LocalizedPageModel
         // ✅ Grant-based: Determine Owner status via AdminAccess grant
         IsOwner = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
 
-        // Load all companies for Owner user management
+        // Load all companies for Owner user management (exclude HQ — auto-assigned for Directors)
         if (IsOwner)
         {
             Companies = await _db.Companies
                 .IgnoreQueryFilters()
+                .Where(c => !c.IsHeadquarters)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -234,16 +244,19 @@ public class UsersModel : LocalizedPageModel
                 companies.TryGetValue(jr.CompanyId, out var company) ? company.Name : $"Company #{jr.CompanyId}",
                 jr.RequestedRole.ToString(),
                 jr.JobType?.DisplayName,
+                jr.JobType?.Name,
                 jr.CreatedAt,
-                jr.Status
+                jr.Status,
+                jr.RequestedRoleTemplateId
             ))
             .ToList();
 
-        // Load available companies for filter dropdown
+        // Load available companies for filter dropdown (exclude HQ)
         if (IsOwner)
         {
             AvailableCompanies = await _db.Companies
                 .IgnoreQueryFilters()
+                .Where(c => !c.IsHeadquarters)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -270,8 +283,20 @@ public class UsersModel : LocalizedPageModel
             .Where(jt => jt.IsActive)
             .Include(jt => jt.Area)
             .OrderBy(jt => jt.Area.Name).ThenBy(jt => jt.Name)
-            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName))
+            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName, jt.Name))
             .ToListAsync();
+
+        // Load assignable role templates (filtered by CanBeAssignedByDefault and user's grant level)
+        AssignableRoleTemplates = await _db.RoleTemplates
+            .IgnoreQueryFilters()
+            .Where(rt => rt.IsActive && rt.CanBeAssignedByDefault)
+            .OrderBy(rt => rt.SortOrder)
+            .ToListAsync();
+
+        // Filter templates by what the current user can assign (DerivedUserRole check)
+        AssignableRoleTemplates = AssignableRoleTemplates
+            .Where(rt => !rt.DerivedUserRole.HasValue || _directorService.CanAssignRole(rt.DerivedUserRole.Value))
+            .ToList();
 
         // Load existing users with filters
         IQueryable<AppUser> usersQuery;
@@ -400,8 +425,10 @@ public class UsersModel : LocalizedPageModel
                         u.LockoutEnd,
                         u.JobTypeId,
                         u.JobType?.DisplayName,
+                        u.JobType?.Name,
                         u.Department?.DisplayName,
-                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0
+                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
+                        u.RoleTemplateId
                     ));
                 }
             }
@@ -427,8 +454,10 @@ public class UsersModel : LocalizedPageModel
                         u.LockoutEnd,
                         u.JobTypeId,
                         u.JobType?.DisplayName,
+                        u.JobType?.Name,
                         u.Department?.DisplayName,
-                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0
+                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
+                        u.RoleTemplateId
                     ));
                 }
             }
@@ -473,8 +502,28 @@ public class UsersModel : LocalizedPageModel
 
         if (await _db.Users.AnyAsync(u => u.Email == NewEmail)) { Error = _localizer["Error_EmailAlreadyExists"]; return Page(); }
 
-        // Validate role string and permission to assign
-        if (!Enum.TryParse<UserRole>(NewRole, ignoreCase: true, out var targetRole))
+        // Resolve role template and derive UserRole
+        RoleTemplate? roleTemplate = null;
+        UserRole targetRole;
+
+        if (NewRoleTemplateId.HasValue)
+        {
+            // Direct template assignment (new path)
+            roleTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(rt => rt.Id == NewRoleTemplateId.Value && rt.IsActive);
+            if (roleTemplate == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
+                return RedirectToPage();
+            }
+            targetRole = roleTemplate.DerivedUserRole ?? UserRole.Employee;
+        }
+        else if (!string.IsNullOrEmpty(NewRole) && Enum.TryParse<UserRole>(NewRole, ignoreCase: true, out var parsedRole))
+        {
+            // Legacy enum-string fallback
+            targetRole = parsedRole;
+        }
+        else
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
             return RedirectToPage();
@@ -484,6 +533,28 @@ public class UsersModel : LocalizedPageModel
         {
             TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
+        }
+
+        // Director/AreaAdmin HQ auto-resolve: get assigned to the molecule's HQ company
+        if (targetRole == UserRole.Director || targetRole == UserRole.AreaAdmin)
+        {
+            if (!NewMoleculeId.HasValue || NewMoleculeId.Value <= 0)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_Signup_SelectMolecule"].Value;
+                return RedirectToPage();
+            }
+
+            var hqCompany = await _db.Companies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.MoleculeId == NewMoleculeId.Value && c.IsHeadquarters);
+
+            if (hqCompany == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_Signup_HQNotFound"].Value;
+                return RedirectToPage();
+            }
+
+            NewUserCompanyId = hqCompany.Id;
         }
 
         // ✅ Grant-based: Determine target company using EditCompanyUsers grant scope
@@ -537,13 +608,27 @@ public class UsersModel : LocalizedPageModel
             }
         }
 
+        // If template wasn't loaded via direct ID, resolve via legacy mapping
+        if (roleTemplate == null)
+        {
+            string? jobTypeName = null;
+            if (NewJobTypeId.HasValue)
+            {
+                var jt = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(j => j.Id == NewJobTypeId.Value);
+                jobTypeName = jt?.Name;
+            }
+            var roleTemplateKey = MapUserRoleToRoleTemplateKey(targetRole, jobTypeName);
+            roleTemplate = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == roleTemplateKey);
+        }
+
         var (h, s) = PasswordHasher.CreateHash(NewPassword);
         var newUser = new AppUser
         {
             CompanyId = targetCompanyId,
             Email = NewEmail,
             DisplayName = NewDisplayName,
-            Role = targetRole,
+            Role = roleTemplate?.DerivedUserRole ?? targetRole,
+            RoleTemplateId = roleTemplate?.Id,
             IsActive = true,
             PasswordHash = h,
             PasswordSalt = s,
@@ -552,21 +637,15 @@ public class UsersModel : LocalizedPageModel
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
 
-        // ✅ Onboarding: Assign role template grants with JobType-aware mapping
-        string? jobTypeName = null;
-        if (NewJobTypeId.HasValue)
-        {
-            var jt = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(j => j.Id == NewJobTypeId.Value);
-            jobTypeName = jt?.Name;
-        }
-        var roleTemplateKey = MapUserRoleToRoleTemplateKey(targetRole, jobTypeName);
-        var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, targetCompanyId, NewJobTypeId);
-        var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserIdForCompany);
+        // Assign role template grants with JobType-aware mapping
+        var templateKey = roleTemplate?.Key ?? "Employee";
+        var grantScope = await BuildGrantScopeForTemplateAsync(templateKey, targetCompanyId, NewJobTypeId);
+        var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, templateKey, grantScope, currentUserIdForCompany);
         _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to new user {UserId}",
-            grantsAssigned, roleTemplateKey, newUser.Id);
+            grantsAssigned, templateKey, newUser.Id);
 
-        // ✅ P0-4/P0-5 FIX: If creating a Director, also create DirectorCompany mapping
-        if (targetRole == UserRole.Director)
+        // ✅ P0-4/P0-5 FIX: If creating a Director/AreaAdmin, also create DirectorCompany mapping
+        if (targetRole == UserRole.Director || targetRole == UserRole.AreaAdmin)
         {
             var directorAssignment = new DirectorCompany
             {
@@ -605,6 +684,8 @@ public class UsersModel : LocalizedPageModel
             TargetUserId = newUser.Id,
             FromRole = null,
             ToRole = targetRole,
+            FromRoleTemplateId = null,
+            ToRoleTemplateId = roleTemplate?.Id,
             CompanyId = targetCompanyId,
             Timestamp = DateTime.UtcNow
         });
@@ -658,7 +739,7 @@ public class UsersModel : LocalizedPageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostRoleAsync(int id, string role)
+    public async Task<IActionResult> OnPostRoleAsync(int id, int roleTemplateId, string? role = null)
     {
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
@@ -667,14 +748,28 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        if (string.IsNullOrWhiteSpace(role) || role.Length > 50)
-        {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
-            return RedirectToPage();
-        }
+        // Resolve target role from template ID or legacy enum string
+        RoleTemplate? selectedTemplate = null;
+        UserRole targetRole;
 
-        // Validate role string and permission to assign
-        if (!Enum.TryParse<UserRole>(role, ignoreCase: true, out var targetRole))
+        if (roleTemplateId > 0)
+        {
+            // Direct template assignment (new path)
+            selectedTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId && rt.IsActive);
+            if (selectedTemplate == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
+                return RedirectToPage();
+            }
+            targetRole = selectedTemplate.DerivedUserRole ?? UserRole.Employee;
+        }
+        else if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRole>(role, ignoreCase: true, out var parsedRole))
+        {
+            // Legacy fallback
+            targetRole = parsedRole;
+        }
+        else
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
             return RedirectToPage();
@@ -686,7 +781,7 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
+        var u = await _db.Users.IgnoreQueryFilters().Include(x => x.JobType).FirstOrDefaultAsync(x => x.Id == id);
         if (u != null)
         {
             var oldRole = u.Role;
@@ -759,11 +854,32 @@ public class UsersModel : LocalizedPageModel
                 }
             }
 
+            var oldRoleTemplateId = u.RoleTemplateId;
             u.Role = targetRole;
+
+            // Set RoleTemplateId — use direct template if available, otherwise resolve via mapping
+            if (selectedTemplate != null)
+            {
+                u.RoleTemplateId = selectedTemplate.Id;
+                if (selectedTemplate.DerivedUserRole.HasValue)
+                    u.Role = selectedTemplate.DerivedUserRole.Value;
+            }
+            else
+            {
+                var templateKey = MapUserRoleToRoleTemplateKey(targetRole, u.JobType?.Name);
+                var template = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
+                if (template != null)
+                {
+                    u.RoleTemplateId = template.Id;
+                    if (template.DerivedUserRole.HasValue)
+                        u.Role = template.DerivedUserRole.Value;
+                }
+            }
             await _db.SaveChangesAsync();
 
-            // ✅ P0-4/P0-5 FIX: If changing TO Director, create DirectorCompany mapping
-            if (oldRole != UserRole.Director && targetRole == UserRole.Director)
+            // ✅ P0-4/P0-5 FIX: If changing TO Director/AreaAdmin, create DirectorCompany mapping
+            if (oldRole != UserRole.Director && oldRole != UserRole.AreaAdmin &&
+                (targetRole == UserRole.Director || targetRole == UserRole.AreaAdmin))
             {
                 // Check if DirectorCompany mapping already exists
                 var existingMapping = await _db.DirectorCompanies
@@ -794,7 +910,9 @@ public class UsersModel : LocalizedPageModel
                 ChangedBy = currentUserId,
                 TargetUserId = u.Id,
                 FromRole = oldRole,
-                ToRole = targetRole,
+                ToRole = u.Role,
+                FromRoleTemplateId = oldRoleTemplateId,
+                ToRoleTemplateId = u.RoleTemplateId,
                 CompanyId = u.CompanyId,
                 Timestamp = DateTime.UtcNow
             });
@@ -1120,7 +1238,7 @@ public class UsersModel : LocalizedPageModel
         }
     }
 
-    public async Task<IActionResult> OnPostApproveJoinRequestAsync(int id)
+    public async Task<IActionResult> OnPostApproveJoinRequestAsync(int id, int? roleTemplateId = null)
     {
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
@@ -1184,7 +1302,24 @@ public class UsersModel : LocalizedPageModel
         // HIGH-009 FIX: Wrap in try/catch to prevent unhandled exceptions
         try
         {
-            // Create the user account with JobTypeId from join request
+            // Create the user account — prefer admin-selected template, then join request's template, fall back to mapping
+            RoleTemplate? approveTemplate = null;
+            if (roleTemplateId.HasValue)
+            {
+                approveTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId.Value && rt.IsActive);
+            }
+            if (approveTemplate == null && joinRequest.RequestedRoleTemplateId.HasValue)
+            {
+                approveTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(rt => rt.Id == joinRequest.RequestedRoleTemplateId.Value && rt.IsActive);
+            }
+            if (approveTemplate == null)
+            {
+                var approveTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
+                approveTemplate = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == approveTemplateKey);
+            }
+
             var newUser = new AppUser
             {
                 Email = joinRequest.Email,
@@ -1193,7 +1328,8 @@ public class UsersModel : LocalizedPageModel
                 PasswordSalt = joinRequest.PasswordSalt,
                 CompanyId = joinRequest.CompanyId,
                 JobTypeId = joinRequest.JobTypeId,
-                Role = joinRequest.RequestedRole,
+                Role = approveTemplate?.DerivedUserRole ?? joinRequest.RequestedRole,
+                RoleTemplateId = approveTemplate?.Id,
                 IsActive = true
             };
 
@@ -1211,7 +1347,7 @@ public class UsersModel : LocalizedPageModel
             await _db.SaveChangesAsync();
 
             // ✅ Onboarding: Assign role template grants with JobType-aware mapping
-            var roleTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
+            var roleTemplateKey = approveTemplate?.Key ?? MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
             var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, joinRequest.CompanyId, joinRequest.JobTypeId);
             var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
             _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
@@ -1341,12 +1477,26 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Manually bind RequestRoles dictionary from form data
-        RequestRoles = new Dictionary<int, UserRole>();
-        foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("RequestRoles[")))
+        // Manually bind RequestTemplateIds dictionary from form data
+        RequestTemplateIds = new Dictionary<int, int>();
+        const string templatePrefix = "RequestTemplateIds[";
+        foreach (var key in Request.Form.Keys.Where(k => k.StartsWith(templatePrefix)))
         {
-            // Extract the ID from "RequestRoles[123]"
-            var idString = key.Substring(13, key.Length - 14); // Remove "RequestRoles[" and "]"
+            var idString = key[templatePrefix.Length..^1]; // Extract ID between "[" and "]"
+            if (int.TryParse(idString, out var requestId) &&
+                int.TryParse(Request.Form[key].ToString(), out var templateId) &&
+                templateId > 0)
+            {
+                RequestTemplateIds[requestId] = templateId;
+            }
+        }
+
+        // Legacy fallback: also parse RequestRoles if present
+        RequestRoles = new Dictionary<int, UserRole>();
+        const string rolesPrefix = "RequestRoles[";
+        foreach (var key in Request.Form.Keys.Where(k => k.StartsWith(rolesPrefix)))
+        {
+            var idString = key[rolesPrefix.Length..^1]; // Extract ID between "[" and "]"
             if (int.TryParse(idString, out var requestId) &&
                 int.TryParse(Request.Form[key].ToString(), out var roleInt) &&
                 Enum.IsDefined(typeof(UserRole), roleInt))
@@ -1431,10 +1581,30 @@ public class UsersModel : LocalizedPageModel
                     continue;
                 }
 
-                // Get assigned role from form (default to requested role if not specified)
-                var assignedRole = RequestRoles.ContainsKey(joinRequest.Id)
-                    ? RequestRoles[joinRequest.Id]
-                    : joinRequest.RequestedRole;
+                // Get assigned role — prefer template ID from form, fall back to legacy enum, then requested role
+                RoleTemplate? batchTemplate = null;
+                UserRole assignedRole;
+
+                if (RequestTemplateIds.TryGetValue(joinRequest.Id, out var batchTemplateId))
+                {
+                    batchTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(rt => rt.Id == batchTemplateId && rt.IsActive);
+                    if (batchTemplate == null)
+                    {
+                        errors.Add(string.Format(_localizer["Error_InvalidRole"].Value));
+                        skippedCount++;
+                        continue;
+                    }
+                    assignedRole = batchTemplate.DerivedUserRole ?? UserRole.Employee;
+                }
+                else if (RequestRoles.TryGetValue(joinRequest.Id, out var legacyRole))
+                {
+                    assignedRole = legacyRole;
+                }
+                else
+                {
+                    assignedRole = joinRequest.RequestedRole;
+                }
 
                 // Validate permission to assign the role
                 if (!_directorService.CanAssignRole(assignedRole))
@@ -1444,7 +1614,13 @@ public class UsersModel : LocalizedPageModel
                     continue;
                 }
 
-                // Create the user account with JobTypeId from join request
+                // If template wasn't loaded via direct ID, resolve via mapping
+                if (batchTemplate == null)
+                {
+                    var batchTemplateKey = MapUserRoleToRoleTemplateKey(assignedRole, joinRequest.JobType?.Name);
+                    batchTemplate = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == batchTemplateKey);
+                }
+
                 var newUser = new AppUser
                 {
                     Email = joinRequest.Email,
@@ -1453,7 +1629,8 @@ public class UsersModel : LocalizedPageModel
                     PasswordSalt = joinRequest.PasswordSalt,
                     CompanyId = joinRequest.CompanyId,
                     JobTypeId = joinRequest.JobTypeId,
-                    Role = assignedRole,
+                    Role = batchTemplate?.DerivedUserRole ?? assignedRole,
+                    RoleTemplateId = batchTemplate?.Id,
                     IsActive = true
                 };
 
@@ -1469,14 +1646,14 @@ public class UsersModel : LocalizedPageModel
                 // Link the created user to the join request
                 joinRequest.CreatedUserId = newUser.Id;
 
-                // ✅ Onboarding: Assign role template grants with JobType-aware mapping
-                var roleTemplateKey = MapUserRoleToRoleTemplateKey(assignedRole, joinRequest.JobType?.Name);
+                // ✅ Onboarding: Assign role template grants — prefer resolved template key, fall back to mapping
+                var roleTemplateKey = batchTemplate?.Key ?? MapUserRoleToRoleTemplateKey(assignedRole, joinRequest.JobType?.Name);
                 var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, joinRequest.CompanyId, joinRequest.JobTypeId);
                 var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
 
                 _logger.LogInformation(
-                    "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} for company {CompanyId}. Assigned {GrantsCount} grants.",
-                    joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, joinRequest.CompanyId, grantsAssigned);
+                    "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} template {TemplateKey} for company {CompanyId}. Assigned {GrantsCount} grants.",
+                    joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, roleTemplateKey, joinRequest.CompanyId, grantsAssigned);
 
                 // Log to audit log
                 await _auditLogService.LogUserActionAsync(
@@ -1642,31 +1819,10 @@ public class UsersModel : LocalizedPageModel
 
     /// <summary>
     /// Maps UserRole enum + JobType name to the correct RoleTemplate key.
-    /// JobType-aware: Directors/Managers get different templates based on their specialization.
+    /// Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
     /// </summary>
     private static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName)
-    {
-        return role switch
-        {
-            UserRole.Owner => "Owner",
-            UserRole.Director => jobTypeName switch
-            {
-                "Alhut" => "AlhutDirector",
-                "Text" => "TextDirector",
-                _ => "MoleculeAdmin" // BR, Hakam, null, and any unknown default to MoleculeAdmin
-            },
-            UserRole.Manager => jobTypeName switch
-            {
-                "Alhut" => "AlhutLead",
-                "Text" => "TextLead",
-                _ => "BRDirector" // BR, Hakam, null, and any unknown default to BRDirector
-            },
-            UserRole.Employee => "Employee",
-            UserRole.Trainee => "Employee",
-            UserRole.Assigner => "Assigner",
-            _ => "Employee"
-        };
-    }
+        => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role, jobTypeName);
 
     /// <summary>
     /// Builds the correct GrantScope based on the role template key.
@@ -1697,6 +1853,11 @@ public class UsersModel : LocalizedPageModel
             // Molecule-scoped templates
             "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
                 ? GrantScope.Molecule(company.MoleculeId.Value)
+                : GrantScope.Company(companyId),
+
+            // Area-scoped templates
+            "AreaAdmin" => company.Molecule?.Area?.Id != null
+                ? GrantScope.Area(company.Molecule.Area.Id)
                 : GrantScope.Company(companyId),
 
             // MoleculeJobType-scoped templates (need MoleculeId + JobTypeId)
@@ -1809,12 +1970,40 @@ public class UsersModel : LocalizedPageModel
                 continue;
             }
 
-            if (!Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var role))
-                role = UserRole.Employee;
+            // Try parsing as template key first, then fall back to UserRole enum
+            RoleTemplate? importTemplate = null;
+            UserRole role;
 
-            // Don't allow bulk creation of Owner/Director
-            if (role == UserRole.Owner || role == UserRole.Director)
+            // Look up template by key (supports custom roles)
+            importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(rt => rt.Key == roleStr);
+
+            if (importTemplate != null)
+            {
+                role = importTemplate.DerivedUserRole ?? UserRole.Employee;
+            }
+            else if (Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var parsedRole))
+            {
+                role = parsedRole;
+                // Map enum to template
+                var templateKey = MapUserRoleToRoleTemplateKey(role, null);
+                importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(rt => rt.Key == templateKey);
+            }
+            else
+            {
                 role = UserRole.Employee;
+                importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(rt => rt.Key == "Employee");
+            }
+
+            // Don't allow bulk creation of Owner/Director/AreaAdmin
+            if (role == UserRole.Owner || role == UserRole.Director || role == UserRole.AreaAdmin)
+            {
+                role = UserRole.Employee;
+                importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(rt => rt.Key == "Employee");
+            }
 
             var (hash, salt) = PasswordHasher.CreateHash(password);
             var user = new AppUser
@@ -1824,6 +2013,7 @@ public class UsersModel : LocalizedPageModel
                 PasswordHash = hash,
                 PasswordSalt = salt,
                 Role = role,
+                RoleTemplateId = importTemplate?.Id,
                 Phone = string.IsNullOrWhiteSpace(phone) ? null : phone,
                 CompanyId = companyId,
                 IsActive = true,

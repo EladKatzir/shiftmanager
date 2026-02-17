@@ -4,6 +4,8 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — used in GetUsersForGroupingAsync to find active users
+// across companies within a molecule; scoped by explicit moleculeId/companyIds parameters
 public class ShiftGroupingService : IShiftGroupingService
 {
     private readonly AppDbContext _db;

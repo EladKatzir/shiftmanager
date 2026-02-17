@@ -187,6 +187,14 @@
             });
         });
 
+        // SECURITY FIX: Escape HTML entities including single quotes for safe innerHTML rendering
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, '&#39;');
+        }
+
         // Refresh calendar data via AJAX
         async function refreshCalendarData() {
             const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
@@ -237,7 +245,7 @@
             const assignmentList = cell.querySelector('.excel-cell__assignments');
             if (assignmentList) {
                 assignmentList.innerHTML = cellData.assignments
-                    .map(a => `<span class="excel-cell__assignee" data-user-id="${a.userId}">${a.userName}</span>`)
+                    .map(a => `<span class="excel-cell__assignee" data-user-id="${a.userId}">${escapeHtml(a.userName)}</span>`)
                     .join('');
             }
         }

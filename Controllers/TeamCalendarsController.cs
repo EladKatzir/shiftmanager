@@ -29,7 +29,7 @@ public class TeamCalendarsController : ControllerBase
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.Parse(userIdClaim ?? "0");
+        return int.TryParse(userIdClaim, out var id) ? id : 0;
     }
 
     private UserRole GetCurrentUserRole()

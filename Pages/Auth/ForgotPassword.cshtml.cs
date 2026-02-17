@@ -12,6 +12,8 @@ using System.Text;
 
 namespace ShiftManager.Pages.Auth;
 
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — anonymous auth flow before tenant context established;
+// scoped by explicit email parameter; only checks user existence, no sensitive data exposed
 [AllowAnonymous]
 public class ForgotPasswordModel : LocalizedPageModel
 {
