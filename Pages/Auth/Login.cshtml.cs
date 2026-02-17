@@ -27,6 +27,7 @@ public class LoginModel : LocalizedPageModel
     private readonly IGriffinConfigService _griffinConfigService;
     private readonly IGriffinService _griffinService;
     private readonly IHierarchyService _hierarchyService;
+    private readonly IGrantService _grantService;
 
     public LoginModel(
         AppDbContext db,
@@ -36,7 +37,8 @@ public class LoginModel : LocalizedPageModel
         IValidationService validation,
         IGriffinConfigService griffinConfigService,
         IGriffinService griffinService,
-        IHierarchyService hierarchyService)
+        IHierarchyService hierarchyService,
+        IGrantService grantService)
         : base(localizer)
     {
         _db = db;
@@ -46,6 +48,7 @@ public class LoginModel : LocalizedPageModel
         _griffinConfigService = griffinConfigService;
         _griffinService = griffinService;
         _hierarchyService = hierarchyService;
+        _grantService = grantService;
     }
 
     [BindProperty] public string Email { get; set; } = string.Empty;
@@ -263,6 +266,27 @@ public class LoginModel : LocalizedPageModel
                 }
             }
 
+            // v3.0 Organizational Hierarchy - fetch early so we can use for grant provisioning and claims
+            var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+
+            // Login-time grant provisioning: if user has a RoleTemplate but no grants, provision from AutoGrants
+            if (user.RoleTemplateId.HasValue)
+            {
+                var hasAnyGrants = await _db.Grants.AnyAsync(g => g.UserId == user.Id);
+                if (!hasAnyGrants)
+                {
+                    var roleScope = new GrantScope(
+                        ProjectId: hierarchyContext?.Path.Project?.Id,
+                        AreaId: hierarchyContext?.Path.Area?.Id,
+                        MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+                        CompanyId: user.CompanyId
+                    );
+                    await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
+                    _logger.LogInformation("Provisioned auto-grants for user {UserId} from RoleTemplate {TemplateId} at login",
+                        user.Id, user.RoleTemplateId.Value);
+                }
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -276,9 +300,6 @@ public class LoginModel : LocalizedPageModel
             {
                 claims.Add(new Claim("RoleTemplateKey", user.RoleTemplate.Key));
             }
-
-            // v3.0 Organizational Hierarchy claims
-            var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
             if (hierarchyContext != null)
             {
                 claims.Add(new Claim("MoleculeId", hierarchyContext.Path.Molecule.Id.ToString()));

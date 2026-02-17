@@ -22,6 +22,7 @@ public class GriffinService : IGriffinService
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<GriffinService> _logger;
     private readonly IHierarchyService _hierarchyService;
+    private readonly IGrantService _grantService;
 
     public GriffinService(
         IHttpClientFactory httpClientFactory,
@@ -30,7 +31,8 @@ public class GriffinService : IGriffinService
         ISecurityLogger securityLogger,
         IAuditLogService auditLogService,
         ILogger<GriffinService> logger,
-        IHierarchyService hierarchyService)
+        IHierarchyService hierarchyService,
+        IGrantService grantService)
     {
         _httpClientFactory = httpClientFactory;
         _dbContext = dbContext;
@@ -39,6 +41,7 @@ public class GriffinService : IGriffinService
         _auditLogService = auditLogService;
         _logger = logger;
         _hierarchyService = hierarchyService;
+        _grantService = grantService;
     }
 
     public string BuildAuthenticationUrl(string griffinBaseUrl, string tokenConsumerUrl)
@@ -232,6 +235,27 @@ public class GriffinService : IGriffinService
             }
         }
 
+        // v3.0 Organizational Hierarchy - fetch early so we can use for grant provisioning and claims
+        var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+
+        // Login-time grant provisioning: if user has a RoleTemplate but no grants, provision from AutoGrants
+        if (user.RoleTemplateId.HasValue)
+        {
+            var hasAnyGrants = await _dbContext.Grants.AnyAsync(g => g.UserId == user.Id);
+            if (!hasAnyGrants)
+            {
+                var roleScope = new GrantScope(
+                    ProjectId: hierarchyContext?.Path.Project?.Id,
+                    AreaId: hierarchyContext?.Path.Area?.Id,
+                    MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+                    CompanyId: user.CompanyId
+                );
+                await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
+                _logger.LogInformation("Provisioned auto-grants for Griffin user {UserId} from RoleTemplate {TemplateId}",
+                    user.Id, user.RoleTemplateId.Value);
+            }
+        }
+
         // Build ClaimsPrincipal
         var claims = new List<Claim>
         {
@@ -255,9 +279,6 @@ public class GriffinService : IGriffinService
         {
             claims.Add(new Claim("RoleTemplateKey", user.RoleTemplate.Key));
         }
-
-        // v3.0 Organizational Hierarchy claims
-        var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
         if (hierarchyContext != null)
         {
             claims.Add(new Claim("MoleculeId", hierarchyContext.Path.Molecule.Id.ToString()));
