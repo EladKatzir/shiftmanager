@@ -141,9 +141,7 @@ public static class FeatureFlagSeed
     public static class Flags
     {
         // UI flags
-        public const string NewNavEnabled = "FF_NEW_NAV_ENABLED";
-        public const string ScopeSwitcherEnabled = "FF_SCOPE_SWITCHER_ENABLED";
-        public const string NewCalendarStyles = "FF_NEW_CALENDAR_STYLES";
+        // Removed: NewNavEnabled, ScopeSwitcherEnabled, NewCalendarStyles — permanently active, no fallback UI
         public const string WidgetsEnabled = "FF_WIDGETS_ENABLED";
 
         // Excel Calendar flags

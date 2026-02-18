@@ -14,7 +14,7 @@ public class FeatureFlag
     public int Id { get; set; }
 
     /// <summary>
-    /// Unique identifier for the flag (e.g., "FF_NEW_NAV_ENABLED")
+    /// Unique identifier for the flag (e.g., "FF_WIDGETS_ENABLED")
     /// </summary>
     public string Name { get; set; } = string.Empty;
 

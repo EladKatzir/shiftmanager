@@ -255,7 +255,10 @@ public class DatabaseBackupService : BackgroundService
 
             // Clean up partial backup
             try { if (File.Exists(backupPath)) File.Delete(backupPath); }
-            catch { /* ignore cleanup errors */ }
+            catch (Exception cleanupEx)
+            {
+                _logger.LogWarning(cleanupEx, "Failed to clean up partial backup file: {Path}", backupPath);
+            }
 
             throw;
         }

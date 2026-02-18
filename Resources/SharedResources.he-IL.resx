@@ -3023,6 +3023,111 @@
   <data name="Owner_SystemHealth_Desc" xml:space="preserve">
     <value>מעקב אחר מצב המערכת</value>
   </data>
+  <data name="Owner_SystemHealth_SecurityWarnings" xml:space="preserve">
+    <value>אזהרות אבטחה</value>
+  </data>
+  <data name="Owner_SystemHealth_ActionRequired" xml:space="preserve">
+    <value>נדרשת פעולה</value>
+  </data>
+  <data name="Owner_SystemHealth_Database" xml:space="preserve">
+    <value>מסד נתונים</value>
+  </data>
+  <data name="Owner_SystemHealth_Healthy" xml:space="preserve">
+    <value>תקין</value>
+  </data>
+  <data name="Owner_SystemHealth_Error" xml:space="preserve">
+    <value>שגיאה</value>
+  </data>
+  <data name="Owner_SystemHealth_Size" xml:space="preserve">
+    <value>גודל:</value>
+  </data>
+  <data name="Owner_SystemHealth_Tables" xml:space="preserve">
+    <value>טבלאות:</value>
+  </data>
+  <data name="Owner_SystemHealth_Records" xml:space="preserve">
+    <value>רשומות:</value>
+  </data>
+  <data name="Owner_SystemHealth_Memory" xml:space="preserve">
+    <value>זיכרון</value>
+  </data>
+  <data name="Owner_SystemHealth_Used" xml:space="preserve">
+    <value>בשימוש:</value>
+  </data>
+  <data name="Owner_SystemHealth_High" xml:space="preserve">
+    <value>גבוה</value>
+  </data>
+  <data name="Owner_SystemHealth_Uptime" xml:space="preserve">
+    <value>זמן פעילות</value>
+  </data>
+  <data name="Owner_SystemHealth_Running" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
+  <data name="Owner_SystemHealth_Started" xml:space="preserve">
+    <value>הופעל:</value>
+  </data>
+  <data name="Owner_SystemHealth_Duration" xml:space="preserve">
+    <value>משך:</value>
+  </data>
+  <data name="Owner_SystemHealth_Environment" xml:space="preserve">
+    <value>סביבה:</value>
+  </data>
+  <data name="Owner_SystemHealth_Configuration" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
+  <data name="Owner_SystemHealth_OK" xml:space="preserve">
+    <value>תקין</value>
+  </data>
+  <data name="Owner_SystemHealth_Email" xml:space="preserve">
+    <value>דוא"ל:</value>
+  </data>
+  <data name="Owner_SystemHealth_ADFS" xml:space="preserve">
+    <value>ADFS:</value>
+  </data>
+  <data name="Owner_SystemHealth_DailyNotifications" xml:space="preserve">
+    <value>התראות יומיות:</value>
+  </data>
+  <data name="Owner_SystemHealth_Configured" xml:space="preserve">
+    <value>מוגדר</value>
+  </data>
+  <data name="Owner_SystemHealth_NotConfigured" xml:space="preserve">
+    <value>לא מוגדר</value>
+  </data>
+  <data name="Owner_SystemHealth_Enabled" xml:space="preserve">
+    <value>מופעל</value>
+  </data>
+  <data name="Owner_SystemHealth_Disabled" xml:space="preserve">
+    <value>מושבת</value>
+  </data>
+  <data name="Owner_SystemHealth_Companies" xml:space="preserve">
+    <value>חברות:</value>
+  </data>
+  <data name="Owner_SystemHealth_Users" xml:space="preserve">
+    <value>משתמשים:</value>
+  </data>
+  <data name="Owner_SystemHealth_RecentLogs" xml:space="preserve">
+    <value>יומנים אחרונים (24 שעות אחרונות)</value>
+  </data>
+  <data name="Owner_SystemHealth_Errors" xml:space="preserve">
+    <value>שגיאות</value>
+  </data>
+  <data name="Owner_SystemHealth_Warnings" xml:space="preserve">
+    <value>אזהרות</value>
+  </data>
+  <data name="Owner_SystemHealth_Info" xml:space="preserve">
+    <value>מידע</value>
+  </data>
+  <data name="Owner_SystemHealth_Attention" xml:space="preserve">
+    <value>שימו לב:</value>
+  </data>
+  <data name="Owner_SystemHealth_ErrorsDetected" xml:space="preserve">
+    <value>שגיאה/ות התגלו ב-24 השעות האחרונות. בדקו את יומני האפליקציה.</value>
+  </data>
+  <data name="Owner_SystemHealth_Refresh" xml:space="preserve">
+    <value>רענון</value>
+  </data>
+  <data name="Owner_SystemHealth_LastChecked" xml:space="preserve">
+    <value>בדיקה אחרונה:</value>
+  </data>
   <data name="Owner_Backup" xml:space="preserve">
     <value>גיבוי &amp; שחזור</value>
   </data>

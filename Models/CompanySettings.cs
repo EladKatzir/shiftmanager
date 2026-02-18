@@ -1,6 +1,6 @@
 namespace ShiftManager.Models;
 
-public class CompanySettings
+public class CompanySettings : IBelongsToCompany
 {
     public int Id { get; set; }
     public int CompanyId { get; set; }

@@ -73,10 +73,12 @@ public class DiskSpaceHealthCheck : IHealthCheck
 
 /// <summary>
 /// Checks application memory usage.
-/// Reports unhealthy if working set exceeds 800MB.
+/// Reports Degraded if working set exceeds 600MB (early warning).
+/// Reports Unhealthy if working set exceeds 800MB (hard limit).
 /// </summary>
 public class MemoryHealthCheck : IHealthCheck
 {
+    private const long WarnMemoryMB = 600;
     private const long MaxMemoryMB = 800;
 
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
@@ -90,6 +92,12 @@ public class MemoryHealthCheck : IHealthCheck
             {
                 return Task.FromResult(HealthCheckResult.Unhealthy(
                     $"High memory usage: {memoryMB}MB (threshold: {MaxMemoryMB}MB)"));
+            }
+
+            if (memoryMB > WarnMemoryMB)
+            {
+                return Task.FromResult(HealthCheckResult.Degraded(
+                    $"Elevated memory usage: {memoryMB}MB (warn: {WarnMemoryMB}MB, max: {MaxMemoryMB}MB)"));
             }
 
             return Task.FromResult(HealthCheckResult.Healthy(

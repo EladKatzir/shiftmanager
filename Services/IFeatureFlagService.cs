@@ -12,7 +12,7 @@ public interface IFeatureFlagService
     /// Checks if a feature flag is enabled for the given scope.
     /// Resolution priority: user-specific > company-specific > global.
     /// </summary>
-    /// <param name="flagName">The name of the feature flag (e.g., "FF_NEW_NAV_ENABLED")</param>
+    /// <param name="flagName">The name of the feature flag (e.g., "FF_WIDGETS_ENABLED")</param>
     /// <param name="userId">Optional user ID for user-specific check</param>
     /// <param name="companyId">Optional company ID for company-specific check</param>
     /// <returns>True if the flag is enabled, false otherwise</returns>

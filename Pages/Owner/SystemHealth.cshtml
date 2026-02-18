@@ -28,9 +28,9 @@
         <div class="status-icon">@(Model.OverallStatus == "Healthy" ? "✅" : "⚠️")</div>
         <div class="status-content">
             <h2>@Model.OverallStatus</h2>
-            <p>Last checked: @DateTime.Now.ToString("g")</p>
+            <p>@Localizer["Owner_SystemHealth_LastChecked"] @DateTime.Now.ToString("g")</p>
         </div>
-        <button onclick="location.reload()" class="btn btn-ghost">🔄 Refresh</button>
+        <button onclick="location.reload()" class="btn btn-ghost">🔄 @Localizer["Owner_SystemHealth_Refresh"]</button>
     </div>
 
     @* Security Warnings (fixes D-01, B-06, H-07, B-10) *@
@@ -38,8 +38,8 @@
     {
         <div class="health-check-card" style="border: 2px solid var(--danger); background: var(--danger-bg, rgba(220,53,69,0.1)); margin-bottom: 1rem;">
             <div class="check-header">
-                <h3>🔒 Security Warnings</h3>
-                <span class="status-badge badge-error">Action Required</span>
+                <h3>🔒 @Localizer["Owner_SystemHealth_SecurityWarnings"]</h3>
+                <span class="status-badge badge-error">@Localizer["Owner_SystemHealth_ActionRequired"]</span>
             </div>
             <div class="check-details">
                 @foreach (var warning in Model.SecurityWarnings)
@@ -57,22 +57,22 @@
         @* Database Health *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>💾 Database</h3>
+                <h3>💾 @Localizer["Owner_SystemHealth_Database"]</h3>
                 <span class="status-badge @(Model.DatabaseHealthy ? "badge-success" : "badge-error")">
-                    @(Model.DatabaseHealthy ? "Healthy" : "Error")
+                    @(Model.DatabaseHealthy ? Localizer["Owner_SystemHealth_Healthy"] : Localizer["Owner_SystemHealth_Error"])
                 </span>
             </div>
             <div class="check-details">
                 <div class="detail-item">
-                    <span class="label">Size:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Size"]</span>
                     <span class="value">@Model.DatabaseSize</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Tables:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Tables"]</span>
                     <span class="value">@Model.TableCount</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Records:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Records"]</span>
                     <span class="value">@Model.TotalRecords.ToString("N0")</span>
                 </div>
             </div>
@@ -81,14 +81,14 @@
         @* Memory Usage *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>💻 Memory</h3>
+                <h3>💻 @Localizer["Owner_SystemHealth_Memory"]</h3>
                 <span class="status-badge @(Model.MemoryHealthy ? "badge-success" : "badge-warning")">
-                    @(Model.MemoryHealthy ? "Healthy" : "High")
+                    @(Model.MemoryHealthy ? Localizer["Owner_SystemHealth_Healthy"] : Localizer["Owner_SystemHealth_High"])
                 </span>
             </div>
             <div class="check-details">
                 <div class="detail-item">
-                    <span class="label">Used:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Used"]</span>
                     <span class="value">@Model.MemoryUsedMB MB</span>
                 </div>
                 <div class="detail-item">
@@ -105,20 +105,20 @@
         @* Application Uptime *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>⏱️ Uptime</h3>
-                <span class="status-badge badge-info">Running</span>
+                <h3>⏱️ @Localizer["Owner_SystemHealth_Uptime"]</h3>
+                <span class="status-badge badge-info">@Localizer["Owner_SystemHealth_Running"]</span>
             </div>
             <div class="check-details">
                 <div class="detail-item">
-                    <span class="label">Started:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Started"]</span>
                     <span class="value">@Model.StartTime.ToString("g")</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Duration:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Duration"]</span>
                     <span class="value">@Model.Uptime</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Environment:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Environment"]</span>
                     <span class="value">@Model.Environment</span>
                 </div>
             </div>
@@ -127,28 +127,28 @@
         @* Configuration Status *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>⚙️ Configuration</h3>
-                <span class="status-badge badge-success">OK</span>
+                <h3>⚙️ @Localizer["Owner_SystemHealth_Configuration"]</h3>
+                <span class="status-badge badge-success">@Localizer["Owner_SystemHealth_OK"]</span>
             </div>
             <div class="check-details">
                 <div class="detail-item">
-                    <span class="label">Email:</span>
-                    <span class="value">@(Model.EmailConfigured ? "✅ Configured" : "❌ Not configured")</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Email"]</span>
+                    <span class="value">@(Model.EmailConfigured ? "✅ " + Localizer["Owner_SystemHealth_Configured"].Value : "❌ " + Localizer["Owner_SystemHealth_NotConfigured"].Value)</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">ADFS:</span>
-                    <span class="value">@(Model.AdfsConfigured ? "✅ Configured" : "❌ Not configured")</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_ADFS"]</span>
+                    <span class="value">@(Model.AdfsConfigured ? "✅ " + Localizer["Owner_SystemHealth_Configured"].Value : "❌ " + Localizer["Owner_SystemHealth_NotConfigured"].Value)</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Daily Notifications:</span>
-                    <span class="value">@(Model.DailyNotificationsEnabled ? "✅ Enabled" : "⏸️ Disabled")</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_DailyNotifications"]</span>
+                    <span class="value">@(Model.DailyNotificationsEnabled ? "✅ " + Localizer["Owner_SystemHealth_Enabled"].Value : "⏸️ " + Localizer["Owner_SystemHealth_Disabled"].Value)</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Companies:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Companies"]</span>
                     <span class="value">@Model.CompanyCount</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Users:</span>
+                    <span class="label">@Localizer["Owner_SystemHealth_Users"]</span>
                     <span class="value">@Model.UserCount</span>
                 </div>
             </div>
@@ -157,26 +157,25 @@
 
     @* Detailed Logs *@
     <div class="health-logs">
-        <h2>📋 Recent Logs (Last 24 hours)</h2>
+        <h2>📋 @Localizer["Owner_SystemHealth_RecentLogs"]</h2>
         <div class="logs-stats">
             <div class="log-stat">
                 <span class="log-count error">@Model.ErrorCount</span>
-                <span class="log-label">Errors</span>
+                <span class="log-label">@Localizer["Owner_SystemHealth_Errors"]</span>
             </div>
             <div class="log-stat">
                 <span class="log-count warning">@Model.WarningCount</span>
-                <span class="log-label">Warnings</span>
+                <span class="log-label">@Localizer["Owner_SystemHealth_Warnings"]</span>
             </div>
             <div class="log-stat">
                 <span class="log-count info">@Model.InfoCount</span>
-                <span class="log-label">Info</span>
+                <span class="log-label">@Localizer["Owner_SystemHealth_Info"]</span>
             </div>
         </div>
         @if (Model.ErrorCount > 0)
         {
             <div class="alert alert-warning">
-                <strong>⚠️ Attention:</strong> @Model.ErrorCount error(s) detected in the last 24 hours.
-                Check application logs for details.
+                <strong>⚠️ @Localizer["Owner_SystemHealth_Attention"]</strong> @Model.ErrorCount @Localizer["Owner_SystemHealth_ErrorsDetected"]
             </div>
         }
     </div>

@@ -669,6 +669,9 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<ApiKeyRequest>()
                 .HasQueryFilter(r => r.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            modelBuilder.Entity<CompanySettings>()
+                .HasQueryFilter(cs => cs.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // Note: ApiRequestLog does NOT have a query filter — CompanyId is nullable (logs unauthenticated attempts)
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
