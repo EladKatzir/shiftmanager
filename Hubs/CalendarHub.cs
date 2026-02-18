@@ -35,6 +35,12 @@ public class CalendarHub : Hub
     public async Task JoinCalendarGroup(string groupName)
     {
         var userId = GetUserId();
+        if (userId == "unknown")
+        {
+            _logger.LogError("JoinCalendarGroup called without NameIdentifier claim (Connection: {ConnectionId})", Context.ConnectionId);
+            return;
+        }
+
         var rateLimitKey = $"hub:{userId}:join";
         if (!_rateLimiter.IsAllowed(rateLimitKey, HubRateLimitMaxAttempts, HubRateLimitWindowMinutes))
         {
@@ -58,6 +64,12 @@ public class CalendarHub : Hub
     public async Task LeaveCalendarGroup(string groupName)
     {
         var userId = GetUserId();
+        if (userId == "unknown")
+        {
+            _logger.LogError("LeaveCalendarGroup called without NameIdentifier claim (Connection: {ConnectionId})", Context.ConnectionId);
+            return;
+        }
+
         var rateLimitKey = $"hub:{userId}:leave";
         if (!_rateLimiter.IsAllowed(rateLimitKey, HubRateLimitMaxAttempts, HubRateLimitWindowMinutes))
         {
@@ -91,8 +103,8 @@ public class CalendarHub : Hub
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        _logger.LogDebug("Connection {ConnectionId} connected (User: {UserId})", Context.ConnectionId, userId ?? "unknown");
+        var userId = GetUserId();
+        _logger.LogDebug("Connection {ConnectionId} connected (User: {UserId})", Context.ConnectionId, userId);
         await base.OnConnectedAsync();
     }
 
