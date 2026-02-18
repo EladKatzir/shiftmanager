@@ -108,6 +108,7 @@ public class ApiAuthenticationMiddleware
 
         // Look up API key in database
         var apiKey = await dbContext.ApiKeys
+            .IgnoreQueryFilters()  // SECURITY-AUDITED: Runs before tenant context; key lookup establishes tenant
             .Include(k => k.Company)
             .FirstOrDefaultAsync(k => k.KeyHash == keyHash);
 
@@ -194,7 +195,9 @@ public class ApiAuthenticationMiddleware
                 {
                     using var scope = context.RequestServices.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    var key = await db.ApiKeys.FindAsync(apiKey.Id);
+                    var key = await db.ApiKeys
+                        .IgnoreQueryFilters()  // SECURITY-AUDITED: Background update of authenticated key's last-used timestamp
+                        .FirstOrDefaultAsync(k => k.Id == apiKey.Id);
                     if (key != null)
                     {
                         key.LastUsedAt = DateTime.UtcNow;

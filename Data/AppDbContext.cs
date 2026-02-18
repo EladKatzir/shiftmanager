@@ -669,6 +669,8 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<ApiKeyRequest>()
                 .HasQueryFilter(r => r.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // Note: ApiRequestLog does NOT have a query filter — CompanyId is nullable (logs unauthenticated attempts)
+
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies

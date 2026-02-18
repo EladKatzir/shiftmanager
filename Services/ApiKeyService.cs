@@ -128,9 +128,10 @@ public class ApiKeyService : IApiKeyService
         int? rateLimitPerMinute = null,
         DateTime? expiresAt = null)
     {
+        var companyId = _tenantResolver.GetCurrentTenantId();
         var request = await _context.ApiKeyRequests
             .Include(r => r.Company)
-            .FirstOrDefaultAsync(r => r.Id == requestId);
+            .FirstOrDefaultAsync(r => r.Id == requestId && r.CompanyId == companyId);
 
         if (request == null)
             return (null, null, "Request not found");
@@ -200,8 +201,9 @@ public class ApiKeyService : IApiKeyService
         if (string.IsNullOrWhiteSpace(reviewNotes))
             return (null, "Rejection reason is required");
 
+        var companyId = _tenantResolver.GetCurrentTenantId();
         var request = await _context.ApiKeyRequests
-            .FirstOrDefaultAsync(r => r.Id == requestId);
+            .FirstOrDefaultAsync(r => r.Id == requestId && r.CompanyId == companyId);
 
         if (request == null)
             return (null, "Request not found");
