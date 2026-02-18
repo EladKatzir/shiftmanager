@@ -31,14 +31,14 @@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.Success
+            <strong>✅ @Localizer["Success"]:</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-danger">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong>❌ @Localizer["Error"]:</strong> @Model.Error
         </div>
     }
 
@@ -48,9 +48,9 @@
         <div class="info-banner">
             <div class="info-icon">ℹ️</div>
             <div class="info-content">
-                <strong>Latest Archive:</strong> Created @Model.LatestArchiveMetadata.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
-                cutoff date: @Model.LatestArchiveMetadata.CutoffDate.ToString("yyyy-MM-dd"),
-                @Model.LatestArchiveMetadata.RowCounts.Values.Sum() total records
+                <strong>@Localizer["Owner_DataLifecycle_LatestArchive"]:</strong> @Localizer["Owner_DataLifecycle_LatestArchive_Created"] @Model.LatestArchiveMetadata.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+                @Localizer["Owner_DataLifecycle_LatestArchive_CutoffDate"]: @Model.LatestArchiveMetadata.CutoffDate.ToString("yyyy-MM-dd"),
+                @Model.LatestArchiveMetadata.RowCounts.Values.Sum() @Localizer["Owner_DataLifecycle_LatestArchive_TotalRecords"]
             </div>
         </div>
     }
@@ -428,7 +428,7 @@
                             @if (Model.ValidationResult.Warnings.Any())
                             {
                                 <div class="warnings-section">
-                                    <h4>⚠️ Warnings:</h4>
+                                    <h4>⚠️ <loc key="Owner_DataLifecycle_Warnings" />:</h4>
                                     <ul>
                                         @foreach (var warning in Model.ValidationResult.Warnings)
                                         {

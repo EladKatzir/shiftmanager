@@ -10256,6 +10256,18 @@
   <data name="Owner_DataLifecycle_HardDelete_Desc" xml:space="preserve">
     <value>הסר רשומות לצמיתות ממסד הנתונים</value>
   </data>
+  <data name="Owner_DataLifecycle_LatestArchive" xml:space="preserve">
+    <value>ארכיון אחרון</value>
+  </data>
+  <data name="Owner_DataLifecycle_LatestArchive_Created" xml:space="preserve">
+    <value>נוצר</value>
+  </data>
+  <data name="Owner_DataLifecycle_LatestArchive_CutoffDate" xml:space="preserve">
+    <value>תאריך גבול</value>
+  </data>
+  <data name="Owner_DataLifecycle_LatestArchive_TotalRecords" xml:space="preserve">
+    <value>רשומות בסה״כ</value>
+  </data>
   <data name="Owner_DataLifecycle_NdjsonExport" xml:space="preserve">
     <value>ייצוא NDJSON</value>
   </data>

@@ -10290,6 +10290,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Owner_DataLifecycle_HardDelete_Desc" xml:space="preserve">
     <value>Permanently remove records from the database</value>
   </data>
+  <data name="Owner_DataLifecycle_LatestArchive" xml:space="preserve">
+    <value>Latest Archive</value>
+  </data>
+  <data name="Owner_DataLifecycle_LatestArchive_Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Owner_DataLifecycle_LatestArchive_CutoffDate" xml:space="preserve">
+    <value>Cutoff date</value>
+  </data>
+  <data name="Owner_DataLifecycle_LatestArchive_TotalRecords" xml:space="preserve">
+    <value>total records</value>
+  </data>
   <data name="Owner_DataLifecycle_NdjsonExport" xml:space="preserve">
     <value>NDJSON Export</value>
   </data>
