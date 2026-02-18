@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Services;
 
 namespace ShiftManager.Hubs;
 
@@ -14,11 +15,16 @@ public class CalendarHub : Hub
 {
     private readonly ILogger<CalendarHub> _logger;
     private readonly AppDbContext _db;
+    private readonly IRateLimitingService _rateLimiter;
 
-    public CalendarHub(ILogger<CalendarHub> logger, AppDbContext db)
+    private const int HubRateLimitMaxAttempts = 30;
+    private const int HubRateLimitWindowMinutes = 1;
+
+    public CalendarHub(ILogger<CalendarHub> logger, AppDbContext db, IRateLimitingService rateLimiter)
     {
         _logger = logger;
         _db = db;
+        _rateLimiter = rateLimiter;
     }
 
     /// <summary>
@@ -28,6 +34,14 @@ public class CalendarHub : Hub
     /// </summary>
     public async Task JoinCalendarGroup(string groupName)
     {
+        var userId = GetUserId();
+        var rateLimitKey = $"hub:{userId}:join";
+        if (!_rateLimiter.IsAllowed(rateLimitKey, HubRateLimitMaxAttempts, HubRateLimitWindowMinutes))
+        {
+            _logger.LogWarning("Rate limit exceeded for JoinCalendarGroup by user {UserId} (Connection: {ConnectionId})", userId, Context.ConnectionId);
+            return;
+        }
+
         if (!await ValidateGroupAccessAsync(groupName))
         {
             _logger.LogWarning("Connection {ConnectionId} denied access to group {GroupName}", Context.ConnectionId, groupName);
@@ -43,6 +57,14 @@ public class CalendarHub : Hub
     /// </summary>
     public async Task LeaveCalendarGroup(string groupName)
     {
+        var userId = GetUserId();
+        var rateLimitKey = $"hub:{userId}:leave";
+        if (!_rateLimiter.IsAllowed(rateLimitKey, HubRateLimitMaxAttempts, HubRateLimitWindowMinutes))
+        {
+            _logger.LogWarning("Rate limit exceeded for LeaveCalendarGroup by user {UserId} (Connection: {ConnectionId})", userId, Context.ConnectionId);
+            return;
+        }
+
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
         _logger.LogDebug("Connection {ConnectionId} left group {GroupName}", Context.ConnectionId, groupName);
     }
@@ -72,6 +94,15 @@ public class CalendarHub : Hub
         var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         _logger.LogDebug("Connection {ConnectionId} connected (User: {UserId})", Context.ConnectionId, userId ?? "unknown");
         await base.OnConnectedAsync();
+    }
+
+    /// <summary>
+    /// Extracts the user ID from claims for rate limiting keying.
+    /// Returns "unknown" if the claim is not present (should not happen for [Authorize] hub).
+    /// </summary>
+    private string GetUserId()
+    {
+        return Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown";
     }
 
     /// <summary>
