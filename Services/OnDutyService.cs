@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 
@@ -63,7 +64,7 @@ public class OnDutyService : IOnDutyService
     private readonly IDirectorService _directorService;
     private readonly IGrantService _grantService;
     private readonly ILogger<OnDutyService> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public OnDutyService(
         AppDbContext db,
@@ -71,14 +72,14 @@ public class OnDutyService : IOnDutyService
         IDirectorService directorService,
         IGrantService grantService,
         ILogger<OnDutyService> logger,
-        IConfiguration configuration)
+        IFeatureFlagService featureFlagService)
     {
         _db = db;
         _httpContextAccessor = httpContextAccessor;
         _directorService = directorService;
         _grantService = grantService;
         _logger = logger;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
     }
 
     private int GetCurrentUserId()
@@ -254,7 +255,7 @@ public class OnDutyService : IOnDutyService
             }
 
             // Check if duty type requires officer rank (only enforce when feature flag is enabled)
-            var enforceRankEligibility = _configuration.GetValue<bool>("Features:EnforceRankEligibility", false);
+            var enforceRankEligibility = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnforceRankEligibility);
             if (enforceRankEligibility)
             {
                 var requiresOfficer = await RequiresOfficerForDutyTypeAsync(type);

@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Owner_AreaConfig"];
@@ -77,7 +78,7 @@
                     @if (area.LastUpdated.HasValue)
                     {
                         <div class="area-card__meta">
-                            <loc key="LastUpdated" />: @area.LastUpdated.Value.ToString("MMM dd, yyyy")
+                            <loc key="LastUpdated" />: @Localization.FormatMediumDate(area.LastUpdated.Value)
                         </div>
                     }
 

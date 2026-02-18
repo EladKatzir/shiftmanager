@@ -21,6 +21,7 @@ public class ArchiveService : IArchiveService
     private readonly ILogger<ArchiveService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
+    private readonly ICompanyCacheService _companyCacheService;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public ArchiveService(
@@ -30,7 +31,8 @@ public class ArchiveService : IArchiveService
         IWebHostEnvironment env,
         ILogger<ArchiveService> logger,
         IHttpContextAccessor httpContextAccessor,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ICompanyCacheService companyCacheService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -39,6 +41,7 @@ public class ArchiveService : IArchiveService
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
         _configuration = configuration;
+        _companyCacheService = companyCacheService;
 
         _jsonOptions = new JsonSerializerOptions
         {
@@ -152,7 +155,7 @@ public class ArchiveService : IArchiveService
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var company = await _db.Companies.FindAsync(companyId);
+            var company = await _companyCacheService.GetCompanyAsync(companyId);
 
             if (company == null)
             {

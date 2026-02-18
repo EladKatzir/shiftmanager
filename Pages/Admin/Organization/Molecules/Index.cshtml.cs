@@ -6,6 +6,8 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
+using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Molecules;
 
@@ -16,14 +18,17 @@ public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly ISetupTaskService _setupTaskService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        ISetupTaskService setupTaskService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _setupTaskService = setupTaskService;
     }
 
     // View Models
@@ -135,6 +140,15 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Created molecule {MoleculeId}: {MoleculeName} (Type: {Type}) in Area {AreaId} with HQ company {HQCompanyId}",
             molecule.Id, molecule.Name, molecule.Type, molecule.AreaId, hqCompany.Id);
+
+        // Auto-generate setup tasks for the new molecule (duplicate guard: only if none exist)
+        var existingTasks = await _setupTaskService.GetTasksForMoleculeAsync(molecule.Id);
+        if (!existingTasks.Any())
+        {
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _setupTaskService.GenerateTasksForMoleculeAsync(molecule.Id, currentUserId);
+            _logger.LogInformation("Auto-generated setup tasks for new molecule {MoleculeId}", molecule.Id);
+        }
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeCreated"], molecule.DisplayName);
         return RedirectToPage();

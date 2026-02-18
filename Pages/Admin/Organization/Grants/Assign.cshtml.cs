@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Grants;
@@ -16,14 +17,17 @@ public class AssignModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<AssignModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<AssignModel> logger) : base(localizer)
+        ILogger<AssignModel> logger,
+        IJobTypeService jobTypeService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -236,12 +240,9 @@ public class AssignModel : LocalizedPageModel
             .Select(d => new ScopeOption(d.Id, $"{d.Molecule.DisplayName} / {d.DisplayName}", "Department"))
             .ToListAsync();
 
-        AvailableJobTypes = await _db.JobTypes
-            .IgnoreQueryFilters()
-            .Where(jt => jt.IsActive)
-            .Include(jt => jt.Area)
-            .OrderBy(jt => jt.Area.Name).ThenBy(jt => jt.Name)
-            .Select(jt => new ScopeOption(jt.Id, $"{jt.Area.DisplayName} / {jt.DisplayName}", "JobType"))
-            .ToListAsync();
+        var activeJobTypes = await _jobTypeService.GetAllJobTypesAsync();
+        AvailableJobTypes = activeJobTypes
+            .Select(jt => new ScopeOption(jt.Id, $"{jt.Area?.DisplayName ?? ""} / {jt.DisplayName}", "JobType"))
+            .ToList();
     }
 }

@@ -54,4 +54,23 @@ public interface IFeatureFlagService
     /// Invalidates the cache for a specific flag scope.
     /// </summary>
     void InvalidateCache(string flagName, int? companyId = null, int? userId = null);
+
+    /// <summary>
+    /// Synchronous cache-only check for whether a feature flag is enabled.
+    /// Returns false if the flag is not in the warm cache (never hits DB synchronously).
+    /// Safe for use in Razor views, interceptors, and synchronous code paths.
+    /// Call WarmCacheAsync() at startup to ensure flags are available.
+    /// </summary>
+    /// <param name="flagName">The name of the feature flag (e.g., "FF_ALLOW_PUBLIC_SIGNUP")</param>
+    /// <param name="userId">Optional user ID for user-specific check</param>
+    /// <param name="companyId">Optional company ID for company-specific check</param>
+    /// <returns>True if the flag is enabled in cache, false if disabled or not cached</returns>
+    bool IsEnabled(string flagName, int? userId = null, int? companyId = null);
+
+    /// <summary>
+    /// Warms the cache by loading ALL feature flags from the database.
+    /// Should be called once at application startup after app.Build().
+    /// This ensures the sync IsEnabled() method has data to work with immediately.
+    /// </summary>
+    Task WarmCacheAsync();
 }

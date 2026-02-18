@@ -13,7 +13,9 @@ public interface IWidgetService
     /// <summary>
     /// Builds the on-call widget data for a user, merging contacts from all granted contexts.
     /// </summary>
-    Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId);
+    /// <param name="userId">The current user's ID.</param>
+    /// <param name="currentCompanyId">The user's current tenant company ID (used for ManagerHomeAccess fallback).</param>
+    Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId, int currentCompanyId = 0);
 
     /// <summary>
     /// Gets the current Hakam (on-call commander) for the given date.
@@ -57,7 +59,7 @@ public class WidgetService : IWidgetService
         _grantService = grantService;
     }
 
-    public async Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId)
+    public async Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId, int currentCompanyId = 0)
     {
         var contacts = new List<ContactInfo>();
         var date = DateTime.Today;
@@ -75,13 +77,23 @@ public class WidgetService : IWidgetService
 
         // Get all company-specific grants (additive merging)
         var userGrants = await _grantService.GetUserGrantsAsync(userId);
-        var companyGrants = userGrants
+        var companyIds = userGrants
             .Where(g => g.GrantType?.Key == "ViewCompanyOnCall" && g.CompanyId.HasValue)
             .Select(g => g.CompanyId!.Value)
             .Distinct()
             .ToList();
 
-        foreach (var companyId in companyGrants)
+        // ManagerHomeAccess fallback: always include current company if user has manager-level access
+        if (currentCompanyId > 0)
+        {
+            var hasManagerAccess = await _grantService.HasGrantAsync(userId, "ManagerHomeAccess");
+            if (hasManagerAccess && !companyIds.Contains(currentCompanyId))
+            {
+                companyIds.Add(currentCompanyId);
+            }
+        }
+
+        foreach (var companyId in companyIds)
         {
             var companyContacts = await GetCompanyOnCallAsync(companyId, date);
             contacts.AddRange(companyContacts);
@@ -113,30 +125,37 @@ public class WidgetService : IWidgetService
     {
         var targetDate = DateOnly.FromDateTime(date ?? DateTime.Today);
 
-        // Use projection query to avoid EF Core translation issues with tenant filtering
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
+        // First, get the IDs of Hakam shift types
+        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        var hakamShiftTypeIds = await _context.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => (st.CustomName != null && st.CustomName.Contains("Hakam")) || st.Key.Contains("Hakam"))
+            .Select(st => st.Id)
+            .ToListAsync();
+
+        if (!hakamShiftTypeIds.Any()) return null;
+
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
         var hakamData = await _context.ShiftInstances
-            .Where(si => si.WorkDate == targetDate)
+            .IgnoreQueryFilters()
+            .Where(si => si.WorkDate == targetDate && hakamShiftTypeIds.Contains(si.ShiftTypeId))
             .Join(
-                _context.ShiftTypes.Where(st => st.Name.Contains("Hakam")),
-                si => si.ShiftTypeId,
-                st => st.Id,
-                (si, st) => new { ShiftInstance = si, ShiftTypeName = st.Name }
-            )
-            .Join(
-                _context.ShiftAssignments.Where(sa => sa.UserId != null),
-                x => x.ShiftInstance.Id,
+                _context.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId != null),
+                si => si.Id,
                 sa => sa.ShiftInstanceId,
-                (x, sa) => new { x.ShiftInstance, x.ShiftTypeName, sa.UserId }
+                (si, sa) => new { si, sa.UserId }
             )
             .Join(
-                _context.Users.Where(u => u.IsActive),
+                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
                 x => x.UserId,
                 u => u.Id,
                 (x, u) => new
                 {
                     UserId = u.Id,
                     DisplayName = u.DisplayName,
-                    Phone = u.Phone
+                    Phone = u.Phone,
+                    Rank = u.Rank
                 }
             )
             .FirstOrDefaultAsync();
@@ -150,7 +169,8 @@ public class WidgetService : IWidgetService
             Role = "Hakam",
             PhoneNumber = hakamData.Phone ?? "",
             AvatarInitial = GetInitial(hakamData.DisplayName),
-            ContactType = ContactType.Hakam
+            ContactType = ContactType.Hakam,
+            Rank = hakamData.Rank
         };
     }
 
@@ -167,23 +187,32 @@ public class WidgetService : IWidgetService
 
         if (company == null) return contacts;
 
-        // Use projection query to avoid EF Core translation issues
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
+        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        var brShiftTypes = await _context.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => (st.CustomName != null && (st.CustomName.Contains("BR") || st.CustomName.Contains("Katzin")))
+                      || st.Key.Contains("BR") || st.Key.Contains("Katzin"))
+            .Select(st => new { st.Id, Name = st.CustomName ?? st.Key })
+            .ToListAsync();
+
+        if (!brShiftTypes.Any()) return contacts;
+
+        var brShiftTypeIds = brShiftTypes.Select(st => st.Id).ToList();
+        var shiftTypeNames = brShiftTypes.ToDictionary(st => st.Id, st => st.Name);
+
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
         var onDutyData = await _context.ShiftInstances
-            .Where(si => si.WorkDate == targetDate && si.CompanyId == companyId)
+            .IgnoreQueryFilters()
+            .Where(si => si.WorkDate == targetDate && si.CompanyId == companyId && brShiftTypeIds.Contains(si.ShiftTypeId))
             .Join(
-                _context.ShiftTypes.Where(st => st.Name.Contains("BR") || st.Name.Contains("Katzin")),
-                si => si.ShiftTypeId,
-                st => st.Id,
-                (si, st) => new { ShiftInstance = si, ShiftTypeName = st.Name }
-            )
-            .Join(
-                _context.ShiftAssignments.Where(sa => sa.UserId != null && sa.CompanyId == companyId),
-                x => x.ShiftInstance.Id,
+                _context.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId != null && sa.CompanyId == companyId),
+                si => si.Id,
                 sa => sa.ShiftInstanceId,
-                (x, sa) => new { x.ShiftInstance, x.ShiftTypeName, sa.UserId }
+                (si, sa) => new { si.ShiftTypeId, sa.UserId }
             )
             .Join(
-                _context.Users.Where(u => u.IsActive),
+                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
                 x => x.UserId,
                 u => u.Id,
                 (x, u) => new
@@ -191,22 +220,25 @@ public class WidgetService : IWidgetService
                     UserId = u.Id,
                     DisplayName = u.DisplayName,
                     Phone = u.Phone,
-                    x.ShiftTypeName
+                    Rank = u.Rank,
+                    x.ShiftTypeId
                 }
             )
             .ToListAsync();
 
         foreach (var shift in onDutyData)
         {
+            var shiftTypeName = shiftTypeNames.GetValueOrDefault(shift.ShiftTypeId, "On-Call");
             contacts.Add(new ContactInfo
             {
                 UserId = shift.UserId,
                 Name = shift.DisplayName,
-                Role = $"{shift.ShiftTypeName} - {company.Name}",
+                Role = $"{shiftTypeName} - {company.Name}",
                 PhoneNumber = shift.Phone ?? "",
                 AvatarInitial = GetInitial(shift.DisplayName),
                 ContactType = ContactType.CompanyOnCall,
-                CompanyName = company.Name
+                CompanyName = company.Name,
+                Rank = shift.Rank
             });
         }
 
@@ -239,16 +271,20 @@ public class WidgetService : IWidgetService
         var friends = new List<FriendOnCallInfo>();
         var targetDate = DateOnly.FromDateTime(date ?? DateTime.Today);
 
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
         // Get user's accepted friends from UserFriendships table (bidirectional)
         var friendships = await _context.UserFriendships
+            .IgnoreQueryFilters()
             .Where(f => (f.UserId == userId || f.FriendId == userId) && f.Status == FriendshipStatus.Accepted)
             .ToListAsync();
         var friendIds = friendships.Select(f => f.UserId == userId ? f.FriendId : f.UserId).ToList();
 
         if (!friendIds.Any()) return friends;
 
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
         // Get friend user data
         var friendUsers = await _context.Users
+            .IgnoreQueryFilters()
             .Where(u => friendIds.Contains(u.Id) && u.IsActive)
             .Select(u => new
             {
@@ -258,27 +294,29 @@ public class WidgetService : IWidgetService
             })
             .ToListAsync();
 
+        // Pre-fetch on-call shift type IDs to avoid [NotMapped] ShiftType.Name in LINQ-to-SQL
+        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        var onCallShiftTypeIds = await _context.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => (st.CustomName != null && (st.CustomName.Contains("BR") || st.CustomName.Contains("Katzin") || st.CustomName.Contains("Hakam")))
+                      || st.Key.Contains("BR") || st.Key.Contains("Katzin") || st.Key.Contains("Hakam"))
+            .Select(st => st.Id)
+            .ToListAsync();
+
         foreach (var friend in friendUsers)
         {
-            // Check if friend is on-call today using a simple query
+            // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
+            // Check if friend is on-call today using pre-fetched shift type IDs
             var isOnCall = await _context.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Where(sa => sa.UserId == friend.Id)
                 .Join(
-                    _context.ShiftInstances.Where(si => si.WorkDate == targetDate),
+                    _context.ShiftInstances.IgnoreQueryFilters().Where(si => si.WorkDate == targetDate),
                     sa => sa.ShiftInstanceId,
                     si => si.Id,
                     (sa, si) => si.ShiftTypeId
                 )
-                .Join(
-                    _context.ShiftTypes.Where(st =>
-                        st.Name.Contains("BR") ||
-                        st.Name.Contains("Katzin") ||
-                        st.Name.Contains("Hakam")),
-                    stId => stId,
-                    st => st.Id,
-                    (stId, st) => st.Id
-                )
-                .AnyAsync();
+                .AnyAsync(stId => onCallShiftTypeIds.Contains(stId));
 
             friends.Add(new FriendOnCallInfo
             {
@@ -329,6 +367,7 @@ public class ContactInfo
     public string AvatarInitial { get; set; } = "";
     public ContactType ContactType { get; set; }
     public string? CompanyName { get; set; }
+    public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;
 }
 
 public enum ContactType

@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner.Hub.RoleTemplates;
 
@@ -17,14 +18,17 @@ public class CreateModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<CreateModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
     public CreateModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<CreateModel> logger) : base(localizer)
+        ILogger<CreateModel> logger,
+        IJobTypeService jobTypeService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     [BindProperty] public string Key { get; set; } = string.Empty;
@@ -136,10 +140,6 @@ public class CreateModel : LocalizedPageModel
 
     private async Task LoadJobTypesAsync()
     {
-        AvailableJobTypes = await _db.JobTypes
-            .Where(jt => jt.IsActive)
-            .OrderBy(jt => jt.SortOrder)
-            .ThenBy(jt => jt.DisplayName ?? jt.Name)
-            .ToListAsync();
+        AvailableJobTypes = await _jobTypeService.GetAllJobTypesAsync();
     }
 }

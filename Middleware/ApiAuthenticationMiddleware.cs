@@ -344,6 +344,18 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // Friends API - used by friends-highlight.js for calendar friend highlighting
+        if (path.StartsWithSegments("/Api/Friends", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // TechShift API - used by Calendar/Table for tech shift eligible user lookups
+        if (path.StartsWithSegments("/Api/TechShift", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 

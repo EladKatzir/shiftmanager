@@ -24,15 +24,18 @@ public class CreateModel : PageModel
     private readonly AppDbContext _db;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<CreateModel> _logger;
+    private readonly ISetupTaskService _setupTaskService;
 
     public CreateModel(
         AppDbContext db,
         IAuditLogService auditLogService,
-        ILogger<CreateModel> logger)
+        ILogger<CreateModel> logger,
+        ISetupTaskService setupTaskService)
     {
         _db = db;
         _auditLogService = auditLogService;
         _logger = logger;
+        _setupTaskService = setupTaskService;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -129,6 +132,13 @@ public class CreateModel : PageModel
                     await _db.SaveChangesAsync();
                     entityId = molecule.Id;
                     result = $"Molecule '{request.Name}' created with ID {entityId} under area {request.ParentId}";
+                    // Auto-generate setup tasks for the new molecule (duplicate guard: only if none exist)
+                    var existingMoleculeTasks = await _setupTaskService.GetTasksForMoleculeAsync(molecule.Id);
+                    if (!existingMoleculeTasks.Any())
+                    {
+                        await _setupTaskService.GenerateTasksForMoleculeAsync(molecule.Id, userId);
+                        _logger.LogInformation("Auto-generated setup tasks for new molecule {MoleculeId}", molecule.Id);
+                    }
                     break;
 
                 case "company":
@@ -152,6 +162,14 @@ public class CreateModel : PageModel
                     await _db.SaveChangesAsync();
                     entityId = company.Id;
                     result = $"Company '{request.Name}' created with ID {entityId} under molecule {request.ParentId}";
+                    // Auto-generate setup tasks for the new company (duplicate guard: only if none exist)
+                    var existingHierarchyCompanyTasks = await _setupTaskService.GetTasksForMoleculeAsync(request.ParentId.Value);
+                    var hasHierarchyCompanyTasks = existingHierarchyCompanyTasks.Any(t => t.CompanyId == company.Id);
+                    if (!hasHierarchyCompanyTasks)
+                    {
+                        await _setupTaskService.GenerateTasksForCompanyAsync(company.Id, userId);
+                        _logger.LogInformation("Auto-generated setup tasks for new company {CompanyId}", company.Id);
+                    }
                     break;
 
                 case "department":

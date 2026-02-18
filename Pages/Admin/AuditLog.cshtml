@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     ViewData["Title"] = Localizer["AuditLog"];
     Layout = "_Layout";
@@ -167,8 +168,8 @@
                         <tr onclick="toggleDetails@(log.Id)()">
                             <td>
                                 <div class="timestamp-cell">
-                                    <span class="timestamp-date">@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy")</span>
-                                    <span class="timestamp-time">@log.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                                    <span class="timestamp-date">@Localization.FormatMediumDate(log.Timestamp.ToLocalTime())</span>
+                                    <span class="timestamp-time">@Localization.FormatTimeLong(log.Timestamp.ToLocalTime())</span>
                                 </div>
                             </td>
                             <td>

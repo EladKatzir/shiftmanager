@@ -5,6 +5,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Calendar_MyCalendar"] + " - " + Localizer["Week"];
@@ -28,7 +29,7 @@
     <div class="header-main">
         <h2>
             <span class="calendar-icon">📅</span>
-            Week of @Model.CurrentWeekStart.ToString("MMM dd, yyyy")
+            Week of @Localization.FormatMediumDate(Model.CurrentWeekStart)
         </h2>
         @* ✅ PHASE 20: Show My Items toggle *@
         <div class="calendar-controls">
@@ -221,7 +222,7 @@
             <div class="column-header">
                 <div class="day-name">@day.DayName</div>
                 <div class="day-date">
-                    @day.Date.ToString("MMM dd")
+                    @Localization.FormatShortMonthDay(day.Date)
                     @if (isToday)
                     {
                         <span class="today-indicator">•</span>

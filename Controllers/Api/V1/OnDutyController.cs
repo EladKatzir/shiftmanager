@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Services;
 using ShiftManager.Services.Api;
 
 namespace ShiftManager.Controllers.Api.V1;
@@ -19,16 +21,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class OnDutyController : ControllerBase
 {
     private readonly OnDutyApiService _onDutyService;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<OnDutyController> _logger;
 
     public OnDutyController(
         OnDutyApiService onDutyService,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<OnDutyController> logger)
     {
         _onDutyService = onDutyService;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -55,7 +57,7 @@ public class OnDutyController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:OnDuty:ListEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiOnDutyList))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListOnDuties), HttpContext.Request.Path);
@@ -148,7 +150,7 @@ public class OnDutyController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:OnDuty:GetEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiOnDutyGet))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetOnDuty), HttpContext.Request.Path);
@@ -206,7 +208,7 @@ public class OnDutyController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:OnDuty:CreateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiOnDutyCreate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(CreateOnDuty), HttpContext.Request.Path);
@@ -299,7 +301,7 @@ public class OnDutyController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:OnDuty:UpdateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiOnDutyUpdate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(UpdateOnDuty), HttpContext.Request.Path);
@@ -367,7 +369,7 @@ public class OnDutyController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:OnDuty:DeleteEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiOnDutyDelete))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(DeleteOnDuty), HttpContext.Request.Path);

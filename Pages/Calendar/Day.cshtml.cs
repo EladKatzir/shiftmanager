@@ -30,6 +30,7 @@ public class DayModel : PageModel
     private readonly IChoreService _choreService;
     private readonly IScopeFilterService _scopeFilterService;
     private readonly IGrantService _grantService;
+    private readonly ILocalizationService _localization;
 
     public DayModel(
         AppDbContext db,
@@ -39,7 +40,8 @@ public class DayModel : PageModel
         IUserPreferenceService userPreferenceService,
         IChoreService choreService,
         IScopeFilterService scopeFilterService,
-        IGrantService grantService)
+        IGrantService grantService,
+        ILocalizationService localization)
     {
         _db = db;
         _companyContext = companyContext;
@@ -49,6 +51,7 @@ public class DayModel : PageModel
         _choreService = choreService;
         _scopeFilterService = scopeFilterService;
         _grantService = grantService;
+        _localization = localization;
     }
 
     public DateOnly CurrentDate { get; set; }
@@ -85,8 +88,8 @@ public class DayModel : PageModel
         }
 
         CurrentDate = target;
-        Previous = (target.AddDays(-1), target.AddDays(-1).ToString("MMM dd, yyyy"));
-        Next = (target.AddDays(1), target.AddDays(1).ToString("MMM dd, yyyy"));
+        Previous = (target.AddDays(-1), _localization.FormatMediumDate(target.AddDays(-1)));
+        Next = (target.AddDays(1), _localization.FormatMediumDate(target.AddDays(1)));
 
         // Get current user
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

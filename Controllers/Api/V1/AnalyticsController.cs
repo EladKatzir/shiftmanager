@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
+using ShiftManager.Services;
 
 namespace ShiftManager.Controllers.Api.V1;
 
@@ -17,16 +19,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class AnalyticsController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<AnalyticsController> _logger;
 
     public AnalyticsController(
         AppDbContext context,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<AnalyticsController> logger)
     {
         _context = context;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -46,7 +48,7 @@ public class AnalyticsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Analytics:SummaryEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiAnalyticsSummary))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetSummary), HttpContext.Request.Path);

@@ -29,6 +29,7 @@ public class MailService : IMailService
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IEmailTemplateService _emailTemplateService;
     private readonly EmailBackgroundQueue _emailQueue;
+    private readonly ILocalizationService _localization;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
@@ -41,7 +42,8 @@ public class MailService : IMailService
         IEmailApiLogService emailApiLogService,
         IStringLocalizer<SharedResources> localizer,
         IEmailTemplateService emailTemplateService,
-        EmailBackgroundQueue emailQueue)
+        EmailBackgroundQueue emailQueue,
+        ILocalizationService localization)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -51,6 +53,7 @@ public class MailService : IMailService
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
         _emailQueue = emailQueue ?? throw new ArgumentNullException(nameof(emailQueue));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
     }
 
     /// <summary>
@@ -386,7 +389,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ShiftAssignedSubject"], shiftDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_ShiftAssignedSubject"], _localization.FormatMediumDate(shiftDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -414,8 +417,8 @@ public class MailService : IMailService
 
             <div class='shift-details'>
                 <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftTypeName)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
-                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(shiftDate)}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
             <p>{_localizer["Email_ShiftAssignedLoginPrompt"]}</p>
@@ -450,7 +453,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ShiftChangedSubject"], shiftDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_ShiftChangedSubject"], _localization.FormatMediumDate(shiftDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -479,8 +482,8 @@ public class MailService : IMailService
 
             <div class='shift-details'>
                 <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftTypeName)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
-                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(shiftDate)}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
             <div class='change-notice'>
@@ -518,7 +521,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ShiftDeletedSubject"], shiftDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_ShiftDeletedSubject"], _localization.FormatMediumDate(shiftDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -546,8 +549,8 @@ public class MailService : IMailService
 
             <div class='shift-details'>
                 <p><strong>{_localizer["Email_ShiftType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(shiftTypeName)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {shiftDate:dddd, MMMM dd, yyyy}</p>
-                <p><strong>{_localizer["Time"]}:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(shiftDate)}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
             <p>{_localizer["Email_ShiftDeletedSchedulePrompt"]}</p>
@@ -579,7 +582,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ChoreAssignedSubject"], choreDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_ChoreAssignedSubject"], _localization.FormatMediumDate(choreDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -607,7 +610,7 @@ public class MailService : IMailService
 
             <div class='chore-details'>
                 <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(choreTitle)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(choreDate)}</p>
             </div>
 
             <p>{_localizer["Email_ChoreAssignedLoginPrompt"]}</p>
@@ -639,7 +642,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ChoreCanceledSubject"], choreDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_ChoreCanceledSubject"], _localization.FormatMediumDate(choreDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -667,7 +670,7 @@ public class MailService : IMailService
 
             <div class='chore-details'>
                 <p><strong>{_localizer["Email_Chore"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(choreTitle)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {choreDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(choreDate)}</p>
             </div>
 
             <p>{_localizer["Email_ChoreCanceledSchedulePrompt"]}</p>
@@ -787,8 +790,8 @@ public class MailService : IMailService
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
         var dateRange = startDate == endDate
-            ? startDate.ToString("MMM dd, yyyy")
-            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+            ? _localization.FormatMediumDate(startDate)
+            : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
         string subject = string.Format(_localizer["Email_TimeOffApprovedSubject"], dateRange);
 
@@ -801,8 +804,8 @@ public class MailService : IMailService
             var variables = new Dictionary<string, string>
             {
                 { "EmployeeName", employeeName },
-                { "StartDate", startDate.ToString("MMM dd, yyyy") },
-                { "EndDate", endDate.ToString("MMM dd, yyyy") }
+                { "StartDate", _localization.FormatMediumDate(startDate) },
+                { "EndDate", _localization.FormatMediumDate(endDate) }
             };
             messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
         }
@@ -869,8 +872,8 @@ public class MailService : IMailService
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
         var dateRange = startDate == endDate
-            ? startDate.ToString("MMM dd, yyyy")
-            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+            ? _localization.FormatMediumDate(startDate)
+            : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
         string subject = string.Format(_localizer["Email_TimeOffDeclinedSubject"], dateRange);
 
@@ -883,8 +886,8 @@ public class MailService : IMailService
             var variables = new Dictionary<string, string>
             {
                 { "EmployeeName", employeeName },
-                { "StartDate", startDate.ToString("MMM dd, yyyy") },
-                { "EndDate", endDate.ToString("MMM dd, yyyy") }
+                { "StartDate", _localization.FormatMediumDate(startDate) },
+                { "EndDate", _localization.FormatMediumDate(endDate) }
             };
             messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
         }
@@ -951,8 +954,8 @@ public class MailService : IMailService
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
         var dateRange = startDate == endDate
-            ? startDate.ToString("MMM dd, yyyy")
-            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+            ? _localization.FormatMediumDate(startDate)
+            : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
         string subject = string.Format(_localizer["Email_TimeOffDeletedSubject"], dateRange);
 
@@ -965,8 +968,8 @@ public class MailService : IMailService
             var variables = new Dictionary<string, string>
             {
                 { "EmployeeName", employeeName },
-                { "StartDate", startDate.ToString("MMM dd, yyyy") },
-                { "EndDate", endDate.ToString("MMM dd, yyyy") }
+                { "StartDate", _localization.FormatMediumDate(startDate) },
+                { "EndDate", _localization.FormatMediumDate(endDate) }
             };
             messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
         }
@@ -1183,7 +1186,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_OnDutyAssignedSubject"], onDutyDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_OnDutyAssignedSubject"], _localization.FormatMediumDate(onDutyDate));
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.OnDutyAssigned);
@@ -1195,7 +1198,7 @@ public class MailService : IMailService
             {
                 { "EmployeeName", employeeName },
                 { "OnDutyType", onDutyTypeName },
-                { "Date", onDutyDate.ToString("MMM dd, yyyy") }
+                { "Date", _localization.FormatMediumDate(onDutyDate) }
             };
             messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
         }
@@ -1230,7 +1233,7 @@ public class MailService : IMailService
 
             <div class='onduty-details'>
                 <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(onDutyTypeName)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {onDutyDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(onDutyDate)}</p>
             </div>
 
             <p>{_localizer["Email_OnDutyAssignedLoginPrompt"]}</p>
@@ -1261,7 +1264,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_OnDutyCanceledSubject"], onDutyDate.ToString("MMM dd, yyyy"));
+        string subject = string.Format(_localizer["Email_OnDutyCanceledSubject"], _localization.FormatMediumDate(onDutyDate));
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.OnDutyCanceled);
@@ -1273,7 +1276,7 @@ public class MailService : IMailService
             {
                 { "EmployeeName", employeeName },
                 { "OnDutyType", onDutyTypeName },
-                { "Date", onDutyDate.ToString("MMM dd, yyyy") }
+                { "Date", _localization.FormatMediumDate(onDutyDate) }
             };
             messageBody = _emailTemplateService.ReplaceVariables(customMessage, variables);
         }
@@ -1308,7 +1311,7 @@ public class MailService : IMailService
 
             <div class='onduty-details'>
                 <p><strong>{_localizer["Email_OnDutyType"]}:</strong> <span class='highlight'>{WebUtility.HtmlEncode(onDutyTypeName)}</span></p>
-                <p><strong>{_localizer["Date"]}:</strong> {onDutyDate:dddd, MMMM dd, yyyy}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatLongDate(onDutyDate)}</p>
             </div>
 
             <p>{_localizer["Email_OnDutyCanceledScheduleUpdated"]}</p>
@@ -1413,7 +1416,7 @@ public class MailService : IMailService
     public async Task<bool> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
         string traineeName, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime)
     {
-        var subject = $"Trainee Added: {shiftTypeName} on {shiftDate:MMM dd, yyyy}";
+        var subject = $"Trainee Added: {shiftTypeName} on {_localization.FormatMediumDate(shiftDate)}";
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1443,8 +1446,8 @@ public class MailService : IMailService
 
             <div class='details'>
                 <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
-                <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
-                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>Date:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
+                <p><strong>Time:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
             <p>Please help guide and mentor your trainee during this shift.</p>
@@ -1462,7 +1465,7 @@ public class MailService : IMailService
     public async Task<bool> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime, string reason)
     {
-        var subject = $"Shift Removed: {shiftTypeName} on {shiftDate:MMM dd, yyyy}";
+        var subject = $"Shift Removed: {shiftTypeName} on {_localization.FormatMediumDate(shiftDate)}";
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1488,8 +1491,8 @@ public class MailService : IMailService
 
             <div class='details'>
                 <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
-                <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
-                <p><strong>Time:</strong> {startTime:HH:mm} - {endTime:HH:mm}</p>
+                <p><strong>Date:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
+                <p><strong>Time:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
             <div class='alert-box'>
@@ -1511,7 +1514,7 @@ public class MailService : IMailService
     public async Task<bool> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, string changeDescription)
     {
-        var subject = $"Shift Modified: {shiftTypeName} on {shiftDate:MMM dd, yyyy}";
+        var subject = $"Shift Modified: {shiftTypeName} on {_localization.FormatMediumDate(shiftDate)}";
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1537,7 +1540,7 @@ public class MailService : IMailService
 
             <div class='details'>
                 <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
-                <p><strong>Date:</strong> {shiftDate:MMM dd, yyyy}</p>
+                <p><strong>Date:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
             </div>
 
             <div class='change-box'>

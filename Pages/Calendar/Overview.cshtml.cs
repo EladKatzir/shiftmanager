@@ -372,7 +372,8 @@ public class OverviewModel : PageModel
                     {
                         Id = 0, // Not editable
                         Name = shift,
-                        Role = "shift"
+                        Role = "shift",
+                        UserId = userId
                     });
                 }
             }
@@ -386,7 +387,8 @@ public class OverviewModel : PageModel
                     {
                         Id = 0,
                         Name = chore,
-                        Role = "chore"
+                        Role = "chore",
+                        UserId = userId
                     });
                 }
             }
@@ -400,7 +402,8 @@ public class OverviewModel : PageModel
                     {
                         Id = 0,
                         Name = duty,
-                        Role = "duty"
+                        Role = "duty",
+                        UserId = userId
                     });
                 }
             }

@@ -52,6 +52,10 @@ public class CompanyIdInterceptor : SaveChangesInterceptor
             return;
 
         // Check feature flag for enforcement mode
+        // NOTE: This is intentionally on IConfiguration, not IFeatureFlagService.
+        // CompanyIdInterceptor is registered as Singleton; IFeatureFlagService is Scoped (depends on AppDbContext).
+        // Injecting a Scoped service into a Singleton would cause a captive dependency.
+        // See: docs/plans/2026-02-18-feature-completion-design.md Section 1D
         var enforceCompanyScope = _configuration.GetValue<bool>("Features:EnforceCompanyScope", false);
 
         // NOTE: Creates new scope per SaveChanges because this interceptor is registered as Singleton.

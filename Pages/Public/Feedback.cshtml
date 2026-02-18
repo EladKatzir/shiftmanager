@@ -5,6 +5,7 @@
 @using ShiftManager.ViewComponents
 @using ShiftManager.Models
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Feedback"];
@@ -222,7 +223,7 @@
                             </div>
                         }
                         <div class="feedback-footer">
-                            <span>@feedback.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                            <span>@Localization.FormatDateTime(feedback.CreatedAt)</span>
                         </div>
                     </div>
                 }

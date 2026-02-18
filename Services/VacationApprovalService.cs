@@ -455,9 +455,7 @@ public class VacationApprovalService : IVacationApprovalService
         if (request.Status != RequestStatus.Pending)
             return (false, "VacationApproval_AlreadyProcessed");
 
-        // NOTE: Uses Declined status for self-cancellations since RequestStatus has no Canceled value.
-        // Distinguish from admin-declined by checking if ApproverId is null (self-cancel) vs set (admin-declined).
-        request.Status = RequestStatus.Declined;
+        request.Status = RequestStatus.Canceled;
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Request {RequestId} canceled by user {UserId}", requestId, userId);

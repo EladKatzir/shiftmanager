@@ -21,19 +21,22 @@ public class AnnouncementsModel : LocalizedPageModel
     private readonly ICurrentUserService _currentUserService;
     private readonly AppDbContext _db;
     private readonly ILogger<AnnouncementsModel> _logger;
+    private readonly IRoleService _roleService;
 
     public AnnouncementsModel(
         IStringLocalizer<SharedResources> localizer,
         IAnnouncementService announcementService,
         ICurrentUserService currentUserService,
         AppDbContext db,
-        ILogger<AnnouncementsModel> logger)
+        ILogger<AnnouncementsModel> logger,
+        IRoleService roleService)
         : base(localizer)
     {
         _announcementService = announcementService;
         _currentUserService = currentUserService;
         _db = db;
         _logger = logger;
+        _roleService = roleService;
     }
 
     // View Models
@@ -108,11 +111,7 @@ public class AnnouncementsModel : LocalizedPageModel
             .ToListAsync();
 
         // Build role dropdown from active RoleTemplates
-        var roleTemplates = await _db.RoleTemplates
-            .IgnoreQueryFilters()
-            .Where(rt => rt.IsActive)
-            .OrderBy(rt => rt.SortOrder)
-            .ToListAsync();
+        var roleTemplates = await _roleService.GetRoleTemplatesAsync();
         Roles = roleTemplates
             .Select(rt => new SelectListItem(
                 Helpers.RoleDisplayHelper.GetRoleDisplayName(_localizer, rt),

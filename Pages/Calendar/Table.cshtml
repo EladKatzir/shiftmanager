@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["TableView"];
@@ -1504,7 +1505,7 @@
         ← @Localizer["Pagination_Previous"]
     </a>
     <span style="font-weight: 600;">
-        @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
+        @Localization.FormatMediumDate(Model.StartDate) - @Localization.FormatMediumDate(Model.EndDate)
     </span>
     <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
         @Localizer["Pagination_Next"] →
@@ -1539,7 +1540,7 @@
                 @foreach (var date in Model.Dates)
                 {
                     <th>
-                        @date.ToString("MMM dd")<br/>
+                        @Localization.FormatShortDate(date)<br/>
                         <small>@date.ToString("yyyy")</small>
                     </th>
                 }
@@ -1560,7 +1561,7 @@
                         <div class="shift-row-header">
                             <div class="shift-metadata" id="metadata-@shiftType.Id">
                                 <strong>@(shiftType.Key.StartsWith("CUSTOM_") ? shiftType.Name : Localizer[$"ShiftType_{shiftType.Key}"].Value)</strong>
-                                <small style="color: var(--text-muted);">@shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")</small>
+                                <small style="color: var(--text-muted);">@Localization.FormatTime(shiftType.Start) - @Localization.FormatTime(shiftType.End)</small>
                             </div>
                             <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
                                 <input type="text"

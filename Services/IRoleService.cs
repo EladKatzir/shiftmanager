@@ -25,4 +25,20 @@ public interface IRoleService
     // Queries for role holders
     Task<List<AppUser>> GetUsersWithRoleAsync(int roleTemplateId);
     Task<List<AppUser>> GetUsersWithRoleInScopeAsync(int roleTemplateId, GrantScope scope);
+
+    // Filtered template queries
+    Task<List<RoleTemplate>> GetAssignableRoleTemplatesAsync();
+    Task<List<RoleTemplate>> GetSignupRoleTemplatesAsync();
+
+    // Templates with AutoGrants navigation (for grant management admin pages)
+    Task<RoleTemplate?> GetRoleTemplateWithAutoGrantsAsync(int roleTemplateId);
+    Task<RoleTemplate?> GetRoleTemplateWithAutoGrantsByKeyAsync(string key);
+
+    // Bulk template queries for admin pages
+    Task<List<RoleTemplate>> GetActiveRoleTemplatesWithAutoGrantsAsync();
+    Task<List<RoleTemplate>> GetAllRoleTemplatesWithDetailsAsync();
+
+    // Count for stats pages
+    Task<int> GetActiveRoleTemplateCountAsync();
+    Task<int> GetRoleTemplateCountAsync();
 }

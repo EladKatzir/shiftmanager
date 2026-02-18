@@ -27,6 +27,8 @@ public class DataLifecycleModel : LocalizedPageModel
     private readonly ILogger<DataLifecycleModel> _logger;
     private readonly IWebHostEnvironment _environment;
 
+    private readonly ICompanyCacheService _companyCacheService;
+
     public DataLifecycleModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
@@ -36,7 +38,8 @@ public class DataLifecycleModel : LocalizedPageModel
         ITenantResolver tenantResolver,
         IAuditLogService auditLogService,
         ILogger<DataLifecycleModel> logger,
-        IWebHostEnvironment environment) : base(localizer)
+        IWebHostEnvironment environment,
+        ICompanyCacheService companyCacheService) : base(localizer)
     {
         _db = db;
         _archiveService = archiveService;
@@ -46,6 +49,7 @@ public class DataLifecycleModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _logger = logger;
         _environment = environment;
+        _companyCacheService = companyCacheService;
     }
 
     // Tab 1: Create Archive
@@ -97,7 +101,7 @@ public class DataLifecycleModel : LocalizedPageModel
 
             // Get company name
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var company = await _db.Companies.FindAsync(companyId);
+            var company = await _companyCacheService.GetCompanyAsync(companyId);
             CompanyName = company?.Name ?? "Unknown";
 
             // Load latest archive metadata

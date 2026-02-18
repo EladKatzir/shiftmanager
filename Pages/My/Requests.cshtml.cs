@@ -8,6 +8,8 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Data.SeedData;
+using ShiftManager.Services;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
@@ -18,13 +20,19 @@ public class RequestsModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<RequestsModel> _logger;
+    private readonly IVacationApprovalService _vacationApprovalService;
+    private readonly IFeatureFlagService _featureFlagService;
     public RequestsModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<RequestsModel> logger) : base(localizer)
+        ILogger<RequestsModel> logger,
+        IVacationApprovalService vacationApprovalService,
+        IFeatureFlagService featureFlagService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _vacationApprovalService = vacationApprovalService;
+        _featureFlagService = featureFlagService;
     }
 
     [BindProperty]
@@ -224,6 +232,15 @@ public class RequestsModel : LocalizedPageModel
 
             _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}, Type: {Type}, Approver: {ApproverId}",
                 request.Id, userId, request.Type, request.ApproverId);
+
+            // Submit for approval if the vacation approval feature flag is enabled
+            if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.VacationApprovalEnabled))
+            {
+                var (success, approvalMessage) = await _vacationApprovalService.SubmitForApprovalAsync(request.Id, userId);
+                _logger.LogInformation("Vacation approval result for request {RequestId}: Success={Success}, Message={Message}",
+                    request.Id, success, approvalMessage);
+            }
+
             Message = _localizer["Success_TimeOffRequestSubmitted"];
             return RedirectToPage();
         }
@@ -316,6 +333,60 @@ public class RequestsModel : LocalizedPageModel
             Error = _localizer["Error_SubmittingSwapRequestFailed"];
             await OnGetAsync();
             return Page();
+        }
+    }
+
+    public async Task<IActionResult> OnPostCancelRequestAsync(int requestId)
+    {
+        try
+        {
+            // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogError("Invalid or missing NameIdentifier claim");
+                Error = _localizer["Error_AuthenticationError"];
+                return RedirectToPage();
+            }
+
+            // Verify request belongs to current user and is still Pending
+            var request = await _db.TimeOffRequests
+                .FirstOrDefaultAsync(r => r.Id == requestId && r.UserId == userId);
+
+            if (request == null)
+            {
+                _logger.LogWarning("Cancel request: TimeOffRequest {RequestId} not found for user {UserId}", requestId, userId);
+                Error = _localizer["Error_RequestNotFound"];
+                return RedirectToPage();
+            }
+
+            if (request.Status != RequestStatus.Pending)
+            {
+                _logger.LogWarning("Cancel request: TimeOffRequest {RequestId} is not pending (status={Status})", requestId, request.Status);
+                Error = _localizer["Error_RequestAlreadyProcessed"];
+                return RedirectToPage();
+            }
+
+            var (success, message) = await _vacationApprovalService.CancelRequestAsync(requestId, userId);
+
+            if (success)
+            {
+                _logger.LogInformation("TimeOffRequest {RequestId} canceled by user {UserId}", requestId, userId);
+                Message = _localizer["RequestCanceled"];
+            }
+            else
+            {
+                _logger.LogWarning("Failed to cancel TimeOffRequest {RequestId}: {Message}", requestId, message);
+                Error = _localizer["Error_CancelRequestFailed"];
+            }
+
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error canceling time off request {RequestId}", requestId);
+            Error = _localizer["Error_CancelRequestFailed"];
+            return RedirectToPage();
         }
     }
 

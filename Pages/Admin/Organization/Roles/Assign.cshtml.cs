@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin.Organization.Roles;
@@ -17,14 +18,20 @@ public class AssignModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<AssignModel> _logger;
+    private readonly IRoleService _roleService;
+    private readonly IJobTypeService _jobTypeService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<AssignModel> logger) : base(localizer)
+        ILogger<AssignModel> logger,
+        IRoleService roleService,
+        IJobTypeService jobTypeService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _roleService = roleService;
+        _jobTypeService = jobTypeService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -110,7 +117,7 @@ public class AssignModel : LocalizedPageModel
         }
 
         // Verify role template exists
-        var roleTemplate = await _db.RoleTemplates.FindAsync(SelectedRoleId);
+        var roleTemplate = await _roleService.GetRoleTemplateAsync(SelectedRoleId);
         if (roleTemplate == null)
         {
             Error = _localizer["Error_RoleNotFound"];
@@ -127,46 +134,31 @@ public class AssignModel : LocalizedPageModel
             return Page();
         }
 
-        // Check if assignment already exists (active)
-        var existingAssignment = await _db.UserRoleAssignments
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(ura =>
-                ura.UserId == SelectedUserId &&
-                ura.RoleTemplateId == SelectedRoleId &&
-                ura.AreaId == ScopeAreaId &&
-                ura.MoleculeId == ScopeMoleculeId &&
-                ura.CompanyId == ScopeCompanyId &&
-                ura.DepartmentId == ScopeDepartmentId &&
-                ura.JobTypeId == ScopeJobTypeId &&
-                ura.IsActive);
-
-        if (existingAssignment != null)
-        {
-            Error = _localizer["Error_RoleAlreadyAssigned"];
-            await LoadDropdownOptionsAsync();
-            return Page();
-        }
-
         // Get current user ID for audit
         var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int.TryParse(currentUserIdClaim, out var currentUserId);
 
-        var assignment = new UserRoleAssignment
-        {
-            UserId = SelectedUserId,
-            RoleTemplateId = SelectedRoleId,
-            AreaId = ScopeAreaId,
-            MoleculeId = ScopeMoleculeId,
-            CompanyId = ScopeCompanyId,
-            DepartmentId = ScopeDepartmentId,
-            JobTypeId = ScopeJobTypeId,
-            AssignedByUserId = currentUserId > 0 ? currentUserId : 1,
-            AssignedAt = DateTime.UtcNow,
-            IsActive = true
-        };
+        // Assign role via service (handles duplicate checks and auto-grants internally)
+        var scope = new GrantScope(
+            AreaId: ScopeAreaId,
+            MoleculeId: ScopeMoleculeId,
+            CompanyId: ScopeCompanyId,
+            DepartmentId: ScopeDepartmentId,
+            JobTypeId: ScopeJobTypeId
+        );
 
-        _db.UserRoleAssignments.Add(assignment);
-        await _db.SaveChangesAsync();
+        var assignment = await _roleService.AssignRoleAsync(
+            SelectedUserId,
+            SelectedRoleId,
+            scope,
+            currentUserId > 0 ? currentUserId : 1);
+
+        if (assignment == null)
+        {
+            Error = _localizer["Error_RoleAssignmentFailed"];
+            await LoadDropdownOptionsAsync();
+            return Page();
+        }
 
         _logger.LogInformation("Assigned role {Role} to user {UserId} by {AssignedBy}",
             roleTemplate.Key, SelectedUserId, currentUserId);
@@ -212,12 +204,10 @@ public class AssignModel : LocalizedPageModel
             .Select(u => new UserOption(u.Id, u.DisplayName, u.Email))
             .ToListAsync();
 
-        AvailableRoles = await _db.RoleTemplates
-            .IgnoreQueryFilters()
-            .Where(rt => rt.IsActive)
-            .OrderBy(rt => rt.SortOrder).ThenBy(rt => rt.Key)
+        var activeRoles = await _roleService.GetRoleTemplatesAsync();
+        AvailableRoles = activeRoles
             .Select(rt => new RoleTemplateOption(rt.Id, rt.Key, rt.NameKey, rt.ScopeLevel, rt.DescriptionKey))
-            .ToListAsync();
+            .ToList();
 
         AvailableProjects = await _db.Projects
             .IgnoreQueryFilters()
@@ -256,12 +246,9 @@ public class AssignModel : LocalizedPageModel
             .Select(d => new ScopeOption(d.Id, $"{d.Molecule.DisplayName} / {d.DisplayName}", "Department"))
             .ToListAsync();
 
-        AvailableJobTypes = await _db.JobTypes
-            .IgnoreQueryFilters()
-            .Where(jt => jt.IsActive)
-            .Include(jt => jt.Area)
-            .OrderBy(jt => jt.Area.Name).ThenBy(jt => jt.Name)
-            .Select(jt => new ScopeOption(jt.Id, $"{jt.Area.DisplayName} / {jt.DisplayName}", "JobType"))
-            .ToListAsync();
+        var activeJobTypes = await _jobTypeService.GetAllJobTypesAsync();
+        AvailableJobTypes = activeJobTypes
+            .Select(jt => new ScopeOption(jt.Id, $"{jt.Area?.DisplayName ?? ""} / {jt.DisplayName}", "JobType"))
+            .ToList();
     }
 }

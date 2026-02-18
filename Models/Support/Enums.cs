@@ -15,7 +15,8 @@ public enum RequestStatus
 {
     Pending = 0,
     Approved = 1,
-    Declined = 2
+    Declined = 2,
+    Canceled = 3
 }
 
 public enum NotificationType

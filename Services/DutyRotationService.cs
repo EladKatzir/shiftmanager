@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 
@@ -12,18 +13,18 @@ public class DutyRotationService : IDutyRotationService
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<DutyRotationService> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public DutyRotationService(
         AppDbContext db,
         ITenantResolver tenantResolver,
         ILogger<DutyRotationService> logger,
-        IConfiguration configuration)
+        IFeatureFlagService featureFlagService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _logger = logger;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
     }
 
     public async Task<DutyRotation> CreateRotationAsync(
@@ -244,7 +245,7 @@ public class DutyRotationService : IDutyRotationService
         if (!activeEntries.Any())
             return (false, "No users in rotation queue.", null);
 
-        var enforceRankEligibility = _configuration.GetValue<bool>("Features:EnforceRankEligibility", false);
+        var enforceRankEligibility = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnforceRankEligibility);
         var totalEntries = activeEntries.Count;
         var startPosition = rotation.CurrentQueuePosition % totalEntries;
         OnDuty? createdOnDuty = null;
@@ -394,7 +395,7 @@ public class DutyRotationService : IDutyRotationService
         if (!activeEntries.Any())
             return new List<(DateOnly, int, string?)>();
 
-        var enforceRankEligibility = _configuration.GetValue<bool>("Features:EnforceRankEligibility", false);
+        var enforceRankEligibility = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnforceRankEligibility);
         var results = new List<(DateOnly Date, int UserId, string? SkipReason)>();
         var currentPosition = rotation.CurrentQueuePosition;
         var totalEntries = activeEntries.Count;

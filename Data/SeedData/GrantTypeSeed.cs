@@ -271,6 +271,11 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ViewAllAreas", NameKey = "Grant_ViewAllAreas", DescriptionKey = "Grant_ViewAllAreas_Desc", Category = GrantCategory.System, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ManageOnDuty", NameKey = "Grant_ManageOnDuty", DescriptionKey = "Grant_ManageOnDuty_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
+        // ============================================
+        // HIERARCHY REORDER (Section 8 — was missing, needed by Api/Hierarchy/Reorder endpoint)
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "ReorderHierarchy", NameKey = "Grant_ReorderHierarchy", DescriptionKey = "Grant_ReorderHierarchy_Desc", Category = GrantCategory.Hierarchy, DefaultScope = GrantScopeLevel.Project, IsSystem = true });
+
         return grants;
     }
 }

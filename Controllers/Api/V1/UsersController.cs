@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Services;
 using ShiftManager.Services.Api;
 
 namespace ShiftManager.Controllers.Api.V1;
@@ -18,16 +20,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class UsersController : ControllerBase
 {
     private readonly UserApiService _userService;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<UsersController> _logger;
 
     public UsersController(
         UserApiService userService,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<UsersController> logger)
     {
         _userService = userService;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -56,7 +58,7 @@ public class UsersController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Users:ListEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiUsersList))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListUsers), HttpContext.Request.Path);
@@ -126,7 +128,7 @@ public class UsersController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Users:GetEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiUsersGet))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetUser), HttpContext.Request.Path);
@@ -189,7 +191,7 @@ public class UsersController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Users:CreateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiUsersCreate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(CreateUser), HttpContext.Request.Path);
@@ -291,7 +293,7 @@ public class UsersController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Users:UpdateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiUsersUpdate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(UpdateUser), HttpContext.Request.Path);

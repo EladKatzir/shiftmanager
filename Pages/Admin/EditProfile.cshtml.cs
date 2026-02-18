@@ -25,6 +25,8 @@ public class EditProfileModel : LocalizedPageModel
     private readonly IAvatarService _avatarService;
     private readonly ITenantResolver _tenantResolver;
     private readonly IAuditLogService _auditLogService;
+    private readonly IRoleService _roleService;
+    private readonly IJobTypeService _jobTypeService;
 
     public EditProfileModel(
         IStringLocalizer<SharedResources> localizer,
@@ -32,7 +34,9 @@ public class EditProfileModel : LocalizedPageModel
         IProfileService profileService,
         IAvatarService avatarService,
         ITenantResolver tenantResolver,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IRoleService roleService,
+        IJobTypeService jobTypeService)
         : base(localizer)
     {
         _db = db;
@@ -40,6 +44,8 @@ public class EditProfileModel : LocalizedPageModel
         _avatarService = avatarService;
         _tenantResolver = tenantResolver;
         _auditLogService = auditLogService;
+        _roleService = roleService;
+        _jobTypeService = jobTypeService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -430,8 +436,7 @@ public class EditProfileModel : LocalizedPageModel
         // Sync RoleTemplate — if RoleTemplateId was submitted, update and sync Role
         if (RoleTemplateId.HasValue && RoleTemplateId != targetUser.RoleTemplateId)
         {
-            var newTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(rt => rt.Id == RoleTemplateId.Value);
+            var newTemplate = await _roleService.GetRoleTemplateAsync(RoleTemplateId.Value);
             if (newTemplate != null)
             {
                 targetUser.RoleTemplateId = newTemplate.Id;
@@ -580,13 +585,11 @@ public class EditProfileModel : LocalizedPageModel
             {
                 // Load job types for the area
                 var areaId = company.Molecule.AreaId;
-                AvailableJobTypes = await _db.JobTypes
-                    .IgnoreQueryFilters()
-                    .Where(jt => jt.AreaId == areaId && jt.IsActive)
-                    .Include(jt => jt.Area)
-                    .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
-                    .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName))
-                    .ToListAsync();
+                var areaDisplayName = company.Molecule.Area?.DisplayName ?? "";
+                var jobTypesForArea = await _jobTypeService.GetJobTypesAsync(areaId);
+                AvailableJobTypes = jobTypesForArea
+                    .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, areaDisplayName))
+                    .ToList();
             }
             else if (IsTechMolecule)
             {
@@ -608,11 +611,7 @@ public class EditProfileModel : LocalizedPageModel
             .CountAsync(g => g.UserId == user.Id);
 
         // Load available role templates for dropdown
-        AvailableRoleTemplates = await _db.RoleTemplates
-            .IgnoreQueryFilters()
-            .Where(rt => rt.IsActive && rt.CanBeAssignedByDefault)
-            .OrderBy(rt => rt.SortOrder)
-            .ToListAsync();
+        AvailableRoleTemplates = await _roleService.GetAssignableRoleTemplatesAsync();
     }
 
     private List<string> ParseJsonArray(string? json)

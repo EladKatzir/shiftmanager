@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.Roles;
 
@@ -16,14 +17,17 @@ public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IRoleService _roleService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IRoleService roleService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _roleService = roleService;
     }
 
     public record RoleTemplateVM(
@@ -68,16 +72,14 @@ public class IndexModel : LocalizedPageModel
         if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
 
         // Load role templates for filter
-        AvailableRoles = await _db.RoleTemplates
-            .IgnoreQueryFilters()
-            .Where(rt => rt.IsActive)
-            .OrderBy(rt => rt.SortOrder).ThenBy(rt => rt.Key)
+        var activeTemplates = await _roleService.GetRoleTemplatesAsync();
+        AvailableRoles = activeTemplates
             .Select(rt => new RoleTemplateOption(rt.Id, rt.Key, rt.NameKey))
-            .ToListAsync();
+            .ToList();
 
         if (ViewMode == "assignments")
         {
-            // Show user role assignments
+            // Complex filtered admin query — direct DB access intentional
             var assignmentsQuery = _db.UserRoleAssignments
                 .IgnoreQueryFilters()
                 .Include(ura => ura.User)
@@ -117,13 +119,8 @@ public class IndexModel : LocalizedPageModel
         }
         else
         {
-            // Show role templates (default view)
-            var templates = await _db.RoleTemplates
-                .IgnoreQueryFilters()
-                .Include(rt => rt.AutoGrants)
-                .Include(rt => rt.UserRoles)
-                .OrderBy(rt => rt.SortOrder).ThenBy(rt => rt.Key)
-                .ToListAsync();
+            // Load all role templates with AutoGrants and UserRoles via service
+            var templates = await _roleService.GetAllRoleTemplatesWithDetailsAsync();
 
             RoleTemplates = templates.Select(rt => new RoleTemplateVM(
                 rt.Id,
@@ -141,11 +138,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRevokeAsync(int id)
     {
-        var assignment = await _db.UserRoleAssignments
-            .IgnoreQueryFilters()
-            .Include(ura => ura.User)
-            .Include(ura => ura.RoleTemplate)
-            .FirstOrDefaultAsync(ura => ura.Id == id);
+        var assignment = await _roleService.GetUserRoleAssignmentAsync(id);
 
         if (assignment == null)
         {
@@ -153,17 +146,21 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage(new { ViewMode = "assignments" });
         }
 
-        // Soft delete - mark as inactive
-        assignment.IsActive = false;
-        await _db.SaveChangesAsync();
+        var roleKey = assignment.RoleTemplate.Key;
+        var roleNameKey = assignment.RoleTemplate.NameKey;
+        var userId = assignment.UserId;
+        var userName = assignment.User.DisplayName;
+
+        // Soft delete via service (also removes auto-grants)
+        await _roleService.RemoveRoleAsync(id);
 
         _logger.LogInformation("Revoked role assignment {AssignmentId} ({Role}) from user {UserId}",
-            id, assignment.RoleTemplate.Key, assignment.UserId);
+            id, roleKey, userId);
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleRevoked"],
-            _localizer[assignment.RoleTemplate.NameKey], assignment.User.DisplayName);
+            _localizer[roleNameKey], userName);
 
-        return RedirectToPage(new { ViewMode = "assignments", FilterUserId = assignment.UserId });
+        return RedirectToPage(new { ViewMode = "assignments", FilterUserId = userId });
     }
 
     private static string BuildScopeDescription(UserRoleAssignment ura)

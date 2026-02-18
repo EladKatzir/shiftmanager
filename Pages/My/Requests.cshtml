@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["MyRequests"];
@@ -123,7 +124,7 @@
                                     <option value="0">@Localizer["ChooseAShift"]</option>
                                     @foreach (var shift in Model.AvailableShifts)
                                     {
-                                        <option value="@shift.ShiftId">@shift.Date.ToString("yyyy-MM-dd") - @shift.ShiftTypeName (@shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm"))</option>
+                                        <option value="@shift.ShiftId">@Localization.FormatMediumDate(shift.Date) - @shift.ShiftTypeName (@Localization.FormatTime(shift.StartTime) - @Localization.FormatTime(shift.EndTime))</option>
                                     }
                                 </select>
                                 <span asp-validation-for="SwapRequest.ShiftId" class="validation-error"></span>
@@ -175,11 +176,23 @@
                                     <div class="request-item-content">
                                         <div class="request-item-header">
                                             <span class="text-body text-bold">
-                                                @request.StartDate.ToString("MMM dd") - @request.EndDate.ToString("MMM dd, yyyy")
+                                                @Localization.FormatMediumDate(request.StartDate) - @Localization.FormatMediumDate(request.EndDate)
                                             </span>
-                                            <span class="status-badge status-@request.Status.ToLower()">
-                                                @request.Status
-                                            </span>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <span class="status-badge status-@request.Status.ToLower()">
+                                                    @Localizer[request.Status]
+                                                </span>
+                                                @if (request.Status == "Pending")
+                                                {
+                                                    <form method="post" asp-page-handler="CancelRequest" style="display: inline; margin: 0;">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="requestId" value="@request.Id" />
+                                                        <button type="submit" class="btn-cancel" onclick="return confirm('@Localizer["ConfirmCancelRequest"]')">
+                                                            <loc key="CancelRequest" />
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
                                         </div>
                                         @if (!string.IsNullOrEmpty(request.Reason))
                                         {
@@ -221,7 +234,7 @@
                                     <div class="request-item-content">
                                         <div class="request-item-header">
                                             <span class="text-body text-bold">
-                                                @request.ShiftDate.ToString("MMM dd, yyyy")
+                                                @Localization.FormatMediumDate(request.ShiftDate)
                                             </span>
                                             <span class="status-badge status-@request.Status.ToLower()">
                                                 @request.Status
@@ -567,6 +580,28 @@
         }
 
         .status-declined {
+            background: var(--danger);
+            color: var(--danger-text);
+        }
+
+        .status-canceled {
+            background: var(--border);
+            color: var(--text-muted);
+        }
+
+        .btn-cancel {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--danger);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--danger);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-cancel:hover {
             background: var(--danger);
             color: var(--danger-text);
         }

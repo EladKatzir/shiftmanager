@@ -19,8 +19,10 @@ public class FeatureFlagService : IFeatureFlagService
 
     // Cache settings
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan WarmCacheExpiration = TimeSpan.FromMinutes(5);
     private const string CacheKeyPrefix = "FeatureFlag_";
     private const string AllFlagsCacheKey = "FeatureFlags_All";
+    private const string WarmCacheKey = "FeatureFlags_Warm";
 
     public FeatureFlagService(
         AppDbContext context,
@@ -219,7 +221,99 @@ public class FeatureFlagService : IFeatureFlagService
     {
         var cacheKey = BuildCacheKey(flagName, userId, companyId);
         _cache.Remove(cacheKey);
+
+        // Also invalidate the warm cache so it gets refreshed on next WarmCacheAsync or IsEnabled
+        _cache.Remove(WarmCacheKey);
+
         _logger.LogDebug("Cache invalidated for feature flag {FlagName} (key: {CacheKey})", flagName, cacheKey);
+    }
+
+    /// <inheritdoc/>
+    public bool IsEnabled(string flagName, int? userId = null, int? companyId = null)
+    {
+        // First check the per-scope cache (populated by IsEnabledAsync)
+        var cacheKey = BuildCacheKey(flagName, userId, companyId);
+        if (_cache.TryGetValue(cacheKey, out bool cachedValue))
+        {
+            return cachedValue;
+        }
+
+        // Fall back to warm cache (bulk-loaded at startup via WarmCacheAsync)
+        if (_cache.TryGetValue(WarmCacheKey, out List<FeatureFlag>? allFlags) && allFlags != null)
+        {
+            var resolved = ResolveFlagFromList(allFlags, flagName, userId, companyId);
+
+            // Cache the resolved value in the per-scope cache for faster subsequent lookups
+            _cache.Set(cacheKey, resolved, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CacheExpiration
+            });
+
+            return resolved;
+        }
+
+        // No cache available — return false (safe default, never hit DB synchronously)
+        _logger.LogDebug("Feature flag {FlagName} not in warm cache, returning false (cache miss)", flagName);
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public async Task WarmCacheAsync()
+    {
+        try
+        {
+            // SECURITY-AUDITED: SAFE — loads all flags into memory cache at startup; admin-only data
+            var allFlags = await _context.FeatureFlags
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .ToListAsync();
+
+            _cache.Set(WarmCacheKey, allFlags, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = WarmCacheExpiration
+            });
+
+            _logger.LogInformation("Feature flag warm cache loaded with {Count} flags", allFlags.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to warm feature flag cache. Sync IsEnabled() will return false for uncached flags.");
+        }
+    }
+
+    /// <summary>
+    /// Resolves the flag value from an in-memory list with priority: user-specific > company-specific > global.
+    /// Used by the sync IsEnabled() method to avoid DB access.
+    /// </summary>
+    private static bool ResolveFlagFromList(List<FeatureFlag> allFlags, string flagName, int? userId, int? companyId)
+    {
+        var flags = allFlags.Where(f => f.Name == flagName).ToList();
+
+        if (flags.Count == 0)
+            return false;
+
+        // Priority 1: User-specific flag (most specific)
+        if (userId.HasValue && companyId.HasValue)
+        {
+            var userFlag = flags.FirstOrDefault(f => f.UserId == userId && f.CompanyId == companyId);
+            if (userFlag != null)
+                return userFlag.IsEnabled;
+        }
+
+        // Priority 2: Company-specific flag
+        if (companyId.HasValue)
+        {
+            var companyFlag = flags.FirstOrDefault(f => f.CompanyId == companyId && f.UserId == null);
+            if (companyFlag != null)
+                return companyFlag.IsEnabled;
+        }
+
+        // Priority 3: Global flag (least specific)
+        var globalFlag = flags.FirstOrDefault(f => f.CompanyId == null && f.UserId == null);
+        if (globalFlag != null)
+            return globalFlag.IsEnabled;
+
+        return false;
     }
 
     /// <summary>

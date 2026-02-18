@@ -3,6 +3,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Dashboard_MissionOverview"];
@@ -133,7 +134,7 @@
                             }
                             <div class="announcement-title">@announcement.Title</div>
                             <div class="announcement-meta">
-                                @announcement.Creator?.DisplayName • @announcement.CreatedAt.ToLocalTime().ToString("MMM d")
+                                @announcement.Creator?.DisplayName • @Localization.FormatShortMonthDay(announcement.CreatedAt.ToLocalTime())
                             </div>
                             <div class="announcement-content">@announcement.Content</div>
                         </div>

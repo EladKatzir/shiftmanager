@@ -19,19 +19,22 @@ public class AnalyticsModel : LocalizedPageModel
     private readonly ITenantResolver _tenantResolver;
     private readonly AppDbContext _db;
     private readonly ILogger<AnalyticsModel> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
 
     public AnalyticsModel(
         IStringLocalizer<SharedResources> localizer,
         IAnalyticsService analyticsService,
         ITenantResolver tenantResolver,
         AppDbContext db,
-        ILogger<AnalyticsModel> logger)
+        ILogger<AnalyticsModel> logger,
+        ICompanyCacheService companyCacheService)
         : base(localizer)
     {
         _analyticsService = analyticsService;
         _tenantResolver = tenantResolver;
         _db = db;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -151,7 +154,7 @@ public class AnalyticsModel : LocalizedPageModel
             var timeOffStats = await _analyticsService.GetTimeOffStatsAsync(startDate, endDate);
             var coverageRate = await _analyticsService.GetCoverageRateAsync(startDate, endDate);
 
-            var company = await _db.Companies.FindAsync(_tenantResolver.GetCurrentTenantId());
+            var company = await _companyCacheService.GetCompanyAsync(_tenantResolver.GetCurrentTenantId());
 
             var csv = new StringBuilder();
             csv.AppendLine($"Analytics Report - {company?.Name ?? "Company"}");

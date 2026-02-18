@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.JobTypes;
 
@@ -15,14 +16,17 @@ public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IJobTypeService jobTypeService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     // View Models
@@ -59,10 +63,8 @@ public class IndexModel : LocalizedPageModel
             .Select(g => new { JobTypeId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.JobTypeId, x => x.Count);
 
-        JobTypes = (await _db.JobTypes
-            .IgnoreQueryFilters()
-            .Include(jt => jt.Area)
-            .ThenInclude(a => a.Project)
+        var allJobTypes = await _jobTypeService.GetAllJobTypesWithHierarchyAsync();
+        JobTypes = allJobTypes
             .Select(jt => new JobTypeVM(
                 jt.Id,
                 jt.Name,
@@ -74,7 +76,6 @@ public class IndexModel : LocalizedPageModel
                 jt.IsActive,
                 userCountsByJobType.GetValueOrDefault(jt.Id, 0)
             ))
-            .ToListAsync())
             .OrderBy(jt => jt.ProjectName)
             .ThenBy(jt => jt.AreaName)
             .ThenBy(jt => jt.SortOrder)
@@ -114,18 +115,17 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var jobType = new JobType
-        {
-            AreaId = SelectedAreaId,
-            Name = JobTypeName.Trim(),
-            DisplayName = string.IsNullOrWhiteSpace(JobTypeDisplayName) ? JobTypeName.Trim() : JobTypeDisplayName.Trim(),
-            Color = string.IsNullOrWhiteSpace(JobTypeColor) ? null : JobTypeColor.Trim(),
-            SortOrder = SortOrder,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
+        var jobType = await _jobTypeService.CreateJobTypeAsync(
+            JobTypeName.Trim(),
+            SelectedAreaId,
+            TimeOnly.MinValue,
+            TimeOnly.MinValue,
+            isActive: true);
 
-        _db.JobTypes.Add(jobType);
+        // Update additional properties not covered by CreateJobTypeAsync
+        jobType.DisplayName = string.IsNullOrWhiteSpace(JobTypeDisplayName) ? JobTypeName.Trim() : JobTypeDisplayName.Trim();
+        jobType.Color = string.IsNullOrWhiteSpace(JobTypeColor) ? null : JobTypeColor.Trim();
+        jobType.SortOrder = SortOrder;
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Created JobType {JobTypeId}: {JobTypeName} in Area {AreaId}",
@@ -137,22 +137,30 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var jobType = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(jt => jt.Id == id);
-        if (jobType == null)
+        // Get the job type info for logging/messages before toggling
+        // (GetAllJobTypesWithAreaAsync includes inactive, so we can find it)
+        var allJobTypes = await _jobTypeService.GetAllJobTypesWithAreaAsync();
+        var jobTypeInfo = allJobTypes.FirstOrDefault(jt => jt.Id == id);
+        if (jobTypeInfo == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
             return RedirectToPage();
         }
 
-        jobType.IsActive = !jobType.IsActive;
-        await _db.SaveChangesAsync();
+        var success = await _jobTypeService.ToggleActiveAsync(id);
+        if (!success)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
+            return RedirectToPage();
+        }
 
+        var newIsActive = !jobTypeInfo.IsActive; // toggled state
         _logger.LogInformation("JobType {JobTypeId} ({JobTypeName}) active status changed to {IsActive}",
-            id, jobType.Name, jobType.IsActive);
+            id, jobTypeInfo.Name, newIsActive);
 
-        TempData["SuccessMessage"] = jobType.IsActive
-            ? string.Format(_localizer["Success_JobTypeActivated"], jobType.DisplayName)
-            : string.Format(_localizer["Success_JobTypeDeactivated"], jobType.DisplayName);
+        TempData["SuccessMessage"] = newIsActive
+            ? string.Format(_localizer["Success_JobTypeActivated"], jobTypeInfo.DisplayName)
+            : string.Format(_localizer["Success_JobTypeDeactivated"], jobTypeInfo.DisplayName);
 
         return RedirectToPage();
     }
@@ -169,19 +177,20 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var jobType = await _db.JobTypes.FindAsync(id);
-        if (jobType == null)
+        // Get info for logging before deletion
+        var allJobTypes = await _jobTypeService.GetAllJobTypesWithAreaAsync();
+        var jobTypeInfo = allJobTypes.FirstOrDefault(jt => jt.Id == id);
+
+        var success = await _jobTypeService.DeleteJobTypeAsync(id);
+        if (!success)
         {
             TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
             return RedirectToPage();
         }
 
-        _db.JobTypes.Remove(jobType);
-        await _db.SaveChangesAsync();
+        _logger.LogInformation("Deleted JobType {JobTypeId}: {JobTypeName}", id, jobTypeInfo?.Name ?? "Unknown");
 
-        _logger.LogInformation("Deleted JobType {JobTypeId}: {JobTypeName}", id, jobType.Name);
-
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeDeleted"], jobType.DisplayName);
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeDeleted"], jobTypeInfo?.DisplayName ?? "Unknown");
         return RedirectToPage();
     }
 }

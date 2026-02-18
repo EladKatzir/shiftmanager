@@ -4,6 +4,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["OnDutyCalendar"];
@@ -80,7 +81,7 @@
                            onchange="navigateToDate(this.value)"
                            class="oncall-calendar__date-picker" />
                     <span class="oncall-calendar__date-label">
-                        @Model.StartDate.ToString("MMM dd") - @Model.EndDate.ToString("MMM dd, yyyy")
+                        @Localization.FormatMediumDate(Model.StartDate) - @Localization.FormatMediumDate(Model.EndDate)
                     </span>
                 </div>
 
@@ -110,6 +111,13 @@
                        class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
                         @Localizer["JustMine"]
                     </a>
+                </div>
+
+                @* Show Friends toggle *@
+                <div class="oncall-calendar__toggle-group">
+                    <button id="friendsToggle" type="button" class="btn btn-ghost" onclick="toggleFriendsHighlight()">
+                        <span>🤝</span> <loc key="ShowFriends" />
+                    </button>
                 </div>
             </div>
 

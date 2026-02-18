@@ -14,15 +14,18 @@ public class SetupTaskService : ISetupTaskService
     private readonly AppDbContext _db;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<SetupTaskService> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
     public SetupTaskService(
         AppDbContext db,
         IStringLocalizer<SharedResources> localizer,
-        ILogger<SetupTaskService> logger)
+        ILogger<SetupTaskService> logger,
+        IJobTypeService jobTypeService)
     {
         _db = db;
         _localizer = localizer;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     public async Task<List<SetupTaskDto>> GenerateTasksForMoleculeAsync(int moleculeId, int assignToUserId)
@@ -65,9 +68,7 @@ public class SetupTaskService : ISetupTaskService
 
             // Task 3: Assign directors for each job type
             // SECURITY-AUDITED: SAFE — scoped by molecule's areaId; admin setup wizard
-            var jobTypes = await _db.JobTypes.IgnoreQueryFilters()
-                .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
-                .ToListAsync();
+            var jobTypes = await _jobTypeService.GetJobTypesAsync(molecule.AreaId);
 
             foreach (var jobType in jobTypes)
             {
@@ -139,9 +140,7 @@ public class SetupTaskService : ISetupTaskService
         if (company.Molecule.Type == MoleculeType.Workforce)
         {
             // SECURITY-AUDITED: SAFE — scoped by company's molecule's areaId; admin setup wizard
-            var jobTypes = await _db.JobTypes.IgnoreQueryFilters()
-                .Where(jt => jt.AreaId == company.Molecule.AreaId && jt.IsActive)
-                .ToListAsync();
+            var jobTypes = await _jobTypeService.GetJobTypesAsync(company.Molecule.AreaId);
 
             foreach (var jobType in jobTypes)
             {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Pages;
 using ShiftManager.Resources;
@@ -14,12 +15,14 @@ public class ApiKeysModel : LocalizedPageModel
 {
     private readonly IApiKeyService _apiKeyService;
     private readonly IGrantService _grantService;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<ApiKeysModel> _logger;
 
-    public ApiKeysModel(IApiKeyService apiKeyService, IGrantService grantService, ILogger<ApiKeysModel> logger, IStringLocalizer<SharedResources> localizer) : base(localizer)
+    public ApiKeysModel(IApiKeyService apiKeyService, IGrantService grantService, IFeatureFlagService featureFlagService, ILogger<ApiKeysModel> logger, IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _apiKeyService = apiKeyService;
         _grantService = grantService;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -55,13 +58,16 @@ public class ApiKeysModel : LocalizedPageModel
         return await _grantService.HasGrantAsync(userId, "AdminAccess");
     }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        if (!_featureFlagService.IsEnabled(FeatureFlagSeed.Flags.EnableApiKeyManagement))
+            return RedirectToPage("/Home/Index");
+
         if (!int.TryParse(User.FindFirstValue("CompanyId"), out var companyId) ||
             !int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
             Error = _localizer["Error_AuthenticationError"];
-            return;
+            return Page();
         }
 
         // Grant-based access checks
@@ -82,6 +88,8 @@ public class ApiKeysModel : LocalizedPageModel
             AllKeys = await _apiKeyService.ListAllKeysAsync(companyId, includeInactive: true);
             AllCompanyRequests = await _apiKeyService.ListAllRequestsAsync(companyId);
         }
+
+        return Page();
     }
 
     public async Task<IActionResult> OnPostRequestAsync(string name, string description, string[] scopes)

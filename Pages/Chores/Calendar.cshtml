@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Chores"];
@@ -220,16 +221,16 @@
 
 <div class="chores-calendar">
     <div class="calendar-header">
-        <h2><loc key="ChoresCalendar" /> - @firstDay.ToString("MMMM yyyy")</h2>
+        <h2><loc key="ChoresCalendar" /> - @Localization.FormatMonthYear(firstDay)</h2>
         <div class="calendar-nav">
             <a class="btn btn-ghost" href="/Chores/Calendar?year=@firstDay.AddMonths(-1).Year&month=@firstDay.AddMonths(-1).Month">
-                ← @firstDay.AddMonths(-1).ToString("MMM")
+                ← @Localization.FormatMonthAbbreviation(firstDay.AddMonths(-1))
             </a>
             <a class="btn btn-primary" href="/Chores/Calendar">
                 @Localizer["Today"]
             </a>
             <a class="btn btn-ghost" href="/Chores/Calendar?year=@firstDay.AddMonths(1).Year&month=@firstDay.AddMonths(1).Month">
-                @firstDay.AddMonths(1).ToString("MMM") →
+                @Localization.FormatMonthAbbreviation(firstDay.AddMonths(1)) →
             </a>
         </div>
 

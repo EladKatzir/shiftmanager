@@ -14,11 +14,13 @@ public class UserDataExportService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<UserDataExportService> _logger;
+    private readonly IRoleService _roleService;
 
-    public UserDataExportService(AppDbContext db, ILogger<UserDataExportService> logger)
+    public UserDataExportService(AppDbContext db, ILogger<UserDataExportService> logger, IRoleService roleService)
     {
         _db = db;
         _logger = logger;
+        _roleService = roleService;
     }
 
     public async Task<object?> ExportUserDataAsync(int userId)
@@ -228,12 +230,8 @@ public class UserDataExportService
             .ToListAsync();
 
         // Role assignments
-        var roleAssignments = await _db.UserRoleAssignments
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(ra => ra.UserId == userId)
-            .Include(ra => ra.RoleTemplate)
-            .Select(ra => new
+        var userRoles = await _roleService.GetUserRolesAsync(userId);
+        var roleAssignments = userRoles.Select(ra => new
             {
                 ra.Id,
                 RoleTemplateKey = ra.RoleTemplate != null ? ra.RoleTemplate.Key : "Unknown",
@@ -246,7 +244,7 @@ public class UserDataExportService
                 ra.AssignedByUserId,
                 ra.IsActive
             })
-            .ToListAsync();
+            .ToList();
 
         // Day notes
         var dayNotes = await _db.UserDayNotes

@@ -12,13 +12,15 @@ public class ShiftCalendarService : IShiftCalendarService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<ShiftCalendarService> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
     private const int DEFAULT_REST_HOURS = 8;
     private const int DEFAULT_STAFFING_REQUIRED = 1;
 
-    public ShiftCalendarService(AppDbContext db, ILogger<ShiftCalendarService> logger)
+    public ShiftCalendarService(AppDbContext db, ILogger<ShiftCalendarService> logger, ICompanyCacheService companyCacheService)
     {
         _db = db;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     public async Task<List<AppUser>> GetUsersForCalendarAsync(int moleculeId, int jobTypeId)
@@ -202,8 +204,7 @@ public class ShiftCalendarService : IShiftCalendarService
         if (user == null)
             return new AssignmentResult(false, "User not found", new());
 
-        var userCompany = await _db.Companies
-            .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+        var userCompany = await _companyCacheService.GetCompanyAsync(user.CompanyId);
 
         if (userCompany?.MoleculeId != shiftInstance.ShiftType.MoleculeId)
             return new AssignmentResult(false, "User does not belong to this molecule", new());

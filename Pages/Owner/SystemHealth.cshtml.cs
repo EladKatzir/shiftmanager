@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
+using ShiftManager.Services;
 using System.Diagnostics;
 
 namespace ShiftManager.Pages.Owner;
@@ -18,17 +20,20 @@ public class SystemHealthModel : PageModel
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<SystemHealthModel> _logger;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public SystemHealthModel(
         AppDbContext db,
         IConfiguration configuration,
         IWebHostEnvironment env,
-        ILogger<SystemHealthModel> logger)
+        ILogger<SystemHealthModel> logger,
+        IFeatureFlagService featureFlagService)
     {
         _db = db;
         _configuration = configuration;
         _env = env;
         _logger = logger;
+        _featureFlagService = featureFlagService;
     }
 
     // Overall Status
@@ -202,8 +207,8 @@ public class SystemHealthModel : PageModel
                             !string.IsNullOrEmpty(griffinConfig.BaseUrl) &&
                             !string.IsNullOrEmpty(griffinConfig.TokenConsumerUrl);
 
-            // Check daily notifications feature flag
-            DailyNotificationsEnabled = _configuration.GetValue<bool>("Features:EnableDailyNotifications", true);
+            // Check daily notifications feature flag (DB-backed)
+            DailyNotificationsEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnableDailyNotifications);
 
             // Get counts
             CompanyCount = await _db.Companies.CountAsync();
@@ -285,8 +290,8 @@ public class SystemHealthModel : PageModel
             }
         }
 
-        // Check for public signup enabled (fixes H-07, B-10)
-        PublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup");
+        // Check for public signup enabled (fixes H-07, B-10) — reads from DB-backed service
+        PublicSignupEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
         if (PublicSignupEnabled)
         {
             SecurityWarnings.Add("Public signup is enabled. Anyone with server access can create an account.");

@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Services;
 using ShiftManager.Services.Api;
 
 namespace ShiftManager.Controllers.Api.V1;
@@ -18,16 +20,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class ChoresController : ControllerBase
 {
     private readonly ChoreApiService _choreService;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<ChoresController> _logger;
 
     public ChoresController(
         ChoreApiService choreService,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<ChoresController> logger)
     {
         _choreService = choreService;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -52,7 +54,7 @@ public class ChoresController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Chores:ListEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresList))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListChores), HttpContext.Request.Path);
@@ -145,7 +147,7 @@ public class ChoresController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Chores:GetEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresGet))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetChore), HttpContext.Request.Path);
@@ -203,7 +205,7 @@ public class ChoresController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Chores:CreateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresCreate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(CreateChore), HttpContext.Request.Path);
@@ -296,7 +298,7 @@ public class ChoresController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Chores:UpdateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresUpdate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(UpdateChore), HttpContext.Request.Path);
@@ -364,7 +366,7 @@ public class ChoresController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Chores:DeleteEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresDelete))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(DeleteChore), HttpContext.Request.Path);

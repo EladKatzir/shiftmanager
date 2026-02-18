@@ -31,6 +31,7 @@ public class WeekModel : PageModel
     private readonly IChoreService _choreService;
     private readonly IScopeFilterService _scopeFilterService;
     private readonly IGrantService _grantService;
+    private readonly ILocalizationService _localization;
 
     public WeekModel(
         AppDbContext db,
@@ -41,7 +42,8 @@ public class WeekModel : PageModel
         IUserPreferenceService userPreferenceService,
         IChoreService choreService,
         IScopeFilterService scopeFilterService,
-        IGrantService grantService)
+        IGrantService grantService,
+        ILocalizationService localization)
     {
         _db = db;
         _companyContext = companyContext;
@@ -52,6 +54,7 @@ public class WeekModel : PageModel
         _choreService = choreService;
         _scopeFilterService = scopeFilterService;
         _grantService = grantService;
+        _localization = localization;
     }
 
     public DateOnly CurrentWeekStart { get; set; }
@@ -99,8 +102,8 @@ public class WeekModel : PageModel
         var weekStart = target.AddDays(-daysFromSunday);
         CurrentWeekStart = weekStart;
 
-        Previous = (weekStart.AddDays(-7), weekStart.AddDays(-7).ToString("MMM dd, yyyy"));
-        Next = (weekStart.AddDays(7), weekStart.AddDays(7).ToString("MMM dd, yyyy"));
+        Previous = (weekStart.AddDays(-7), _localization.FormatMediumDate(weekStart.AddDays(-7)));
+        Next = (weekStart.AddDays(7), _localization.FormatMediumDate(weekStart.AddDays(7)));
 
         // Get current user
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

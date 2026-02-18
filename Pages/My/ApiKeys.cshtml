@@ -5,6 +5,7 @@
 @using ShiftManager.ViewComponents
 @using ShiftManager.Models.Api
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["MyApiKeys"];
@@ -99,10 +100,10 @@
                                     }
                                 </td>
                                 <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
-                                    @key.CreatedAt.ToString("MMM dd, yyyy")
+                                    @Localization.FormatMediumDate(key.CreatedAt)
                                 </td>
                                 <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
-                                    @(key.LastUsedAt.HasValue ? key.LastUsedAt.Value.ToString("MMM dd, yyyy") : Localizer["Never"])
+                                    @(key.LastUsedAt.HasValue ? Localization.FormatMediumDate(key.LastUsedAt.Value) : Localizer["Never"])
                                 </td>
                                 <td style="padding: 1rem;">
                                     <div style="display: flex; gap: 0.5rem;">
@@ -165,7 +166,7 @@
                                     }
                                 </td>
                                 <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
-                                    @request.RequestedAt.ToString("MMM dd, yyyy HH:mm")
+                                    @Localization.FormatDateTime(request.RequestedAt)
                                 </td>
                                 <td style="padding: 1rem;">
                                     <span style="display: inline-block; background: var(--warning-light); color: var(--warning); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.85rem; font-weight: 600;">
@@ -209,10 +210,10 @@
                                     <div style="font-weight: 600;">@request.Name</div>
                                 </td>
                                 <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
-                                    @request.RequestedAt.ToString("MMM dd, yyyy")
+                                    @Localization.FormatMediumDate(request.RequestedAt)
                                 </td>
                                 <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
-                                    @(request.ReviewedAt.HasValue ? request.ReviewedAt.Value.ToString("MMM dd, yyyy") : "-")
+                                    @(request.ReviewedAt.HasValue ? Localization.FormatMediumDate(request.ReviewedAt.Value) : "-")
                                 </td>
                                 <td style="padding: 1rem;">
                                     @{
@@ -268,7 +269,7 @@
                                         Requested by <strong>@request.RequestedByUser?.DisplayName</strong> (@request.RequestedByUser?.Email)
                                     </p>
                                     <p style="color: var(--muted); margin: 0.25rem 0 0 0; font-size: 0.85rem;">
-                                        @request.RequestedAt.ToString("MMM dd, yyyy HH:mm")
+                                        @Localization.FormatDateTime(request.RequestedAt)
                                     </p>
                                 </div>
                                 <span style="background: var(--warning); color: var(--warning-text); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
@@ -366,7 +367,7 @@
                                             }
                                         </td>
                                         <td style="padding: 1rem; color: var(--text); font-size: 0.9rem;">
-                                            @key.CreatedAt.ToString("MMM dd, yyyy")
+                                            @Localization.FormatMediumDate(key.CreatedAt)
                                         </td>
                                         <td style="padding: 1rem;">
                                             <button type="button" data-key-name="@key.Name" onclick="showRevokeAdminModal(@key.Id, this.dataset.keyName)" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">

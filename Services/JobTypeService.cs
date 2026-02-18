@@ -18,14 +18,14 @@ public class JobTypeService : IJobTypeService
     // Query operations
     public async Task<JobType?> GetJobTypeAsync(int jobTypeId)
     {
-        return await _db.JobTypes
+        return await _db.JobTypes.IgnoreQueryFilters()
             .Include(jt => jt.Area)
             .FirstOrDefaultAsync(jt => jt.Id == jobTypeId && jt.IsActive);
     }
 
     public async Task<List<JobType>> GetJobTypesAsync(int areaId)
     {
-        return await _db.JobTypes
+        return await _db.JobTypes.IgnoreQueryFilters()
             .Where(jt => jt.AreaId == areaId && jt.IsActive)
             .OrderBy(jt => jt.SortOrder)
             .ThenBy(jt => jt.Name)
@@ -34,7 +34,7 @@ public class JobTypeService : IJobTypeService
 
     public async Task<List<JobType>> GetAllJobTypesAsync()
     {
-        return await _db.JobTypes
+        return await _db.JobTypes.IgnoreQueryFilters()
             .Include(jt => jt.Area)
             .Where(jt => jt.IsActive)
             .OrderBy(jt => jt.Area.Name)
@@ -140,5 +140,73 @@ public class JobTypeService : IJobTypeService
 
         // Job type must be in the same area as the user
         return jobType.AreaId == userContext.Path.Area.Id;
+    }
+
+    // CRUD and admin operations
+    public async Task<JobType> CreateJobTypeAsync(string name, int areaId, TimeOnly start, TimeOnly end, bool isActive = true)
+    {
+        var jobType = new JobType
+        {
+            Name = name,
+            DisplayName = name,
+            AreaId = areaId,
+            IsActive = isActive,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.JobTypes.Add(jobType);
+        await _db.SaveChangesAsync();
+        return jobType;
+    }
+
+    public async Task<bool> ToggleActiveAsync(int jobTypeId)
+    {
+        var jobType = await _db.JobTypes.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(jt => jt.Id == jobTypeId);
+
+        if (jobType == null)
+            return false;
+
+        jobType.IsActive = !jobType.IsActive;
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteJobTypeAsync(int jobTypeId)
+    {
+        var jobType = await _db.JobTypes.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(jt => jt.Id == jobTypeId);
+
+        if (jobType == null)
+            return false;
+
+        _db.JobTypes.Remove(jobType);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<int> GetJobTypeCountAsync()
+    {
+        return await _db.JobTypes.IgnoreQueryFilters()
+            .CountAsync();
+    }
+
+    public async Task<List<JobType>> GetAllJobTypesWithAreaAsync()
+    {
+        return await _db.JobTypes.IgnoreQueryFilters()
+            .Include(jt => jt.Area)
+            .OrderBy(jt => jt.Area.Name)
+            .ThenBy(jt => jt.SortOrder)
+            .ThenBy(jt => jt.Name)
+            .ToListAsync();
+    }
+
+    public async Task<List<JobType>> GetAllJobTypesWithHierarchyAsync()
+    {
+        return await _db.JobTypes.IgnoreQueryFilters()
+            .Include(jt => jt.Area)
+                .ThenInclude(a => a.Project)
+            .AsNoTracking()
+            .ToListAsync();
     }
 }

@@ -150,5 +150,53 @@ namespace ShiftManager.Services
                 return FormatDate(dateTime);
             }
         }
+
+        public string FormatMediumDate(DateTime date)
+        {
+            if (IsHebrew)
+                return date.ToString("dd MMM yyyy", new CultureInfo("he-IL"));
+            return date.ToString("MMM dd, yyyy", CurrentCulture);
+        }
+
+        public string FormatMonthYear(DateTime date)
+        {
+            if (IsHebrew)
+                return date.ToString("MMMM yyyy", new CultureInfo("he-IL"));
+            return date.ToString("MMMM yyyy", CurrentCulture);
+        }
+
+        public string FormatMonthYear(DateOnly date) => FormatMonthYear(date.ToDateTime(TimeOnly.MinValue));
+
+        public string FormatMonthAbbreviation(DateTime date)
+        {
+            if (IsHebrew)
+                return date.ToString("MMM", new CultureInfo("he-IL"));
+            return date.ToString("MMM", CurrentCulture);
+        }
+
+        public string FormatMonthAbbreviation(DateOnly date) => FormatMonthAbbreviation(date.ToDateTime(TimeOnly.MinValue));
+
+        public string FormatTimeLong(DateTime date)
+        {
+            if (IsHebrew)
+                return date.ToString("HH:mm:ss", new CultureInfo("he-IL"));
+            return date.ToString("HH:mm:ss", CurrentCulture);
+        }
+
+        public string FormatShortMonthDay(DateTime date)
+        {
+            if (IsHebrew)
+                return date.ToString("dd MMM", new CultureInfo("he-IL"));
+            return date.ToString("MMM dd", CurrentCulture);
+        }
+
+        public string FormatShortMonthDay(DateOnly date) => FormatShortMonthDay(date.ToDateTime(TimeOnly.MinValue));
+
+        // DateOnly/TimeOnly overloads (delegate to DateTime versions)
+        public string FormatMediumDate(DateOnly date) => FormatMediumDate(date.ToDateTime(TimeOnly.MinValue));
+        public string FormatDate(DateOnly date) => FormatDate(date.ToDateTime(TimeOnly.MinValue));
+        public string FormatTime(TimeOnly time) => FormatTime(DateTime.Today.Add(time.ToTimeSpan()));
+        public string FormatShortDate(DateOnly date) => FormatShortDate(date.ToDateTime(TimeOnly.MinValue));
+        public string FormatLongDate(DateOnly date) => FormatLongDate(date.ToDateTime(TimeOnly.MinValue));
     }
 }

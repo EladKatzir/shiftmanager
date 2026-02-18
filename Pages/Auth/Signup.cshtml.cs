@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -19,27 +20,34 @@ public class SignupModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<SignupModel> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly IValidationService _validation;
     private readonly INotificationService _notificationService;
     private readonly IRateLimitingService _rateLimiting;
+
+    private readonly ICompanyCacheService _companyCacheService;
+    private readonly IRoleService _roleService;
 
     public SignupModel(
         AppDbContext db,
         ILogger<SignupModel> logger,
         IStringLocalizer<SharedResources> localizer,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         IValidationService validation,
         INotificationService notificationService,
-        IRateLimitingService rateLimiting)
+        IRateLimitingService rateLimiting,
+        ICompanyCacheService companyCacheService,
+        IRoleService roleService)
         : base(localizer)
     {
         _db = db;
         _logger = logger;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _validation = validation;
         _notificationService = notificationService;
         _rateLimiting = rateLimiting;
+        _companyCacheService = companyCacheService;
+        _roleService = roleService;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -74,7 +82,7 @@ public class SignupModel : LocalizedPageModel
     public async Task OnGetAsync()
     {
         // SECURITY FIX: Only load data if public signup is explicitly enabled
-        IsPublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        IsPublicSignupEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
         if (IsPublicSignupEnabled)
         {
             _logger.LogWarning("Public signup is enabled - this exposes organizational structure");
@@ -112,7 +120,7 @@ public class SignupModel : LocalizedPageModel
         }
 
         // SECURITY FIX: Only allow if public signup is explicitly enabled
-        IsPublicSignupEnabled = _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        IsPublicSignupEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
         if (IsPublicSignupEnabled)
         {
             AvailableMolecules = await _db.Molecules
@@ -166,8 +174,9 @@ public class SignupModel : LocalizedPageModel
         RoleTemplate? signupTemplate = null;
         if (RequestedRoleTemplateId.HasValue)
         {
-            signupTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(rt => rt.Id == RequestedRoleTemplateId.Value && rt.IsVisibleInSignup);
+            var candidate = await _roleService.GetRoleTemplateAsync(RequestedRoleTemplateId.Value);
+            if (candidate?.IsVisibleInSignup == true)
+                signupTemplate = candidate;
             if (signupTemplate?.DerivedUserRole.HasValue == true)
                 RequestedRole = signupTemplate.DerivedUserRole.Value;
         }
@@ -227,15 +236,16 @@ public class SignupModel : LocalizedPageModel
                 jr.RequestedRole == RequestedRole &&
                 jr.Status == JoinRequestStatus.Pending);
 
+        // Pre-fetch company from cache (used for both pending-request message and existence validation)
+        var selectedCompany = await _companyCacheService.GetCompanyAsync(CompanyId);
+
         if (existingPendingRequest != null)
         {
-            var company = await _db.Companies.FindAsync(CompanyId);
-            PendingRequestMessage = _localizer["SignupPendingMessage", company?.Name ?? "", _localizer[RequestedRole.ToString()].Value];
+            PendingRequestMessage = _localizer["SignupPendingMessage", selectedCompany?.Name ?? "", _localizer[RequestedRole.ToString()].Value];
             return Page();
         }
 
         // Validate company exists
-        var selectedCompany = await _db.Companies.FindAsync(CompanyId);
         if (selectedCompany == null)
         {
             Error = _localizer["Error_Signup_CompanyNotFound"];

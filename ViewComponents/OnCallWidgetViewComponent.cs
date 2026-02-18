@@ -1,32 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using ShiftManager.Data;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using ShiftManager.Models.Support;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ShiftManager.ViewComponents;
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OnDuty is cross-company by design;
-// queries scoped by explicit companyId/areaId parameters; ViewComponent used only on [Authorize]-protected pages
+/// <summary>
+/// On-call widget view component — delegates all data retrieval to IWidgetService.
+/// </summary>
 public class OnCallWidgetViewComponent : ViewComponent
 {
     private readonly IStringLocalizer<SharedResources> _localizer;
-    private readonly AppDbContext _context;
-    private readonly IGrantService _grantService;
+    private readonly IWidgetService _widgetService;
     private readonly ITenantResolver _tenantResolver;
 
     public OnCallWidgetViewComponent(
         IStringLocalizer<SharedResources> localizer,
-        AppDbContext context,
-        IGrantService grantService,
+        IWidgetService widgetService,
         ITenantResolver tenantResolver)
     {
         _localizer = localizer;
-        _context = context;
-        _grantService = grantService;
+        _widgetService = widgetService;
         _tenantResolver = tenantResolver;
     }
 
@@ -44,67 +40,40 @@ public class OnCallWidgetViewComponent : ViewComponent
             return Content(string.Empty);
         }
 
-        var contacts = new List<OnCallContact>();
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
-        // Get current company context
+        // Get current company context for ManagerHomeAccess fallback
         var companyId = _tenantResolver.GetCurrentTenantId();
 
-        // Get Hakam (on-call commander) - if user has grant to view
-        // Note: Grant-based only; role fallbacks removed for proper grant-based authorization
-        var hasHakamGrant = await _grantService.HasGrantAsync(userId, "ViewHakamOnCall");
-
-        if (hasHakamGrant)
-        {
-            var hakamContact = await GetCurrentHakamAsync(today);
-            if (hakamContact != null)
-            {
-                contacts.Add(hakamContact);
-            }
-        }
-
-        // Get company-specific on-call contacts (additive merging based on grants)
-        var companyGrants = await _grantService.GetUserGrantsAsync(userId);
-        var companyIds = companyGrants
-            .Where(g => g.GrantType?.Key == "ViewCompanyOnCall" && g.CompanyId.HasValue)
-            .Select(g => g.CompanyId!.Value)
-            .Distinct()
-            .ToList();
-
-        // Always include current company if user has manager-level access
-        var hasManagerAccess = await _grantService.HasGrantAsync(userId, "ManagerHomeAccess");
-        if (companyId > 0 && hasManagerAccess)
-        {
-            if (!companyIds.Contains(companyId))
-            {
-                companyIds.Add(companyId);
-            }
-        }
-
-        foreach (var cId in companyIds)
-        {
-            var companyContacts = await GetCompanyOnCallAsync(cId, today);
-            contacts.AddRange(companyContacts);
-        }
-
-        // Remove duplicates (by UserId)
-        contacts = contacts
-            .GroupBy(c => c.UserId)
-            .Select(g => g.First())
-            .ToList();
+        // Delegate all data retrieval to WidgetService
+        var widgetData = await _widgetService.BuildOnCallWidgetAsync(userId, companyId);
 
         // Get office numbers for current company
-        var officeNumbers = await GetOfficeNumbersAsync(companyId);
+        var officeNumberData = await _widgetService.GetOfficeNumbersAsync(companyId);
 
-        // Get user preferences (what to show, collapsed state)
-        var preferences = await GetUserWidgetPreferencesAsync(userId);
+        // Map WidgetService DTOs to ViewComponent view model types
+        var contacts = widgetData.Contacts.Select(c => new OnCallContact
+        {
+            UserId = c.UserId,
+            Name = c.Name,
+            Role = c.Role,
+            PhoneNumber = c.PhoneNumber,
+            AvatarInitial = c.AvatarInitial,
+            ContactType = MapContactType(c.ContactType),
+            CompanyName = c.CompanyName,
+            Rank = c.Rank
+        }).ToList();
+
+        var officeNumbers = officeNumberData.Select(o => new OfficeNumber
+        {
+            Label = o.Label,
+            Number = o.Number
+        }).ToList();
 
         var model = new OnCallWidgetViewModel
         {
             Contacts = contacts,
             OfficeNumbers = officeNumbers,
-            IsCollapsed = preferences?.IsCollapsed ?? false,
-            ShowOfficeNumbers = preferences?.ShowOfficeNumbers ?? true,
+            IsCollapsed = widgetData.IsCollapsed,
+            ShowOfficeNumbers = widgetData.ShowOfficeNumbers,
             ShowInSidebar = showInSidebar,
             HasContacts = contacts.Any(),
             HasOfficeNumbers = officeNumbers.Any()
@@ -113,153 +82,16 @@ public class OnCallWidgetViewComponent : ViewComponent
         return View(model);
     }
 
-    private async Task<OnCallContact?> GetCurrentHakamAsync(DateOnly date)
+    /// <summary>
+    /// Maps WidgetService ContactType enum to ViewComponent OnCallContactType enum.
+    /// </summary>
+    private static OnCallContactType MapContactType(ContactType contactType) => contactType switch
     {
-        // First, get the IDs of Hakam shift types
-        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
-        // IgnoreQueryFilters: Hakam shift types, instances, and users may be in different companies
-        var hakamShiftTypeIds = await _context.ShiftTypes
-            .IgnoreQueryFilters()
-            .Where(st => (st.CustomName != null && st.CustomName.Contains("Hakam")) || st.Key.Contains("Hakam"))
-            .Select(st => st.Id)
-            .ToListAsync();
-
-        if (!hakamShiftTypeIds.Any()) return null;
-
-        // Now query shift instances with those IDs
-        var hakamData = await _context.ShiftInstances
-            .IgnoreQueryFilters()
-            .Where(si => si.WorkDate == date && hakamShiftTypeIds.Contains(si.ShiftTypeId))
-            .Join(
-                _context.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId != null),
-                si => si.Id,
-                sa => sa.ShiftInstanceId,
-                (si, sa) => new { si, sa.UserId }
-            )
-            .Join(
-                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
-                x => x.UserId,
-                u => u.Id,
-                (x, u) => new
-                {
-                    UserId = u.Id,
-                    DisplayName = u.DisplayName,
-                    Phone = u.Phone,
-                    Rank = u.Rank
-                }
-            )
-            .FirstOrDefaultAsync();
-
-        if (hakamData == null) return null;
-
-        return new OnCallContact
-        {
-            UserId = hakamData.UserId,
-            Name = hakamData.DisplayName,
-            Role = "Hakam",
-            PhoneNumber = hakamData.Phone ?? "",
-            AvatarInitial = GetInitial(hakamData.DisplayName),
-            ContactType = OnCallContactType.Hakam,
-            Rank = hakamData.Rank
-        };
-    }
-
-    private async Task<List<OnCallContact>> GetCompanyOnCallAsync(int companyId, DateOnly date)
-    {
-        var contacts = new List<OnCallContact>();
-
-        // Get company name
-        var company = await _context.Companies
-            .Where(c => c.Id == companyId)
-            .Select(c => new { c.Name })
-            .FirstOrDefaultAsync();
-
-        if (company == null) return contacts;
-
-        // First, get the IDs of BR/Katzin shift types
-        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
-        // IgnoreQueryFilters: shift types, instances, and users may be in different companies
-        var brShiftTypes = await _context.ShiftTypes
-            .IgnoreQueryFilters()
-            .Where(st => (st.CustomName != null && (st.CustomName.Contains("BR") || st.CustomName.Contains("Katzin")))
-                      || st.Key.Contains("BR") || st.Key.Contains("Katzin"))
-            .Select(st => new { st.Id, Name = st.CustomName ?? st.Key })
-            .ToListAsync();
-
-        if (!brShiftTypes.Any()) return contacts;
-
-        var brShiftTypeIds = brShiftTypes.Select(st => st.Id).ToList();
-        var shiftTypeNames = brShiftTypes.ToDictionary(st => st.Id, st => st.Name);
-
-        // Now query shift instances with those IDs
-        var brData = await _context.ShiftInstances
-            .IgnoreQueryFilters()
-            .Where(si => si.WorkDate == date && si.CompanyId == companyId && brShiftTypeIds.Contains(si.ShiftTypeId))
-            .Join(
-                _context.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId != null && sa.CompanyId == companyId),
-                si => si.Id,
-                sa => sa.ShiftInstanceId,
-                (si, sa) => new { si.ShiftTypeId, sa.UserId }
-            )
-            .Join(
-                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
-                x => x.UserId,
-                u => u.Id,
-                (x, u) => new
-                {
-                    UserId = u.Id,
-                    DisplayName = u.DisplayName,
-                    Phone = u.Phone,
-                    Rank = u.Rank,
-                    x.ShiftTypeId
-                }
-            )
-            .ToListAsync();
-
-        foreach (var shift in brData)
-        {
-            var shiftTypeName = shiftTypeNames.GetValueOrDefault(shift.ShiftTypeId, "On-Call");
-            contacts.Add(new OnCallContact
-            {
-                UserId = shift.UserId,
-                Name = shift.DisplayName,
-                Role = $"{shiftTypeName} - {company.Name}",
-                PhoneNumber = shift.Phone ?? "",
-                AvatarInitial = GetInitial(shift.DisplayName),
-                ContactType = OnCallContactType.CompanyOnCall,
-                CompanyName = company.Name,
-                Rank = shift.Rank
-            });
-        }
-
-        return contacts;
-    }
-
-    private Task<List<OfficeNumber>> GetOfficeNumbersAsync(int companyId)
-    {
-        if (companyId <= 0) return Task.FromResult(new List<OfficeNumber>());
-
-        // Get office numbers from company settings or a dedicated table
-        // For now, return empty - this would be populated from company configuration
-        return Task.FromResult(new List<OfficeNumber>());
-    }
-
-    private Task<OnCallWidgetPreferences?> GetUserWidgetPreferencesAsync(int userId)
-    {
-        // This would typically come from a UserPreferences table
-        // For now, return default preferences
-        return Task.FromResult<OnCallWidgetPreferences?>(new OnCallWidgetPreferences
-        {
-            IsCollapsed = false,
-            ShowOfficeNumbers = true
-        });
-    }
-
-    private string GetInitial(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "?";
-        return name.Trim().Substring(0, 1).ToUpper();
-    }
+        ContactType.Hakam => OnCallContactType.Hakam,
+        ContactType.CompanyOnCall => OnCallContactType.CompanyOnCall,
+        ContactType.Friend => OnCallContactType.Friend,
+        _ => OnCallContactType.CompanyOnCall
+    };
 }
 
 public class OnCallWidgetViewModel

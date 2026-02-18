@@ -3,10 +3,11 @@
 @using ShiftManager.Resources
 @using System.Globalization
 @using ShiftManager.Services
+@using ShiftManager.Data.SeedData
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @inject IStringLocalizer<SharedResources> Localizer
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @inject IViewAsModeService ViewAsModeService
+@inject IFeatureFlagService FeatureFlagService
 @{
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
@@ -21,21 +22,19 @@
     var isHebrew = currentCulture.StartsWith("he");
     var direction = isHebrew ? "rtl" : "ltr";
     var lang = isHebrew ? "he" : "en";
-    var enableCompanySwitcher = Configuration.GetValue<bool>("Features:EnableCompanySwitcher", false);
     var isViewingAsManager = ViewAsModeService.IsViewingAsManager();
+    var friendshipsEnabled = FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.FriendshipsEnabled);
 
-    // Excel Calendar feature flags - use new URLs when enabled
-    var excelCalendarsEnabled = Configuration.GetValue<bool>("Features:ExcelCalendars", false);
-    var shiftsCalendarUrl = excelCalendarsEnabled && Configuration.GetValue<bool>("Features:ExcelCalendarShifts", false)
+    // Excel Calendar feature flags - use new URLs when enabled (sync cache-only reads)
+    var excelCalendarsEnabled = FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendars);
+    var shiftsCalendarUrl = excelCalendarsEnabled && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarShifts)
         ? "/Calendar/Shifts" : "/Calendar/Month";
-    var shiftsTableUrl = excelCalendarsEnabled && Configuration.GetValue<bool>("Features:ExcelCalendarShifts", false)
+    var shiftsTableUrl = excelCalendarsEnabled && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarShifts)
         ? "/Calendar/Shifts" : "/Calendar/Table";
-    var choresCalendarUrl = excelCalendarsEnabled && Configuration.GetValue<bool>("Features:ExcelCalendarChores", false)
+    var choresCalendarUrl = excelCalendarsEnabled && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarChores)
         ? "/Calendar/Chores" : "/Public/Chores";
-    var onCallCalendarUrl = excelCalendarsEnabled && Configuration.GetValue<bool>("Features:ExcelCalendarOnCall", false)
+    var onCallCalendarUrl = excelCalendarsEnabled && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarOnCall)
         ? "/Calendar/OnCall" : "/Public/OnDuty";
-    var overviewCalendarUrl = excelCalendarsEnabled && Configuration.GetValue<bool>("Features:ExcelCalendarOverview", false)
-        ? "/Calendar/Overview" : "/Calendar/Month";
     var viewAsCompanyName = isViewingAsManager ? ViewAsModeService.GetViewAsCompanyNameAsync().Result : null;
     var currentPath = HttpContextAccessor?.HttpContext?.Request.Path.Value ?? "";
 }
@@ -162,6 +161,8 @@
     <script defer src="~/js/widget-persistence.js" asp-append-version="true"></script>
     @* B-006: Calendar Print Button - Adds print functionality to calendar pages *@
     <script defer src="~/js/calendar-print.js" asp-append-version="true"></script>
+    @* Section 3: Friends Highlight - Calendar friend highlighting toggle *@
+    <script defer src="~/js/friends-highlight.js" asp-append-version="true"></script>
     @* A-002: Sidebar Collapse State Persistence - Apply BEFORE first paint to prevent flash *@
     <script>
     (function() {
@@ -394,8 +395,11 @@
                 </div>
             </a>
 
-            @* Context Switcher - Only shown if user has multiple contexts *@
-            @await Component.InvokeAsync("ContextSwitcher")
+            @* Context Switcher - Only shown if feature flag enabled and user has multiple contexts *@
+            @if (FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.EnableCompanySwitcher))
+            {
+                @await Component.InvokeAsync("ContextSwitcher")
+            }
 
             @* Navigation - All access controlled via grants, never via user.Role *@
             <nav class="app-sidebar-nav">
@@ -499,6 +503,39 @@
                         </a>
                     </require-grant>
 
+                    @* Duty Rotation - grant protected + feature flag gated *@
+                    @if (FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.DutyRotationEnabled))
+                    {
+                        <require-grant key="ManageOnDuty">
+                            <a href="/Admin/DutyRotation" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/DutyRotation") ? "active" : "")">
+                                <span class="app-sidebar-nav-icon"><i data-lucide="refresh-cw"></i></span>
+                                <span><loc key="DutyRotations" /></span>
+                            </a>
+                        </require-grant>
+                    }
+
+                    @* Setup Tasks - grant protected + feature flag gated *@
+                    @if (FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.SetupTasksEnabled))
+                    {
+                        <require-grant key="SystemConfiguration">
+                            <a href="/Admin/SetupTasks" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/SetupTasks") ? "active" : "")">
+                                <span class="app-sidebar-nav-icon"><i data-lucide="list-checks"></i></span>
+                                <span><loc key="SetupTasks" /></span>
+                            </a>
+                        </require-grant>
+                    }
+
+                    @* Approval Rules - grant protected + feature flag gated *@
+                    @if (FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.VacationApprovalEnabled))
+                    {
+                        <require-grant key="SystemConfiguration">
+                            <a href="/Admin/Settings/ApprovalRules" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Settings/ApprovalRules") ? "active" : "")">
+                                <span class="app-sidebar-nav-icon"><i data-lucide="shield-check"></i></span>
+                                <span><loc key="ApprovalRules" /></span>
+                            </a>
+                        </require-grant>
+                    }
+
                     @* Owner Administration Panel - AdminAccess grant required *@
                     <require-grant key="AdminAccess">
                         <div class="nav-section-header">🔧 <loc key="Owner_AdminPanel" /></div>
@@ -506,7 +543,19 @@
                             <span class="app-sidebar-nav-icon">🔧</span>
                             <span><loc key="Owner_AdminPanel" /></span>
                         </a>
+                        <a href="/Owner/Telemetry" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner/Telemetry") ? "active" : "")">
+                            <span class="app-sidebar-nav-icon"><i data-lucide="activity"></i></span>
+                            <span><loc key="Telemetry" /></span>
+                        </a>
                     </require-grant>
+
+                    @* Friends - available to all authenticated users, gated by feature flag *@
+                    @if (friendshipsEnabled) {
+                    <a href="/Friends" class="app-sidebar-nav-item @(currentPath.StartsWith("/Friends") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🤝</span>
+                        <span><loc key="MyFriends" /></span>
+                    </a>
+                    }
 
                     @* Management Section - Show if user has any calendar management grants *@
                     <require-grant key="ViewShifts,ViewChores,ViewDuties" mode="any">
@@ -560,6 +609,14 @@
                         <span class="app-sidebar-nav-icon">👥</span>
                         <span><loc key="MyTeam" /></span>
                     </a>
+
+                    @* Friends - available to all authenticated users, gated by feature flag *@
+                    @if (friendshipsEnabled) {
+                    <a href="/Friends" class="app-sidebar-nav-item @(currentPath.StartsWith("/Friends") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">🤝</span>
+                        <span><loc key="MyFriends" /></span>
+                    </a>
+                    }
 
                     @* Divider *@
                     <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
@@ -740,8 +797,8 @@
                 @RenderBody()
             </main>
 
-            @* Bottom Dock Panel *@
-            @if (User?.Identity?.IsAuthenticated == true)
+            @* Bottom Dock Panel - gated by WidgetsEnabled feature flag *@
+            @if (User?.Identity?.IsAuthenticated == true && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.WidgetsEnabled))
             {
                 <div class="bottom-dock" id="bottomDock">
                     <button class="bottom-dock__toggle"

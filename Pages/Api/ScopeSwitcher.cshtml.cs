@@ -21,17 +21,20 @@ public class ScopeSwitcherModel : PageModel
     private readonly IGrantService _grantService;
     private readonly IHierarchyService _hierarchyService;
     private readonly ILogger<ScopeSwitcherModel> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
 
     public ScopeSwitcherModel(
         AppDbContext db,
         IGrantService grantService,
         IHierarchyService hierarchyService,
-        ILogger<ScopeSwitcherModel> logger)
+        ILogger<ScopeSwitcherModel> logger,
+        ICompanyCacheService companyCacheService)
     {
         _db = db;
         _grantService = grantService;
         _hierarchyService = hierarchyService;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     /// <summary>
@@ -108,7 +111,7 @@ public class ScopeSwitcherModel : PageModel
         Company? company = null;
         if (user.CompanyId > 0)
         {
-            company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+            company = await _companyCacheService.GetCompanyAsync(user.CompanyId);
         }
 
         // Get user's hierarchy context

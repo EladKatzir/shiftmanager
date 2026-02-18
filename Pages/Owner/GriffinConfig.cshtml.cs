@@ -24,6 +24,7 @@ public class GriffinConfigModel : LocalizedPageModel
     private readonly IAuditLogService _auditLogService;
     private readonly AppDbContext _db;
     private readonly ILogger<GriffinConfigModel> _logger;
+    private readonly IRoleService _roleService;
 
     [BindProperty] public bool Enabled { get; set; }
     [BindProperty] public string BaseUrl { get; set; } = string.Empty;
@@ -54,7 +55,8 @@ public class GriffinConfigModel : LocalizedPageModel
         IGriffinApiLogService griffinApiLogService,
         IAuditLogService auditLogService,
         AppDbContext db,
-        ILogger<GriffinConfigModel> logger)
+        ILogger<GriffinConfigModel> logger,
+        IRoleService roleService)
         : base(localizer)
     {
         _griffinConfigService = griffinConfigService;
@@ -62,6 +64,7 @@ public class GriffinConfigModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _db = db;
         _logger = logger;
+        _roleService = roleService;
     }
 
     public async Task OnGetAsync()
@@ -223,11 +226,7 @@ public class GriffinConfigModel : LocalizedPageModel
     private async Task LoadRoleOptionsAsync()
     {
         RoleOptions = new SelectList(Enum.GetValues(typeof(UserRole)).Cast<UserRole>());
-        AvailableRoleTemplates = await _db.RoleTemplates
-            .IgnoreQueryFilters()
-            .Where(rt => rt.IsActive)
-            .OrderBy(rt => rt.SortOrder)
-            .ToListAsync();
+        AvailableRoleTemplates = await _roleService.GetRoleTemplatesAsync();
     }
 
     private string? ValidateInputs()

@@ -30,6 +30,7 @@ public class PurgeService : IPurgeService
     private readonly ILogger<PurgeService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ICompanyCacheService _companyCacheService;
 
     public PurgeService(
         AppDbContext db,
@@ -38,7 +39,8 @@ public class PurgeService : IPurgeService
         IAuditLogService auditLogService,
         ILogger<PurgeService> logger,
         IConfiguration configuration,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ICompanyCacheService companyCacheService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -47,6 +49,7 @@ public class PurgeService : IPurgeService
         _logger = logger;
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
+        _companyCacheService = companyCacheService;
     }
 
     /// <summary>
@@ -91,7 +94,7 @@ public class PurgeService : IPurgeService
             }
 
             // 2. Validate typed confirmation
-            var company = await _db.Companies.FindAsync(companyId);
+            var company = await _companyCacheService.GetCompanyAsync(companyId);
             if (company == null)
             {
                 result.Success = false;
@@ -139,6 +142,9 @@ public class PurgeService : IPurgeService
                 result.DbSizeAfterBytes = await GetDatabaseSizeAsync();
 
                 result.Success = true;
+
+                // Invalidate company cache after purge
+                _companyCacheService.InvalidateCache(companyId);
 
                 // 10. Log audit
                 var totalDeleted = result.DeletedCounts.Values.Sum();

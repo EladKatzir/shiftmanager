@@ -54,19 +54,16 @@ public class ConcurrencyServiceTests
     }
 
     [Fact]
-    public async Task SaveWithConcurrencyHandlingAsync_WhenDbUpdateException_ReturnsDatabaseError()
+    public async Task SaveWithConcurrencyHandlingAsync_WhenDbUpdateException_Propagates()
     {
-        // Arrange
+        // Arrange - DbUpdateException (non-concurrency) should propagate to caller
         var dbException = new DbUpdateException("Database error");
         var saveAction = new Func<Task<int>>(() => throw dbException);
 
-        // Act
-        var result = await _sut.SaveWithConcurrencyHandlingAsync(saveAction, "ShiftAssignment", 789);
-
-        // Assert
-        result.Success.Should().BeFalse();
-        result.FailureType.Should().Be(ConcurrencyFailureType.DatabaseError);
-        result.ErrorMessage.Should().Contain("database error");
+        // Act & Assert - exception should not be caught by ConcurrencyService
+        var act = () => _sut.SaveWithConcurrencyHandlingAsync(saveAction, "ShiftAssignment", 789);
+        await act.Should().ThrowAsync<DbUpdateException>()
+            .WithMessage("Database error");
     }
 
     [Fact]
@@ -92,23 +89,30 @@ public class ConcurrencyServiceTests
     }
 
     [Fact]
-    public async Task SaveWithConcurrencyHandlingAsync_LogsErrorOnDatabaseError()
+    public async Task SaveWithConcurrencyHandlingAsync_DbUpdateException_DoesNotLog()
     {
-        // Arrange
+        // Arrange - DbUpdateException (non-concurrency) propagates without logging
         var dbException = new DbUpdateException("Database error");
         var saveAction = new Func<Task<int>>(() => throw dbException);
 
-        // Act
-        await _sut.SaveWithConcurrencyHandlingAsync(saveAction, "ShiftAssignment", 789);
+        // Act - catch the propagated exception
+        try
+        {
+            await _sut.SaveWithConcurrencyHandlingAsync(saveAction, "ShiftAssignment", 789);
+        }
+        catch (DbUpdateException)
+        {
+            // Expected
+        }
 
-        // Assert
+        // Assert - no error logging occurred (exception was not caught by the service)
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Database error")),
+                It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+            Times.Never);
     }
 }

@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Requests"];
@@ -481,7 +482,7 @@
                             <div class="request-info-item">
                                 <span class="icon">📅</span>
                                 <span class="label"><loc key="Dates" />:</span>
-                                <span>@r.StartDate.ToString("MMM dd, yyyy") → @r.EndDate.ToString("MMM dd, yyyy")</span>
+                                <span>@Localization.FormatMediumDate(r.StartDate) → @Localization.FormatMediumDate(r.EndDate)</span>
                             </div>
                             <div class="request-info-item">
                                 <span class="icon">⏱️</span>
@@ -640,10 +641,10 @@
                                     <span class="icon">📅</span>
                                     <span class="label"><loc key="Dates" />:</span>
                                     <span>
-                                        @timeOff.StartDate.ToString("MMM dd, yyyy")
+                                        @Localization.FormatMediumDate(timeOff.StartDate)
                                         @if (timeOff.StartDate != timeOff.EndDate)
                                         {
-                                            <text> → @timeOff.EndDate.ToString("MMM dd, yyyy")</text>
+                                            <text> → @Localization.FormatMediumDate(timeOff.EndDate)</text>
                                         }
                                     </span>
                                 </div>
@@ -655,7 +656,7 @@
                                 <div class="request-info-item">
                                     <span class="icon">📝</span>
                                     <span class="label"><loc key="RequestedOn" />:</span>
-                                    <span>@timeOff.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                    <span>@Localization.FormatDateTime(timeOff.CreatedAt)</span>
                                 </div>
                             </div>
 

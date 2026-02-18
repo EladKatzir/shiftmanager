@@ -18,19 +18,22 @@ public class ImportService : IImportService
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<ImportService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ICompanyCacheService _companyCacheService;
 
     public ImportService(
         AppDbContext db,
         ITenantResolver tenantResolver,
         IAuditLogService auditLogService,
         ILogger<ImportService> logger,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ICompanyCacheService companyCacheService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _auditLogService = auditLogService;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
+        _companyCacheService = companyCacheService;
     }
 
     /// <summary>
@@ -84,7 +87,7 @@ public class ImportService : IImportService
 
             // 3. Validate company match
             var companyId = _tenantResolver.GetCurrentTenantId();
-            var currentCompany = await _db.Companies.FindAsync(companyId);
+            var currentCompany = await _companyCacheService.GetCompanyAsync(companyId);
 
             if (currentCompany == null)
             {

@@ -17,16 +17,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly IShiftGroupingService _shiftGroupingService;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IShiftGroupingService shiftGroupingService,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IJobTypeService jobTypeService) : base(localizer)
     {
         _db = db;
         _shiftGroupingService = shiftGroupingService;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     // View Models
@@ -96,12 +99,9 @@ public class IndexModel : LocalizedPageModel
             .Select(c => new CompanyOption(c.Id, c.DisplayName ?? c.Name))
             .ToListAsync();
 
-        AvailableJobTypes = (await _db.JobTypes
-            .IgnoreQueryFilters()
-            .Where(jt => jt.IsActive)
-            .Include(jt => jt.Area)
-            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName))
-            .ToListAsync())
+        var allActiveJobTypes = await _jobTypeService.GetAllJobTypesAsync();
+        AvailableJobTypes = allActiveJobTypes
+            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area?.DisplayName ?? ""))
             .OrderBy(jt => jt.AreaName)
             .ThenBy(jt => jt.Name)
             .ToList();

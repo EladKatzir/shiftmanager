@@ -3617,6 +3617,9 @@
   <data name="Error_UnexpectedError" xml:space="preserve">
     <value>שגיאה בלתי צפויה. אנא נסה שוב.</value>
   </data>
+  <data name="Error_ConcurrencyConflict" xml:space="preserve">
+    <value>רשומה זו שונתה על ידי משתמש אחר. אנא רענן ונסה שוב.</value>
+  </data>
   <data name="Error_RoleTemplate_InvalidKey" xml:space="preserve">
     <value>המפתח חייב להכיל רק אותיות, מספרים וקווים תחתונים, ולהתחיל באות.</value>
   </data>
@@ -7637,9 +7640,6 @@
   <data name="Error_GriffinTimeoutOutOfRange" xml:space="preserve">
     <value>זמן המתנה חייב להיות בין 1 ל-60 שניות.</value>
   </data>
-  <data name="Info_FeatureFlagChangesRequireRestart" xml:space="preserve">
-    <value>שינויי דגלי תכונה דורשים הפעלה מחדש של האפליקציה.</value>
-  </data>
   <data name="Error_SavingFeatureFlags" xml:space="preserve">
     <value>שגיאה בשמירת דגלי תכונה.</value>
   </data>
@@ -11042,6 +11042,15 @@
   <data name="Error_ShiftFullyStaffed" xml:space="preserve">
     <value>משמרת זו כבר מאוישת במלואה</value>
   </data>
+  <data name="Error_TraineeSelfTraining" xml:space="preserve">
+    <value>לא ניתן לשבץ משתמש כמתמחה במשמרת שלו עצמו</value>
+  </data>
+  <data name="Error_TraineeWrongRole" xml:space="preserve">
+    <value>למשתמש זה אין תפקיד מתמחה</value>
+  </data>
+  <data name="Error_TraineeDifferentCompany" xml:space="preserve">
+    <value>המתמחה חייב להשתייך לאותה חברה כמו השיבוץ</value>
+  </data>
 
   <!-- Command Palette Navigation (JS localization) -->
   <data name="Nav_Requests" xml:space="preserve">
@@ -11340,6 +11349,15 @@
   </data>
   <data name="FeatureFlags_ApiEndpoints" xml:space="preserve">
     <value>🔌 נקודות קצה API</value>
+  </data>
+  <data name="FeatureFlags_Flags" xml:space="preserve">
+    <value>דגלים</value>
+  </data>
+  <data name="FeatureFlags_Updated" xml:space="preserve">
+    <value>עודכן</value>
+  </data>
+  <data name="FeatureFlags_ChangesImmediate" xml:space="preserve">
+    <value>שינויים נכנסים לתוקף מיידית</value>
   </data>
   <data name="Offline" xml:space="preserve">
     <value>לא מקוון</value>
@@ -11959,5 +11977,372 @@
   </data>
   <data name="Nav_RoleTemplatesDesc" xml:space="preserve">
     <value>ניהול תבניות תפקיד מערכתיות ומותאמות אישית</value>
+  </data>
+
+  <!-- Owner/Telemetry.cshtml -->
+  <data name="Telemetry" xml:space="preserve">
+    <value>טלמטריה</value>
+  </data>
+  <data name="Owner_Telemetry" xml:space="preserve">
+    <value>טלמטריית לקוח</value>
+  </data>
+  <data name="Owner_Telemetry_Desc" xml:space="preserve">
+    <value>צפייה בשגיאות, אירועים ומדדי ביצועים מצד הלקוח</value>
+  </data>
+  <data name="Telemetry_Subtitle" xml:space="preserve">
+    <value>נראות מצד הלקוח: שגיאות, אירועי אנליטיקה ו-Core Web Vitals</value>
+  </data>
+  <data name="Telemetry_Tab_Errors" xml:space="preserve">
+    <value>שגיאות</value>
+  </data>
+  <data name="Telemetry_Tab_Performance" xml:space="preserve">
+    <value>ביצועים</value>
+  </data>
+  <data name="Telemetry_Tab_Events" xml:space="preserve">
+    <value>אירועים</value>
+  </data>
+  <data name="Telemetry_Tab_Cleanup" xml:space="preserve">
+    <value>ניקוי נתונים</value>
+  </data>
+  <data name="Telemetry_ErrorsByType" xml:space="preserve">
+    <value>שגיאות לפי סוג</value>
+  </data>
+  <data name="Telemetry_EventsByType" xml:space="preserve">
+    <value>אירועים לפי סוג</value>
+  </data>
+  <data name="Telemetry_Last7Days" xml:space="preserve">
+    <value>7 ימים אחרונים</value>
+  </data>
+  <data name="Telemetry_RecentErrors" xml:space="preserve">
+    <value>שגיאות אחרונות</value>
+  </data>
+  <data name="Telemetry_RecentEvents" xml:space="preserve">
+    <value>אירועים אחרונים</value>
+  </data>
+  <data name="Telemetry_RecentMetrics" xml:space="preserve">
+    <value>מדדים אחרונים</value>
+  </data>
+  <data name="Telemetry_NoErrors" xml:space="preserve">
+    <value>לא נרשמו שגיאות לקוח. כל הכבוד!</value>
+  </data>
+  <data name="Telemetry_NoEvents" xml:space="preserve">
+    <value>לא נרשמו אירועי אנליטיקה עדיין.</value>
+  </data>
+  <data name="Telemetry_NoPerformanceData" xml:space="preserve">
+    <value>לא נרשמו נתוני ביצועים עדיין.</value>
+  </data>
+  <data name="Telemetry_WebVitals" xml:space="preserve">
+    <value>Core Web Vitals</value>
+  </data>
+  <data name="Telemetry_Samples" xml:space="preserve">
+    <value>דגימות</value>
+  </data>
+  <data name="Telemetry_Good" xml:space="preserve">
+    <value>טוב</value>
+  </data>
+  <data name="Telemetry_NeedsImprovement" xml:space="preserve">
+    <value>דורש שיפור</value>
+  </data>
+  <data name="Telemetry_Poor" xml:space="preserve">
+    <value>גרוע</value>
+  </data>
+  <data name="Telemetry_P75" xml:space="preserve">
+    <value>אחוזון 75</value>
+  </data>
+  <data name="Telemetry_P95" xml:space="preserve">
+    <value>אחוזון 95</value>
+  </data>
+  <data name="Telemetry_Col_Timestamp" xml:space="preserve">
+    <value>זמן</value>
+  </data>
+  <data name="Telemetry_Col_Type" xml:space="preserve">
+    <value>סוג</value>
+  </data>
+  <data name="Telemetry_Col_Message" xml:space="preserve">
+    <value>הודעה</value>
+  </data>
+  <data name="Telemetry_Col_Url" xml:space="preserve">
+    <value>דף</value>
+  </data>
+  <data name="Telemetry_Col_Source" xml:space="preserve">
+    <value>מקור</value>
+  </data>
+  <data name="Telemetry_Col_Metric" xml:space="preserve">
+    <value>מדד</value>
+  </data>
+  <data name="Telemetry_Col_Value" xml:space="preserve">
+    <value>ערך</value>
+  </data>
+  <data name="Telemetry_Col_Rating" xml:space="preserve">
+    <value>דירוג</value>
+  </data>
+  <data name="Telemetry_Col_EventType" xml:space="preserve">
+    <value>סוג אירוע</value>
+  </data>
+  <data name="Telemetry_Col_Session" xml:space="preserve">
+    <value>סשן</value>
+  </data>
+  <data name="Telemetry_Cleanup_Title" xml:space="preserve">
+    <value>ניקוי שמירת נתונים</value>
+  </data>
+  <data name="Telemetry_Cleanup_Description" xml:space="preserve">
+    <value>הסרת נתוני טלמטריה ישנים לשמירה על גודל מסד נתונים נוח. נתונים ישנים יותר ממספר הימים שיצוין יימחקו לצמיתות.</value>
+  </data>
+  <data name="Telemetry_Cleanup_RetentionDays" xml:space="preserve">
+    <value>שמור נתונים למשך (ימים)</value>
+  </data>
+  <data name="Telemetry_Cleanup_DaysHint" xml:space="preserve">
+    <value>ימים (1-365)</value>
+  </data>
+  <data name="Telemetry_Cleanup_Warning" xml:space="preserve">
+    <value>פעולה זו בלתי הפיכה. לא ניתן לשחזר נתוני טלמטריה שנמחקו.</value>
+  </data>
+  <data name="Telemetry_Cleanup_Run" xml:space="preserve">
+    <value>הפעל ניקוי</value>
+  </data>
+  <data name="Telemetry_Cleanup_Success" xml:space="preserve">
+    <value>הניקוי הושלם: {0} אירועים, {1} שגיאות, {2} מדדים נמחקו (נתונים ישנים יותר מ-{3} ימים).</value>
+  </data>
+  <data name="Telemetry_Cleanup_Error" xml:space="preserve">
+    <value>אירעה שגיאה במהלך הניקוי. אנא בדוק את יומני השרת.</value>
+  </data>
+  <data name="Telemetry_Cleanup_InvalidRetention" xml:space="preserve">
+    <value>מספר ימי השמירה חייב להיות בין 1 ל-365.</value>
+  </data>
+
+  <!-- Duty Rotation Admin Page -->
+  <data name="DutyRotation" xml:space="preserve">
+    <value>רוטציית תורנות</value>
+  </data>
+  <data name="DutyRotations" xml:space="preserve">
+    <value>רוטציות תורנות</value>
+  </data>
+  <data name="ManageDutyRotations" xml:space="preserve">
+    <value>ניהול רוטציות תורנות</value>
+  </data>
+  <data name="ManageDutyRotationsDescription" xml:space="preserve">
+    <value>יצירה וניהול לוחות זמנים אוטומטיים לרוטציית תורנות ותורי משתמשים</value>
+  </data>
+  <data name="CreateRotation" xml:space="preserve">
+    <value>צור רוטציה</value>
+  </data>
+  <data name="EditRotation" xml:space="preserve">
+    <value>עריכת רוטציה</value>
+  </data>
+  <data name="DeleteRotation" xml:space="preserve">
+    <value>מחיקת רוטציה</value>
+  </data>
+  <data name="AllRotations" xml:space="preserve">
+    <value>כל הרוטציות</value>
+  </data>
+  <data name="RotationName" xml:space="preserve">
+    <value>שם רוטציה</value>
+  </data>
+  <data name="Placeholder_RotationName" xml:space="preserve">
+    <value>לדוגמה: רוטציית חק"ם שבועית</value>
+  </data>
+  <data name="DutyType" xml:space="preserve">
+    <value>סוג תורנות</value>
+  </data>
+  <data name="Frequency" xml:space="preserve">
+    <value>תדירות</value>
+  </data>
+  <data name="Frequency_Daily" xml:space="preserve">
+    <value>יומי</value>
+  </data>
+  <data name="Frequency_Weekly" xml:space="preserve">
+    <value>שבועי</value>
+  </data>
+  <data name="Frequency_Biweekly" xml:space="preserve">
+    <value>דו-שבועי</value>
+  </data>
+  <data name="Frequency_Monthly" xml:space="preserve">
+    <value>חודשי</value>
+  </data>
+  <data name="IncludeWeekends" xml:space="preserve">
+    <value>כולל סופי שבוע</value>
+  </data>
+  <data name="MaxConsecutiveDays" xml:space="preserve">
+    <value>מקסימום ימים רצופים</value>
+  </data>
+  <data name="IsActive" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
+  <data name="Queue" xml:space="preserve">
+    <value>תור</value>
+  </data>
+  <data name="RotationQueue" xml:space="preserve">
+    <value>תור רוטציה</value>
+  </data>
+  <data name="AddToQueue" xml:space="preserve">
+    <value>הוסף משתמש לתור</value>
+  </data>
+  <data name="RemoveFromQueue" xml:space="preserve">
+    <value>הסר מהתור</value>
+  </data>
+  <data name="ManageQueue" xml:space="preserve">
+    <value>ניהול תור</value>
+  </data>
+  <data name="QueuePosition" xml:space="preserve">
+    <value>מיקום</value>
+  </data>
+  <data name="NoRotationsFound" xml:space="preserve">
+    <value>לא נמצאו רוטציות תורנות. צור אחת למעלה כדי להתחיל.</value>
+  </data>
+  <data name="NoUsersInQueue" xml:space="preserve">
+    <value>אין משתמשים בתור רוטציה זה עדיין. הוסף משתמשים למטה.</value>
+  </data>
+  <data name="ConfirmDeleteRotation" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק רוטציה זו? פעולה זו תבטל את הפעלתה.</value>
+  </data>
+  <data name="MoveUp" xml:space="preserve">
+    <value>הזז למעלה</value>
+  </data>
+  <data name="MoveDown" xml:space="preserve">
+    <value>הזז למטה</value>
+  </data>
+  <data name="SaveOrder" xml:space="preserve">
+    <value>שמור סדר</value>
+  </data>
+  <data name="Error_RotationNameRequired" xml:space="preserve">
+    <value>שם רוטציה הוא שדה חובה.</value>
+  </data>
+  <data name="Error_RotationNotFound" xml:space="preserve">
+    <value>הרוטציה לא נמצאה.</value>
+  </data>
+  <data name="Error_CreatingRotation" xml:space="preserve">
+    <value>אירעה שגיאה בעת יצירת הרוטציה.</value>
+  </data>
+  <data name="Error_InvalidSelection" xml:space="preserve">
+    <value>בחירה לא תקינה. אנא נסה שנית.</value>
+  </data>
+  <data name="Error_UserAlreadyInQueue" xml:space="preserve">
+    <value>משתמש זה כבר נמצא בתור הרוטציה.</value>
+  </data>
+  <data name="Error_UserNotInQueue" xml:space="preserve">
+    <value>המשתמש לא נמצא בתור הרוטציה.</value>
+  </data>
+  <data name="Error_ReorderFailed" xml:space="preserve">
+    <value>שינוי הסדר נכשל. אנא נסה שנית.</value>
+  </data>
+  <data name="Success_RotationCreated" xml:space="preserve">
+    <value>הרוטציה '{0}' נוצרה בהצלחה.</value>
+  </data>
+  <data name="Success_RotationUpdated" xml:space="preserve">
+    <value>הרוטציה עודכנה בהצלחה.</value>
+  </data>
+  <data name="Success_RotationDeleted" xml:space="preserve">
+    <value>הרוטציה נמחקה בהצלחה.</value>
+  </data>
+  <data name="Success_UserAddedToQueue" xml:space="preserve">
+    <value>המשתמש נוסף לתור הרוטציה.</value>
+  </data>
+  <data name="Success_UserRemovedFromQueue" xml:space="preserve">
+    <value>המשתמש הוסר מתור הרוטציה.</value>
+  </data>
+  <data name="Success_QueueReordered" xml:space="preserve">
+    <value>סדר התור נשמר בהצלחה.</value>
+  </data>
+  <data name="ApprovalRules" xml:space="preserve">
+    <value>כללי אישור</value>
+  </data>
+  <data name="ApprovalRulesDescription" xml:space="preserve">
+    <value>הגדרת ניתוב אישורי חופשה, ספי אישור אוטומטי וכללי הסלמה.</value>
+  </data>
+  <data name="CreateRule" xml:space="preserve">
+    <value>צור כלל</value>
+  </data>
+  <data name="EditRule" xml:space="preserve">
+    <value>ערוך כלל</value>
+  </data>
+  <data name="DeleteRule" xml:space="preserve">
+    <value>מחק</value>
+  </data>
+  <data name="ApprovalRoute" xml:space="preserve">
+    <value>מסלול אישור</value>
+  </data>
+  <data name="ApprovalRouteHint" xml:space="preserve">
+    <value>מפתח הרשאה נדרש לאישור בקשות התואמות לכלל זה.</value>
+  </data>
+  <data name="Approver" xml:space="preserve">
+    <value>מאשר</value>
+  </data>
+  <data name="ApproverHint" xml:space="preserve">
+    <value>השאר ריק כדי לאפשר לכל משתמש עם ההרשאה הנדרשת לאשר.</value>
+  </data>
+  <data name="AutoApprove" xml:space="preserve">
+    <value>אישור אוטומטי</value>
+  </data>
+  <data name="AutoApproveHint" xml:space="preserve">
+    <value>בקשות עם מספר ימים שווה או קטן יאושרו אוטומטית. הגדר 0 לביטול.</value>
+  </data>
+  <data name="CancelRequest" xml:space="preserve">
+    <value>בטל</value>
+  </data>
+  <data name="RequestCanceled" xml:space="preserve">
+    <value>הבקשה בוטלה בהצלחה.</value>
+  </data>
+  <data name="PendingApproval" xml:space="preserve">
+    <value>ממתין לאישור</value>
+  </data>
+  <data name="OrphanedRulesWarning" xml:space="preserve">
+    <value>לחלק מכללי האישור אין מאשרים פעילים והבקשות יתקעו במצב ממתין:</value>
+  </data>
+  <data name="NoRulesFound" xml:space="preserve">
+    <value>לא הוגדרו כללי אישור. בקשות ישתמשו בניתוב אישור ברירת מחדל.</value>
+  </data>
+  <data name="ExistingRules" xml:space="preserve">
+    <value>כללים קיימים</value>
+  </data>
+  <data name="ConfirmDeleteRule" xml:space="preserve">
+    <value>האם אתה בטוח שברצונך למחוק כלל זה?</value>
+  </data>
+  <data name="Success_RuleCreated" xml:space="preserve">
+    <value>כלל האישור נוצר בהצלחה.</value>
+  </data>
+  <data name="Success_RuleUpdated" xml:space="preserve">
+    <value>כלל האישור עודכן בהצלחה.</value>
+  </data>
+  <data name="Success_RuleDeleted" xml:space="preserve">
+    <value>כלל האישור נמחק בהצלחה.</value>
+  </data>
+  <data name="Error_InvalidRule" xml:space="preserve">
+    <value>כלל לא תקין צוין.</value>
+  </data>
+  <data name="Error_RuleNotFound" xml:space="preserve">
+    <value>כלל האישור לא נמצא.</value>
+  </data>
+  <data name="Error_CancelRequestFailed" xml:space="preserve">
+    <value>ביטול הבקשה נכשל. נסה שוב.</value>
+  </data>
+  <data name="DefaultAllJobTypes" xml:space="preserve">
+    <value>ברירת מחדל (כל סוגי התפקידים)</value>
+  </data>
+  <data name="AnyWithGrant" xml:space="preserve">
+    <value>כל משתמש עם הרשאה</value>
+  </data>
+  <data name="JobTypeRuleHint" xml:space="preserve">
+    <value>השאר ריק לכלל ברירת מחדל שחל על כל סוגי התפקידים.</value>
+  </data>
+  <data name="PriorityHint" xml:space="preserve">
+    <value>כללים בעדיפות גבוהה יותר נבדקים ראשונים.</value>
+  </data>
+  <data name="ExtendedLeaveThreshold" xml:space="preserve">
+    <value>סף חופשה מורחבת</value>
+  </data>
+  <data name="SecondApproverGrant" xml:space="preserve">
+    <value>הרשאת מאשר שני</value>
+  </data>
+  <data name="RequiresSecondApproval" xml:space="preserve">
+    <value>דורש אישור שני לחופשה מורחבת</value>
+  </data>
+  <data name="Rule" xml:space="preserve">
+    <value>כלל</value>
+  </data>
+  <data name="Canceled" xml:space="preserve">
+    <value>בוטל</value>
+  </data>
+  <data name="Error_TechShiftIneligible" xml:space="preserve">
+    <value>למשתמש אין את ההרשאה הנדרשת לסוג משמרת טכנאי זה.</value>
   </data>
 </root>

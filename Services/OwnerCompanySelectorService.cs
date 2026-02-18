@@ -15,16 +15,19 @@ public class OwnerCompanySelectorService : IOwnerCompanySelectorService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly AppDbContext _db;
     private readonly ILogger<OwnerCompanySelectorService> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
     private const string CookieName = "owner_selected_company";
 
     public OwnerCompanySelectorService(
         IHttpContextAccessor httpContextAccessor,
         AppDbContext db,
-        ILogger<OwnerCompanySelectorService> logger)
+        ILogger<OwnerCompanySelectorService> logger,
+        ICompanyCacheService companyCacheService)
     {
         _httpContextAccessor = httpContextAccessor;
         _db = db;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     public bool IsOwner()
@@ -63,8 +66,8 @@ public class OwnerCompanySelectorService : IOwnerCompanySelectorService
         }
 
         // Verify company exists
-        var companyExists = await _db.Companies.AnyAsync(c => c.Id == companyId);
-        if (!companyExists)
+        var company = await _companyCacheService.GetCompanyAsync(companyId);
+        if (company == null)
         {
             _logger.LogWarning("Owner attempted to select non-existent company {CompanyId}", companyId);
             return false;
@@ -82,14 +85,9 @@ public class OwnerCompanySelectorService : IOwnerCompanySelectorService
                 Path = "/"                       // Available site-wide
             });
 
-            var companyName = await _db.Companies
-                .Where(c => c.Id == companyId)
-                .Select(c => c.Name)
-                .FirstOrDefaultAsync();
-
             _logger.LogInformation(
                 "Owner user {UserId} selected company {CompanyId} ({CompanyName})",
-                GetCurrentUserId(), companyId, companyName);
+                GetCurrentUserId(), companyId, company.Name);
         }
 
         return true;
@@ -123,7 +121,7 @@ public class OwnerCompanySelectorService : IOwnerCompanySelectorService
             return null;
         }
 
-        var company = await _db.Companies.FindAsync(companyId.Value);
+        var company = await _companyCacheService.GetCompanyAsync(companyId.Value);
         return company?.Name;
     }
 

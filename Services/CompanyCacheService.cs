@@ -12,6 +12,8 @@ public interface ICompanyCacheService
 {
     Task<Company?> GetCompanyAsync(int companyId);
     void InvalidateCache(int companyId);
+    Task<bool> IsSlugTakenAsync(string slug);
+    Task<bool> HasOrphanedCompaniesAsync();
 }
 
 /// <summary>
@@ -53,6 +55,7 @@ public class CompanyCacheService : ICompanyCacheService
 
         // Load from database
         company = await _db.Companies
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == companyId);
 
@@ -83,5 +86,29 @@ public class CompanyCacheService : ICompanyCacheService
         string cacheKey = $"Company_{companyId}";
         _cache.Remove(cacheKey);
         _logger.LogInformation("Invalidated Company cache for company {CompanyId}", companyId);
+    }
+
+    /// <summary>
+    /// Check if a slug is already taken by any company (cross-tenant uniqueness check)
+    /// </summary>
+    // SECURITY-AUDITED: IgnoreQueryFilters() is SAFE — slug uniqueness must be checked across all tenants
+    public async Task<bool> IsSlugTakenAsync(string slug)
+    {
+        return await _db.Companies
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .AnyAsync(c => c.Slug == slug);
+    }
+
+    /// <summary>
+    /// Check if any companies have a null MoleculeId (orphaned companies health check)
+    /// </summary>
+    // SECURITY-AUDITED: IgnoreQueryFilters() is SAFE — system-wide health check for owner diagnostics
+    public async Task<bool> HasOrphanedCompaniesAsync()
+    {
+        return await _db.Companies
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .AnyAsync(c => c.MoleculeId == null);
     }
 }

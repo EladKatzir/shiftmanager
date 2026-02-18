@@ -18,4 +18,12 @@ public interface IJobTypeService
 
     // Validation
     Task<bool> CanUserHaveJobTypeAsync(int userId, int jobTypeId);
+
+    // CRUD and admin operations
+    Task<JobType> CreateJobTypeAsync(string name, int areaId, TimeOnly start, TimeOnly end, bool isActive = true);
+    Task<bool> ToggleActiveAsync(int jobTypeId);
+    Task<bool> DeleteJobTypeAsync(int jobTypeId);
+    Task<int> GetJobTypeCountAsync();
+    Task<List<JobType>> GetAllJobTypesWithAreaAsync();
+    Task<List<JobType>> GetAllJobTypesWithHierarchyAsync();
 }

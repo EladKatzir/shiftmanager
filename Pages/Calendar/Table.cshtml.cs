@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Hubs;
 using ShiftManager.Services;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ShiftManager.Pages.Calendar;
@@ -19,6 +21,9 @@ public class TableModel : PageModel
     private readonly IBusyUserService _busyUserService;
     private readonly IShiftTypeCacheService _shiftTypeCache;
     private readonly IShiftProgramService _programService;
+    private readonly IShiftAssignmentService _assignmentService;
+    private readonly ICalendarNotificationService _calendarNotification;
+    private readonly IConcurrencyService _concurrencyService;
 
     public TableModel(
         AppDbContext db,
@@ -26,7 +31,10 @@ public class TableModel : PageModel
         ILogger<TableModel> logger,
         IBusyUserService busyUserService,
         IShiftTypeCacheService shiftTypeCache,
-        IShiftProgramService programService)
+        IShiftProgramService programService,
+        IShiftAssignmentService assignmentService,
+        ICalendarNotificationService calendarNotification,
+        IConcurrencyService concurrencyService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -34,6 +42,9 @@ public class TableModel : PageModel
         _busyUserService = busyUserService;
         _shiftTypeCache = shiftTypeCache;
         _programService = programService;
+        _assignmentService = assignmentService;
+        _calendarNotification = calendarNotification;
+        _concurrencyService = concurrencyService;
     }
 
     public DateOnly StartDate { get; set; }
@@ -252,7 +263,10 @@ public class TableModel : PageModel
                         Concurrency = 0
                     };
                     _db.ShiftInstances.Add(instance);
-                    await _db.SaveChangesAsync();
+                    var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "ShiftInstance");
+                    if (!saveResult.Success)
+                        return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
                     // Create empty assignment slots
                     for (int i = 0; i < request.StaffingRequired; i++)
@@ -265,7 +279,10 @@ public class TableModel : PageModel
                         };
                         _db.ShiftAssignments.Add(assignment);
                     }
-                    await _db.SaveChangesAsync();
+                    var saveResult2 = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "ShiftAssignment");
+                    if (!saveResult2.Success)
+                        return new JsonResult(new { success = false, error = saveResult2.ErrorMessage }) { StatusCode = 409 };
 
                     await transaction.CommitAsync();
                 }
@@ -295,7 +312,10 @@ public class TableModel : PageModel
                         _db.ShiftAssignments.Add(assignment);
                     }
                     instance.StaffingRequired = request.StaffingRequired;
-                    await _db.SaveChangesAsync();
+                    var saveResult3 = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "ShiftInstance", instance.Id);
+                    if (!saveResult3.Success)
+                        return new JsonResult(new { success = false, error = saveResult3.ErrorMessage }) { StatusCode = 409 };
                 }
             }
 
@@ -349,7 +369,10 @@ public class TableModel : PageModel
                     Concurrency = 0
                 };
                 _db.ShiftInstances.Add(instance);
-                await _db.SaveChangesAsync();
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "ShiftInstance");
+                if (!saveResult.Success)
+                    return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
                 // Create empty assignment slots
                 for (int i = 0; i < request.StaffingRequired; i++)
@@ -362,7 +385,10 @@ public class TableModel : PageModel
                     };
                     _db.ShiftAssignments.Add(assignment);
                 }
-                await _db.SaveChangesAsync();
+                var saveResult2 = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "ShiftAssignment");
+                if (!saveResult2.Success)
+                    return new JsonResult(new { success = false, error = saveResult2.ErrorMessage }) { StatusCode = 409 };
 
                 await transaction.CommitAsync();
 
@@ -400,16 +426,41 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Assignment not found" });
             }
 
-            // Check if user is already assigned to this shift instance
-            var existingAssignment = await _db.ShiftAssignments
-                .FirstOrDefaultAsync(a => a.ShiftInstanceId == assignment.ShiftInstanceId && a.UserId == request.UserId);
+            // Validate via service (job type, grouping, weekly cap, rest hours)
+            var validation = await _assignmentService.ValidateShiftAssignmentAsync(request.UserId, assignment.ShiftInstanceId);
 
-            if (existingAssignment != null && existingAssignment.Id != request.AssignmentId)
+            if (!validation.CanAssign)
             {
-                return new JsonResult(new { success = false, error = "Employee already assigned to this shift" });
+                return new JsonResult(new
+                {
+                    success = false,
+                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                });
             }
 
-            // Overlap detection: Check if user has conflicting shifts on the same date
+            if (validation.Warnings.Count > 0 && string.IsNullOrEmpty(request.OverrideToken))
+            {
+                var overrideToken = _assignmentService.GenerateOverrideToken(
+                    assignment.ShiftInstanceId, request.UserId, validation.Warnings.Select(w => w.Key).ToList());
+                return new JsonResult(new
+                {
+                    success = false,
+                    requiresOverride = true,
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    overrideToken,
+                    shiftInstanceId = assignment.ShiftInstanceId
+                });
+            }
+
+            // Validate override token if provided
+            if (!string.IsNullOrEmpty(request.OverrideToken) &&
+                !_assignmentService.ValidateOverrideToken(request.OverrideToken, assignment.ShiftInstanceId, request.UserId))
+            {
+                return new JsonResult(new { success = false, error = "Invalid or expired override token" });
+            }
+
+            // Overlap detection (kept as hard check — not part of service validation)
             var shiftDate = assignment.ShiftInstance.WorkDate;
             var shiftStart = assignment.ShiftInstance.ShiftType.Start;
             var shiftEnd = assignment.ShiftInstance.ShiftType.End;
@@ -427,27 +478,20 @@ public class TableModel : PageModel
                 var existingStart = existing.ShiftInstance.ShiftType.Start;
                 var existingEnd = existing.ShiftInstance.ShiftType.End;
 
-                // Check for time overlap
                 bool overlaps = false;
 
-                // Handle overnight shifts
-                if (shiftEnd < shiftStart) // Current shift is overnight
+                if (shiftEnd < shiftStart)
                 {
-                    if (existingEnd < existingStart) // Existing shift is also overnight
-                    {
-                        overlaps = true; // Both overnight shifts on same date = overlap
-                    }
-                    else // Existing shift is same-day
-                    {
-                        // Overnight shift overlaps if existing shift starts before midnight
+                    if (existingEnd < existingStart)
+                        overlaps = true;
+                    else
                         overlaps = existingStart >= shiftStart || existingEnd <= shiftEnd;
-                    }
                 }
-                else if (existingEnd < existingStart) // Existing shift is overnight
+                else if (existingEnd < existingStart)
                 {
                     overlaps = shiftStart >= existingStart || shiftEnd <= existingEnd;
                 }
-                else // Both shifts are same-day
+                else
                 {
                     overlaps = (shiftStart < existingEnd && shiftEnd > existingStart);
                 }
@@ -464,7 +508,10 @@ public class TableModel : PageModel
 
             // Assign user to slot
             assignment.UserId = request.UserId;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             var user = await _db.Users.FindAsync(request.UserId);
 
@@ -487,7 +534,7 @@ public class TableModel : PageModel
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
-            // Get or create shift instance
+            // Get or create shift instance (service expects pre-existing instance)
             var instance = await _db.ShiftInstances
                 .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId && si.WorkDate == request.Date);
 
@@ -504,48 +551,97 @@ public class TableModel : PageModel
                     CompanyId = companyId,
                     ShiftTypeId = request.ShiftTypeId,
                     WorkDate = request.Date,
-                    StaffingRequired = 1, // Default to 1 employee required
+                    StaffingRequired = 1,
                     Concurrency = 0
                 };
                 _db.ShiftInstances.Add(instance);
-                await _db.SaveChangesAsync();
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "ShiftInstance");
+                if (!saveResult.Success)
+                    return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
             }
 
-            // Check if assignment already exists for this user
-            var existingAssignment = await _db.ShiftAssignments
-                .FirstOrDefaultAsync(a => a.ShiftInstanceId == instance.Id && a.UserId == request.UserId);
+            // Validate assignment via service (job type, grouping, weekly cap, rest hours)
+            var validation = await _assignmentService.ValidateShiftAssignmentAsync(request.UserId, instance.Id);
 
-            if (existingAssignment != null)
+            if (!validation.CanAssign)
             {
-                return new JsonResult(new { success = false, error = "Employee already assigned to this shift" });
+                return new JsonResult(new
+                {
+                    success = false,
+                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                });
             }
 
-            // Check if we've reached the staffing limit
-            var assignmentCount = await _db.ShiftAssignments
-                .CountAsync(a => a.ShiftInstanceId == instance.Id);
-
-            if (assignmentCount >= instance.StaffingRequired)
+            if (validation.Warnings.Count > 0 && string.IsNullOrEmpty(request.OverrideToken))
             {
-                return new JsonResult(new { success = false, error = "Shift is fully staffed" });
+                // Return warnings + override token for client to confirm
+                var overrideToken = _assignmentService.GenerateOverrideToken(
+                    instance.Id, request.UserId, validation.Warnings.Select(w => w.Key).ToList());
+                return new JsonResult(new
+                {
+                    success = false,
+                    requiresOverride = true,
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    overrideToken,
+                    shiftInstanceId = instance.Id
+                });
             }
 
-            // Create new assignment
-            var assignment = new ShiftAssignment
-            {
-                CompanyId = companyId,
-                ShiftInstanceId = instance.Id,
-                UserId = request.UserId
-            };
+            // Proceed with assignment (service handles duplicate/capacity checks + override token validation)
+            var currentUserId = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : 0;
+            var result = await _assignmentService.AssignShiftAsync(request.UserId, instance.Id, currentUserId, request.OverrideToken);
 
-            _db.ShiftAssignments.Add(assignment);
-            await _db.SaveChangesAsync();
+            if (!result.Success)
+            {
+                // If warnings still pending (token invalid/expired), return them again
+                if (result.Validation?.Warnings.Count > 0)
+                {
+                    var newToken = _assignmentService.GenerateOverrideToken(
+                        instance.Id, request.UserId, result.Validation.Warnings.Select(w => w.Key).ToList());
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        requiresOverride = true,
+                        warnings = result.Validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                        overrideToken = newToken,
+                        shiftInstanceId = instance.Id
+                    });
+                }
+                return new JsonResult(new { success = false, error = result.ErrorMessage });
+            }
 
             var user = await _db.Users.FindAsync(request.UserId);
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                        new CalendarAssignmentChangedEvent(
+                            ShiftInstanceId: instance.Id,
+                            UserId: request.UserId,
+                            UserDisplayName: user?.DisplayName,
+                            Date: instance.WorkDate,
+                            ShiftTypeId: shiftType.Id,
+                            ShiftTypeName: shiftType.Name,
+                            ChangeType: "Assigned"
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for AssignEmployee");
+            }
 
             return new JsonResult(new
             {
                 success = true,
-                assignmentId = assignment.Id,
+                assignmentId = result.AssignmentId,
                 employeeName = user?.DisplayName
             });
         }
@@ -560,14 +656,51 @@ public class TableModel : PageModel
     {
         try
         {
-            var assignment = await _db.ShiftAssignments.FindAsync(request.AssignmentId);
+            var assignment = await _db.ShiftAssignments
+                .Include(a => a.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
                 return new JsonResult(new { success = false, error = "Assignment not found" });
             }
 
+            // Capture data before removal for notification
+            var instanceId = assignment.ShiftInstance.Id;
+            var workDate = assignment.ShiftInstance.WorkDate;
+            var shiftType = assignment.ShiftInstance.ShiftType;
+            var removedUserId = assignment.UserId;
+            var removedUserName = assignment.User?.DisplayName;
+
             _db.ShiftAssignments.Remove(assignment);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                        new CalendarAssignmentChangedEvent(
+                            ShiftInstanceId: instanceId,
+                            UserId: removedUserId,
+                            UserDisplayName: removedUserName,
+                            Date: workDate,
+                            ShiftTypeId: shiftType.Id,
+                            ShiftTypeName: shiftType.Name,
+                            ChangeType: "Unassigned"
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for UnassignEmployee");
+            }
 
             return new JsonResult(new { success = true });
         }
@@ -582,7 +715,10 @@ public class TableModel : PageModel
     {
         try
         {
-            var assignment = await _db.ShiftAssignments.FindAsync(request.AssignmentId);
+            var assignment = await _db.ShiftAssignments
+                .Include(a => a.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
                 return new JsonResult(new { success = false, error = "Assignment not found" });
@@ -591,7 +727,34 @@ public class TableModel : PageModel
             // Clear user and trainee without deleting the assignment slot
             assignment.UserId = null;
             assignment.TraineeUserId = null;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = assignment.ShiftInstance.ShiftType;
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                        new CalendarAssignmentChangedEvent(
+                            ShiftInstanceId: assignment.ShiftInstance.Id,
+                            UserId: null,
+                            UserDisplayName: null,
+                            Date: assignment.ShiftInstance.WorkDate,
+                            ShiftTypeId: shiftType.Id,
+                            ShiftTypeName: shiftType.Name,
+                            ChangeType: "Cleared"
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for ClearAssignment");
+            }
 
             return new JsonResult(new { success = true });
         }
@@ -686,7 +849,33 @@ public class TableModel : PageModel
 
             // Update staffing requirement
             instance.StaffingRequired = request.StaffingRequired;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftInstance", instance.Id);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = await _db.ShiftTypes.FindAsync(instance.ShiftTypeId);
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var assignedCount = await _db.ShiftAssignments
+                        .CountAsync(a => a.ShiftInstanceId == instance.Id && a.UserId != null);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyCapacityChangedAsync(groupName,
+                        new CalendarCapacityChangedEvent(
+                            ShiftTypeId: shiftType.Id,
+                            Date: instance.WorkDate,
+                            NewCapacity: instance.StaffingRequired,
+                            AssignedCount: assignedCount
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for UpdateShiftStaffing");
+            }
 
             return new JsonResult(new { success = true });
         }
@@ -721,10 +910,39 @@ public class TableModel : PageModel
             // Delete the instance
             _db.ShiftInstances.Remove(instance);
 
-            await _db.SaveChangesAsync();
+            // Capture data before deletion for notification
+            var deletedInstanceId = instance.Id;
+            var deletedWorkDate = instance.WorkDate;
+            var deletedShiftTypeId = instance.ShiftTypeId;
+
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftInstance", deletedInstanceId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Deleted shift instance {InstanceId} with {AssignmentCount} assignments",
-                instance.Id, assignments.Count);
+                deletedInstanceId, assignments.Count);
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = await _db.ShiftTypes.FindAsync(deletedShiftTypeId);
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyCapacityChangedAsync(groupName,
+                        new CalendarCapacityChangedEvent(
+                            ShiftTypeId: shiftType.Id,
+                            Date: deletedWorkDate,
+                            NewCapacity: 0,
+                            AssignedCount: 0
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for DeleteShiftInstance");
+            }
 
             return new JsonResult(new { success = true });
         }
@@ -739,17 +957,82 @@ public class TableModel : PageModel
     {
         try
         {
-            var assignment = await _db.ShiftAssignments.FindAsync(request.AssignmentId);
+            var assignment = await _db.ShiftAssignments
+                .Include(a => a.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
                 return new JsonResult(new { success = false, error = "Assignment not found" });
             }
 
+            // Validate trainee assignment (self-training, same company, trainee role)
+            var validation = await _assignmentService.ValidateTraineeAssignmentAsync(request.TraineeUserId, request.AssignmentId);
+
+            if (!validation.CanAssign)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                });
+            }
+
+            if (validation.Warnings.Count > 0 && string.IsNullOrEmpty(request.OverrideToken))
+            {
+                // For trainee validation, use a synthetic token scoped to assignmentId + traineeUserId
+                var overrideToken = _assignmentService.GenerateOverrideToken(
+                    request.AssignmentId, request.TraineeUserId, validation.Warnings.Select(w => w.Key).ToList());
+                return new JsonResult(new
+                {
+                    success = false,
+                    requiresOverride = true,
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    overrideToken,
+                    assignmentId = request.AssignmentId
+                });
+            }
+
+            // Validate override token if provided
+            if (!string.IsNullOrEmpty(request.OverrideToken) &&
+                !_assignmentService.ValidateOverrideToken(request.OverrideToken, request.AssignmentId, request.TraineeUserId))
+            {
+                return new JsonResult(new { success = false, error = "Invalid or expired override token" });
+            }
+
             // Update trainee
             assignment.TraineeUserId = request.TraineeUserId;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             var trainee = await _db.Users.FindAsync(request.TraineeUserId);
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = assignment.ShiftInstance.ShiftType;
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                        new CalendarAssignmentChangedEvent(
+                            ShiftInstanceId: assignment.ShiftInstance.Id,
+                            UserId: request.TraineeUserId,
+                            UserDisplayName: trainee?.DisplayName,
+                            Date: assignment.ShiftInstance.WorkDate,
+                            ShiftTypeId: shiftType.Id,
+                            ShiftTypeName: shiftType.Name,
+                            ChangeType: "TraineeAdded"
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for AddTrainee");
+            }
 
             return new JsonResult(new
             {
@@ -768,15 +1051,48 @@ public class TableModel : PageModel
     {
         try
         {
-            var assignment = await _db.ShiftAssignments.FindAsync(request.AssignmentId);
+            var assignment = await _db.ShiftAssignments
+                .Include(a => a.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
                 return new JsonResult(new { success = false, error = "Assignment not found" });
             }
 
+            // Capture trainee info before clearing
+            var removedTraineeId = assignment.TraineeUserId;
+
             // Remove trainee
             assignment.TraineeUserId = null;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = assignment.ShiftInstance.ShiftType;
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                        new CalendarAssignmentChangedEvent(
+                            ShiftInstanceId: assignment.ShiftInstance.Id,
+                            UserId: removedTraineeId,
+                            UserDisplayName: null,
+                            Date: assignment.ShiftInstance.WorkDate,
+                            ShiftTypeId: shiftType.Id,
+                            ShiftTypeName: shiftType.Name,
+                            ChangeType: "TraineeRemoved"
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for RemoveTrainee");
+            }
 
             return new JsonResult(new { success = true });
         }
@@ -791,17 +1107,81 @@ public class TableModel : PageModel
     {
         try
         {
-            var assignment = await _db.ShiftAssignments.FindAsync(request.AssignmentId);
+            var assignment = await _db.ShiftAssignments
+                .Include(a => a.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
                 return new JsonResult(new { success = false, error = "Assignment not found" });
             }
 
+            // Validate new user assignment via service
+            var validation = await _assignmentService.ValidateShiftAssignmentAsync(request.NewUserId, assignment.ShiftInstanceId);
+
+            if (!validation.CanAssign)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                });
+            }
+
+            if (validation.Warnings.Count > 0 && string.IsNullOrEmpty(request.OverrideToken))
+            {
+                var overrideToken = _assignmentService.GenerateOverrideToken(
+                    assignment.ShiftInstanceId, request.NewUserId, validation.Warnings.Select(w => w.Key).ToList());
+                return new JsonResult(new
+                {
+                    success = false,
+                    requiresOverride = true,
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    overrideToken,
+                    shiftInstanceId = assignment.ShiftInstanceId
+                });
+            }
+
+            // Validate override token if provided
+            if (!string.IsNullOrEmpty(request.OverrideToken) &&
+                !_assignmentService.ValidateOverrideToken(request.OverrideToken, assignment.ShiftInstanceId, request.NewUserId))
+            {
+                return new JsonResult(new { success = false, error = "Invalid or expired override token" });
+            }
+
             // Change primary user
             assignment.UserId = request.NewUserId;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             var user = await _db.Users.FindAsync(request.NewUserId);
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                var shiftType = assignment.ShiftInstance.ShiftType;
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                        new CalendarAssignmentChangedEvent(
+                            ShiftInstanceId: assignment.ShiftInstance.Id,
+                            UserId: request.NewUserId,
+                            UserDisplayName: user?.DisplayName,
+                            Date: assignment.ShiftInstance.WorkDate,
+                            ShiftTypeId: shiftType.Id,
+                            ShiftTypeName: shiftType.Name,
+                            ChangeType: "Changed"
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for ChangeUser");
+            }
 
             return new JsonResult(new
             {
@@ -845,7 +1225,10 @@ public class TableModel : PageModel
             shiftType.Start = startTime;
             shiftType.End = endTime;
 
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType", request.ShiftTypeId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             return new JsonResult(new { success = true });
         }
@@ -888,10 +1271,33 @@ public class TableModel : PageModel
             };
 
             _db.ShiftTypes.Add(shiftType);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType");
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Created custom shift type {ShiftTypeId} with name '{Name}' for company {CompanyId}",
                 shiftType.Id, shiftType.CustomName, companyId);
+
+            // Send real-time notification (fire-and-forget)
+            try
+            {
+                if (shiftType.MoleculeId != null && shiftType.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    await _calendarNotification.NotifyCapacityChangedAsync(groupName,
+                        new CalendarCapacityChangedEvent(
+                            ShiftTypeId: shiftType.Id,
+                            Date: DateOnly.FromDateTime(DateTime.Today),
+                            NewCapacity: 0,
+                            AssignedCount: 0
+                        ));
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for CreateCustomShiftType");
+            }
 
             return new JsonResult(new
             {
@@ -933,6 +1339,7 @@ public class TableModel : PageModel
     {
         public int AssignmentId { get; set; }
         public int UserId { get; set; }
+        public string? OverrideToken { get; set; }
     }
 
     public class AssignEmployeeRequest
@@ -940,6 +1347,7 @@ public class TableModel : PageModel
         public int ShiftTypeId { get; set; }
         public DateOnly Date { get; set; }
         public int UserId { get; set; }
+        public string? OverrideToken { get; set; }
     }
 
     public class UnassignEmployeeRequest
@@ -951,6 +1359,7 @@ public class TableModel : PageModel
     {
         public int AssignmentId { get; set; }
         public int TraineeUserId { get; set; }
+        public string? OverrideToken { get; set; }
     }
 
     public class RemoveTraineeRequest
@@ -962,6 +1371,7 @@ public class TableModel : PageModel
     {
         public int AssignmentId { get; set; }
         public int NewUserId { get; set; }
+        public string? OverrideToken { get; set; }
     }
 
     public class ClearAssignmentRequest
@@ -1292,7 +1702,12 @@ public class TableModel : PageModel
                             };
 
                             _db.ShiftInstances.Add(newInstance);
-                            await _db.SaveChangesAsync(); // Save to get ID
+                            {
+                                var fillSaveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                                    () => _db.SaveChangesAsync(), "ShiftInstance");
+                                if (!fillSaveResult.Success)
+                                    return new JsonResult(new { success = false, error = fillSaveResult.ErrorMessage }) { StatusCode = 409 };
+                            }
 
                             // Add assignments
                             foreach (var sourceAssignment in sourceAssignments)
@@ -1345,7 +1760,12 @@ public class TableModel : PageModel
                             };
 
                             _db.ShiftInstances.Add(newInstance);
-                            await _db.SaveChangesAsync();
+                            {
+                                var fillSaveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                                    () => _db.SaveChangesAsync(), "ShiftInstance");
+                                if (!fillSaveResult.Success)
+                                    return new JsonResult(new { success = false, error = fillSaveResult.ErrorMessage }) { StatusCode = 409 };
+                            }
 
                             // Add empty slots
                             for (int i = 0; i < sourceInstance.StaffingRequired; i++)
@@ -1414,7 +1834,12 @@ public class TableModel : PageModel
                                         };
 
                                         _db.ShiftInstances.Add(newInstance);
-                                        await _db.SaveChangesAsync();
+                                        {
+                                            var fillSaveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                                                () => _db.SaveChangesAsync(), "ShiftInstance");
+                                            if (!fillSaveResult.Success)
+                                                return new JsonResult(new { success = false, error = fillSaveResult.ErrorMessage }) { StatusCode = 409 };
+                                        }
 
                                         // Add empty slots
                                         for (int i = 0; i < staffingRequired; i++)
@@ -1443,11 +1868,51 @@ public class TableModel : PageModel
                 }
             }
 
-            await _db.SaveChangesAsync();
+            var finalSaveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftInstance", request.SourceInstanceId);
+            if (!finalSaveResult.Success)
+                return new JsonResult(new { success = false, error = finalSaveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation(
                 "Fill range completed: {Created} created, {Updated} updated using mode {Mode}",
                 createdCount, updatedCount, request.Mode);
+
+            // Send real-time notification (fire-and-forget) — one aggregated notification for the fill operation
+            try
+            {
+                var shiftType = sourceInstance.ShiftType;
+                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                {
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    // Send one notification per filled target date
+                    foreach (var targetDate in request.TargetDates)
+                    {
+                        if (DateOnly.TryParse(targetDate, out var parsedNotifyDate))
+                        {
+                            // Look up the actual instance to get current state
+                            var filledInstance = await _db.ShiftInstances
+                                .FirstOrDefaultAsync(si => si.ShiftTypeId == sourceInstance.ShiftTypeId && si.WorkDate == parsedNotifyDate);
+                            if (filledInstance != null)
+                            {
+                                await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
+                                    new CalendarAssignmentChangedEvent(
+                                        ShiftInstanceId: filledInstance.Id,
+                                        UserId: null,
+                                        UserDisplayName: null,
+                                        Date: parsedNotifyDate,
+                                        ShiftTypeId: shiftType.Id,
+                                        ShiftTypeName: shiftType.Name,
+                                        ChangeType: "Filled"
+                                    ));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Failed to send calendar notification for FillRange");
+            }
 
             return new JsonResult(new
             {

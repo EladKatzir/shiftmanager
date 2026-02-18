@@ -1,0 +1,398 @@
+@page
+@model ShiftManager.Pages.Admin.DutyRotation.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@using ShiftManager.Models.Support
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["DutyRotations"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["DutyRotations"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
+
+        .alert-success, .alert-error {
+            padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500;
+        }
+        .alert-success { background: var(--success); color: var(--success-text); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .alert-error { background: var(--danger); color: var(--danger-text); border: 1px solid rgba(244, 67, 54, 0.3); }
+
+        .section-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+        }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text);
+            margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 0; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input, .form-select {
+            width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text);
+            background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; transition: all 0.15s ease;
+        }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+        .form-check { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.75rem; }
+        .form-check input[type="checkbox"] { width: 1.125rem; height: 1.125rem; accent-color: var(--primary); }
+        .form-check label { font-size: 0.875rem; font-weight: 500; color: var(--text); cursor: pointer; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: var(--success-text); border-color: var(--success); }
+        .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost { background: transparent; color: var(--text); border-color: transparent; font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost:hover { background: var(--surface-soft); border-color: var(--border); }
+        .btn-sm { font-size: 0.8125rem; padding: 0.375rem 0.75rem; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { padding: 0.875rem; text-align: start; font-size: 0.8125rem; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.025em; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background-color 0.15s ease; }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .data-table td { padding: 1rem 0.875rem; font-size: 0.9375rem; color: var(--text); }
+        .table-actions { display: flex; gap: 0.5rem; white-space: nowrap; }
+
+        .badge {
+            display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
+            font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
+        }
+        .badge-active { background: var(--success-soft); color: var(--success); }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted); }
+        .badge-hakam { background: var(--primary-soft); color: var(--primary); }
+        .badge-lead { background: var(--accent-soft); color: var(--accent); }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+
+        .queue-section {
+            background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px;
+            padding: 1.25rem; margin-top: 1rem;
+        }
+        .queue-header { font-size: 1rem; font-weight: 600; color: var(--text); margin: 0 0 1rem 0; }
+        .queue-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1rem; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; margin-bottom: 0.5rem;
+        }
+        .queue-item-info { display: flex; align-items: center; gap: 0.75rem; }
+        .queue-position {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 1.75rem; height: 1.75rem; background: var(--primary-soft); color: var(--primary);
+            border-radius: 50%; font-size: 0.75rem; font-weight: 700;
+        }
+        .queue-add-form { display: flex; gap: 0.5rem; align-items: end; margin-top: 1rem; }
+        .queue-add-form .form-group { flex: 1; margin-bottom: 0; }
+
+        .rotation-detail-row { background: var(--surface-soft); }
+        .rotation-detail-cell { padding: 1.5rem !important; }
+
+        .edit-form-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+
+        .move-btn { background: transparent; border: none; cursor: pointer; color: var(--text-muted); padding: 0.25rem; font-size: 1rem; }
+        .move-btn:hover { color: var(--primary); }
+
+        @@media (max-width: 768px) {
+            .page-title { font-size: 1.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .edit-form-inline { grid-template-columns: 1fr; }
+            .table-actions { flex-direction: column; }
+            .queue-add-form { flex-direction: column; }
+        }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageDutyRotations" /></h1>
+    <p class="page-subtitle"><loc key="ManageDutyRotationsDescription" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div>
+}
+
+<!-- Create New Rotation -->
+<div class="section-card">
+    <h3 class="section-header"><loc key="CreateRotation" /></h3>
+    <form method="post" asp-page-handler="Create">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">@Localizer["RotationName"] <span class="form-label-required">*</span></label>
+                <input class="form-input" asp-for="RotationName" required placeholder="@Localizer["Placeholder_RotationName"]" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["DutyType"] <span class="form-label-required">*</span></label>
+                <select class="form-select" asp-for="SelectedDutyType" required>
+                    <option value="@OnDutyType.Hakam">@Localizer["OnDuty_Hakam"]</option>
+                    <option value="@OnDutyType.Lead">@Localizer["OnDuty_Lead"]</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["Frequency"] <span class="form-label-required">*</span></label>
+                <select class="form-select" asp-for="SelectedFrequency" required>
+                    <option value="@RotationFrequency.Daily">@Localizer["Frequency_Daily"]</option>
+                    <option value="@RotationFrequency.Weekly">@Localizer["Frequency_Weekly"]</option>
+                    <option value="@RotationFrequency.Biweekly">@Localizer["Frequency_Biweekly"]</option>
+                    <option value="@RotationFrequency.Monthly">@Localizer["Frequency_Monthly"]</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["MaxConsecutiveDays"]</label>
+                <input class="form-input" asp-for="FormMaxConsecutive" type="number" min="1" max="30" value="1" />
+            </div>
+            <div class="form-check">
+                <input type="checkbox" asp-for="FormIncludeWeekends" id="FormIncludeWeekends" />
+                <label for="FormIncludeWeekends">@Localizer["IncludeWeekends"]</label>
+            </div>
+        </div>
+        <button class="btn btn-primary" type="submit"><loc key="CreateRotation" /></button>
+    </form>
+</div>
+
+<!-- Rotations Table -->
+<div class="section-card">
+    <h3 class="section-header"><loc key="AllRotations" /> (@Model.Rotations.Count)</h3>
+    @if (Model.Rotations.Any())
+    {
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><loc key="RotationName" /></th>
+                        <th><loc key="DutyType" /></th>
+                        <th><loc key="Frequency" /></th>
+                        <th><loc key="IncludeWeekends" /></th>
+                        <th><loc key="MaxConsecutiveDays" /></th>
+                        <th><loc key="Queue" /></th>
+                        <th><loc key="Status" /></th>
+                        <th style="width:1%"><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var r in Model.Rotations)
+                {
+                    var isSelected = Model.SelectedRotationId == r.Id;
+                    <tr>
+                        <td>
+                            <strong>@Html.Encode(r.Name)</strong>
+                            @if (r.CreatorName != null)
+                            {
+                                <br /><small style="color: var(--text-muted);">@Localizer["CreatedBy"]: @Html.Encode(r.CreatorName)</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge @(r.DutyType == OnDutyType.Hakam ? "badge-hakam" : "badge-lead")">
+                                @Model.GetDutyTypeDisplay(r.DutyType)
+                            </span>
+                        </td>
+                        <td>@Model.GetFrequencyDisplay(r.Frequency)</td>
+                        <td>@(r.IncludeWeekends ? Localizer["Yes"] : Localizer["No"])</td>
+                        <td>@r.MaxConsecutiveDays</td>
+                        <td>@r.QueueSize @Localizer["Users"]</td>
+                        <td>
+                            @if (r.IsActive)
+                            {
+                                <span class="badge badge-active"><loc key="Active" /></span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive"><loc key="Inactive" /></span>
+                            }
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                @if (isSelected)
+                                {
+                                    <a href="/Admin/DutyRotation" class="btn btn-ghost btn-sm">@Localizer["Close"]</a>
+                                }
+                                else
+                                {
+                                    <a href="/Admin/DutyRotation?rotationId=@r.Id" class="btn btn-ghost btn-sm">@Localizer["ManageQueue"]</a>
+                                }
+                                <form method="post" asp-page-handler="Delete" style="display:inline"
+                                      onsubmit="return confirm('@Localizer["ConfirmDeleteRotation"].Value.Replace("'", "\\'").Trim()');">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm"><loc key="Delete" /></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @if (isSelected && Model.SelectedRotation != null)
+                    {
+                        <tr class="rotation-detail-row">
+                            <td colspan="8" class="rotation-detail-cell">
+                                <!-- Edit Rotation -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h4 style="font-size: 0.9375rem; font-weight: 600; color: var(--text); margin: 0 0 1rem 0;">
+                                        <loc key="EditRotation" />
+                                    </h4>
+                                    <form method="post" asp-page-handler="Update">
+                                        <input type="hidden" asp-for="EditRotationId" value="@r.Id" />
+                                        <div class="edit-form-inline">
+                                            <div class="form-group">
+                                                <label class="form-label">@Localizer["RotationName"]</label>
+                                                <input class="form-input" asp-for="EditName" value="@r.Name" required />
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">@Localizer["Frequency"]</label>
+                                                <select class="form-select" asp-for="EditFrequency">
+                                                    @foreach (RotationFrequency freq in Enum.GetValues(typeof(RotationFrequency)))
+                                                    {
+                                                        <option value="@freq" selected="@(freq == r.Frequency)">@Model.GetFrequencyDisplay(freq)</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">@Localizer["MaxConsecutiveDays"]</label>
+                                                <input class="form-input" asp-for="EditMaxConsecutive" type="number" min="1" max="30" value="@r.MaxConsecutiveDays" />
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" asp-for="EditIncludeWeekends" id="EditIncludeWeekends_@r.Id"
+                                                       checked="@r.IncludeWeekends" />
+                                                <label for="EditIncludeWeekends_@r.Id">@Localizer["IncludeWeekends"]</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" asp-for="EditIsActive" id="EditIsActive_@r.Id"
+                                                       checked="@r.IsActive" />
+                                                <label for="EditIsActive_@r.Id">@Localizer["IsActive"]</label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm"><loc key="SaveChanges" /></button>
+                                    </form>
+                                </div>
+
+                                <!-- Queue Management -->
+                                <div class="queue-section">
+                                    <h4 class="queue-header"><loc key="RotationQueue" /> (@Model.QueueEntries.Count)</h4>
+
+                                    @if (Model.QueueEntries.Any())
+                                    {
+                                        <form method="post" asp-page-handler="ReorderQueue" id="reorderForm_@r.Id">
+                                            <input type="hidden" name="QueueRotationId" value="@r.Id" />
+                                            <input type="hidden" name="ReorderUserIds" id="reorderInput_@r.Id" />
+
+                                            <div id="queueList_@r.Id">
+                                                @foreach (var entry in Model.QueueEntries)
+                                                {
+                                                    <div class="queue-item" data-user-id="@entry.UserId">
+                                                        <div class="queue-item-info">
+                                                            <span class="queue-position">@(entry.Position + 1)</span>
+                                                            <span>@Html.Encode(entry.DisplayName)</span>
+                                                        </div>
+                                                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                                                            <button type="button" class="move-btn" title="@Localizer["MoveUp"]"
+                                                                    onclick="moveQueueItem(this.closest('.queue-item'), -1, '@r.Id')">&#9650;</button>
+                                                            <button type="button" class="move-btn" title="@Localizer["MoveDown"]"
+                                                                    onclick="moveQueueItem(this.closest('.queue-item'), 1, '@r.Id')">&#9660;</button>
+                                                            <form method="post" asp-page-handler="RemoveUser" style="display:inline; margin: 0;">
+                                                                <input type="hidden" name="QueueRotationId" value="@r.Id" />
+                                                                <input type="hidden" name="QueueUserId" value="@entry.UserId" />
+                                                                <button type="submit" class="btn btn-danger btn-sm" style="margin-inline-start: 0.25rem;"
+                                                                        title="@Localizer["RemoveFromQueue"]">&#10005;</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <button type="button" class="btn btn-ghost btn-sm" style="margin-top: 0.5rem;"
+                                                    onclick="submitReorder('@r.Id')">
+                                                <loc key="SaveOrder" />
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.5rem 0;"><loc key="NoUsersInQueue" /></p>
+                                    }
+
+                                    <!-- Add User to Queue -->
+                                    <div class="queue-add-form">
+                                        <form method="post" asp-page-handler="AddUser" style="display: flex; gap: 0.5rem; align-items: end; width: 100%;">
+                                            <input type="hidden" name="QueueRotationId" value="@r.Id" />
+                                            <div class="form-group" style="flex: 1;">
+                                                <label class="form-label">@Localizer["AddToQueue"]</label>
+                                                <select class="form-select" name="QueueUserId" required>
+                                                    <option value="">@Localizer["SelectUser"]</option>
+                                                    @foreach (var user in Model.AvailableUsers)
+                                                    {
+                                                        @if (!Model.QueueEntries.Any(q => q.UserId == user.Id))
+                                                        {
+                                                            <option value="@user.Id">@Html.Encode(user.DisplayName)</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-success btn-sm"><loc key="Add" /></button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="empty-state"><loc key="NoRotationsFound" /></p>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function moveQueueItem(item, direction, rotationId) {
+            var list = document.getElementById('queueList_' + rotationId);
+            var items = Array.from(list.querySelectorAll('.queue-item'));
+            var index = items.indexOf(item);
+            var newIndex = index + direction;
+
+            if (newIndex < 0 || newIndex >= items.length) return;
+
+            if (direction < 0) {
+                list.insertBefore(item, items[newIndex]);
+            } else {
+                list.insertBefore(item, items[newIndex].nextSibling);
+            }
+
+            // Update position numbers
+            var updatedItems = list.querySelectorAll('.queue-item');
+            updatedItems.forEach(function (el, i) {
+                el.querySelector('.queue-position').textContent = i + 1;
+            });
+        }
+
+        function submitReorder(rotationId) {
+            var list = document.getElementById('queueList_' + rotationId);
+            var items = list.querySelectorAll('.queue-item');
+            var userIds = Array.from(items).map(function (el) { return el.getAttribute('data-user-id'); });
+
+            document.getElementById('reorderInput_' + rotationId).value = userIds.join(',');
+            document.getElementById('reorderForm_' + rotationId).submit();
+        }
+    </script>
+}

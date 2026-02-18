@@ -1,137 +1,132 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
+using ShiftManager.Models;
 using ShiftManager.Resources;
-using System.Text.Json;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner;
 
 /// <summary>
-/// Feature Flags Management - Toggle system features on/off
+/// Feature Flags Management — view and toggle all DB-backed feature flags.
+/// Uses IFeatureFlagService for full CRUD. Changes take effect immediately
+/// (SetFlagAsync calls InvalidateCache which clears both per-flag and warm cache).
 /// </summary>
 [Authorize(Policy = "Grant:SystemConfiguration")]
 public class FeatureFlagsModel : LocalizedPageModel
 {
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<FeatureFlagsModel> _logger;
 
     public FeatureFlagsModel(
         IStringLocalizer<SharedResources> localizer,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<FeatureFlagsModel> logger)
         : base(localizer)
     {
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
-    // Core Feature Flags
-    [BindProperty] public bool EnforceCompanyScope { get; set; }
-    [BindProperty] public bool EnableDirectorRole { get; set; }
-    [BindProperty] public bool AllowPublicSignup { get; set; }
-    [BindProperty] public bool EnableApiKeyManagement { get; set; }
-
-    // API Categories
-    public Dictionary<string, Dictionary<string, bool>> ApiCategories { get; set; } = new();
+    /// <summary>
+    /// Flags grouped by category for display. Key = category name, Value = list of flags.
+    /// </summary>
+    public Dictionary<string, List<FeatureFlag>> FlagsByCategory { get; set; } = new();
 
     public string? Message { get; set; }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        LoadFeatureFlags();
+        await LoadFlagsAsync();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
         try
         {
-            // Note: Modifying appsettings.json at runtime is not recommended for production
-            // In production, use environment variables, Azure App Configuration, or similar
-            Message = _localizer["Info_FeatureFlagChangesRequireRestart"].Value;
+            // Get all current global flags from DB
+            var allFlags = (await _featureFlagService.GetAllFlagsAsync())
+                .Where(f => f.CompanyId == null && f.UserId == null) // Only global flags
+                .ToList();
 
-            _logger.LogInformation("Feature flags updated: EnforceCompanyScope={EnforceCompanyScope}, " +
-                "EnableDirectorRole={EnableDirectorRole}, AllowPublicSignup={AllowPublicSignup}, " +
-                "EnableApiKeyManagement={EnableApiKeyManagement}",
-                EnforceCompanyScope, EnableDirectorRole, AllowPublicSignup, EnableApiKeyManagement);
+            var enabledFlags = Request.Form.Keys
+                .Where(k => k.StartsWith("flag_"))
+                .Select(k => k.Substring(5)) // Remove "flag_" prefix
+                .ToHashSet();
 
-            // In a real implementation, you would:
-            // 1. Write to appsettings.json or external config
-            // 2. Trigger configuration reload
-            // 3. Or use a database-backed feature flag system
+            int changed = 0;
+            foreach (var flag in allFlags)
+            {
+                var shouldBeEnabled = enabledFlags.Contains(flag.Name);
+                if (flag.IsEnabled != shouldBeEnabled)
+                {
+                    await _featureFlagService.SetFlagAsync(flag.Name, shouldBeEnabled);
+                    _logger.LogInformation("Feature flag {FlagName} changed to {IsEnabled}", flag.Name, shouldBeEnabled);
+                    changed++;
+                }
+            }
 
-            LoadFeatureFlags();
+            if (changed > 0)
+            {
+                Message = $"{changed} flag(s) updated. Changes take effect immediately.";
+            }
+            else
+            {
+                Message = "No changes detected.";
+            }
+
+            await LoadFlagsAsync();
             return Page();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving feature flags");
-            Message = _localizer["Error_SavingFeatureFlags"].Value;
-            LoadFeatureFlags();
+            Error = _localizer["Error_SavingFeatureFlags"].Value;
+            await LoadFlagsAsync();
             return Page();
         }
     }
 
-    private void LoadFeatureFlags()
+    private async Task LoadFlagsAsync()
     {
-        try
-        {
-            // Load core feature flags
-            EnforceCompanyScope = _configuration.GetValue<bool>("Features:EnforceCompanyScope", true);
-            EnableDirectorRole = _configuration.GetValue<bool>("Features:EnableDirectorRole", true);
-            AllowPublicSignup = _configuration.GetValue<bool>("Features:AllowPublicSignup", true);
-            EnableApiKeyManagement = _configuration.GetValue<bool>("Features:EnableApiKeyManagement", true);
+        var allFlags = (await _featureFlagService.GetAllFlagsAsync())
+            .Where(f => f.CompanyId == null && f.UserId == null) // Only global flags
+            .ToList();
 
-            // Load API feature flags
-            ApiCategories = new Dictionary<string, Dictionary<string, bool>>
-            {
-                ["Users"] = new()
-                {
-                    ["List"] = _configuration.GetValue<bool>("Features:Api:Users:ListEnabled", true),
-                    ["Get"] = _configuration.GetValue<bool>("Features:Api:Users:GetEnabled", true),
-                    ["Create"] = _configuration.GetValue<bool>("Features:Api:Users:CreateEnabled", true),
-                    ["Update"] = _configuration.GetValue<bool>("Features:Api:Users:UpdateEnabled", true)
-                },
-                ["Shifts"] = new()
-                {
-                    ["List"] = _configuration.GetValue<bool>("Features:Api:Shifts:ListEnabled", true),
-                    ["Get"] = _configuration.GetValue<bool>("Features:Api:Shifts:GetEnabled", true)
-                },
-                ["TimeOff"] = new()
-                {
-                    ["List"] = _configuration.GetValue<bool>("Features:Api:TimeOff:ListEnabled", true),
-                    ["Get"] = _configuration.GetValue<bool>("Features:Api:TimeOff:GetEnabled", true),
-                    ["Create"] = _configuration.GetValue<bool>("Features:Api:TimeOff:CreateEnabled", true),
-                    ["Approve"] = _configuration.GetValue<bool>("Features:Api:TimeOff:ApproveEnabled", true)
-                },
-                ["Notifications"] = new()
-                {
-                    ["List"] = _configuration.GetValue<bool>("Features:Api:Notifications:ListEnabled", true),
-                    ["Get"] = _configuration.GetValue<bool>("Features:Api:Notifications:GetEnabled", true),
-                    ["MarkRead"] = _configuration.GetValue<bool>("Features:Api:Notifications:MarkReadEnabled", true)
-                },
-                ["Chores"] = new()
-                {
-                    ["List"] = _configuration.GetValue<bool>("Features:Api:Chores:ListEnabled", true),
-                    ["Get"] = _configuration.GetValue<bool>("Features:Api:Chores:GetEnabled", true),
-                    ["Create"] = _configuration.GetValue<bool>("Features:Api:Chores:CreateEnabled", true),
-                    ["Update"] = _configuration.GetValue<bool>("Features:Api:Chores:UpdateEnabled", true),
-                    ["Delete"] = _configuration.GetValue<bool>("Features:Api:Chores:DeleteEnabled", true)
-                },
-                ["OnDuty"] = new()
-                {
-                    ["List"] = _configuration.GetValue<bool>("Features:Api:OnDuty:ListEnabled", true),
-                    ["Get"] = _configuration.GetValue<bool>("Features:Api:OnDuty:GetEnabled", true),
-                    ["Create"] = _configuration.GetValue<bool>("Features:Api:OnDuty:CreateEnabled", true),
-                    ["Update"] = _configuration.GetValue<bool>("Features:Api:OnDuty:UpdateEnabled", true),
-                    ["Delete"] = _configuration.GetValue<bool>("Features:Api:OnDuty:DeleteEnabled", true)
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading feature flags");
-        }
+        FlagsByCategory = allFlags
+            .GroupBy(f => GetCategory(f.Name))
+            .OrderBy(g => GetCategorySortOrder(g.Key))
+            .ToDictionary(g => g.Key, g => g.OrderBy(f => f.Name).ToList());
     }
+
+    /// <summary>
+    /// Maps flag names to display categories based on prefix convention.
+    /// </summary>
+    private static string GetCategory(string flagName)
+    {
+        if (flagName.StartsWith("FF_API_"))
+            return "API Endpoints";
+        if (flagName.StartsWith("FF_EXCEL_"))
+            return "Excel Calendars";
+        if (flagName.StartsWith("FF_NEW_") || flagName.StartsWith("FF_WIDGETS_") || flagName.StartsWith("FF_SCOPE_"))
+            return "UI Features";
+        if (flagName.StartsWith("FF_ENFORCE_") || flagName.StartsWith("FF_ALLOW_") || flagName.StartsWith("FF_ENABLE_"))
+            return "Operations";
+        // Remaining: feature-specific flags (friendships, duty rotation, setup tasks)
+        return "Features";
+    }
+
+    /// <summary>
+    /// Sort order for categories in the UI.
+    /// </summary>
+    private static int GetCategorySortOrder(string category) => category switch
+    {
+        "Operations" => 0,
+        "UI Features" => 1,
+        "Excel Calendars" => 2,
+        "Features" => 3,
+        "API Endpoints" => 4,
+        _ => 99
+    };
 }

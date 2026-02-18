@@ -1,0 +1,704 @@
+@page
+@model ShiftManager.Pages.Owner.TelemetryModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Owner_Telemetry"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Owner_AdminPanel"], Url = "/Owner/Index" },
+    new BreadcrumbItem { Label = Localizer["Owner_Telemetry"], IsActive = true }
+})
+
+<div class="telemetry-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon"><i data-lucide="activity"></i></span>
+            @Localizer["Owner_Telemetry"]
+        </h1>
+        <p class="page-subtitle"><loc key="Telemetry_Subtitle" /></p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success">
+            <strong>&#x2705;</strong> @Model.Success
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger">
+            <strong>&#x274C;</strong> @Model.Error
+        </div>
+    }
+
+    @* ─── Tab Navigation ─────────────────────────────────────────────── *@
+    <div class="tab-bar">
+        <a href="/Owner/Telemetry?tab=errors"
+           class="tab-item @(Model.ActiveTab == "errors" ? "tab-active" : "")">
+            <i data-lucide="alert-triangle"></i>
+            <loc key="Telemetry_Tab_Errors" />
+        </a>
+        <a href="/Owner/Telemetry?tab=performance"
+           class="tab-item @(Model.ActiveTab == "performance" ? "tab-active" : "")">
+            <i data-lucide="zap"></i>
+            <loc key="Telemetry_Tab_Performance" />
+        </a>
+        <a href="/Owner/Telemetry?tab=events"
+           class="tab-item @(Model.ActiveTab == "events" ? "tab-active" : "")">
+            <i data-lucide="bar-chart-2"></i>
+            <loc key="Telemetry_Tab_Events" />
+        </a>
+        <a href="/Owner/Telemetry?tab=cleanup"
+           class="tab-item @(Model.ActiveTab == "cleanup" ? "tab-active" : "")">
+            <i data-lucide="trash-2"></i>
+            <loc key="Telemetry_Tab_Cleanup" />
+        </a>
+    </div>
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* ERRORS TAB                                                         *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @if (Model.ActiveTab == "errors")
+    {
+        <div class="tab-content">
+            @* Error counts by type — last 7 days *@
+            @if (Model.ErrorCountsByType != null && Model.ErrorCountsByType.Any())
+            {
+                <div class="counts-section">
+                    <h2 class="section-title">
+                        <i data-lucide="pie-chart"></i>
+                        <loc key="Telemetry_ErrorsByType" /> &mdash;
+                        <span class="section-subtitle">@Localizer["Telemetry_Last7Days"]</span>
+                    </h2>
+                    <div class="counts-grid">
+                        @foreach (var kv in Model.ErrorCountsByType.OrderByDescending(x => x.Value))
+                        {
+                            <div class="count-chip">
+                                <span class="count-label">@kv.Key</span>
+                                <span class="count-badge">@kv.Value</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @* Recent errors table *@
+            <h2 class="section-title">
+                <i data-lucide="list"></i>
+                <loc key="Telemetry_RecentErrors" />
+            </h2>
+
+            @if (Model.RecentErrors == null || !Model.RecentErrors.Any())
+            {
+                <div class="empty-state">
+                    <i data-lucide="check-circle"></i>
+                    <p><loc key="Telemetry_NoErrors" /></p>
+                </div>
+            }
+            else
+            {
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><loc key="Telemetry_Col_Timestamp" /></th>
+                                <th><loc key="Telemetry_Col_Type" /></th>
+                                <th><loc key="Telemetry_Col_Message" /></th>
+                                <th><loc key="Telemetry_Col_Url" /></th>
+                                <th><loc key="Telemetry_Col_Source" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var err in Model.RecentErrors)
+                            {
+                                <tr>
+                                    <td class="ts-cell" title="@err.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") UTC">
+                                        @err.Timestamp.ToString("MM/dd HH:mm")
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(err.ErrorType))
+                                        {
+                                            <span class="type-badge type-error">@err.ErrorType</span>
+                                        }
+                                    </td>
+                                    <td class="msg-cell" title="@err.Message">
+                                        @(err.Message.Length > 120 ? err.Message.Substring(0, 120) + "…" : err.Message)
+                                    </td>
+                                    <td class="url-cell" title="@err.PageUrl">
+                                        @(err.PageUrl.Length > 50 ? "…" + err.PageUrl.Substring(err.PageUrl.Length - 47) : err.PageUrl)
+                                    </td>
+                                    <td class="src-cell">
+                                        @if (!string.IsNullOrEmpty(err.Source))
+                                        {
+                                            <span title="Line @err.LineNumber, Col @err.ColumnNumber">@System.IO.Path.GetFileName(err.Source)</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* PERFORMANCE TAB                                                    *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @if (Model.ActiveTab == "performance")
+    {
+        <div class="tab-content">
+            @* Web Vitals Summary *@
+            <h2 class="section-title">
+                <i data-lucide="gauge"></i>
+                <loc key="Telemetry_WebVitals" /> &mdash;
+                <span class="section-subtitle">@Localizer["Telemetry_Last7Days"]</span>
+            </h2>
+
+            @if (Model.WebVitalsSummary == null || !Model.WebVitalsSummary.Any())
+            {
+                <div class="empty-state">
+                    <i data-lucide="inbox"></i>
+                    <p><loc key="Telemetry_NoPerformanceData" /></p>
+                </div>
+            }
+            else
+            {
+                <div class="vitals-grid">
+                    @foreach (var kv in Model.WebVitalsSummary)
+                    {
+                        var s = kv.Value;
+                        var total = s.GoodCount + s.NeedsImprovementCount + s.PoorCount;
+                        var goodPct = total > 0 ? (int)Math.Round(s.GoodCount * 100.0 / total) : 0;
+                        var poorPct = total > 0 ? (int)Math.Round(s.PoorCount * 100.0 / total) : 0;
+                        var ratingClass = goodPct >= 75 ? "vital-good" : poorPct >= 25 ? "vital-poor" : "vital-needs-improvement";
+                        <div class="vital-card @ratingClass">
+                            <div class="vital-name">@kv.Key</div>
+                            <div class="vital-value">
+                                @(kv.Key == "CLS"
+                                    ? s.Median.ToString("F3")
+                                    : ((int)s.Median).ToString())
+                                <span class="vital-unit">@(kv.Key == "CLS" ? "" : "ms")</span>
+                            </div>
+                            <div class="vital-meta">
+                                <span title="@Localizer["Telemetry_P75"]">p75: @(kv.Key == "CLS" ? s.P75.ToString("F3") : ((int)s.P75).ToString())</span>
+                                &bull;
+                                <span title="@Localizer["Telemetry_P95"]">p95: @(kv.Key == "CLS" ? s.P95.ToString("F3") : ((int)s.P95).ToString())</span>
+                            </div>
+                            <div class="vital-distribution">
+                                <span class="dist-good" title="@Localizer["Telemetry_Good"]">&#x25CF; @s.GoodCount</span>
+                                <span class="dist-needs" title="@Localizer["Telemetry_NeedsImprovement"]">&#x25CF; @s.NeedsImprovementCount</span>
+                                <span class="dist-poor" title="@Localizer["Telemetry_Poor"]">&#x25CF; @s.PoorCount</span>
+                            </div>
+                            <div class="vital-samples"><loc key="Telemetry_Samples" />: @s.SampleCount</div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @* Recent performance metrics table *@
+            <h2 class="section-title" style="margin-top: 2rem;">
+                <i data-lucide="list"></i>
+                <loc key="Telemetry_RecentMetrics" />
+            </h2>
+
+            @if (Model.RecentMetrics == null || !Model.RecentMetrics.Any())
+            {
+                <div class="empty-state">
+                    <i data-lucide="inbox"></i>
+                    <p><loc key="Telemetry_NoPerformanceData" /></p>
+                </div>
+            }
+            else
+            {
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><loc key="Telemetry_Col_Timestamp" /></th>
+                                <th><loc key="Telemetry_Col_Metric" /></th>
+                                <th><loc key="Telemetry_Col_Value" /></th>
+                                <th><loc key="Telemetry_Col_Rating" /></th>
+                                <th><loc key="Telemetry_Col_Url" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in Model.RecentMetrics)
+                            {
+                                <tr>
+                                    <td class="ts-cell" title="@m.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") UTC">
+                                        @m.Timestamp.ToString("MM/dd HH:mm")
+                                    </td>
+                                    <td><span class="type-badge type-metric">@m.MetricName</span></td>
+                                    <td>
+                                        @(m.MetricName == "CLS"
+                                            ? m.Value.ToString("F4")
+                                            : ((int)m.Value).ToString() + " ms")
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(m.Rating))
+                                        {
+                                            <span class="rating-badge rating-@m.Rating">@m.Rating</span>
+                                        }
+                                    </td>
+                                    <td class="url-cell" title="@m.PageUrl">
+                                        @(m.PageUrl.Length > 50 ? "…" + m.PageUrl.Substring(m.PageUrl.Length - 47) : m.PageUrl)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* EVENTS TAB                                                         *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @if (Model.ActiveTab == "events")
+    {
+        <div class="tab-content">
+            @* Event counts by type — last 7 days *@
+            @if (Model.EventCountsByType != null && Model.EventCountsByType.Any())
+            {
+                <div class="counts-section">
+                    <h2 class="section-title">
+                        <i data-lucide="pie-chart"></i>
+                        <loc key="Telemetry_EventsByType" /> &mdash;
+                        <span class="section-subtitle">@Localizer["Telemetry_Last7Days"]</span>
+                    </h2>
+                    <div class="counts-grid">
+                        @foreach (var kv in Model.EventCountsByType.OrderByDescending(x => x.Value))
+                        {
+                            <div class="count-chip">
+                                <span class="count-label">@kv.Key</span>
+                                <span class="count-badge">@kv.Value</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @* Recent events table *@
+            <h2 class="section-title">
+                <i data-lucide="list"></i>
+                <loc key="Telemetry_RecentEvents" />
+            </h2>
+
+            @if (Model.RecentEvents == null || !Model.RecentEvents.Any())
+            {
+                <div class="empty-state">
+                    <i data-lucide="inbox"></i>
+                    <p><loc key="Telemetry_NoEvents" /></p>
+                </div>
+            }
+            else
+            {
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><loc key="Telemetry_Col_Timestamp" /></th>
+                                <th><loc key="Telemetry_Col_EventType" /></th>
+                                <th><loc key="Telemetry_Col_Url" /></th>
+                                <th><loc key="Telemetry_Col_Session" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var evt in Model.RecentEvents)
+                            {
+                                <tr>
+                                    <td class="ts-cell" title="@evt.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") UTC">
+                                        @evt.Timestamp.ToString("MM/dd HH:mm")
+                                    </td>
+                                    <td><span class="type-badge type-event">@evt.EventType</span></td>
+                                    <td class="url-cell" title="@evt.PageUrl">
+                                        @(evt.PageUrl.Length > 50 ? "…" + evt.PageUrl.Substring(evt.PageUrl.Length - 47) : evt.PageUrl)
+                                    </td>
+                                    <td class="src-cell">
+                                        @if (!string.IsNullOrEmpty(evt.SessionId))
+                                        {
+                                            <span title="@evt.SessionId">@evt.SessionId.Substring(0, Math.Min(8, evt.SessionId.Length))…</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* CLEANUP TAB                                                        *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @if (Model.ActiveTab == "cleanup")
+    {
+        <div class="tab-content">
+            <div class="cleanup-card">
+                <h2 class="section-title">
+                    <i data-lucide="trash-2"></i>
+                    <loc key="Telemetry_Cleanup_Title" />
+                </h2>
+                <p class="cleanup-desc"><loc key="Telemetry_Cleanup_Description" /></p>
+
+                <form method="post" asp-page-handler="Cleanup">
+                    <div class="cleanup-form">
+                        <label for="retentionDays" class="form-label">
+                            <loc key="Telemetry_Cleanup_RetentionDays" />
+                        </label>
+                        <div class="form-row">
+                            <input type="number"
+                                   id="retentionDays"
+                                   name="retentionDays"
+                                   value="30"
+                                   min="1"
+                                   max="365"
+                                   class="form-input retention-input" />
+                            <span class="form-hint"><loc key="Telemetry_Cleanup_DaysHint" /></span>
+                        </div>
+                        <div class="cleanup-warning">
+                            <i data-lucide="alert-triangle"></i>
+                            <loc key="Telemetry_Cleanup_Warning" />
+                        </div>
+                        <button type="submit" class="btn btn-danger">
+                            <i data-lucide="trash-2"></i>
+                            <loc key="Telemetry_Cleanup_Run" />
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.telemetry-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ─── Tab Bar ─────────────────────────────────────────────────────────────── */
+.tab-bar {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+.tab-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px 6px 0 0;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab-item:hover {
+    background: var(--hover);
+    color: var(--foreground);
+}
+
+.tab-active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: transparent;
+}
+
+/* ─── Section Titles ──────────────────────────────────────────────────────── */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: var(--foreground);
+}
+
+.section-subtitle {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+/* ─── Counts Grid ─────────────────────────────────────────────────────────── */
+.counts-section {
+    margin-bottom: 2rem;
+}
+
+.counts-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.count-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+}
+
+.count-label {
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: var(--foreground);
+}
+
+.count-badge {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 10px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* ─── Web Vitals Grid ─────────────────────────────────────────────────────── */
+.vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.vital-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    border-inline-start: 4px solid var(--border);
+}
+
+.vital-good { border-inline-start-color: var(--success); }
+.vital-needs-improvement { border-inline-start-color: #f59e0b; }
+.vital-poor { border-inline-start-color: var(--danger); }
+
+.vital-name {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.vital-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.375rem;
+}
+
+.vital-unit {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.vital-meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+}
+
+.vital-distribution {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.375rem;
+}
+
+.dist-good { color: var(--success); }
+.dist-needs { color: #f59e0b; }
+.dist-poor { color: var(--danger); }
+
+.vital-samples {
+    font-size: 0.6875rem;
+    color: var(--muted);
+}
+
+/* ─── Rating Badge ────────────────────────────────────────────────────────── */
+.rating-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.rating-good { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.rating-needs-improvement { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.rating-poor { background: var(--danger-soft); color: var(--danger); }
+.rating-unknown { background: var(--hover); color: var(--muted); }
+
+/* ─── Type Badge ──────────────────────────────────────────────────────────── */
+.type-badge {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.type-error { background: var(--danger-soft); color: var(--danger); }
+.type-event { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.type-metric { background: rgba(14, 165, 233, 0.12); color: #0ea5e9; }
+
+/* ─── Table ───────────────────────────────────────────────────────────────── */
+.table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.data-table thead tr {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+    padding: 0.75rem 1rem;
+    text-align: start;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.data-table td {
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background: var(--hover);
+}
+
+.ts-cell { white-space: nowrap; color: var(--muted); font-size: 0.75rem; }
+.msg-cell { max-width: 360px; word-break: break-word; }
+.url-cell { max-width: 220px; word-break: break-all; color: var(--muted); font-size: 0.75rem; }
+.src-cell { white-space: nowrap; color: var(--muted); font-size: 0.75rem; }
+
+/* ─── Empty State ─────────────────────────────────────────────────────────── */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem;
+    color: var(--muted);
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+}
+
+/* ─── Cleanup Card ────────────────────────────────────────────────────────── */
+.cleanup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+    max-width: 540px;
+}
+
+.cleanup-desc {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.cleanup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.retention-input {
+    width: 90px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 0.875rem;
+}
+
+.form-hint {
+    font-size: 0.8125rem;
+    color: var(--muted);
+}
+
+.cleanup-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid #f59e0b;
+    color: #d97706;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+}
+
+/* ─── Alerts ──────────────────────────────────────────────────────────────── */
+.alert-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid var(--success);
+    color: var(--success);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-danger {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+</style>

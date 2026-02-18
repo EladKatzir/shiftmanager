@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Owner_Permissions"];
@@ -130,7 +131,7 @@
                                 {
                                     <span class="badge badge-manual">@(grant.GrantedByName ?? Localizer["Manual"])</span>
                                 }
-                                <span class="grant-date">@grant.GrantedAt.ToString("MMM dd")</span>
+                                <span class="grant-date">@Localization.FormatShortDate(grant.GrantedAt)</span>
                             </div>
                         </div>
                     }

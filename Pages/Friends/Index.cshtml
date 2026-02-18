@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{ Layout = "_Layout"; ViewData["Title"] = Localizer["Friends"]; }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
@@ -117,7 +118,7 @@
             <div class="request-card">
                 <div class="request-header">
                     <strong>@request.FromUserName</strong>
-                    <span class="request-time">@request.RequestedAt.ToString("MMM dd, yyyy")</span>
+                    <span class="request-time">@Localization.FormatMediumDate(request.RequestedAt)</span>
                 </div>
                 <div class="friend-actions">
                     <form method="post" asp-page-handler="Accept" style="display:inline">
@@ -146,7 +147,7 @@
             <div class="request-card">
                 <div class="request-header">
                     <span><loc key="RequestSentTo" /> <strong>@request.ToUserName</strong></span>
-                    <span class="request-time">@request.RequestedAt.ToString("MMM dd, yyyy")</span>
+                    <span class="request-time">@Localization.FormatMediumDate(request.RequestedAt)</span>
                 </div>
                 <div class="friend-actions">
                     <form method="post" asp-page-handler="CancelRequest" style="display:inline"
@@ -177,7 +178,7 @@
                     <p class="friend-meta">
                         @if (!string.IsNullOrEmpty(friend.CompanyName)) { <span>@friend.CompanyName</span> }
                         @if (!string.IsNullOrEmpty(friend.JobTypeName)) { <span> · @friend.JobTypeName</span> }
-                        <span> · @Localizer["FriendsSince"] @friend.FriendsSince.ToString("MMM yyyy")</span>
+                        <span> · @Localizer["FriendsSince"] @Localization.FormatMonthYear(friend.FriendsSince)</span>
                     </p>
                 </div>
                 <div class="friend-actions">

@@ -2,7 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
+using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Api.Signup;
 
@@ -15,17 +19,26 @@ namespace ShiftManager.Pages.Api.Signup;
 public class GetSignupOptionsModel : PageModel
 {
     private readonly AppDbContext _db;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<GetSignupOptionsModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IRoleService _roleService;
+    private readonly IJobTypeService _jobTypeService;
 
     public GetSignupOptionsModel(
         AppDbContext db,
-        IConfiguration configuration,
-        ILogger<GetSignupOptionsModel> logger)
+        IFeatureFlagService featureFlagService,
+        ILogger<GetSignupOptionsModel> logger,
+        IStringLocalizer<SharedResources> localizer,
+        IRoleService roleService,
+        IJobTypeService jobTypeService)
     {
         _db = db;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
+        _localizer = localizer;
+        _roleService = roleService;
+        _jobTypeService = jobTypeService;
     }
 
     /// <summary>
@@ -33,7 +46,7 @@ public class GetSignupOptionsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetMoleculesAsync()
     {
-        if (!IsPublicSignupEnabled())
+        if (!await IsPublicSignupEnabledAsync())
         {
             return new JsonResult(new { error = "Public signup is disabled" }) { StatusCode = 403 };
         }
@@ -65,7 +78,7 @@ public class GetSignupOptionsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetCompaniesAsync(int moleculeId)
     {
-        if (!IsPublicSignupEnabled())
+        if (!await IsPublicSignupEnabledAsync())
         {
             return new JsonResult(new { error = "Public signup is disabled" }) { StatusCode = 403 };
         }
@@ -101,7 +114,7 @@ public class GetSignupOptionsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetJobTypesAsync(int moleculeId)
     {
-        if (!IsPublicSignupEnabled())
+        if (!await IsPublicSignupEnabledAsync())
         {
             return new JsonResult(new { error = "Public signup is disabled" }) { StatusCode = 403 };
         }
@@ -120,10 +133,8 @@ public class GetSignupOptionsModel : PageModel
                 return new JsonResult(new { error = "Molecule not found" }) { StatusCode = 404 };
             }
 
-            var jobTypes = await _db.JobTypes
-                .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
-                .OrderBy(jt => jt.SortOrder)
-                .ThenBy(jt => jt.DisplayName ?? jt.Name)
+            var jobTypesRaw = await _jobTypeService.GetJobTypesAsync(molecule.AreaId);
+            var jobTypes = jobTypesRaw
                 .Select(jt => new JobTypeOption
                 {
                     Id = jt.Id,
@@ -131,7 +142,7 @@ public class GetSignupOptionsModel : PageModel
                     Color = jt.Color,
                     Key = jt.Name
                 })
-                .ToListAsync();
+                .ToList();
 
             return new JsonResult(new { jobTypes });
         }
@@ -147,17 +158,15 @@ public class GetSignupOptionsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetAllJobTypesAsync()
     {
-        if (!IsPublicSignupEnabled())
+        if (!await IsPublicSignupEnabledAsync())
         {
             return new JsonResult(new { error = "Public signup is disabled" }) { StatusCode = 403 };
         }
 
         try
         {
-            var jobTypes = await _db.JobTypes
-                .Where(jt => jt.IsActive)
-                .OrderBy(jt => jt.SortOrder)
-                .ThenBy(jt => jt.DisplayName ?? jt.Name)
+            var allJobTypesRaw = await _jobTypeService.GetAllJobTypesAsync();
+            var jobTypes = allJobTypesRaw
                 .Select(jt => new JobTypeOption
                 {
                     Id = jt.Id,
@@ -165,7 +174,7 @@ public class GetSignupOptionsModel : PageModel
                     Color = jt.Color,
                     Key = jt.Name
                 })
-                .ToListAsync();
+                .ToList();
 
             return new JsonResult(new { jobTypes });
         }
@@ -181,16 +190,15 @@ public class GetSignupOptionsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetRoleTemplatesAsync()
     {
-        if (!IsPublicSignupEnabled())
+        if (!await IsPublicSignupEnabledAsync())
         {
             return new JsonResult(new { error = "Public signup is disabled" }) { StatusCode = 403 };
         }
 
         try
         {
-            var templates = await _db.RoleTemplates
-                .Where(rt => rt.IsActive && rt.IsVisibleInSignup)
-                .OrderBy(rt => rt.SortOrder)
+            var signupTemplates = await _roleService.GetSignupRoleTemplatesAsync();
+            var templates = signupTemplates
                 .Select(rt => new RoleTemplateOption
                 {
                     Id = rt.Id,
@@ -200,7 +208,14 @@ public class GetSignupOptionsModel : PageModel
                     NameKey = rt.NameKey,
                     DerivedUserRole = rt.DerivedUserRole.HasValue ? (int)rt.DerivedUserRole.Value : (int?)null
                 })
-                .ToListAsync();
+                .ToList();
+
+            // Resolve NameKey to localized display name for each template
+            foreach (var t in templates)
+            {
+                if (!string.IsNullOrEmpty(t.NameKey))
+                    t.DisplayName = _localizer[t.NameKey].Value;
+            }
 
             return new JsonResult(new { roleTemplates = templates });
         }
@@ -211,9 +226,9 @@ public class GetSignupOptionsModel : PageModel
         }
     }
 
-    private bool IsPublicSignupEnabled()
+    private async Task<bool> IsPublicSignupEnabledAsync()
     {
-        return _configuration.GetValue<bool>("Features:AllowPublicSignup", false);
+        return await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
     }
 }
 
@@ -247,6 +262,8 @@ public class RoleTemplateOption
     public string? DisplayNameEN { get; set; }
     public string? DisplayNameHE { get; set; }
     public string? NameKey { get; set; }
+    /// <summary>Localized display name resolved from NameKey (server-side).</summary>
+    public string? DisplayName { get; set; }
     public int? DerivedUserRole { get; set; }
 }
 

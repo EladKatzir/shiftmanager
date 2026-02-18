@@ -15,6 +15,7 @@ using System.Reflection;
 using ShiftManager.Middleware;
 using ShiftManager.Authorization;
 using ShiftManager.Hubs;
+using ShiftManager.Data.SeedData;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,13 +124,22 @@ builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 builder.Services.AddScoped<ITenantResolver, TenantResolver>();
 builder.Services.AddScoped<ICompanyContext, CompanyContext>();
 
+// Section 12B: Startup validation — fail fast instead of cryptic runtime errors
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrEmpty(connectionString))
+    throw new InvalidOperationException("ConnectionStrings:Default is required. Check appsettings.json.");
+
+var ownerEmail = builder.Configuration["Seeding:Owner:Email"];
+if (string.IsNullOrEmpty(ownerEmail))
+    throw new InvalidOperationException("Seeding:Owner:Email is required. Check appsettings.json.");
+
 // Multitenancy Phase 2: Register CompanyId interceptor
 builder.Services.AddSingleton<CompanyIdInterceptor>();
 
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, opt) =>
 {
     var interceptor = serviceProvider.GetRequiredService<CompanyIdInterceptor>();
-    opt.UseSqlite(builder.Configuration.GetConnectionString("Default"))
+    opt.UseSqlite(connectionString)
        .EnableDetailedErrors()
        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
        .AddInterceptors(interceptor)
@@ -511,38 +521,155 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // H-04: Seed RoleTemplates — upsert-style (insert missing by Key)
+    // H-04: Seed RoleTemplates — upsert-style (insert missing by Key, update existing with missing fields)
     {
         var roleTemplates = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
-        var existingKeys = await db.RoleTemplates.Select(r => r.Key).ToHashSetAsync();
+        var seedByKey = roleTemplates.ToDictionary(r => r.Key);
+        var existingTemplates = await db.RoleTemplates.ToListAsync();
+        var existingKeys = existingTemplates.Select(r => r.Key).ToHashSet();
         var newTemplates = roleTemplates.Where(r => !existingKeys.Contains(r.Key)).ToList();
         if (newTemplates.Any())
         {
             db.RoleTemplates.AddRange(newTemplates);
             await db.SaveChangesAsync();
+            logger.LogInformation("Seeded {Count} new role templates", newTemplates.Count);
+        }
 
-            // Seed grants for ALL templates (existing + new) to fill in any missing mappings
-            var roleTemplateGrants = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
-            var existingMappings = await db.RoleTemplateGrants
-                .Select(g => new { g.RoleTemplateId, g.GrantTypeId })
-                .ToListAsync();
-            var existingSet = existingMappings.Select(m => $"{m.RoleTemplateId}:{m.GrantTypeId}").ToHashSet();
-            var newMappings = roleTemplateGrants
-                .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}"))
-                .ToList();
-            if (newMappings.Any())
+        // Sync DerivedUserRole, ScopeLevel, IsVisibleInSignup, and other fields from seed to existing templates
+        // (handles the case where migration added columns but didn't populate existing rows correctly)
+        var syncCount = 0;
+        foreach (var existing in existingTemplates)
+        {
+            if (!seedByKey.TryGetValue(existing.Key, out var seed)) continue;
+            var changed = false;
+
+            if (!existing.DerivedUserRole.HasValue && seed.DerivedUserRole.HasValue)
             {
-                // Clear hardcoded Ids so SQLite auto-generates them (avoids UNIQUE constraint on Id)
-                foreach (var m in newMappings) m.Id = 0;
-                db.RoleTemplateGrants.AddRange(newMappings);
-                await db.SaveChangesAsync();
+                existing.DerivedUserRole = seed.DerivedUserRole;
+                changed = true;
             }
-            logger.LogInformation("Seeded {Count} new role templates, {MappingCount} new grant mappings", newTemplates.Count, newMappings.Count);
+            if (string.IsNullOrEmpty(existing.DescriptionKey) && !string.IsNullOrEmpty(seed.DescriptionKey))
+            {
+                existing.DescriptionKey = seed.DescriptionKey;
+                changed = true;
+            }
+            if (existing.ScopeLevel == default && seed.ScopeLevel != default)
+            {
+                existing.ScopeLevel = seed.ScopeLevel;
+                changed = true;
+            }
+            // IsVisibleInSignup: migration set default=true for all rows, but some system templates
+            // (Owner, Trainee, Assigner) should be false — always sync from seed for system templates
+            if (existing.IsSystem && existing.IsVisibleInSignup != seed.IsVisibleInSignup)
+            {
+                existing.IsVisibleInSignup = seed.IsVisibleInSignup;
+                changed = true;
+            }
+            // DisplayNameEN/HE: sync from seed if not already set by admin
+            if (string.IsNullOrEmpty(existing.DisplayNameEN) && !string.IsNullOrEmpty(seed.DisplayNameEN))
+            {
+                existing.DisplayNameEN = seed.DisplayNameEN;
+                changed = true;
+            }
+            if (string.IsNullOrEmpty(existing.DisplayNameHE) && !string.IsNullOrEmpty(seed.DisplayNameHE))
+            {
+                existing.DisplayNameHE = seed.DisplayNameHE;
+                changed = true;
+            }
+
+            if (changed) syncCount++;
+        }
+        if (syncCount > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Synced {Count} existing role templates with missing seed data (DerivedUserRole, ScopeLevel)", syncCount);
+        }
+
+        // Seed grants for ALL templates (existing + new) to fill in any missing mappings
+        var roleTemplateGrants = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
+        var existingMappings = await db.RoleTemplateGrants
+            .Select(g => new { g.RoleTemplateId, g.GrantTypeId })
+            .ToListAsync();
+        var existingSet = existingMappings.Select(m => $"{m.RoleTemplateId}:{m.GrantTypeId}").ToHashSet();
+        var newMappings = roleTemplateGrants
+            .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}"))
+            .ToList();
+        if (newMappings.Any())
+        {
+            // Clear hardcoded Ids so SQLite auto-generates them (avoids UNIQUE constraint on Id)
+            foreach (var m in newMappings) m.Id = 0;
+            db.RoleTemplateGrants.AddRange(newMappings);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Seeded {MappingCount} new grant mappings", newMappings.Count);
         }
     }
 
     // Seed Shifty Organization (Project → Area → Molecules → Companies including SystemAdmins)
     await ShiftManager.Data.SeedData.ShiftyOrganizationSeed.SeedAsync(db);
+
+    // ============================================================
+    // CATCH-UP: Ensure System molecule, SystemAdmins, and HQ companies exist
+    // (these were added to ShiftyOrganizationSeed after some DBs were already seeded)
+    // ============================================================
+    {
+        var area = await db.Areas.FirstOrDefaultAsync(a => a.Name == "190");
+        if (area != null)
+        {
+            // 1. Ensure System molecule exists
+            var systemMol = await db.Molecules.FirstOrDefaultAsync(m => m.Name == "System" && m.AreaId == area.Id);
+            if (systemMol == null)
+            {
+                systemMol = new Molecule { AreaId = area.Id, Name = "System", DisplayName = "מערכת", Type = MoleculeType.System };
+                db.Molecules.Add(systemMol);
+                await db.SaveChangesAsync();
+                logger.LogInformation("Catch-up: Created System molecule");
+            }
+
+            // 2. Ensure SystemAdmins company exists (under System molecule)
+            if (!await db.Companies.AnyAsync(c => c.Name == "SystemAdmins" && c.MoleculeId == systemMol.Id))
+            {
+                // Check if SystemAdmins exists under a wrong/no molecule and fix it
+                var orphanedSysAdmins = await db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Name == "SystemAdmins");
+                if (orphanedSysAdmins != null)
+                {
+                    orphanedSysAdmins.MoleculeId = systemMol.Id;
+                    logger.LogInformation("Catch-up: Linked orphaned SystemAdmins company to System molecule");
+                }
+                else
+                {
+                    db.Companies.Add(new Company { Name = "SystemAdmins", DisplayName = "מנהלי מערכת", Slug = "system-admins", MoleculeId = systemMol.Id });
+                    logger.LogInformation("Catch-up: Created SystemAdmins company");
+                }
+                await db.SaveChangesAsync();
+            }
+
+            // 3. Ensure each non-System molecule has an HQ company (for Director/AreaAdmin signup)
+            var allMolecules = await db.Molecules.Where(m => m.AreaId == area.Id && m.Type != MoleculeType.System).ToListAsync();
+            var moleculesWithHQ = await db.Companies
+                .Where(c => c.IsHeadquarters)
+                .Select(c => c.MoleculeId)
+                .ToHashSetAsync();
+
+            var missingHQ = allMolecules.Where(m => !moleculesWithHQ.Contains(m.Id)).ToList();
+            if (missingHQ.Count > 0)
+            {
+                foreach (var mol in missingHQ)
+                {
+                    db.Companies.Add(new Company
+                    {
+                        Name = "HQ",
+                        DisplayName = "כלל צוותי",
+                        Slug = $"hq-{mol.Name.ToLowerInvariant()}",
+                        MoleculeId = mol.Id,
+                        IsHeadquarters = true
+                    });
+                }
+                await db.SaveChangesAsync();
+                logger.LogInformation("Catch-up: Created {Count} missing HQ companies for molecules: {Names}",
+                    missingHQ.Count, string.Join(", ", missingHQ.Select(m => m.Name)));
+            }
+        }
+    }
 
     // ============================================================
     // SEED ADDITIONAL MOLECULES/COMPANIES FROM appsettings.json
@@ -737,7 +864,10 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Seed test Director user and companies (for QA)
-    var enableDirectorRole = app.Configuration.GetValue<bool>("Features:EnableDirectorRole", false);
+    // Section 1E: Migrated from IConfiguration to IFeatureFlagService
+    // Uses async since cache isn't warmed yet at seeding time (warming happens after seeding)
+    var seedFlagService = scope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
+    var enableDirectorRole = await seedFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnableDirectorRole);
     if (enableDirectorRole && app.Environment.IsDevelopment())
     {
         // Create second company if it doesn't exist
@@ -913,6 +1043,17 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "An error occurred while repairing test user grants");
     }
+}
+
+// ============================================================
+// WARM FEATURE FLAG CACHE (Section 1B)
+// Loads all flags from DB into IMemoryCache so sync IsEnabled()
+// works immediately without DB queries during request handling.
+// ============================================================
+using (var scope = app.Services.CreateScope())
+{
+    var flagService = scope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
+    await flagService.WarmCacheAsync();
 }
 
 // C-08: Log startup duration for diagnostics
@@ -1092,8 +1233,8 @@ app.MapControllers(); // Map API controllers
 // ============================================================
 app.Use(async (context, next) =>
 {
-    var config = context.RequestServices.GetRequiredService<IConfiguration>();
-    var excelCalendarsEnabled = config.GetValue<bool>("Features:ExcelCalendars");
+    var flagService = context.RequestServices.GetRequiredService<IFeatureFlagService>();
+    var excelCalendarsEnabled = flagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendars);
 
     // Only redirect GET requests — POST requests must reach the original page's handlers
     // for CRUD operations (e.g., Calendar/Table POST handlers for shift assignment)
@@ -1103,7 +1244,7 @@ app.Use(async (context, next) =>
         string? redirectTo = null;
 
         // Shifts calendar redirects
-        if (config.GetValue<bool>("Features:ExcelCalendarShifts"))
+        if (flagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarShifts))
         {
             if (path == "/calendar/month" || path == "/calendar/week" ||
                 path == "/calendar/day" || path == "/calendar/table")
@@ -1113,7 +1254,7 @@ app.Use(async (context, next) =>
         }
 
         // Chores calendar redirects
-        if (config.GetValue<bool>("Features:ExcelCalendarChores"))
+        if (flagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarChores))
         {
             if (path == "/chores/calendar")
             {
@@ -1127,7 +1268,7 @@ app.Use(async (context, next) =>
         }
 
         // On-Call calendar redirects
-        if (config.GetValue<bool>("Features:ExcelCalendarOnCall"))
+        if (flagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarOnCall))
         {
             // Only redirect authenticated users; anonymous users stay on Public page
             if (path == "/public/onduty" && context.User.Identity?.IsAuthenticated == true)
@@ -1253,12 +1394,15 @@ app.MapGet("/api/v1/version", () =>
     }
 
     // AllowPublicSignup warning (fixes H-07, B-10)
-    var publicSignup = app.Configuration.GetValue<bool>("Features:AllowPublicSignup");
-    if (publicSignup && !app.Environment.IsDevelopment())
+    using (var flagScope = app.Services.CreateScope())
     {
-        startupLogger.LogWarning(
-            "PUBLIC SIGNUP ENABLED: Anyone with access to this server can create an account. " +
-            "Set Features:AllowPublicSignup=false in appsettings.json for production deployments.");
+        var flagService = flagScope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
+        if (flagService.IsEnabled(FeatureFlagSeed.Flags.AllowPublicSignup) && !app.Environment.IsDevelopment())
+        {
+            startupLogger.LogWarning(
+                "PUBLIC SIGNUP ENABLED: Anyone with access to this server can create an account. " +
+                "Disable via Owner > Feature Flags or set Features:AllowPublicSignup=false in appsettings.json.");
+        }
     }
 }
 
@@ -1279,8 +1423,12 @@ void DisplayStartupBanner(WebApplication app)
     // Get configuration values
     var emailEnabled = app.Configuration.GetValue<bool>("Email:Enabled");
     var griffinEnabled = app.Configuration.GetValue<bool>("Griffin:Enabled");
-    var publicSignup = app.Configuration.GetValue<bool>("Features:AllowPublicSignup");
-    var apiEnabled = app.Configuration.GetValue<bool>("Features:Api:Enabled");
+
+    // Feature flags from DB-backed service (warm cache loaded at startup)
+    using var flagScope = app.Services.CreateScope();
+    var flagService = flagScope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
+    var publicSignup = flagService.IsEnabled(FeatureFlagSeed.Flags.AllowPublicSignup);
+    var apiEnabled = flagService.IsEnabled(FeatureFlagSeed.Flags.ApiEnabled);
     var env = app.Environment.EnvironmentName;
     var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
     
@@ -1404,18 +1552,22 @@ void DisplayStartupBanner(WebApplication app)
     WriteStatusLine(f1);
     WriteStatusLine(f2);
 
-    // H-06: Log all feature flag states for version tracking
+    // H-06: Log all feature flag states for version tracking (reads from DB-backed IFeatureFlagService)
     {
         var featureFlagLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        var featureKeys = new[] {
-            "Features:EnableDailyNotifications", "Features:EnableDirectorRole",
-            "Features:AllowPublicSignup", "Features:Api:Enabled",
-            "Features:ExcelCalendars", "Features:ExcelCalendarShifts",
-            "Features:ExcelCalendarChores", "Features:ExcelCalendarOnCall"
+        var flagsToLog = new[] {
+            FeatureFlagSeed.Flags.EnableDailyNotifications,
+            FeatureFlagSeed.Flags.EnableDirectorRole,
+            FeatureFlagSeed.Flags.AllowPublicSignup,
+            FeatureFlagSeed.Flags.ApiEnabled,
+            FeatureFlagSeed.Flags.ExcelCalendars,
+            FeatureFlagSeed.Flags.ExcelCalendarShifts,
+            FeatureFlagSeed.Flags.ExcelCalendarChores,
+            FeatureFlagSeed.Flags.ExcelCalendarOnCall
         };
-        foreach (var key in featureKeys)
+        foreach (var key in flagsToLog)
         {
-            var val = app.Configuration.GetValue<bool>(key);
+            var val = flagService.IsEnabled(key);
             featureFlagLogger.LogInformation("FeatureFlag: {Key}={Value}", key, val);
         }
     }

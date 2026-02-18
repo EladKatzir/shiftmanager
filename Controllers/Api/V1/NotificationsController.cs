@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Services;
 using ShiftManager.Services.Api;
 
 namespace ShiftManager.Controllers.Api.V1;
@@ -18,16 +20,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class NotificationsController : ControllerBase
 {
     private readonly NotificationApiService _notificationService;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<NotificationsController> _logger;
 
     public NotificationsController(
         NotificationApiService notificationService,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<NotificationsController> logger)
     {
         _notificationService = notificationService;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -50,7 +52,7 @@ public class NotificationsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Notifications:ListEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiNotificationsList))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListNotifications), HttpContext.Request.Path);
@@ -116,7 +118,7 @@ public class NotificationsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Notifications:GetEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiNotificationsGet))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetNotification), HttpContext.Request.Path);
@@ -176,7 +178,7 @@ public class NotificationsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Notifications:MarkReadEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiNotificationsMarkRead))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(MarkAsRead), HttpContext.Request.Path);
@@ -245,7 +247,7 @@ public class NotificationsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Notifications:MarkAllReadEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiNotificationsMarkAllRead))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(MarkAllAsRead), HttpContext.Request.Path);

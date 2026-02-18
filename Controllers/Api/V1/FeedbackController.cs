@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Services;
 using ShiftManager.Services.Api;
 
 namespace ShiftManager.Controllers.Api.V1;
@@ -18,16 +20,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class FeedbackController : ControllerBase
 {
     private readonly FeedbackApiService _feedbackService;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<FeedbackController> _logger;
 
     public FeedbackController(
         FeedbackApiService feedbackService,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<FeedbackController> logger)
     {
         _feedbackService = feedbackService;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -53,7 +55,7 @@ public class FeedbackController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Feedback:ListEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackList))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListFeedback), HttpContext.Request.Path);
@@ -118,7 +120,7 @@ public class FeedbackController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Feedback:GetEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackGet))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetFeedback), HttpContext.Request.Path);
@@ -176,7 +178,7 @@ public class FeedbackController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Feedback:CreateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackCreate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(CreateFeedback), HttpContext.Request.Path);
@@ -262,7 +264,7 @@ public class FeedbackController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Feedback:UpdateStatusEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackUpdateStatus))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(UpdateFeedbackStatus), HttpContext.Request.Path);
@@ -339,7 +341,7 @@ public class FeedbackController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:Feedback:DeleteEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackDelete))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(DeleteFeedback), HttpContext.Request.Path);

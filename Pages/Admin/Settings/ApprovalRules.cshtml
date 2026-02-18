@@ -1,0 +1,233 @@
+@page
+@model ShiftManager.Pages.Admin.Settings.ApprovalRulesModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{ Layout = "_Layout"; ViewData["Title"] = Localizer["ApprovalRules"]; }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Settings"], Url = "/Admin/Settings" },
+    new BreadcrumbItem { Label = Localizer["ApprovalRules"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
+        .alert-success, .alert-error, .alert-warning { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
+        .alert-success { background: var(--success); color: var(--success-text); }
+        .alert-error { background: var(--danger); color: var(--danger-text); }
+        .alert-warning { background: var(--warning); color: var(--warning-text); }
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-input, .form-select { width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
+        .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: var(--danger-text); }
+        .btn-secondary { background: var(--surface-soft); color: var(--text); }
+        .rules-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .rules-table th, .rules-table td { padding: 0.75rem 1rem; text-align: start; border-bottom: 1px solid var(--border); }
+        .rules-table th { font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        .rules-table tr:hover { background: var(--surface-soft); }
+        .badge { display: inline-flex; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .badge-active { background: var(--success-soft, rgba(76,175,80,0.1)); color: var(--success); }
+        .badge-inactive { background: var(--border); color: var(--text-muted); }
+        .badge-default { background: var(--primary-soft); color: var(--primary); }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+        .checkbox-group input { width: auto; margin: 0; }
+        .actions-cell { display: flex; gap: 0.5rem; align-items: center; }
+        .table-responsive { overflow-x: auto; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ApprovalRules" /></h1>
+    <p class="page-subtitle"><loc key="ApprovalRulesDescription" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+
+@if (Model.OrphanedRules.Any())
+{
+    <div class="alert-warning">
+        <span>&#9888;</span>
+        <div>
+            <strong><loc key="OrphanedRulesWarning" /></strong>
+            <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                @foreach (var orphan in Model.OrphanedRules)
+                {
+                    <li>@Localizer["Rule"] #@orphan.RuleId: @orphan.Reason</li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="CreateRule" /></h3>
+    <form method="post" asp-page-handler="Create">
+        @Html.AntiForgeryToken()
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label"><loc key="JobType" /> (<loc key="Optional" />)</label>
+                <select asp-for="Form.JobTypeId" class="form-select">
+                    <option value="0">@Localizer["DefaultAllJobTypes"]</option>
+                    @foreach (var jt in Model.AvailableJobTypes)
+                    {
+                        <option value="@jt.Id">@jt.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="JobTypeRuleHint" /></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><loc key="Approver" /> (<loc key="Optional" />)</label>
+                <select asp-for="Form.ApproverUserId" class="form-select">
+                    <option value="0">@Localizer["AnyWithGrant"]</option>
+                    @foreach (var u in Model.AvailableApprovers)
+                    {
+                        <option value="@u.Id">@u.DisplayName</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="ApproverHint" /></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><loc key="ApprovalRoute" /></label>
+                <input asp-for="Form.ApproverGrantKey" class="form-input" placeholder="ApproveVacations" />
+                <span class="form-hint"><loc key="ApprovalRouteHint" /></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><loc key="AutoApprove" /> (<loc key="Days" />)</label>
+                <input asp-for="Form.MaxAutoApproveDays" type="number" min="0" max="365" class="form-input" />
+                <span class="form-hint"><loc key="AutoApproveHint" /></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><loc key="Priority" /></label>
+                <input asp-for="Form.Priority" type="number" min="0" max="100" class="form-input" />
+                <span class="form-hint"><loc key="PriorityHint" /></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><loc key="ExtendedLeaveThreshold" /> (<loc key="Days" />)</label>
+                <input asp-for="Form.ExtendedLeaveDaysThreshold" type="number" min="1" max="365" class="form-input" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><loc key="SecondApproverGrant" /></label>
+                <input asp-for="Form.SecondApproverGrantKey" class="form-input" placeholder="ApproveExtendedLeave" />
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: end;">
+                <div class="checkbox-group">
+                    <input asp-for="Form.RequiresSecondApproval" type="checkbox" />
+                    <label><loc key="RequiresSecondApproval" /></label>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 1rem;">
+            <button type="submit" class="btn btn-primary"><loc key="CreateRule" /></button>
+        </div>
+    </form>
+</div>
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="ExistingRules" /></h3>
+
+    @if (Model.Rules.Any())
+    {
+        <div class="table-responsive">
+            <table class="rules-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th><loc key="JobType" /></th>
+                        <th><loc key="ApprovalRoute" /></th>
+                        <th><loc key="Approver" /></th>
+                        <th><loc key="AutoApprove" /></th>
+                        <th><loc key="Priority" /></th>
+                        <th><loc key="Status" /></th>
+                        <th><loc key="Actions" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rule in Model.Rules)
+                    {
+                        <tr>
+                            <td>@rule.Id</td>
+                            <td>
+                                @if (rule.JobTypeId.HasValue)
+                                {
+                                    var jt = Model.AvailableJobTypes.FirstOrDefault(j => j.Id == rule.JobTypeId.Value);
+                                    @(jt?.Name ?? $"#{rule.JobTypeId}")
+                                }
+                                else
+                                {
+                                    <span class="badge badge-default"><loc key="DefaultAllJobTypes" /></span>
+                                }
+                            </td>
+                            <td>@rule.ApproverGrantKey</td>
+                            <td>
+                                @if (rule.ApproverUserId.HasValue)
+                                {
+                                    var u = Model.AvailableApprovers.FirstOrDefault(a => a.Id == rule.ApproverUserId.Value);
+                                    @(u?.DisplayName ?? $"#{rule.ApproverUserId}")
+                                }
+                                else
+                                {
+                                    @Localizer["AnyWithGrant"]
+                                }
+                            </td>
+                            <td>
+                                @if (rule.MaxAutoApproveDays > 0)
+                                {
+                                    <span>@rule.MaxAutoApproveDays @Localizer["Days"]</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">-</span>
+                                }
+                            </td>
+                            <td>@rule.Priority</td>
+                            <td>
+                                <span class="badge @(rule.IsActive ? "badge-active" : "badge-inactive")">
+                                    @(rule.IsActive ? Localizer["Active"] : Localizer["Inactive"])
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions-cell">
+                                    <form method="post" asp-page-handler="Delete" style="display: inline; margin: 0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ruleId" value="@rule.Id" />
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('@Localizer["ConfirmDeleteRule"]')">
+                                            <loc key="DeleteRule" />
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p><loc key="NoRulesFound" /></p>
+        </div>
+    }
+</div>

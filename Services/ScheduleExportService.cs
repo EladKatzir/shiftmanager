@@ -22,15 +22,21 @@ public class ScheduleExportService : IScheduleExportService
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<ScheduleExportService> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
+    private readonly IJobTypeService _jobTypeService;
 
     public ScheduleExportService(
         AppDbContext db,
         ITenantResolver tenantResolver,
-        ILogger<ScheduleExportService> logger)
+        ILogger<ScheduleExportService> logger,
+        ICompanyCacheService companyCacheService,
+        IJobTypeService jobTypeService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _logger = logger;
+        _companyCacheService = companyCacheService;
+        _jobTypeService = jobTypeService;
 
         // Set QuestPDF license for community use
         QuestPDF.Settings.License = LicenseType.Community;
@@ -52,11 +58,8 @@ public class ScheduleExportService : IScheduleExportService
 
         var companyId = _tenantResolver.GetCurrentTenantId();
 
-        // Get company name
-        // SECURITY-AUDITED: SAFE — scoped by tenant-resolved companyId; returns company name for export header
-        var company = await _db.Companies
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Id == companyId);
+        // Get company name (cache handles IgnoreQueryFilters + AsNoTracking internally)
+        var company = await _companyCacheService.GetCompanyAsync(companyId);
 
         var companyName = company?.DisplayName ?? company?.Name ?? "Unknown Company";
 
@@ -73,8 +76,7 @@ public class ScheduleExportService : IScheduleExportService
 
         if (request.JobTypeId.HasValue)
         {
-            var jobType = await _db.JobTypes
-                .FirstOrDefaultAsync(jt => jt.Id == request.JobTypeId.Value);
+            var jobType = await _jobTypeService.GetJobTypeAsync(request.JobTypeId.Value);
             jobTypeName = jobType?.DisplayName ?? jobType?.Name;
         }
 

@@ -45,6 +45,7 @@ public class ExcelCalendarAssignment
     public string Name { get; set; } = string.Empty;
     public string? Role { get; set; }
     public bool IsTrainee { get; set; }
+    public int? UserId { get; set; }
 }
 
 public class ExcelCalendarOverlay

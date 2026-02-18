@@ -27,6 +27,7 @@ public class ShiftsModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<ShiftsModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -34,7 +35,8 @@ public class ShiftsModel : PageModel
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
-        ILogger<ShiftsModel> logger)
+        ILogger<ShiftsModel> logger,
+        IJobTypeService jobTypeService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -42,6 +44,7 @@ public class ShiftsModel : PageModel
         _companyContext = companyContext;
         _localizer = localizer;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     // Query parameters
@@ -245,11 +248,7 @@ public class ShiftsModel : PageModel
             return;
         }
 
-        AvailableJobTypes = await _db.JobTypes
-            .Where(jt => jt.AreaId == areaId.Value && jt.IsActive)
-            .OrderBy(jt => jt.SortOrder)
-            .ThenBy(jt => jt.DisplayName)
-            .ToListAsync();
+        AvailableJobTypes = await _jobTypeService.GetJobTypesAsync(areaId.Value);
     }
 
     private async Task BuildShiftBasedCalendarAsync(int moleculeId, int jobTypeId)
@@ -361,7 +360,8 @@ public class ShiftsModel : PageModel
                 {
                     Id = a.Id,
                     Name = a.User?.DisplayName ?? _localizer["Unassigned"].Value,
-                    IsTrainee = a.TraineeUserId.HasValue
+                    IsTrainee = a.TraineeUserId.HasValue,
+                    UserId = a.UserId
                 }).ToList();
 
                 if (CapacityMode)
@@ -398,7 +398,8 @@ public class ShiftsModel : PageModel
             {
                 Id = a.Id,
                 Name = a.ShiftInstance.ShiftType?.Name ?? "Shift",
-                IsTrainee = a.TraineeUserId == userId
+                IsTrainee = a.TraineeUserId == userId,
+                UserId = a.UserId
             }).ToList();
 
             // Add overlay data

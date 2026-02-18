@@ -19,7 +19,7 @@ public class RoleService : IRoleService
     // Role template queries
     public async Task<RoleTemplate?> GetRoleTemplateAsync(int roleTemplateId)
     {
-        return await _db.RoleTemplates
+        return await _db.RoleTemplates.IgnoreQueryFilters()
             .Include(rt => rt.AutoGrants)
             .ThenInclude(ag => ag.GrantType)
             .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId && rt.IsActive);
@@ -27,7 +27,7 @@ public class RoleService : IRoleService
 
     public async Task<RoleTemplate?> GetRoleTemplateByKeyAsync(string key)
     {
-        return await _db.RoleTemplates
+        return await _db.RoleTemplates.IgnoreQueryFilters()
             .Include(rt => rt.AutoGrants)
             .ThenInclude(ag => ag.GrantType)
             .FirstOrDefaultAsync(rt => rt.Key == key && rt.IsActive);
@@ -35,7 +35,7 @@ public class RoleService : IRoleService
 
     public async Task<List<RoleTemplate>> GetRoleTemplatesAsync()
     {
-        return await _db.RoleTemplates
+        return await _db.RoleTemplates.IgnoreQueryFilters()
             .Include(rt => rt.AutoGrants)
             .Where(rt => rt.IsActive)
             .OrderBy(rt => rt.SortOrder)
@@ -45,7 +45,7 @@ public class RoleService : IRoleService
 
     public async Task<List<RoleTemplate>> GetRoleTemplatesByScopeLevelAsync(RoleScopeLevel scopeLevel)
     {
-        return await _db.RoleTemplates
+        return await _db.RoleTemplates.IgnoreQueryFilters()
             .Include(rt => rt.AutoGrants)
             .Where(rt => rt.IsActive && rt.ScopeLevel == scopeLevel)
             .OrderBy(rt => rt.SortOrder)
@@ -55,7 +55,7 @@ public class RoleService : IRoleService
     // User role queries
     public async Task<List<UserRoleAssignment>> GetUserRolesAsync(int userId)
     {
-        return await _db.UserRoleAssignments
+        return await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.RoleTemplate)
             .Include(ura => ura.Company)
             .Include(ura => ura.Department)
@@ -69,7 +69,7 @@ public class RoleService : IRoleService
 
     public async Task<List<UserRoleAssignment>> GetUserRolesInScopeAsync(int userId, GrantScope scope)
     {
-        var query = _db.UserRoleAssignments
+        var query = _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.RoleTemplate)
             .Where(ura => ura.UserId == userId && ura.IsActive);
 
@@ -89,7 +89,7 @@ public class RoleService : IRoleService
 
     public async Task<UserRoleAssignment?> GetUserRoleAssignmentAsync(int userRoleId)
     {
-        return await _db.UserRoleAssignments
+        return await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.RoleTemplate)
             .Include(ura => ura.User)
             .FirstOrDefaultAsync(ura => ura.Id == userRoleId);
@@ -97,14 +97,14 @@ public class RoleService : IRoleService
 
     public async Task<bool> UserHasRoleAsync(int userId, string roleKey)
     {
-        return await _db.UserRoleAssignments
+        return await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.RoleTemplate)
             .AnyAsync(ura => ura.UserId == userId && ura.IsActive && ura.RoleTemplate.Key == roleKey);
     }
 
     public async Task<bool> UserHasRoleAsync(int userId, int roleTemplateId)
     {
-        return await _db.UserRoleAssignments
+        return await _db.UserRoleAssignments.IgnoreQueryFilters()
             .AnyAsync(ura => ura.UserId == userId && ura.IsActive && ura.RoleTemplateId == roleTemplateId);
     }
 
@@ -120,7 +120,7 @@ public class RoleService : IRoleService
             return null;
 
         // Check if user already has this role with the same scope
-        var existingRole = await _db.UserRoleAssignments
+        var existingRole = await _db.UserRoleAssignments.IgnoreQueryFilters()
             .FirstOrDefaultAsync(ura => ura.UserId == userId && ura.RoleTemplateId == roleTemplateId &&
                 ura.CompanyId == scope.CompanyId && ura.DepartmentId == scope.DepartmentId &&
                 ura.MoleculeId == scope.MoleculeId && ura.AreaId == scope.AreaId &&
@@ -155,7 +155,7 @@ public class RoleService : IRoleService
 
     public async Task<bool> RemoveRoleAsync(int userRoleId, int? removedByUserId = null)
     {
-        var roleAssignment = await _db.UserRoleAssignments
+        var roleAssignment = await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.RoleTemplate)
             .FirstOrDefaultAsync(ura => ura.Id == userRoleId);
 
@@ -177,7 +177,7 @@ public class RoleService : IRoleService
 
     public async Task<bool> RemoveAllUserRolesAsync(int userId)
     {
-        var roles = await _db.UserRoleAssignments
+        var roles = await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Where(ura => ura.UserId == userId && ura.IsActive)
             .ToListAsync();
 
@@ -194,7 +194,7 @@ public class RoleService : IRoleService
     // Queries for role holders
     public async Task<List<AppUser>> GetUsersWithRoleAsync(int roleTemplateId)
     {
-        return await _db.UserRoleAssignments
+        return await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.User)
             .Where(ura => ura.RoleTemplateId == roleTemplateId && ura.IsActive && ura.User.IsActive)
             .Select(ura => ura.User)
@@ -205,7 +205,7 @@ public class RoleService : IRoleService
 
     public async Task<List<AppUser>> GetUsersWithRoleInScopeAsync(int roleTemplateId, GrantScope scope)
     {
-        var query = _db.UserRoleAssignments
+        var query = _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.User)
             .Where(ura => ura.RoleTemplateId == roleTemplateId && ura.IsActive && ura.User.IsActive);
 
@@ -225,5 +225,73 @@ public class RoleService : IRoleService
             .Distinct()
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
+    }
+
+    // Filtered template queries
+    public async Task<List<RoleTemplate>> GetAssignableRoleTemplatesAsync()
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .Where(rt => rt.IsActive && rt.CanBeAssignedByDefault)
+            .OrderBy(rt => rt.SortOrder)
+            .ToListAsync();
+    }
+
+    public async Task<List<RoleTemplate>> GetSignupRoleTemplatesAsync()
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .Where(rt => rt.IsActive && rt.IsVisibleInSignup)
+            .OrderBy(rt => rt.SortOrder)
+            .ToListAsync();
+    }
+
+    public async Task<RoleTemplate?> GetRoleTemplateWithAutoGrantsAsync(int roleTemplateId)
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .Include(rt => rt.AutoGrants)
+                .ThenInclude(ag => ag.GrantType)
+            .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId);
+    }
+
+    public async Task<RoleTemplate?> GetRoleTemplateWithAutoGrantsByKeyAsync(string key)
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .Include(rt => rt.AutoGrants)
+                .ThenInclude(ag => ag.GrantType)
+            .FirstOrDefaultAsync(rt => rt.Key == key && rt.IsActive);
+    }
+
+    // Bulk template queries for admin pages
+    public async Task<List<RoleTemplate>> GetActiveRoleTemplatesWithAutoGrantsAsync()
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .Include(rt => rt.AutoGrants)
+                .ThenInclude(ag => ag.GrantType)
+            .Where(rt => rt.IsActive)
+            .OrderBy(rt => rt.SortOrder)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<RoleTemplate>> GetAllRoleTemplatesWithDetailsAsync()
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .Include(rt => rt.AutoGrants)
+            .Include(rt => rt.UserRoles)
+            .OrderBy(rt => rt.SortOrder)
+            .ThenBy(rt => rt.Key)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<int> GetActiveRoleTemplateCountAsync()
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .CountAsync(rt => rt.IsActive);
+    }
+
+    public async Task<int> GetRoleTemplateCountAsync()
+    {
+        return await _db.RoleTemplates.IgnoreQueryFilters()
+            .CountAsync();
     }
 }

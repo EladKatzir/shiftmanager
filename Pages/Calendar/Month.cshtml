@@ -5,6 +5,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Calendar_MyCalendar"] + " - " + Localizer["Month"];
@@ -28,7 +29,7 @@
     <div class="header-main">
         <h2>
             <span class="calendar-icon"><i data-lucide="calendar"></i></span>
-            @Model.CurrentMonth.ToString("MMMM yyyy")
+            @Localization.FormatMonthYear(Model.CurrentMonth)
         </h2>
         @* ✅ PHASE 20: Show My Items toggle *@
         <div class="calendar-controls">
@@ -284,7 +285,7 @@
             if (isToday) { cellClass += " today"; }
             if (isPastDate) { cellClass += " past-date"; }
 
-            <div class="@cellClass" role="gridcell" tabindex="@(isToday ? "0" : "-1")" data-date="@day.Date.ToString("yyyy-MM-dd")" data-day-name="@day.Date.ToString("ddd")" aria-label="@day.Date.ToString("MMMM d, yyyy")">
+            <div class="@cellClass" role="gridcell" tabindex="@(isToday ? "0" : "-1")" data-date="@day.Date.ToString("yyyy-MM-dd")" data-day-name="@day.Date.ToString("ddd")" aria-label="@Localization.FormatLongDate(day.Date)">
                 <div class="cell-date">
                     @day.Date.Day
                     @if (isToday)

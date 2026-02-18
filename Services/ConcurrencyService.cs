@@ -65,18 +65,5 @@ public class ConcurrencyService : IConcurrencyService
                     ? "This record was deleted by another user."
                     : "This record was modified by another user. Please reload and try again.");
         }
-        catch (DbUpdateException ex)
-        {
-            _logger.LogError(
-                ex,
-                "Database error while saving {EntityType} {EntityId}",
-                entityType,
-                entityId?.ToString() ?? "unknown");
-
-            return new ConcurrencySaveResult(
-                Success: false,
-                FailureType: ConcurrencyFailureType.DatabaseError,
-                ErrorMessage: "A database error occurred while saving changes.");
-        }
     }
 }

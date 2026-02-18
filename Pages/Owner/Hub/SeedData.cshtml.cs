@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner.Hub;
 
@@ -18,11 +19,13 @@ public class SeedDataModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<SeedDataModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
-    public SeedDataModel(AppDbContext db, ILogger<SeedDataModel> logger)
+    public SeedDataModel(AppDbContext db, ILogger<SeedDataModel> logger, IJobTypeService jobTypeService)
     {
         _db = db;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     // Status counts
@@ -258,7 +261,7 @@ public class SeedDataModel : PageModel
             ProjectCount = await _db.Projects.IgnoreQueryFilters().CountAsync();
             AreaCount = await _db.Areas.IgnoreQueryFilters().CountAsync();
             MoleculeCount = await _db.Molecules.IgnoreQueryFilters().CountAsync();
-            JobTypeCount = await _db.JobTypes.IgnoreQueryFilters().CountAsync();
+            JobTypeCount = await _jobTypeService.GetJobTypeCountAsync();
             CompanyCount = await _db.Companies.IgnoreQueryFilters().CountAsync();
             DepartmentCount = await _db.Departments.IgnoreQueryFilters().CountAsync();
             ShiftGroupingCount = await _db.ShiftGroupings.IgnoreQueryFilters().CountAsync();

@@ -56,8 +56,9 @@ public class NotificationService : INotificationService
     private readonly IMailService _mailService;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IConfiguration _configuration;
+    private readonly ILocalizationService _localization;
 
-    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration)
+    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, ILocalizationService localization)
     {
         _db = db;
         _logger = logger;
@@ -65,6 +66,7 @@ public class NotificationService : INotificationService
         _mailService = mailService;
         _localizer = localizer;
         _configuration = configuration;
+        _localization = localization;
     }
 
     public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
@@ -110,9 +112,9 @@ public class NotificationService : INotificationService
         var title = _localizer["NotificationShiftAddedTitle"];
         var message = string.Format(_localizer["NotificationShiftAddedMessage"],
             shiftTypeName,
-            shiftDate.ToString("MMM dd, yyyy"),
-            startTime.ToString("HH:mm"),
-            endTime.ToString("HH:mm"));
+            _localization.FormatMediumDate(shiftDate),
+            _localization.FormatTime(startTime),
+            _localization.FormatTime(endTime));
 
         await CreateNotificationAsync(userId, NotificationType.ShiftAdded, title, message, null, "ShiftAssignment");
 
@@ -143,9 +145,9 @@ public class NotificationService : INotificationService
         var title = _localizer["NotificationShiftRemovedTitle"];
         var message = string.Format(_localizer["NotificationShiftRemovedMessage"],
             shiftTypeName,
-            shiftDate.ToString("MMM dd, yyyy"),
-            startTime.ToString("HH:mm"),
-            endTime.ToString("HH:mm"));
+            _localization.FormatMediumDate(shiftDate),
+            _localization.FormatTime(startTime),
+            _localization.FormatTime(endTime));
 
         await CreateNotificationAsync(userId, NotificationType.ShiftRemoved, title, message, null, "ShiftAssignment");
 
@@ -178,8 +180,8 @@ public class NotificationService : INotificationService
             : _localizer["NotificationTimeOffDeclinedTitle"];
 
         var dateRange = startDate == endDate
-            ? startDate.ToString("MMM dd, yyyy")
-            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+            ? _localization.FormatMediumDate(startDate)
+            : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
         var message = status == RequestStatus.Approved
             ? string.Format(_localizer["NotificationTimeOffApprovedMessage"], dateRange)
@@ -268,7 +270,7 @@ public class NotificationService : INotificationService
         var title = _localizer["NotificationChoreAssignedTitle"];
         var message = string.Format(_localizer["NotificationChoreAssignedMessage"],
             choreTitle,
-            choreDate.ToString("MMM dd, yyyy"));
+            _localization.FormatMediumDate(choreDate));
 
         await CreateNotificationAsync(userId, NotificationType.ChoreAssigned, title, message, choreId, "Chore");
 
@@ -297,7 +299,7 @@ public class NotificationService : INotificationService
         var title = _localizer["NotificationChoreCanceledTitle"];
         var message = string.Format(_localizer["NotificationChoreCanceledMessage"],
             choreTitle,
-            choreDate.ToString("MMM dd, yyyy"));
+            _localization.FormatMediumDate(choreDate));
 
         await CreateNotificationAsync(userId, NotificationType.ChoreCanceled, title, message, choreId, "Chore");
 
@@ -330,7 +332,7 @@ public class NotificationService : INotificationService
         var title = _localizer["NotificationOnDutyAssignedTitle"];
         var message = string.Format(_localizer["NotificationOnDutyAssignedMessage"],
             onDutyTypeName,
-            onDutyDate.ToString("MMM dd, yyyy"));
+            _localization.FormatMediumDate(onDutyDate));
 
         await CreateNotificationAsync(userId, NotificationType.OnDutyAssigned, title, message, onDutyId, "OnDuty");
 
@@ -363,7 +365,7 @@ public class NotificationService : INotificationService
         var title = _localizer["NotificationOnDutyCanceledTitle"];
         var message = string.Format(_localizer["NotificationOnDutyCanceledMessage"],
             onDutyTypeName,
-            onDutyDate.ToString("MMM dd, yyyy"));
+            _localization.FormatMediumDate(onDutyDate));
 
         await CreateNotificationAsync(userId, NotificationType.OnDutyCanceled, title, message, onDutyId, "OnDuty");
 
@@ -391,8 +393,8 @@ public class NotificationService : INotificationService
     {
         var title = _localizer["NotificationTimeOffDeletedTitle"];
         var dateRange = startDate == endDate
-            ? startDate.ToString("MMM dd, yyyy")
-            : $"{startDate:MMM dd} - {endDate:MMM dd, yyyy}";
+            ? _localization.FormatMediumDate(startDate)
+            : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
         var message = string.Format(_localizer["NotificationTimeOffDeletedMessage"], dateRange);
 
         await CreateNotificationAsync(userId, NotificationType.TimeOffDeleted, title, message, null, "TimeOffRequest");
@@ -661,9 +663,9 @@ public class NotificationService : INotificationService
                     var shiftsHtml = $"<h3>{_localizer["Email_UpcomingShifts"]}</h3><ul>";
                     foreach (var shift in upcomingShifts)
                     {
-                        shiftsHtml += $"<li><strong>{shift.ShiftInstance.WorkDate:MMM dd, yyyy}</strong> - " +
+                        shiftsHtml += $"<li><strong>{_localization.FormatMediumDate(shift.ShiftInstance.WorkDate)}</strong> - " +
                                     $"{WebUtility.HtmlEncode(shift.ShiftInstance.ShiftType.Name)} " +
-                                    $"({shift.ShiftInstance.ShiftType.Start:HH:mm} - {shift.ShiftInstance.ShiftType.End:HH:mm})</li>";
+                                    $"({_localization.FormatTime(shift.ShiftInstance.ShiftType.Start)} - {_localization.FormatTime(shift.ShiftInstance.ShiftType.End)})</li>";
                     }
                     shiftsHtml += "</ul>";
                     digestParts.Add(shiftsHtml);
@@ -685,8 +687,8 @@ public class NotificationService : INotificationService
                         foreach (var request in pendingTimeOffList)
                         {
                             var dateRange = request.StartDate == request.EndDate
-                                ? request.StartDate.ToString("MMM dd, yyyy")
-                                : $"{request.StartDate:MMM dd} - {request.EndDate:MMM dd, yyyy}";
+                                ? _localization.FormatMediumDate(request.StartDate)
+                                : $"{_localization.FormatMediumDate(request.StartDate)} - {_localization.FormatMediumDate(request.EndDate)}";
                             requestsHtml += $"<li>{dateRange} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
                         requestsHtml += "</ul>";
@@ -699,7 +701,7 @@ public class NotificationService : INotificationService
                         {
                             var shiftInstance = swap.FromAssignment?.ShiftInstance;
                             var shiftInfo = shiftInstance != null
-                                ? $"{shiftInstance.WorkDate:MMM dd, yyyy} - {WebUtility.HtmlEncode(shiftInstance.ShiftType?.Name ?? "Unknown")}"
+                                ? $"{_localization.FormatMediumDate(shiftInstance.WorkDate)} - {WebUtility.HtmlEncode(shiftInstance.ShiftType?.Name ?? "Unknown")}"
                                 : "Unknown shift";
                             requestsHtml += $"<li>{shiftInfo} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
@@ -717,7 +719,7 @@ public class NotificationService : INotificationService
                     var choresHtml = $"<h3>{_localizer["Email_AssignedChores"]}</h3><ul>";
                     foreach (var chore in upcomingChores)
                     {
-                        choresHtml += $"<li><strong>{chore.Date:MMM dd, yyyy}</strong> - {WebUtility.HtmlEncode(chore.Title)}</li>";
+                        choresHtml += $"<li><strong>{_localization.FormatMediumDate(chore.Date)}</strong> - {WebUtility.HtmlEncode(chore.Title)}</li>";
                     }
                     choresHtml += "</ul>";
                     digestParts.Add(choresHtml);
@@ -734,7 +736,7 @@ public class NotificationService : INotificationService
                         var typeName = od.Type == OnDutyType.Hakam
                             ? _localizer["OnDutyTypeHakam"]
                             : _localizer["OnDutyTypeLead"];
-                        onDutyHtml += $"<li><strong>{od.Date:MMM dd, yyyy}</strong> - {typeName}</li>";
+                        onDutyHtml += $"<li><strong>{_localization.FormatMediumDate(od.Date)}</strong> - {typeName}</li>";
                     }
                     onDutyHtml += "</ul>";
                     digestParts.Add(onDutyHtml);
@@ -823,12 +825,12 @@ public class NotificationService : INotificationService
     {string.Join("\n", digestParts)}
     <div class='footer'>
         <p>{_localizer["Email_DailyDigestFooter"]}</p>
-        <p><em>{string.Format(_localizer["Email_SentAt"], DateTime.UtcNow.ToString("MMM dd, yyyy HH:mm"))}</em></p>
+        <p><em>{string.Format(_localizer["Email_SentAt"], _localization.FormatDateTime(DateTime.UtcNow))}</em></p>
     </div>
 </body>
 </html>";
 
-            var subject = string.Format(_localizer["Email_DailyDigestSubject"], today.ToString("MMM dd, yyyy"));
+            var subject = string.Format(_localizer["Email_DailyDigestSubject"], _localization.FormatMediumDate(today));
 
             var success = await _mailService.SendMailAsync(user.Email, subject, emailBody);
 
@@ -897,8 +899,8 @@ public class NotificationService : INotificationService
                     {
                         var shiftType = sa.ShiftInstance?.ShiftType;
                         var shiftTypeName = shiftType?.Name ?? _localizer["Email_Shift"];
-                        var startTime = shiftType?.Start.ToString("HH:mm") ?? "--:--";
-                        var endTime = shiftType?.End.ToString("HH:mm") ?? "--:--";
+                        var startTime = shiftType != null ? _localization.FormatTime(shiftType.Start) : "--:--";
+                        var endTime = shiftType != null ? _localization.FormatTime(shiftType.End) : "--:--";
                         shiftsHtml += $"<li><strong>{WebUtility.HtmlEncode(shiftTypeName)}</strong> - {startTime} to {endTime}</li>";
                     }
                     shiftsHtml += "</ul>";
@@ -995,16 +997,16 @@ public class NotificationService : INotificationService
 </head>
 <body>
     <h2>{_localizer["Email_ReminderTitle"]}</h2>
-    <p>{string.Format(_localizer["Email_ReminderIntro"], WebUtility.HtmlEncode(user.DisplayName), tomorrow.ToString("MMM dd, yyyy"))}</p>
+    <p>{string.Format(_localizer["Email_ReminderIntro"], WebUtility.HtmlEncode(user.DisplayName), _localization.FormatMediumDate(tomorrow))}</p>
     {string.Join("\n", reminderParts)}
     <div class='footer'>
         <p>{_localizer["Email_ReminderFooter"]}</p>
-        <p><em>{string.Format(_localizer["Email_SentAt"], DateTime.UtcNow.ToString("MMM dd, yyyy HH:mm"))}</em></p>
+        <p><em>{string.Format(_localizer["Email_SentAt"], _localization.FormatDateTime(DateTime.UtcNow))}</em></p>
     </div>
 </body>
 </html>";
 
-            var subject = string.Format(_localizer["Email_ReminderSubject"], tomorrow.ToString("MMM dd, yyyy"));
+            var subject = string.Format(_localizer["Email_ReminderSubject"], _localization.FormatMediumDate(tomorrow));
 
             var success = await _mailService.SendMailAsync(user.Email, subject, emailBody);
 
@@ -1029,7 +1031,7 @@ public class NotificationService : INotificationService
     {
         var title = _localizer["NotificationTraineeAddedTitle"];
         var message = string.Format(_localizer["NotificationTraineeAddedMessage"],
-            traineeName, shiftTypeName, date.ToString("MMM dd, yyyy"), start.ToString("HH:mm"), end.ToString("HH:mm"));
+            traineeName, shiftTypeName, _localization.FormatMediumDate(date), _localization.FormatTime(start), _localization.FormatTime(end));
 
         await CreateNotificationAsync(primaryUserId, NotificationType.EmployeeTraineeAdded, title, message, null, "ShiftAssignment");
 
@@ -1060,17 +1062,17 @@ public class NotificationService : INotificationService
     {
         var title = _localizer["NotificationTraineeChangedTitle"];
         var message = string.Format(_localizer["NotificationTraineeChangedMessage"],
-            shiftTypeName, date.ToString("MMM dd, yyyy"), oldTraineeName, newTraineeName);
+            shiftTypeName, _localization.FormatMediumDate(date), oldTraineeName, newTraineeName);
 
         await CreateNotificationAsync(primaryUserId, NotificationType.EmployeeTraineeAdded, title, message, null, "ShiftAssignment");
 
         // Notify old and new trainees
         var removedTitle = _localizer["NotificationTraineeAssignmentRemovedTitle"];
-        var removedMessage = string.Format(_localizer["NotificationTraineeAssignmentRemovedMessage"], shiftTypeName, date.ToString("MMM dd, yyyy"));
+        var removedMessage = string.Format(_localizer["NotificationTraineeAssignmentRemovedMessage"], shiftTypeName, _localization.FormatMediumDate(date));
         await CreateNotificationAsync(oldTraineeUserId, NotificationType.TraineeShadowingRemoved, removedTitle, removedMessage, null, "ShiftAssignment");
 
         var addedTitle = _localizer["NotificationNewTraineeAssignmentTitle"];
-        var addedMessage = string.Format(_localizer["NotificationNewTraineeAssignmentMessage"], shiftTypeName, date.ToString("MMM dd, yyyy"));
+        var addedMessage = string.Format(_localizer["NotificationNewTraineeAssignmentMessage"], shiftTypeName, _localization.FormatMediumDate(date));
         await CreateNotificationAsync(newTraineeUserId, NotificationType.TraineeShadowingAdded, addedTitle, addedMessage, null, "ShiftAssignment");
     }
 
@@ -1078,13 +1080,13 @@ public class NotificationService : INotificationService
     {
         var title = _localizer["NotificationTraineeRemovedTitle"];
         var message = string.Format(_localizer["NotificationTraineeRemovedMessage"],
-            traineeName, shiftTypeName, date.ToString("MMM dd, yyyy"));
+            traineeName, shiftTypeName, _localization.FormatMediumDate(date));
 
         await CreateNotificationAsync(primaryUserId, NotificationType.EmployeeTraineeRemoved, title, message, null, "ShiftAssignment");
 
         // Notify trainee
         var traineeTitle = _localizer["NotificationTraineeAssignmentRemovedTitle"];
-        var traineeMessage = string.Format(_localizer["NotificationTraineeAssignmentRemovedMessage"], shiftTypeName, date.ToString("MMM dd, yyyy"));
+        var traineeMessage = string.Format(_localizer["NotificationTraineeAssignmentRemovedMessage"], shiftTypeName, _localization.FormatMediumDate(date));
         await CreateNotificationAsync(traineeUserId, NotificationType.TraineeShadowingRemoved, traineeTitle, traineeMessage, null, "ShiftAssignment");
     }
 
@@ -1094,7 +1096,7 @@ public class NotificationService : INotificationService
     {
         var title = _localizer["NotificationSlotRemovedTitle"];
         var message = string.Format(_localizer["NotificationSlotRemovedMessage"],
-            shiftTypeName, date.ToString("MMM dd, yyyy"), start.ToString("HH:mm"), end.ToString("HH:mm"), reason);
+            shiftTypeName, _localization.FormatMediumDate(date), _localization.FormatTime(start), _localization.FormatTime(end), reason);
 
         await CreateNotificationAsync(affectedUserId, NotificationType.ShiftRemoved, title, message, null, "ShiftAssignment");
 
@@ -1127,7 +1129,7 @@ public class NotificationService : INotificationService
     {
         var title = _localizer["NotificationShiftModifiedTitle"];
         var message = string.Format(_localizer["NotificationShiftModifiedMessage"],
-            shiftTypeName, date.ToString("MMM dd, yyyy"), changeDescription);
+            shiftTypeName, _localization.FormatMediumDate(date), changeDescription);
 
         foreach (var userId in assignedUserIds)
         {

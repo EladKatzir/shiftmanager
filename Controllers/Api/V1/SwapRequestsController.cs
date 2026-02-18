@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Api;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Services;
 using ShiftManager.Services.Api;
 
 namespace ShiftManager.Controllers.Api.V1;
@@ -18,16 +20,16 @@ namespace ShiftManager.Controllers.Api.V1;
 public class SwapRequestsController : ControllerBase
 {
     private readonly SwapRequestApiService _swapRequestService;
-    private readonly IConfiguration _configuration;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<SwapRequestsController> _logger;
 
     public SwapRequestsController(
         SwapRequestApiService swapRequestService,
-        IConfiguration configuration,
+        IFeatureFlagService featureFlagService,
         ILogger<SwapRequestsController> logger)
     {
         _swapRequestService = swapRequestService;
-        _configuration = configuration;
+        _featureFlagService = featureFlagService;
         _logger = logger;
     }
 
@@ -52,7 +54,7 @@ public class SwapRequestsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:SwapRequests:ListEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiSwapRequestsList))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListSwapRequests), HttpContext.Request.Path);
@@ -145,7 +147,7 @@ public class SwapRequestsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:SwapRequests:GetEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiSwapRequestsGet))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetSwapRequest), HttpContext.Request.Path);
@@ -203,7 +205,7 @@ public class SwapRequestsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:SwapRequests:CreateEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiSwapRequestsCreate))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(CreateSwapRequest), HttpContext.Request.Path);
@@ -283,7 +285,7 @@ public class SwapRequestsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:SwapRequests:ApproveEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiSwapRequestsApprove))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ApproveSwapRequest), HttpContext.Request.Path);
@@ -360,7 +362,7 @@ public class SwapRequestsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:SwapRequests:DeclineEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiSwapRequestsDecline))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(DeclineSwapRequest), HttpContext.Request.Path);
@@ -438,7 +440,7 @@ public class SwapRequestsController : ControllerBase
         try
         {
             // Check feature flag
-            if (!_configuration.GetValue<bool>("Features:Api:SwapRequests:DeleteEnabled", false))
+            if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiSwapRequestsDelete))
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(DeleteSwapRequest), HttpContext.Request.Path);

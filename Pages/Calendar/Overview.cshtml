@@ -4,6 +4,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["OverviewCalendar"];
@@ -65,7 +66,7 @@
                            onchange="navigateToDate(this.value)"
                            class="overview-calendar__date-picker" />
                     <span class="overview-calendar__date-label">
-                        @Model.StartDate.ToString("MMM dd") - @Model.EndDate.ToString("MMM dd, yyyy")
+                        @Localization.FormatMediumDate(Model.StartDate) - @Localization.FormatMediumDate(Model.EndDate)
                     </span>
                 </div>
 

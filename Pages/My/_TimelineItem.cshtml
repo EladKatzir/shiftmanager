@@ -1,4 +1,5 @@
 @model ShiftManager.Pages.My.IndexModel.TimelineItem
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     var typeClass = Model.Type.ToString().ToLower();
     var icon = Model.Type switch
@@ -33,7 +34,7 @@
             <div class="item-meta">@Model.Metadata</div>
         }
     </div>
-    <div class="item-date">@Model.Date.ToString("MMM dd")</div>
+    <div class="item-date">@Localization.FormatShortDate(Model.Date)</div>
     @if (Model.HasConflict)
     {
         <span class="conflict-badge">⚠ <loc key="Conflict" /></span>

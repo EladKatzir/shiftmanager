@@ -17,11 +17,15 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IRoleService _roleService;
+    private readonly ICompanyCacheService _companyCacheService;
 
-    public IndexModel(AppDbContext db, ILogger<IndexModel> logger)
+    public IndexModel(AppDbContext db, ILogger<IndexModel> logger, IRoleService roleService, ICompanyCacheService companyCacheService)
     {
         _db = db;
         _logger = logger;
+        _roleService = roleService;
+        _companyCacheService = companyCacheService;
     }
 
     // Hierarchy Stats
@@ -76,7 +80,7 @@ public class IndexModel : PageModel
 
             // Grants counts
             TotalGrantTypes = await _db.GrantTypes.CountAsync();
-            TotalRoleTemplates = await _db.RoleTemplates.CountAsync();
+            TotalRoleTemplates = await _roleService.GetActiveRoleTemplateCountAsync();
             TotalGrantAssignments = await _db.Grants.IgnoreQueryFilters().CountAsync();
 
             // Scheduling counts
@@ -97,10 +101,10 @@ public class IndexModel : PageModel
 
             // Seed data stats
             var grantTypeCount = await _db.GrantTypes.CountAsync();
-            var roleTemplateCount = await _db.RoleTemplates.CountAsync();
+            var roleTemplateCount = await _roleService.GetRoleTemplateCountAsync();
             var featureFlagCount = await _db.FeatureFlags.CountAsync();
             TotalSeedEntities = grantTypeCount + roleTemplateCount + TotalProjects + featureFlagCount;
-            SeedDataHealthy = !await _db.Companies.IgnoreQueryFilters().AnyAsync(c => c.MoleculeId == null);
+            SeedDataHealthy = !await _companyCacheService.HasOrphanedCompaniesAsync();
         }
         catch (Exception ex)
         {

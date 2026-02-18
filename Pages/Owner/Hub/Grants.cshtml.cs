@@ -22,12 +22,16 @@ public class GrantsModel : PageModel
     private readonly AppDbContext _db;
     private readonly IGrantService _grantService;
     private readonly ILogger<GrantsModel> _logger;
+    private readonly IRoleService _roleService;
+    private readonly IConcurrencyService _concurrencyService;
 
-    public GrantsModel(AppDbContext db, IGrantService grantService, ILogger<GrantsModel> logger)
+    public GrantsModel(AppDbContext db, IGrantService grantService, ILogger<GrantsModel> logger, IRoleService roleService, IConcurrencyService concurrencyService)
     {
         _db = db;
         _grantService = grantService;
         _logger = logger;
+        _roleService = roleService;
+        _concurrencyService = concurrencyService;
     }
 
     // Stats
@@ -60,7 +64,7 @@ public class GrantsModel : PageModel
         {
             // Load stats
             TotalGrantTypes = await _db.GrantTypes.CountAsync(gt => gt.IsActive);
-            TotalRoleTemplates = await _db.RoleTemplates.CountAsync(rt => rt.IsActive);
+            TotalRoleTemplates = await _roleService.GetActiveRoleTemplateCountAsync();
             TotalGrants = await _db.Grants.IgnoreQueryFilters().CountAsync();
             UsersWithGrants = await _db.Grants.IgnoreQueryFilters().Select(g => g.UserId).Distinct().CountAsync();
 
@@ -89,31 +93,28 @@ public class GrantsModel : PageModel
 
             AllGrantTypes = grantTypes;
 
-            // Load role templates with their grants
-            RoleTemplates = await _db.RoleTemplates
-                .Where(rt => rt.IsActive)
-                .OrderBy(rt => rt.SortOrder)
-                .Select(rt => new RoleTemplateViewModel
+            // Load active role templates with auto-grants via service
+            var activeTemplates = await _roleService.GetActiveRoleTemplatesWithAutoGrantsAsync();
+            RoleTemplates = activeTemplates.Select(rt => new RoleTemplateViewModel
+            {
+                Id = rt.Id,
+                Key = rt.Key,
+                NameKey = rt.NameKey,
+                DescriptionKey = rt.DescriptionKey,
+                ScopeLevel = rt.ScopeLevel,
+                IsSystem = rt.IsSystem,
+                GrantCount = rt.AutoGrants.Count,
+                Grants = rt.AutoGrants.Select(ag => new RoleTemplateGrantViewModel
                 {
-                    Id = rt.Id,
-                    Key = rt.Key,
-                    NameKey = rt.NameKey,
-                    DescriptionKey = rt.DescriptionKey,
-                    ScopeLevel = rt.ScopeLevel,
-                    IsSystem = rt.IsSystem,
-                    GrantCount = rt.AutoGrants.Count,
-                    Grants = rt.AutoGrants.Select(ag => new RoleTemplateGrantViewModel
-                    {
-                        Id = ag.Id,
-                        GrantTypeId = ag.GrantTypeId,
-                        GrantTypeKey = ag.GrantType.Key,
-                        GrantTypeNameKey = ag.GrantType.NameKey,
-                        CanOwn = ag.CanOwn,
-                        CanGive = ag.CanGive,
-                        ScopeMode = ag.ScopeMode
-                    }).ToList()
-                })
-                .ToListAsync();
+                    Id = ag.Id,
+                    GrantTypeId = ag.GrantTypeId,
+                    GrantTypeKey = ag.GrantType.Key,
+                    GrantTypeNameKey = ag.GrantType.NameKey,
+                    CanOwn = ag.CanOwn,
+                    CanGive = ag.CanGive,
+                    ScopeMode = ag.ScopeMode
+                }).ToList()
+            }).ToList();
 
             // Load hierarchy for scope selection (projects -> areas -> molecules -> companies)
             Projects = await _db.Projects
@@ -123,15 +124,15 @@ public class GrantsModel : PageModel
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    Areas = p.Areas.OrderBy(a => a.Name).Select(a => new AreaViewModel
+                    Areas = p.Areas.OrderBy(a => a.SortOrder).ThenBy(a => a.Name).Select(a => new AreaViewModel
                     {
                         Id = a.Id,
                         Name = a.Name,
-                        Molecules = a.Molecules.OrderBy(m => m.Name).Select(m => new MoleculeViewModel
+                        Molecules = a.Molecules.OrderBy(m => m.SortOrder).ThenBy(m => m.Name).Select(m => new MoleculeViewModel
                         {
                             Id = m.Id,
                             Name = m.Name,
-                            Companies = m.Companies.OrderBy(c => c.Name).Select(c => new CompanyViewModel
+                            Companies = m.Companies.OrderBy(c => c.SortOrder).ThenBy(c => c.Name).Select(c => new CompanyViewModel
                             {
                                 Id = c.Id,
                                 Name = c.Name
@@ -153,7 +154,7 @@ public class GrantsModel : PageModel
     {
         try
         {
-            var ownerTemplate = await _db.RoleTemplates.FirstOrDefaultAsync(rt => rt.Key == "Owner");
+            var ownerTemplate = await _roleService.GetRoleTemplateByKeyAsync("Owner");
             if (ownerTemplate == null)
             {
                 ErrorMessage = "Owner role template not found. Seed role templates first.";
@@ -234,7 +235,13 @@ public class GrantsModel : PageModel
 
             if (added > 0)
             {
-                await _db.SaveChangesAsync();
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "Grant");
+                if (!saveResult.Success)
+                {
+                    ErrorMessage = "A concurrency conflict occurred. Please try again.";
+                    return RedirectToPage();
+                }
                 SuccessMessage = $"Added {added} user management grants to user #1.";
                 _logger.LogInformation("Added {Count} user management grants to user #1", added);
             }
@@ -399,7 +406,10 @@ public class GrantsModel : PageModel
             if (request.CanGive)
             {
                 grant.CanGive = true;
-                await _db.SaveChangesAsync();
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "Grant", grant.Id);
+                if (!saveResult.Success)
+                    return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
             }
 
             _logger.LogInformation("Grant assigned: UserId={UserId}, GrantTypeId={GrantTypeId}, GrantedBy={GrantedBy}",
@@ -464,7 +474,10 @@ public class GrantsModel : PageModel
             }
 
             grant.CanGive = request.CanGive;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "Grant", request.GrantId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Grant delegation updated: GrantId={GrantId}, CanGive={CanGive}", request.GrantId, request.CanGive);
 
@@ -482,10 +495,7 @@ public class GrantsModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetRoleTemplateAsync(int templateId)
     {
-        var template = await _db.RoleTemplates
-            .Include(rt => rt.AutoGrants)
-            .ThenInclude(ag => ag.GrantType)
-            .FirstOrDefaultAsync(rt => rt.Id == templateId);
+        var template = await _roleService.GetRoleTemplateWithAutoGrantsAsync(templateId);
 
         if (template == null)
         {
@@ -543,7 +553,10 @@ public class GrantsModel : PageModel
             };
 
             _db.RoleTemplateGrants.Add(grant);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "Grant");
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Role template grant added: TemplateId={TemplateId}, GrantTypeId={GrantTypeId}",
                 request.RoleTemplateId, request.GrantTypeId);
@@ -575,7 +588,10 @@ public class GrantsModel : PageModel
             grant.ScopeMode = request.ScopeMode;
             grant.IsOverride = true;
 
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "Grant", request.GrantId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Role template grant updated: GrantId={GrantId}", request.GrantId);
 
@@ -602,7 +618,10 @@ public class GrantsModel : PageModel
             }
 
             _db.RoleTemplateGrants.Remove(grant);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "Grant", request.GrantId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Role template grant removed: GrantId={GrantId}", request.GrantId);
 

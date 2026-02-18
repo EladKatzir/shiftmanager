@@ -30,6 +30,9 @@ public class UsersModel : LocalizedPageModel
     private readonly IMailService _mailService;
     private readonly INotificationService _notificationService;
     private readonly IGrantService _grantService;
+    private readonly IRoleService _roleService;
+    private readonly IJobTypeService _jobTypeService;
+    private readonly IConcurrencyService _concurrencyService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -41,7 +44,10 @@ public class UsersModel : LocalizedPageModel
         IAuditLogService auditLogService,
         IMailService mailService,
         INotificationService notificationService,
-        IGrantService grantService)
+        IGrantService grantService,
+        IRoleService roleService,
+        IJobTypeService jobTypeService,
+        IConcurrencyService concurrencyService)
         : base(localizer)
     {
         _db = db;
@@ -53,6 +59,9 @@ public class UsersModel : LocalizedPageModel
         _mailService = mailService;
         _notificationService = notificationService;
         _grantService = grantService;
+        _roleService = roleService;
+        _jobTypeService = jobTypeService;
+        _concurrencyService = concurrencyService;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId);
@@ -278,20 +287,15 @@ public class UsersModel : LocalizedPageModel
             .ToListAsync();
 
         // Load available job types for filter dropdown
-        AvailableJobTypes = await _db.JobTypes
-            .IgnoreQueryFilters()
+        var allJobTypesWithArea = await _jobTypeService.GetAllJobTypesWithAreaAsync();
+        AvailableJobTypes = allJobTypesWithArea
             .Where(jt => jt.IsActive)
-            .Include(jt => jt.Area)
-            .OrderBy(jt => jt.Area.Name).ThenBy(jt => jt.Name)
-            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area.DisplayName, jt.Name))
-            .ToListAsync();
+            .OrderBy(jt => jt.Area?.Name).ThenBy(jt => jt.Name)
+            .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area?.DisplayName ?? "", jt.Name))
+            .ToList();
 
         // Load assignable role templates (filtered by CanBeAssignedByDefault and user's grant level)
-        AssignableRoleTemplates = await _db.RoleTemplates
-            .IgnoreQueryFilters()
-            .Where(rt => rt.IsActive && rt.CanBeAssignedByDefault)
-            .OrderBy(rt => rt.SortOrder)
-            .ToListAsync();
+        AssignableRoleTemplates = await _roleService.GetAssignableRoleTemplatesAsync();
 
         // Filter templates by what the current user can assign (DerivedUserRole check)
         AssignableRoleTemplates = AssignableRoleTemplates
@@ -509,8 +513,7 @@ public class UsersModel : LocalizedPageModel
         if (NewRoleTemplateId.HasValue)
         {
             // Direct template assignment (new path)
-            roleTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(rt => rt.Id == NewRoleTemplateId.Value && rt.IsActive);
+            roleTemplate = await _roleService.GetRoleTemplateAsync(NewRoleTemplateId.Value);
             if (roleTemplate == null)
             {
                 TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
@@ -598,9 +601,7 @@ public class UsersModel : LocalizedPageModel
         // Validate job type if specified
         if (NewJobTypeId.HasValue)
         {
-            var jobType = await _db.JobTypes
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(jt => jt.Id == NewJobTypeId.Value && jt.IsActive);
+            var jobType = await _jobTypeService.GetJobTypeAsync(NewJobTypeId.Value);
             if (jobType == null)
             {
                 TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"].Value;
@@ -614,11 +615,11 @@ public class UsersModel : LocalizedPageModel
             string? jobTypeName = null;
             if (NewJobTypeId.HasValue)
             {
-                var jt = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(j => j.Id == NewJobTypeId.Value);
+                var jt = await _jobTypeService.GetJobTypeAsync(NewJobTypeId.Value);
                 jobTypeName = jt?.Name;
             }
             var roleTemplateKey = MapUserRoleToRoleTemplateKey(targetRole, jobTypeName);
-            roleTemplate = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == roleTemplateKey);
+            roleTemplate = await _roleService.GetRoleTemplateByKeyAsync(roleTemplateKey);
         }
 
         var (h, s) = PasswordHasher.CreateHash(NewPassword);
@@ -635,7 +636,15 @@ public class UsersModel : LocalizedPageModel
             JobTypeId = NewJobTypeId
         };
         _db.Users.Add(newUser);
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser");
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Assign role template grants with JobType-aware mapping
         var templateKey = roleTemplate?.Key ?? "Employee";
@@ -664,7 +673,15 @@ public class UsersModel : LocalizedPageModel
             }
 
             _db.DirectorCompanies.Add(directorAssignment);
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", newUser.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             _logger.LogInformation("Created DirectorCompany mapping for new Director {DirectorId} to Company {CompanyId}",
                 newUser.Id, targetCompanyId);
@@ -689,7 +706,15 @@ public class UsersModel : LocalizedPageModel
             CompanyId = targetCompanyId,
             Timestamp = DateTime.UtcNow
         });
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser", newUser.Id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Audit logging (general audit log)
         await _auditLogService.LogAsync(
@@ -734,7 +759,13 @@ public class UsersModel : LocalizedPageModel
             }
 
             u.IsActive = !u.IsActive;
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
         }
         return RedirectToPage();
     }
@@ -755,13 +786,14 @@ public class UsersModel : LocalizedPageModel
         if (roleTemplateId > 0)
         {
             // Direct template assignment (new path)
-            selectedTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId && rt.IsActive);
+            selectedTemplate = await _roleService.GetRoleTemplateAsync(roleTemplateId);
             if (selectedTemplate == null)
             {
                 TempData["ErrorMessage"] = _localizer["Error_InvalidRole"].Value;
                 return RedirectToPage();
             }
+            if (!selectedTemplate.DerivedUserRole.HasValue)
+                _logger.LogWarning("RoleTemplate {Key} (Id={Id}) missing DerivedUserRole — defaulting to Employee", selectedTemplate.Key, selectedTemplate.Id);
             targetRole = selectedTemplate.DerivedUserRole ?? UserRole.Employee;
         }
         else if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRole>(role, ignoreCase: true, out var parsedRole))
@@ -867,7 +899,7 @@ public class UsersModel : LocalizedPageModel
             else
             {
                 var templateKey = MapUserRoleToRoleTemplateKey(targetRole, u.JobType?.Name);
-                var template = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
+                var template = await _roleService.GetRoleTemplateByKeyAsync(templateKey);
                 if (template != null)
                 {
                     u.RoleTemplateId = template.Id;
@@ -875,7 +907,15 @@ public class UsersModel : LocalizedPageModel
                         u.Role = template.DerivedUserRole.Value;
                 }
             }
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", u.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             // ✅ P0-4/P0-5 FIX: If changing TO Director/AreaAdmin, create DirectorCompany mapping
             if (oldRole != UserRole.Director && oldRole != UserRole.AreaAdmin &&
@@ -897,7 +937,15 @@ public class UsersModel : LocalizedPageModel
                     };
 
                     _db.DirectorCompanies.Add(directorAssignment);
-                    await _db.SaveChangesAsync();
+                    {
+                        var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                            () => _db.SaveChangesAsync(), "AppUser", u.Id);
+                        if (!saveResult.Success)
+                        {
+                            Error = _localizer["Error_ConcurrencyConflict"];
+                            return RedirectToPage();
+                        }
+                    }
 
                     _logger.LogInformation("Created DirectorCompany mapping for user {UserId} promoted to Director for Company {CompanyId}",
                         u.Id, u.CompanyId);
@@ -916,7 +964,15 @@ public class UsersModel : LocalizedPageModel
                 CompanyId = u.CompanyId,
                 Timestamp = DateTime.UtcNow
             });
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", u.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleUpdated"], targetRole, u.DisplayName);
         }
@@ -962,9 +1018,7 @@ public class UsersModel : LocalizedPageModel
         string? jobTypeName = null;
         if (jobTypeId.HasValue)
         {
-            var jobType = await _db.JobTypes
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(jt => jt.Id == jobTypeId.Value && jt.IsActive);
+            var jobType = await _jobTypeService.GetJobTypeAsync(jobTypeId.Value);
             if (jobType == null)
             {
                 TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"].Value;
@@ -975,7 +1029,15 @@ public class UsersModel : LocalizedPageModel
 
         var oldJobTypeId = u.JobTypeId;
         u.JobTypeId = jobTypeId;
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Audit logging
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -1044,7 +1106,15 @@ public class UsersModel : LocalizedPageModel
 
             var (h, s) = PasswordHasher.CreateHash(newPassword);
             u.PasswordHash = h; u.PasswordSalt = s;
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", u.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             // Log the password reset for security audit
             // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
@@ -1106,7 +1176,15 @@ public class UsersModel : LocalizedPageModel
         // Unlock the account
         targetUser.FailedLoginAttempts = 0;
         targetUser.LockoutEnd = null;
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser", targetUser.Id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Log the unlock action for security audit
         await _auditLogService.LogUserActionAsync(
@@ -1218,7 +1296,15 @@ public class UsersModel : LocalizedPageModel
             _logger.LogInformation("Deactivating user {UserId} ({UserName})", id, user.DisplayName);
             user.IsActive = false;
 
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", user.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
             await transaction.CommitAsync();
 
             _logger.LogInformation("Successfully deactivated user {UserId} ({UserName}) and cleaned up all related data", id, user.DisplayName);
@@ -1306,18 +1392,16 @@ public class UsersModel : LocalizedPageModel
             RoleTemplate? approveTemplate = null;
             if (roleTemplateId.HasValue)
             {
-                approveTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId.Value && rt.IsActive);
+                approveTemplate = await _roleService.GetRoleTemplateAsync(roleTemplateId.Value);
             }
             if (approveTemplate == null && joinRequest.RequestedRoleTemplateId.HasValue)
             {
-                approveTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(rt => rt.Id == joinRequest.RequestedRoleTemplateId.Value && rt.IsActive);
+                approveTemplate = await _roleService.GetRoleTemplateAsync(joinRequest.RequestedRoleTemplateId.Value);
             }
             if (approveTemplate == null)
             {
                 var approveTemplateKey = MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
-                approveTemplate = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == approveTemplateKey);
+                approveTemplate = await _roleService.GetRoleTemplateByKeyAsync(approveTemplateKey);
             }
 
             var newUser = new AppUser
@@ -1340,11 +1424,27 @@ public class UsersModel : LocalizedPageModel
             joinRequest.ReviewedBy = currentUserId;
             joinRequest.ReviewedAt = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser");
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             // Link the created user to the join request
             joinRequest.CreatedUserId = newUser.Id;
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", newUser.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             // ✅ Onboarding: Assign role template grants with JobType-aware mapping
             var roleTemplateKey = approveTemplate?.Key ?? MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
@@ -1443,7 +1543,15 @@ public class UsersModel : LocalizedPageModel
             joinRequest.ReviewedAt = DateTime.UtcNow;
             joinRequest.RejectionReason = reason;
 
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             _logger.LogInformation("Join request {RequestId} rejected by {ReviewerId}. Email: {Email}, Company: {CompanyId}",
                 id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
@@ -1587,14 +1695,15 @@ public class UsersModel : LocalizedPageModel
 
                 if (RequestTemplateIds.TryGetValue(joinRequest.Id, out var batchTemplateId))
                 {
-                    batchTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                        .FirstOrDefaultAsync(rt => rt.Id == batchTemplateId && rt.IsActive);
+                    batchTemplate = await _roleService.GetRoleTemplateAsync(batchTemplateId);
                     if (batchTemplate == null)
                     {
                         errors.Add(string.Format(_localizer["Error_InvalidRole"].Value));
                         skippedCount++;
                         continue;
                     }
+                    if (!batchTemplate.DerivedUserRole.HasValue)
+                        _logger.LogWarning("RoleTemplate {Key} (Id={Id}) missing DerivedUserRole — defaulting to Employee", batchTemplate.Key, batchTemplate.Id);
                     assignedRole = batchTemplate.DerivedUserRole ?? UserRole.Employee;
                 }
                 else if (RequestRoles.TryGetValue(joinRequest.Id, out var legacyRole))
@@ -1618,7 +1727,7 @@ public class UsersModel : LocalizedPageModel
                 if (batchTemplate == null)
                 {
                     var batchTemplateKey = MapUserRoleToRoleTemplateKey(assignedRole, joinRequest.JobType?.Name);
-                    batchTemplate = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == batchTemplateKey);
+                    batchTemplate = await _roleService.GetRoleTemplateByKeyAsync(batchTemplateKey);
                 }
 
                 var newUser = new AppUser
@@ -1641,7 +1750,16 @@ public class UsersModel : LocalizedPageModel
                 joinRequest.ReviewedBy = currentUserId;
                 joinRequest.ReviewedAt = DateTime.UtcNow;
 
-                await _db.SaveChangesAsync(); // Save to get newUser.Id
+                {
+                    var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "AppUser");
+                    if (!saveResult.Success)
+                    {
+                        errors.Add(_localizer["Error_ConcurrencyConflict"]);
+                        skippedCount++;
+                        continue;
+                    }
+                }
 
                 // Link the created user to the join request
                 joinRequest.CreatedUserId = newUser.Id;
@@ -1667,7 +1785,15 @@ public class UsersModel : LocalizedPageModel
                 approvedCount++;
             }
 
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser");
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
             await transaction.CommitAsync();
 
             // Build success message
@@ -1975,11 +2101,12 @@ public class UsersModel : LocalizedPageModel
             UserRole role;
 
             // Look up template by key (supports custom roles)
-            importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(rt => rt.Key == roleStr);
+            importTemplate = await _roleService.GetRoleTemplateByKeyAsync(roleStr);
 
             if (importTemplate != null)
             {
+                if (!importTemplate.DerivedUserRole.HasValue)
+                    _logger.LogWarning("RoleTemplate {Key} (Id={Id}) missing DerivedUserRole — defaulting to Employee", importTemplate.Key, importTemplate.Id);
                 role = importTemplate.DerivedUserRole ?? UserRole.Employee;
             }
             else if (Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var parsedRole))
@@ -1987,22 +2114,19 @@ public class UsersModel : LocalizedPageModel
                 role = parsedRole;
                 // Map enum to template
                 var templateKey = MapUserRoleToRoleTemplateKey(role, null);
-                importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(rt => rt.Key == templateKey);
+                importTemplate = await _roleService.GetRoleTemplateByKeyAsync(templateKey);
             }
             else
             {
                 role = UserRole.Employee;
-                importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(rt => rt.Key == "Employee");
+                importTemplate = await _roleService.GetRoleTemplateByKeyAsync("Employee");
             }
 
             // Don't allow bulk creation of Owner/Director/AreaAdmin
             if (role == UserRole.Owner || role == UserRole.Director || role == UserRole.AreaAdmin)
             {
                 role = UserRole.Employee;
-                importTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(rt => rt.Key == "Employee");
+                importTemplate = await _roleService.GetRoleTemplateByKeyAsync("Employee");
             }
 
             var (hash, salt) = PasswordHasher.CreateHash(password);
@@ -2025,7 +2149,15 @@ public class UsersModel : LocalizedPageModel
         }
 
         if (created > 0)
-            await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser");
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         var resultParts = new List<string>();
         resultParts.Add($"Created: {created}");

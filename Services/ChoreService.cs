@@ -35,13 +35,16 @@ public class ChoreService : IChoreService
     private readonly IGrantService _grantService;
     private readonly ILogger<ChoreService> _logger;
 
+    private readonly ICompanyCacheService _companyCacheService;
+
     public ChoreService(
         AppDbContext db,
         ITenantResolver tenantResolver,
         IHttpContextAccessor httpContextAccessor,
         IDirectorService directorService,
         IGrantService grantService,
-        ILogger<ChoreService> logger)
+        ILogger<ChoreService> logger,
+        ICompanyCacheService companyCacheService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -49,6 +52,7 @@ public class ChoreService : IChoreService
         _directorService = directorService;
         _grantService = grantService;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     private int GetCurrentUserId()
@@ -267,7 +271,7 @@ public class ChoreService : IChoreService
             var effectiveMoleculeId = moleculeId;
             if (!effectiveMoleculeId.HasValue)
             {
-                var company = await _db.Companies.FindAsync(assignee.CompanyId);
+                var company = await _companyCacheService.GetCompanyAsync(assignee.CompanyId);
                 effectiveMoleculeId = company?.MoleculeId;
             }
 

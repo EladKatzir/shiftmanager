@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Models;
+using ShiftManager.Services;
 
 namespace ShiftManager.Data.SeedData;
 
@@ -12,11 +13,13 @@ public class DataMigrationHelper
 {
     private readonly AppDbContext _db;
     private readonly ILogger<DataMigrationHelper> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
-    public DataMigrationHelper(AppDbContext db, ILogger<DataMigrationHelper> logger)
+    public DataMigrationHelper(AppDbContext db, ILogger<DataMigrationHelper> logger, IJobTypeService jobTypeService)
     {
         _db = db;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     /// <summary>
@@ -115,8 +118,8 @@ public class DataMigrationHelper
         }
 
         // Get job types (area-scoped, so we need the area from company's molecule)
-        var jobTypes = await _db.JobTypes
-            .ToListAsync();
+        // GetAllJobTypesWithAreaAsync returns all job types (including inactive) with Area included
+        var jobTypes = await _jobTypeService.GetAllJobTypesWithAreaAsync();
 
         // Get company to areaId mapping (via molecule)
         var companyAreaMap = await _db.Companies

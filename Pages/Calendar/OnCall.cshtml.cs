@@ -392,7 +392,8 @@ public class OnCallModel : PageModel
             {
                 Id = o.Id,
                 Name = o.User?.DisplayName ?? _localizer["Unknown"],
-                Role = o.Notes // Use notes as additional info
+                Role = o.Notes, // Use notes as additional info
+                UserId = o.UserId
             }).ToList();
 
             cells[date] = cell;

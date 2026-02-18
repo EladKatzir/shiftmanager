@@ -55,19 +55,19 @@ public class IndexModel : LocalizedPageModel
         // Load areas
         var areas = await _db.Areas
             .IgnoreQueryFilters()
-            .OrderBy(a => a.Name)
+            .OrderBy(a => a.SortOrder).ThenBy(a => a.Name)
             .ToListAsync();
 
         // Load molecules
         var molecules = await _db.Molecules
             .IgnoreQueryFilters()
-            .OrderBy(m => m.Name)
+            .OrderBy(m => m.SortOrder).ThenBy(m => m.Name)
             .ToListAsync();
 
         // Load companies
         var companies = await _db.Companies
             .IgnoreQueryFilters()
-            .OrderBy(c => c.Name)
+            .OrderBy(c => c.SortOrder).ThenBy(c => c.Name)
             .ToListAsync();
 
         // Build the tree

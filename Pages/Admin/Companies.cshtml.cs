@@ -9,7 +9,9 @@ using ShiftManager.Helpers;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace ShiftManager.Pages.Admin;
@@ -21,14 +23,27 @@ public class CompaniesModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<CompaniesModel> _logger;
+    private readonly ISetupTaskService _setupTaskService;
+
+    private readonly ICompanyCacheService _companyCacheService;
+    private readonly IRoleService _roleService;
+    private readonly IConcurrencyService _concurrencyService;
 
     public CompaniesModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<CompaniesModel> logger) : base(localizer)
+        ILogger<CompaniesModel> logger,
+        ISetupTaskService setupTaskService,
+        ICompanyCacheService companyCacheService,
+        IRoleService roleService,
+        IConcurrencyService concurrencyService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _setupTaskService = setupTaskService;
+        _companyCacheService = companyCacheService;
+        _roleService = roleService;
+        _concurrencyService = concurrencyService;
     }
 
     public record CompanyVM(int Id, string Name, string? Slug, string? DisplayName, int UserCount);
@@ -149,8 +164,8 @@ public class CompaniesModel : LocalizedPageModel
             return Page();
         }
 
-        // Validate slug is unique
-        if (await _db.Companies.AnyAsync(c => c.Slug == CompanySlug))
+        // Validate slug is unique (cross-tenant check via service)
+        if (await _companyCacheService.IsSlugTakenAsync(CompanySlug))
         {
             Error = _localizer["Error_CompanySlugAlreadyExists"];
             return Page();
@@ -218,7 +233,15 @@ public class CompaniesModel : LocalizedPageModel
             };
 
             _db.Companies.Add(company);
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "Company");
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return Page();
+                }
+            }
 
             _logger.LogInformation("Created new company: {CompanyName} (ID: {CompanyId}, Slug: {CompanySlug})",
                 company.Name, company.Id, company.Slug);
@@ -245,7 +268,15 @@ public class CompaniesModel : LocalizedPageModel
                 };
 
                 _db.DirectorCompanies.Add(directorAssignment);
-                await _db.SaveChangesAsync();
+                {
+                    var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "Company", company.Id);
+                    if (!saveResult.Success)
+                    {
+                        Error = _localizer["Error_ConcurrencyConflict"];
+                        return Page();
+                    }
+                }
 
                 _logger.LogInformation("Assigned Director {DirectorId} ({DirectorEmail}) to company {CompanyName}",
                     SelectedDirectorId.Value, director?.Email, company.Name);
@@ -257,8 +288,7 @@ public class CompaniesModel : LocalizedPageModel
                 // Create the manager user for this company with RoleTemplate
                 var (hash, salt) = PasswordHasher.CreateHash(ManagerPassword);
                 var managerTemplateKey = RoleTemplateMapper.MapUserRoleToRoleTemplateKey(UserRole.Manager);
-                var managerTemplate = await _db.RoleTemplates.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(rt => rt.Key == managerTemplateKey);
+                var managerTemplate = await _roleService.GetRoleTemplateByKeyAsync(managerTemplateKey);
                 var manager = new AppUser
                 {
                     CompanyId = company.Id,
@@ -272,7 +302,15 @@ public class CompaniesModel : LocalizedPageModel
                 };
 
                 _db.Users.Add(manager);
-                await _db.SaveChangesAsync();
+                {
+                    var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "Company", company.Id);
+                    if (!saveResult.Success)
+                    {
+                        Error = _localizer["Error_ConcurrencyConflict"];
+                        return Page();
+                    }
+                }
 
                 _logger.LogInformation("Created manager user {ManagerEmail} for company {CompanyName}",
                     ManagerEmail, company.Name);
@@ -290,7 +328,15 @@ public class CompaniesModel : LocalizedPageModel
             };
 
             _db.ShiftTypes.AddRange(defaultShiftTypes);
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "Company", company.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return Page();
+                }
+            }
 
             _logger.LogInformation("Created default shift types for company {CompanyName}", company.Name);
 
@@ -302,11 +348,33 @@ public class CompaniesModel : LocalizedPageModel
             };
 
             _db.Configs.AddRange(defaultConfigs);
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "Company", company.Id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return Page();
+                }
+            }
 
             _logger.LogInformation("Created default config for company {CompanyName}", company.Name);
 
             await transaction.CommitAsync();
+
+            // Auto-generate setup tasks for the new company if it belongs to a molecule.
+            // Duplicate guard: fetch tasks scoped to the molecule and check for this company's tasks.
+            if (company.MoleculeId.HasValue)
+            {
+                var existingCompanyTasks = await _setupTaskService.GetTasksForMoleculeAsync(company.MoleculeId.Value);
+                var hasCompanyTasks = existingCompanyTasks.Any(t => t.CompanyId == company.Id);
+                if (!hasCompanyTasks)
+                {
+                    var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                    await _setupTaskService.GenerateTasksForCompanyAsync(company.Id, currentUserId);
+                    _logger.LogInformation("Auto-generated setup tasks for new company {CompanyId}", company.Id);
+                }
+            }
 
             TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyCreated"], company.Name, successUserInfo);
 
@@ -352,7 +420,17 @@ public class CompaniesModel : LocalizedPageModel
         }
 
         company.Name = NewCompanyName;
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "Company", RenameCompanyId);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
+
+        _companyCacheService.InvalidateCache(RenameCompanyId);
 
         _logger.LogInformation("Company {CompanyId} renamed to {NewName}", RenameCompanyId, NewCompanyName);
         TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"], NewCompanyName);
@@ -433,7 +511,8 @@ public class CompaniesModel : LocalizedPageModel
                 slug, company.Name, company.Id);
         }
 
-        await _db.SaveChangesAsync();
+        await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+            () => _db.SaveChangesAsync(), "Company");
     }
 
     /// <summary>
@@ -514,8 +593,18 @@ public class CompaniesModel : LocalizedPageModel
             // 11. Finally, delete the company itself
             _db.Companies.Remove(company);
 
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "Company", id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
             await transaction.CommitAsync();
+
+            _companyCacheService.InvalidateCache(id);
 
             _logger.LogInformation("Company {CompanyId} ({CompanyName}) deleted successfully", id, company.Name);
             TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyDeleted"], company.Name);

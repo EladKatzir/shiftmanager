@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -38,7 +39,13 @@ public class ShiftAssignmentServiceTests : IDisposable
                 WeeklyCap: 48,
                 RestHoursSource: "Area",
                 WeeklyCapSource: "Area"));
-        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object);
+        var techShiftServiceMock = new Mock<ITechShiftService>();
+        techShiftServiceMock
+            .Setup(x => x.IsUserEligibleForTechShiftAsync(It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+        var configMock = new Mock<IConfiguration>();
+        configMock.Setup(c => c["ApiKeyHmacSecret"]).Returns("test-hmac-secret-for-unit-tests");
+        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object, techShiftServiceMock.Object, configMock.Object);
     }
 
     public void Dispose()
@@ -245,9 +252,9 @@ public class ShiftAssignmentServiceTests : IDisposable
             shiftInstance.Id
         );
 
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.HasJobTypeMismatch.Should().BeTrue();
+        // Assert — job type mismatch is now a Warning (overrideable), not an Error
+        result.CanAssign.Should().BeTrue("job type mismatch is a warning, not a hard error");
+        result.Warnings.Should().ContainSingle(w => w.Key == "JOB_TYPE_MISMATCH");
     }
 
     [Fact]
@@ -272,13 +279,13 @@ public class ShiftAssignmentServiceTests : IDisposable
             shiftInstance.Id
         );
 
-        // Assert
-        result.IsValid.Should().BeTrue();
-        result.HasJobTypeMismatch.Should().BeFalse();
+        // Assert — matching job type should have no warnings
+        result.CanAssign.Should().BeTrue();
+        result.Warnings.Should().NotContain(w => w.Key == "JOB_TYPE_MISMATCH");
     }
 
     [Fact]
-    public async Task ValidateShiftAssignment_UserNotInShiftGrouping_ReturnsInvalid()
+    public async Task ValidateShiftAssignment_UserNotInShiftGrouping_ReturnsWarning()
     {
         // Arrange
         var hierarchy = await SetupTestHierarchyAsync();
@@ -316,9 +323,9 @@ public class ShiftAssignmentServiceTests : IDisposable
             shiftInstance.Id
         );
 
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.NotInShiftGrouping.Should().BeTrue();
+        // Assert — not-in-grouping is now a Warning (overrideable), not an Error
+        result.CanAssign.Should().BeTrue("grouping mismatch is a warning, not a hard error");
+        result.Warnings.Should().ContainSingle(w => w.Key == "NOT_IN_SHIFT_GROUPING");
     }
 
     [Fact]

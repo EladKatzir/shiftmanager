@@ -25,6 +25,7 @@ public class IndexModel : LocalizedPageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly IDirectorService _directorService;
     private readonly IGrantService _grantService;
+    private readonly IConcurrencyService _concurrencyService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
@@ -34,7 +35,8 @@ public class IndexModel : LocalizedPageModel
         ITraineeService traineeService,
         ILogger<IndexModel> logger,
         IDirectorService directorService,
-        IGrantService grantService)
+        IGrantService grantService,
+        IConcurrencyService concurrencyService)
         : base(localizer)
     {
         _db = db;
@@ -44,6 +46,7 @@ public class IndexModel : LocalizedPageModel
         _logger = logger;
         _directorService = directorService;
         _grantService = grantService;
+        _concurrencyService = concurrencyService;
     }
 
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
@@ -230,7 +233,15 @@ public class IndexModel : LocalizedPageModel
             await _traineeService.CancelShadowingForTimeOffAsync(r.UserId, startDate, endDate);
         }
 
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "TimeOffRequest", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Send notification to user
         await _notificationService.CreateTimeOffNotificationAsync(r.UserId, RequestStatus.Approved, r.StartDate, r.EndDate, r.Id);
@@ -287,7 +298,15 @@ public class IndexModel : LocalizedPageModel
         }
 
         r.Status = RequestStatus.Declined;
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "TimeOffRequest", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Send notification to user
         await _notificationService.CreateTimeOffNotificationAsync(r.UserId, RequestStatus.Declined, r.StartDate, r.EndDate, r.Id);
@@ -350,15 +369,15 @@ public class IndexModel : LocalizedPageModel
 
         // IgnoreQueryFilters: these entities may belong to a different company than current tenant
         var assign = await _db.ShiftAssignments.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == s.FromAssignmentId);
-        if (assign == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
+        if (assign == null) { s.Status = RequestStatus.Declined; await _concurrencyService.SaveWithConcurrencyHandlingAsync(() => _db.SaveChangesAsync(), "SwapRequest", id); await trx.CommitAsync(); return RedirectToPage(); }
 
         var si = await _db.ShiftInstances.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == assign.ShiftInstanceId);
-        if (si == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
+        if (si == null) { s.Status = RequestStatus.Declined; await _concurrencyService.SaveWithConcurrencyHandlingAsync(() => _db.SaveChangesAsync(), "SwapRequest", id); await trx.CommitAsync(); return RedirectToPage(); }
 
         var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == si.ShiftTypeId);
-        if (shiftType == null) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
+        if (shiftType == null) { s.Status = RequestStatus.Declined; await _concurrencyService.SaveWithConcurrencyHandlingAsync(() => _db.SaveChangesAsync(), "SwapRequest", id); await trx.CommitAsync(); return RedirectToPage(); }
 
-        if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _db.SaveChangesAsync(); await trx.CommitAsync(); return RedirectToPage(); }
+        if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _concurrencyService.SaveWithConcurrencyHandlingAsync(() => _db.SaveChangesAsync(), "SwapRequest", id); await trx.CommitAsync(); return RedirectToPage(); }
 
         var conflict = await _checker.CanAssignAsync(s.ToUserId.Value, si);
         if (!conflict.Allowed)
@@ -375,7 +394,16 @@ public class IndexModel : LocalizedPageModel
         // Reassign
         assign.UserId = s.ToUserId;
         s.Status = RequestStatus.Approved;
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "SwapRequest", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                await trx.RollbackAsync();
+                return RedirectToPage();
+            }
+        }
         await trx.CommitAsync();
 
         // Send notification to original user (if there was one)
@@ -447,7 +475,15 @@ public class IndexModel : LocalizedPageModel
                               .FirstOrDefaultAsync();
 
         s.Status = RequestStatus.Declined;
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "SwapRequest", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
 
         // Send notification to user (if there was one)
         if (shiftInfo != null && shiftInfo.UserId.HasValue)
@@ -539,7 +575,15 @@ public class IndexModel : LocalizedPageModel
 
             // Remove the time-off request
             _db.TimeOffRequests.Remove(request);
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "TimeOffRequest", id);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage();
+                }
+            }
 
             // Notify the user that their time-off was deleted
             await _notificationService.CreateTimeOffDeletedNotificationAsync(

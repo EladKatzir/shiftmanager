@@ -32,6 +32,7 @@ public class MonthModel : PageModel
     private readonly IChoreService _choreService;
     private readonly IScopeFilterService _scopeFilterService;
     private readonly IGrantService _grantService;
+    private readonly IJobTypeService _jobTypeService;
 
     public MonthModel(
         AppDbContext db,
@@ -42,7 +43,8 @@ public class MonthModel : PageModel
         IUserPreferenceService userPreferenceService,
         IChoreService choreService,
         IScopeFilterService scopeFilterService,
-        IGrantService grantService)
+        IGrantService grantService,
+        IJobTypeService jobTypeService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -53,6 +55,7 @@ public class MonthModel : PageModel
         _choreService = choreService;
         _scopeFilterService = scopeFilterService;
         _grantService = grantService;
+        _jobTypeService = jobTypeService;
     }
 
     public DateOnly CurrentMonth { get; set; }
@@ -176,11 +179,10 @@ public class MonthModel : PageModel
 
                 if (molecule?.AreaId != null)
                 {
-                    AvailableJobTypes = await _db.JobTypes.IgnoreQueryFilters()
-                        .Where(jt => jt.AreaId == molecule.AreaId && jt.IsActive)
-                        .OrderBy(jt => jt.SortOrder).ThenBy(jt => jt.Name)
+                    var jobTypesForArea = await _jobTypeService.GetJobTypesAsync(molecule.AreaId);
+                    AvailableJobTypes = jobTypesForArea
                         .Select(jt => ValueTuple.Create(jt.Id, jt.DisplayName))
-                        .ToListAsync();
+                        .ToList();
                 }
 
                 AvailableShiftGroupings = await _db.ShiftGroupings.IgnoreQueryFilters()

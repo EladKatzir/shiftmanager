@@ -20,12 +20,14 @@ public class EditModel : PageModel
     private readonly AppDbContext _db;
     private readonly IGrantService _grantService;
     private readonly ILogger<EditModel> _logger;
+    private readonly IJobTypeService _jobTypeService;
 
-    public EditModel(AppDbContext db, IGrantService grantService, ILogger<EditModel> logger)
+    public EditModel(AppDbContext db, IGrantService grantService, ILogger<EditModel> logger, IJobTypeService jobTypeService)
     {
         _db = db;
         _grantService = grantService;
         _logger = logger;
+        _jobTypeService = jobTypeService;
     }
 
     [BindProperty(SupportsGet = true)] public int Id { get; set; }
@@ -232,11 +234,7 @@ public class EditModel : PageModel
             .ThenBy(gt => gt.Key)
             .ToListAsync();
 
-        AvailableJobTypes = await _db.JobTypes
-            .Where(jt => jt.IsActive)
-            .OrderBy(jt => jt.SortOrder)
-            .ThenBy(jt => jt.DisplayName ?? jt.Name)
-            .ToListAsync();
+        AvailableJobTypes = await _jobTypeService.GetAllJobTypesAsync();
 
         // SECURITY-AUDITED: Cross-tenant user count — Owner page requires Grant:AdminAccess
         UserCount = await _db.Users

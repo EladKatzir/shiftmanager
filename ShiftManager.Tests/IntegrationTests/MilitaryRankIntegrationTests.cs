@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
@@ -22,7 +23,7 @@ namespace ShiftManager.Tests.IntegrationTests;
 public class MilitaryRankIntegrationTests : IDisposable
 {
     private readonly AppDbContext _db;
-    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<IFeatureFlagService> _mockFeatureFlagService;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IDirectorService> _mockDirectorService;
     private readonly Mock<IGrantService> _mockGrantService;
@@ -40,7 +41,7 @@ public class MilitaryRankIntegrationTests : IDisposable
             .Options;
         _db = new AppDbContext(options);
 
-        _mockConfiguration = new Mock<IConfiguration>();
+        _mockFeatureFlagService = new Mock<IFeatureFlagService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDirectorService = new Mock<IDirectorService>();
         _mockGrantService = new Mock<IGrantService>();
@@ -123,14 +124,10 @@ public class MilitaryRankIntegrationTests : IDisposable
 
     private OnDutyService CreateService(bool enforceRankEligibility = true)
     {
-        // Setup configuration
-        var configSection = new Mock<IConfigurationSection>();
-        configSection.Setup(x => x.Value).Returns(enforceRankEligibility.ToString().ToLower());
-        _mockConfiguration.Setup(x => x.GetSection("Features:EnforceRankEligibility")).Returns(configSection.Object);
-
-        // For GetValue<bool> extension method behavior
-        _mockConfiguration.Setup(c => c["Features:EnforceRankEligibility"])
-            .Returns(enforceRankEligibility.ToString().ToLower());
+        // Setup feature flag service
+        _mockFeatureFlagService
+            .Setup(f => f.IsEnabledAsync(FeatureFlagSeed.Flags.EnforceRankEligibility, null, null))
+            .ReturnsAsync(enforceRankEligibility);
 
         // Setup HTTP context with manager user
         var claims = new List<Claim>
@@ -148,7 +145,7 @@ public class MilitaryRankIntegrationTests : IDisposable
             _mockDirectorService.Object,
             _mockGrantService.Object,
             NullLogger<OnDutyService>.Instance,
-            _mockConfiguration.Object);
+            _mockFeatureFlagService.Object);
     }
 
     #region Katzin (Lead) Assignment Tests

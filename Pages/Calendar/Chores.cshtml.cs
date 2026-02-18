@@ -311,7 +311,8 @@ public class ChoresModel : PageModel
             {
                 Id = c.Id,
                 Name = c.ChoreType?.DisplayName ?? c.Title,
-                Role = c.ChoreType?.Color // Use color as role for styling
+                Role = c.ChoreType?.Color, // Use color as role for styling
+                UserId = c.UserId
             }).ToList();
 
             cells[date] = cell;

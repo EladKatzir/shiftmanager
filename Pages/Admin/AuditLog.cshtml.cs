@@ -17,13 +17,15 @@ public class AuditLogModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<AuditLogModel> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
 
-    public AuditLogModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ITenantResolver tenantResolver, ILogger<AuditLogModel> logger)
+    public AuditLogModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ITenantResolver tenantResolver, ILogger<AuditLogModel> logger, ICompanyCacheService companyCacheService)
         : base(localizer)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     public List<AuditLog> AuditLogs { get; set; } = new();
@@ -198,7 +200,7 @@ public class AuditLogModel : LocalizedPageModel
                 csv.AppendLine($"\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\",\"{log.UserDisplayName}\",\"{log.Action}\",\"{log.EntityType}\",\"{log.EntityId}\",\"{log.Description.Replace("\"", "\"\"")}\",\"{log.IpAddress}\"");
             }
 
-            var company = await _db.Companies.FindAsync(_tenantResolver.GetCurrentTenantId());
+            var company = await _companyCacheService.GetCompanyAsync(_tenantResolver.GetCurrentTenantId());
             var fileName = $"AuditLog_{company?.Name.Replace(" ", "_")}_{DateTime.UtcNow:yyyyMMdd}.csv";
 
             // Add UTF-8 BOM for Hebrew Excel compatibility (fixes G-07)

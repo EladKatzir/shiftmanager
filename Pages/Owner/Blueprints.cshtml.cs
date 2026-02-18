@@ -22,19 +22,22 @@ public class BlueprintsModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<BlueprintsModel> _logger;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IConcurrencyService _concurrencyService;
 
     public BlueprintsModel(
         AppDbContext db,
         ICompanyLocalizationService localizationService,
         IAuditLogService auditLogService,
         ILogger<BlueprintsModel> logger,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IConcurrencyService concurrencyService)
     {
         _db = db;
         _localizationService = localizationService;
         _auditLogService = auditLogService;
         _logger = logger;
         _tenantResolver = tenantResolver;
+        _concurrencyService = concurrencyService;
     }
 
     public List<ShiftType> ShiftTypes { get; set; } = new();
@@ -109,7 +112,10 @@ public class BlueprintsModel : PageModel
             };
 
             _db.ShiftTypes.Add(shiftType);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType");
+            if (!saveResult.Success)
+                return RedirectToPage(new { error = "A concurrency conflict occurred. Please try again." });
 
             // Create localization overrides for both cultures
             await _localizationService.UpsertOverrideAsync(
@@ -208,7 +214,10 @@ public class BlueprintsModel : PageModel
             shiftType.Start = start;
             shiftType.End = end;
 
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             // Audit log
 
@@ -331,7 +340,10 @@ public class BlueprintsModel : PageModel
                 shiftTypeId, shiftType.Key, instanceCount);
 
             _db.ShiftTypes.Remove(shiftType);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
+            if (!saveResult.Success)
+                return RedirectToPage(new { error = "A concurrency conflict occurred. Please try again." });
 
             _logger.LogInformation(
                 "DELETE SUCCESS: ShiftType removed from database - ShiftTypeId={ShiftTypeId}, Key={Key}",
@@ -426,7 +438,10 @@ public class BlueprintsModel : PageModel
 
             if (updated > 0)
             {
-                await _db.SaveChangesAsync();
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "ShiftType");
+                if (!saveResult.Success)
+                    return RedirectToPage(new { error = "A concurrency conflict occurred. Please try again." });
                 return RedirectToPage(new { success = $"Populated NameKey for {updated} shift types" });
             }
             else

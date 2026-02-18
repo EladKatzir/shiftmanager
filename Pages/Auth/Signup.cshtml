@@ -85,11 +85,11 @@
                         </div>
                         <div class="auth-step" data-step="2">
                             <span class="auth-step__number">2</span>
-                            <span><loc key="Auth_StepRole" /></span>
+                            <span><loc key="Auth_StepOrganization" /></span>
                         </div>
                         <div class="auth-step" data-step="3">
                             <span class="auth-step__number">3</span>
-                            <span><loc key="Auth_StepOrganization" /></span>
+                            <span><loc key="Auth_StepRole" /></span>
                         </div>
                     </div>
 
@@ -135,37 +135,7 @@
                                    required />
                         </div>
 
-                        <!-- Step 2: Role + Job Type -->
-                        <div class="auth-field">
-                            <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
-                            <select id="RequestedRole"
-                                    name="RequestedRole"
-                                    class="auth-field__select"
-                                    required>
-                                <option value="">@Localizer["Loading"]...</option>
-                            </select>
-                            <input type="hidden" id="RequestedRoleTemplateId" name="RequestedRoleTemplateId" value="@Model.RequestedRoleTemplateId" />
-                            <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
-                                <loc key="RequestNeedsApproval" />
-                            </small>
-                        </div>
-
-                        <div class="auth-field" id="jobTypeField">
-                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
-                            <select id="JobTypeId"
-                                    name="JobTypeId"
-                                    class="auth-field__select"
-                                    disabled
-                                    required>
-                                <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
-                            </select>
-                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
-                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
-                                <loc key="Loading" />...
-                            </div>
-                        </div>
-
-                        <!-- Step 3: Organization (Cascading Dropdowns) -->
+                        <!-- Step 2: Organization (Cascading Dropdowns) -->
                         <div class="auth-field" id="moleculeField">
                             <label class="auth-field__label" for="MoleculeId"><loc key="Auth_SelectMolecule" /></label>
                             <select id="MoleculeId"
@@ -199,6 +169,36 @@
 
                         <div id="directorHqHint" class="auth-field" style="display: none; color: var(--info); font-size: var(--text-small);">
                             @Localizer["Auth_DirectorAutoHQ"]
+                        </div>
+
+                        <!-- Step 3: Job Type + Role -->
+                        <div class="auth-field" id="jobTypeField">
+                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
+                            <select id="JobTypeId"
+                                    name="JobTypeId"
+                                    class="auth-field__select"
+                                    disabled
+                                    required>
+                                <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
+                            </select>
+                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
+                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
+                            <select id="RequestedRole"
+                                    name="RequestedRole"
+                                    class="auth-field__select"
+                                    required>
+                                <option value="">@Localizer["Loading"]...</option>
+                            </select>
+                            <input type="hidden" id="RequestedRoleTemplateId" name="RequestedRoleTemplateId" value="@Model.RequestedRoleTemplateId" />
+                            <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
+                                <loc key="RequestNeedsApproval" />
+                            </small>
                         </div>
 
                         <button type="submit" class="auth-submit">
@@ -277,6 +277,8 @@
             const isHebrew = document.documentElement.lang === 'he';
             const savedRole = '@((int)Model.RequestedRole)';
             const savedTemplateId = '@(Model.RequestedRoleTemplateId?.ToString() ?? "")';
+            const savedCompanyId = '@(Model.CompanyId > 0 ? Model.CompanyId.ToString() : "")';
+            const savedJobTypeId = '@(Model.JobTypeId > 0 ? Model.JobTypeId.ToString() : "")';
 
             // Load role templates dynamically from API
             fetch('/Api/Signup/GetSignupOptions?handler=RoleTemplates', { credentials: 'same-origin' })
@@ -289,15 +291,15 @@
                     roleSelect.innerHTML = '';
                     data.roleTemplates.forEach(function(rt) {
                         var opt = document.createElement('option');
-                        opt.value = rt.derivedUserRole !== null ? rt.derivedUserRole.toString() : '';
+                        opt.value = rt.derivedUserRole != null ? rt.derivedUserRole.toString() : '';
                         opt.setAttribute('data-template-id', rt.id);
-                        // Priority: DisplayName (localized) → NameKey fallback → Key
+                        // Priority: custom DisplayNameEN/HE → server-resolved DisplayName → Key
                         var name = isHebrew ? (rt.displayNameHE || rt.displayNameEN) : (rt.displayNameEN || rt.displayNameHE);
-                        opt.textContent = name || rt.nameKey || rt.key;
+                        opt.textContent = name || rt.displayName || rt.key;
                         // Restore selection from form post-back
                         if (savedTemplateId && rt.id.toString() === savedTemplateId) {
                             opt.selected = true;
-                        } else if (!savedTemplateId && rt.derivedUserRole !== null && rt.derivedUserRole.toString() === savedRole) {
+                        } else if (!savedTemplateId && rt.derivedUserRole != null && rt.derivedUserRole.toString() === savedRole) {
                             opt.selected = true;
                         }
                         roleSelect.appendChild(opt);
@@ -322,35 +324,6 @@
 
             function isDirectorOrAreaAdmin() {
                 return roleSelect.value === DIRECTOR_VALUE || roleSelect.value === AREAADMIN_VALUE;
-            }
-
-            // Role label map for job-type-specific role names
-            var roleLabelMap = {
-                'Manager_Alhut': @Html.Raw(Json.Serialize(Localizer["Manager_Alhut"].Value.Trim())),
-                'Manager_Text': @Html.Raw(Json.Serialize(Localizer["Manager_Text"].Value.Trim())),
-                'Manager_BR': @Html.Raw(Json.Serialize(Localizer["Manager_BR"].Value.Trim())),
-                'Manager_Hakam': @Html.Raw(Json.Serialize(Localizer["Manager_Hakam"].Value.Trim())),
-                'Director_Alhut': @Html.Raw(Json.Serialize(Localizer["Director_Alhut"].Value.Trim())),
-                'Director_Text': @Html.Raw(Json.Serialize(Localizer["Director_Text"].Value.Trim())),
-                'Director_BR': @Html.Raw(Json.Serialize(Localizer["Director_BR"].Value.Trim())),
-                'Director_Hakam': @Html.Raw(Json.Serialize(Localizer["Director_Hakam"].Value.Trim())),
-                'Manager': @Html.Raw(Json.Serialize(Localizer["Manager"].Value.Trim())),
-                'Director': @Html.Raw(Json.Serialize(Localizer["Director"].Value.Trim()))
-            };
-            var MANAGER_VALUE = '@((int)UserRole.Manager)';
-
-            function updateRoleLabels(jobTypeKey) {
-                var options = roleSelect.options;
-                for (var i = 0; i < options.length; i++) {
-                    var opt = options[i];
-                    if (opt.value === MANAGER_VALUE) {
-                        var key = jobTypeKey ? ('Manager_' + jobTypeKey) : 'Manager';
-                        opt.textContent = roleLabelMap[key] || roleLabelMap['Manager'];
-                    } else if (opt.value === DIRECTOR_VALUE) {
-                        var key = jobTypeKey ? ('Director_' + jobTypeKey) : 'Director';
-                        opt.textContent = roleLabelMap[key] || roleLabelMap['Director'];
-                    }
-                }
             }
 
             // Update step indicators
@@ -381,18 +354,18 @@
                     return;
                 }
 
-                // Step 2: Role + JobType
-                var hasRole = roleSelect.value !== '';
-                var hasJobType = jobTypeSelect && jobTypeSelect.value !== '';
-                if (!hasRole || !hasJobType) {
+                // Step 2: Organization
+                var hasMolecule = moleculeSelect.value !== '';
+                var hasCompany = isDirectorOrAreaAdmin() || (companySelect.value !== '');
+                if (!hasMolecule || !hasCompany) {
                     updateSteps(2);
                     return;
                 }
 
-                // Step 3: Organization
-                var hasMolecule = moleculeSelect.value !== '';
-                var hasCompany = isDirectorOrAreaAdmin() || (companySelect.value !== '');
-                if (!hasMolecule || !hasCompany) {
+                // Step 3: JobType + Role
+                var hasJobType = jobTypeSelect && jobTypeSelect.value !== '';
+                var hasRole = roleSelect.value !== '';
+                if (!hasJobType || !hasRole) {
                     updateSteps(3);
                     return;
                 }
@@ -404,12 +377,19 @@
             if (displayNameInput) displayNameInput.addEventListener('input', checkProgress);
             if (passwordInput) passwordInput.addEventListener('input', checkProgress);
 
-            // Load job types on page load (all share the same area)
-            (async function loadJobTypes() {
+            // Load job types filtered by molecule's area
+            async function loadJobTypesForMolecule(moleculeId) {
                 if (!jobTypeSelect) return;
+
+                // Reset job type dropdown
+                jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_ChooseJobTypeFirst"].Value.Trim()</option>';
+                jobTypeSelect.disabled = true;
+
+                if (!moleculeId) return;
+
                 jobTypeLoading.style.display = 'block';
                 try {
-                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=AllJobTypes', { credentials: 'same-origin' });
+                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=JobTypes&moleculeId=' + moleculeId, { credentials: 'same-origin' });
                     if (!response.ok) throw new Error('Request failed: ' + response.status);
                     var data = await response.json();
 
@@ -425,6 +405,10 @@
                             if (jobType.color) {
                                 option.style.color = jobType.color;
                             }
+                            // Restore selection from post-back
+                            if (savedJobTypeId && jobType.id.toString() === savedJobTypeId) {
+                                option.selected = true;
+                            }
                             jobTypeSelect.appendChild(option);
                         });
                         jobTypeSelect.disabled = false;
@@ -437,7 +421,7 @@
                 } finally {
                     jobTypeLoading.style.display = 'none';
                 }
-            })();
+            }
 
             // Role change -> toggle company field visibility
             roleSelect.addEventListener('change', function() {
@@ -458,13 +442,16 @@
                 checkProgress();
             });
 
-            // Molecule change -> Load companies (only if not Director)
+            // Molecule change -> Load companies + job types
             moleculeSelect.addEventListener('change', async function() {
                 var moleculeId = this.value;
 
                 // Reset company dropdown
                 companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"].Value.Trim()</option>';
                 companySelect.disabled = true;
+
+                // Load job types for this molecule's area
+                loadJobTypesForMolecule(moleculeId);
 
                 if (!moleculeId || isDirectorOrAreaAdmin()) {
                     checkProgress();
@@ -484,6 +471,10 @@
                             var option = document.createElement('option');
                             option.value = company.id;
                             option.textContent = company.name;
+                            // Restore selection from post-back
+                            if (savedCompanyId && company.id.toString() === savedCompanyId) {
+                                option.selected = true;
+                            }
                             companySelect.appendChild(option);
                         });
                         companySelect.disabled = false;
@@ -505,14 +496,17 @@
                 checkProgress();
             });
 
-            // JobType change -> Update progress and role labels
+            // JobType change -> Update progress
             if (jobTypeSelect) {
                 jobTypeSelect.addEventListener('change', function() {
-                    var selectedOption = jobTypeSelect.options[jobTypeSelect.selectedIndex];
-                    var jobTypeKey = selectedOption ? selectedOption.dataset.key : null;
-                    updateRoleLabels(jobTypeKey);
                     checkProgress();
                 });
+            }
+
+            // Post-back restoration: if molecule was already selected (form validation error),
+            // trigger the cascade to reload companies and job types
+            if (moleculeSelect.value) {
+                moleculeSelect.dispatchEvent(new Event('change'));
             }
         })();
     </script>

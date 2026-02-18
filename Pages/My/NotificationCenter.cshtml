@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["NotificationCenter"];
@@ -73,12 +74,12 @@
                             </p>
                             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
                                 <small style="color: var(--muted);">
-                                    @notification.CreatedAt.ToString("MMM dd, yyyy 'at' HH:mm")
+                                    @Localization.FormatMediumDate(notification.CreatedAt) @Localization.FormatTime(notification.CreatedAt)
                                 </small>
                                 @if (notification.IsRead && notification.ReadAt.HasValue)
                                 {
                                     <small style="color: var(--muted);">
-                                        @Localizer["Read"] @notification.ReadAt.Value.ToString("MMM dd 'at' HH:mm")
+                                        @Localizer["Read"] @Localization.FormatShortDate(notification.ReadAt.Value) @Localization.FormatTime(notification.ReadAt.Value)
                                     </small>
                                 }
                             </div>

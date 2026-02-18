@@ -37,7 +37,7 @@
                 {
                     foreach (var assignment in cell.Assignments)
                     {
-                        <div class="excel-calendar__assignment" data-assignment-id="@assignment.Id">
+                        <div class="excel-calendar__assignment" data-assignment-id="@assignment.Id" data-user-id="@assignment.UserId">
                             <span class="excel-calendar__assignment-name">@assignment.Name</span>
                             @if (assignment.IsTrainee)
                             {

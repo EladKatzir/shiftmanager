@@ -6,6 +6,7 @@
 @using ShiftManager.Helpers
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["UserManagement"];
@@ -791,7 +792,7 @@
                     @u.DisplayName
                     @if (u.IsLocked)
                     {
-                        var lockoutTime = u.LockoutEnd.HasValue ? u.LockoutEnd.Value.ToLocalTime().ToString("HH:mm") : "";
+                        var lockoutTime = u.LockoutEnd.HasValue ? Localization.FormatTime(u.LockoutEnd.Value.ToLocalTime()) : "";
                         <span style="color: var(--danger); margin-inline-start: 0.5rem;" title="@Localizer["LockedUntil", lockoutTime]">🔒</span>
                     }
                 </td>
@@ -1189,41 +1190,10 @@
             }
         });
 
-        // Role label map for job-type-specific role names in Add User form
-        (function() {
-            var roleLabelMap = {
-                'Manager_Alhut': @Html.Raw(Json.Serialize(Localizer["Manager_Alhut"].Value.Trim())),
-                'Manager_Text': @Html.Raw(Json.Serialize(Localizer["Manager_Text"].Value.Trim())),
-                'Manager_BR': @Html.Raw(Json.Serialize(Localizer["Manager_BR"].Value.Trim())),
-                'Manager_Hakam': @Html.Raw(Json.Serialize(Localizer["Manager_Hakam"].Value.Trim())),
-                'Director_Alhut': @Html.Raw(Json.Serialize(Localizer["Director_Alhut"].Value.Trim())),
-                'Director_Text': @Html.Raw(Json.Serialize(Localizer["Director_Text"].Value.Trim())),
-                'Director_BR': @Html.Raw(Json.Serialize(Localizer["Director_BR"].Value.Trim())),
-                'Director_Hakam': @Html.Raw(Json.Serialize(Localizer["Director_Hakam"].Value.Trim())),
-                'Manager': @Html.Raw(Json.Serialize(Localizer["Manager"].Value.Trim())),
-                'Director': @Html.Raw(Json.Serialize(Localizer["Director"].Value.Trim()))
-            };
-            var addUserJobType = document.getElementById('addUserJobType');
-            var addUserRoleSelect = document.querySelector('[name="NewRoleTemplateId"]');
-            if (addUserJobType && addUserRoleSelect) {
-                addUserJobType.addEventListener('change', function() {
-                    var selectedOption = this.options[this.selectedIndex];
-                    var jobTypeKey = selectedOption ? selectedOption.dataset.key : null;
-                    var options = addUserRoleSelect.options;
-                    for (var i = 0; i < options.length; i++) {
-                        var opt = options[i];
-                        var derivedRole = opt.dataset.derivedRole;
-                        if (derivedRole === 'Manager') {
-                            var key = jobTypeKey ? ('Manager_' + jobTypeKey) : 'Manager';
-                            opt.textContent = roleLabelMap[key] || roleLabelMap['Manager'];
-                        } else if (derivedRole === 'Director') {
-                            var key = jobTypeKey ? ('Director_' + jobTypeKey) : 'Director';
-                            opt.textContent = roleLabelMap[key] || roleLabelMap['Director'];
-                        }
-                    }
-                });
-            }
-        })();
+        // NOTE: roleLabelMap was removed — each RoleTemplate has its own unique display name
+        // (via RoleDisplayHelper / DisplayNameEN/HE), so renaming by DerivedUserRole+JobType
+        // would incorrectly overwrite all Manager-derived or Director-derived templates
+        // with the same label (the "mapotz" bug).
 
         // Director/AreaAdmin-aware company/molecule toggle for Add User form
         (function() {
@@ -1232,8 +1202,8 @@
             const addUserMoleculeField = document.getElementById('addUserMoleculeField');
 
             if (addUserRoleSelect) {
-                addUserRoleSelect.addEventListener('change', function() {
-                    const selectedOpt = this.options[this.selectedIndex];
+                function updateFieldVisibility() {
+                    const selectedOpt = addUserRoleSelect.options[addUserRoleSelect.selectedIndex];
                     const derivedRole = selectedOpt ? selectedOpt.dataset.derivedRole : '';
                     const isDirectorOrAreaAdmin = (derivedRole === 'Director' || derivedRole === 'AreaAdmin');
                     if (addUserCompanyField) addUserCompanyField.style.display = isDirectorOrAreaAdmin ? 'none' : '';
@@ -1243,7 +1213,10 @@
                     const moleculeSelect = addUserMoleculeField ? addUserMoleculeField.querySelector('select') : null;
                     if (companySelect) companySelect.required = !isDirectorOrAreaAdmin;
                     if (moleculeSelect) moleculeSelect.required = isDirectorOrAreaAdmin;
-                });
+                }
+                addUserRoleSelect.addEventListener('change', updateFieldVisibility);
+                // Sync initial state on page load (handles post-back after validation error)
+                updateFieldVisibility();
             }
         })();
     </script>

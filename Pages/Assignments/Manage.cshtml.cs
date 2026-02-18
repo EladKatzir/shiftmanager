@@ -26,8 +26,9 @@ public class ManageModel : LocalizedPageModel
     private readonly ITraineeService _traineeService;
     private readonly IBusyUserService _busyUserService;
     private readonly IGrantService _grantService;
+    private readonly IConcurrencyService _concurrencyService;
 
-    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService)
+    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService)
         : base(localizer)
     {
         _db = db;
@@ -39,6 +40,7 @@ public class ManageModel : LocalizedPageModel
         _traineeService = traineeService;
         _busyUserService = busyUserService;
         _grantService = grantService;
+        _concurrencyService = concurrencyService;
     }
 
 
@@ -107,7 +109,13 @@ public class ManageModel : LocalizedPageModel
         if (Instance.Id == 0)
         {
             _db.ShiftInstances.Add(Instance);
-            await _db.SaveChangesAsync();
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftInstance");
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage("/Calendar/Month");
+            }
         }
 
         var assignments = await _db.ShiftAssignments
@@ -227,7 +235,15 @@ public class ManageModel : LocalizedPageModel
             // Note: Frontend will handle localStorage-based shift names via JavaScript
         }
 
-        await _db.SaveChangesAsync();
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftAssignment");
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return Page();
+            }
+        }
 
         // Send notification to the assigned user
         await _notificationService.CreateShiftAddedNotificationAsync(
@@ -286,7 +302,15 @@ public class ManageModel : LocalizedPageModel
             }
 
             _db.ShiftAssignments.Remove(a);
-            await _db.SaveChangesAsync();
+            {
+                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "ShiftAssignment", assignmentId);
+                if (!saveResult.Success)
+                {
+                    Error = _localizer["Error_ConcurrencyConflict"];
+                    return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId });
+                }
+            }
             _logger.LogInformation("Successfully removed assignment {AssignmentId}", assignmentId);
         }
         else

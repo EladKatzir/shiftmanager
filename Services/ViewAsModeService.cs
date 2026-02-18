@@ -8,16 +8,19 @@ public class ViewAsModeService : IViewAsModeService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDirectorService _directorService;
     private readonly AppDbContext _db;
+    private readonly ICompanyCacheService _companyCacheService;
     private const string ViewAsCookieName = "director_view_as_mode";
 
     public ViewAsModeService(
         IHttpContextAccessor httpContextAccessor,
         IDirectorService directorService,
-        AppDbContext db)
+        AppDbContext db,
+        ICompanyCacheService companyCacheService)
     {
         _httpContextAccessor = httpContextAccessor;
         _directorService = directorService;
         _db = db;
+        _companyCacheService = companyCacheService;
     }
 
     public bool IsViewingAsManager()
@@ -53,7 +56,7 @@ public class ViewAsModeService : IViewAsModeService
             return false;
 
         // Verify company exists
-        var companyExists = await _db.Companies.AnyAsync(c => c.Id == companyId);
+        var companyExists = (await _companyCacheService.GetCompanyAsync(companyId)) != null;
         if (!companyExists)
             return false;
 
@@ -87,7 +90,7 @@ public class ViewAsModeService : IViewAsModeService
         if (companyId == null)
             return null;
 
-        var company = await _db.Companies.FindAsync(companyId.Value);
+        var company = await _companyCacheService.GetCompanyAsync(companyId.Value);
         return company?.Name;
     }
 }

@@ -296,7 +296,7 @@ function renderWeekGrid(members) {
 
 function renderDayCell(day, isMobile) {
     const statusClass = day.type.toLowerCase().replace('_', '-').replace(/\s+/g, '-');
-    const hasUrl = day.targetUrl !== null && day.targetUrl !== undefined && day.targetUrl !== '';
+    const hasUrl = day.targetUrl != null && day.targetUrl !== '';
     const clickableClass = hasUrl ? 'clickable' : '';
     const onclickAttr = hasUrl ? `onclick="navigateTo('${escapeJsAttr(day.targetUrl)}')"` : '';
 

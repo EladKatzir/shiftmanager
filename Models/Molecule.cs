@@ -10,6 +10,7 @@ public class Molecule
     public string DisplayName { get; set; } = string.Empty;
     public MoleculeType Type { get; set; }
     public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation

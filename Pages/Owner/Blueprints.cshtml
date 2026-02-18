@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Blueprints_Title"];
@@ -160,7 +161,7 @@
                             </td>
                             <td>
                                 <span class="editable-time" data-shift-id="@shiftType.Id">
-                                    @shiftType.Start.ToString("HH:mm") - @shiftType.End.ToString("HH:mm")
+                                    @Localization.FormatTime(shiftType.Start) - @Localization.FormatTime(shiftType.End)
                                 </span>
                             </td>
                             <td>

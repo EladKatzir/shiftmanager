@@ -79,6 +79,7 @@ public class GriffinService : IGriffinService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Griffin token validation failed with status {StatusCode}", response.StatusCode);
+                _securityLogger.LogAuthenticationFailure("Griffin SSO", "unknown", $"Token validation HTTP {response.StatusCode}");
                 return false;
             }
 
@@ -92,6 +93,7 @@ public class GriffinService : IGriffinService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating Griffin token");
+            _securityLogger.LogSecurityThreat("TokenValidationError", $"Griffin token validation threw: {ex.Message}", "unknown");
             return false;
         }
     }
@@ -114,6 +116,7 @@ public class GriffinService : IGriffinService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Griffin getClaims failed with status {StatusCode}", response.StatusCode);
+                _securityLogger.LogAuthenticationFailure("Griffin SSO", "unknown", $"Claims retrieval HTTP {response.StatusCode}");
                 return null;
             }
 
@@ -133,6 +136,7 @@ public class GriffinService : IGriffinService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching Griffin claims");
+            _securityLogger.LogSecurityThreat("ClaimsRetrievalError", $"Griffin claims retrieval threw: {ex.Message}", "unknown");
             return null;
         }
     }
@@ -182,6 +186,7 @@ public class GriffinService : IGriffinService
         if (griffinClaims == null)
         {
             _logger.LogWarning("Griffin authentication failed: invalid token or claims");
+            _securityLogger.LogAuthenticationFailure("Griffin SSO", ipAddress, "Invalid token or claims retrieval failed");
             return null;
         }
 
@@ -189,6 +194,7 @@ public class GriffinService : IGriffinService
         if (string.IsNullOrWhiteSpace(griffinClaims.UPN) || string.IsNullOrWhiteSpace(griffinClaims.sAMAccountName))
         {
             _logger.LogError("Griffin claims missing required fields (UPN or sAMAccountName)");
+            _securityLogger.LogSecurityThreat("MissingClaims", "Griffin token claims missing UPN or sAMAccountName — possible token tampering", ipAddress);
             return null;
         }
 
@@ -209,12 +215,14 @@ public class GriffinService : IGriffinService
                 if (user == null)
                 {
                     _logger.LogError("Failed to auto-provision user for UPN: {UPN}", griffinClaims.UPN);
+                    _securityLogger.LogAuthenticationFailure(griffinClaims.UPN, ipAddress, "Auto-provisioning failed");
                     return null;
                 }
             }
             else
             {
                 _logger.LogInformation("User {UPN} not found and auto-provisioning disabled", griffinClaims.UPN);
+                _securityLogger.LogAuthenticationFailure(griffinClaims.UPN, ipAddress, "User not found and auto-provisioning disabled");
                 return null; // Will show pending approval message in callback
             }
         }
@@ -301,6 +309,7 @@ public class GriffinService : IGriffinService
         var principal = new ClaimsPrincipal(identity);
 
         _logger.LogInformation("Griffin authentication successful for user {UserId} ({Email})", user.Id, user.Email);
+        _securityLogger.LogAuthenticationSuccess(user.Id, user.Email, user.Role.ToString(), ipAddress);
 
         return principal;
     }
@@ -335,6 +344,7 @@ public class GriffinService : IGriffinService
             await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("Auto-provisioned Griffin user: {Email} with role {Role}, template {TemplateId}", user.Email, user.Role, user.RoleTemplateId);
+            _securityLogger.LogSensitiveDataAccess(user.Id, "AppUser", "AutoProvision via Griffin SSO");
             _logger.LogWarning("Griffin auto-provisioned user {Email} has no molecule/hierarchy placement. " +
                 "Owner or Manager must assign placement before user can access operational features (D-06).",
                 user.Email);
@@ -352,6 +362,7 @@ public class GriffinService : IGriffinService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to auto-provision user for UPN: {UPN}", griffinClaims.UPN);
+            _securityLogger.LogSecurityThreat("AutoProvisionError", $"Failed to auto-provision Griffin user {griffinClaims.UPN}: {ex.Message}", null);
             return null;
         }
     }

@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
 @{
     ViewData["Title"] = Localizer["Home"];
     Layout = "_Layout";
@@ -39,14 +40,14 @@
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div>
                             <div class="text-subtle" style="font-size: 0.875rem;"><loc key="Date" /></div>
-                            <div class="text-body" style="font-weight: 500;">@Model.NextShift.ShiftInstance.WorkDate.ToString("dddd, MMMM dd")</div>
+                            <div class="text-body" style="font-weight: 500;">@Localization.FormatLongDate(Model.NextShift.ShiftInstance.WorkDate)</div>
                         </div>
                         <div>
                             <div class="text-subtle" style="font-size: 0.875rem;"><loc key="Time" /></div>
                             <div class="text-body" style="font-weight: 500;">
                                 @if (Model.NextShift.ShiftInstance.ShiftType != null)
                                 {
-                                    <text>@Model.NextShift.ShiftInstance.ShiftType.Start.ToString(@"HH:mm") - @Model.NextShift.ShiftInstance.ShiftType.End.ToString(@"HH:mm")</text>
+                                    <text>@Localization.FormatTime(Model.NextShift.ShiftInstance.ShiftType.Start) - @Localization.FormatTime(Model.NextShift.ShiftInstance.ShiftType.End)</text>
                                 }
                             </div>
                         </div>
@@ -112,7 +113,7 @@
                         {
                             <div style="padding: 0.5rem; background: var(--surface-soft); border-radius: 6px; @(notification.IsRead ? "" : "border-left: 3px solid var(--primary);")">
                                 <div class="text-body" style="font-size: 0.875rem; margin-bottom: 0.25rem;">@notification.Message</div>
-                                <div class="text-caption" style="color: var(--text-muted);">@notification.CreatedAt.ToString("MMM dd, HH:mm")</div>
+                                <div class="text-caption" style="color: var(--text-muted);">@Localization.FormatShortDate(notification.CreatedAt) @Localization.FormatTime(notification.CreatedAt)</div>
                             </div>
                         }
                     </div>

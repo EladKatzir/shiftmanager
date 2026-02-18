@@ -28,6 +28,7 @@ public class LoginModel : LocalizedPageModel
     private readonly IGriffinService _griffinService;
     private readonly IHierarchyService _hierarchyService;
     private readonly IGrantService _grantService;
+    private readonly IRoleService _roleService;
 
     public LoginModel(
         AppDbContext db,
@@ -38,7 +39,8 @@ public class LoginModel : LocalizedPageModel
         IGriffinConfigService griffinConfigService,
         IGriffinService griffinService,
         IHierarchyService hierarchyService,
-        IGrantService grantService)
+        IGrantService grantService,
+        IRoleService roleService)
         : base(localizer)
     {
         _db = db;
@@ -49,6 +51,7 @@ public class LoginModel : LocalizedPageModel
         _griffinService = griffinService;
         _hierarchyService = hierarchyService;
         _grantService = grantService;
+        _roleService = roleService;
     }
 
     [BindProperty] public string Email { get; set; } = string.Empty;
@@ -254,7 +257,7 @@ public class LoginModel : LocalizedPageModel
             if (user.RoleTemplateId == null)
             {
                 var templateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
-                var template = await _db.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
+                var template = await _roleService.GetRoleTemplateByKeyAsync(templateKey);
                 if (template != null)
                 {
                     user.RoleTemplateId = template.Id;

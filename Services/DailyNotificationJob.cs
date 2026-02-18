@@ -4,18 +4,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 
 namespace ShiftManager.Services;
 
 /// <summary>
 /// Phase 6: Background service that sends daily digest emails to users based on their preferences.
 /// Runs every 15 minutes to check for users whose preferred time matches the current time.
-/// Can be disabled via configuration flag: Features:EnableDailyNotifications
+/// Can be disabled via feature flag: FF_ENABLE_DAILY_NOTIFICATIONS
 /// </summary>
 public class DailyNotificationJob : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<DailyNotificationJob> _logger;
     private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(15);
     // C-04: Overlap detection — prevent job from running concurrently with itself
@@ -23,11 +23,9 @@ public class DailyNotificationJob : BackgroundService
 
     public DailyNotificationJob(
         IServiceProvider serviceProvider,
-        IConfiguration configuration,
         ILogger<DailyNotificationJob> logger)
     {
         _serviceProvider = serviceProvider;
-        _configuration = configuration;
         _logger = logger;
     }
 
@@ -36,11 +34,17 @@ public class DailyNotificationJob : BackgroundService
         _logger.LogInformation("Daily Notification Job started");
 
         // Check if daily notifications are enabled via feature flag
-        var isEnabled = _configuration.GetValue<bool>("Features:EnableDailyNotifications", true);
+        bool isEnabled;
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var flagService = scope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
+            isEnabled = await flagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnableDailyNotifications);
+        }
 
         if (!isEnabled)
         {
-            _logger.LogInformation("Daily notifications disabled by feature flag (Features:EnableDailyNotifications=false). Job will exit gracefully.");
+            _logger.LogInformation("Daily notifications disabled by feature flag ({FlagName}=false). Job will exit gracefully.",
+                FeatureFlagSeed.Flags.EnableDailyNotifications);
             return;
         }
 
@@ -50,7 +54,11 @@ public class DailyNotificationJob : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             // Re-check feature flag at start of each iteration to allow runtime disabling
-            isEnabled = _configuration.GetValue<bool>("Features:EnableDailyNotifications", true);
+            using (var flagScope = _serviceProvider.CreateScope())
+            {
+                var flagService = flagScope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
+                isEnabled = await flagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnableDailyNotifications);
+            }
 
             if (!isEnabled)
             {
@@ -69,6 +77,23 @@ public class DailyNotificationJob : BackgroundService
             try
             {
                 await ProcessDailyDigestsAsync(stoppingToken);
+
+                // Section 10C: Cleanup old telemetry data daily (prevents unbounded DB growth in air-gapped environments)
+                try
+                {
+                    using var cleanupScope = _serviceProvider.CreateScope();
+                    var telemetryService = cleanupScope.ServiceProvider.GetRequiredService<IClientTelemetryService>();
+                    var (events, errors, metrics) = await telemetryService.CleanupOldDataAsync(30);
+                    if (events > 0 || errors > 0 || metrics > 0)
+                    {
+                        _logger.LogInformation("Telemetry cleanup: removed {Events} events, {Errors} errors, {Metrics} metrics older than 30 days",
+                            events, errors, metrics);
+                    }
+                }
+                catch (Exception cleanupEx)
+                {
+                    _logger.LogWarning(cleanupEx, "Telemetry data cleanup failed (non-critical)");
+                }
             }
             catch (Exception ex)
             {
