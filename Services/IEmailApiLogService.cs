@@ -25,6 +25,9 @@ public interface IEmailApiLogService
     /// <param name="durationMs">Request duration in milliseconds</param>
     /// <param name="validationErrors">List of validation errors (if any)</param>
     /// <returns>The created log entry</returns>
+    /// <param name="companyId">Optional CompanyId to set on the log entity before saving.
+    /// When provided (non-zero), bypasses CompanyIdInterceptor resolution, enabling persistence
+    /// from background services that lack HTTP tenant context.</param>
     Task<EmailApiLog> LogEmailApiCallAsync(
         string requestUrl,
         string requestMethod,
@@ -38,7 +41,8 @@ public interface IEmailApiLogService
         bool success,
         string? errorMessage,
         int durationMs,
-        List<string>? validationErrors = null);
+        List<string>? validationErrors = null,
+        int companyId = 0);
 
     /// <summary>
     /// Gets the most recent email API logs for the current company.

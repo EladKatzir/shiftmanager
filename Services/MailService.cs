@@ -30,9 +30,11 @@ public class MailService : IMailService
     private readonly IEmailTemplateService _emailTemplateService;
     private readonly EmailBackgroundQueue _emailQueue;
     private readonly ILocalizationService _localization;
+    private readonly ITenantResolver? _tenantResolver;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
+    /// ITenantResolver is optional — it's available during HTTP requests (for enqueue) but not in background processor scope.
     /// </summary>
     public MailService(
         IHttpClientFactory httpClientFactory,
@@ -43,7 +45,8 @@ public class MailService : IMailService
         IStringLocalizer<SharedResources> localizer,
         IEmailTemplateService emailTemplateService,
         EmailBackgroundQueue emailQueue,
-        ILocalizationService localization)
+        ILocalizationService localization,
+        ITenantResolver? tenantResolver = null)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -54,6 +57,7 @@ public class MailService : IMailService
         _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
         _emailQueue = emailQueue ?? throw new ArgumentNullException(nameof(emailQueue));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        _tenantResolver = tenantResolver;
     }
 
     /// <summary>
@@ -176,7 +180,14 @@ public class MailService : IMailService
             return false;
         }
 
-        var queued = await _emailQueue.EnqueueAsync(new QueuedEmail(recipient, subject, htmlBody));
+        // Capture CompanyId from tenant context at enqueue time (HTTP request context is available here).
+        // This allows the background processor to set CompanyId on EmailApiLog entities,
+        // bypassing the CompanyIdInterceptor which would otherwise throw when no HTTP context exists.
+        var companyId = _tenantResolver != null && _tenantResolver.HasTenant()
+            ? _tenantResolver.GetCurrentTenantId()
+            : 0;
+
+        var queued = await _emailQueue.EnqueueAsync(new QueuedEmail(recipient, subject, htmlBody, companyId));
         if (queued)
         {
             _logger.LogDebug("Email queued for background delivery to {Recipient}", recipient);
@@ -189,7 +200,7 @@ public class MailService : IMailService
     /// Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
     /// Do not call from HTTP request handlers — use SendMailAsync instead.
     /// </summary>
-    public async Task<bool> SendMailDirectAsync(string recipient, string subject, string htmlBody)
+    public async Task<bool> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0)
     {
         // Start timing for diagnostics
         var stopwatch = Stopwatch.StartNew();
@@ -254,7 +265,8 @@ public class MailService : IMailService
                     success: false,
                     errorMessage: errorMessage,
                     durationMs: (int)stopwatch.ElapsedMilliseconds,
-                    validationErrors: validationErrors);
+                    validationErrors: validationErrors,
+                    companyId: companyId);
 
                 return false;
             }
@@ -366,7 +378,8 @@ public class MailService : IMailService
                 success: success,
                 errorMessage: errorMessage,
                 durationMs: (int)stopwatch.ElapsedMilliseconds,
-                validationErrors: validationErrors);
+                validationErrors: validationErrors,
+                companyId: companyId);
         }
 
         return success;

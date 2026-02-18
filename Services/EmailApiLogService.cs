@@ -33,7 +33,8 @@ public class EmailApiLogService : IEmailApiLogService
         bool success,
         string? errorMessage,
         int durationMs,
-        List<string>? validationErrors = null)
+        List<string>? validationErrors = null,
+        int companyId = 0)
     {
         try
         {
@@ -42,6 +43,9 @@ public class EmailApiLogService : IEmailApiLogService
 
             var log = new EmailApiLog
             {
+                // Pre-set CompanyId when provided (non-zero) so CompanyIdInterceptor skips resolution.
+                // This enables persistence from background services that lack HTTP tenant context.
+                CompanyId = companyId,
                 RequestUrl = requestUrl,
                 RequestMethod = requestMethod,
                 RequestHeaders = SerializeToJson(sanitizedHeaders),
