@@ -160,28 +160,29 @@ public class MailService : IMailService
 
     /// <summary>
     /// Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
+    /// Uses backpressure-aware EnqueueAsync that waits briefly if the queue is full.
     /// </summary>
-    public Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
+    public async Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
     {
         if (string.IsNullOrWhiteSpace(recipient))
         {
             _logger.LogWarning("Cannot queue email: recipient is null or empty");
-            return Task.FromResult(false);
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(subject))
         {
             _logger.LogWarning("Cannot queue email to {Recipient}: subject is null or empty", recipient);
-            return Task.FromResult(false);
+            return false;
         }
 
-        var queued = _emailQueue.Enqueue(new QueuedEmail(recipient, subject, htmlBody));
+        var queued = await _emailQueue.EnqueueAsync(new QueuedEmail(recipient, subject, htmlBody));
         if (queued)
         {
             _logger.LogDebug("Email queued for background delivery to {Recipient}", recipient);
         }
 
-        return Task.FromResult(queued);
+        return queued;
     }
 
     /// <summary>

@@ -4,12 +4,21 @@ namespace ShiftManager.Services;
 /// Background service that processes queued emails from the EmailBackgroundQueue.
 /// Creates a new DI scope per email to properly resolve scoped services (IEmailConfigService, etc.).
 /// Falls back to appsettings.json config when no tenant context is available.
+/// Implements retry with exponential backoff and dead letter logging to EmailApiLog.
 /// </summary>
 public class EmailBackgroundProcessor : BackgroundService
 {
     private readonly EmailBackgroundQueue _queue;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EmailBackgroundProcessor> _logger;
+
+    private const int MaxRetries = 3;
+    private static readonly TimeSpan[] RetryDelays = new[]
+    {
+        TimeSpan.FromSeconds(10),
+        TimeSpan.FromSeconds(30),
+        TimeSpan.FromSeconds(90)
+    };
 
     public EmailBackgroundProcessor(
         EmailBackgroundQueue queue,
@@ -23,19 +32,76 @@ public class EmailBackgroundProcessor : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("EmailBackgroundProcessor started");
+        _logger.LogInformation("EmailBackgroundProcessor started (max retries: {MaxRetries})", MaxRetries);
 
         await foreach (var email in _queue.Reader.ReadAllAsync(stoppingToken))
         {
+            var attempt = email with { FirstAttemptAt = email.FirstAttemptAt ?? DateTime.UtcNow };
+            bool sent = false;
+
             try
             {
                 using var scope = _serviceProvider.CreateScope();
                 var mailService = scope.ServiceProvider.GetRequiredService<IMailService>();
-                await mailService.SendMailDirectAsync(email.Recipient, email.Subject, email.HtmlBody);
+                sent = await mailService.SendMailDirectAsync(attempt.Recipient, attempt.Subject, attempt.HtmlBody);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send queued email to {Recipient}", email.Recipient);
+                _logger.LogError(ex, "Failed to send email to {Recipient} (attempt {Attempt}/{MaxAttempts})",
+                    attempt.Recipient, attempt.RetryCount + 1, MaxRetries + 1);
+            }
+
+            if (!sent && attempt.RetryCount < MaxRetries)
+            {
+                var delay = RetryDelays[attempt.RetryCount];
+                _logger.LogWarning("Scheduling retry {Retry}/{MaxRetries} for email to {Recipient} in {Delay}s",
+                    attempt.RetryCount + 1, MaxRetries, attempt.Recipient, delay.TotalSeconds);
+
+                // Schedule retry after delay (don't block the processor)
+                var retryEmail = attempt with { RetryCount = attempt.RetryCount + 1 };
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Task.Delay(delay, stoppingToken);
+                        _queue.Enqueue(retryEmail);
+                    }
+                    catch (OperationCanceledException) { /* shutting down */ }
+                }, stoppingToken);
+            }
+            else if (!sent)
+            {
+                // All retries exhausted — log to dead letter
+                _logger.LogError("Email to {Recipient} failed after {Attempts} attempts, logging to dead letter. Subject: {Subject}",
+                    attempt.Recipient, attempt.RetryCount + 1, attempt.Subject);
+
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var emailApiLogService = scope.ServiceProvider.GetRequiredService<IEmailApiLogService>();
+                    await emailApiLogService.LogEmailApiCallAsync(
+                        requestUrl: "dead-letter",
+                        requestMethod: "RETRY_EXHAUSTED",
+                        requestHeaders: new Dictionary<string, string>
+                        {
+                            ["X-Retry-Count"] = attempt.RetryCount.ToString(),
+                            ["X-First-Attempt"] = attempt.FirstAttemptAt?.ToString("o") ?? "unknown"
+                        },
+                        requestBody: "",
+                        responseStatusCode: null,
+                        responseHeaders: null,
+                        responseBody: null,
+                        recipientEmail: attempt.Recipient,
+                        emailSubject: attempt.Subject,
+                        success: false,
+                        errorMessage: $"All {attempt.RetryCount + 1} attempts failed. Email moved to dead letter.",
+                        durationMs: 0,
+                        validationErrors: null);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to log dead letter for email to {Recipient}", attempt.Recipient);
+                }
             }
         }
 
