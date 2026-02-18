@@ -57,16 +57,30 @@ public class EmailBackgroundProcessor : BackgroundService
                 _logger.LogWarning("Scheduling retry {Retry}/{MaxRetries} for email to {Recipient} in {Delay}s",
                     attempt.RetryCount + 1, MaxRetries, attempt.Recipient, delay.TotalSeconds);
 
-                // Schedule retry after delay (don't block the processor)
+                // Schedule retry after delay (don't block the processor).
+                // Known limitation: During application shutdown, pending Task.Run retry delays may be
+                // cancelled via stoppingToken before they can re-enqueue. This means emails mid-retry-delay
+                // will be lost on shutdown. Acceptable for air-gapped deployment where restarts are rare
+                // and controlled. A persistent retry queue (e.g. database-backed) would be needed to
+                // survive restarts, but is not warranted for the current deployment model.
                 var retryEmail = attempt with { RetryCount = attempt.RetryCount + 1 };
                 _ = Task.Run(async () =>
                 {
                     try
                     {
                         await Task.Delay(delay, stoppingToken);
-                        _queue.Enqueue(retryEmail);
+                        if (!_queue.Enqueue(retryEmail))
+                        {
+                            // Queue is full — retry email would be silently dropped. Log to dead letter.
+                            _logger.LogError(
+                                "Retry queue full: email to {Recipient} dropped after attempt {Attempt}. Logging to dead letter. Subject: {Subject}",
+                                retryEmail.Recipient, retryEmail.RetryCount, retryEmail.Subject);
+
+                            await LogDeadLetterAsync(retryEmail, "RETRY_QUEUE_FULL",
+                                $"Retry {retryEmail.RetryCount} could not be enqueued (queue full). Email dropped.");
+                        }
                     }
-                    catch (OperationCanceledException) { /* shutting down */ }
+                    catch (OperationCanceledException) { /* shutting down — see comment above */ }
                 }, stoppingToken);
             }
             else if (!sent)
@@ -75,36 +89,52 @@ public class EmailBackgroundProcessor : BackgroundService
                 _logger.LogError("Email to {Recipient} failed after {Attempts} attempts, logging to dead letter. Subject: {Subject}",
                     attempt.Recipient, attempt.RetryCount + 1, attempt.Subject);
 
-                try
-                {
-                    using var scope = _serviceProvider.CreateScope();
-                    var emailApiLogService = scope.ServiceProvider.GetRequiredService<IEmailApiLogService>();
-                    await emailApiLogService.LogEmailApiCallAsync(
-                        requestUrl: "dead-letter",
-                        requestMethod: "RETRY_EXHAUSTED",
-                        requestHeaders: new Dictionary<string, string>
-                        {
-                            ["X-Retry-Count"] = attempt.RetryCount.ToString(),
-                            ["X-First-Attempt"] = attempt.FirstAttemptAt?.ToString("o") ?? "unknown"
-                        },
-                        requestBody: "",
-                        responseStatusCode: null,
-                        responseHeaders: null,
-                        responseBody: null,
-                        recipientEmail: attempt.Recipient,
-                        emailSubject: attempt.Subject,
-                        success: false,
-                        errorMessage: $"All {attempt.RetryCount + 1} attempts failed. Email moved to dead letter.",
-                        durationMs: 0,
-                        validationErrors: null);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to log dead letter for email to {Recipient}", attempt.Recipient);
-                }
+                await LogDeadLetterAsync(attempt, "RETRY_EXHAUSTED",
+                    $"All {attempt.RetryCount + 1} attempts failed. Email moved to dead letter.");
             }
         }
 
         _logger.LogInformation("EmailBackgroundProcessor stopped");
+    }
+
+    /// <summary>
+    /// Logs a dead letter entry to EmailApiLog for emails that could not be delivered.
+    /// Used for both retry-exhausted and retry-queue-full scenarios.
+    ///
+    /// Tenant context note: This runs in a background service without HTTP context, so
+    /// CompanyIdInterceptor will not resolve a tenant. The EmailApiLog entity will be saved
+    /// with CompanyId=0 (the interceptor's default when no tenant is available). This is
+    /// acceptable because dead letter logs are diagnostic records accessed via admin/owner
+    /// pages that use IgnoreQueryFilters(), not tenant-scoped user views.
+    /// </summary>
+    private async Task LogDeadLetterAsync(QueuedEmail email, string requestMethod, string errorMessage)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var emailApiLogService = scope.ServiceProvider.GetRequiredService<IEmailApiLogService>();
+            await emailApiLogService.LogEmailApiCallAsync(
+                requestUrl: "dead-letter",
+                requestMethod: requestMethod,
+                requestHeaders: new Dictionary<string, string>
+                {
+                    ["X-Retry-Count"] = email.RetryCount.ToString(),
+                    ["X-First-Attempt"] = email.FirstAttemptAt?.ToString("o") ?? "unknown"
+                },
+                requestBody: "",
+                responseStatusCode: null,
+                responseHeaders: null,
+                responseBody: null,
+                recipientEmail: email.Recipient,
+                emailSubject: email.Subject,
+                success: false,
+                errorMessage: errorMessage,
+                durationMs: 0,
+                validationErrors: null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to log dead letter for email to {Recipient}", email.Recipient);
+        }
     }
 }
