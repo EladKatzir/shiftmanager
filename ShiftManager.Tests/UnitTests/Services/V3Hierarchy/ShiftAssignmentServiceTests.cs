@@ -43,9 +43,10 @@ public class ShiftAssignmentServiceTests : IDisposable
         techShiftServiceMock
             .Setup(x => x.IsUserEligibleForTechShiftAsync(It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync(true);
+        var auditLogService = Mock.Of<IAuditLogService>();
         var configMock = new Mock<IConfiguration>();
         configMock.Setup(c => c["ApiKeyHmacSecret"]).Returns("test-hmac-secret-for-unit-tests");
-        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object, techShiftServiceMock.Object, configMock.Object);
+        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object, techShiftServiceMock.Object, auditLogService, configMock.Object);
     }
 
     public void Dispose()
