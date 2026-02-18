@@ -13,15 +13,18 @@ public class ApiKeyService : IApiKeyService
 {
     private readonly AppDbContext _context;
     private readonly IAuditLogService _auditLogService;
+    private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<ApiKeyService> _logger;
 
     public ApiKeyService(
         AppDbContext context,
         IAuditLogService auditLogService,
+        ITenantResolver tenantResolver,
         ILogger<ApiKeyService> logger)
     {
         _context = context;
         _auditLogService = auditLogService;
+        _tenantResolver = tenantResolver;
         _logger = logger;
     }
 
@@ -229,8 +232,9 @@ public class ApiKeyService : IApiKeyService
 
     public async Task<(ApiKey? key, string? error)> RevokeApiKeyAsync(int keyId, int revokedBy, string? reason = null)
     {
+        var companyId = _tenantResolver.GetCurrentTenantId();
         var apiKey = await _context.ApiKeys
-            .FirstOrDefaultAsync(k => k.Id == keyId);
+            .FirstOrDefaultAsync(k => k.Id == keyId && k.CompanyId == companyId);
 
         if (apiKey == null)
             return (null, "API key not found");
@@ -288,24 +292,27 @@ public class ApiKeyService : IApiKeyService
 
     public async Task<ApiKeyRequest?> GetRequestByIdAsync(int requestId)
     {
+        var companyId = _tenantResolver.GetCurrentTenantId();
         return await _context.ApiKeyRequests
             .Include(r => r.RequestedByUser)
             .Include(r => r.ReviewedByUser)
             .Include(r => r.GeneratedApiKey)
-            .FirstOrDefaultAsync(r => r.Id == requestId);
+            .FirstOrDefaultAsync(r => r.Id == requestId && r.CompanyId == companyId);
     }
 
     public async Task<ApiKey?> GetKeyByIdAsync(int keyId)
     {
+        var companyId = _tenantResolver.GetCurrentTenantId();
         return await _context.ApiKeys
             .Include(k => k.CreatedByUser)
             .Include(k => k.Company)
-            .FirstOrDefaultAsync(k => k.Id == keyId);
+            .FirstOrDefaultAsync(k => k.Id == keyId && k.CompanyId == companyId);
     }
 
     public async Task<(string? newApiKey, string? error)> RegenerateApiKeyAsync(int keyId, int regeneratedBy)
     {
-        var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.Id == keyId);
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.Id == keyId && k.CompanyId == companyId);
 
         if (apiKey == null)
             return (null, "API key not found");

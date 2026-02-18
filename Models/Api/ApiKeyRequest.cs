@@ -1,3 +1,5 @@
+using ShiftManager.Models;
+
 namespace ShiftManager.Models.Api;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace ShiftManager.Models.Api;
 /// Follows approval workflow: Pending -> Approved/Rejected
 /// Sidecar table - additive only, no changes to existing auth.
 /// </summary>
-public class ApiKeyRequest
+public class ApiKeyRequest : IBelongsToCompany
 {
     public int Id { get; set; }
 

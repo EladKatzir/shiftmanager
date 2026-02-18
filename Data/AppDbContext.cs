@@ -61,7 +61,7 @@ public class AppDbContext : DbContext
     public DbSet<OnDuty> OnDuties => Set<OnDuty>();
     public DbSet<OnDutyTypeConfig> OnDutyTypeConfigs => Set<OnDutyTypeConfig>();
 
-    // API Sidecar Tables (no query filters - not tenant-scoped in traditional sense)
+    // API Sidecar Tables (tenant-scoped via query filters + IBelongsToCompany)
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<ApiKeyRequest> ApiKeyRequests => Set<ApiKeyRequest>();
     public DbSet<ApiRequestLog> ApiRequestLogs => Set<ApiRequestLog>();
@@ -661,6 +661,13 @@ public class AppDbContext : DbContext
 
             modelBuilder.Entity<DailyNotificationPreference>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // SECURITY FIX: Add query filters for API key entities (cross-tenant vulnerability)
+            modelBuilder.Entity<ApiKey>()
+                .HasQueryFilter(k => k.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<ApiKeyRequest>()
+                .HasQueryFilter(r => r.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table

@@ -1,10 +1,12 @@
+using ShiftManager.Models;
+
 namespace ShiftManager.Models.Api;
 
 /// <summary>
 /// Represents an API key for external integrations.
 /// Sidecar table - does not modify existing authentication.
 /// </summary>
-public class ApiKey
+public class ApiKey : IBelongsToCompany
 {
     public int Id { get; set; }
 
