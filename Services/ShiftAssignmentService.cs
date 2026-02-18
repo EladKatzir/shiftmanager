@@ -481,35 +481,50 @@ public class ShiftAssignmentService : IShiftAssignmentService
         int unassignedByUserId,
         string? reason = null)
     {
-        var assignment = await _db.ShiftAssignments
-            .FirstOrDefaultAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId == userId);
-
-        if (assignment == null)
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
         {
+            var assignment = await _db.ShiftAssignments
+                .FirstOrDefaultAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId == userId);
+
+            if (assignment == null)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+
+            var assignmentId = assignment.Id;
+            _db.ShiftAssignments.Remove(assignment);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Unassigned user {UserId} from shift {ShiftInstanceId} by {UnassignedBy}. Reason: {Reason}",
+                userId, shiftInstanceId, unassignedByUserId, reason ?? "Not specified");
+
+            await _auditLogService.LogUserActionAsync(
+                unassignedByUserId,
+                "ShiftUnassigned",
+                "ShiftAssignment",
+                assignmentId,
+                $"Unassigned user {userId} from shift instance {shiftInstanceId}",
+                System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    unassignedByUserId,
+                    shiftInstanceId,
+                    userId,
+                    reason
+                }));
+
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning(
+                "Concurrent unassignment conflict for user {UserId} on shift {ShiftInstanceId}",
+                userId, shiftInstanceId);
             return false;
         }
-
-        _db.ShiftAssignments.Remove(assignment);
-        await _db.SaveChangesAsync();
-
-        _logger.LogInformation("Unassigned user {UserId} from shift {ShiftInstanceId} by {UnassignedBy}. Reason: {Reason}",
-            userId, shiftInstanceId, unassignedByUserId, reason ?? "Not specified");
-
-        await _auditLogService.LogUserActionAsync(
-            unassignedByUserId,
-            "ShiftUnassigned",
-            "ShiftAssignment",
-            assignment.Id,
-            $"Unassigned user {userId} from shift instance {shiftInstanceId}",
-            System.Text.Json.JsonSerializer.Serialize(new
-            {
-                unassignedByUserId,
-                shiftInstanceId,
-                userId,
-                reason
-            }));
-
-        return true;
     }
 
     public string GenerateOverrideToken(int shiftInstanceId, int userId, IReadOnlyList<string> warningKeys)
