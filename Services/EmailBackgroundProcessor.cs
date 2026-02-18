@@ -101,15 +101,11 @@ public class EmailBackgroundProcessor : BackgroundService
     /// Logs a dead letter entry to EmailApiLog for emails that could not be delivered.
     /// Used for both retry-exhausted and retry-queue-full scenarios.
     ///
-    /// Tenant context note: This runs in a background service without HTTP context.
-    /// When EnforceCompanyScope is true (production default), CompanyIdInterceptor will throw
-    /// InvalidOperationException on SaveChanges because CompanyId cannot be resolved. The throw
-    /// is caught by EmailApiLogService's defensive try/catch, so the processor won't crash, but
-    /// the dead letter record won't be persisted to the database. The _logger.LogError calls
-    /// above still capture all dead letter information in structured logs, which is where
-    /// operators look in air-gapped IIS deployments. This pre-existing limitation affects all
-    /// EmailApiLog writes from the background processor, not just dead letter entries.
-    /// Future fix: carry CompanyId on QueuedEmail and set it explicitly before saving.
+    /// Tenant context: This runs in a background service without HTTP context. CompanyId is
+    /// carried on the QueuedEmail record from the point of enqueue (where HTTP tenant context
+    /// exists) and passed to LogEmailApiCallAsync, which pre-sets it on the EmailApiLog entity
+    /// before SaveChanges. The CompanyIdInterceptor skips entities with non-zero CompanyId,
+    /// so persistence succeeds even without HTTP tenant context.
     /// </summary>
     private async Task LogDeadLetterAsync(QueuedEmail email, string requestMethod, string errorMessage)
     {
@@ -134,7 +130,8 @@ public class EmailBackgroundProcessor : BackgroundService
                 success: false,
                 errorMessage: errorMessage,
                 durationMs: 0,
-                validationErrors: null);
+                validationErrors: null,
+                companyId: email.CompanyId);
         }
         catch (Exception ex)
         {
