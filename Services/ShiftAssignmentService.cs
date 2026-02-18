@@ -18,6 +18,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
     private readonly ILogger<ShiftAssignmentService> _logger;
     private readonly IHierarchySettingsService _hierarchySettingsService;
     private readonly ITechShiftService _techShiftService;
+    private readonly IAuditLogService _auditLogService;
     private readonly string _hmacSecret;
 
     private const int OverrideTokenExpiryMinutes = 5;
@@ -28,6 +29,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         ILogger<ShiftAssignmentService> logger,
         IHierarchySettingsService hierarchySettingsService,
         ITechShiftService techShiftService,
+        IAuditLogService auditLogService,
         IConfiguration configuration)
     {
         _db = db;
@@ -35,6 +37,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         _logger = logger;
         _hierarchySettingsService = hierarchySettingsService;
         _techShiftService = techShiftService;
+        _auditLogService = auditLogService;
         _hmacSecret = configuration["ApiKeyHmacSecret"]
             ?? Middleware.ApiAuthenticationMiddleware.HmacSecret;
     }
@@ -446,6 +449,20 @@ public class ShiftAssignmentService : IShiftAssignmentService
             _logger.LogInformation("Assigned user {UserId} to shift {ShiftInstanceId} by {AssignedBy}",
                 userId, shiftInstanceId, assignedByUserId);
 
+            await _auditLogService.LogUserActionAsync(
+                assignedByUserId,
+                "ShiftAssigned",
+                "ShiftAssignment",
+                assignment.Id,
+                $"Assigned user {userId} to shift instance {shiftInstanceId}",
+                System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    assignedByUserId,
+                    shiftInstanceId,
+                    userId,
+                    notes
+                }));
+
             return new ShiftAssignmentResult(true, assignment.Id, null, null);
         }
         catch (DbUpdateException)
@@ -477,6 +494,20 @@ public class ShiftAssignmentService : IShiftAssignmentService
 
         _logger.LogInformation("Unassigned user {UserId} from shift {ShiftInstanceId} by {UnassignedBy}. Reason: {Reason}",
             userId, shiftInstanceId, unassignedByUserId, reason ?? "Not specified");
+
+        await _auditLogService.LogUserActionAsync(
+            unassignedByUserId,
+            "ShiftUnassigned",
+            "ShiftAssignment",
+            assignment.Id,
+            $"Unassigned user {userId} from shift instance {shiftInstanceId}",
+            System.Text.Json.JsonSerializer.Serialize(new
+            {
+                unassignedByUserId,
+                shiftInstanceId,
+                userId,
+                reason
+            }));
 
         return true;
     }
