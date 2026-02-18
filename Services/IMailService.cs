@@ -21,9 +21,8 @@ public interface IMailService
     /// <summary>
     /// Send an email directly (synchronous HTTP call). Used by the background processor.
     /// Do not call from HTTP request handlers — use SendMailAsync instead.
+    /// Optional companyId (from QueuedEmail) enables EmailApiLog persistence from background services.
     /// </summary>
-    /// <param name="companyId">Optional CompanyId carried from QueuedEmail to enable
-    /// EmailApiLog persistence from background services without HTTP tenant context.</param>
     Task<bool> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0);
 
     /// <summary>
