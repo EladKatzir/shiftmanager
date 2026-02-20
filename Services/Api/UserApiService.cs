@@ -153,17 +153,16 @@ public class UserApiService
         // Set password if provided (otherwise, user must reset)
         if (!string.IsNullOrEmpty(password))
         {
-            // Generate salt and hash
-            using var hmac = new System.Security.Cryptography.HMACSHA512();
-            user.PasswordSalt = hmac.Key;
-            user.PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            var (hash, salt) = PasswordHasher.CreateHash(password);
+            user.PasswordHash = hash;
+            user.PasswordSalt = salt;
         }
         else
         {
-            // Generate random salt for now (user must reset password)
-            using var hmac = new System.Security.Cryptography.HMACSHA512();
-            user.PasswordSalt = hmac.Key;
-            user.PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()));
+            // Generate random hash (user must reset password)
+            var (hash, salt) = PasswordHasher.CreateHash(Guid.NewGuid().ToString());
+            user.PasswordHash = hash;
+            user.PasswordSalt = salt;
         }
 
         _context.Users.Add(user);
