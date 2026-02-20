@@ -917,6 +917,29 @@ public class UsersModel : LocalizedPageModel
                 }
             }
 
+            // FINDING-009 FIX: Reconcile grants on role change to prevent privilege escalation
+            var oldTemplateIdForGrants = oldRoleTemplateId;
+            if (!oldTemplateIdForGrants.HasValue)
+            {
+                // Fallback for legacy users without RoleTemplateId: resolve from old role enum
+                var oldTemplateKeyForGrants = MapUserRoleToRoleTemplateKey(oldRole, u.JobType?.Name);
+                var oldTemplateForGrants = await _roleService.GetRoleTemplateByKeyAsync(oldTemplateKeyForGrants);
+                oldTemplateIdForGrants = oldTemplateForGrants?.Id;
+            }
+            if (oldTemplateIdForGrants.HasValue)
+            {
+                await _grantService.RemoveAutoGrantsAsync(u.Id, oldTemplateIdForGrants.Value);
+                _logger.LogInformation("Removed auto-grants from old role template {OldTemplateId} for user {UserId} during role change",
+                    oldTemplateIdForGrants.Value, u.Id);
+            }
+
+            // Assign new role's auto-grants
+            var newGrantTemplateKey = selectedTemplate?.Key ?? MapUserRoleToRoleTemplateKey(targetRole, u.JobType?.Name);
+            var newGrantScope = await BuildGrantScopeForTemplateAsync(newGrantTemplateKey, u.CompanyId, u.JobTypeId);
+            var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(u.Id, newGrantTemplateKey, newGrantScope, currentUserId);
+            _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} during role change",
+                grantsAssigned, newGrantTemplateKey, u.Id);
+
             // ✅ P0-4/P0-5 FIX: If changing TO Director/AreaAdmin, create DirectorCompany mapping
             if (oldRole != UserRole.Director && oldRole != UserRole.AreaAdmin &&
                 (targetRole == UserRole.Director || targetRole == UserRole.AreaAdmin))
