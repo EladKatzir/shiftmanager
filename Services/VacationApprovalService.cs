@@ -12,15 +12,21 @@ public class VacationApprovalService : IVacationApprovalService
     private readonly AppDbContext _context;
     private readonly IGrantService _grantService;
     private readonly ILogger<VacationApprovalService> _logger;
+    private readonly INotificationService _notificationService;
+    private readonly ITraineeService _traineeService;
 
     public VacationApprovalService(
         AppDbContext context,
         IGrantService grantService,
-        ILogger<VacationApprovalService> logger)
+        ILogger<VacationApprovalService> logger,
+        INotificationService notificationService,
+        ITraineeService traineeService)
     {
         _context = context;
         _grantService = grantService;
         _logger = logger;
+        _notificationService = notificationService;
+        _traineeService = traineeService;
     }
 
     /// <summary>
@@ -107,24 +113,6 @@ public class VacationApprovalService : IVacationApprovalService
         }
 
         var (approverId, approverGrantKey, requiresSecondApproval) = await GetApprovalRouteAsync(requestId);
-
-        // Calculate leave days for auto-approve check
-        int leaveDays = request.EndDate.DayNumber - request.StartDate.DayNumber + 1;
-
-        // Check if auto-approve applies
-        var rule = await GetMatchingRuleAsync(request);
-        if (rule != null && rule.MaxAutoApproveDays > 0 && leaveDays <= rule.MaxAutoApproveDays)
-        {
-            // Auto-approve
-            request.Status = RequestStatus.Approved;
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Request {RequestId} auto-approved for user {UserId} ({LeaveDays} days)",
-                requestId, request.UserId, leaveDays);
-
-            return (true, "VacationApproval_AutoApproved");
-        }
 
         // Set specific approver if rule defines one
         if (approverId.HasValue)
@@ -232,6 +220,16 @@ public class VacationApprovalService : IVacationApprovalService
         _logger.LogInformation(
             "Request {RequestId} approved by user {ApproverId}",
             requestId, approverId);
+
+        // Process post-approval side effects (shift removal, trainee cancel, notification)
+        try
+        {
+            await ProcessApprovalSideEffectsAsync(requestId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Side effects failed for approved request {RequestId}. Manual remediation may be needed.", requestId);
+        }
 
         return (true, "VacationApproval_Approved");
     }
@@ -585,6 +583,61 @@ public class VacationApprovalService : IVacationApprovalService
             requiresSecondApproval,
             isOrphaned,
             request.CreatedAt);
+    }
+
+    /// <summary>
+    /// Processes all post-approval side effects for an approved time-off request.
+    /// </summary>
+    public async Task ProcessApprovalSideEffectsAsync(int requestId)
+    {
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific requestId
+        var request = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request == null)
+        {
+            _logger.LogWarning("ProcessApprovalSideEffectsAsync: Request {RequestId} not found", requestId);
+            return;
+        }
+
+        // 1. Remove overlapping shift assignments
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by request.UserId + date range
+        var assignments = await (from a in _context.ShiftAssignments.IgnoreQueryFilters()
+                                 join si in _context.ShiftInstances.IgnoreQueryFilters()
+                                    on a.ShiftInstanceId equals si.Id
+                                 where a.UserId == request.UserId
+                                    && si.WorkDate >= request.StartDate
+                                    && si.WorkDate <= request.EndDate
+                                 select a).ToListAsync();
+
+        if (assignments.Any())
+        {
+            _context.ShiftAssignments.RemoveRange(assignments);
+            _logger.LogInformation(
+                "Removed {Count} overlapping shift assignments for user {UserId} during approved time-off {RequestId}",
+                assignments.Count, request.UserId, requestId);
+        }
+
+        // 2. Cancel trainee shadowing if user is a trainee
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by request.UserId
+        var user = await _context.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+        if (user?.Role == UserRole.Trainee)
+        {
+            var startDate = request.StartDate.ToDateTime(TimeOnly.MinValue);
+            var endDate = request.EndDate.ToDateTime(TimeOnly.MaxValue);
+            await _traineeService.CancelShadowingForTimeOffAsync(request.UserId, startDate, endDate);
+        }
+
+        await _context.SaveChangesAsync();
+
+        // 3. Send approval notification (after save so DB state is consistent)
+        await _notificationService.CreateTimeOffNotificationAsync(
+            request.UserId, RequestStatus.Approved,
+            request.StartDate, request.EndDate, request.Id);
     }
 
     /// <summary>

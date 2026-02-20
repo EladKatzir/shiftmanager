@@ -14,11 +14,13 @@ public class TimeOffApiService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<TimeOffApiService> _logger;
+    private readonly IVacationApprovalService _vacationApprovalService;
 
-    public TimeOffApiService(AppDbContext context, ILogger<TimeOffApiService> logger)
+    public TimeOffApiService(AppDbContext context, ILogger<TimeOffApiService> logger, IVacationApprovalService vacationApprovalService)
     {
         _context = context;
         _logger = logger;
+        _vacationApprovalService = vacationApprovalService;
     }
 
     /// <summary>
@@ -202,6 +204,16 @@ public class TimeOffApiService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Time-off request approved via API: RequestId={RequestId}", requestId);
+
+        // Process approval side effects (shift removal, trainee cancel, notification)
+        try
+        {
+            await _vacationApprovalService.ProcessApprovalSideEffectsAsync(requestId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Side effects failed for approved time-off request {RequestId}. Manual remediation may be needed.", requestId);
+        }
 
         var user = await _context.Users.FindAsync(request.UserId);
         return (TimeOffDto.FromEntity(request, user), null);

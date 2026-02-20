@@ -26,6 +26,7 @@ public class IndexModel : LocalizedPageModel
     private readonly IDirectorService _directorService;
     private readonly IGrantService _grantService;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly IVacationApprovalService _vacationApprovalService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
@@ -36,7 +37,8 @@ public class IndexModel : LocalizedPageModel
         ILogger<IndexModel> logger,
         IDirectorService directorService,
         IGrantService grantService,
-        IConcurrencyService concurrencyService)
+        IConcurrencyService concurrencyService,
+        IVacationApprovalService vacationApprovalService)
         : base(localizer)
     {
         _db = db;
@@ -47,6 +49,7 @@ public class IndexModel : LocalizedPageModel
         _directorService = directorService;
         _grantService = grantService;
         _concurrencyService = concurrencyService;
+        _vacationApprovalService = vacationApprovalService;
     }
 
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
@@ -213,26 +216,6 @@ public class IndexModel : LocalizedPageModel
 
         r.Status = RequestStatus.Approved;
 
-        // Remove existing assignments in the approved window
-        // IgnoreQueryFilters: assignments may be in a different company
-        var assignments = await (from a in _db.ShiftAssignments.IgnoreQueryFilters()
-                                 join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
-                                 where a.UserId == r.UserId && si.WorkDate >= r.StartDate && si.WorkDate <= r.EndDate
-                                 select a).ToListAsync();
-        if (assignments.Any())
-        {
-            _db.ShiftAssignments.RemoveRange(assignments);
-        }
-
-        // Cancel trainee shadowing assignments if user is a trainee
-        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == r.UserId);
-        if (user != null && user.Role == UserRole.Trainee)
-        {
-            var startDate = r.StartDate.ToDateTime(TimeOnly.MinValue);
-            var endDate = r.EndDate.ToDateTime(TimeOnly.MaxValue);
-            await _traineeService.CancelShadowingForTimeOffAsync(r.UserId, startDate, endDate);
-        }
-
         {
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "TimeOffRequest", id);
@@ -243,8 +226,15 @@ public class IndexModel : LocalizedPageModel
             }
         }
 
-        // Send notification to user
-        await _notificationService.CreateTimeOffNotificationAsync(r.UserId, RequestStatus.Approved, r.StartDate, r.EndDate, r.Id);
+        // Process approval side effects (shift removal, trainee cancel, notification)
+        try
+        {
+            await _vacationApprovalService.ProcessApprovalSideEffectsAsync(id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Side effects failed for approved time-off request {RequestId}. Manual remediation may be needed.", id);
+        }
 
         return RedirectToPage();
     }

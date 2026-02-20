@@ -31,4 +31,10 @@ public interface IVacationApprovalService
     Task<(bool Success, string Message)> CancelRequestAsync(int requestId, int userId);
     Task<List<OrphanedApprovalRuleInfo>> DetectOrphanedRulesAsync(int companyId);
     Task<ApprovalPipelineStatus> GetApprovalStatusAsync(int requestId);
+
+    /// <summary>
+    /// Processes post-approval side effects: removes overlapping shifts, cancels trainee shadowing, sends notification.
+    /// Call this after setting request status to Approved.
+    /// </summary>
+    Task ProcessApprovalSideEffectsAsync(int requestId);
 }
