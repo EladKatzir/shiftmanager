@@ -234,6 +234,9 @@ public class TableModel : PageModel
     {
         try
         {
+            if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
+                return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
+
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
             // Get or create instance (idempotent)
@@ -341,6 +344,9 @@ public class TableModel : PageModel
     {
         try
         {
+            if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
+                return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
+
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
             // Check if instance already exists
@@ -419,6 +425,8 @@ public class TableModel : PageModel
     {
         try
         {
+            using var transaction = await _db.Database.BeginTransactionAsync();
+
             var assignment = await _db.ShiftAssignments
                 .Include(a => a.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
@@ -515,6 +523,8 @@ public class TableModel : PageModel
                 () => _db.SaveChangesAsync(), "ShiftAssignment", request.AssignmentId);
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            await transaction.CommitAsync();
 
             var user = await _db.Users.FindAsync(request.UserId);
 
@@ -788,6 +798,9 @@ public class TableModel : PageModel
     {
         try
         {
+            if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
+                return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
+
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
             var instance = await _db.ShiftInstances.FindAsync(request.ShiftInstanceId);
@@ -1632,6 +1645,11 @@ public class TableModel : PageModel
     {
         try
         {
+            if (request.TargetDates.Count > 730)
+                return new JsonResult(new { success = false, error = "Cannot fill more than 730 dates (2 years) at once" });
+
+            using var transaction = await _db.Database.BeginTransactionAsync();
+
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
             // Validate source instance
@@ -1891,6 +1909,8 @@ public class TableModel : PageModel
                 () => _db.SaveChangesAsync(), "ShiftInstance", request.SourceInstanceId);
             if (!finalSaveResult.Success)
                 return new JsonResult(new { success = false, error = finalSaveResult.ErrorMessage }) { StatusCode = 409 };
+
+            await transaction.CommitAsync();
 
             _logger.LogInformation(
                 "Fill range completed: {Created} created, {Updated} updated using mode {Mode}",
