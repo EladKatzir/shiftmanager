@@ -1483,6 +1483,19 @@ public class UsersModel : LocalizedPageModel
             _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
                 grantsAssigned, roleTemplateKey, newUser.Id);
 
+            // FINDING-010 FIX: Record initial role assignment in audit trail
+            _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
+            {
+                ChangedBy = currentUserId,
+                TargetUserId = newUser.Id,
+                FromRole = null,
+                ToRole = newUser.Role,
+                FromRoleTemplateId = null,
+                ToRoleTemplateId = newUser.RoleTemplateId,
+                CompanyId = newUser.CompanyId,
+                Timestamp = DateTime.UtcNow
+            });
+
             // Send account approval email notification
             _ = _mailService.SendAccountApprovedEmailAsync(
                 newUser.Email,
@@ -1802,6 +1815,19 @@ public class UsersModel : LocalizedPageModel
                 _logger.LogInformation(
                     "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} template {TemplateKey} for company {CompanyId}. Assigned {GrantsCount} grants.",
                     joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, roleTemplateKey, joinRequest.CompanyId, grantsAssigned);
+
+                // FINDING-010 FIX: Record initial role assignment in audit trail
+                _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
+                {
+                    ChangedBy = currentUserId,
+                    TargetUserId = newUser.Id,
+                    FromRole = null,
+                    ToRole = newUser.Role,
+                    FromRoleTemplateId = null,
+                    ToRoleTemplateId = newUser.RoleTemplateId,
+                    CompanyId = newUser.CompanyId,
+                    Timestamp = DateTime.UtcNow
+                });
 
                 // Log to audit log
                 await _auditLogService.LogUserActionAsync(
