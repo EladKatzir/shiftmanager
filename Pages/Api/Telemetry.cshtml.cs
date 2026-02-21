@@ -100,11 +100,11 @@ public class TelemetryModel : PageModel
 
         var events = dtos.Select(dto => new ClientAnalyticsEvent
         {
-            EventType = dto.EventType ?? string.Empty,
-            EventData = dto.EventData,
+            EventType = TruncateField(dto.EventType, 100) ?? string.Empty,
+            EventData = TruncateField(dto.EventData, 2000),
             UserIdHash = userIdHash,
-            SessionId = dto.SessionId,
-            PageUrl = dto.PageUrl ?? string.Empty,
+            SessionId = TruncateField(dto.SessionId, 100),
+            PageUrl = TruncateField(dto.PageUrl, 500) ?? string.Empty,
             UserAgent = userAgent,
             Timestamp = dto.Timestamp ?? DateTime.UtcNow
         }).ToList();
@@ -185,13 +185,13 @@ public class TelemetryModel : PageModel
 
         var errors = dtos.Select(dto => new ClientError
         {
-            Message = dto.Message ?? string.Empty,
-            StackTrace = dto.StackTrace,
-            Source = dto.Source,
+            Message = TruncateField(dto.Message, 1000) ?? string.Empty,
+            StackTrace = TruncateField(dto.StackTrace, 5000),
+            Source = TruncateField(dto.Source, 500),
             LineNumber = dto.LineNumber,
             ColumnNumber = dto.ColumnNumber,
-            ErrorType = dto.ErrorType,
-            PageUrl = dto.PageUrl ?? string.Empty,
+            ErrorType = TruncateField(dto.ErrorType, 100),
+            PageUrl = TruncateField(dto.PageUrl, 500) ?? string.Empty,
             UserAgent = userAgent,
             UserIdHash = userIdHash,
             Timestamp = dto.Timestamp ?? DateTime.UtcNow,
