@@ -24,6 +24,7 @@ public class TableModel : PageModel
     private readonly IShiftAssignmentService _assignmentService;
     private readonly ICalendarNotificationService _calendarNotification;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly IGrantService _grantService;
 
     public TableModel(
         AppDbContext db,
@@ -34,7 +35,8 @@ public class TableModel : PageModel
         IShiftProgramService programService,
         IShiftAssignmentService assignmentService,
         ICalendarNotificationService calendarNotification,
-        IConcurrencyService concurrencyService)
+        IConcurrencyService concurrencyService,
+        IGrantService grantService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -45,6 +47,7 @@ public class TableModel : PageModel
         _assignmentService = assignmentService;
         _calendarNotification = calendarNotification;
         _concurrencyService = concurrencyService;
+        _grantService = grantService;
     }
 
     public DateOnly StartDate { get; set; }
@@ -534,6 +537,23 @@ public class TableModel : PageModel
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
+            // FINDING-002 FIX: Authorization check — verify user has shift assignment grant
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
+                return new JsonResult(new { success = false, error = "Invalid user session" }) { StatusCode = 401 };
+
+            var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+            if (!isAdmin)
+            {
+                // Check for any shift assignment grant scoped to this company
+                var hasAnyShiftGrant = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignAlhutShifts", companyId: companyId)
+                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", companyId: companyId)
+                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", companyId: companyId)
+                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", companyId: companyId);
+
+                if (!hasAnyShiftGrant)
+                    return new JsonResult(new { success = false, error = "Insufficient permissions to assign shifts" }) { StatusCode = 403 };
+            }
+
             // Get or create shift instance (service expects pre-existing instance)
             var instance = await _db.ShiftInstances
                 .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId && si.WorkDate == request.Date);
@@ -590,7 +610,6 @@ public class TableModel : PageModel
             }
 
             // Proceed with assignment (service handles duplicate/capacity checks + override token validation)
-            var currentUserId = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : 0;
             var result = await _assignmentService.AssignShiftAsync(request.UserId, instance.Id, currentUserId, request.OverrideToken);
 
             if (!result.Success)
