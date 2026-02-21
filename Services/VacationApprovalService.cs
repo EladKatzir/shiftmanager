@@ -114,23 +114,42 @@ public class VacationApprovalService : IVacationApprovalService
 
         var (approverId, approverGrantKey, requiresSecondApproval) = await GetApprovalRouteAsync(requestId);
 
-        // Set specific approver if rule defines one
-        if (approverId.HasValue)
+        // Wrap in transaction to prevent concurrent submissions
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            request.ApproverId = approverId.Value;
-            await _context.SaveChangesAsync();
-        }
+            // Re-check status inside transaction
+            var freshRequest = await _context.TimeOffRequests
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+            if (freshRequest == null || freshRequest.Status != RequestStatus.Pending)
+            {
+                await transaction.RollbackAsync();
+                return (false, "VacationApproval_AlreadyProcessed");
+            }
 
-        _logger.LogInformation(
-            "Request {RequestId} submitted for approval. RequiresSecondApproval={RequiresSecond}",
-            requestId, requiresSecondApproval);
+            // Set specific approver if rule defines one
+            if (approverId.HasValue)
+            {
+                freshRequest.ApproverId = approverId.Value;
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to submit vacation request {RequestId} for approval", requestId);
+            return (false, "VacationApproval_Error");
+        }
 
         if (requiresSecondApproval)
         {
-            return (true, "VacationApproval_RequiresSecondApproval");
+            return (true, "VacationApproval_SubmittedForSecondApproval");
         }
 
-        return (true, "VacationApproval_PendingApproval");
+        return (true, "VacationApproval_Submitted");
     }
 
     /// <summary>
@@ -264,8 +283,30 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_NotAuthorized");
         }
 
-        request.Status = RequestStatus.Declined;
-        await _context.SaveChangesAsync();
+        // Wrap in transaction to prevent concurrent approve/decline race
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Re-check status inside transaction
+            var freshRequest = await _context.TimeOffRequests
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+            if (freshRequest == null || freshRequest.Status != RequestStatus.Pending)
+            {
+                await transaction.RollbackAsync();
+                return (false, "VacationApproval_AlreadyProcessed");
+            }
+
+            freshRequest.Status = RequestStatus.Declined;
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to decline vacation request {RequestId}", requestId);
+            return (false, "VacationApproval_Error");
+        }
 
         _logger.LogInformation(
             "Request {RequestId} declined by user {DeclinerId}. Reason: {Reason}",
