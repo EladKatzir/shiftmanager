@@ -31,6 +31,13 @@ public class ApiAuthenticationMiddleware
             return;
         }
 
+        // FINDING-001 FIX: Version endpoint is truly anonymous — no auth required
+        if (context.Request.Path.StartsWithSegments("/api/v1/version", StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
         // Check if this is an internal web UI endpoint (uses cookie auth, not API keys)
         // These are Razor Page endpoints used by authenticated users in the browser
         if (IsInternalWebUiEndpoint(context.Request.Path))
