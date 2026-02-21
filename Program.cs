@@ -1553,22 +1553,48 @@ void DisplayStartupBanner(WebApplication app)
     WriteStatusLine(f2);
 
     // H-06: Log all feature flag states for version tracking (reads from DB-backed IFeatureFlagService)
+    // Core flags emit a WARNING when disabled — these control production-critical features.
+    // To change flag values: Owner > Feature Flags page (DB-backed, NOT appsettings).
     {
         var featureFlagLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        var flagsToLog = new[] {
-            FeatureFlagSeed.Flags.EnableDailyNotifications,
-            FeatureFlagSeed.Flags.EnableDirectorRole,
-            FeatureFlagSeed.Flags.AllowPublicSignup,
-            FeatureFlagSeed.Flags.ApiEnabled,
+
+        // Core flags — disabling these removes user-facing features; warn loudly
+        var coreFlags = new[] {
             FeatureFlagSeed.Flags.ExcelCalendars,
             FeatureFlagSeed.Flags.ExcelCalendarShifts,
             FeatureFlagSeed.Flags.ExcelCalendarChores,
-            FeatureFlagSeed.Flags.ExcelCalendarOnCall
+            FeatureFlagSeed.Flags.ExcelCalendarOnCall,
+            FeatureFlagSeed.Flags.WidgetsEnabled,
+            FeatureFlagSeed.Flags.EnableDirectorRole,
+            FeatureFlagSeed.Flags.EnableDailyNotifications
         };
-        foreach (var key in flagsToLog)
+
+        // Operational flags — legitimately togglable per deployment; info-level only
+        var operationalFlags = new[] {
+            FeatureFlagSeed.Flags.AllowPublicSignup,
+            FeatureFlagSeed.Flags.ApiEnabled
+        };
+
+        var disabledCoreFlags = new List<string>();
+        foreach (var key in coreFlags)
         {
             var val = flagService.IsEnabled(key);
             featureFlagLogger.LogInformation("FeatureFlag: {Key}={Value}", key, val);
+            if (!val) disabledCoreFlags.Add(key);
+        }
+        foreach (var key in operationalFlags)
+        {
+            var val = flagService.IsEnabled(key);
+            featureFlagLogger.LogInformation("FeatureFlag: {Key}={Value}", key, val);
+        }
+
+        if (disabledCoreFlags.Count > 0)
+        {
+            featureFlagLogger.LogWarning(
+                "DISABLED CORE FLAGS DETECTED: {Flags}. " +
+                "These flags control production features and should normally be enabled. " +
+                "To fix: log in as Owner > Feature Flags page, or delete app.db to re-seed defaults.",
+                string.Join(", ", disabledCoreFlags));
         }
     }
 
