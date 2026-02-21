@@ -1322,6 +1322,43 @@ public class UsersModel : LocalizedPageModel
                 await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.UserId == id).ExecuteDeleteAsync();
             }
 
+            // 3a. Clean up grants (prevents orphaned grants for deactivated users)
+            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId being deactivated
+            var grantCount = await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == id).CountAsync();
+            if (grantCount > 0)
+            {
+                _logger.LogInformation("Removing {Count} grants for deactivated user {UserId}", grantCount, id);
+                await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == id).ExecuteDeleteAsync();
+            }
+
+            // 3b. Soft-delete DirectorCompany mappings
+            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId
+            var directorMappings = await _db.DirectorCompanies
+                .IgnoreQueryFilters()
+                .Where(dc => dc.UserId == id && !dc.IsDeleted)
+                .ToListAsync();
+            if (directorMappings.Any())
+            {
+                _logger.LogInformation("Soft-deleting {Count} DirectorCompany mappings for deactivated user {UserId}", directorMappings.Count, id);
+                foreach (var mapping in directorMappings)
+                    mapping.IsDeleted = true;
+            }
+
+            // 3c. Clear TraineeUserId references on shift assignments where this user is the trainee
+            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId as trainee
+            var traineeRefCount = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
+                .Where(sa => sa.TraineeUserId == id)
+                .CountAsync();
+            if (traineeRefCount > 0)
+            {
+                _logger.LogInformation("Clearing {Count} trainee references for deactivated user {UserId}", traineeRefCount, id);
+                await _db.ShiftAssignments
+                    .IgnoreQueryFilters()
+                    .Where(sa => sa.TraineeUserId == id)
+                    .ExecuteUpdateAsync(sa => sa.SetProperty(a => a.TraineeUserId, (int?)null));
+            }
+
             // 4. Deactivate the user (soft-delete to preserve audit trail integrity)
             _logger.LogInformation("Deactivating user {UserId} ({UserName})", id, user.DisplayName);
             user.IsActive = false;
