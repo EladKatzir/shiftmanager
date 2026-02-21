@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -14,15 +15,18 @@ public class IndexModel : PageModel
     private readonly IFriendshipService _friendshipService;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public IndexModel(
         IFriendshipService friendshipService,
         IStringLocalizer<SharedResources> localizer,
-        ILogger<IndexModel> logger)
+        ILogger<IndexModel> logger,
+        IFeatureFlagService featureFlagService)
     {
         _friendshipService = friendshipService;
         _localizer = localizer;
         _logger = logger;
+        _featureFlagService = featureFlagService;
     }
 
     public List<FriendDto> Friends { get; set; } = new();
@@ -38,8 +42,11 @@ public class IndexModel : PageModel
 
     public int CurrentUserId { get; private set; }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.FriendshipsEnabled))
+            return NotFound();
+
         if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
         if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
 
@@ -47,7 +54,7 @@ public class IndexModel : PageModel
         if (!int.TryParse(userIdClaim, out var userId))
         {
             Error = _localizer["Error_NotAuthenticated"];
-            return;
+            return Page();
         }
         CurrentUserId = userId;
 
@@ -59,6 +66,8 @@ public class IndexModel : PageModel
         {
             SearchResults = await _friendshipService.SearchUsersAsync(userId, SearchQuery);
         }
+
+        return Page();
     }
 
     public async Task<IActionResult> OnPostSendRequestAsync(int friendId)

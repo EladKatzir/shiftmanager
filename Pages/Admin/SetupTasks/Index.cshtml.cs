@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -19,16 +20,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ISetupTaskService _setupTaskService;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ISetupTaskService setupTaskService,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IFeatureFlagService featureFlagService) : base(localizer)
     {
         _db = db;
         _setupTaskService = setupTaskService;
         _logger = logger;
+        _featureFlagService = featureFlagService;
     }
 
     public List<SetupTaskDto> PendingTasks { get; set; } = new();
@@ -46,8 +50,11 @@ public class IndexModel : LocalizedPageModel
 
     public record MoleculeOption(int Id, string Name);
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.SetupTasksEnabled))
+            return NotFound();
+
         if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
         if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
 
@@ -55,7 +62,7 @@ public class IndexModel : LocalizedPageModel
         if (!int.TryParse(userIdClaim, out var userId))
         {
             Error = _localizer["Error_NotAuthenticated"];
-            return;
+            return Page();
         }
         CurrentUserId = userId;
 
@@ -93,6 +100,8 @@ public class IndexModel : LocalizedPageModel
             // Show pending tasks for current user (default)
             PendingTasks = await _setupTaskService.GetPendingTasksAsync(userId);
         }
+
+        return Page();
     }
 
     public async Task<IActionResult> OnPostCompleteAsync(int id)

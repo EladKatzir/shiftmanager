@@ -8,6 +8,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -27,6 +28,7 @@ public class IndexModel : LocalizedPageModel
     private readonly IGrantService _grantService;
     private readonly IConcurrencyService _concurrencyService;
     private readonly IVacationApprovalService _vacationApprovalService;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
@@ -38,7 +40,8 @@ public class IndexModel : LocalizedPageModel
         IDirectorService directorService,
         IGrantService grantService,
         IConcurrencyService concurrencyService,
-        IVacationApprovalService vacationApprovalService)
+        IVacationApprovalService vacationApprovalService,
+        IFeatureFlagService featureFlagService)
         : base(localizer)
     {
         _db = db;
@@ -50,6 +53,7 @@ public class IndexModel : LocalizedPageModel
         _grantService = grantService;
         _concurrencyService = concurrencyService;
         _vacationApprovalService = vacationApprovalService;
+        _featureFlagService = featureFlagService;
     }
 
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
@@ -175,6 +179,9 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.VacationApprovalEnabled))
+            return NotFound();
+
         // ✅ SECURITY FIX: Validate authorization before approving request
         // IgnoreQueryFilters: request may be in a different company than current tenant
         var r = await _db.TimeOffRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
@@ -247,6 +254,9 @@ public class IndexModel : LocalizedPageModel
             _logger.LogWarning("Invalid time off request ID: {Id}", id);
             return RedirectToPage();
         }
+
+        if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.VacationApprovalEnabled))
+            return NotFound();
 
         // ✅ SECURITY FIX: Validate authorization before declining request
         // IgnoreQueryFilters: request may be in a different company than current tenant

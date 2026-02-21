@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -17,16 +18,19 @@ public class IndexModel : LocalizedPageModel
     private readonly IDutyRotationService _dutyRotationService;
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         IDutyRotationService dutyRotationService,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IFeatureFlagService featureFlagService) : base(localizer)
     {
         _dutyRotationService = dutyRotationService;
         _db = db;
         _logger = logger;
+        _featureFlagService = featureFlagService;
     }
 
     // View Models
@@ -72,14 +76,18 @@ public class IndexModel : LocalizedPageModel
     [BindProperty] public int QueueUserId { get; set; }
     [BindProperty] public string? ReorderUserIds { get; set; }
 
-    public async Task OnGetAsync(int? rotationId)
+    public async Task<IActionResult> OnGetAsync(int? rotationId)
     {
+        if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.DutyRotationEnabled))
+            return NotFound();
+
         if (TempData["SuccessMessage"] is string successMsg)
             Success = successMsg;
         if (TempData["ErrorMessage"] is string errorMsg)
             Error = errorMsg;
 
         await LoadDataAsync(rotationId);
+        return Page();
     }
 
     private async Task LoadDataAsync(int? rotationId)
