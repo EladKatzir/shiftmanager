@@ -12496,4 +12496,7 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_TechShiftIneligible" xml:space="preserve">
     <value>User does not have the required grant for this tech shift type.</value>
   </data>
+  <data name="Error_OverlappingTimeOffRequest" xml:space="preserve">
+    <value>You already have a time-off request for overlapping dates.</value>
+  </data>
 </root>

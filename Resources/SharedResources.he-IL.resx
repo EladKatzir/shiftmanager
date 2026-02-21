@@ -12462,4 +12462,7 @@
   <data name="Error_TechShiftIneligible" xml:space="preserve">
     <value>למשתמש אין את ההרשאה הנדרשת לסוג משמרת טכנאי זה.</value>
   </data>
+  <data name="Error_OverlappingTimeOffRequest" xml:space="preserve">
+    <value>כבר קיימת בקשת חופש עבור תאריכים חופפים.</value>
+  </data>
 </root>

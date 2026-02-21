@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -81,6 +82,20 @@ public class CreateModel : LocalizedPageModel
         if (!int.TryParse(userIdClaim, out var userId))
         {
             return RedirectToPage("/Auth/Login");
+        }
+
+        // FINDING-005 FIX: Check for overlapping time-off requests
+        var hasOverlap = await _db.TimeOffRequests
+            .Where(r => r.UserId == userId
+                && r.Status != RequestStatus.Declined
+                && r.Status != RequestStatus.Canceled
+                && r.StartDate <= EndDate
+                && r.EndDate >= StartDate)
+            .AnyAsync();
+        if (hasOverlap)
+        {
+            ModelState.AddModelError("", _localizer["Error_OverlappingTimeOffRequest"]);
+            return Page();
         }
 
         _db.TimeOffRequests.Add(new TimeOffRequest
