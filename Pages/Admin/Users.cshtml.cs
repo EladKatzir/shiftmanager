@@ -504,7 +504,8 @@ public class UsersModel : LocalizedPageModel
         if (!NewEmail.Contains('@') || NewEmail.Length < 3)
         { Error = _localizer["Error_InvalidEmailFormat"]; return Page(); }
 
-        if (await _db.Users.AnyAsync(u => u.Email == NewEmail)) { Error = _localizer["Error_EmailAlreadyExists"]; return Page(); }
+        // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == NewEmail)) { Error = _localizer["Error_EmailAlreadyExists"]; return Page(); }
 
         // Resolve role template and derive UserRole
         RoleTemplate? roleTemplate = null;
@@ -766,6 +767,12 @@ public class UsersModel : LocalizedPageModel
                 Error = _localizer["Error_ConcurrencyConflict"];
                 return RedirectToPage();
             }
+
+            // FINDING-008 FIX: Audit log for user enable/disable
+            await _auditLogService.LogAsync(
+                u.IsActive ? "UserEnabled" : "UserDisabled",
+                "User", u.Id,
+                $"User {u.Email} {(u.IsActive ? "enabled" : "disabled")} by admin");
         }
         return RedirectToPage();
     }
@@ -1394,8 +1401,8 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Check if user with this email already exists
-        if (await _db.Users.AnyAsync(u => u.Email == joinRequest.Email))
+        // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == joinRequest.Email))
         {
             TempData["ErrorMessage"] = _localizer["Error_UserEmailAlreadyExists"].Value;
             return RedirectToPage();
@@ -1704,8 +1711,8 @@ public class UsersModel : LocalizedPageModel
                     continue;
                 }
 
-                // Check if user already exists
-                if (await _db.Users.AnyAsync(u => u.Email == joinRequest.Email))
+                // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
+                if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == joinRequest.Email))
                 {
                     errors.Add(string.Format(_localizer["Error_UserWithEmailExists"], joinRequest.Email));
                     skippedCount++;
