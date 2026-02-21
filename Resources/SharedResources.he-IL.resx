@@ -12465,4 +12465,7 @@
   <data name="Error_OverlappingTimeOffRequest" xml:space="preserve">
     <value>כבר קיימת בקשת חופש עבור תאריכים חופפים.</value>
   </data>
+  <data name="Warning_PastDateShiftAssignment" xml:space="preserve">
+    <value>תאריך המשמרת כבר עבר. השיבוץ ישנה רשומות היסטוריות.</value>
+  </data>
 </root>

@@ -297,6 +297,16 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 ValidationCategory.RestHours));
         }
 
+        // FINDING-003 FIX: Warn when assigning to past dates (back-fill allowed via override)
+        if (shiftInstance.WorkDate < DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            warnings.Add(new ValidationIssue(
+                "PAST_DATE",
+                _localizer["Warning_PastDateShiftAssignment"],
+                ValidationSeverity.Warning,
+                ValidationCategory.Concurrency));
+        }
+
         bool canAssign = errors.Count == 0;
         return new ShiftAssignmentValidation(canAssign, errors, warnings);
     }
