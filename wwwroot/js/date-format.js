@@ -342,18 +342,20 @@
     };
 
     /**
-     * Auto-format elements with data-date attribute on DOM ready
+     * Auto-format elements with data-date-format attribute on DOM ready.
+     * Only formats elements that explicitly opt-in with data-date-format.
      * Usage: <span data-date="2026-01-30" data-date-format="longDate"></span>
      * Or: <span data-relative-time="2026-01-30T14:30:00Z"></span>
      */
     function autoFormatDates() {
-        // Format elements with data-date attribute
-        var dateElements = document.querySelectorAll('[data-date]');
+        // Only format elements that explicitly have data-date-format attribute
+        // (data-date alone is used as a DOM query attribute across many pages)
+        var dateElements = document.querySelectorAll('[data-date][data-date-format]');
         for (var i = 0; i < dateElements.length; i++) {
             var el = dateElements[i];
             var date = el.getAttribute('data-date');
-            var format = el.getAttribute('data-date-format') || 'longDate';
-            if (date && window.DateFormat[format]) {
+            var format = el.getAttribute('data-date-format');
+            if (date && format && window.DateFormat[format]) {
                 el.textContent = window.DateFormat[format](date);
             }
         }

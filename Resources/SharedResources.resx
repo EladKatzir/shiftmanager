@@ -736,6 +736,12 @@
   <data name="ShiftType_OFFLINE" xml:space="preserve">
     <value>Offline</value>
   </data>
+  <data name="ShiftType_AFTERNOON" xml:space="preserve">
+    <value>Afternoon</value>
+  </data>
+  <data name="ShiftType_EVENING" xml:space="preserve">
+    <value>Evening</value>
+  </data>
 
 
   <data name="Companies" xml:space="preserve">
@@ -12120,6 +12126,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="RoleTemplates_NoGrants" xml:space="preserve">
     <value>No grants assigned to this template.</value>
   </data>
+  <data name="RoleTemplates_BasicInfo" xml:space="preserve">
+    <value>Basic Information</value>
+  </data>
+  <data name="RoleTemplates_SystemDerivedRoleLocked" xml:space="preserve">
+    <value>System template derived role cannot be changed</value>
+  </data>
   <data name="OwnerHub_RoleTemplatesLink" xml:space="preserve">
     <value>Role Templates</value>
   </data>
@@ -12499,7 +12511,28 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_OverlappingTimeOffRequest" xml:space="preserve">
     <value>You already have a time-off request for overlapping dates.</value>
   </data>
+  <data name="Error_ApprovingJoinRequest" xml:space="preserve">
+    <value>Error approving join request.</value>
+  </data>
+  <data name="Error_RejectingJoinRequest" xml:space="preserve">
+    <value>Error rejecting join request.</value>
+  </data>
+  <data name="Error_RoleAssignmentFailed" xml:space="preserve">
+    <value>Role assignment failed.</value>
+  </data>
+  <data name="Priority" xml:space="preserve">
+    <value>Priority</value>
+  </data>
+  <data name="ShowFriends" xml:space="preserve">
+    <value>Show Friends</value>
+  </data>
   <data name="Warning_PastDateShiftAssignment" xml:space="preserve">
     <value>This shift date has already passed. Assignment will modify historical records.</value>
+  </data>
+  <data name="Calendar_OverrideWarningsFound" xml:space="preserve">
+    <value>The following warnings were found:</value>
+  </data>
+  <data name="Calendar_ProceedAnyway" xml:space="preserve">
+    <value>Do you want to proceed anyway?</value>
   </data>
 </root>

@@ -732,6 +732,12 @@
   <data name="ShiftType_OFFLINE" xml:space="preserve">
     <value>אופליין</value>
   </data>
+  <data name="ShiftType_AFTERNOON" xml:space="preserve">
+    <value>אחה"צ</value>
+  </data>
+  <data name="ShiftType_EVENING" xml:space="preserve">
+    <value>ערב</value>
+  </data>
 
 
   <data name="Companies" xml:space="preserve">
@@ -12086,6 +12092,12 @@
   <data name="RoleTemplates_NoGrants" xml:space="preserve">
     <value>אין הרשאות משויכות לתבנית זו.</value>
   </data>
+  <data name="RoleTemplates_BasicInfo" xml:space="preserve">
+    <value>מידע בסיסי</value>
+  </data>
+  <data name="RoleTemplates_SystemDerivedRoleLocked" xml:space="preserve">
+    <value>לא ניתן לשנות את התפקיד הנגזר של תבנית מערכת</value>
+  </data>
   <data name="OwnerHub_RoleTemplatesLink" xml:space="preserve">
     <value>תבניות תפקידים</value>
   </data>
@@ -12465,7 +12477,28 @@
   <data name="Error_OverlappingTimeOffRequest" xml:space="preserve">
     <value>כבר קיימת בקשת חופש עבור תאריכים חופפים.</value>
   </data>
+  <data name="Error_ApprovingJoinRequest" xml:space="preserve">
+    <value>שגיאה באישור בקשת הצטרפות.</value>
+  </data>
+  <data name="Error_RejectingJoinRequest" xml:space="preserve">
+    <value>שגיאה בדחיית בקשת הצטרפות.</value>
+  </data>
+  <data name="Error_RoleAssignmentFailed" xml:space="preserve">
+    <value>שיוך התפקיד נכשל.</value>
+  </data>
+  <data name="Priority" xml:space="preserve">
+    <value>עדיפות</value>
+  </data>
+  <data name="ShowFriends" xml:space="preserve">
+    <value>הצג חברים</value>
+  </data>
   <data name="Warning_PastDateShiftAssignment" xml:space="preserve">
     <value>תאריך המשמרת כבר עבר. השיבוץ ישנה רשומות היסטוריות.</value>
+  </data>
+  <data name="Calendar_OverrideWarningsFound" xml:space="preserve">
+    <value>נמצאו האזהרות הבאות:</value>
+  </data>
+  <data name="Calendar_ProceedAnyway" xml:space="preserve">
+    <value>האם ברצונך להמשיך בכל זאת?</value>
   </data>
 </root>

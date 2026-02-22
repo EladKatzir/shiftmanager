@@ -1836,8 +1836,27 @@ const i18n = {
     failedToDeleteShift: @Html.Raw(Json.Serialize(Localizer["FailedToDeleteShift"].Value)),
     resetToProgramConfirm: @Html.Raw(Json.Serialize(Localizer["Calendar_ResetToProgramConfirm"].Value)),
     loadingEmployees: @Html.Raw(Json.Serialize(Localizer["Calendar_LoadingEmployees"].Value)),
-    roster: @Html.Raw(Json.Serialize(Localizer["Roster"].Value))
+    roster: @Html.Raw(Json.Serialize(Localizer["Roster"].Value)),
+    overrideWarningsFound: @Html.Raw(Json.Serialize(Localizer["Calendar_OverrideWarningsFound"].Value)),
+    overrideProceedAnyway: @Html.Raw(Json.Serialize(Localizer["Calendar_ProceedAnyway"].Value))
 };
+
+// Override warning handler — re-sends the request with the overrideToken if user confirms
+async function retryWithOverride(result, handlerUrl, originalBody, headers) {
+    var messages = result.warnings.map(function(w) { return '• ' + w.message; }).join('\n');
+    var prompt = i18n.overrideWarningsFound + '\n\n' + messages + '\n\n' + i18n.overrideProceedAnyway;
+    if (!confirm(prompt)) return null;
+
+    originalBody.overrideToken = result.overrideToken;
+    var response = await fetch(handlerUrl, {
+        method: 'POST',
+        headers: headers,
+        credentials: 'same-origin',
+        body: JSON.stringify(originalBody)
+    });
+    if (!response.ok) throw new Error('Request failed: ' + response.status);
+    return await response.json();
+}
 
 // Shift Row Editing Functions
 function toggleEditMode(shiftTypeId, isEdit) {
@@ -2243,21 +2262,24 @@ async function addTrainee(assignmentId, traineeId, traineeName) {
         };
         if (csrfToken5) headers5['RequestVerificationToken'] = csrfToken5;
 
+        var body5 = { assignmentId: parseInt(assignmentId), traineeUserId: traineeId };
         const response = await fetch('/Calendar/Table?handler=AddTrainee', {
             method: 'POST',
             headers: headers5,
             credentials: 'same-origin',
-            body: JSON.stringify({
-                assignmentId: parseInt(assignmentId),
-                traineeUserId: traineeId
-            })
+            body: JSON.stringify(body5)
         });
 
         if (!response.ok) {
             throw new Error(`Request failed: ${response.status}`);
         }
 
-        const result = await response.json();
+        var result = await response.json();
+
+        if (result.requiresOverride) {
+            result = await retryWithOverride(result, '/Calendar/Table?handler=AddTrainee', body5, headers5);
+            if (!result) return;
+        }
 
         if (result.success) {
             // Update DOM immediately
@@ -2292,7 +2314,7 @@ async function addTrainee(assignmentId, traineeId, traineeName) {
                 document.getElementById('removeTraineeItem').style.display = 'block';
             }
         } else {
-            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''));
         }
     } catch (error) {
         console.error('Error adding trainee:', error);
@@ -2353,26 +2375,29 @@ async function assignUserToSlot(assignmentId, userId) {
         };
         if (csrfToken7) headers7['RequestVerificationToken'] = csrfToken7;
 
+        var body7 = { assignmentId: parseInt(assignmentId), userId: userId };
         const response = await fetch('/Calendar/Table?handler=AssignUserToSlot', {
             method: 'POST',
             headers: headers7,
             credentials: 'same-origin',
-            body: JSON.stringify({
-                assignmentId: parseInt(assignmentId),
-                userId: userId
-            })
+            body: JSON.stringify(body7)
         });
 
         if (!response.ok) {
             throw new Error(`Request failed: ${response.status}`);
         }
 
-        const result = await response.json();
+        var result = await response.json();
+
+        if (result.requiresOverride) {
+            result = await retryWithOverride(result, '/Calendar/Table?handler=AssignUserToSlot', body7, headers7);
+            if (!result) return;
+        }
 
         if (result.success) {
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''));
         }
     } catch (error) {
         console.error('Error assigning user to slot:', error);
@@ -2389,26 +2414,29 @@ async function changeUser(assignmentId, newUserId, newUserName) {
         };
         if (csrfToken8) headers8['RequestVerificationToken'] = csrfToken8;
 
+        var body8 = { assignmentId: parseInt(assignmentId), newUserId: newUserId };
         const response = await fetch('/Calendar/Table?handler=ChangeUser', {
             method: 'POST',
             headers: headers8,
             credentials: 'same-origin',
-            body: JSON.stringify({
-                assignmentId: parseInt(assignmentId),
-                newUserId: newUserId
-            })
+            body: JSON.stringify(body8)
         });
 
         if (!response.ok) {
             throw new Error(`Request failed: ${response.status}`);
         }
 
-        const result = await response.json();
+        var result = await response.json();
+
+        if (result.requiresOverride) {
+            result = await retryWithOverride(result, '/Calendar/Table?handler=ChangeUser', body8, headers8);
+            if (!result) return;
+        }
 
         if (result.success) {
             location.reload();
         } else {
-            alert('@Localizer["Error_Prefix"].Value.Trim()' + result.error);
+            alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''));
         }
     } catch (error) {
         console.error('Error changing user:', error);
