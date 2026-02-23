@@ -40,7 +40,10 @@
             <label id="startDateLabel"><loc key="StartDate" /><br /><input class="input" asp-for="StartDate" type="date" /></label>
             <label id="endDateLabel"><loc key="EndDate" /><br /><input class="input" asp-for="EndDate" type="date" /></label>
             <label><loc key="ReasonOptional" /><br /><input class="input" asp-for="Reason" /></label>
-            <button class="btn btn-primary" type="submit"><loc key="Submit" /></button>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button class="btn btn-primary" type="submit"><loc key="Submit" /></button>
+                <a href="/Requests/Index" class="btn btn-outline"><loc key="Cancel">Cancel</loc></a>
+            </div>
         </div>
     </form>
 </div>
