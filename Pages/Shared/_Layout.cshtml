@@ -436,9 +436,15 @@
                     </require-grant>
 
                     @* Schedule - common for all admins *@
-                    <a href="@shiftsCalendarUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
+                    <a href="@shiftsCalendarUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") && !currentPath.StartsWith("/Calendar/Overview") || currentPath.StartsWith("/Schedule") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📅</span>
                         <span><loc key="Schedule" /></span>
+                    </a>
+
+                    @* Company Overview *@
+                    <a href="/Calendar/Overview" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Overview") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📋</span>
+                        <span><loc key="CompanyOverview" /></span>
                     </a>
 
                     @* Requests - common for all admins *@
@@ -472,10 +478,10 @@
                         </a>
                     </require-grant>
                     <require-grant key="ViewAllUsers" negate="true">
-                        @* Users without ViewAllUsers see "My Team" *@
+                        @* Users without ViewAllUsers see "My Groups" *@
                         <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
                             <span class="app-sidebar-nav-icon">👥</span>
-                            <span><loc key="MyTeam" /></span>
+                            <span><loc key="MyGroups" /></span>
                         </a>
                     </require-grant>
 
@@ -593,9 +599,15 @@
                     </a>
 
                     @* Schedule *@
-                    <a href="@shiftsCalendarUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") || currentPath.StartsWith("/Schedule") ? "active" : "")">
+                    <a href="@shiftsCalendarUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar") && !currentPath.StartsWith("/Calendar/Overview") || currentPath.StartsWith("/Schedule") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">📅</span>
                         <span><loc key="Schedule" /></span>
+                    </a>
+
+                    @* Company Overview *@
+                    <a href="/Calendar/Overview" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Overview") ? "active" : "")">
+                        <span class="app-sidebar-nav-icon">📋</span>
+                        <span><loc key="CompanyOverview" /></span>
                     </a>
 
                     @* Requests *@
@@ -604,10 +616,10 @@
                         <span><loc key="Requests" /></span>
                     </a>
 
-                    @* My Team *@
+                    @* My Groups *@
                     <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
                         <span class="app-sidebar-nav-icon">👥</span>
-                        <span><loc key="MyTeam" /></span>
+                        <span><loc key="MyGroups" /></span>
                     </a>
 
                     @* Friends - available to all authenticated users, gated by feature flag *@

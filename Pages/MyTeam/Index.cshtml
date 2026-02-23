@@ -6,12 +6,12 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
-    ViewData["Title"] = Localizer["MyTeam"];
+    ViewData["Title"] = Localizer["MyGroups"];
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
-    new BreadcrumbItem { Label = Localizer["MyTeam"], IsActive = true }
+    new BreadcrumbItem { Label = Localizer["MyGroups"], IsActive = true }
 })
 
 <div data-ui-version="v2">
@@ -840,8 +840,9 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title"><loc key="MyTeam" /></h1>
-    <p class="page-subtitle"><loc key="ViewYourTeamScheduleAndAvailability" /></p>
+    <h1 class="page-title"><loc key="MyGroups" /></h1>
+    <p class="page-subtitle"><loc key="MyGroupsSubtitle" /></p>
+    <p class="page-instruction" style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;"><loc key="MyGroupsExplanation" /></p>
 </div>
 
 <div class="myteam-container">
@@ -882,8 +883,8 @@
     <!-- Empty State (hidden by default) -->
     <div class="empty-state" id="emptyState" style="display: none;">
         <div class="empty-state-icon">📅</div>
-        <h3><loc key="NoTeamMembers" /></h3>
-        <p><loc key="AddTeamMembersToStart" /></p>
+        <h3><loc key="NoGroupMembers" /></h3>
+        <p><loc key="AddGroupMembersToStart" /></p>
         <button class="btn btn-primary" onclick="document.getElementById('btnConfigureMembers').click()">
             <span class="icon">⚙️</span>
             <span><loc key="ConfigureMembers" /></span>
@@ -933,7 +934,7 @@
 <div class="modal" id="modalConfigureMembers">
     <div class="modal-content large">
         <div class="modal-header">
-            <h2><loc key="ConfigureTeamMembers" /></h2>
+            <h2><loc key="ConfigureGroupMembers" /></h2>
             <button class="modal-close" onclick="closeModal('modalConfigureMembers')" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
         <div class="modal-body">
@@ -1010,9 +1011,9 @@
                 @Html.Raw(Json.Serialize(Localizer["Dec"].Value))
             ],
             // UI strings
-            teamMember: @Html.Raw(Json.Serialize(Localizer["TeamMember"].Value)),
+            teamMember: @Html.Raw(Json.Serialize(Localizer["GroupMember"].Value)),
             noCalendars: @Html.Raw(Json.Serialize(Localizer["NoCalendars"].Value)),
-            noTeamCalendars: @Html.Raw(Json.Serialize(Localizer["NoTeamCalendars"].Value)),
+            noTeamCalendars: @Html.Raw(Json.Serialize(Localizer["NoGroupCalendars"].Value)),
             createFirstCalendar: @Html.Raw(Json.Serialize(Localizer["CreateFirstCalendar"].Value)),
             createCalendar: @Html.Raw(Json.Serialize(Localizer["CreateCalendar"].Value)),
             failedToLoadCalendars: @Html.Raw(Json.Serialize(Localizer["FailedToLoadCalendars"].Value)),

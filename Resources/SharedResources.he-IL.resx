@@ -12588,4 +12588,49 @@
   <data name="Section_SetupTasksDesc" xml:space="preserve">
     <value>אשף הקמת חברה ורשימת משימות</value>
   </data>
+  <data name="CompanyOverview" xml:space="preserve">
+    <value>צפייה בצוות</value>
+  </data>
+  <data name="Nav_CompanyOverview" xml:space="preserve">
+    <value>צפייה בצוות</value>
+  </data>
+  <data name="MyGroups" xml:space="preserve">
+    <value>הקבוצות שלי</value>
+  </data>
+  <data name="Nav_MyGroups" xml:space="preserve">
+    <value>הקבוצות שלי</value>
+  </data>
+  <data name="MyGroupsSubtitle" xml:space="preserve">
+    <value>צרו קבוצות מותאמות אישית למעקב אחר לוחות זמנים של חברים, עמיתים או צוותי משימה</value>
+  </data>
+  <data name="MyGroupsExplanation" xml:space="preserve">
+    <value>צרו קבוצות אישיות למעקב אחר לוחות זמנים של חברים, צוותי משימה מיוחדים או כל משתמש בארגון שלכם.</value>
+  </data>
+  <data name="NoGroupMembers" xml:space="preserve">
+    <value>אין חברים בקבוצה</value>
+  </data>
+  <data name="AddGroupMembersToStart" xml:space="preserve">
+    <value>הוסיפו חברים כדי להתחיל לראות את לוח הזמנים השבועי שלהם</value>
+  </data>
+  <data name="ConfigureGroupMembers" xml:space="preserve">
+    <value>הגדרת חברי קבוצה</value>
+  </data>
+  <data name="Dashboard_ViewGroups" xml:space="preserve">
+    <value>הקבוצות שלי</value>
+  </data>
+  <data name="ViewGroupMembers" xml:space="preserve">
+    <value>הצגת חברי קבוצה</value>
+  </data>
+  <data name="Section_MyGroups" xml:space="preserve">
+    <value>הקבוצות שלי</value>
+  </data>
+  <data name="Section_MyGroupsDesc" xml:space="preserve">
+    <value>יצירה וניהול של קבוצות לוח זמנים מותאמות אישית</value>
+  </data>
+  <data name="GroupMember" xml:space="preserve">
+    <value>חבר קבוצה</value>
+  </data>
+  <data name="NoGroupCalendars" xml:space="preserve">
+    <value>אין עדיין לוחות קבוצה</value>
+  </data>
 </root>

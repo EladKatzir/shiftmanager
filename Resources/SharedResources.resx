@@ -12622,4 +12622,49 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Section_SetupTasksDesc" xml:space="preserve">
     <value>Company setup wizard and checklist</value>
   </data>
+  <data name="CompanyOverview" xml:space="preserve">
+    <value>Company Overview</value>
+  </data>
+  <data name="Nav_CompanyOverview" xml:space="preserve">
+    <value>Company Overview</value>
+  </data>
+  <data name="MyGroups" xml:space="preserve">
+    <value>My Groups</value>
+  </data>
+  <data name="Nav_MyGroups" xml:space="preserve">
+    <value>My Groups</value>
+  </data>
+  <data name="MyGroupsSubtitle" xml:space="preserve">
+    <value>Create custom groups to track schedules of friends, colleagues, or task teams</value>
+  </data>
+  <data name="MyGroupsExplanation" xml:space="preserve">
+    <value>Create personal groups to track schedules of friends, special task teams, or any users in your organization.</value>
+  </data>
+  <data name="NoGroupMembers" xml:space="preserve">
+    <value>No Group Members</value>
+  </data>
+  <data name="AddGroupMembersToStart" xml:space="preserve">
+    <value>Add members to start viewing their weekly schedule</value>
+  </data>
+  <data name="ConfigureGroupMembers" xml:space="preserve">
+    <value>Configure Group Members</value>
+  </data>
+  <data name="Dashboard_ViewGroups" xml:space="preserve">
+    <value>My Groups</value>
+  </data>
+  <data name="ViewGroupMembers" xml:space="preserve">
+    <value>View group members</value>
+  </data>
+  <data name="Section_MyGroups" xml:space="preserve">
+    <value>My Groups</value>
+  </data>
+  <data name="Section_MyGroupsDesc" xml:space="preserve">
+    <value>Create and manage custom schedule groups</value>
+  </data>
+  <data name="GroupMember" xml:space="preserve">
+    <value>Group Member</value>
+  </data>
+  <data name="NoGroupCalendars" xml:space="preserve">
+    <value>No group calendars yet</value>
+  </data>
 </root>

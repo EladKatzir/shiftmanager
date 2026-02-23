@@ -958,7 +958,8 @@ function getCommandPalettePages() {
 
     // Employee Pages
     { title: window.AppLocalizer?.Nav_MyRequests || 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
-    { title: window.AppLocalizer?.Nav_MyTeam || 'My Team', subtitle: window.AppLocalizer.ViewTeamMembers, url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_MyGroups || 'My Groups', subtitle: window.AppLocalizer?.ViewGroupMembers || 'View group members', url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_CompanyOverview || 'Company Overview', subtitle: window.AppLocalizer?.OverviewCalendarDesc || 'Company-wide view of all assignments', url: '/Calendar/Overview', icon: '📋', roles: ['all'] },
     { title: window.AppLocalizer?.Nav_MyProfile || 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
     { title: window.AppLocalizer?.Nav_Notifications || 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
   ];
