@@ -12501,4 +12501,91 @@
   <data name="Calendar_ProceedAnyway" xml:space="preserve">
     <value>האם ברצונך להמשיך בכל זאת?</value>
   </data>
+  <data name="OwnerHub_EmailConfig" xml:space="preserve">
+    <value>הגדרות אימייל</value>
+  </data>
+  <data name="OwnerHub_EmailTemplates" xml:space="preserve">
+    <value>תבניות אימייל</value>
+  </data>
+  <data name="OwnerHub_GriffinConfig" xml:space="preserve">
+    <value>Griffin / ADFS</value>
+  </data>
+  <data name="OwnerHub_GameConfig" xml:space="preserve">
+    <value>הגדרות משחק</value>
+  </data>
+  <data name="OwnerHub_Telemetry" xml:space="preserve">
+    <value>טלמטריה</value>
+  </data>
+  <data name="OwnerHub_DataLifecycle" xml:space="preserve">
+    <value>מחזור חיי נתונים</value>
+  </data>
+  <data name="OwnerHub_LockedUsers" xml:space="preserve">
+    <value>משתמשים נעולים</value>
+  </data>
+  <data name="OwnerHub_MasterPrograms" xml:space="preserve">
+    <value>תוכניות ראשיות</value>
+  </data>
+  <data name="OwnerHub_AreaConfig" xml:space="preserve">
+    <value>הגדרות אזור</value>
+  </data>
+  <data name="OwnerHub_Permissions" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="OwnerHub_ExportUserData" xml:space="preserve">
+    <value>ייצוא נתוני משתמש</value>
+  </data>
+  <data name="Section_OrganizationStructure" xml:space="preserve">
+    <value>ארגון ומבנה</value>
+  </data>
+  <data name="Section_OrganizationHub" xml:space="preserve">
+    <value>מרכז ארגון</value>
+  </data>
+  <data name="Section_OrganizationHubDesc" xml:space="preserve">
+    <value>עץ היררכיה וסקירת ישויות</value>
+  </data>
+  <data name="Section_JobTypes" xml:space="preserve">
+    <value>סוגי תפקידים</value>
+  </data>
+  <data name="Section_JobTypesDesc" xml:space="preserve">
+    <value>ניהול הגדרות סוגי תפקידים וצבעים</value>
+  </data>
+  <data name="Section_Departments" xml:space="preserve">
+    <value>מחלקות</value>
+  </data>
+  <data name="Section_DepartmentsDesc" xml:space="preserve">
+    <value>ניהול מחלקות למולקולות טכניות</value>
+  </data>
+  <data name="Section_Configuration" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
+  <data name="Section_HierarchySettings" xml:space="preserve">
+    <value>הגדרות היררכיה</value>
+  </data>
+  <data name="Section_HierarchySettingsDesc" xml:space="preserve">
+    <value>שעות מנוחה ומכסות שבועיות לפי רמה</value>
+  </data>
+  <data name="Section_Announcements" xml:space="preserve">
+    <value>הודעות</value>
+  </data>
+  <data name="Section_AnnouncementsDesc" xml:space="preserve">
+    <value>הודעות והתראות חברה</value>
+  </data>
+  <data name="Section_ApprovalRules" xml:space="preserve">
+    <value>כללי אישור</value>
+  </data>
+  <data name="Section_ApprovalRulesDesc" xml:space="preserve">
+    <value>הגדרת תהליך אישור חופשות</value>
+  </data>
+  <data name="Section_DutyRotation" xml:space="preserve">
+    <value>רוטציות תורנות</value>
+  </data>
+  <data name="Section_DutyRotationDesc" xml:space="preserve">
+    <value>ניהול רוטציות תורנות</value>
+  </data>
+  <data name="Section_SetupTasks" xml:space="preserve">
+    <value>משימות הקמה</value>
+  </data>
+  <data name="Section_SetupTasksDesc" xml:space="preserve">
+    <value>אשף הקמת חברה ורשימת משימות</value>
+  </data>
 </root>

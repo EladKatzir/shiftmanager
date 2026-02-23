@@ -81,6 +81,64 @@
         </a>
     </div>
 
+    @* Organization & Structure *@
+    @if (Model.HasViewHierarchy || Model.HasEditCompany || Model.HasManageJobTypes || Model.HasManageDepartments)
+    {
+        <h2 class="section-title">
+            <span class="section-icon">🏗️</span>
+            <loc key="Section_OrganizationStructure">Organization & Structure</loc>
+        </h2>
+        <div class="admin-tools-grid">
+            @if (Model.HasViewHierarchy)
+            {
+                <a href="/Admin/Organization" class="admin-tool-card">
+                    <div class="tool-icon">🏢</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_OrganizationHub">Organization Hub</loc></h3>
+                        <p><loc key="Section_OrganizationHubDesc">Hierarchy tree and entity overview</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.HasEditCompany)
+            {
+                <a href="/Admin/Companies" class="admin-tool-card">
+                    <div class="tool-icon">🏛️</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_Companies">Companies</loc></h3>
+                        <p><loc key="Section_CompaniesDesc">Manage tenants, create/edit companies</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.HasManageJobTypes)
+            {
+                <a href="/Admin/Organization/JobTypes" class="admin-tool-card">
+                    <div class="tool-icon">🏷️</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_JobTypes">Job Types</loc></h3>
+                        <p><loc key="Section_JobTypesDesc">Manage job type definitions and colors</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.HasManageDepartments)
+            {
+                <a href="/Admin/Organization/Departments" class="admin-tool-card">
+                    <div class="tool-icon">🏬</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_Departments">Departments</loc></h3>
+                        <p><loc key="Section_DepartmentsDesc">Department management for Tech molecules</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+        </div>
+    }
+
     @* Scheduling Configuration *@
     <h2 class="section-title">
         <span class="section-icon">📅</span>
@@ -114,6 +172,79 @@
             <div class="tool-arrow">→</div>
         </a>
     </div>
+
+    @* Configuration *@
+    @{
+        var showConfigSection = Model.HasViewSettings || Model.HasManageAnnouncements || Model.HasSystemConfiguration || Model.HasManageOnDuty;
+    }
+    @if (showConfigSection)
+    {
+        <h2 class="section-title">
+            <span class="section-icon">🔧</span>
+            <loc key="Section_Configuration">Configuration</loc>
+        </h2>
+        <div class="admin-tools-grid">
+            @if (Model.HasViewSettings)
+            {
+                <a href="/Admin/Settings" class="admin-tool-card">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_HierarchySettings">Hierarchy Settings</loc></h3>
+                        <p><loc key="Section_HierarchySettingsDesc">Rest hours and weekly caps by level</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.HasManageAnnouncements)
+            {
+                <a href="/Admin/Announcements" class="admin-tool-card">
+                    <div class="tool-icon">📢</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_Announcements">Announcements</loc></h3>
+                        <p><loc key="Section_AnnouncementsDesc">Company announcements and notices</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.VacationApprovalEnabled && Model.HasSystemConfiguration)
+            {
+                <a href="/Admin/Settings/ApprovalRules" class="admin-tool-card">
+                    <div class="tool-icon">✅</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_ApprovalRules">Approval Rules</loc></h3>
+                        <p><loc key="Section_ApprovalRulesDesc">Vacation approval workflow configuration</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.DutyRotationEnabled && Model.HasManageOnDuty)
+            {
+                <a href="/Admin/DutyRotation" class="admin-tool-card">
+                    <div class="tool-icon">🔄</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_DutyRotation">Duty Rotations</loc></h3>
+                        <p><loc key="Section_DutyRotationDesc">On-duty rotation management</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+
+            @if (Model.SetupTasksEnabled && Model.HasSystemConfiguration)
+            {
+                <a href="/Admin/SetupTasks" class="admin-tool-card">
+                    <div class="tool-icon">📋</div>
+                    <div class="tool-content">
+                        <h3><loc key="Section_SetupTasks">Setup Tasks</loc></h3>
+                        <p><loc key="Section_SetupTasksDesc">Company setup wizard and checklist</loc></p>
+                    </div>
+                    <div class="tool-arrow">→</div>
+                </a>
+            }
+        </div>
+    }
 
     @* Operations Management *@
     <h2 class="section-title">

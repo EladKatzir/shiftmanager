@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Services;
+using ShiftManager.Data.SeedData;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Admin;
@@ -21,16 +22,19 @@ public class IndexModel : PageModel
     private readonly ITenantResolver _tenantResolver;
     private readonly IDirectorService? _directorService;
     private readonly IGrantService _grantService;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public IndexModel(
         AppDbContext db,
         ITenantResolver tenantResolver,
         IGrantService grantService,
+        IFeatureFlagService featureFlagService,
         IDirectorService? directorService = null)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _grantService = grantService;
+        _featureFlagService = featureFlagService;
         _directorService = directorService;
     }
 
@@ -38,6 +42,21 @@ public class IndexModel : PageModel
     public bool IsOwner { get; set; }
     public bool IsDirector { get; set; }
     public bool IsManager { get; set; }
+
+    // Grant-based access for hub card visibility
+    public bool HasViewHierarchy { get; set; }
+    public bool HasEditCompany { get; set; }
+    public bool HasManageJobTypes { get; set; }
+    public bool HasManageDepartments { get; set; }
+    public bool HasViewSettings { get; set; }
+    public bool HasManageAnnouncements { get; set; }
+    public bool HasSystemConfiguration { get; set; }
+    public bool HasManageOnDuty { get; set; }
+
+    // Feature flag states for conditional hub cards
+    public bool DutyRotationEnabled { get; set; }
+    public bool SetupTasksEnabled { get; set; }
+    public bool VacationApprovalEnabled { get; set; }
 
     // Stats
     public int TotalUsers { get; set; }
@@ -96,5 +115,23 @@ public class IndexModel : PageModel
             TotalChores = 0;
             TotalAssignments = 0;
         }
+
+        // Grant checks for card visibility (only check if we have a valid userId)
+        if (userId > 0)
+        {
+            HasViewHierarchy = await _grantService.HasGrantAsync(userId, "ViewHierarchy");
+            HasEditCompany = await _grantService.HasGrantAsync(userId, "EditCompany");
+            HasManageJobTypes = await _grantService.HasGrantAsync(userId, "ManageJobTypes");
+            HasManageDepartments = await _grantService.HasGrantAsync(userId, "ManageDepartments");
+            HasViewSettings = await _grantService.HasGrantAsync(userId, "ViewSettings");
+            HasManageAnnouncements = await _grantService.HasGrantAsync(userId, "ManageAnnouncements");
+            HasSystemConfiguration = await _grantService.HasGrantAsync(userId, "SystemConfiguration");
+            HasManageOnDuty = await _grantService.HasGrantAsync(userId, "ManageOnDuty");
+        }
+
+        // Feature flags for conditional card rendering (sync cache-only check, same as _Layout.cshtml)
+        DutyRotationEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.DutyRotationEnabled);
+        SetupTasksEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.SetupTasksEnabled);
+        VacationApprovalEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.VacationApprovalEnabled);
     }
 }
