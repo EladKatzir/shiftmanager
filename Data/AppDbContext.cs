@@ -1092,9 +1092,10 @@ public class AppDbContext : DbContext
             .HasForeignKey(rtg => rtg.GrantTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // RoleTemplateGrant unique constraint (one grant per role template)
+        // RoleTemplateGrant unique constraint (one grant per role template per JobType)
+        // Includes TargetJobTypeId to support dual-JobType grants (e.g., BRDirector ApproveVacations for BR + Hakam)
         modelBuilder.Entity<RoleTemplateGrant>()
-            .HasIndex(rtg => new { rtg.RoleTemplateId, rtg.GrantTypeId })
+            .HasIndex(rtg => new { rtg.RoleTemplateId, rtg.GrantTypeId, rtg.TargetJobTypeId })
             .IsUnique();
 
         // AppUser → RoleTemplate relationship

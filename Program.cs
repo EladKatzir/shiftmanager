@@ -608,6 +608,49 @@ using (var scope = app.Services.CreateScope())
     // Seed Shifty Organization (Project → Area → Molecules → Companies including SystemAdmins)
     await ShiftManager.Data.SeedData.ShiftyOrganizationSeed.SeedAsync(db);
 
+    // Resolve sentinel TargetJobTypeId values in RoleTemplateGrants.
+    // Sentinels (negative IDs) map to deployment-specific JobType names (e.g., BR, Hakam).
+    // Must run AFTER ShiftyOrganizationSeed which creates the JobTypes.
+    {
+        var sentinelMap = ShiftManager.Data.SeedData.RoleTemplateSeed.JobTypeSentinelMap;
+        var sentinelGrants = await db.RoleTemplateGrants
+            .Where(g => g.TargetJobTypeId != null && g.TargetJobTypeId < 0)
+            .ToListAsync();
+
+        if (sentinelGrants.Any())
+        {
+            // Build name→ID lookup for all referenced JobTypes
+            var jobTypeNames = sentinelMap.Values.ToHashSet();
+            var jobTypeLookup = await db.JobTypes
+                .Where(jt => jobTypeNames.Contains(jt.Name))
+                .ToDictionaryAsync(jt => jt.Name, jt => jt.Id);
+
+            var resolved = 0;
+            var removed = 0;
+            foreach (var grant in sentinelGrants)
+            {
+                if (sentinelMap.TryGetValue(grant.TargetJobTypeId!.Value, out var jobTypeName) &&
+                    jobTypeLookup.TryGetValue(jobTypeName, out var actualId))
+                {
+                    grant.TargetJobTypeId = actualId;
+                    resolved++;
+                }
+                else
+                {
+                    // JobType doesn't exist in this deployment — remove the grant
+                    db.RoleTemplateGrants.Remove(grant);
+                    removed++;
+                }
+            }
+
+            await db.SaveChangesAsync();
+            if (resolved > 0)
+                logger.LogInformation("Resolved {Count} sentinel TargetJobTypeId values to actual JobType IDs", resolved);
+            if (removed > 0)
+                logger.LogWarning("Removed {Count} RoleTemplateGrants with unresolvable JobType sentinels (deployment may not have these JobTypes)", removed);
+        }
+    }
+
     // ============================================================
     // CATCH-UP: Ensure System molecule, SystemAdmins, and HQ companies exist
     // (these were added to ShiftyOrganizationSeed after some DBs were already seeded)

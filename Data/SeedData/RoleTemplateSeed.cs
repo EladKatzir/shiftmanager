@@ -192,6 +192,23 @@ public static class RoleTemplateSeed
         };
     }
 
+    /// <summary>
+    /// Sentinel TargetJobTypeId values for deployment-specific JobTypes.
+    /// Resolved to actual DB IDs in Program.cs after ShiftyOrganizationSeed runs.
+    /// Negative IDs ensure they never collide with real auto-generated IDs.
+    /// </summary>
+    public const int JT_SENTINEL_BR = -1;
+    public const int JT_SENTINEL_HAKAM = -2;
+
+    /// <summary>
+    /// Maps sentinel values to JobType names for resolution in Program.cs.
+    /// </summary>
+    public static readonly Dictionary<int, string> JobTypeSentinelMap = new()
+    {
+        { JT_SENTINEL_BR, "BR" },
+        { JT_SENTINEL_HAKAM, "Hakam" }
+    };
+
     public static List<RoleTemplateGrant> GetRoleTemplateGrants()
     {
         var grants = new List<RoleTemplateGrant>();
@@ -381,8 +398,9 @@ public static class RoleTemplateSeed
         grants.Add(G(4, 120, SAR));
 
         // ============================================
-        // BR DIRECTOR (Template 2) — 42 grants
+        // BR DIRECTOR (Template 2) — 44 grants
         // Employee base (SAR) + BR management. AssignBRShifts + ViewAllShifts at ETM.
+        // Dual ApproveVacations: BR + Hakam via TargetJobTypeId sentinels (resolved in Program.cs).
         // ============================================
         grants.Add(G(2, 1, SAR));
         grants.Add(G(2, 16, SAR));
@@ -417,7 +435,8 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 76, SAR));   // ManageHakamPrograms (ALL)
         grants.Add(G(2, 109, SAR, useOwnJobType: true));
         grants.Add(G(2, 17, SAR));   // AssignChores
-        grants.Add(G(2, 22, SAR));   // ApproveVacations (ALL)
+        grants.Add(G(2, 22, SAR, targetJobTypeId: JT_SENTINEL_BR));     // ApproveVacations (BR)
+        grants.Add(G(2, 22, SAR, targetJobTypeId: JT_SENTINEL_HAKAM));  // ApproveVacations (Hakam)
         grants.Add(G(2, 23, SAR));   // OverrideVacationLimits
         grants.Add(G(2, 26, SAR));   // ApproveSwaps (ALL)
         grants.Add(G(2, 27, SAR));   // InitiateSwap

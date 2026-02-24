@@ -440,15 +440,21 @@ public class GrantService : IGrantService
         }
 
         // Phase 3: Insert new grants (dedup includes JobTypeId)
+        // Pre-load all existing grants for user in one query (avoids N+1)
+        var allUserGrants = await _db.Grants
+            .Where(g => g.UserId == userId)
+            .Select(g => new { g.GrantTypeId, g.ProjectId, g.AreaId, g.MoleculeId, g.DepartmentId, g.CompanyId, g.JobTypeId })
+            .ToListAsync();
+
         foreach (var (grantTypeId, effectiveScope, canOwn, canGive) in expectedGrants)
         {
-            var existing = await _db.Grants.FirstOrDefaultAsync(g =>
-                g.UserId == userId && g.GrantTypeId == grantTypeId &&
+            var alreadyExists = allUserGrants.Any(g =>
+                g.GrantTypeId == grantTypeId &&
                 g.ProjectId == effectiveScope.ProjectId && g.AreaId == effectiveScope.AreaId &&
                 g.MoleculeId == effectiveScope.MoleculeId && g.DepartmentId == effectiveScope.DepartmentId &&
                 g.CompanyId == effectiveScope.CompanyId && g.JobTypeId == effectiveScope.JobTypeId);
 
-            if (existing == null)
+            if (!alreadyExists)
             {
                 _db.Grants.Add(new Grant
                 {
