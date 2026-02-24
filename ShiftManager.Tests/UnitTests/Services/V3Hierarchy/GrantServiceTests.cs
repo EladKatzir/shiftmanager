@@ -835,41 +835,44 @@ public class AssignerRoleTests : IDisposable
     }
 
     [Fact]
-    public void RoleTemplateSeed_AssignerRole_HasOnlyChoreGrants()
+    public void RoleTemplateSeed_AssignerRole_HasEmployeeGrantsPlusChoreAssignment()
     {
         // Arrange
         var roleTemplates = Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
         var roleGrants = Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
-        var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Find Assigner role (ID 8)
         var assignerRole = roleTemplates.FirstOrDefault(rt => rt.Key == "Assigner");
         assignerRole.Should().NotBeNull("Assigner role should exist");
+        var employeeRole = roleTemplates.FirstOrDefault(rt => rt.Key == "Employee");
+        employeeRole.Should().NotBeNull("Employee role should exist");
 
-        // Get grants for Assigner role
         var assignerGrants = roleGrants.Where(rg => rg.RoleTemplateId == assignerRole!.Id).ToList();
+        var employeeGrants = roleGrants.Where(rg => rg.RoleTemplateId == employeeRole!.Id).ToList();
 
-        // Get the grant types for those grants
-        var assignerGrantTypes = assignerGrants
-            .Select(ag => grantTypes.FirstOrDefault(gt => gt.Id == ag.GrantTypeId))
-            .Where(gt => gt != null)
-            .ToList();
+        var assignerGrantTypeIds = assignerGrants.Select(g => g.GrantTypeId).ToHashSet();
+        var employeeGrantTypeIds = employeeGrants.Select(g => g.GrantTypeId).ToHashSet();
 
-        // Assert - Should only have chore grants
-        assignerGrantTypes.Should().NotBeEmpty("Assigner should have some grants");
-        assignerGrantTypes.Should().AllSatisfy(gt =>
+        // Assigner inherits ALL Employee grants
+        employeeGrantTypeIds.Should().BeSubsetOf(assignerGrantTypeIds,
+            "Assigner should have all Employee grants");
+
+        // Assigner = Employee + AssignChores (exactly 1 extra)
+        assignerGrants.Should().HaveCount(employeeGrants.Count + 1,
+            "Assigner = Employee + AssignChores");
+
+        // AssignChores (grant ID 17) should be molecule-scoped
+        var assignChoresGrant = assignerGrants.FirstOrDefault(g => g.GrantTypeId == 17);
+        assignChoresGrant.Should().NotBeNull("Assigner should have AssignChores grant");
+        assignChoresGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToMolecule,
+            "Assigner's AssignChores should be molecule-scoped");
+
+        // All inherited grants should be SAR (not widened)
+        var inheritedGrants = assignerGrants.Where(g => g.GrantTypeId != 17).ToList();
+        inheritedGrants.Should().AllSatisfy(g =>
         {
-            gt!.Category.Should().Be(GrantCategory.Chore,
-                $"Assigner grant '{gt.Key}' should be a chore grant, not {gt.Category}");
+            g.ScopeMode.Should().Be(GrantScopeMode.SameAsRole,
+                $"Assigner's inherited grant (GrantTypeId={g.GrantTypeId}) should be SAR, not widened");
         });
-
-        // Verify specific grants
-        var grantKeys = assignerGrantTypes.Select(gt => gt!.Key).ToList();
-        grantKeys.Should().Contain("AssignChores", "Assigner should have AssignChores grant");
-        grantKeys.Should().Contain("ViewChores", "Assigner should have ViewChores grant");
-
-        // Verify NO shift grants
-        grantKeys.Should().NotContain(k => k.Contains("Shift"), "Assigner should NOT have any shift grants");
     }
 }
 
