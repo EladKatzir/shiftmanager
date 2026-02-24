@@ -197,204 +197,624 @@ public static class RoleTemplateSeed
         var grants = new List<RoleTemplateGrant>();
         int id = 1;
 
-        // Employee (Role 1) - Basic view grants
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 1, GrantTypeId = 1, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 1, GrantTypeId = 17, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewChores
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 1, GrantTypeId = 21, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewVacations
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 1, GrantTypeId = 22, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // RequestVacation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 1, GrantTypeId = 26, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // RequestSwap
+        // Helper for concise grant creation
+        RoleTemplateGrant G(int templateId, int grantTypeId, GrantScopeMode scope,
+            bool canGive = false, int? targetJobTypeId = null, bool useOwnJobType = false)
+            => new RoleTemplateGrant
+            {
+                Id = id++,
+                RoleTemplateId = templateId,
+                GrantTypeId = grantTypeId,
+                CanOwn = true,
+                CanGive = canGive,
+                ScopeMode = scope,
+                TargetJobTypeId = targetJobTypeId,
+                UseOwnJobType = useOwnJobType
+            };
 
-        // BR Director (Role 2) - Company-wide BR management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 5, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.ExpandToMolecule }); // AssignBRShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 2, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.ExpandToMolecule }); // ViewAllShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 23, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ApproveVacations
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 27, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ApproveSwaps
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 29, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 30, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditUsers
-
-        // Alhut Lead (Role 3) - Company+JobType Alhut shift assignment
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 3, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignAlhutShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 1, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 29, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewUsers
-
-        // Text Lead (Role 4) - Company+JobType Text shift assignment
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 4, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignTextShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 1, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 29, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewUsers
-
-        // Alhut Director (Role 5) - Molecule-wide Alhut management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 3, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AssignAlhutShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 2, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 7, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditShiftPrograms
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 35, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 40, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignRoles (for Leads)
-
-        // Text Director (Role 6) - Molecule-wide Text management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 4, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AssignTextShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 2, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 7, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditShiftPrograms
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 35, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 40, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignRoles (for Leads)
-
-        // Molecule Admin (Role 7) - Full molecule administration
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 2, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 18, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AssignChores
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 19, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditChoreTypes
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 35, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 30, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 40, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AssignRoles
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 43, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditMolecule
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 47, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageShiftGroupings
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 51, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditMoleculeSettings
-
-        // Assigner (Role 8) - Chore assignment only (NOT shift assignment)
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 17, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignChores (ID 17)
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 8, GrantTypeId = 16, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewChores (ID 16)
-
-        // Department Lead (Role 9) - Tech department management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 6, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AssignTechShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 1, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 29, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 30, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditUsers
-
-        // Area Admin (Role 10) - Area-wide administration
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 13, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewDuties
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 14, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AssignHakamDuties
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 15, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AssignKatzinDuties
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 44, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditArea
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 45, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // CreateCompany
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 46, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // CreateMolecule
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 48, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageJobTypes
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 52, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditAreaSettings
-
-        // Owner (Role 11) - Full system access
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 57, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AdminAccess
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 58, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // SystemConfiguration
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 111, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 112, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // DirectorHubAccess
+        // Shorthand constants
+        const GrantScopeMode SAR = GrantScopeMode.SameAsRole;
+        const GrantScopeMode ETM = GrantScopeMode.ExpandToMolecule;
+        const GrantScopeMode ETA = GrantScopeMode.ExpandToArea;
+        const GrantScopeMode ETP = GrantScopeMode.ExpandToProject;
 
         // ============================================
-        // NAVIGATION GRANTS - Added to roles that need admin navigation
-        // AccessAdminNavigation (111), DirectorHubAccess (112), ManagerHomeAccess (113), ViewCompanyCalendar (114)
+        // EMPLOYEE (Template 1) — 19 grants
+        // All SAR (company-scoped). Base for all workforce roles.
         // ============================================
-
-        // BRDirector (Role 2) - Admin navigation + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // AlhutLead (Role 3) - Admin navigation + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // TextLead (Role 4) - Admin navigation + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // AlhutDirector (Role 5) - Admin navigation + Director Hub + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 112, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // DirectorHubAccess
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // TextDirector (Role 6) - Admin navigation + Director Hub + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 112, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // DirectorHubAccess
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // MoleculeAdmin (Role 7) - Admin navigation + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // Assigner (Role 8) - Chore-only role, uses employee navigation with chore access
-
-        // DepartmentLead (Role 9) - Admin navigation + Manager home
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 111, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 113, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManagerHomeAccess
-
-        // AreaAdmin (Role 10) - Admin navigation + Director Hub access
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 111, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // AccessAdminNavigation
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 112, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // DirectorHubAccess
-
-        // Note: Assigner (Role 8) does NOT get AccessAdminNavigation - uses employee navigation
-        // Note: Employee (Role 1) does NOT get AccessAdminNavigation - uses employee navigation
+        grants.Add(G(1, 1, SAR));    // ViewShifts
+        grants.Add(G(1, 16, SAR));   // ViewChores
+        grants.Add(G(1, 12, SAR));   // ViewDuties
+        grants.Add(G(1, 20, SAR));   // ViewVacations
+        grants.Add(G(1, 21, SAR));   // RequestVacation (NOT 22 — old seed was off-by-one!)
+        grants.Add(G(1, 25, SAR));   // RequestSwap (NOT 26 — old seed was off-by-one!)
+        grants.Add(G(1, 115, SAR));  // ViewCompanyCalendar
+        grants.Add(G(1, 117, SAR));  // ViewCompanyUsers
+        grants.Add(G(1, 35, SAR));   // ViewGrants
+        grants.Add(G(1, 39, SAR));   // ViewHierarchy
+        grants.Add(G(1, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(1, 61, SAR));   // ViewAlhutShiftCalendar
+        grants.Add(G(1, 62, SAR));   // ViewTextShiftCalendar
+        grants.Add(G(1, 63, SAR));   // ViewBRShiftCalendar
+        grants.Add(G(1, 64, SAR));   // ViewHakamShiftCalendar
+        grants.Add(G(1, 65, SAR, useOwnJobType: true));   // CanBeAssignedAlhutShifts (OWN)
+        grants.Add(G(1, 66, SAR, useOwnJobType: true));   // CanBeAssignedTextShifts (OWN)
+        grants.Add(G(1, 67, SAR, useOwnJobType: true));   // CanBeAssignedBRShifts (OWN)
+        grants.Add(G(1, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // VIEW COMPANY CALENDAR GRANTS (114)
+        // TRAINEE (Template 12) — 18 grants
+        // Same as Employee minus RequestSwap
         // ============================================
-
-        // All roles that can view company-wide calendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 114, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // Owner: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Area Admin: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Molecule Admin: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Alhut Director: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Text Director: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // BR Director: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Alhut Lead: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Text Lead: ViewCompanyCalendar
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 9, GrantTypeId = 114, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // Department Lead: ViewCompanyCalendar
-
-        // ============================================
-        // JOIN REQUEST MANAGEMENT GRANTS
-        // ============================================
-
-        // Owner (Role 11) - Global scope for join request management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 115, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ManageJoinRequests
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 116, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewCompanyUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 117, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // EditCompanyUsers
-
-        // Area Admin (Role 10) - Area scope for join request management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 115, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageJoinRequests
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 116, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewCompanyUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 117, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditCompanyUsers
-
-        // Molecule Admin (Role 7) - Molecule scope for join request management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 115, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageJoinRequests
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 116, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewCompanyUsers
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 117, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // EditCompanyUsers
-
-        // BR Director (Role 2) - Company scope for join request management
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 115, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageJoinRequests
+        grants.Add(G(12, 1, SAR));    // ViewShifts
+        grants.Add(G(12, 16, SAR));   // ViewChores
+        grants.Add(G(12, 12, SAR));   // ViewDuties
+        grants.Add(G(12, 20, SAR));   // ViewVacations
+        grants.Add(G(12, 21, SAR));   // RequestVacation (FIXED: was 22)
+        // NO RequestSwap for Trainee
+        grants.Add(G(12, 115, SAR));  // ViewCompanyCalendar
+        grants.Add(G(12, 117, SAR));  // ViewCompanyUsers
+        grants.Add(G(12, 35, SAR));   // ViewGrants
+        grants.Add(G(12, 39, SAR));   // ViewHierarchy
+        grants.Add(G(12, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(12, 61, SAR));   // ViewAlhutShiftCalendar
+        grants.Add(G(12, 62, SAR));   // ViewTextShiftCalendar
+        grants.Add(G(12, 63, SAR));   // ViewBRShiftCalendar
+        grants.Add(G(12, 64, SAR));   // ViewHakamShiftCalendar
+        grants.Add(G(12, 65, SAR, useOwnJobType: true));   // CanBeAssignedAlhutShifts (OWN)
+        grants.Add(G(12, 66, SAR, useOwnJobType: true));   // CanBeAssignedTextShifts (OWN)
+        grants.Add(G(12, 67, SAR, useOwnJobType: true));   // CanBeAssignedBRShifts (OWN)
+        grants.Add(G(12, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // DYNAMIC ROLE TEMPLATE GRANTS (IDs 119-122)
-        // ManageAnnouncements (119), ViewSystemAlerts (120), ViewAllAreas (121), ManageOnDuty (122)
+        // ASSIGNER (Template 8) — 20 grants
+        // All Employee grants at SAR + AssignChores at ETM
         // ============================================
+        grants.Add(G(8, 1, SAR));    // ViewShifts
+        grants.Add(G(8, 16, SAR));   // ViewChores
+        grants.Add(G(8, 12, SAR));   // ViewDuties
+        grants.Add(G(8, 20, SAR));   // ViewVacations
+        grants.Add(G(8, 21, SAR));   // RequestVacation
+        grants.Add(G(8, 25, SAR));   // RequestSwap
+        grants.Add(G(8, 115, SAR));  // ViewCompanyCalendar
+        grants.Add(G(8, 117, SAR));  // ViewCompanyUsers
+        grants.Add(G(8, 35, SAR));   // ViewGrants
+        grants.Add(G(8, 39, SAR));   // ViewHierarchy
+        grants.Add(G(8, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(8, 61, SAR));   // ViewAlhutShiftCalendar
+        grants.Add(G(8, 62, SAR));   // ViewTextShiftCalendar
+        grants.Add(G(8, 63, SAR));   // ViewBRShiftCalendar
+        grants.Add(G(8, 64, SAR));   // ViewHakamShiftCalendar
+        grants.Add(G(8, 65, SAR, useOwnJobType: true));
+        grants.Add(G(8, 66, SAR, useOwnJobType: true));
+        grants.Add(G(8, 67, SAR, useOwnJobType: true));
+        grants.Add(G(8, 68, SAR, useOwnJobType: true));
+        // Assigner extra: molecule-wide chore assignment
+        grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
 
-        // Trainee (Role 12) - Basic view grants (subset of Employee — explicitly NO RequestSwap)
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 1, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewShifts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 17, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewChores
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 21, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewVacations
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 12, GrantTypeId = 22, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // RequestVacation
+        // ============================================
+        // ALHUT LEAD (Template 3) — 38 grants
+        // Employee base (SAR) + lead-specific grants. AssignAlhutShifts at ETM.
+        // ============================================
+        grants.Add(G(3, 1, SAR));    // ViewShifts
+        grants.Add(G(3, 16, SAR));   // ViewChores
+        grants.Add(G(3, 12, SAR));   // ViewDuties
+        grants.Add(G(3, 20, SAR));   // ViewVacations
+        grants.Add(G(3, 21, SAR));   // RequestVacation
+        grants.Add(G(3, 25, SAR));   // RequestSwap
+        grants.Add(G(3, 115, SAR));  // ViewCompanyCalendar
+        grants.Add(G(3, 117, SAR));  // ViewCompanyUsers
+        grants.Add(G(3, 35, SAR));   // ViewGrants
+        grants.Add(G(3, 39, SAR));   // ViewHierarchy
+        grants.Add(G(3, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(3, 61, SAR));   // ViewAlhutShiftCalendar
+        grants.Add(G(3, 62, SAR));   // ViewTextShiftCalendar
+        grants.Add(G(3, 63, SAR));   // ViewBRShiftCalendar
+        grants.Add(G(3, 64, SAR));   // ViewHakamShiftCalendar
+        grants.Add(G(3, 65, SAR, useOwnJobType: true));
+        grants.Add(G(3, 66, SAR, useOwnJobType: true));
+        grants.Add(G(3, 67, SAR, useOwnJobType: true));
+        grants.Add(G(3, 68, SAR, useOwnJobType: true));
+        // Lead-specific grants
+        grants.Add(G(3, 3, ETM, useOwnJobType: true));    // AssignAlhutShifts (ETM, OWN)
+        grants.Add(G(3, 2, SAR));    // ViewAllShifts
+        grants.Add(G(3, 7, SAR, useOwnJobType: true));    // EditShiftPrograms (OWN)
+        grants.Add(G(3, 8, SAR, useOwnJobType: true));    // CreateShiftPrograms (OWN)
+        grants.Add(G(3, 9, SAR, useOwnJobType: true));    // DeleteShiftPrograms (OWN)
+        grants.Add(G(3, 10, SAR, useOwnJobType: true));   // EditShiftTypes (OWN)
+        grants.Add(G(3, 11, SAR, useOwnJobType: true));   // CreateShiftTypes (OWN)
+        grants.Add(G(3, 69, SAR, useOwnJobType: true));   // ManageAlhutBlueprints (OWN)
+        grants.Add(G(3, 70, SAR, useOwnJobType: true));   // ManageAlhutPrograms (OWN)
+        grants.Add(G(3, 109, SAR, useOwnJobType: true));  // ManageShiftCapacity (OWN)
+        grants.Add(G(3, 17, SAR));   // AssignChores
+        grants.Add(G(3, 22, SAR, useOwnJobType: true));   // ApproveVacations (OWN)
+        grants.Add(G(3, 26, SAR, useOwnJobType: true));   // ApproveSwaps (OWN)
+        grants.Add(G(3, 28, SAR));   // ViewUsers
+        grants.Add(G(3, 36, SAR, useOwnJobType: true));   // AssignGrants (OWN)
+        grants.Add(G(3, 37, SAR, useOwnJobType: true));   // RevokeGrants (OWN)
+        grants.Add(G(3, 112, SAR));  // AccessAdminNavigation
+        grants.Add(G(3, 114, SAR));  // ManagerHomeAccess
+        grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
 
-        // Owner (Role 11) - ManageAnnouncements, ViewSystemAlerts, ViewAllAreas, ManageOnDuty
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 119, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 120, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 121, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 11, GrantTypeId = 122, CanOwn = true, CanGive = true, ScopeMode = GrantScopeMode.SameAsRole }); // ManageOnDuty
+        // ============================================
+        // TEXT LEAD (Template 4) — 38 grants
+        // Same as AlhutLead but Text-specific
+        // ============================================
+        grants.Add(G(4, 1, SAR));
+        grants.Add(G(4, 16, SAR));
+        grants.Add(G(4, 12, SAR));
+        grants.Add(G(4, 20, SAR));
+        grants.Add(G(4, 21, SAR));
+        grants.Add(G(4, 25, SAR));
+        grants.Add(G(4, 115, SAR));
+        grants.Add(G(4, 117, SAR));
+        grants.Add(G(4, 35, SAR));
+        grants.Add(G(4, 39, SAR));
+        grants.Add(G(4, 110, SAR));
+        grants.Add(G(4, 61, SAR));
+        grants.Add(G(4, 62, SAR));
+        grants.Add(G(4, 63, SAR));
+        grants.Add(G(4, 64, SAR));
+        grants.Add(G(4, 65, SAR, useOwnJobType: true));
+        grants.Add(G(4, 66, SAR, useOwnJobType: true));
+        grants.Add(G(4, 67, SAR, useOwnJobType: true));
+        grants.Add(G(4, 68, SAR, useOwnJobType: true));
+        // Lead-specific (Text variant)
+        grants.Add(G(4, 4, ETM, useOwnJobType: true));    // AssignTextShifts (ETM, OWN)
+        grants.Add(G(4, 2, SAR));
+        grants.Add(G(4, 7, SAR, useOwnJobType: true));
+        grants.Add(G(4, 8, SAR, useOwnJobType: true));
+        grants.Add(G(4, 9, SAR, useOwnJobType: true));
+        grants.Add(G(4, 10, SAR, useOwnJobType: true));
+        grants.Add(G(4, 11, SAR, useOwnJobType: true));
+        grants.Add(G(4, 71, SAR, useOwnJobType: true));   // ManageTextBlueprints (OWN)
+        grants.Add(G(4, 72, SAR, useOwnJobType: true));   // ManageTextPrograms (OWN)
+        grants.Add(G(4, 109, SAR, useOwnJobType: true));
+        grants.Add(G(4, 17, SAR));
+        grants.Add(G(4, 22, SAR, useOwnJobType: true));
+        grants.Add(G(4, 26, SAR, useOwnJobType: true));
+        grants.Add(G(4, 28, SAR));
+        grants.Add(G(4, 36, SAR, useOwnJobType: true));
+        grants.Add(G(4, 37, SAR, useOwnJobType: true));
+        grants.Add(G(4, 112, SAR));
+        grants.Add(G(4, 114, SAR));
+        grants.Add(G(4, 120, SAR));
 
-        // AreaAdmin (Role 10) - ManageAnnouncements, ViewAllAreas, ManageOnDuty
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 121, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 10, GrantTypeId = 122, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageOnDuty
+        // ============================================
+        // BR DIRECTOR (Template 2) — 42 grants
+        // Employee base (SAR) + BR management. AssignBRShifts + ViewAllShifts at ETM.
+        // ============================================
+        grants.Add(G(2, 1, SAR));
+        grants.Add(G(2, 16, SAR));
+        grants.Add(G(2, 12, SAR));
+        grants.Add(G(2, 20, SAR));
+        grants.Add(G(2, 21, SAR));
+        grants.Add(G(2, 25, SAR));
+        grants.Add(G(2, 115, SAR));
+        grants.Add(G(2, 117, SAR));
+        grants.Add(G(2, 35, SAR));
+        grants.Add(G(2, 39, SAR));
+        grants.Add(G(2, 110, SAR));
+        grants.Add(G(2, 61, SAR));
+        grants.Add(G(2, 62, SAR));
+        grants.Add(G(2, 63, SAR));
+        grants.Add(G(2, 64, SAR));
+        grants.Add(G(2, 65, SAR, useOwnJobType: true));
+        grants.Add(G(2, 66, SAR, useOwnJobType: true));
+        grants.Add(G(2, 67, SAR, useOwnJobType: true));
+        grants.Add(G(2, 68, SAR, useOwnJobType: true));
+        // BRDirector-specific
+        grants.Add(G(2, 5, ETM, canGive: true));   // AssignBRShifts (ETM, ALL, CanGive)
+        grants.Add(G(2, 2, ETM));                   // ViewAllShifts (ETM)
+        grants.Add(G(2, 7, SAR, useOwnJobType: true));
+        grants.Add(G(2, 8, SAR, useOwnJobType: true));
+        grants.Add(G(2, 9, SAR, useOwnJobType: true));
+        grants.Add(G(2, 10, SAR, useOwnJobType: true));
+        grants.Add(G(2, 11, SAR, useOwnJobType: true));
+        grants.Add(G(2, 73, SAR));   // ManageBRBlueprints (ALL)
+        grants.Add(G(2, 74, SAR));   // ManageBRPrograms (ALL)
+        grants.Add(G(2, 75, SAR));   // ManageHakamBlueprints (ALL — BR manages Hakam)
+        grants.Add(G(2, 76, SAR));   // ManageHakamPrograms (ALL)
+        grants.Add(G(2, 109, SAR, useOwnJobType: true));
+        grants.Add(G(2, 17, SAR));   // AssignChores
+        grants.Add(G(2, 22, SAR));   // ApproveVacations (ALL)
+        grants.Add(G(2, 23, SAR));   // OverrideVacationLimits
+        grants.Add(G(2, 26, SAR));   // ApproveSwaps (ALL)
+        grants.Add(G(2, 27, SAR));   // InitiateSwap
+        grants.Add(G(2, 28, SAR));   // ViewUsers
+        grants.Add(G(2, 29, SAR));   // EditUsers
+        grants.Add(G(2, 116, SAR));  // ManageJoinRequests
+        grants.Add(G(2, 118, SAR));  // EditCompanyUsers
+        grants.Add(G(2, 112, SAR));  // AccessAdminNavigation
+        grants.Add(G(2, 114, SAR));  // ManagerHomeAccess
+        grants.Add(G(2, 120, SAR));  // ViewSystemAlerts
 
-        // AlhutDirector (Role 5) - ManageAnnouncements, ViewAllAreas
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 5, GrantTypeId = 121, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
+        // ============================================
+        // ALHUT DIRECTOR (Template 5) — 45 grants
+        // All AlhutLead grants widened to ETM + director extras. Self-scoped stay SAR.
+        // ============================================
+        // Self-scoped (stay SAR)
+        grants.Add(G(5, 21, SAR));
+        grants.Add(G(5, 25, SAR));
+        grants.Add(G(5, 65, SAR, useOwnJobType: true));
+        grants.Add(G(5, 66, SAR, useOwnJobType: true));
+        grants.Add(G(5, 67, SAR, useOwnJobType: true));
+        grants.Add(G(5, 68, SAR, useOwnJobType: true));
+        // AlhutLead grants widened to ETM
+        grants.Add(G(5, 1, ETM));
+        grants.Add(G(5, 16, ETM));
+        grants.Add(G(5, 12, ETM));
+        grants.Add(G(5, 20, ETM));
+        grants.Add(G(5, 115, ETM));
+        grants.Add(G(5, 117, ETM));
+        grants.Add(G(5, 35, ETM));
+        grants.Add(G(5, 39, ETM));
+        grants.Add(G(5, 110, ETM));
+        grants.Add(G(5, 61, ETM));
+        grants.Add(G(5, 62, ETM));
+        grants.Add(G(5, 63, ETM));
+        grants.Add(G(5, 64, ETM));
+        grants.Add(G(5, 3, ETM, canGive: true, useOwnJobType: true));  // AssignAlhutShifts (ETM, OWN, CanGive)
+        grants.Add(G(5, 2, ETM));
+        grants.Add(G(5, 7, ETM, useOwnJobType: true));
+        grants.Add(G(5, 8, ETM, useOwnJobType: true));
+        grants.Add(G(5, 9, ETM, useOwnJobType: true));
+        grants.Add(G(5, 10, ETM, useOwnJobType: true));
+        grants.Add(G(5, 11, ETM, useOwnJobType: true));
+        grants.Add(G(5, 69, ETM, useOwnJobType: true));
+        grants.Add(G(5, 70, ETM, useOwnJobType: true));
+        grants.Add(G(5, 109, ETM, useOwnJobType: true));
+        grants.Add(G(5, 17, ETM));
+        grants.Add(G(5, 22, ETM, useOwnJobType: true));
+        grants.Add(G(5, 26, ETM, useOwnJobType: true));
+        grants.Add(G(5, 28, ETM));
+        grants.Add(G(5, 36, ETM, useOwnJobType: true));
+        grants.Add(G(5, 37, ETM, useOwnJobType: true));
+        grants.Add(G(5, 112, ETM));
+        grants.Add(G(5, 114, ETM));
+        grants.Add(G(5, 120, ETM));
+        // Director extras
+        grants.Add(G(5, 34, ETM));   // ViewAllUsers
+        grants.Add(G(5, 38, ETM));   // AssignRoles
+        grants.Add(G(5, 113, ETM));  // DirectorHubAccess
+        grants.Add(G(5, 116, ETM));  // ManageJoinRequests
+        grants.Add(G(5, 118, ETM));  // EditCompanyUsers
+        grants.Add(G(5, 119, ETM));  // ManageAnnouncements
+        grants.Add(G(5, 121, ETM));  // ViewAllAreas
 
-        // TextDirector (Role 6) - ManageAnnouncements, ViewAllAreas
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 6, GrantTypeId = 121, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewAllAreas
+        // ============================================
+        // TEXT DIRECTOR (Template 6) — 45 grants
+        // Same as AlhutDirector but Text-specific
+        // ============================================
+        grants.Add(G(6, 21, SAR));
+        grants.Add(G(6, 25, SAR));
+        grants.Add(G(6, 65, SAR, useOwnJobType: true));
+        grants.Add(G(6, 66, SAR, useOwnJobType: true));
+        grants.Add(G(6, 67, SAR, useOwnJobType: true));
+        grants.Add(G(6, 68, SAR, useOwnJobType: true));
+        grants.Add(G(6, 1, ETM));
+        grants.Add(G(6, 16, ETM));
+        grants.Add(G(6, 12, ETM));
+        grants.Add(G(6, 20, ETM));
+        grants.Add(G(6, 115, ETM));
+        grants.Add(G(6, 117, ETM));
+        grants.Add(G(6, 35, ETM));
+        grants.Add(G(6, 39, ETM));
+        grants.Add(G(6, 110, ETM));
+        grants.Add(G(6, 61, ETM));
+        grants.Add(G(6, 62, ETM));
+        grants.Add(G(6, 63, ETM));
+        grants.Add(G(6, 64, ETM));
+        grants.Add(G(6, 4, ETM, canGive: true, useOwnJobType: true));  // AssignTextShifts
+        grants.Add(G(6, 2, ETM));
+        grants.Add(G(6, 7, ETM, useOwnJobType: true));
+        grants.Add(G(6, 8, ETM, useOwnJobType: true));
+        grants.Add(G(6, 9, ETM, useOwnJobType: true));
+        grants.Add(G(6, 10, ETM, useOwnJobType: true));
+        grants.Add(G(6, 11, ETM, useOwnJobType: true));
+        grants.Add(G(6, 71, ETM, useOwnJobType: true));   // ManageTextBlueprints
+        grants.Add(G(6, 72, ETM, useOwnJobType: true));   // ManageTextPrograms
+        grants.Add(G(6, 109, ETM, useOwnJobType: true));
+        grants.Add(G(6, 17, ETM));
+        grants.Add(G(6, 22, ETM, useOwnJobType: true));
+        grants.Add(G(6, 26, ETM, useOwnJobType: true));
+        grants.Add(G(6, 28, ETM));
+        grants.Add(G(6, 36, ETM, useOwnJobType: true));
+        grants.Add(G(6, 37, ETM, useOwnJobType: true));
+        grants.Add(G(6, 112, ETM));
+        grants.Add(G(6, 114, ETM));
+        grants.Add(G(6, 120, ETM));
+        grants.Add(G(6, 34, ETM));
+        grants.Add(G(6, 38, ETM));
+        grants.Add(G(6, 113, ETM));
+        grants.Add(G(6, 116, ETM));
+        grants.Add(G(6, 118, ETM));
+        grants.Add(G(6, 119, ETM));
+        grants.Add(G(6, 121, ETM));
 
-        // MoleculeAdmin (Role 7) - ManageAnnouncements
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 7, GrantTypeId = 119, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ManageAnnouncements
+        // ============================================
+        // MOLECULE ADMIN (Template 7) — 56 grants
+        // All BRDirector grants widened to ETM + admin extras.
+        // ApproveVacations ALL (supersedes BR+HAKAM). Added AssignAlhut+Text.
+        // ============================================
+        grants.Add(G(7, 21, SAR));
+        grants.Add(G(7, 25, SAR));
+        grants.Add(G(7, 65, SAR, useOwnJobType: true));
+        grants.Add(G(7, 66, SAR, useOwnJobType: true));
+        grants.Add(G(7, 67, SAR, useOwnJobType: true));
+        grants.Add(G(7, 68, SAR, useOwnJobType: true));
+        grants.Add(G(7, 1, ETM));
+        grants.Add(G(7, 16, ETM));
+        grants.Add(G(7, 12, ETM));
+        grants.Add(G(7, 20, ETM));
+        grants.Add(G(7, 115, ETM));
+        grants.Add(G(7, 117, ETM));
+        grants.Add(G(7, 35, ETM));
+        grants.Add(G(7, 39, ETM));
+        grants.Add(G(7, 110, ETM));
+        grants.Add(G(7, 61, ETM));
+        grants.Add(G(7, 62, ETM));
+        grants.Add(G(7, 63, ETM));
+        grants.Add(G(7, 64, ETM));
+        grants.Add(G(7, 5, ETM, canGive: true));   // AssignBRShifts
+        grants.Add(G(7, 2, ETM));                   // ViewAllShifts
+        grants.Add(G(7, 7, ETM));                   // EditShiftPrograms (ALL)
+        grants.Add(G(7, 8, ETM));
+        grants.Add(G(7, 9, ETM));
+        grants.Add(G(7, 10, ETM));
+        grants.Add(G(7, 11, ETM));
+        grants.Add(G(7, 73, ETM));
+        grants.Add(G(7, 74, ETM));
+        grants.Add(G(7, 75, ETM));
+        grants.Add(G(7, 76, ETM));
+        grants.Add(G(7, 109, ETM));
+        grants.Add(G(7, 17, ETM));
+        grants.Add(G(7, 22, ETM));   // ApproveVacations — ALL (supersedes BR+HAKAM)
+        grants.Add(G(7, 23, ETM));
+        grants.Add(G(7, 26, ETM));
+        grants.Add(G(7, 27, ETM));
+        grants.Add(G(7, 28, ETM));
+        grants.Add(G(7, 29, ETM));
+        grants.Add(G(7, 116, ETM));
+        grants.Add(G(7, 118, ETM));
+        grants.Add(G(7, 112, ETM));
+        grants.Add(G(7, 114, ETM));
+        grants.Add(G(7, 120, ETM));
+        // MoleculeAdmin extras
+        grants.Add(G(7, 3, ETM, canGive: true));    // AssignAlhutShifts (ALL, CanGive)
+        grants.Add(G(7, 4, ETM, canGive: true));    // AssignTextShifts (ALL, CanGive)
+        grants.Add(G(7, 18, ETM));
+        grants.Add(G(7, 19, ETM));
+        grants.Add(G(7, 30, ETM));
+        grants.Add(G(7, 31, ETM));
+        grants.Add(G(7, 34, ETM));
+        grants.Add(G(7, 36, ETM, canGive: true));
+        grants.Add(G(7, 37, ETM));
+        grants.Add(G(7, 38, ETM, canGive: true));
+        grants.Add(G(7, 41, ETM));
+        grants.Add(G(7, 45, ETM));
+        grants.Add(G(7, 48, ETM));
+        grants.Add(G(7, 49, ETM));
+        grants.Add(G(7, 50, ETM));
+        grants.Add(G(7, 52, ETM));
+        grants.Add(G(7, 53, ETM));
+        grants.Add(G(7, 59, ETM));
+        grants.Add(G(7, 119, ETM));
+        grants.Add(G(7, 69, ETM));
+        grants.Add(G(7, 70, ETM));
+        grants.Add(G(7, 71, ETM));
+        grants.Add(G(7, 72, ETM));
 
-        // BRDirector (Role 2) - ViewSystemAlerts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 2, GrantTypeId = 120, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
+        // ============================================
+        // DEPARTMENT LEAD (Template 9) — 25 grants
+        // Employee base (SAR) + department management grants
+        // ============================================
+        grants.Add(G(9, 1, SAR));
+        grants.Add(G(9, 16, SAR));
+        grants.Add(G(9, 12, SAR));
+        grants.Add(G(9, 20, SAR));
+        grants.Add(G(9, 21, SAR));
+        grants.Add(G(9, 25, SAR));
+        grants.Add(G(9, 115, SAR));
+        grants.Add(G(9, 117, SAR));
+        grants.Add(G(9, 35, SAR));
+        grants.Add(G(9, 39, SAR));
+        grants.Add(G(9, 110, SAR));
+        grants.Add(G(9, 61, SAR));
+        grants.Add(G(9, 62, SAR));
+        grants.Add(G(9, 63, SAR));
+        grants.Add(G(9, 64, SAR));
+        grants.Add(G(9, 65, SAR, useOwnJobType: true));
+        grants.Add(G(9, 66, SAR, useOwnJobType: true));
+        grants.Add(G(9, 67, SAR, useOwnJobType: true));
+        grants.Add(G(9, 68, SAR, useOwnJobType: true));
+        // Department extras
+        grants.Add(G(9, 28, SAR));
+        grants.Add(G(9, 29, SAR));
+        grants.Add(G(9, 33, SAR));
+        grants.Add(G(9, 47, SAR));
+        grants.Add(G(9, 52, SAR));
+        grants.Add(G(9, 53, SAR));
 
-        // AlhutLead (Role 3) - ViewSystemAlerts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 3, GrantTypeId = 120, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
+        // ============================================
+        // AREA ADMIN (Template 10) — 70+ grants
+        // Merges Directors + MoleculeAdmin at ETA. ALL jobtype wins.
+        // ============================================
+        grants.Add(G(10, 21, SAR));
+        grants.Add(G(10, 25, SAR));
+        grants.Add(G(10, 65, SAR, useOwnJobType: true));
+        grants.Add(G(10, 66, SAR, useOwnJobType: true));
+        grants.Add(G(10, 67, SAR, useOwnJobType: true));
+        grants.Add(G(10, 68, SAR, useOwnJobType: true));
+        grants.Add(G(10, 1, ETA));
+        grants.Add(G(10, 16, ETA));
+        grants.Add(G(10, 12, ETA));
+        grants.Add(G(10, 20, ETA));
+        grants.Add(G(10, 115, ETA));
+        grants.Add(G(10, 117, ETA));
+        grants.Add(G(10, 35, ETA));
+        grants.Add(G(10, 39, ETA));
+        grants.Add(G(10, 110, ETA));
+        grants.Add(G(10, 61, ETA));
+        grants.Add(G(10, 62, ETA));
+        grants.Add(G(10, 63, ETA));
+        grants.Add(G(10, 64, ETA));
+        grants.Add(G(10, 3, ETA, canGive: true));
+        grants.Add(G(10, 4, ETA, canGive: true));
+        grants.Add(G(10, 5, ETA, canGive: true));
+        grants.Add(G(10, 2, ETA));
+        grants.Add(G(10, 7, ETA));
+        grants.Add(G(10, 8, ETA));
+        grants.Add(G(10, 9, ETA));
+        grants.Add(G(10, 10, ETA));
+        grants.Add(G(10, 11, ETA));
+        grants.Add(G(10, 69, ETA));
+        grants.Add(G(10, 70, ETA));
+        grants.Add(G(10, 71, ETA));
+        grants.Add(G(10, 72, ETA));
+        grants.Add(G(10, 73, ETA));
+        grants.Add(G(10, 74, ETA));
+        grants.Add(G(10, 75, ETA));
+        grants.Add(G(10, 76, ETA));
+        grants.Add(G(10, 109, ETA));
+        grants.Add(G(10, 17, ETA));
+        grants.Add(G(10, 18, ETA));
+        grants.Add(G(10, 19, ETA));
+        grants.Add(G(10, 22, ETA));
+        grants.Add(G(10, 23, ETA));
+        grants.Add(G(10, 26, ETA));
+        grants.Add(G(10, 27, ETA));
+        grants.Add(G(10, 28, ETA));
+        grants.Add(G(10, 29, ETA));
+        grants.Add(G(10, 30, ETA));
+        grants.Add(G(10, 31, ETA));
+        grants.Add(G(10, 34, ETA));
+        grants.Add(G(10, 36, ETA, canGive: true));
+        grants.Add(G(10, 37, ETA));
+        grants.Add(G(10, 38, ETA, canGive: true));
+        grants.Add(G(10, 41, ETA));
+        grants.Add(G(10, 45, ETA));
+        grants.Add(G(10, 48, ETA));
+        grants.Add(G(10, 49, ETA));
+        grants.Add(G(10, 50, ETA));
+        grants.Add(G(10, 52, ETA));
+        grants.Add(G(10, 53, ETA));
+        grants.Add(G(10, 59, ETA));
+        grants.Add(G(10, 116, ETA));
+        grants.Add(G(10, 118, ETA));
+        grants.Add(G(10, 112, ETA));
+        grants.Add(G(10, 113, ETA));
+        grants.Add(G(10, 114, ETA));
+        grants.Add(G(10, 119, ETA));
+        grants.Add(G(10, 120, ETA));
+        grants.Add(G(10, 121, ETA));
+        // AreaAdmin extras
+        grants.Add(G(10, 13, ETA, canGive: true));
+        grants.Add(G(10, 14, ETA, canGive: true));
+        grants.Add(G(10, 15, ETA));
+        grants.Add(G(10, 42, ETA));
+        grants.Add(G(10, 43, ETA));
+        grants.Add(G(10, 44, ETA));
+        grants.Add(G(10, 46, ETA));
+        grants.Add(G(10, 51, ETA));
+        grants.Add(G(10, 122, ETA));
+        grants.Add(G(10, 111, ETA));
+        grants.Add(G(10, 107, ETA));
+        grants.Add(G(10, 108, ETA));
 
-        // TextLead (Role 4) - ViewSystemAlerts
-        grants.Add(new RoleTemplateGrant { Id = id++, RoleTemplateId = 4, GrantTypeId = 120, CanOwn = true, CanGive = false, ScopeMode = GrantScopeMode.SameAsRole }); // ViewSystemAlerts
+        // ============================================
+        // OWNER (Template 11) — All grants at ETP
+        // All AreaAdmin grants at ETP + system grants. Self-scoped stay SAR.
+        // ============================================
+        grants.Add(G(11, 21, SAR));
+        grants.Add(G(11, 25, SAR));
+        grants.Add(G(11, 65, SAR, useOwnJobType: true));
+        grants.Add(G(11, 66, SAR, useOwnJobType: true));
+        grants.Add(G(11, 67, SAR, useOwnJobType: true));
+        grants.Add(G(11, 68, SAR, useOwnJobType: true));
+        grants.Add(G(11, 1, ETP));
+        grants.Add(G(11, 16, ETP));
+        grants.Add(G(11, 12, ETP));
+        grants.Add(G(11, 20, ETP));
+        grants.Add(G(11, 115, ETP));
+        grants.Add(G(11, 117, ETP));
+        grants.Add(G(11, 35, ETP));
+        grants.Add(G(11, 39, ETP));
+        grants.Add(G(11, 110, ETP));
+        grants.Add(G(11, 61, ETP));
+        grants.Add(G(11, 62, ETP));
+        grants.Add(G(11, 63, ETP));
+        grants.Add(G(11, 64, ETP));
+        grants.Add(G(11, 3, ETP, canGive: true));
+        grants.Add(G(11, 4, ETP, canGive: true));
+        grants.Add(G(11, 5, ETP, canGive: true));
+        grants.Add(G(11, 2, ETP));
+        grants.Add(G(11, 7, ETP));
+        grants.Add(G(11, 8, ETP));
+        grants.Add(G(11, 9, ETP));
+        grants.Add(G(11, 10, ETP));
+        grants.Add(G(11, 11, ETP));
+        grants.Add(G(11, 69, ETP));
+        grants.Add(G(11, 70, ETP));
+        grants.Add(G(11, 71, ETP));
+        grants.Add(G(11, 72, ETP));
+        grants.Add(G(11, 73, ETP));
+        grants.Add(G(11, 74, ETP));
+        grants.Add(G(11, 75, ETP));
+        grants.Add(G(11, 76, ETP));
+        grants.Add(G(11, 109, ETP));
+        grants.Add(G(11, 17, ETP));
+        grants.Add(G(11, 18, ETP));
+        grants.Add(G(11, 19, ETP));
+        grants.Add(G(11, 22, ETP));
+        grants.Add(G(11, 23, ETP));
+        grants.Add(G(11, 26, ETP));
+        grants.Add(G(11, 27, ETP));
+        grants.Add(G(11, 28, ETP));
+        grants.Add(G(11, 29, ETP));
+        grants.Add(G(11, 30, ETP));
+        grants.Add(G(11, 31, ETP));
+        grants.Add(G(11, 34, ETP));
+        grants.Add(G(11, 36, ETP, canGive: true));
+        grants.Add(G(11, 37, ETP));
+        grants.Add(G(11, 38, ETP, canGive: true));
+        grants.Add(G(11, 41, ETP));
+        grants.Add(G(11, 45, ETP));
+        grants.Add(G(11, 48, ETP));
+        grants.Add(G(11, 49, ETP));
+        grants.Add(G(11, 50, ETP));
+        grants.Add(G(11, 52, ETP));
+        grants.Add(G(11, 53, ETP));
+        grants.Add(G(11, 59, ETP));
+        grants.Add(G(11, 116, ETP));
+        grants.Add(G(11, 118, ETP));
+        grants.Add(G(11, 112, ETP));
+        grants.Add(G(11, 113, ETP));
+        grants.Add(G(11, 114, ETP));
+        grants.Add(G(11, 119, ETP));
+        grants.Add(G(11, 120, ETP));
+        grants.Add(G(11, 121, ETP));
+        // AreaAdmin extras at ETP
+        grants.Add(G(11, 13, ETP, canGive: true));
+        grants.Add(G(11, 14, ETP, canGive: true));
+        grants.Add(G(11, 15, ETP));
+        grants.Add(G(11, 42, ETP));
+        grants.Add(G(11, 43, ETP));
+        grants.Add(G(11, 44, ETP));
+        grants.Add(G(11, 46, ETP));
+        grants.Add(G(11, 51, ETP));
+        grants.Add(G(11, 122, ETP));
+        grants.Add(G(11, 111, ETP));
+        grants.Add(G(11, 107, ETP));
+        grants.Add(G(11, 108, ETP));
+        // Owner system-level extras
+        grants.Add(G(11, 57, ETP, canGive: true));   // AdminAccess
+        grants.Add(G(11, 58, ETP));                  // SystemConfiguration
+        grants.Add(G(11, 60, ETP));                  // ManageApiKeys
+        grants.Add(G(11, 54, ETP));                  // ExportData
+        grants.Add(G(11, 55, ETP));                  // SendNotifications
+        grants.Add(G(11, 56, ETP));                  // ConfigureEmailSettings
+        grants.Add(G(11, 123, ETP));                 // ReorderHierarchy
 
         return grants;
     }

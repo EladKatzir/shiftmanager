@@ -272,22 +272,20 @@ public class LoginModel : LocalizedPageModel
             // v3.0 Organizational Hierarchy - fetch early so we can use for grant provisioning and claims
             var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
 
-            // Login-time grant provisioning: if user has a RoleTemplate but no grants, provision from AutoGrants
+            // Login-time grant reconciliation: ensure user's grants match their RoleTemplate's AutoGrants.
+            // ApplyAutoGrantsAsync is idempotent — it only inserts grants that don't already exist,
+            // so this safely picks up any new grants added to the template since the user was last provisioned.
             if (user.RoleTemplateId.HasValue)
             {
-                var hasAnyGrants = await _db.Grants.AnyAsync(g => g.UserId == user.Id);
-                if (!hasAnyGrants)
-                {
-                    var roleScope = new GrantScope(
-                        ProjectId: hierarchyContext?.Path.Project?.Id,
-                        AreaId: hierarchyContext?.Path.Area?.Id,
-                        MoleculeId: hierarchyContext?.Path.Molecule?.Id,
-                        CompanyId: user.CompanyId
-                    );
-                    await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
-                    _logger.LogInformation("Provisioned auto-grants for user {UserId} from RoleTemplate {TemplateId} at login",
-                        user.Id, user.RoleTemplateId.Value);
-                }
+                var roleScope = new GrantScope(
+                    ProjectId: hierarchyContext?.Path.Project?.Id,
+                    AreaId: hierarchyContext?.Path.Area?.Id,
+                    MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+                    DepartmentId: user.DepartmentId,
+                    CompanyId: user.CompanyId,
+                    JobTypeId: hierarchyContext?.JobType?.Id
+                );
+                await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
             }
 
             var claims = new List<Claim>

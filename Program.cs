@@ -586,13 +586,14 @@ using (var scope = app.Services.CreateScope())
         }
 
         // Seed grants for ALL templates (existing + new) to fill in any missing mappings
+        // Dedup key includes TargetJobTypeId to support dual-JobType grants (e.g., BRDirector ApproveVacations for BR + Hakam)
         var roleTemplateGrants = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants();
         var existingMappings = await db.RoleTemplateGrants
-            .Select(g => new { g.RoleTemplateId, g.GrantTypeId })
+            .Select(g => new { g.RoleTemplateId, g.GrantTypeId, g.TargetJobTypeId })
             .ToListAsync();
-        var existingSet = existingMappings.Select(m => $"{m.RoleTemplateId}:{m.GrantTypeId}").ToHashSet();
+        var existingSet = existingMappings.Select(m => $"{m.RoleTemplateId}:{m.GrantTypeId}:{m.TargetJobTypeId?.ToString() ?? "null"}").ToHashSet();
         var newMappings = roleTemplateGrants
-            .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}"))
+            .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}:{g.TargetJobTypeId?.ToString() ?? "null"}"))
             .ToList();
         if (newMappings.Any())
         {

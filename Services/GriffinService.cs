@@ -247,21 +247,18 @@ public class GriffinService : IGriffinService
         var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
 
         // Login-time grant provisioning: if user has a RoleTemplate but no grants, provision from AutoGrants
+        // Login-time grant reconciliation: idempotent — picks up new template grants automatically
         if (user.RoleTemplateId.HasValue)
         {
-            var hasAnyGrants = await _dbContext.Grants.AnyAsync(g => g.UserId == user.Id);
-            if (!hasAnyGrants)
-            {
-                var roleScope = new GrantScope(
-                    ProjectId: hierarchyContext?.Path.Project?.Id,
-                    AreaId: hierarchyContext?.Path.Area?.Id,
-                    MoleculeId: hierarchyContext?.Path.Molecule?.Id,
-                    CompanyId: user.CompanyId
-                );
-                await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
-                _logger.LogInformation("Provisioned auto-grants for Griffin user {UserId} from RoleTemplate {TemplateId}",
-                    user.Id, user.RoleTemplateId.Value);
-            }
+            var roleScope = new GrantScope(
+                ProjectId: hierarchyContext?.Path.Project?.Id,
+                AreaId: hierarchyContext?.Path.Area?.Id,
+                MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+                DepartmentId: user.DepartmentId,
+                CompanyId: user.CompanyId,
+                JobTypeId: hierarchyContext?.JobType?.Id
+            );
+            await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
         }
 
         // Build ClaimsPrincipal
