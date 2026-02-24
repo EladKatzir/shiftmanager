@@ -310,7 +310,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
 
         // ============================================
-        // ALHUT LEAD (Template 3) — 38 grants
+        // ALHUT LEAD (Template 3) — 39 grants
         // Employee base (SAR) + lead-specific grants. AssignAlhutShifts at ETM.
         // ============================================
         grants.Add(G(3, 1, SAR));    // ViewShifts
@@ -351,10 +351,11 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 37, SAR, useOwnJobType: true));   // RevokeGrants (OWN)
         grants.Add(G(3, 112, SAR));  // AccessAdminNavigation
         grants.Add(G(3, 114, SAR));  // ManagerHomeAccess
+        grants.Add(G(3, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
         grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
 
         // ============================================
-        // TEXT LEAD (Template 4) — 38 grants
+        // TEXT LEAD (Template 4) — 39 grants
         // Same as AlhutLead but Text-specific
         // ============================================
         grants.Add(G(4, 1, SAR));
@@ -395,6 +396,7 @@ public static class RoleTemplateSeed
         grants.Add(G(4, 37, SAR, useOwnJobType: true));
         grants.Add(G(4, 112, SAR));
         grants.Add(G(4, 114, SAR));
+        grants.Add(G(4, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
         grants.Add(G(4, 120, SAR));
 
         // ============================================

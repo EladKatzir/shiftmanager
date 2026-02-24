@@ -202,7 +202,28 @@ public class UsersModel : LocalizedPageModel
         // ✅ Grant-based: Determine accessible company IDs via ManageJoinRequests grant scope
         var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "ManageJoinRequests");
 
-        // Fall back to user's own company if no grants found
+        // For directors without ManageJoinRequests grant, fall back to DirectorHubAccess scope
+        // which correctly resolves all companies in their molecule
+        if (!accessibleCompanyIds.Any())
+        {
+            var isDirector = await _grantService.HasGrantAsync(currentUserId, "DirectorHubAccess");
+            if (isDirector)
+            {
+                accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "DirectorHubAccess");
+                // Exclude HQ companies — directors manage real companies, not HQ placeholders
+                if (accessibleCompanyIds.Any())
+                {
+                    var hqIds = await _db.Companies
+                        .IgnoreQueryFilters()
+                        .Where(c => accessibleCompanyIds.Contains(c.Id) && c.IsHeadquarters)
+                        .Select(c => c.Id)
+                        .ToListAsync();
+                    accessibleCompanyIds = accessibleCompanyIds.Where(id => !hqIds.Contains(id)).ToList();
+                }
+            }
+        }
+
+        // Final fall back to user's own company if still empty
         if (!accessibleCompanyIds.Any())
         {
             accessibleCompanyIds = new List<int> { currentUser.CompanyId };
@@ -271,8 +292,11 @@ public class UsersModel : LocalizedPageModel
         }
         else
         {
+            // SECURITY-AUDITED: SAFE — scoped by accessibleCompanyIds from grant resolution;
+            // IgnoreQueryFilters needed for directors who manage companies outside their own tenant
             AvailableCompanies = await _db.Companies
-                .Where(c => accessibleCompanyIds.Contains(c.Id))
+                .IgnoreQueryFilters()
+                .Where(c => accessibleCompanyIds.Contains(c.Id) && !c.IsHeadquarters)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -316,7 +340,10 @@ public class UsersModel : LocalizedPageModel
         else
         {
             // Other roles see filtered by accessible companies
+            // SECURITY-AUDITED: SAFE — scoped by accessibleCompanyIds from grant resolution;
+            // IgnoreQueryFilters needed for directors who manage users across multiple companies
             usersQuery = _db.Users
+                .IgnoreQueryFilters()
                 .Include(u => u.JobType)
                 .Include(u => u.Department)
                 .AsNoTracking()
@@ -1423,8 +1450,11 @@ public class UsersModel : LocalizedPageModel
         }
 
         // ✅ Grant-based: Verify user has permission to approve this request
+        // Phase 2: Pass joinRequest.JobTypeId so leads with useOwnJobType grants
+        // can only approve requests matching their job type
         var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
-        var hasPermission = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
+        var hasPermission = isAdmin || await _grantService.HasGrantWithScopeAsync(
+            currentUserId, "ManageJoinRequests", companyId: joinRequest.CompanyId, jobTypeId: joinRequest.JobTypeId);
 
         if (!hasPermission)
         {
@@ -1599,8 +1629,10 @@ public class UsersModel : LocalizedPageModel
         }
 
         // ✅ Grant-based: Verify user has permission to reject this request
+        // Phase 2: Pass joinRequest.JobTypeId for same-jobtype enforcement on leads
         var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
-        var hasPermission = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "ManageJoinRequests", joinRequest.CompanyId);
+        var hasPermission = isAdmin || await _grantService.HasGrantWithScopeAsync(
+            currentUserId, "ManageJoinRequests", companyId: joinRequest.CompanyId, jobTypeId: joinRequest.JobTypeId);
 
         if (!hasPermission)
         {
@@ -1744,10 +1776,13 @@ public class UsersModel : LocalizedPageModel
             foreach (var joinRequest in joinRequests)
             {
                 // ✅ SECURITY FIX (DEFECT-019): Check permission for this specific request
-                if (!accessibleCompanyIds.Contains(joinRequest.CompanyId))
+                // Phase 2: Use HasGrantWithScopeAsync for per-request company+JobType enforcement
+                var canManage = isAdmin || await _grantService.HasGrantWithScopeAsync(
+                    currentUserId, "ManageJoinRequests", companyId: joinRequest.CompanyId, jobTypeId: joinRequest.JobTypeId);
+                if (!canManage)
                 {
-                    _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company {CompanyId}",
-                        currentUserId, currentUser!.Role, joinRequest.Id, joinRequest.CompanyId);
+                    _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company/jobtype {CompanyId}/{JobTypeId}",
+                        currentUserId, currentUser!.Role, joinRequest.Id, joinRequest.CompanyId, joinRequest.JobTypeId);
                     errors.Add(string.Format(_localizer["Error_NoPermissionDifferentCompany"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;
