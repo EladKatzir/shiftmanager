@@ -138,21 +138,33 @@ public class RequestsModel : LocalizedPageModel
             var currentUser = await _db.Users.FindAsync(userId);
             if (currentUser != null)
             {
-                // Phase 2: Query grant table directly for users with approval grants in this company
+                // Phase 2: Query grant table for users with approval grants covering this company
+                // Resolve the company's position in the hierarchy for scope matching
                 var approvalGrantKeys = new[] { "ApproveVacations", "ApproveExtendedLeave" };
+                var company = await _db.Companies.FindAsync(currentUser.CompanyId);
+                int? companyMoleculeId = company?.MoleculeId;
+
                 var approverUserIds = await _db.Grants
                     .Where(g => _db.GrantTypes
                         .Where(gt => approvalGrantKeys.Contains(gt.Key))
                         .Select(gt => gt.Id)
                         .Contains(g.GrantTypeId))
                     .Where(g => g.CanOwn)
-                    // Include grants scoped at or above the current user's company
+                    // Match grants whose scope actually covers this user's company hierarchy
                     .Where(g => g.CompanyId == currentUser.CompanyId
-                             || g.MoleculeId != null   // molecule-scoped (covers companies in molecule)
-                             || g.AreaId != null        // area-scoped
-                             || g.ProjectId != null     // project-scoped
+                             // Molecule-scoped: grant's molecule must contain this company
+                             || (g.MoleculeId != null && g.MoleculeId == companyMoleculeId)
+                             // Area-scoped: grant's area must contain this company's molecule
+                             || (g.AreaId != null && companyMoleculeId != null
+                                 && _db.Molecules.Any(m => m.Id == companyMoleculeId && m.AreaId == g.AreaId))
+                             // Project-scoped: grant's project must contain this company's area
+                             || (g.ProjectId != null && companyMoleculeId != null
+                                 && _db.Molecules.Any(m => m.Id == companyMoleculeId
+                                        && _db.Areas.Any(a => a.Id == m.AreaId && a.ProjectId == g.ProjectId)))
+                             // Self-scoped (all nulls): approver must be in the same company
                              || (!g.CompanyId.HasValue && !g.MoleculeId.HasValue
-                                 && !g.AreaId.HasValue && !g.ProjectId.HasValue)) // self-scoped (same company)
+                                 && !g.AreaId.HasValue && !g.ProjectId.HasValue
+                                 && _db.Users.Any(u => u.Id == g.UserId && u.CompanyId == currentUser.CompanyId)))
                     .Select(g => g.UserId)
                     .Distinct()
                     .ToListAsync();
@@ -230,11 +242,14 @@ public class RequestsModel : LocalizedPageModel
                     return Page();
                 }
 
-                // Phase 2: Verify approver actually holds an approval grant
-                bool hasApproveVacations = await _grantService.HasGrantAsync(
-                    TimeOffRequest.ApproverId.Value, "ApproveVacations");
-                bool hasApproveExtendedLeave = await _grantService.HasGrantAsync(
-                    TimeOffRequest.ApproverId.Value, "ApproveExtendedLeave");
+                // Phase 2: Verify approver holds an approval grant scoped to THIS user's company+jobtype
+                var requestingUser = await _db.Users.FindAsync(userId);
+                bool hasApproveVacations = await _grantService.HasGrantWithScopeAsync(
+                    TimeOffRequest.ApproverId.Value, "ApproveVacations",
+                    companyId: requestingUser?.CompanyId, jobTypeId: requestingUser?.JobTypeId);
+                bool hasApproveExtendedLeave = await _grantService.HasGrantWithScopeAsync(
+                    TimeOffRequest.ApproverId.Value, "ApproveExtendedLeave",
+                    companyId: requestingUser?.CompanyId, jobTypeId: requestingUser?.JobTypeId);
                 if (!hasApproveVacations && !hasApproveExtendedLeave)
                 {
                     Error = _localizer["Error_InvalidApproverSelected"];

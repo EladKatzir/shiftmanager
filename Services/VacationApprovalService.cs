@@ -332,13 +332,20 @@ public class VacationApprovalService : IVacationApprovalService
         if (request == null)
             return false;
 
-        // Get the approval route
-        var (specificApproverId, approverGrantKey, _) = await GetApprovalRouteAsync(requestId);
-
-        // Load requesting user's JobTypeId for targeted grant matching
         var requestingUser = await _context.Users.IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Id == request.UserId);
-        int? requestorJobTypeId = requestingUser?.JobTypeId;
+
+        return await CanUserApproveInternalAsync(userId, request, requestingUser?.JobTypeId);
+    }
+
+    /// <summary>
+    /// Internal overload accepting pre-loaded entities to avoid redundant DB queries
+    /// when called in a loop (e.g., from GetPendingApprovalsForUserAsync).
+    /// </summary>
+    private async Task<bool> CanUserApproveInternalAsync(int userId, TimeOffRequest request, int? requestorJobTypeId)
+    {
+        // Get the approval route
+        var (specificApproverId, approverGrantKey, _) = await GetApprovalRouteAsync(request.Id);
 
         // If a specific approver is set, only that user can approve
         if (specificApproverId.HasValue)
@@ -384,12 +391,22 @@ public class VacationApprovalService : IVacationApprovalService
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
+        if (!pendingRequests.Any())
+            return new List<TimeOffRequest>();
+
+        // Batch-load requesting users' JobTypeIds to avoid N+1 queries
+        var requestorUserIds = pendingRequests.Select(r => r.UserId).Distinct().ToList();
+        var requestorJobTypes = await _context.Users.IgnoreQueryFilters()
+            .Where(u => requestorUserIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.JobTypeId);
+
         // Filter: verify the user can actually approve each request
-        // This handles both specific-approver routing AND JobType-targeted grants
+        // Uses internal overload with pre-loaded data to avoid redundant DB queries
         var result = new List<TimeOffRequest>();
         foreach (var req in pendingRequests)
         {
-            if (await CanUserApproveAsync(userId, req.Id))
+            requestorJobTypes.TryGetValue(req.UserId, out int? jobTypeId);
+            if (await CanUserApproveInternalAsync(userId, req, jobTypeId))
             {
                 result.Add(req);
             }
