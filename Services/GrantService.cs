@@ -394,39 +394,78 @@ public class GrantService : IGrantService
         if (roleTemplate == null)
             return;
 
+        // Phase 1: Resolve all expected grants from template
+        var expectedGrants = new List<(int GrantTypeId, GrantScope EffectiveScope, bool CanOwn, bool CanGive)>();
+
         foreach (var autoGrant in roleTemplate.AutoGrants)
         {
-            // Determine effective scope based on ScopeMode
+            // Step 1: Resolve JobTypeId from TargetJobTypeId / UseOwnJobType
+            int? resolvedJobTypeId = null;
+            if (autoGrant.TargetJobTypeId != null)
+                resolvedJobTypeId = autoGrant.TargetJobTypeId;
+            else if (autoGrant.UseOwnJobType)
+                resolvedJobTypeId = roleScope.JobTypeId;
+            // else: null = all jobtypes
+
+            // Step 2: Determine effective scope (extracts ONE level from roleScope)
             var effectiveScope = DetermineEffectiveScope(autoGrant.ScopeMode, roleScope);
 
-            // Create the grant
-            var grant = new Grant
-            {
-                UserId = userId,
-                GrantTypeId = autoGrant.GrantTypeId,
-                ProjectId = effectiveScope.ProjectId,
-                AreaId = effectiveScope.AreaId,
-                MoleculeId = effectiveScope.MoleculeId,
-                DepartmentId = effectiveScope.DepartmentId,
-                CompanyId = effectiveScope.CompanyId,
-                JobTypeId = effectiveScope.JobTypeId,
-                CanOwn = autoGrant.CanOwn,
-                CanGive = autoGrant.CanGive,
-                GrantedAt = DateTime.UtcNow,
-                IsAutoGrant = true,
-                Notes = $"Auto-granted from role: {roleTemplate.Key}"
-            };
+            // Step 3: Overlay resolved JobTypeId
+            effectiveScope = effectiveScope with { JobTypeId = resolvedJobTypeId };
 
-            // Check if already exists
+            expectedGrants.Add((autoGrant.GrantTypeId, effectiveScope, autoGrant.CanOwn, autoGrant.CanGive));
+        }
+
+        // Phase 2: Clean up stale auto-grants (JobType changed, template modified, etc.)
+        var existingAutoGrants = await _db.Grants
+            .Where(g => g.UserId == userId && g.IsAutoGrant &&
+                   g.Notes != null && g.Notes.Contains($"role: {roleTemplate.Key}"))
+            .ToListAsync();
+
+        foreach (var existing in existingAutoGrants)
+        {
+            var stillExpected = expectedGrants.Any(e =>
+                e.GrantTypeId == existing.GrantTypeId &&
+                e.EffectiveScope.ProjectId == existing.ProjectId &&
+                e.EffectiveScope.AreaId == existing.AreaId &&
+                e.EffectiveScope.MoleculeId == existing.MoleculeId &&
+                e.EffectiveScope.DepartmentId == existing.DepartmentId &&
+                e.EffectiveScope.CompanyId == existing.CompanyId &&
+                e.EffectiveScope.JobTypeId == existing.JobTypeId);
+
+            if (!stillExpected)
+            {
+                _db.Grants.Remove(existing);
+            }
+        }
+
+        // Phase 3: Insert new grants (dedup includes JobTypeId)
+        foreach (var (grantTypeId, effectiveScope, canOwn, canGive) in expectedGrants)
+        {
             var existing = await _db.Grants.FirstOrDefaultAsync(g =>
-                g.UserId == userId && g.GrantTypeId == autoGrant.GrantTypeId &&
+                g.UserId == userId && g.GrantTypeId == grantTypeId &&
                 g.ProjectId == effectiveScope.ProjectId && g.AreaId == effectiveScope.AreaId &&
                 g.MoleculeId == effectiveScope.MoleculeId && g.DepartmentId == effectiveScope.DepartmentId &&
                 g.CompanyId == effectiveScope.CompanyId && g.JobTypeId == effectiveScope.JobTypeId);
 
             if (existing == null)
             {
-                _db.Grants.Add(grant);
+                _db.Grants.Add(new Grant
+                {
+                    UserId = userId,
+                    GrantTypeId = grantTypeId,
+                    ProjectId = effectiveScope.ProjectId,
+                    AreaId = effectiveScope.AreaId,
+                    MoleculeId = effectiveScope.MoleculeId,
+                    DepartmentId = effectiveScope.DepartmentId,
+                    CompanyId = effectiveScope.CompanyId,
+                    JobTypeId = effectiveScope.JobTypeId,
+                    CanOwn = canOwn,
+                    CanGive = canGive,
+                    GrantedAt = DateTime.UtcNow,
+                    IsAutoGrant = true,
+                    Notes = $"Auto-granted from role: {roleTemplate.Key}"
+                });
             }
         }
 
@@ -452,15 +491,27 @@ public class GrantService : IGrantService
         await _db.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Extracts exactly ONE scope level from the full hierarchy roleScope.
+    /// CRITICAL: SAR must extract ONLY CompanyId+DepartmentId — NOT the full hierarchy.
+    /// Reason: GetAccessibleCompanyIdsForGrantAsync cascades broadest→narrowest with continue.
+    /// If a Grant has both ProjectId AND CompanyId, ProjectId fires first and returns ALL
+    /// companies in the project, massively over-granting an Employee.
+    /// </summary>
     private GrantScope DetermineEffectiveScope(GrantScopeMode scopeMode, GrantScope roleScope)
     {
         return scopeMode switch
         {
-            GrantScopeMode.SameAsRole => roleScope,
+            // SAR: Company level only — strip all hierarchy above company
+            GrantScopeMode.SameAsRole => new GrantScope(
+                CompanyId: roleScope.CompanyId,
+                DepartmentId: roleScope.DepartmentId
+            ),
             GrantScopeMode.ExpandToMolecule => new GrantScope(MoleculeId: roleScope.MoleculeId),
             GrantScopeMode.ExpandToArea => new GrantScope(AreaId: roleScope.AreaId),
+            GrantScopeMode.ExpandToProject => new GrantScope(ProjectId: roleScope.ProjectId),
             GrantScopeMode.Custom => roleScope,
-            _ => roleScope
+            _ => throw new ArgumentOutOfRangeException(nameof(scopeMode), $"Unknown GrantScopeMode: {scopeMode}")
         };
     }
 
@@ -725,12 +776,12 @@ public class GrantService : IGrantService
     }
 
     /// <summary>
-    /// Builds the correct GrantScope based on role template key and user's hierarchy context.
-    /// Loads company hierarchy to resolve molecule/area/project scope.
+    /// Builds a FULL hierarchy GrantScope for the user. This is raw material —
+    /// DetermineEffectiveScope extracts exactly one level per grant's ScopeMode.
+    /// Role-independent: the role-specific behavior is encoded in each grant's ScopeMode.
     /// </summary>
     private async Task<GrantScope> BuildGrantScopeForUserAsync(AppUser user, string roleTemplateKey)
     {
-        // Load hierarchy for scope resolution
         var company = await _db.Companies
             .IgnoreQueryFilters()
             .Include(c => c.Molecule)
@@ -741,21 +792,15 @@ public class GrantService : IGrantService
         if (company == null)
             return GrantScope.Company(user.CompanyId);
 
-        return roleTemplateKey switch
-        {
-            "BRDirector" or "Employee" => GrantScope.Company(user.CompanyId),
-            "AlhutLead" or "TextLead" => new GrantScope(CompanyId: user.CompanyId, JobTypeId: user.JobTypeId),
-            "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
-                ? GrantScope.Molecule(company.MoleculeId.Value)
-                : GrantScope.Company(user.CompanyId),
-            "AlhutDirector" or "TextDirector" => company.MoleculeId.HasValue
-                ? new GrantScope(MoleculeId: company.MoleculeId.Value, JobTypeId: user.JobTypeId)
-                : GrantScope.Company(user.CompanyId),
-            "Owner" => company.Molecule?.Area?.ProjectId != null
-                ? GrantScope.Project(company.Molecule.Area.ProjectId)
-                : GrantScope.Company(user.CompanyId),
-            _ => GrantScope.Company(user.CompanyId)
-        };
+        // Full hierarchy — DetermineEffectiveScope extracts the right level per grant
+        return new GrantScope(
+            ProjectId: company.Molecule?.Area?.ProjectId,
+            AreaId: company.Molecule?.AreaId,
+            MoleculeId: company.MoleculeId,
+            DepartmentId: user.DepartmentId,
+            CompanyId: user.CompanyId,
+            JobTypeId: user.JobTypeId
+        );
     }
 
     /// <summary>
