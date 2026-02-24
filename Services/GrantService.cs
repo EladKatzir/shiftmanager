@@ -637,8 +637,15 @@ public class GrantService : IGrantService
 
         foreach (var autoGrant in roleTemplate.AutoGrants)
         {
-            // Determine effective scope based on ScopeMode
-            var effectiveScope = DetermineEffectiveScope(autoGrant.ScopeMode, scope);
+            // Resolve JobTypeId: TargetJobTypeId (explicit) > UseOwnJobType (user's own) > null (all)
+            int? resolvedJobTypeId = null;
+            if (autoGrant.TargetJobTypeId != null)
+                resolvedJobTypeId = autoGrant.TargetJobTypeId;
+            else if (autoGrant.UseOwnJobType)
+                resolvedJobTypeId = scope.JobTypeId;
+
+            // Determine effective scope based on ScopeMode, then overlay JobTypeId
+            var effectiveScope = DetermineEffectiveScope(autoGrant.ScopeMode, scope) with { JobTypeId = resolvedJobTypeId };
 
             // Check if grant already exists
             var existing = await _db.Grants.FirstOrDefaultAsync(g =>
