@@ -319,6 +319,8 @@ public class VacationApprovalService : IVacationApprovalService
     /// Checks whether a user can approve a specific request.
     /// If the rule defines a specific ApproverUserId, only that user can approve.
     /// Otherwise, any user with the ApproverGrantKey for the request's company can approve.
+    /// Phase 2: Now JobType-aware — targeted grants (e.g., BRDirector's ApproveVacations for BR/Hakam)
+    /// are only valid when the requesting user's JobTypeId matches.
     /// </summary>
     public async Task<bool> CanUserApproveAsync(int userId, int requestId)
     {
@@ -333,6 +335,11 @@ public class VacationApprovalService : IVacationApprovalService
         // Get the approval route
         var (specificApproverId, approverGrantKey, _) = await GetApprovalRouteAsync(requestId);
 
+        // Load requesting user's JobTypeId for targeted grant matching
+        var requestingUser = await _context.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId);
+        int? requestorJobTypeId = requestingUser?.JobTypeId;
+
         // If a specific approver is set, only that user can approve
         if (specificApproverId.HasValue)
         {
@@ -340,15 +347,20 @@ public class VacationApprovalService : IVacationApprovalService
                 return true;
 
             // Also allow if user has the grant (fallback for flexibility)
-            return await _grantService.HasGrantForCompanyAsync(userId, approverGrantKey, request.CompanyId);
+            // Pass JobTypeId for targeted grant enforcement
+            return await _grantService.HasGrantWithScopeAsync(
+                userId, approverGrantKey, companyId: request.CompanyId, jobTypeId: requestorJobTypeId);
         }
 
-        // Otherwise, check if user has the required grant for the company
-        return await _grantService.HasGrantForCompanyAsync(userId, approverGrantKey, request.CompanyId);
+        // Otherwise, check if user has the required grant for the company + jobtype
+        return await _grantService.HasGrantWithScopeAsync(
+            userId, approverGrantKey, companyId: request.CompanyId, jobTypeId: requestorJobTypeId);
     }
 
     /// <summary>
     /// Gets all pending time-off requests that a user can approve.
+    /// Phase 2: Now JobType-aware — BRDirector only sees requests from users whose
+    /// JobTypeId matches their targeted ApproveVacations grants (BR, Hakam).
     /// </summary>
     public async Task<List<TimeOffRequest>> GetPendingApprovalsForUserAsync(int userId)
     {
@@ -372,21 +384,12 @@ public class VacationApprovalService : IVacationApprovalService
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-        // Filter: if a request has a specific ApproverId, only include if it matches this user
+        // Filter: verify the user can actually approve each request
+        // This handles both specific-approver routing AND JobType-targeted grants
         var result = new List<TimeOffRequest>();
         foreach (var req in pendingRequests)
         {
-            if (req.ApproverId.HasValue && req.ApproverId.Value != userId)
-            {
-                // Specific approver is set and it's not this user.
-                // Still include if user has the grant (flexibility).
-                var (_, grantKey, _) = await GetApprovalRouteAsync(req.Id);
-                if (await _grantService.HasGrantForCompanyAsync(userId, grantKey, req.CompanyId))
-                {
-                    result.Add(req);
-                }
-            }
-            else
+            if (await CanUserApproveAsync(userId, req.Id))
             {
                 result.Add(req);
             }

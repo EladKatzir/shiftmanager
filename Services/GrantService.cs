@@ -118,11 +118,15 @@ public class GrantService : IGrantService
             if (grant.DepartmentId.HasValue && departmentId.HasValue && grant.DepartmentId == departmentId)
                 return true;
 
-            // Company scope
-            if (grant.CompanyId.HasValue && companyId.HasValue && grant.CompanyId == companyId)
+            // Company scope — only matches if grant has NO JobType restriction
+            // (Grants with both CompanyId and JobTypeId are handled in the combined check below)
+            if (grant.CompanyId.HasValue && companyId.HasValue && grant.CompanyId == companyId
+                && !grant.JobTypeId.HasValue)
                 return true;
 
             // JobType scope (optionally combined with company)
+            // Phase 2: Targeted grants (e.g., BRDirector ApproveVacations for BR/Hakam)
+            // require both company AND jobtype to match
             if (grant.JobTypeId.HasValue && jobTypeId.HasValue && grant.JobTypeId == jobTypeId)
             {
                 if (!grant.CompanyId.HasValue || (companyId.HasValue && grant.CompanyId == companyId))

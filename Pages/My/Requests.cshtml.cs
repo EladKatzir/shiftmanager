@@ -22,17 +22,20 @@ public class RequestsModel : LocalizedPageModel
     private readonly ILogger<RequestsModel> _logger;
     private readonly IVacationApprovalService _vacationApprovalService;
     private readonly IFeatureFlagService _featureFlagService;
+    private readonly IGrantService _grantService;
     public RequestsModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<RequestsModel> logger,
         IVacationApprovalService vacationApprovalService,
-        IFeatureFlagService featureFlagService) : base(localizer)
+        IFeatureFlagService featureFlagService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _vacationApprovalService = vacationApprovalService;
         _featureFlagService = featureFlagService;
+        _grantService = grantService;
     }
 
     [BindProperty]
@@ -129,17 +132,33 @@ public class RequestsModel : LocalizedPageModel
                 .ToListAsync();
             _logger.LogInformation("Loaded {Count} available shifts for user {UserId}", AvailableShifts.Count, userId);
 
-            // Load available approvers (managers, directors, owners in the same company)
+            // Load available approvers — users who hold ApproveVacations or ApproveExtendedLeave grants
+            // scoped to the current user's company
             _logger.LogInformation("Loading available approvers for user {UserId}", userId);
             var currentUser = await _db.Users.FindAsync(userId);
             if (currentUser != null)
             {
-                // TODO: Replace role filter with grant-based query when IGrantService supports IQueryable
-                // Currently filtering by management roles as a proxy for users with approval capabilities
+                // Phase 2: Query grant table directly for users with approval grants in this company
+                var approvalGrantKeys = new[] { "ApproveVacations", "ApproveExtendedLeave" };
+                var approverUserIds = await _db.Grants
+                    .Where(g => _db.GrantTypes
+                        .Where(gt => approvalGrantKeys.Contains(gt.Key))
+                        .Select(gt => gt.Id)
+                        .Contains(g.GrantTypeId))
+                    .Where(g => g.CanOwn)
+                    // Include grants scoped at or above the current user's company
+                    .Where(g => g.CompanyId == currentUser.CompanyId
+                             || g.MoleculeId != null   // molecule-scoped (covers companies in molecule)
+                             || g.AreaId != null        // area-scoped
+                             || g.ProjectId != null     // project-scoped
+                             || (!g.CompanyId.HasValue && !g.MoleculeId.HasValue
+                                 && !g.AreaId.HasValue && !g.ProjectId.HasValue)) // self-scoped (same company)
+                    .Select(g => g.UserId)
+                    .Distinct()
+                    .ToListAsync();
+
                 AvailableApprovers = await _db.Users
-                    .Where(u => u.CompanyId == currentUser.CompanyId &&
-                               u.IsActive &&
-                               (u.Role == UserRole.Manager || u.Role == UserRole.Director || u.Role == UserRole.Owner))
+                    .Where(u => approverUserIds.Contains(u.Id) && u.IsActive)
                     .OrderBy(u => u.DisplayName)
                     .Select(u => new ManagerUser
                     {
@@ -200,14 +219,23 @@ public class RequestsModel : LocalizedPageModel
             }
             _logger.LogInformation("Time off request for user {UserId}, dates {StartDate} to {EndDate}", userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
 
-            // Validate approver if specified
+            // Validate approver if specified — must hold ApproveVacations or ApproveExtendedLeave grant
             if (TimeOffRequest.ApproverId.HasValue && TimeOffRequest.ApproverId.Value > 0)
             {
                 var approver = await _db.Users.FindAsync(TimeOffRequest.ApproverId.Value);
-                // TODO: Replace role validation with grant-based check when grant-based querying is available
-                // Currently validating management roles as a proxy for users with approval capabilities
-                if (approver == null || !approver.IsActive ||
-                    (approver.Role != UserRole.Manager && approver.Role != UserRole.Director && approver.Role != UserRole.Owner))
+                if (approver == null || !approver.IsActive)
+                {
+                    Error = _localizer["Error_InvalidApproverSelected"];
+                    await OnGetAsync();
+                    return Page();
+                }
+
+                // Phase 2: Verify approver actually holds an approval grant
+                bool hasApproveVacations = await _grantService.HasGrantAsync(
+                    TimeOffRequest.ApproverId.Value, "ApproveVacations");
+                bool hasApproveExtendedLeave = await _grantService.HasGrantAsync(
+                    TimeOffRequest.ApproverId.Value, "ApproveExtendedLeave");
+                if (!hasApproveVacations && !hasApproveExtendedLeave)
                 {
                     Error = _localizer["Error_InvalidApproverSelected"];
                     await OnGetAsync();
