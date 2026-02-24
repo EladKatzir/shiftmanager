@@ -460,7 +460,7 @@ These grants are ALWAYS SAR regardless of role tier:
 
 ---
 
-**Grant Count Summary** (verified against RoleTemplateSeed.cs — 525 total entries):
+**Grant Count Summary** (verified against RoleTemplateSeed.cs — 531 total entries):
 
 | Template | Role | Grants |
 |----------|------|--------|
@@ -469,13 +469,13 @@ These grants are ALWAYS SAR regardless of role tier:
 | 8 | Assigner | 20 |
 | 3 | AlhutLead | 38 |
 | 4 | TextLead | 38 |
-| 2 | BRDirector | 44 |
-| 5 | AlhutDirector | 45 |
-| 6 | TextDirector | 45 |
-| 7 | MoleculeAdmin | 66 |
+| 2 | BRDirector | 45 |
+| 5 | AlhutDirector | 46 |
+| 6 | TextDirector | 46 |
+| 7 | MoleculeAdmin | 67 |
 | 9 | DepartmentLead | 25 |
-| 10 | AreaAdmin | 80 |
-| 11 | Owner | 87 |
+| 10 | AreaAdmin | 81 |
+| 11 | Owner | 88 |
 
 ### 5.1 EMPLOYEE (Template 1) — 19 grants
 

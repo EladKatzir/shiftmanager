@@ -398,7 +398,7 @@ public static class RoleTemplateSeed
         grants.Add(G(4, 120, SAR));
 
         // ============================================
-        // BR DIRECTOR (Template 2) — 44 grants
+        // BR DIRECTOR (Template 2) — 45 grants
         // Employee base (SAR) + BR management. AssignBRShifts + ViewAllShifts at ETM.
         // Dual ApproveVacations: BR + Hakam via TargetJobTypeId sentinels (resolved in Program.cs).
         // ============================================
@@ -442,6 +442,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 27, SAR));   // InitiateSwap
         grants.Add(G(2, 28, SAR));   // ViewUsers
         grants.Add(G(2, 29, SAR));   // EditUsers
+        grants.Add(G(2, 40, SAR));   // EditCompany (S-01)
         grants.Add(G(2, 116, SAR));  // ManageJoinRequests
         grants.Add(G(2, 118, SAR));  // EditCompanyUsers
         grants.Add(G(2, 112, SAR));  // AccessAdminNavigation
@@ -449,7 +450,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 120, SAR));  // ViewSystemAlerts
 
         // ============================================
-        // ALHUT DIRECTOR (Template 5) — 45 grants
+        // ALHUT DIRECTOR (Template 5) — 46 grants
         // All AlhutLead grants widened to ETM + director extras. Self-scoped stay SAR.
         // ============================================
         // Self-scoped (stay SAR)
@@ -495,6 +496,7 @@ public static class RoleTemplateSeed
         // Director extras
         grants.Add(G(5, 34, ETM));   // ViewAllUsers
         grants.Add(G(5, 38, ETM));   // AssignRoles
+        grants.Add(G(5, 40, ETM));   // EditCompany (S-01)
         grants.Add(G(5, 113, ETM));  // DirectorHubAccess
         grants.Add(G(5, 116, ETM));  // ManageJoinRequests
         grants.Add(G(5, 118, ETM));  // EditCompanyUsers
@@ -502,7 +504,7 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 121, ETM));  // ViewAllAreas
 
         // ============================================
-        // TEXT DIRECTOR (Template 6) — 45 grants
+        // TEXT DIRECTOR (Template 6) — 46 grants
         // Same as AlhutDirector but Text-specific
         // ============================================
         grants.Add(G(6, 21, SAR));
@@ -545,6 +547,7 @@ public static class RoleTemplateSeed
         grants.Add(G(6, 120, ETM));
         grants.Add(G(6, 34, ETM));
         grants.Add(G(6, 38, ETM));
+        grants.Add(G(6, 40, ETM));   // EditCompany (S-01)
         grants.Add(G(6, 113, ETM));
         grants.Add(G(6, 116, ETM));
         grants.Add(G(6, 118, ETM));
@@ -552,7 +555,7 @@ public static class RoleTemplateSeed
         grants.Add(G(6, 121, ETM));
 
         // ============================================
-        // MOLECULE ADMIN (Template 7) — 56 grants
+        // MOLECULE ADMIN (Template 7) — 67 grants
         // All BRDirector grants widened to ETM + admin extras.
         // ApproveVacations ALL (supersedes BR+HAKAM). Added AssignAlhut+Text.
         // ============================================
@@ -610,6 +613,7 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 36, ETM, canGive: true));
         grants.Add(G(7, 37, ETM));
         grants.Add(G(7, 38, ETM, canGive: true));
+        grants.Add(G(7, 40, ETM));   // EditCompany (S-01)
         grants.Add(G(7, 41, ETM));
         grants.Add(G(7, 45, ETM));
         grants.Add(G(7, 48, ETM));
@@ -656,7 +660,7 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 53, SAR));
 
         // ============================================
-        // AREA ADMIN (Template 10) — 70+ grants
+        // AREA ADMIN (Template 10) — 81 grants
         // Merges Directors + MoleculeAdmin at ETA. ALL jobtype wins.
         // ============================================
         grants.Add(G(10, 21, SAR));
@@ -711,6 +715,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 36, ETA, canGive: true));
         grants.Add(G(10, 37, ETA));
         grants.Add(G(10, 38, ETA, canGive: true));
+        grants.Add(G(10, 40, ETA));   // EditCompany (S-01)
         grants.Add(G(10, 41, ETA));
         grants.Add(G(10, 45, ETA));
         grants.Add(G(10, 48, ETA));
@@ -742,7 +747,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 108, ETA));
 
         // ============================================
-        // OWNER (Template 11) — All grants at ETP
+        // OWNER (Template 11) — 88 grants at ETP
         // All AreaAdmin grants at ETP + system grants. Self-scoped stay SAR.
         // ============================================
         grants.Add(G(11, 21, SAR));
@@ -797,6 +802,7 @@ public static class RoleTemplateSeed
         grants.Add(G(11, 36, ETP, canGive: true));
         grants.Add(G(11, 37, ETP));
         grants.Add(G(11, 38, ETP, canGive: true));
+        grants.Add(G(11, 40, ETP));   // EditCompany (S-01)
         grants.Add(G(11, 41, ETP));
         grants.Add(G(11, 45, ETP));
         grants.Add(G(11, 48, ETP));
