@@ -296,9 +296,9 @@ function renderWeekGrid(members) {
 
 function renderDayCell(day, isMobile) {
     const statusClass = day.type.toLowerCase().replace('_', '-').replace(/\s+/g, '-');
-    const hasUrl = day.targetUrl !== null && day.targetUrl !== undefined && day.targetUrl !== '';
+    const hasUrl = day.targetUrl != null && day.targetUrl !== '';
     const clickableClass = hasUrl ? 'clickable' : '';
-    const onclickAttr = hasUrl ? `onclick="navigateTo('${escapeHtml(day.targetUrl)}')"` : '';
+    const onclickAttr = hasUrl ? `onclick="navigateTo('${escapeJsAttr(day.targetUrl)}')"` : '';
 
     // Build tooltip text
     const tooltip = buildTooltip(day);
@@ -421,9 +421,9 @@ function renderCalendarList() {
                     <div class="calendar-meta">${calendar.memberCount} ${window.MyTeamLocalization.members}</div>
                 </div>
                 <div class="calendar-actions" onclick="event.stopPropagation()">
-                    <button class="icon-btn" onclick="openRenameCalendarModal(${calendar.id}, '${escapeHtml(calendar.name)}')"
+                    <button class="icon-btn" onclick="openRenameCalendarModal(${calendar.id}, '${escapeJsAttr(calendar.name)}')"
                             title="${window.MyTeamLocalization.rename}">✏️</button>
-                    <button class="icon-btn" onclick="openDeleteCalendarModal(${calendar.id}, '${escapeHtml(calendar.name)}')"
+                    <button class="icon-btn" onclick="openDeleteCalendarModal(${calendar.id}, '${escapeJsAttr(calendar.name)}')"
                             title="${window.MyTeamLocalization.delete}">🗑️</button>
                 </div>
             </div>
@@ -696,11 +696,22 @@ function closeModal(modalId) {
 }
 
 // ===== UTILITY =====
+// escapeHtml is provided globally by site.js
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+/**
+ * Escape a string for safe embedding inside a JavaScript string literal
+ * within an HTML inline event handler (onclick="fn('${escapeJsAttr(val)}')").
+ * Escapes backslashes, single quotes, and HTML-significant characters.
+ */
+function escapeJsAttr(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/</g, '\\x3c')
+        .replace(/>/g, '\\x3e')
+        .replace(/&/g, '\\x26')
+        .replace(/"/g, '\\x22');
 }
 
 // ===== OPTIMISTIC UI ENHANCEMENTS =====

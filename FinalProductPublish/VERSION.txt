@@ -1,18 +1,18 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 2.9.5
+                           Version 3.0.3
 ================================================================================
 
-VERSION: 2.9.5
-RELEASE DATE: 2026-02-15
-BUILD DATE: 2026-02-15 19:03:19 UTC
-GIT COMMIT: 0edaeee
+VERSION: 3.0.3
+RELEASE DATE: 2026-02-27
+BUILD DATE: 2026-02-27 09:24:46 UTC
+GIT COMMIT: 19e93d8
 GIT BRANCH: merged-canonical
 
 PACKAGE INFORMATION:
-  Total Files:  649
+  Total Files:  706
   DLL Count:    351
-  Package Size: 170 MB
+  Package Size: 175 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
   Platform:     Windows x64 (Server 2022 / Windows 10+)
 
@@ -130,7 +130,7 @@ INSTALLATION SUMMARY
 ================================================================================
 
 Installation Type: Self-Contained
-Installation Size: 170 MB
+Installation Size: 175 MB
 Installation Time: 1 minute (extract + configure)
 First Run Time:    5-10 seconds (database creation)
 
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-02-15 19:03:19 UTC
+Build Date:     2026-02-27 09:24:46 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v2.9.5
+  âœ“ Git tagged: v3.0.3
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (649 files)
+  âœ… Verified for completeness (706 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v2.9.5)
+  âœ… Tagged in version control (v3.0.3)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-02-15 19:03:19 UTC
-Git Commit: 0edaeee
+Date: 2026-02-27 09:24:46 UTC
+Git Commit: 19e93d8
 
 ================================================================================
 LICENSE

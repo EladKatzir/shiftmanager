@@ -258,7 +258,8 @@ test.describe('Module R: Concurrency', () => {
     const session = await sessionResp.json();
     expect(session.authenticated).toBe(true);
     expect(session.state).toBe('ok');
-    expect(session.userId).toBeGreaterThan(0);
+    // userId removed from response for security hardening (ad86581)
+    expect(session).not.toHaveProperty('userId');
 
     await saveEvidence(page, EVIDENCE, 'R-08-session-valid.png');
   });
@@ -289,8 +290,9 @@ test.describe('Module R: Concurrency', () => {
     const dataB = await respB.json();
     expect(dataB.authenticated).toBe(true);
 
-    // Both should report the same user ID (both logged in as owner)
-    expect(dataA.userId).toBe(dataB.userId);
+    // Both sessions are valid and authenticated
+    expect(dataA.authenticated).toBe(dataB.authenticated);
+    expect(dataA.state).toBe(dataB.state);
 
     await saveEvidence(page, EVIDENCE, 'R-09-separate-sessions-A.png');
     await saveEvidence(page2, EVIDENCE, 'R-09-separate-sessions-B.png');

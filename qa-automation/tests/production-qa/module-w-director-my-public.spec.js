@@ -102,10 +102,8 @@ test.describe('Module W: Director, My, Public Pages', () => {
     await expect(heading.first()).toBeVisible({ timeout: 10000 });
 
     // ASSERT: Page has notification-related content (list or empty state)
-    const notificationItems = page.locator('.notification-item');
-    const emptyState = page.locator(':text("no notification"), :text("No notification"), :text("אין"), .empty-state');
-    const pageContent = page.locator('main, .page-content, .notification-center').first();
-    await expect(pageContent.or(notificationItems.first()).or(emptyState.first())).toBeVisible({ timeout: 5000 });
+    const hasContent = page.locator('.notification-item, .empty-state, main').first();
+    await expect(hasContent).toBeVisible({ timeout: 5000 });
 
     await saveEvidence(page, EVIDENCE, 'W-05-notifications.png');
   });

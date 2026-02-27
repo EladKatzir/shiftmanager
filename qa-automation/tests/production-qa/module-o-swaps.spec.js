@@ -26,7 +26,7 @@ test.describe('Module O: Swap Requests', () => {
     await navigateTo(page, '/My/Requests');
 
     // ASSERT: The page loaded with My Requests layout
-    await expect(page.locator('.page-title')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.page-title').first()).toBeVisible({ timeout: 5000 });
 
     // ASSERT: The swap request card/section is present
     // The swap section either shows a form (if upcoming shifts exist) or an empty state
@@ -148,7 +148,7 @@ test.describe('Module O: Swap Requests', () => {
     await expect(page.locator('h1:has-text("An unhandled exception occurred")')).not.toBeVisible({ timeout: 2000 });
 
     // ASSERT: The page has the Requests title
-    await expect(page.locator('.page-title')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.page-title').first()).toBeVisible({ timeout: 5000 });
 
     // ASSERT: All three tab buttons are rendered
     const tabButtons = page.locator('.tab-button[role="tab"]');

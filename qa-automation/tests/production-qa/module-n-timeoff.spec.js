@@ -27,7 +27,7 @@ test.describe('Module N: Time-Off Requests', () => {
     await navigateTo(page, '/My/Requests');
 
     // ASSERT: The page title for "My Requests" is visible
-    await expect(page.locator('.page-title')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.page-title').first()).toBeVisible({ timeout: 5000 });
 
     // ASSERT: The time-off request form card is present
     const timeOffCard = page.locator('.card-header:has-text("TimeOff"), .card-title:has-text("TimeOff"), form[action*="TimeOff"], .card-header').first();
@@ -110,7 +110,7 @@ test.describe('Module N: Time-Off Requests', () => {
     await navigateTo(page, '/My/Requests');
 
     // ASSERT: Page loaded successfully with the requests page layout
-    await expect(page.locator('.requests-page, .page-title')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.requests-page, .page-title').first()).toBeVisible({ timeout: 5000 });
 
     // ASSERT: The "My Time Off Requests" history card is present
     const timeOffHistoryCard = page.locator('.card-header:has-text("TimeOff"), .card-title:has-text("TimeOff"), .history-section .card').first();

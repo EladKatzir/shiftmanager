@@ -45,6 +45,23 @@ async function fillSignupForm(page, { email, displayName, password }) {
   const companyOptionCount = await companySelect.locator('option:not([value=""])').count();
   expect(companyOptionCount).toBeGreaterThan(0);
   await companySelect.selectOption({ index: 1 });
+
+  // Wait for cascade to populate job type dropdown (loaded when molecule is selected)
+  const jobTypeSelect = page.locator('#JobTypeId');
+  await expect(jobTypeSelect).toBeEnabled({ timeout: 10000 });
+  const jobTypeOptionCount = await jobTypeSelect.locator('option:not([value=""])').count();
+  expect(jobTypeOptionCount).toBeGreaterThan(0);
+  await jobTypeSelect.selectOption({ index: 1 });
+
+  // Wait for role templates to load via API (RequestedRole populated dynamically)
+  const roleSelect = page.locator('#RequestedRole');
+  await expect(roleSelect).toBeVisible({ timeout: 5000 });
+  // Wait until the API populates real options (replaces the "Loading..." placeholder)
+  await page.waitForFunction(() => {
+    const sel = document.getElementById('RequestedRole');
+    return sel && sel.options.length > 0 && sel.options[0].value !== '';
+  }, { timeout: 10000 });
+  await roleSelect.selectOption({ index: 0 });
 }
 
 test.describe('Module C: Signup & Join Requests', () => {

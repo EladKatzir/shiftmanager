@@ -317,7 +317,7 @@
         // Handle click on calendar cells for note editing
         document.addEventListener('DOMContentLoaded', function() {
             // Add click handlers for cells in overview calendar
-            document.querySelectorAll('.excel-calendar-cell').forEach(cell => {
+            document.querySelectorAll('.excel-calendar__cell').forEach(cell => {
                 const canEdit = @(Model.CanEditNotes.ToString().ToLower());
                 if (canEdit) {
                     cell.addEventListener('dblclick', function() {
@@ -327,8 +327,8 @@
 
                         const userId = parseInt(rowId.replace('user-', ''));
                         const date = this.dataset.date;
-                        const userName = row.querySelector('.excel-calendar-row-label')?.textContent || '';
-                        const existingNote = this.querySelector('.excel-calendar-note')?.textContent || '';
+                        const userName = row.querySelector('.excel-calendar__row-label')?.textContent || '';
+                        const existingNote = this.querySelector('.excel-calendar__note')?.textContent || '';
 
                         openNoteModal(userId, date, userName, existingNote);
                     });

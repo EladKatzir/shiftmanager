@@ -110,8 +110,13 @@
         employeeList.innerHTML = '<p class="loading-text">' + (window.AppLocalizer?.Roster_Loading || 'Loading employees...') + '</p>';
 
         try {
-            // Use the new EmployeeAvailability endpoint for 7-day availability cubes
-            const response = await fetch('/Calendar/Table?handler=EmployeeAvailability', {
+            // Use the EmployeeAvailability endpoint for 7-day availability cubes
+            // Forward molecule params from URL if present (for cross-company visibility)
+            const urlParams = new URLSearchParams(window.location.search);
+            let availUrl = '/Calendar/Table?handler=EmployeeAvailability';
+            if (urlParams.get('MoleculeId')) availUrl += '&moleculeId=' + encodeURIComponent(urlParams.get('MoleculeId'));
+            if (urlParams.get('JobTypeId')) availUrl += '&jobTypeId=' + encodeURIComponent(urlParams.get('JobTypeId'));
+            const response = await fetch(availUrl, {
                 method: 'GET',
                 credentials: 'same-origin'
             });
@@ -150,9 +155,9 @@
             if (emp.availability && emp.availability.length > 0) {
                 emp.availability.forEach(day => {
                     cubesHtml += `
-                        <div class="availability-cube ${day.status}" title="${day.tooltip}">
-                            <span class="cube-date">${day.date}</span>
-                            <span class="cube-tooltip">${day.dayName}: ${day.tooltip}</span>
+                        <div class="availability-cube ${escapeHtml(day.status)}" title="${escapeHtml(day.tooltip)}">
+                            <span class="cube-date">${escapeHtml(day.date)}</span>
+                            <span class="cube-tooltip">${escapeHtml(day.dayName)}: ${escapeHtml(day.tooltip)}</span>
                         </div>
                     `;
                 });
@@ -164,7 +169,7 @@
                      draggable="true"
                      data-user-id="${emp.id}"
                      data-user-name="${escapeHtml(emp.name)}">
-                    <div class="employee-avatar">${initials}</div>
+                    <div class="employee-avatar">${escapeHtml(initials)}</div>
                     <div class="employee-info">
                         <div class="employee-name">${escapeHtml(emp.name)}</div>
                         ${cubesHtml}
@@ -229,7 +234,7 @@
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        return div.innerHTML.replace(/'/g, '&#39;');
     }
 
     /**

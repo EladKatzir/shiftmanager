@@ -252,9 +252,9 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border
   margin-right: auto;
 }
 
-table { width: 100%; border-collapse: collapse; color: var(--text) !important; }
-th, td { border-bottom: 1px solid var(--border); padding: .5rem; vertical-align: top; color: var(--text) !important; }
-th { text-align: left; color: var(--text) !important; }
+table { width: 100%; border-collapse: collapse; color: var(--text); }
+th, td { border-bottom: 1px solid var(--border); padding: .5rem; vertical-align: top; color: var(--text); }
+th { text-align: left; color: var(--text); }
 
 .btn {
   padding: .35rem .6rem; border-radius: .4rem; border:1px solid var(--border); background: var(--surface); cursor: pointer;
@@ -2495,10 +2495,7 @@ body, p, h1, h2, h3, h4, h5, h6, div, span, label {
   color: var(--text) !important;
 }
 
-/* Specific override for any problematic elements */
-table *, th *, td *, tr * {
-  color: var(--text) !important;
-}
+/* Table descendants inherit text color from parent (allows dark-bg headers to set white text) */
 
 /* Warning/highlighting styles for better UX */
 .warning-highlight {
@@ -2698,7 +2695,7 @@ thead {
 
 thead th {
   border-bottom: 2px solid var(--border);
-  color: var(--text) !important;
+  color: var(--text);
 }
 
 /* ========================================
@@ -6976,6 +6973,13 @@ code {
 .onduty-item .rank-badge {
   margin-inline-start: 0.25rem;
   font-size: 0.65rem;
+}
+
+/* ----------------------------------------
+   Friends Highlight (Section 3)
+   ---------------------------------------- */
+.is-friend {
+  box-shadow: inset 3px 0 0 var(--info);
 }
 
 /* ----------------------------------------

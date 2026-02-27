@@ -210,7 +210,7 @@ test.describe('Module X: Localization & RTL', () => {
   });
 
   test('X-11: Company localization override page loads', async ({ page }) => {
-    await navigateTo(page, '/Owner/Languages');
+    await navigateTo(page, '/Owner/LanguageManagement');
     await page.waitForLoadState('networkidle');
 
     // ASSERT: Page heading is visible
@@ -225,7 +225,7 @@ test.describe('Module X: Localization & RTL', () => {
   });
 
   test('X-12: Language edit mode page accessible', async ({ page }) => {
-    await navigateTo(page, '/Owner/Languages');
+    await navigateTo(page, '/Owner/LanguageManagement');
     await page.waitForLoadState('networkidle');
 
     // ASSERT: Page heading is visible

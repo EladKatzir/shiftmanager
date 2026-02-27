@@ -214,10 +214,9 @@ test.describe('Module T: Page Handler API Coverage', () => {
       expect(json).toHaveProperty('authenticated', true);
       expect(json).toHaveProperty('state');
       expect(['ok', 'warning']).toContain(json.state);
-      expect(json).toHaveProperty('userId');
-      expect(json.userId).toBeGreaterThan(0);
-      expect(json).toHaveProperty('username');
-      expect(json.username.length).toBeGreaterThan(0);
+      // Security hardening (ad86581): userId/username no longer exposed
+      expect(json).not.toHaveProperty('userId');
+      expect(json).not.toHaveProperty('username');
       expect(json).toHaveProperty('secondsRemaining');
       expect(json.secondsRemaining).toBeGreaterThan(0);
       expect(json).toHaveProperty('minutesRemaining');

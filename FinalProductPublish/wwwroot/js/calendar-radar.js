@@ -79,8 +79,12 @@
             const start = urlParams.get('start') || '';
             const view = urlParams.get('view') || 'week';
 
-            // Build API URL with parameters
-            const apiUrl = `/Calendar/Table?handler=GetConflicts&start=${encodeURIComponent(start)}&view=${encodeURIComponent(view)}`;
+            // Build API URL with parameters (forward molecule params if present)
+            const moleculeId = urlParams.get('MoleculeId') || '';
+            const jobTypeId = urlParams.get('JobTypeId') || '';
+            let apiUrl = `/Calendar/Table?handler=GetConflicts&start=${encodeURIComponent(start)}&view=${encodeURIComponent(view)}`;
+            if (moleculeId) apiUrl += `&moleculeId=${encodeURIComponent(moleculeId)}`;
+            if (jobTypeId) apiUrl += `&jobTypeId=${encodeURIComponent(jobTypeId)}`;
 
             const response = await fetch(apiUrl, {
                 method: 'GET',
@@ -176,13 +180,13 @@
         switch (conflictType) {
             case 'underfilled':
                 badge.textContent = `⚠️ ${conflict.filled}/${conflict.required}`;
-                badge.title = `Understaffed: ${conflict.required - conflict.filled} needed`;
+                badge.title = (window.AppLocalizer?.Radar_Understaffed || 'Understaffed') + `: ${conflict.required - conflict.filled} ` + (window.AppLocalizer?.Radar_Needed || 'needed');
                 badge.classList.add('badge-warning');
                 break;
 
             case 'overfilled':
                 badge.textContent = `⚠️ ${conflict.filled}/${conflict.required}`;
-                badge.title = `Overstaffed: ${conflict.filled - conflict.required} extra`;
+                badge.title = (window.AppLocalizer?.Radar_Overstaffed || 'Overstaffed') + `: ${conflict.filled - conflict.required} ` + (window.AppLocalizer?.Radar_Extra || 'extra');
                 badge.classList.add('badge-danger');
                 break;
 
@@ -210,20 +214,28 @@
         const tooltip = document.createElement('div');
         tooltip.className = 'conflict-tooltip';
 
+        const lbl = {
+            shift: window.AppLocalizer?.Radar_Shift || 'Shift',
+            date: window.AppLocalizer?.Radar_Date || 'Date',
+            staffing: window.AppLocalizer?.Radar_Staffing || 'Staffing',
+            needed: window.AppLocalizer?.Radar_Needed || 'Needed',
+            extra: window.AppLocalizer?.Radar_Extra || 'Extra'
+        };
+
         let content = `
             <div class="tooltip-header">${getConflictTitle(conflict)}</div>
             <div class="tooltip-body">
-                <p><strong>Shift:</strong> ${escapeHtml(conflict.shiftTypeName)}</p>
-                <p><strong>Date:</strong> ${formatDate(conflict.date)}</p>
-                <p><strong>Staffing:</strong> ${conflict.filled} / ${conflict.required}</p>
+                <p><strong>${lbl.shift}:</strong> ${escapeHtml(conflict.shiftTypeName)}</p>
+                <p><strong>${lbl.date}:</strong> ${formatDate(conflict.date)}</p>
+                <p><strong>${lbl.staffing}:</strong> ${conflict.filled} / ${conflict.required}</p>
         `;
 
         if (conflict.type === 'underfilled') {
             const needed = conflict.required - conflict.filled;
-            content += `<p><strong>Needed:</strong> ${needed} more employee${needed !== 1 ? 's' : ''}</p>`;
+            content += `<p><strong>${lbl.needed}:</strong> ${needed}</p>`;
         } else if (conflict.type === 'overfilled') {
             const extra = conflict.filled - conflict.required;
-            content += `<p><strong>Extra:</strong> ${extra} employee${extra !== 1 ? 's' : ''}</p>`;
+            content += `<p><strong>${lbl.extra}:</strong> ${extra}</p>`;
         }
 
         content += `</div>`;
@@ -247,11 +259,11 @@
     function getConflictTitle(conflict) {
         switch (conflict.type) {
             case 'underfilled':
-                return '⚠️ Understaffed';
+                return '⚠️ ' + (window.AppLocalizer?.Radar_Understaffed || 'Understaffed');
             case 'overfilled':
-                return '⚠️ Overstaffed';
+                return '⚠️ ' + (window.AppLocalizer?.Radar_Overstaffed || 'Overstaffed');
             default:
-                return '⚠️ Conflict';
+                return '⚠️ ' + (window.AppLocalizer?.Radar_Conflict || 'Conflict');
         }
     }
 
@@ -280,7 +292,7 @@
     function formatDate(dateString) {
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
+            return date.toLocaleDateString(document.documentElement.lang || undefined, {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric'
@@ -296,7 +308,7 @@
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        return div.innerHTML.replace(/'/g, '&#39;');
     }
 
     /**
