@@ -10567,7 +10567,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Enhanced Diagnostic Engine</value>
   </data>
   <data name="EntireCallbackUrl2x" xml:space="preserve">
-    <value>Entire Callback URL (2x encoded)</value>
+    <value>returnUrl embedded in tokenConsumerURL (breaks query string)</value>
   </data>
   <data name="FinalUrlSentToGriffin" xml:space="preserve">
     <value>Final URL Sent to Griffin</value>
@@ -10618,10 +10618,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Missing Scheme</value>
   </data>
   <data name="NewApproachTitle" xml:space="preserve">
-    <value>New Approach</value>
+    <value>Current Approach (Fixed)</value>
   </data>
   <data name="NewProposed" xml:space="preserve">
-    <value>New (Proposed)</value>
+    <value>Current (Fixed)</value>
   </data>
   <data name="NewUrlRecognizableExplanation" xml:space="preserve">
     <value>The new URL format is more recognizable and debuggable</value>
@@ -10639,10 +10639,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>No Griffin Config Found</value>
   </data>
   <data name="OldApproachTitle" xml:space="preserve">
-    <value>Old Approach</value>
+    <value>Previous Approach (Broken)</value>
   </data>
   <data name="OldCurrent" xml:space="preserve">
-    <value>Old (Current)</value>
+    <value>Previous (Broken)</value>
   </data>
   <data name="OldUrlEncodedGibberishExplanation" xml:space="preserve">
     <value>The old URL format produces encoded text that is hard to debug</value>
@@ -10651,7 +10651,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Only Destination Path (3x encoded)</value>
   </data>
   <data name="OnlyReturnUrl3x" xml:space="preserve">
-    <value>Only Return URL (3x encoded)</value>
+    <value>Clean tokenConsumerURL (returnUrl in cookie)</value>
   </data>
   <data name="OverallStatus" xml:space="preserve">
     <value>Overall Status</value>
@@ -10693,7 +10693,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Server Status</value>
   </data>
   <data name="ShouldWork" xml:space="preserve">
-    <value>Should Work</value>
+    <value>Active</value>
   </data>
   <data name="Step1ReturnUrlEncoding" xml:space="preserve">
     <value>Step 1: Return URL Encoding</value>

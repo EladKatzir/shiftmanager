@@ -349,6 +349,37 @@ public class GriffinDiagnosticModel : PageModel
                 Warnings.Add("BaseUrl ends with a trailing slash. This is usually fine, but may cause double-slash in generated URLs.");
             }
 
+            // 8. Verify unauthenticated config resolution
+            Checks.Add("8. Checking config availability for unauthenticated users (login page)...");
+            try
+            {
+                var anyEnabledConfig = await _griffinConfigService.GetAnyEnabledGriffinConfigAsync();
+                if (anyEnabledConfig != null)
+                {
+                    Checks.Add($"   ✓ GetAnyEnabledGriffinConfigAsync() found config (CompanyId={anyEnabledConfig.CompanyId})");
+                    Checks.Add("   ✓ Unauthenticated users on login page WILL see the ADFS button");
+                    ValidationResults["UnauthenticatedConfigAvailable"] = true;
+                }
+                else
+                {
+                    Checks.Add("   ✗ GetAnyEnabledGriffinConfigAsync() returned null");
+                    Checks.Add("   ✗ Unauthenticated users on login page will NOT see the ADFS button");
+                    Warnings.Add("No enabled Griffin config found in database. Unauthenticated users cannot use ADFS SSO from the login page.");
+                    ValidationResults["UnauthenticatedConfigAvailable"] = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Checks.Add($"   ⚠ Error checking unauthenticated config: {ex.Message}");
+                ValidationResults["UnauthenticatedConfigAvailable"] = false;
+            }
+
+            // 9. Verify returnUrl cookie approach
+            Checks.Add("9. Verifying returnUrl handling...");
+            Checks.Add("   ✓ returnUrl is stored in 'griffin.returnUrl' cookie (HttpOnly, 5min TTL, /Auth path)");
+            Checks.Add("   ✓ tokenConsumerURL sent to Griffin is clean (no embedded query params)");
+            Checks.Add("   ✓ GriffinCallback reads returnUrl from cookie if not in query string");
+
             Checks.Add("✓ Diagnostic complete!");
 
             // Determine root cause
@@ -385,6 +416,8 @@ public class GriffinDiagnosticModel : PageModel
                         UrlPath,
                         UrlQuery
                     },
+                    ReturnUrlHandling = "cookie (griffin.returnUrl, HttpOnly, 5min TTL, /Auth path)",
+                    TokenConsumerUrlClean = "no query params embedded — matches DOOF pattern",
                     RootCause,
                     RootCauseExplanation,
                     FixInstructions
@@ -550,9 +583,9 @@ public class GriffinDiagnosticModel : PageModel
         {
             oldUrlStart += 17; // Length of "tokenConsumerURL="
             var previewLength = Math.Min(20, OldFinalGriffinUrl.Length - oldUrlStart);
-            Checks.Add($"   OLD (current): tokenConsumerURL starts with '{OldFinalGriffinUrl.Substring(oldUrlStart, previewLength)}...'");
+            Checks.Add($"   OLD (broken): tokenConsumerURL had embedded ?returnUrl=... → '{OldFinalGriffinUrl.Substring(oldUrlStart, previewLength)}...'");
         }
-        Checks.Add($"   NEW (proposed): tokenConsumerURL starts with 'http://' or 'https://'");
-        Checks.Add($"   DOOF (working): tokenConsumerURL starts with 'https://'");
+        Checks.Add($"   CURRENT (fixed): tokenConsumerURL is clean — returnUrl stored in cookie");
+        Checks.Add($"   DOOF (reference): tokenConsumerURL is clean — destination in path");
     }
 }

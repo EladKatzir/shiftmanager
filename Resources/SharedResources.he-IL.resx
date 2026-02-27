@@ -10533,7 +10533,7 @@
     <value>מנוע אבחון משופר</value>
   </data>
   <data name="EntireCallbackUrl2x" xml:space="preserve">
-    <value>כתובת callback מלאה (מקודדת 2x)</value>
+    <value>returnUrl מוטמע ב-tokenConsumerURL (שובר את query string)</value>
   </data>
   <data name="FinalUrlSentToGriffin" xml:space="preserve">
     <value>כתובת סופית שנשלחה ל-Griffin</value>
@@ -10584,10 +10584,10 @@
     <value>חסר סכמה</value>
   </data>
   <data name="NewApproachTitle" xml:space="preserve">
-    <value>גישה חדשה</value>
+    <value>גישה נוכחית (מתוקנת)</value>
   </data>
   <data name="NewProposed" xml:space="preserve">
-    <value>חדש (מוצע)</value>
+    <value>נוכחי (מתוקן)</value>
   </data>
   <data name="NewUrlRecognizableExplanation" xml:space="preserve">
     <value>פורמט הכתובת החדש קריא יותר וניתן לאבחון</value>
@@ -10605,10 +10605,10 @@
     <value>לא נמצאה הגדרת Griffin</value>
   </data>
   <data name="OldApproachTitle" xml:space="preserve">
-    <value>גישה ישנה</value>
+    <value>גישה קודמת (שבורה)</value>
   </data>
   <data name="OldCurrent" xml:space="preserve">
-    <value>ישן (נוכחי)</value>
+    <value>קודם (שבור)</value>
   </data>
   <data name="OldUrlEncodedGibberishExplanation" xml:space="preserve">
     <value>פורמט הכתובת הישן מייצר טקסט מקודד שקשה לאבחן</value>
@@ -10617,7 +10617,7 @@
     <value>נתיב יעד בלבד (מקודד 3x)</value>
   </data>
   <data name="OnlyReturnUrl3x" xml:space="preserve">
-    <value>כתובת חזרה בלבד (מקודדת 3x)</value>
+    <value>tokenConsumerURL נקי (returnUrl בעוגייה)</value>
   </data>
   <data name="OverallStatus" xml:space="preserve">
     <value>סטטוס כללי</value>
@@ -10659,7 +10659,7 @@
     <value>סטטוס שרת</value>
   </data>
   <data name="ShouldWork" xml:space="preserve">
-    <value>אמור לעבוד</value>
+    <value>פעיל</value>
   </data>
   <data name="Step1ReturnUrlEncoding" xml:space="preserve">
     <value>שלב 1: קידוד כתובת חזרה</value>
