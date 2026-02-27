@@ -426,35 +426,31 @@ public class LoginModel : LocalizedPageModel
         }
 
         // ✅ FIX: Use configured TokenConsumerUrl from database (not Request.Scheme/Host)
+        // IMPORTANT: Do NOT append returnUrl as a query parameter to the callback URL.
+        // Adding ?returnUrl=... introduces a '?' that breaks the outer Griffin auth URL's
+        // query string parsing — Griffin sees a truncated tokenConsumerURL and may not
+        // redirect correctly (causing "token missing" errors).
+        // Instead, store returnUrl in a temporary cookie and read it in the callback.
         var callbackUrl = griffinConfig.TokenConsumerUrl;
 
-        // Append returnUrl as query parameter if present
         if (!string.IsNullOrEmpty(returnUrl))
         {
-            // Triple-encode the returnUrl to survive multiple decoding layers:
-            // 1st layer: Griffin's HTTP query parameter parsing
-            // 2nd layer: Griffin's internal processing/redirect
-            // 3rd layer: Our ASP.NET Core query parameter parsing
-            // This matches the Doof pattern of triple-encoding the destination path
-            var encodedReturn = Uri.EscapeDataString(returnUrl);
-            var encodedTwice = Uri.EscapeDataString(encodedReturn);
-            var encodedThrice = Uri.EscapeDataString(encodedTwice);
-
-            var separator = callbackUrl.Contains('?') ? '&' : '?';
-            callbackUrl += $"{separator}returnUrl={encodedThrice}";
-
-            _logger.LogDebug("Triple-encoding returnUrl:");
-            _logger.LogDebug("  - Original returnUrl: {Original}", returnUrl);
-            _logger.LogDebug("  - After 1st encode: {Encoded1}", encodedReturn);
-            _logger.LogDebug("  - After 2nd encode: {Encoded2}", encodedTwice);
-            _logger.LogDebug("  - After 3rd encode: {Encoded3}", encodedThrice);
+            Response.Cookies.Append("griffin.returnUrl", returnUrl, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                MaxAge = TimeSpan.FromMinutes(5),
+                Path = "/Auth"
+            });
+            _logger.LogDebug("Stored returnUrl in cookie: {ReturnUrl}", returnUrl);
         }
 
         _logger.LogInformation("=== GRIFFIN ADFS REDIRECT DEBUG ===");
         _logger.LogInformation("Config from database:");
         _logger.LogInformation("  - BaseUrl: {BaseUrl}", griffinConfig.BaseUrl);
         _logger.LogInformation("  - TokenConsumerUrl: {TokenConsumerUrl}", griffinConfig.TokenConsumerUrl);
-        _logger.LogInformation("  - CallbackUrl (with triple-encoded returnUrl): {CallbackUrl}", callbackUrl);
+        _logger.LogInformation("  - CallbackUrl (clean, no query params): {CallbackUrl}", callbackUrl);
 
         // Build authentication URL
         var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl, callbackUrl);

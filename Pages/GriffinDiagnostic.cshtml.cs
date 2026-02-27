@@ -55,11 +55,11 @@ public class GriffinDiagnosticModel : PageModel
     public string ReturnUrlEncoded2x { get; set; } = string.Empty;
     public string ReturnUrlEncoded3x { get; set; } = string.Empty;
 
-    // OLD approach (current - WRONG)
+    // OLD approach (embedding returnUrl in tokenConsumerURL - BROKEN)
     public string OldCallbackUrl { get; set; } = string.Empty;
     public string OldFinalGriffinUrl { get; set; } = string.Empty;
 
-    // NEW approach (proposed fix - CORRECT)
+    // NEW approach (clean tokenConsumerURL, returnUrl stored in cookie - CORRECT)
     public string NewCallbackUrl { get; set; } = string.Empty;
     public string NewFinalGriffinUrl { get; set; } = string.Empty;
 
@@ -514,27 +514,24 @@ public class GriffinDiagnosticModel : PageModel
         ReturnUrlEncoded3x = Uri.EscapeDataString(ReturnUrlEncoded2x);
 
         // ===========================================
-        // OLD APPROACH (Current - WRONG)
+        // OLD APPROACH (Embedding returnUrl in tokenConsumerURL - BROKEN)
         // ===========================================
-        var oldCallback = GriffinConfig.TokenConsumerUrl + "?returnUrl=" + ReturnUrlEncoded1x;
-
-        // Simulate current GriffinService.BuildAuthenticationUrl() - double-encodes ENTIRE URL
-        var oldEncoded1x = Uri.EscapeDataString(oldCallback);
-        var oldEncoded2x = Uri.EscapeDataString(oldEncoded1x);
-
-        OldCallbackUrl = oldEncoded2x;  // This is gibberish!
-        OldFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={oldEncoded2x}";
+        // Appending ?returnUrl=... to the callback URL introduces a '?' that breaks
+        // the outer Griffin auth URL's query string parsing.
+        var oldCallback = GriffinConfig.TokenConsumerUrl + "?returnUrl=" + ReturnUrlEncoded3x;
+        OldCallbackUrl = oldCallback;
+        OldFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={oldCallback}";
         OldUrlLooksLikeUrl = OldFinalGriffinUrl.Contains("tokenConsumerURL=https://") ||
                              OldFinalGriffinUrl.Contains("tokenConsumerURL=http://");
 
         // ===========================================
-        // NEW APPROACH (Proposed Fix - CORRECT)
+        // NEW APPROACH (Clean tokenConsumerURL, returnUrl in cookie - CORRECT)
         // ===========================================
-        var newCallback = GriffinConfig.TokenConsumerUrl + "?returnUrl=" + ReturnUrlEncoded3x;
-
-        // New GriffinService.BuildAuthenticationUrl() - does NOT encode the entire URL
-        NewCallbackUrl = newCallback;  // Readable URL structure!
-        NewFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={newCallback}";
+        // The tokenConsumerURL is sent as-is (no query params embedded).
+        // returnUrl is stored in a temporary cookie and read in the callback.
+        // This matches how DOOF keeps its tokenConsumerURL clean.
+        NewCallbackUrl = GriffinConfig.TokenConsumerUrl;  // Clean URL, no query params
+        NewFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={GriffinConfig.TokenConsumerUrl}";
         NewUrlLooksLikeUrl = NewFinalGriffinUrl.Contains("tokenConsumerURL=https://") ||
                              NewFinalGriffinUrl.Contains("tokenConsumerURL=http://");
 

@@ -40,8 +40,47 @@ public class GriffinConfigService : IGriffinConfigService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Unable to get Griffin config via tenant resolver, falling back to appsettings");
+            _logger.LogDebug(ex, "Unable to get Griffin config via tenant resolver, trying database fallback then appsettings");
+
+            // Try to find any enabled config in the database (for unauthenticated users on the login page)
+            var anyConfig = await GetAnyEnabledGriffinConfigAsync();
+            if (anyConfig != null)
+            {
+                _logger.LogDebug("Found enabled Griffin config from database (CompanyId={CompanyId}) without tenant context", anyConfig.CompanyId);
+                return anyConfig;
+            }
+
             return GetConfigFromAppSettings();
+        }
+    }
+
+    public async Task<GriffinConfig?> GetAnyEnabledGriffinConfigAsync()
+    {
+        try
+        {
+            // SECURITY-AUDITED: IgnoreQueryFilters needed — called from login page before tenant context exists;
+            // returns first enabled config to determine if Griffin SSO is available at all
+            var config = await _dbContext.GriffinConfigs
+                .IgnoreQueryFilters()
+                .Where(c => c.Enabled && !string.IsNullOrEmpty(c.BaseUrl) && !string.IsNullOrEmpty(c.TokenConsumerUrl))
+                .FirstOrDefaultAsync();
+
+            if (config != null)
+            {
+                _logger.LogDebug("Found enabled Griffin config in database (CompanyId={CompanyId}, BaseUrl={BaseUrl})",
+                    config.CompanyId, config.BaseUrl);
+            }
+            else
+            {
+                _logger.LogDebug("No enabled Griffin config found in database");
+            }
+
+            return config;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Error querying database for any enabled Griffin config");
+            return null;
         }
     }
 

@@ -14,6 +14,12 @@ public interface IGriffinConfigService
     Task<GriffinConfig?> GetGriffinConfigAsync();
 
     /// <summary>
+    /// Load any enabled Griffin config from the database (ignoring tenant context).
+    /// Used on the login page where no tenant context exists yet.
+    /// </summary>
+    Task<GriffinConfig?> GetAnyEnabledGriffinConfigAsync();
+
+    /// <summary>
     /// Load Griffin config for specific company
     /// </summary>
     Task<GriffinConfig?> GetGriffinConfigByCompanyIdAsync(int companyId);

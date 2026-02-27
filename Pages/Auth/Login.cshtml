@@ -91,28 +91,32 @@
                     </div>
                 }
 
-                <!-- ADFS Login Button -->
-                <div class="auth-adfs">
-                    <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
-                        <button type="submit" class="auth-adfs__btn">
-                            <span class="auth-adfs__icon">🛡️</span>
-                            <span><loc key="LoginWithADFS" /></span>
-                        </button>
-                    </form>
+                <!-- ADFS Login Button (only shown when Griffin is configured and reachable) -->
+                @if (Model.ShowGriffinButton)
+                {
+                    <div class="auth-adfs">
+                        <form method="post" asp-page-handler="Griffin" asp-route-returnUrl="@Model.ReturnUrl">
+                            <button type="submit" class="auth-adfs__btn">
+                                <span class="auth-adfs__icon">🛡️</span>
+                                <span><loc key="LoginWithADFS" /></span>
+                            </button>
+                        </form>
+                    </div>
 
-                    @if (Model.ShowGriffinUnavailableMessage)
-                    {
+                    <!-- Divider -->
+                    <div class="auth-divider">
+                        <span><loc key="Auth_OrContinueWith" /></span>
+                    </div>
+                }
+                else if (Model.ShowGriffinUnavailableMessage)
+                {
+                    <div class="auth-adfs">
                         <div class="auth-adfs__warning">
                             <span>⚠️</span>
                             <span>@Localizer["LoginWithADFS_Unavailable"]</span>
                         </div>
-                    }
-                </div>
-
-                <!-- Divider -->
-                <div class="auth-divider">
-                    <span><loc key="Auth_OrContinueWith" /></span>
-                </div>
+                    </div>
+                }
 
                 <!-- Login Form -->
                 <form method="post" asp-page="./Login" class="auth-form">

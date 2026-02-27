@@ -114,15 +114,23 @@ public class GriffinCallbackModel : LocalizedPageModel
         if (int.TryParse(userId, out var parsedUid))
             _securityLogger.LogAuthenticationSuccess(parsedUid, email ?? "", role ?? "", ipAddress);
 
-        // 7. Redirect
-        if (!string.IsNullOrEmpty(returnUrl))
+        // 7. Redirect — check query string first, then cookie fallback
+        if (string.IsNullOrEmpty(returnUrl))
         {
-            // NOTE: ASP.NET Core should auto-decode the triple-encoded returnUrl via model binding.
-            // If testing shows returnUrl arrives still encoded, uncomment the line below:
-            // returnUrl = Uri.UnescapeDataString(returnUrl);
+            // Read returnUrl from cookie (set by Login page before Griffin redirect)
+            returnUrl = Request.Cookies["griffin.returnUrl"];
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                _logger.LogDebug("Read returnUrl from cookie: {ReturnUrl}", returnUrl);
+            }
+        }
 
-            if (Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl);
+        // Clean up the returnUrl cookie
+        Response.Cookies.Delete("griffin.returnUrl", new CookieOptions { Path = "/Auth" });
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
         }
 
         return RedirectToPage("/Home/Index");
