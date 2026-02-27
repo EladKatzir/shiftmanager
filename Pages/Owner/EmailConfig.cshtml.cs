@@ -159,10 +159,15 @@ public class EmailConfigModel : LocalizedPageModel
             var testBody = BuildTestEmailHtml();
 
             _logger.LogInformation("Sending test email to {Email}", testEmail);
-            bool success = await _mailService.SendMailAsync(testEmail, testSubject, testBody);
 
-            // Fetch most recent log (our test)
-            await Task.Delay(100); // Brief delay to ensure log is written
+            // Use SendMailDirectAsync for test emails — sends synchronously so the
+            // log entry is available immediately for diagnostics. SendMailAsync only
+            // enqueues for background delivery, causing a race condition where the
+            // log isn't written yet when we try to read it.
+            var companyId = int.TryParse(User.FindFirst("CompanyId")?.Value, out var cid) ? cid : 0;
+            bool success = await _mailService.SendMailDirectAsync(testEmail, testSubject, testBody, companyId);
+
+            // Fetch most recent log — now available immediately because SendMailDirectAsync is synchronous
             var recentLogs = await _emailApiLogService.GetRecentLogsAsync(1);
             LastTestResult = recentLogs.FirstOrDefault();
 

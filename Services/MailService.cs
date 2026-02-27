@@ -250,9 +250,9 @@ public class MailService : IMailService
                 errorMessage = string.Join("; ", validationErrors);
                 _logger.LogError("Email configuration validation failed: {Errors}", errorMessage);
 
-                // Log validation failure to database (fire-and-forget)
+                // Log validation failure to database
                 stopwatch.Stop();
-                _ = _emailApiLogService.LogEmailApiCallAsync(
+                await _emailApiLogService.LogEmailApiCallAsync(
                     requestUrl: requestUrl,
                     requestMethod: "POST",
                     requestHeaders: new Dictionary<string, string>(),
@@ -363,9 +363,9 @@ public class MailService : IMailService
         }
         finally
         {
-            // Always log to database for diagnostics (fire-and-forget)
+            // Always log to database for diagnostics (awaited so callers can read the log immediately)
             stopwatch.Stop();
-            _ = _emailApiLogService.LogEmailApiCallAsync(
+            await _emailApiLogService.LogEmailApiCallAsync(
                 requestUrl: requestUrl ?? "unknown",
                 requestMethod: "POST",
                 requestHeaders: requestHeaders ?? new Dictionary<string, string>(),
