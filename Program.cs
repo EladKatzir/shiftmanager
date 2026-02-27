@@ -17,6 +17,12 @@ using ShiftManager.Authorization;
 using ShiftManager.Hubs;
 using ShiftManager.Data.SeedData;
 
+// F-01: Top-level try-catch for IIS deployment diagnostics.
+// When the app crashes during startup under IIS (HTTP 500.30), stdout may not be captured.
+// This writes the fatal exception to a file next to the exe for offline troubleshooting.
+try
+{
+
 var builder = WebApplication.CreateBuilder(args);
 
 // B-022: Logging Configuration
@@ -57,12 +63,20 @@ else
     if (OperatingSystem.IsWindows())
     {
 #pragma warning disable CA1416 // Platform compatibility — guarded by IsWindows()
-        builder.Logging.AddEventLog(settings =>
+        try
         {
-            settings.SourceName = "ShiftManager";
-            settings.LogName = "Application";
-            settings.Filter = (category, level) => level >= LogLevel.Warning;
-        });
+            builder.Logging.AddEventLog(settings =>
+            {
+                settings.SourceName = "ShiftManager";
+                settings.LogName = "Application";
+                settings.Filter = (category, level) => level >= LogLevel.Warning;
+            });
+        }
+        catch (Exception)
+        {
+            // EventLog source creation requires admin privileges which IIS app pool identity
+            // may not have. Swallow and continue — stdout/file logging is sufficient.
+        }
 #pragma warning restore CA1416
     }
 }
@@ -457,6 +471,20 @@ using (var scope = app.Services.CreateScope())
             {
                 logger.LogWarning(ex, "Failed to create pre-migration backup. Proceeding with migration.");
             }
+        }
+    }
+
+    // F-01: Ensure the database directory exists before migration (IIS deployment fix)
+    // When appsettings.Production.json specifies an absolute path like C:\ShiftManager\Data\app.db,
+    // SQLite cannot create the file if the directory doesn't exist, causing HTTP 500.30.
+    {
+        var connStr = app.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+        var dbFilePath = connStr.Split('=', 2).Length > 1 ? connStr.Split('=', 2)[1].Trim() : "app.db";
+        var dbDir = Path.GetDirectoryName(Path.GetFullPath(dbFilePath));
+        if (!string.IsNullOrEmpty(dbDir) && !Directory.Exists(dbDir))
+        {
+            Directory.CreateDirectory(dbDir);
+            logger.LogInformation("Created database directory: {Path}", dbDir);
         }
     }
 
@@ -1576,6 +1604,37 @@ app.MapGet("/api/v1/version", () =>
 DisplayStartupBanner(app);
 
 app.Run();
+
+}
+catch (Exception ex)
+{
+    // F-01: Write fatal startup exception to file for IIS 500.30 diagnosis.
+    // Under IIS in-process hosting, if the app crashes before logging is configured,
+    // there's no way to see the error. This file is the last resort.
+    var errorFile = Path.Combine(AppContext.BaseDirectory, "startup-error.txt");
+    var errorMessage = $"""
+        ShiftManager Fatal Startup Error
+        ==================================
+        Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+        Error: {ex.GetType().Name}: {ex.Message}
+
+        Stack Trace:
+        {ex}
+
+        Inner Exception:
+        {ex.InnerException}
+
+        COMMON FIXES:
+        1. Check that the 'logs' folder exists in the app directory
+        2. Check that C:\ShiftManager\Data\ directory exists (or update ConnectionStrings:Default in appsettings.Production.json)
+        3. Ensure the IIS App Pool identity has write permissions to the app folder
+        4. Run UNBLOCK_FILES.bat if DLLs were copied via USB
+        5. Check appsettings.Production.json has valid ApiKeyHmacSecret
+        6. Check Windows Event Viewer > Application for additional details
+        """;
+    try { File.WriteAllText(errorFile, errorMessage); } catch { /* last resort failed */ }
+    throw; // Re-throw so IIS ANCM reports the error
+}
 
 // ============================================================
 // STARTUP BANNER METHOD
