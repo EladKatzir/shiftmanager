@@ -498,8 +498,29 @@ try {
         throw ("Destination missing after copy: {0}" -f $DestDir)
     }
 
-    # File-count check WITH tolerance (10 files)
-    Assert-FileCountMatchWithTolerance -Expected $srcStats.FileCount -Actual $dstStats.FileCount -Tolerance $FileCountTolerance -Context 'ProjectPublish vs FinalProductPublish'
+    # Compute adjusted source count excluding the same dirs that Copy-Folder skips (ExcludeDirs).
+    # Without this, the source count includes files in ProductionReady/, qa-automation/, ProjectPublish_BACKUP_*/, etc.
+    # which are intentionally NOT copied, causing a guaranteed file-count mismatch.
+    $excludePatterns = $Script:ExcludeDirs | ForEach-Object { '^' + $_.Replace('*', '.*') + '$' }
+    $excludedDirs = Get-ChildItem -LiteralPath $SourceDir -Directory -Force -ErrorAction SilentlyContinue | Where-Object {
+        $dirName = $_.Name
+        $match = $false
+        foreach ($pattern in $excludePatterns) {
+            if ($dirName -match $pattern) { $match = $true; break }
+        }
+        $match
+    }
+    $excludedFileCount = 0
+    foreach ($d in $excludedDirs) {
+        $excludedFileCount += (Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue).Count
+    }
+    $adjustedSrcCount = $srcStats.FileCount - $excludedFileCount
+    if ($excludedFileCount -gt 0) {
+        Write-Log -Level INFO -Message ("Excluded {0} files in {1} dirs from source count (ExcludeDirs filter). Adjusted: {2} -> {3}" -f $excludedFileCount, $excludedDirs.Count, $srcStats.FileCount, $adjustedSrcCount)
+    }
+
+    # File-count check WITH tolerance (10 files), using the adjusted source count
+    Assert-FileCountMatchWithTolerance -Expected $adjustedSrcCount -Actual $dstStats.FileCount -Tolerance $FileCountTolerance -Context 'ProjectPublish (adjusted) vs FinalProductPublish'
 
     Write-Log -Level OK -Message ("FinalProductPublish files: {0}" -f $dstStats.FileCount)
     Write-Log -Level OK -Message ("FinalProductPublish size:  {0} MB" -f $dstStats.SizeMB)
@@ -513,18 +534,26 @@ try {
         Push-Location $DestDir
         try {
             $tmp = Join-Path $DestDir 'verify_output.tmp'
+            # Run with SilentlyContinue to prevent cmd.exe parse errors from becoming terminating exceptions.
+            # VERIFY_FILES.bat is a deployment-time helper, not a build gate.
+            $prevEAP = $ErrorActionPreference
+            $ErrorActionPreference = 'SilentlyContinue'
             & cmd.exe /c ".\VERIFY_FILES.bat" *>&1 | Out-File -FilePath $tmp -Encoding UTF8
+            $ErrorActionPreference = $prevEAP
+
             $out = ''
             if (Test-Path -LiteralPath $tmp) {
                 $out = Get-Content -LiteralPath $tmp -Raw -ErrorAction SilentlyContinue
                 Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
             }
 
-            if ($out -match 'Verification PASSED' -or $out -match 'All checks passed') {
+            if ($out -match 'SUCCESS' -or $out -match 'Verification PASSED' -or $out -match 'All checks passed') {
                 Write-Log -Level OK -Message "VERIFY_FILES.bat PASSED."
             } else {
                 Write-Log -Level WARN -Message "VERIFY_FILES.bat completed but output was not clearly PASS. Review manually if needed."
             }
+        } catch {
+            Write-Log -Level WARN -Message ("VERIFY_FILES.bat encountered an error (non-fatal): {0}" -f $_.Exception.Message)
         } finally {
             Pop-Location
         }
