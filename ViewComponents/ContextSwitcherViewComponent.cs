@@ -90,15 +90,15 @@ public class ContextSwitcherViewComponent : ViewComponent
             }
             else if (isDirector)
             {
-                // Director sees companies they're assigned to via DirectorCompanies table
-                var directorCompanyIds = await _context.DirectorCompanies
-                    .Where(d => d.UserId == userId && !d.IsDeleted)
-                    .Select(d => d.CompanyId)
-                    .ToListAsync();
+                // Resolve director's accessible companies via grant scope (DirectorHubAccess grant
+                // scoped to MoleculeId resolves to all companies in that molecule)
+                var directorCompanyIds = await _grantService
+                    .GetAccessibleCompanyIdsForGrantAsync(userId, "DirectorHubAccess");
 
-                // Get the companies with their molecules
+                // Get the companies with their molecules, excluding HQ placeholders
                 var companies = await _context.Companies
-                    .Where(c => directorCompanyIds.Contains(c.Id))
+                    .IgnoreQueryFilters()
+                    .Where(c => directorCompanyIds.Contains(c.Id) && !c.IsHeadquarters)
                     .Include(c => c.Molecule)
                     .OrderBy(c => c.Name)
                     .ToListAsync();

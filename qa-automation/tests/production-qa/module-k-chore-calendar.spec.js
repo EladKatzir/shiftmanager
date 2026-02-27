@@ -405,3 +405,101 @@ test.describe('Module K: Chore Calendar Full Flow', () => {
     await saveEvidence(page, EVIDENCE, 'K-16-signalr.png');
   });
 });
+
+// =============================================================================
+// Phase 2 (P1): Chore Calendar Extended — K-17 through K-19
+// =============================================================================
+
+test.describe('Module K: Chore Calendar Extended (P1)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsOwner(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // K-17: GetChoresData API returns structured JSON
+  // ---------------------------------------------------------------------------
+  test('K-17: GetChoresData API returns structured data', async ({ page }) => {
+    // First get moleculeId from the Chores page
+    await navigateTo(page, '/Calendar/Chores');
+    const moleculeSelect = page.locator('#moleculeSelect');
+    await expect(moleculeSelect).toBeVisible({ timeout: 15000 });
+    const moleculeId = await moleculeSelect.inputValue();
+
+    // Calculate date range
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - dayOfWeek);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const startDate = weekStart.toISOString().split('T')[0];
+    const endDate = weekEnd.toISOString().split('T')[0];
+
+    // Call the API
+    const response = await page.request.get(
+      `http://localhost:5000/Api/Calendar/GetChoresData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`
+    );
+
+    // ASSERT: API responds successfully
+    expect(response.status()).toBe(200);
+
+    const data = await response.json();
+    expect(data.success).toBe(true);
+
+    // ASSERT: Response has expected structure
+    expect(data).toHaveProperty('data');
+    expect(data.data).toHaveProperty('chores');
+    expect(Array.isArray(data.data.chores)).toBe(true);
+
+    await saveEvidence(page, EVIDENCE, 'K-17-api-chores-data.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // K-18: View mode 2weeks shows 14 column headers on chore calendar
+  // ---------------------------------------------------------------------------
+  test('K-18: Chore calendar 2-week view renders correctly', async ({ page }) => {
+    await navigateTo(page, '/Calendar/Chores?ViewMode=2weeks');
+
+    const calendarContainer = page.locator('.chores-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    const hasTable = await page.locator('.excel-calendar__table').count() > 0;
+    const hasEmpty = await page.locator('.chores-calendar__empty').count() > 0;
+    expect(hasTable || hasEmpty).toBe(true);
+
+    if (hasTable) {
+      // ASSERT: 2-week view has 14 header columns
+      const headerDays = page.locator('.excel-calendar__header-day');
+      const headerCount = await headerDays.count();
+      expect(headerCount).toBe(14);
+    }
+
+    await saveEvidence(page, EVIDENCE, 'K-18-two-week-view.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // K-19: Chore calendar legend shows chore type colors
+  // ---------------------------------------------------------------------------
+  test('K-19: Chore calendar legend items have color indicators', async ({ page }) => {
+    await navigateTo(page, '/Calendar/Chores');
+
+    const calendarContainer = page.locator('.chores-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    // Check for legend (may not be present if no chore types exist)
+    const legend = page.locator('.chores-calendar__legend');
+    const legendCount = await legend.count();
+
+    if (legendCount > 0) {
+      const legendItems = legend.locator('.chores-calendar__legend-item');
+      const itemCount = await legendItems.count();
+      // ASSERT: At least one legend item if legend exists
+      expect(itemCount).toBeGreaterThanOrEqual(1);
+    }
+
+    // ASSERT: Calendar still renders regardless
+    await expect(calendarContainer).toBeVisible();
+
+    await saveEvidence(page, EVIDENCE, 'K-19-legend-colors.png');
+  });
+});

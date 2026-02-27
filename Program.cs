@@ -164,12 +164,31 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         // ✅ PHASE 18: Add auth required prompt when redirecting unauthorized users
         opt.Events = new CookieAuthenticationEvents
         {
-            OnRedirectToLogin = context =>
+            OnRedirectToLogin = async context =>
             {
+                // SAFEGUARD: If cookie auth challenge fires on an /api/ route, return 401
+                // instead of redirecting to the login page. API consumers expect JSON errors,
+                // not HTML redirects. This is defense-in-depth — normally ApiAuthenticationMiddleware
+                // (registered before UseAuthorization) handles /api/ auth. But if middleware ordering
+                // ever breaks, this prevents a confusing 302 to /Auth/Login.
+                if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        type = "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+                        title = "Unauthorized",
+                        status = 401,
+                        detail = "Authentication required. Provide a valid X-API-Key header.",
+                        instance = context.Request.Path.ToString()
+                    });
+                    return;
+                }
+
                 // Add reason=authRequired query parameter to inform user why they're seeing login
                 var returnUrl = context.Request.Path + context.Request.QueryString;
                 context.Response.Redirect($"/Auth/Login?reason=authRequired&returnUrl={Uri.EscapeDataString(returnUrl)}");
-                return Task.CompletedTask;
             }
         };
     });
@@ -625,6 +644,13 @@ using (var scope = app.Services.CreateScope())
                 .Where(jt => jobTypeNames.Contains(jt.Name))
                 .ToDictionaryAsync(jt => jt.Name, jt => jt.Id);
 
+            // Build set of already-resolved grants to detect duplicates on re-run
+            var resolvedSet = await db.RoleTemplateGrants
+                .Where(g => g.TargetJobTypeId != null && g.TargetJobTypeId > 0)
+                .Select(g => $"{g.RoleTemplateId}:{g.GrantTypeId}:{g.TargetJobTypeId}")
+                .ToListAsync();
+            var resolvedExisting = new HashSet<string>(resolvedSet);
+
             var resolved = 0;
             var removed = 0;
             foreach (var grant in sentinelGrants)
@@ -632,8 +658,19 @@ using (var scope = app.Services.CreateScope())
                 if (sentinelMap.TryGetValue(grant.TargetJobTypeId!.Value, out var jobTypeName) &&
                     jobTypeLookup.TryGetValue(jobTypeName, out var actualId))
                 {
-                    grant.TargetJobTypeId = actualId;
-                    resolved++;
+                    var key = $"{grant.RoleTemplateId}:{grant.GrantTypeId}:{actualId}";
+                    if (resolvedExisting.Contains(key))
+                    {
+                        // Already resolved in a previous run — remove the duplicate sentinel row
+                        db.RoleTemplateGrants.Remove(grant);
+                        removed++;
+                    }
+                    else
+                    {
+                        grant.TargetJobTypeId = actualId;
+                        resolvedExisting.Add(key);
+                        resolved++;
+                    }
                 }
                 else
                 {
@@ -1061,26 +1098,33 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while seeding E2E test data");
     }
 
-    // Repair grants for test users (seeder creates users but doesn't assign role template grants)
+    // ============================================================
+    // SEED QA AUTOMATION TEST USERS
+    // Creates all ~45 test users matching qa-automation TEST_USERS definitions
+    // Only runs in Development/Test environments
+    // ============================================================
+    try
+    {
+        await ShiftManager.Data.SeedData.QaTestUserSeed.SeedAsync(db, logger);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding QA test users");
+    }
+
+    // Repair grants for all test users with RoleTemplates (seeder creates users but doesn't assign role template grants)
     try
     {
         var grantService = scope.ServiceProvider.GetRequiredService<IGrantService>();
-        var testEmails = new[]
+        var testUsers = await db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.RoleTemplateId != null && (u.Email.EndsWith("@test") || u.Email.EndsWith("@shifty.test")))
+            .ToListAsync();
+        foreach (var user in testUsers)
         {
-            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.OwnerEmail,
-            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.DirectorEmail,
-            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.ManagerEmail,
-            ShiftManager.Data.SeedData.TestDataSeed.TestUsers.AssignerEmail,
-        };
-        foreach (var email in testEmails)
-        {
-            var user = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
-            if (user != null)
-            {
-                var repaired = await grantService.RepairUserGrantsAsync(user.Id);
-                if (repaired > 0)
-                    logger.LogInformation("Repaired {Count} grants for test user {Email}", repaired, email);
-            }
+            var repaired = await grantService.RepairUserGrantsAsync(user.Id);
+            if (repaired > 0)
+                logger.LogInformation("Repaired {Count} grants for test user {Email}", repaired, user.Email);
         }
     }
     catch (Exception ex)
@@ -1215,6 +1259,81 @@ app.UseMiddleware<CompanyContextMiddleware>();
 
 // Authentication must come before API middleware so cookie auth is available
 app.UseAuthentication();
+
+// CRITICAL: ApiAuthenticationMiddleware MUST run BEFORE UseAuthorization().
+// It reads X-API-Key from incoming /api/v1/* requests and sets HttpContext.User with
+// ApiKey claims. Without this, UseAuthorization() sees [Authorize] on V1 controllers,
+// finds no authenticated user (cookie auth finds no cookie), and triggers a 302 redirect
+// to /Auth/Login — meaning ALL API key auth is silently broken.
+//
+// This middleware is a no-op for non-/api paths (short-circuits at line 28), so Razor Pages
+// cookie auth is unaffected.
+//
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │ FUTURE REFACTOR: Option B — Register as a proper AuthenticationScheme  │
+// ├─────────────────────────────────────────────────────────────────────────┤
+// │ The correct long-term approach is to replace this middleware with a    │
+// │ registered ASP.NET Core authentication handler:                        │
+// │                                                                        │
+// │ 1. Create ApiKeyAuthHandler : AuthenticationHandler<ApiKeyAuthOptions>  │
+// │    - Move key lookup + validation into HandleAuthenticateAsync()        │
+// │    - Return AuthenticateResult.Success with ClaimsPrincipal on valid key│
+// │    - Return AuthenticateResult.Fail on invalid/missing key             │
+// │                                                                        │
+// │ 2. Implement HandleChallengeAsync (401 problem+json)                   │
+// │    and HandleForbidAsync (403 problem+json) so the framework           │
+// │    returns proper API error responses instead of cookie redirects.      │
+// │                                                                        │
+// │ 3. Register in Program.cs:                                             │
+// │    builder.Services.AddAuthentication(CookieAuthDefaults.Scheme)       │
+// │        .AddCookie(...)                                                 │
+// │        .AddScheme<ApiKeyAuthOptions, ApiKeyAuthHandler>("ApiKey", ...) │
+// │                                                                        │
+// │ 4. Update all V1 controllers:                                          │
+// │    [Authorize(AuthenticationSchemes = "ApiKey")]                        │
+// │                                                                        │
+// │ 5. Move scope-checking into a custom IAuthorizationHandler / policy    │
+// │    so authentication (who are you?) is separate from authorization     │
+// │    (what can you do?).                                                 │
+// │                                                                        │
+// │ Benefits: pipeline-position-independent, explicit scheme binding,      │
+// │ proper challenge/forbid at the framework level, future-proof for       │
+// │ adding JWT/OAuth schemes.                                              │
+// │                                                                        │
+// │ This middleware + the OnRedirectToLogin guard below are the interim    │
+// │ fix (Option A) until that refactor is done.                            │
+// └─────────────────────────────────────────────────────────────────────────┘
+// Wrap API auth in exception handling so DB failures (e.g. SQLITE_BUSY) during
+// API key lookup return problem+json instead of HTML. The main ApiExceptionMiddleware
+// is registered later in the pipeline and no longer wraps this middleware.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex) when (context.Request.Path.StartsWithSegments("/api"))
+    {
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("ApiAuthExceptionGuard");
+        logger.LogError(ex, "Unhandled exception during API authentication for {Path}", context.Request.Path);
+
+        if (!context.Response.HasStarted)
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+                title = "Internal Server Error",
+                status = 500,
+                detail = "An internal error occurred during authentication."
+            });
+        }
+    }
+});
+app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
+
 app.UseAuthorization();
 
 // B-016: Cache-Control headers for API responses
@@ -1261,9 +1380,10 @@ else if (!app.Environment.IsDevelopment())
 }
 
 // API Middleware (only for /api routes)
+// NOTE: ApiAuthenticationMiddleware is registered earlier (before UseAuthorization) —
+// see the CRITICAL comment above. Do NOT re-add it here.
 app.UseMiddleware<ShiftManager.Middleware.ApiExceptionMiddleware>(); // B-028: Standardized error responses
 app.UseMiddleware<ShiftManager.Middleware.ApiRequestLoggingMiddleware>();
-app.UseMiddleware<ShiftManager.Middleware.ApiAuthenticationMiddleware>();
 app.UseMiddleware<ShiftManager.Middleware.ApiRateLimitingMiddleware>(); // API key-based rate limiting
 app.MapControllers(); // Map API controllers
 

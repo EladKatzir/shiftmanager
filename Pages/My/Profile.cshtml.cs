@@ -70,15 +70,12 @@ public class ProfileModel : LocalizedPageModel
     [BindProperty]
     public IFormFile? AvatarFile { get; set; }
 
-    // Owner-editable fields (read-only for other users)
-    [BindProperty]
-    public string? Department { get; set; }
-
-    [BindProperty]
-    public string? JobTitle { get; set; }
-
     [BindProperty]
     public DateOnly? HireDate { get; set; }
+
+    // Computed display-only fields (derived from user's organizational hierarchy)
+    public string? MoleculeName { get; set; }
+    public string? ComputedJobTitle { get; set; }
 
     public string? AvatarUrl { get; set; }
     public string? InitialsForAvatar { get; set; }
@@ -109,7 +106,7 @@ public class ProfileModel : LocalizedPageModel
         // Grant-based check for professional info editing (Owner-level access)
         CanEditProfessionalInfo = await _grantService.HasGrantAsync(userId, "AdminAccess");
 
-        LoadUserData(user);
+        await LoadUserDataAsync(user);
 
         return Page();
     }
@@ -133,70 +130,70 @@ public class ProfileModel : LocalizedPageModel
         if (string.IsNullOrWhiteSpace(DisplayName))
         {
             ErrorMessage = _localizer["Profile_Error_DisplayNameRequired"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (DisplayName.Length > 200)
         {
             ErrorMessage = _localizer["Profile_Error_DisplayNameTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(PreferredName) && PreferredName.Length > 100)
         {
             ErrorMessage = _localizer["Profile_Error_PreferredNameTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length > 50)
         {
             ErrorMessage = _localizer["Profile_Error_PhoneTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(City) && City.Length > 100)
         {
             ErrorMessage = _localizer["Profile_Error_CityTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Skills) && Skills.Length > 5000)
         {
             ErrorMessage = _localizer["Profile_Error_SkillsTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Certifications) && Certifications.Length > 5000)
         {
             ErrorMessage = _localizer["Profile_Error_CertificationsTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactName) && EmergencyContactName.Length > 200)
         {
             ErrorMessage = _localizer["Profile_Error_EmergencyContactNameTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactPhone) && EmergencyContactPhone.Length > 50)
         {
             ErrorMessage = _localizer["Profile_Error_EmergencyContactPhoneTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactRelation) && EmergencyContactRelation.Length > 100)
         {
             ErrorMessage = _localizer["Profile_Error_EmergencyContactRelationTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
@@ -207,34 +204,19 @@ public class ProfileModel : LocalizedPageModel
             if (!success)
             {
                 ErrorMessage = error;
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 return Page();
             }
         }
 
-        // Check if user is Owner (can edit Department, JobTitle, HireDate)
+        // Check if user is Owner (can edit HireDate)
         var isOwner = await _grantService.HasGrantAsync(userId, "AdminAccess");
 
         // Validate HireDate for Owner
         if (isOwner && HireDate.HasValue && HireDate.Value > DateOnly.FromDateTime(DateTime.Today))
         {
             ErrorMessage = _localizer["Profile_Error_HireDateFuture"];
-            LoadUserData(user);
-            return Page();
-        }
-
-        // Validate Department and JobTitle length
-        if (isOwner && Department != null && Department.Length > 100)
-        {
-            ErrorMessage = _localizer["Profile_Error_DepartmentTooLong"];
-            LoadUserData(user);
-            return Page();
-        }
-
-        if (isOwner && JobTitle != null && JobTitle.Length > 100)
-        {
-            ErrorMessage = _localizer["Profile_Error_JobTitleTooLong"];
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
@@ -255,9 +237,9 @@ public class ProfileModel : LocalizedPageModel
             EmergencyContactName = EmergencyContactName,
             EmergencyContactPhone = EmergencyContactPhone,
             EmergencyContactRelation = EmergencyContactRelation,
-            // Owner-only fields
-            Department = isOwner ? Department : user.LegacyDepartment,
-            JobTitle = isOwner ? JobTitle : user.JobTitle,
+            // Preserve existing values (Molecule and JobTitle are now computed display-only)
+            Department = user.LegacyDepartment,
+            JobTitle = user.JobTitle,
             HireDate = isOwner ? HireDate : user.HireDate
         };
 
@@ -266,17 +248,17 @@ public class ProfileModel : LocalizedPageModel
         if (!updateSuccess)
         {
             ErrorMessage = updateError;
-            LoadUserData(user);
+            await LoadUserDataAsync(user);
             return Page();
         }
 
-        SuccessMessage = isOwner && (Department != user.LegacyDepartment || JobTitle != user.JobTitle || HireDate != user.HireDate)
+        SuccessMessage = isOwner && HireDate != user.HireDate
             ? _localizer["Profile_Success_UpdatedWithProfessionalInfo"]
             : _localizer["Profile_Success_Updated"];
 
         // Reload user data
         user = await _db.Users.FindAsync(userId);
-        LoadUserData(user!);
+        await LoadUserDataAsync(user!);
 
         return Page();
     }
@@ -301,24 +283,47 @@ public class ProfileModel : LocalizedPageModel
         }
 
         var user = await _db.Users.FindAsync(userId);
-        LoadUserData(user!);
+        await LoadUserDataAsync(user!);
 
         return Page();
     }
 
-    private void LoadUserData(AppUser user)
+    private async Task LoadUserDataAsync(AppUser user)
     {
         DisplayName = user.DisplayName;
         PreferredName = user.PreferredName;
         Phone = user.Phone;
         City = user.City;
         DateOfBirth = user.DateOfBirth;
-        Department = user.LegacyDepartment;
-        JobTitle = user.JobTitle;
         HireDate = user.HireDate;
         EmergencyContactName = user.EmergencyContactName;
         EmergencyContactPhone = user.EmergencyContactPhone;
         EmergencyContactRelation = user.EmergencyContactRelation;
+
+        // Molecule name: User → Company → Molecule
+        // SECURITY: IgnoreQueryFilters safe — fetching by explicit user.CompanyId
+        var company = await _db.Companies
+            .IgnoreQueryFilters()
+            .Include(c => c.Molecule)
+            .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+        MoleculeName = company?.Molecule?.DisplayName;
+
+        // Computed job title: JobType + Role
+        var roleKey = $"Role_{user.Role}";
+        var roleName = _localizer[roleKey].Value;
+        if (user.JobTypeId.HasValue)
+        {
+            var jobType = await _db.JobTypes
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(jt => jt.Id == user.JobTypeId.Value);
+            ComputedJobTitle = jobType != null
+                ? $"{jobType.DisplayName} — {roleName}"
+                : roleName;
+        }
+        else
+        {
+            ComputedJobTitle = roleName;
+        }
 
         // Parse skills and certifications
         SkillsList = ParseJsonArray(user.Skills);

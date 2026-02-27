@@ -16,6 +16,12 @@
     new BreadcrumbItem { Label = Localizer["TableView"], IsActive = true }
 })
 
+@{
+    var moleculeParams = Model.IsMoleculeMode
+        ? $"&MoleculeId={Model.MoleculeId}&JobTypeId={Model.JobTypeId}"
+        : "";
+}
+
 <style>
 .table-view-container {
     overflow-x: auto;
@@ -60,7 +66,7 @@
 
 .shift-table th {
     background-color: var(--primary);
-    color: var(--primary-text);
+    color: var(--primary-contrast);
     font-weight: 600;
     position: sticky;
     top: 0;
@@ -1484,33 +1490,75 @@
 
 <h2><loc key="ShiftAssignmentTable" /></h2>
 
+@if (Model.AvailableMolecules.Count > 1 || Model.IsMoleculeMode)
+{
+<div class="molecule-selector-bar" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--surface-alt, #f5f5f5); border-radius: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="moleculeSelect" style="font-weight: 600; white-space: nowrap;">@Localizer["Molecule"]</label>
+        <select id="moleculeSelect" class="form-select" style="min-width: 160px;" onchange="updateMoleculeFilter()">
+            <option value="">@Localizer["CompanyMode"]</option>
+            @foreach (var molecule in Model.AvailableMolecules)
+            {
+                if (molecule.Id == Model.MoleculeId)
+                {
+                    <option value="@molecule.Id" selected>@molecule.DisplayName</option>
+                }
+                else
+                {
+                    <option value="@molecule.Id">@molecule.DisplayName</option>
+                }
+            }
+        </select>
+    </div>
+    @if (Model.IsMoleculeMode)
+    {
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="jobTypeSelect" style="font-weight: 600; white-space: nowrap;">@Localizer["JobType"]</label>
+        <select id="jobTypeSelect" class="form-select" style="min-width: 140px;" onchange="updateMoleculeFilter()">
+            @foreach (var jobType in Model.AvailableJobTypes)
+            {
+                if (jobType.Id == Model.JobTypeId)
+                {
+                    <option value="@jobType.Id" selected>@jobType.DisplayName</option>
+                }
+                else
+                {
+                    <option value="@jobType.Id">@jobType.DisplayName</option>
+                }
+            }
+        </select>
+    </div>
+    }
+</div>
+}
+
 <!-- View Mode Toggle -->
 <div class="view-mode-toggle" style="margin-bottom: 1rem;">
-    <a href="/Calendar/Table?view=week&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+    <a href="/Calendar/Table?view=week&start=@Model.StartDate.ToString("yyyy-MM-dd")@moleculeParams"
        class="view-mode-btn @(Model.ViewMode == "week" ? "active" : "")">
         <loc key="ViewMode_Week" />
     </a>
-    <a href="/Calendar/Table?view=2weeks&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+    <a href="/Calendar/Table?view=2weeks&start=@Model.StartDate.ToString("yyyy-MM-dd")@moleculeParams"
        class="view-mode-btn @(Model.ViewMode == "2weeks" ? "active" : "")">
         <loc key="ViewMode_2Weeks" />
     </a>
-    <a href="/Calendar/Table?view=month&start=@Model.StartDate.ToString("yyyy-MM-dd")"
+    <a href="/Calendar/Table?view=month&start=@Model.StartDate.ToString("yyyy-MM-dd")@moleculeParams"
        class="view-mode-btn @(Model.ViewMode == "month" ? "active" : "")">
         <loc key="ViewMode_Month" />
     </a>
 </div>
 
 <div class="nav-buttons">
-    <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
+    <a href="/Calendar/Table?start=@Model.PreviousWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode@moleculeParams" class="btn-secondary">
         ← @Localizer["Pagination_Previous"]
     </a>
     <span style="font-weight: 600;">
         @Localization.FormatMediumDate(Model.StartDate) - @Localization.FormatMediumDate(Model.EndDate)
     </span>
-    <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode" class="btn-secondary">
+    <a href="/Calendar/Table?start=@Model.NextWeekStart.ToString("yyyy-MM-dd")&view=@Model.ViewMode@moleculeParams" class="btn-secondary">
         @Localizer["Pagination_Next"] →
     </a>
-    <a href="/Calendar/Table?view=@Model.ViewMode" class="btn btn-primary">
+    <a href="/Calendar/Table?view=@Model.ViewMode@moleculeParams" class="btn btn-primary">
         @Localizer["CurrentWeek"]
     </a>
 </div>
@@ -1562,6 +1610,10 @@
                             <div class="shift-metadata" id="metadata-@shiftType.Id">
                                 <strong>@(shiftType.Key.StartsWith("CUSTOM_") ? shiftType.Name : Localizer[$"ShiftType_{shiftType.Key}"].Value)</strong>
                                 <small style="color: var(--text-muted);">@Localization.FormatTime(shiftType.Start) - @Localization.FormatTime(shiftType.End)</small>
+                                @if (Model.IsMoleculeMode && Model.CompanyNames.TryGetValue(shiftType.CompanyId, out var ownerName))
+                                {
+                                    <span class="company-badge" title="@ownerName">🏢 @ownerName</span>
+                                }
                             </div>
                             <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
                                 <input type="text"
@@ -1762,11 +1814,31 @@
 
 <!-- Employee Dropdown -->
 <div class="employee-dropdown" id="employeeDropdown">
-    @foreach (var employee in Model.Employees)
+    @if (Model.IsMoleculeMode)
     {
-        <div class="employee-option" data-employee-id="@employee.Id" data-employee-name="@employee.DisplayName">
-            @employee.DisplayName
-        </div>
+        var lastCompanyId = -1;
+        foreach (var employee in Model.Employees)
+        {
+            if (employee.CompanyId != lastCompanyId)
+            {
+                lastCompanyId = employee.CompanyId;
+                <div class="employee-group-header" style="padding: 0.375rem 0.75rem; font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-top: 2px solid var(--primary, #3B82F6); background: var(--surface-alt, #f0f0f0);">
+                    @(Model.CompanyNames.GetValueOrDefault(employee.CompanyId, ""))
+                </div>
+            }
+            <div class="employee-option" data-employee-id="@employee.Id" data-employee-name="@employee.DisplayName" data-company-id="@employee.CompanyId">
+                @employee.DisplayName
+            </div>
+        }
+    }
+    else
+    {
+        foreach (var employee in Model.Employees)
+        {
+            <div class="employee-option" data-employee-id="@employee.Id" data-employee-name="@employee.DisplayName">
+                @employee.DisplayName
+            </div>
+        }
     }
 </div>
 
@@ -1816,6 +1888,11 @@ const MIN_AMOUNT = 1;
 
 // Busy users data per date (serialized from server)
 const busyUsersByDate = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BusyUsersByDate));
+
+// Molecule mode context — passed to POST handlers that need it
+const currentMoleculeId = @(Model.MoleculeId.HasValue ? Model.MoleculeId.Value.ToString() : "null");
+const currentJobTypeId = @(Model.JobTypeId.HasValue ? Model.JobTypeId.Value.ToString() : "null");
+const isMoleculeMode = @(Model.IsMoleculeMode ? "true" : "false");
 
 // Localized strings — SECURITY FIX: Use Json.Serialize for proper JS-context escaping (prevents XSS via admin localization overrides)
 const i18n = {
@@ -1965,7 +2042,9 @@ async function createCustomShiftRow() {
             body: JSON.stringify({
                 name: name,
                 startTime: start,
-                endTime: end
+                endTime: end,
+                moleculeId: isMoleculeMode ? currentMoleculeId : null,
+                jobTypeId: isMoleculeMode ? currentJobTypeId : null
             })
         });
 
@@ -2519,7 +2598,8 @@ async function confirmDeleteShift(instanceId, event) {
             headers: headers10,
             credentials: 'same-origin',
             body: JSON.stringify({
-                shiftInstanceId: instanceId
+                shiftInstanceId: instanceId,
+                moleculeId: isMoleculeMode ? currentMoleculeId : null
             })
         });
 
@@ -2868,13 +2948,30 @@ async function detachFromProgram(instanceId, reason) {
     }
 }
 
+// Molecule mode navigation
+function updateMoleculeFilter() {
+    const moleculeSelect = document.getElementById('moleculeSelect');
+    const jobTypeSelect = document.getElementById('jobTypeSelect');
+    const moleculeId = moleculeSelect ? moleculeSelect.value : '';
+    const jobTypeId = jobTypeSelect ? jobTypeSelect.value : '';
+
+    let url = '/Calendar/Table?view=@Model.ViewMode&start=@Model.StartDate.ToString("yyyy-MM-dd")';
+    if (moleculeId) {
+        url += '&MoleculeId=' + moleculeId;
+        if (jobTypeId) {
+            url += '&JobTypeId=' + jobTypeId;
+        }
+    }
+    window.location.href = url;
+}
+
 </script>
 
 <!-- Roster Dock Sidebar -->
 <div id="rosterDock" class="roster-dock">
     <div class="roster-dock-header">
         <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">
-            👥 Roster
+            👥 <loc key="Roster" />
         </h3>
         <button class="close-roster-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">
             ×
@@ -2902,7 +2999,7 @@ async function detachFromProgram(instanceId, reason) {
 
 <!-- Radar Mode Toggle Button (Fixed Position) -->
 <button id="radarToggle" class="radar-toggle-btn" onclick="toggleRadarMode()" loc-title="Title_ToggleRadarMode">
-    📡 Radar
+    📡 <loc key="Radar" />
 </button>
 
 @Html.AntiForgeryToken()

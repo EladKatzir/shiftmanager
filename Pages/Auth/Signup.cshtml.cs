@@ -108,18 +108,7 @@ public class SignupModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // SECURITY FIX: Rate limiting — per-IP, 5 attempts per 15 minutes
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var ipRateLimitKey = $"signup:ip:{ipAddress}";
-
-        if (!_rateLimiting.IsAllowed(ipRateLimitKey, 5, 15))
-        {
-            _logger.LogWarning("Signup rate limit exceeded for IP: {IP}", ipAddress);
-            Error = _localizer["Error_Login_RateLimitExceeded"];
-            return Page();
-        }
-
-        // SECURITY FIX: Only allow if public signup is explicitly enabled
+        // Load page state BEFORE rate limit check so the form re-renders properly when rate-limited (Bug 4 fix)
         IsPublicSignupEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
         if (IsPublicSignupEnabled)
         {
@@ -136,6 +125,17 @@ public class SignupModel : LocalizedPageModel
         else
         {
             Error = _localizer["Error_Signup_PublicDisabled"];
+            return Page();
+        }
+
+        // Rate limiting — per-IP, 50 attempts per 10 minutes (Bug 3 fix: relaxed from 5/15min)
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ipRateLimitKey = $"signup:ip:{ipAddress}";
+
+        if (!_rateLimiting.IsAllowed(ipRateLimitKey, 50, 10))
+        {
+            _logger.LogWarning("Signup rate limit exceeded for IP: {IP}", ipAddress);
+            Error = _localizer["Error_Login_RateLimitExceeded"];
             return Page();
         }
 

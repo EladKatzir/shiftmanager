@@ -1241,3 +1241,412 @@ public class GrantScopeResolutionTests : IDisposable
         result2.Should().BeTrue();
     }
 }
+
+/// <summary>
+/// AA-U04, AA-U05: Phase 1 gap tests for grant authorization.
+/// Tests project-scope coverage and self-scoped grant skip behavior.
+/// </summary>
+public class GrantAuthPhase1Tests : IDisposable
+{
+    private readonly AppDbContext _db;
+    private readonly GrantService _service;
+    private readonly Mock<IHierarchyService> _hierarchyServiceMock;
+
+    public GrantAuthPhase1Tests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _db = new AppDbContext(options);
+        _hierarchyServiceMock = new Mock<IHierarchyService>();
+        _service = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+    }
+
+    private async Task<(Project project, Area area, Molecule molecule, Company company1, Company company2, GrantType grantType, AppUser user)> SetupHierarchyAsync()
+    {
+        var project = new Project { Name = "TestProject", DisplayName = "Test" };
+        _db.Projects.Add(project);
+        await _db.SaveChangesAsync();
+
+        var area = new Area { ProjectId = project.Id, Name = "TestArea", DisplayName = "Test Area" };
+        _db.Areas.Add(area);
+        await _db.SaveChangesAsync();
+
+        var molecule = new Molecule { AreaId = area.Id, Name = "TestMolecule", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(molecule);
+        await _db.SaveChangesAsync();
+
+        var company1 = new Company { MoleculeId = molecule.Id, Name = "Company1", DisplayName = "Company 1" };
+        var company2 = new Company { MoleculeId = molecule.Id, Name = "Company2", DisplayName = "Company 2" };
+        _db.Companies.AddRange(company1, company2);
+        await _db.SaveChangesAsync();
+
+        var grantType = new GrantType { Key = "Shift.View", NameKey = "Grant_Shift_View", Category = GrantCategory.Shift };
+        _db.GrantTypes.Add(grantType);
+        await _db.SaveChangesAsync();
+
+        var user = new AppUser
+        {
+            CompanyId = company1.Id,
+            Email = "test@test.com",
+            DisplayName = "Test User",
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        var hierarchyPath = new HierarchyPath(project, area, molecule, company1, null);
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(user.Id))
+            .ReturnsAsync(new UserHierarchyContext(
+                UserId: user.Id,
+                Path: hierarchyPath,
+                JobType: null,
+                IsWorkforce: true,
+                IsTech: false
+            ));
+
+        return (project, area, molecule, company1, company2, grantType, user);
+    }
+
+    // -----------------------------------------------------------------------
+    // AA-U04  Project-scoped grant covers everything under it
+    // -----------------------------------------------------------------------
+    [Fact]
+    public async Task AAU04_ProjectScope_CoversAllChildCompanies()
+    {
+        // Arrange: User has grant scoped to project level
+        var (project, area, molecule, company1, company2, grantType, user) = await SetupHierarchyAsync();
+
+        await _service.GrantAsync(user.Id, grantType.Id, GrantScope.Project(project.Id));
+
+        // Act: Check grant at various child scopes
+        var hasAtProject = await _service.HasGrantWithScopeAsync(user.Id, "Shift.View", projectId: project.Id);
+        var hasAtArea = await _service.HasGrantWithScopeAsync(user.Id, "Shift.View", areaId: area.Id);
+        var hasAtCompany1 = await _service.HasGrantWithScopeAsync(user.Id, "Shift.View", companyId: company1.Id);
+
+        // Assert: Project scope should cover project, area, and companies within
+        hasAtProject.Should().BeTrue("Project-scoped grant should cover the project itself");
+        hasAtArea.Should().BeTrue("Project-scoped grant should cover areas under the project");
+        hasAtCompany1.Should().BeTrue("Project-scoped grant should cover companies under the project");
+    }
+
+    // -----------------------------------------------------------------------
+    // AA-U05  Self-scoped grant (all null) is skipped in HasGrantWithScopeAsync
+    // -----------------------------------------------------------------------
+    [Fact]
+    public async Task AAU05_SelfScopedGrant_SkippedInHasGrantWithScopeAsync()
+    {
+        // Arrange: User has a self-scoped grant (all scope fields null).
+        // This is the behavior documented in MEMORY.md: "Self-scoped grants
+        // (all-null scope) are intentionally skipped in HasGrantWithScopeAsync"
+        var (project, area, molecule, company1, company2, grantType, user) = await SetupHierarchyAsync();
+
+        await _service.GrantAsync(user.Id, grantType.Id, GrantScope.Self());
+
+        // Act: HasGrantAsync (no scope check) should return true
+        var hasGrantNoScope = await _service.HasGrantAsync(user.Id, "Shift.View");
+
+        // Act: HasGrantWithScopeAsync with company scope should return false
+        // because the self-scoped grant has no scope fields and is skipped
+        // unless targetUserId matches
+        var hasGrantWithCompanyScope = await _service.HasGrantWithScopeAsync(
+            user.Id, "Shift.View", companyId: company1.Id);
+
+        // Act: HasGrantWithScopeAsync with targetUserId == self should return true
+        var hasGrantSelfTarget = await _service.HasGrantWithScopeAsync(
+            user.Id, "Shift.View", targetUserId: user.Id);
+
+        // Act: HasGrantWithScopeAsync with targetUserId == other should return false
+        var hasGrantOtherTarget = await _service.HasGrantWithScopeAsync(
+            user.Id, "Shift.View", targetUserId: user.Id + 999);
+
+        // Assert
+        hasGrantNoScope.Should().BeTrue("HasGrantAsync without scope should find the grant");
+        hasGrantWithCompanyScope.Should().BeFalse("Self-scoped grant should NOT match company-scoped checks");
+        hasGrantSelfTarget.Should().BeTrue("Self-scoped grant should match when targetUserId is the grant owner");
+        hasGrantOtherTarget.Should().BeFalse("Self-scoped grant should NOT match when targetUserId is a different user");
+    }
+}
+
+/// <summary>
+/// AA-U06 + AA-U07: Auto-grants from RoleTemplate and CanGive delegation
+/// Verifies scope mode resolution (SAR, ExpandToMolecule, UseOwnJobType)
+/// and delegation authority checks (CanGive enforcement, ScopeCovers).
+/// </summary>
+public class GrantAutoGrantAndDelegationTests : IDisposable
+{
+    private readonly AppDbContext _db;
+    private readonly GrantService _service;
+    private readonly Mock<IHierarchyService> _hierarchyServiceMock;
+
+    public GrantAutoGrantAndDelegationTests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _db = new AppDbContext(options);
+        _hierarchyServiceMock = new Mock<IHierarchyService>();
+        _service = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+    }
+
+    private async Task<AutoGrantTestEntities> SetupAutoGrantTestAsync()
+    {
+        var project = new Project { Name = "TestProject", DisplayName = "Test" };
+        _db.Projects.Add(project);
+        await _db.SaveChangesAsync();
+
+        var area = new Area { ProjectId = project.Id, Name = "TestArea", DisplayName = "Test Area" };
+        _db.Areas.Add(area);
+        await _db.SaveChangesAsync();
+
+        var molecule = new Molecule { AreaId = area.Id, Name = "TestMolecule", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(molecule);
+        await _db.SaveChangesAsync();
+
+        var company = new Company { MoleculeId = molecule.Id, Name = "TestCompany", DisplayName = "Test Company" };
+        _db.Companies.Add(company);
+        await _db.SaveChangesAsync();
+
+        var jobType = new JobType { Name = "Alhut", DisplayName = "Alhut" };
+        _db.JobTypes.Add(jobType);
+        await _db.SaveChangesAsync();
+
+        var viewGrant = new GrantType { Key = "Shift.View", NameKey = "Grant_Shift_View", Category = GrantCategory.Shift };
+        var editGrant = new GrantType { Key = "Shift.Edit", NameKey = "Grant_Shift_Edit", Category = GrantCategory.Shift };
+        var assignGrant = new GrantType { Key = "Shift.Assign", NameKey = "Grant_Shift_Assign", Category = GrantCategory.Shift };
+        _db.GrantTypes.AddRange(viewGrant, editGrant, assignGrant);
+        await _db.SaveChangesAsync();
+
+        var user = new AppUser
+        {
+            CompanyId = company.Id,
+            Email = "autogrant-user@test.com",
+            DisplayName = "AutoGrant User",
+            JobTypeId = jobType.Id,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        var hierarchyPath = new HierarchyPath(project, area, molecule, company, null);
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(user.Id))
+            .ReturnsAsync(new UserHierarchyContext(
+                UserId: user.Id,
+                Path: hierarchyPath,
+                JobType: jobType,
+                IsWorkforce: true,
+                IsTech: false
+            ));
+
+        return new AutoGrantTestEntities(
+            Project: project,
+            Area: area,
+            Molecule: molecule,
+            Company: company,
+            JobType: jobType,
+            GrantTypes: new Dictionary<string, GrantType>
+            {
+                ["Shift.View"] = viewGrant,
+                ["Shift.Edit"] = editGrant,
+                ["Shift.Assign"] = assignGrant
+            },
+            User: user
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // AA-U06  Auto-grants from RoleTemplate with scope mode resolution
+    // -----------------------------------------------------------------------
+    [Fact]
+    public async Task AAU06_ApplyAutoGrants_SameAsRole_ExtractsOnlyCompanyScope()
+    {
+        // Arrange: Create a template with SAR + ExpandToMolecule grants
+        var e = await SetupAutoGrantTestAsync();
+
+        var template = new RoleTemplate
+        {
+            Key = "TestSAR",
+            NameKey = "Role_TestSAR",
+            DescriptionKey = "Role_TestSAR_Desc",
+            ScopeLevel = RoleScopeLevel.Company,
+            IsSystem = false,
+            IsActive = true,
+            SortOrder = 99
+        };
+        _db.RoleTemplates.Add(template);
+        await _db.SaveChangesAsync();
+
+        // SAR grant (should extract CompanyId only, strip Project/Area/Molecule)
+        var sarAutoGrant = new RoleTemplateGrant
+        {
+            RoleTemplateId = template.Id,
+            GrantTypeId = e.GrantTypes["Shift.View"].Id,
+            CanOwn = true,
+            CanGive = false,
+            ScopeMode = GrantScopeMode.SameAsRole
+        };
+        // ExpandToMolecule grant (should extract MoleculeId only)
+        var moleculeAutoGrant = new RoleTemplateGrant
+        {
+            RoleTemplateId = template.Id,
+            GrantTypeId = e.GrantTypes["Shift.Edit"].Id,
+            CanOwn = true,
+            CanGive = true,
+            ScopeMode = GrantScopeMode.ExpandToMolecule
+        };
+        // UseOwnJobType grant (should resolve to user's JobTypeId)
+        var jobTypeAutoGrant = new RoleTemplateGrant
+        {
+            RoleTemplateId = template.Id,
+            GrantTypeId = e.GrantTypes["Shift.Assign"].Id,
+            CanOwn = true,
+            CanGive = false,
+            ScopeMode = GrantScopeMode.SameAsRole,
+            UseOwnJobType = true
+        };
+        _db.RoleTemplateGrants.AddRange(sarAutoGrant, moleculeAutoGrant, jobTypeAutoGrant);
+        await _db.SaveChangesAsync();
+
+        // Supply full hierarchy scope (Project/Area/Molecule/Company + JobType)
+        var roleScope = new GrantScope(
+            ProjectId: e.Project.Id,
+            AreaId: e.Area.Id,
+            MoleculeId: e.Molecule.Id,
+            CompanyId: e.Company.Id,
+            JobTypeId: e.JobType.Id
+        );
+
+        // Act
+        await _service.ApplyAutoGrantsAsync(e.User.Id, template.Id, roleScope);
+
+        // Assert
+        var grants = await _service.GetUserGrantsAsync(e.User.Id);
+        grants.Should().HaveCount(3, "Template has 3 auto-grants");
+
+        // SAR grant: ONLY CompanyId should be set (Project/Area/Molecule stripped)
+        var sarGrant = grants.First(g => g.GrantTypeId == e.GrantTypes["Shift.View"].Id);
+        sarGrant.CompanyId.Should().Be(e.Company.Id, "SAR scope should preserve CompanyId");
+        sarGrant.ProjectId.Should().BeNull("SAR scope MUST strip ProjectId to prevent over-granting");
+        sarGrant.AreaId.Should().BeNull("SAR scope MUST strip AreaId");
+        sarGrant.MoleculeId.Should().BeNull("SAR scope MUST strip MoleculeId");
+        sarGrant.JobTypeId.Should().BeNull("SAR grant without UseOwnJobType should have null JobTypeId");
+        sarGrant.IsAutoGrant.Should().BeTrue("Auto-grant flag should be set");
+
+        // ExpandToMolecule grant: ONLY MoleculeId should be set
+        var molGrant = grants.First(g => g.GrantTypeId == e.GrantTypes["Shift.Edit"].Id);
+        molGrant.MoleculeId.Should().Be(e.Molecule.Id, "ExpandToMolecule should set MoleculeId");
+        molGrant.ProjectId.Should().BeNull("ExpandToMolecule MUST strip ProjectId");
+        molGrant.AreaId.Should().BeNull("ExpandToMolecule MUST strip AreaId");
+        molGrant.CompanyId.Should().BeNull("ExpandToMolecule MUST strip CompanyId");
+        molGrant.CanGive.Should().BeTrue("CanGive should be preserved from template");
+
+        // UseOwnJobType grant: should have user's JobTypeId overlaid on SAR scope
+        var jtGrant = grants.First(g => g.GrantTypeId == e.GrantTypes["Shift.Assign"].Id);
+        jtGrant.JobTypeId.Should().Be(e.JobType.Id, "UseOwnJobType should resolve to user's JobTypeId");
+        jtGrant.CompanyId.Should().Be(e.Company.Id, "SAR scope with UseOwnJobType keeps CompanyId");
+    }
+
+    // -----------------------------------------------------------------------
+    // AA-U07  CanGive delegation allows granting to others at matching scope
+    // -----------------------------------------------------------------------
+    [Fact]
+    public async Task AAU07_CanGiveDelegation_RespectsHierarchicalScopeRules()
+    {
+        // Arrange: Granter has molecule-scoped grant with CanGive=true
+        var e = await SetupAutoGrantTestAsync();
+
+        var granter = new AppUser
+        {
+            CompanyId = e.Company.Id,
+            Email = "granter@test.com",
+            DisplayName = "Granter",
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(granter);
+        await _db.SaveChangesAsync();
+
+        // Give granter a molecule-scoped grant with CanGive=true
+        _db.Grants.Add(new Grant
+        {
+            UserId = granter.Id,
+            GrantTypeId = e.GrantTypes["Shift.View"].Id,
+            MoleculeId = e.Molecule.Id,
+            CanOwn = true,
+            CanGive = true,
+            GrantedAt = DateTime.UtcNow,
+            IsAutoGrant = false
+        });
+        await _db.SaveChangesAsync();
+
+        // Act & Assert: Can delegate at same scope (molecule)
+        var canGrantMolecule = await _service.CanUserGrantAsync(
+            granter.Id, e.GrantTypes["Shift.View"].Id, GrantScope.Molecule(e.Molecule.Id));
+        canGrantMolecule.Should().BeTrue("Granter with molecule-scoped CanGive should delegate at molecule level");
+
+        // Act & Assert: Can delegate at narrower scope (company within molecule)
+        var canGrantCompany = await _service.CanUserGrantAsync(
+            granter.Id, e.GrantTypes["Shift.View"].Id, GrantScope.Company(e.Company.Id));
+        canGrantCompany.Should().BeTrue("Granter with molecule-scoped CanGive should delegate at company level (narrower)");
+
+        // Act & Assert: CANNOT delegate at broader scope (area)
+        var canGrantArea = await _service.CanUserGrantAsync(
+            granter.Id, e.GrantTypes["Shift.View"].Id, GrantScope.Area(e.Area.Id));
+        canGrantArea.Should().BeFalse("Granter with molecule-scoped CanGive should NOT delegate at area level (broader)");
+
+        // Act & Assert: CANNOT delegate at project scope
+        var canGrantProject = await _service.CanUserGrantAsync(
+            granter.Id, e.GrantTypes["Shift.View"].Id, GrantScope.Project(e.Project.Id));
+        canGrantProject.Should().BeFalse("Granter with molecule-scoped CanGive should NOT delegate at project level (broader)");
+
+        // Act & Assert: Self-scoped grant with CanGive cannot delegate to non-self targets
+        _db.Grants.Add(new Grant
+        {
+            UserId = granter.Id,
+            GrantTypeId = e.GrantTypes["Shift.Edit"].Id,
+            // All scope fields null = self-scoped
+            CanOwn = true,
+            CanGive = true,
+            GrantedAt = DateTime.UtcNow,
+            IsAutoGrant = false
+        });
+        await _db.SaveChangesAsync();
+
+        var canGrantSelfScoped = await _service.CanUserGrantAsync(
+            granter.Id, e.GrantTypes["Shift.Edit"].Id, GrantScope.Company(e.Company.Id));
+        canGrantSelfScoped.Should().BeFalse("Self-scoped grant (all null) cannot delegate to others");
+
+        // Act & Assert: GrantAsync enforces delegation — no CanGive for Shift.Assign → throws
+        await FluentActions.Invoking(() => _service.GrantAsync(
+            e.User.Id,
+            e.GrantTypes["Shift.Assign"].Id,
+            GrantScope.Company(e.Company.Id),
+            grantedByUserId: granter.Id
+        )).Should().ThrowAsync<UnauthorizedAccessException>(
+            "Granting a type the granter doesn't have CanGive for should throw");
+    }
+
+    private record AutoGrantTestEntities(
+        Project Project,
+        Area Area,
+        Molecule Molecule,
+        Company Company,
+        JobType JobType,
+        Dictionary<string, GrantType> GrantTypes,
+        AppUser User
+    );
+}

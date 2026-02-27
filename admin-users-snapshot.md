@@ -1,0 +1,893 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]: "CRITICAL: Disk space is critically low (1.5% free). Database may fail."
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e7] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e9]
+        - generic [ref=e10]:
+          - generic [ref=e11]: SHIFTY
+          - generic [ref=e12]: Shift Manager
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: 📍
+          - generic [ref=e16]: Currently Viewing
+        - button "SystemAdmins" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: 🏢
+            - generic [ref=e20]: SystemAdmins
+          - generic [ref=e21]: ▼
+      - navigation [ref=e22]:
+        - generic [ref=e23]: 📅 My Shifty
+        - link "🏠 Home" [ref=e24] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e25]: 🏠
+          - generic [ref=e26]: Home
+        - link "📅 Schedule" [ref=e27] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e28]: 📅
+          - generic [ref=e29]: Schedule
+        - link "📋 Company Overview" [ref=e30] [cursor=pointer]:
+          - /url: /Calendar/Overview
+          - generic [ref=e31]: 📋
+          - generic [ref=e32]: Company Overview
+        - link "📝 Requests" [ref=e33] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e34]: 📝
+          - generic [ref=e35]: Requests
+        - link "📊 Analytics" [ref=e36] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e37]: 📊
+          - generic [ref=e38]: Analytics
+        - link "🔍 Audit Log" [ref=e39] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e40]: 🔍
+          - generic [ref=e41]: Audit Log
+        - link "👥 People" [ref=e42] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e43]: 👥
+          - generic [ref=e44]: People
+        - link "🏢 Companies" [ref=e45] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e46]: 🏢
+          - generic [ref=e47]: Companies
+        - link "⚙️ Settings" [ref=e48] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e49]: ⚙️
+          - generic [ref=e50]: Settings
+        - link "Duty Rotations" [ref=e51] [cursor=pointer]:
+          - /url: /Admin/DutyRotation
+          - img [ref=e53]
+          - generic [ref=e58]: Duty Rotations
+        - link "Setup Tasks" [ref=e59] [cursor=pointer]:
+          - /url: /Admin/SetupTasks
+          - img [ref=e61]
+          - generic [ref=e64]: Setup Tasks
+        - link "Approval Rules" [ref=e65] [cursor=pointer]:
+          - /url: /Admin/Settings/ApprovalRules
+          - img [ref=e67]
+          - generic [ref=e70]: Approval Rules
+        - generic [ref=e71]: 🔧 Owner Administration
+        - link "🔧 Owner Administration" [ref=e72] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e73]: 🔧
+          - generic [ref=e74]: Owner Administration
+        - link "Telemetry" [ref=e75] [cursor=pointer]:
+          - /url: /Owner/Telemetry
+          - img [ref=e77]
+          - generic [ref=e79]: Telemetry
+        - link "🤝 My Friends" [ref=e80] [cursor=pointer]:
+          - /url: /Friends
+          - generic [ref=e81]: 🤝
+          - generic [ref=e82]: My Friends
+        - generic [ref=e83]: ⚙️ Management
+        - link "📊 Scheduled Shifts" [ref=e84] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e85]: 📊
+          - generic [ref=e86]: Scheduled Shifts
+        - link "🗂️ Chores" [ref=e87] [cursor=pointer]:
+          - /url: /Calendar/Chores
+          - generic [ref=e88]: 🗂️
+          - generic [ref=e89]: Chores
+        - link "🎯 Day Shifts" [ref=e90] [cursor=pointer]:
+          - /url: /Calendar/OnCall
+          - generic [ref=e91]: 🎯
+          - generic [ref=e92]: Day Shifts
+      - generic [ref=e93]:
+        - button "מ מנהל Owner ▼" [ref=e95] [cursor=pointer]:
+          - generic [ref=e96]: מ
+          - generic [ref=e97]:
+            - generic [ref=e98]: מנהל
+            - generic [ref=e99]: Owner
+          - generic [ref=e100]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e101]:
+          - generic [ref=e102]: ⌨️
+          - generic [ref=e103]: Ctrl
+          - generic [ref=e104]: +
+          - generic [ref=e105]: K
+      - button "Toggle sidebar (Ctrl+B)" [expanded] [ref=e106] [cursor=pointer]:
+        - generic [ref=e107]: ◀
+    - generic [ref=e108]:
+      - banner [ref=e109]:
+        - generic [ref=e110]:
+          - heading "User Management" [level=1] [ref=e112]
+          - generic [ref=e113]:
+            - link "✓" [ref=e115] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e116]: ✓
+            - link "🔔" [ref=e117] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e118]: 🔔
+            - button "Language" [ref=e120] [cursor=pointer]:
+              - generic [ref=e121]: 🌐
+              - generic [ref=e122]: En
+            - button "Toggle dark mode" [ref=e123] [cursor=pointer]:
+              - generic [ref=e124]: 🌓
+            - button "🚪 Logout" [ref=e126] [cursor=pointer]:
+              - generic [ref=e127]: 🚪
+              - generic [ref=e128]: Logout
+      - main [ref=e129]:
+        - navigation [ref=e130]:
+          - list [ref=e131]:
+            - listitem "Admin" [ref=e132]
+        - generic [ref=e133]:
+          - generic [ref=e134]:
+            - heading "User Management" [level=1] [ref=e135]
+            - paragraph [ref=e136]: Manage users, join requests, and permissions across your organization
+          - link "📊 Export CSV" [ref=e138] [cursor=pointer]:
+            - /url: /Admin/Users?handler=ExportCsv
+        - generic [ref=e139]:
+          - heading "Join Requests" [level=2] [ref=e140]
+          - generic [ref=e142]:
+            - generic [ref=e143]:
+              - generic [ref=e144]: Status
+              - combobox "Status" [ref=e145] [cursor=pointer]:
+                - option "Pending" [selected]
+                - option "Approved"
+                - option "Rejected"
+            - generic [ref=e146]:
+              - generic [ref=e147]: Company
+              - combobox "Company" [ref=e148] [cursor=pointer]:
+                - option "All Companies" [selected]
+                - option "Camps"
+                - option "City"
+                - option "Element"
+                - option "GAP"
+                - option "Hamasa"
+                - option "Hir"
+                - option "Hitazmut"
+                - option "Inside"
+                - option "Kabah"
+                - option "Matot"
+                - option "Multi Test A"
+                - option "Multi Test B"
+                - option "Out"
+                - option "Radio"
+                - option "SystemAdmins"
+                - option "Test Company"
+                - option "Test Company Empty"
+                - option "Test Company Full"
+                - option "Tzafona"
+                - option "Yeadim"
+            - generic [ref=e149]:
+              - generic [ref=e150]: Role
+              - combobox "Role" [ref=e151] [cursor=pointer]:
+                - option "All Roles" [selected]
+                - option "Owner"
+                - option "Manager"
+                - option "Employee"
+                - option "Director"
+                - option "Trainee"
+                - option "Assigner"
+                - option "Area Admin"
+          - paragraph [ref=e152]: No join requests found with the current filters.
+        - generic [ref=e153]:
+          - heading "Existing Users" [level=2] [ref=e154]
+          - generic [ref=e156]:
+            - generic [ref=e157]:
+              - generic [ref=e158]: Company
+              - combobox [ref=e159] [cursor=pointer]:
+                - option "All Companies" [selected]
+                - option "Camps"
+                - option "City"
+                - option "Element"
+                - option "GAP"
+                - option "Hamasa"
+                - option "Hir"
+                - option "Hitazmut"
+                - option "Inside"
+                - option "Kabah"
+                - option "Matot"
+                - option "Multi Test A"
+                - option "Multi Test B"
+                - option "Out"
+                - option "Radio"
+                - option "SystemAdmins"
+                - option "Test Company"
+                - option "Test Company Empty"
+                - option "Test Company Full"
+                - option "Tzafona"
+                - option "Yeadim"
+            - generic [ref=e160]:
+              - generic [ref=e161]: Role
+              - combobox [ref=e162] [cursor=pointer]:
+                - option "All Roles" [selected]
+                - option "Owner"
+                - option "Manager"
+                - option "Employee"
+                - option "Director"
+                - option "Trainee"
+                - option "Assigner"
+                - option "Area Admin"
+            - generic [ref=e163]:
+              - generic [ref=e164]: Molecule
+              - combobox [ref=e165] [cursor=pointer]:
+                - option "All Molecules" [selected]
+                - option "190 - אלה"
+                - option "190 - גפן"
+                - option "190 - ערבה"
+                - option "190 - נגדים"
+                - option "190 - אורן"
+                - option "190 - שקד"
+                - option "190 - שקלוט"
+                - option "190 - שקמה"
+                - option "190 - מערכת"
+            - generic [ref=e166]:
+              - generic [ref=e167]: Job Type
+              - combobox [ref=e168] [cursor=pointer]:
+                - option "All Job Types" [selected]
+                - option "190 - אלחוט"
+                - option "190 - ב\"ר"
+                - option "190 - חק\"ם"
+                - option "190 - טקסט"
+          - table [ref=e170]:
+            - rowgroup [ref=e171]:
+              - row "Name Email Company Job Type Department Role Grants Status Password Actions" [ref=e172]:
+                - columnheader "Name" [ref=e173]
+                - columnheader "Email" [ref=e174]
+                - columnheader "Company" [ref=e175]
+                - columnheader "Job Type" [ref=e176]
+                - columnheader "Department" [ref=e177]
+                - columnheader "Role" [ref=e178]
+                - columnheader "Grants" [ref=e179]
+                - columnheader "Status" [ref=e180]
+                - columnheader "Password" [ref=e181]
+                - columnheader "Actions" [ref=e182]
+            - rowgroup [ref=e183]:
+              - row "Test Director test.director@shifty.test Camps אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e184]:
+                - cell "Test Director" [ref=e185]
+                - cell "test.director@shifty.test" [ref=e186]
+                - cell "Camps" [ref=e187]
+                - cell "אלחוט Edit job type" [ref=e188]:
+                  - generic [ref=e189]:
+                    - generic [ref=e190]: אלחוט
+                    - button "Edit job type" [ref=e191] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e192]
+                - cell "Mem-Mem Edit role" [ref=e193]:
+                  - generic [ref=e194]:
+                    - generic [ref=e195]: Mem-Mem
+                    - button "Edit role" [ref=e196] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e197]:
+                  - generic [ref=e198]: "46"
+                - cell "Active" [ref=e199]:
+                  - button "Active" [ref=e201] [cursor=pointer]
+                - cell "Set" [ref=e202]:
+                  - generic [ref=e204]:
+                    - textbox "New Password" [ref=e205]
+                    - button "Set" [ref=e206] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e207]:
+                  - generic [ref=e208]:
+                    - link "✏️" [ref=e209] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e211] [cursor=pointer]
+              - row "Test Director test.director@shifty.test City אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e212]:
+                - cell "Test Director" [ref=e213]
+                - cell "test.director@shifty.test" [ref=e214]
+                - cell "City" [ref=e215]
+                - cell "אלחוט Edit job type" [ref=e216]:
+                  - generic [ref=e217]:
+                    - generic [ref=e218]: אלחוט
+                    - button "Edit job type" [ref=e219] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e220]
+                - cell "Mem-Mem Edit role" [ref=e221]:
+                  - generic [ref=e222]:
+                    - generic [ref=e223]: Mem-Mem
+                    - button "Edit role" [ref=e224] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e225]:
+                  - generic [ref=e226]: "46"
+                - cell "Active" [ref=e227]:
+                  - button "Active" [ref=e229] [cursor=pointer]
+                - cell "Set" [ref=e230]:
+                  - generic [ref=e232]:
+                    - textbox "New Password" [ref=e233]
+                    - button "Set" [ref=e234] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e235]:
+                  - generic [ref=e236]:
+                    - link "✏️" [ref=e237] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e239] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Hir אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e240]:
+                - cell "Test Director" [ref=e241]
+                - cell "test.director@shifty.test" [ref=e242]
+                - cell "Hir" [ref=e243]
+                - cell "אלחוט Edit job type" [ref=e244]:
+                  - generic [ref=e245]:
+                    - generic [ref=e246]: אלחוט
+                    - button "Edit job type" [ref=e247] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e248]
+                - cell "Mem-Mem Edit role" [ref=e249]:
+                  - generic [ref=e250]:
+                    - generic [ref=e251]: Mem-Mem
+                    - button "Edit role" [ref=e252] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e253]:
+                  - generic [ref=e254]: "46"
+                - cell "Active" [ref=e255]:
+                  - button "Active" [ref=e257] [cursor=pointer]
+                - cell "Set" [ref=e258]:
+                  - generic [ref=e260]:
+                    - textbox "New Password" [ref=e261]
+                    - button "Set" [ref=e262] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e263]:
+                  - generic [ref=e264]:
+                    - link "✏️" [ref=e265] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e267] [cursor=pointer]
+              - row "Test Director test.director@shifty.test HQ אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e268]:
+                - cell "Test Director" [ref=e269]
+                - cell "test.director@shifty.test" [ref=e270]
+                - cell "HQ" [ref=e271]
+                - cell "אלחוט Edit job type" [ref=e272]:
+                  - generic [ref=e273]:
+                    - generic [ref=e274]: אלחוט
+                    - button "Edit job type" [ref=e275] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e276]
+                - cell "Mem-Mem Edit role" [ref=e277]:
+                  - generic [ref=e278]:
+                    - generic [ref=e279]: Mem-Mem
+                    - button "Edit role" [ref=e280] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e281]:
+                  - generic [ref=e282]: "46"
+                - cell "Active" [ref=e283]:
+                  - button "Active" [ref=e285] [cursor=pointer]
+                - cell "Set" [ref=e286]:
+                  - generic [ref=e288]:
+                    - textbox "New Password" [ref=e289]
+                    - button "Set" [ref=e290] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e291]:
+                  - generic [ref=e292]:
+                    - link "✏️" [ref=e293] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e295] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Multi Test A אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e296]:
+                - cell "Test Director" [ref=e297]
+                - cell "test.director@shifty.test" [ref=e298]
+                - cell "Multi Test A" [ref=e299]
+                - cell "אלחוט Edit job type" [ref=e300]:
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: אלחוט
+                    - button "Edit job type" [ref=e303] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e304]
+                - cell "Mem-Mem Edit role" [ref=e305]:
+                  - generic [ref=e306]:
+                    - generic [ref=e307]: Mem-Mem
+                    - button "Edit role" [ref=e308] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e309]:
+                  - generic [ref=e310]: "46"
+                - cell "Active" [ref=e311]:
+                  - button "Active" [ref=e313] [cursor=pointer]
+                - cell "Set" [ref=e314]:
+                  - generic [ref=e316]:
+                    - textbox "New Password" [ref=e317]
+                    - button "Set" [ref=e318] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e319]:
+                  - generic [ref=e320]:
+                    - link "✏️" [ref=e321] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e323] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Multi Test B אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e324]:
+                - cell "Test Director" [ref=e325]
+                - cell "test.director@shifty.test" [ref=e326]
+                - cell "Multi Test B" [ref=e327]
+                - cell "אלחוט Edit job type" [ref=e328]:
+                  - generic [ref=e329]:
+                    - generic [ref=e330]: אלחוט
+                    - button "Edit job type" [ref=e331] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e332]
+                - cell "Mem-Mem Edit role" [ref=e333]:
+                  - generic [ref=e334]:
+                    - generic [ref=e335]: Mem-Mem
+                    - button "Edit role" [ref=e336] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e337]:
+                  - generic [ref=e338]: "46"
+                - cell "Active" [ref=e339]:
+                  - button "Active" [ref=e341] [cursor=pointer]
+                - cell "Set" [ref=e342]:
+                  - generic [ref=e344]:
+                    - textbox "New Password" [ref=e345]
+                    - button "Set" [ref=e346] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e347]:
+                  - generic [ref=e348]:
+                    - link "✏️" [ref=e349] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e351] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Radio אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e352]:
+                - cell "Test Director" [ref=e353]
+                - cell "test.director@shifty.test" [ref=e354]
+                - cell "Radio" [ref=e355]
+                - cell "אלחוט Edit job type" [ref=e356]:
+                  - generic [ref=e357]:
+                    - generic [ref=e358]: אלחוט
+                    - button "Edit job type" [ref=e359] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e360]
+                - cell "Mem-Mem Edit role" [ref=e361]:
+                  - generic [ref=e362]:
+                    - generic [ref=e363]: Mem-Mem
+                    - button "Edit role" [ref=e364] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e365]:
+                  - generic [ref=e366]: "46"
+                - cell "Active" [ref=e367]:
+                  - button "Active" [ref=e369] [cursor=pointer]
+                - cell "Set" [ref=e370]:
+                  - generic [ref=e372]:
+                    - textbox "New Password" [ref=e373]
+                    - button "Set" [ref=e374] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e375]:
+                  - generic [ref=e376]:
+                    - link "✏️" [ref=e377] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e379] [cursor=pointer]
+              - row "מנהל מערכת admin@local SystemAdmins - Edit job type - Owner Edit role 129 Active Set ✏️ 🗑️" [ref=e380]:
+                - cell "מנהל מערכת" [ref=e381]
+                - cell "admin@local" [ref=e382]
+                - cell "SystemAdmins" [ref=e383]
+                - cell "- Edit job type" [ref=e384]:
+                  - generic [ref=e385]:
+                    - generic [ref=e386]: "-"
+                    - button "Edit job type" [ref=e387] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e388]
+                - cell "Owner Edit role" [ref=e389]:
+                  - generic [ref=e390]:
+                    - generic [ref=e391]: Owner
+                    - button "Edit role" [ref=e392] [cursor=pointer]: ⚙️
+                - cell "129" [ref=e393]:
+                  - generic [ref=e394]: "129"
+                - cell "Active" [ref=e395]:
+                  - button "Active" [ref=e397] [cursor=pointer]
+                - cell "Set" [ref=e398]:
+                  - generic [ref=e400]:
+                    - textbox "New Password" [ref=e401]
+                    - button "Set" [ref=e402] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e403]:
+                  - generic [ref=e404]:
+                    - link "✏️" [ref=e405] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=1
+                    - button "🗑️" [ref=e407] [cursor=pointer]
+              - row "Test Assigner assigner@test.com Test Company - Edit job type - Assigner Edit role 0 Active Set ✏️ 🗑️" [ref=e408]:
+                - cell "Test Assigner" [ref=e409]
+                - cell "assigner@test.com" [ref=e410]
+                - cell "Test Company" [ref=e411]
+                - cell "- Edit job type" [ref=e412]:
+                  - generic [ref=e413]:
+                    - generic [ref=e414]: "-"
+                    - button "Edit job type" [ref=e415] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e416]
+                - cell "Assigner Edit role" [ref=e417]:
+                  - generic [ref=e418]:
+                    - generic [ref=e419]: Assigner
+                    - button "Edit role" [ref=e420] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e421]
+                - cell "Active" [ref=e422]:
+                  - button "Active" [ref=e424] [cursor=pointer]
+                - cell "Set" [ref=e425]:
+                  - generic [ref=e427]:
+                    - textbox "New Password" [ref=e428]
+                    - button "Set" [ref=e429] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e430]:
+                  - generic [ref=e431]:
+                    - link "✏️" [ref=e432] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=6
+                    - button "🗑️" [ref=e434] [cursor=pointer]
+              - row "Test Employee employee@test.com Test Company - Edit job type - Employee Edit role 0 Active Set ✏️ 🗑️" [ref=e435]:
+                - cell "Test Employee" [ref=e436]
+                - cell "employee@test.com" [ref=e437]
+                - cell "Test Company" [ref=e438]
+                - cell "- Edit job type" [ref=e439]:
+                  - generic [ref=e440]:
+                    - generic [ref=e441]: "-"
+                    - button "Edit job type" [ref=e442] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e443]
+                - cell "Employee Edit role" [ref=e444]:
+                  - generic [ref=e445]:
+                    - generic [ref=e446]: Employee
+                    - button "Edit role" [ref=e447] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e448]
+                - cell "Active" [ref=e449]:
+                  - button "Active" [ref=e451] [cursor=pointer]
+                - cell "Set" [ref=e452]:
+                  - generic [ref=e454]:
+                    - textbox "New Password" [ref=e455]
+                    - button "Set" [ref=e456] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e457]:
+                  - generic [ref=e458]:
+                    - link "✏️" [ref=e459] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=5
+                    - button "🗑️" [ref=e461] [cursor=pointer]
+              - row "Test Manager manager@test.com Test Company - Edit job type - Manager Edit role 0 Active Set ✏️ 🗑️" [ref=e462]:
+                - cell "Test Manager" [ref=e463]
+                - cell "manager@test.com" [ref=e464]
+                - cell "Test Company" [ref=e465]
+                - cell "- Edit job type" [ref=e466]:
+                  - generic [ref=e467]:
+                    - generic [ref=e468]: "-"
+                    - button "Edit job type" [ref=e469] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e470]
+                - cell "Manager Edit role" [ref=e471]:
+                  - generic [ref=e472]:
+                    - generic [ref=e473]: Manager
+                    - button "Edit role" [ref=e474] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e475]
+                - cell "Active" [ref=e476]:
+                  - button "Active" [ref=e478] [cursor=pointer]
+                - cell "Set" [ref=e479]:
+                  - generic [ref=e481]:
+                    - textbox "New Password" [ref=e482]
+                    - button "Set" [ref=e483] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e484]:
+                  - generic [ref=e485]:
+                    - link "✏️" [ref=e486] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=4
+                    - button "🗑️" [ref=e488] [cursor=pointer]
+              - row "Test Owner owner@test.com Test Company - Edit job type - Owner Edit role 0 Active Set ✏️ 🗑️" [ref=e489]:
+                - cell "Test Owner" [ref=e490]
+                - cell "owner@test.com" [ref=e491]
+                - cell "Test Company" [ref=e492]
+                - cell "- Edit job type" [ref=e493]:
+                  - generic [ref=e494]:
+                    - generic [ref=e495]: "-"
+                    - button "Edit job type" [ref=e496] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e497]
+                - cell "Owner Edit role" [ref=e498]:
+                  - generic [ref=e499]:
+                    - generic [ref=e500]: Owner
+                    - button "Edit role" [ref=e501] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e502]
+                - cell "Active" [ref=e503]:
+                  - button "Active" [ref=e505] [cursor=pointer]
+                - cell "Set" [ref=e506]:
+                  - generic [ref=e508]:
+                    - textbox "New Password" [ref=e509]
+                    - button "Set" [ref=e510] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e511]:
+                  - generic [ref=e512]:
+                    - link "✏️" [ref=e513] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=2
+                    - button "🗑️" [ref=e515] [cursor=pointer]
+              - row "Test Trainee trainee@test.com Test Company - Edit job type - Trainee Edit role 0 Active Set ✏️ 🗑️" [ref=e516]:
+                - cell "Test Trainee" [ref=e517]
+                - cell "trainee@test.com" [ref=e518]
+                - cell "Test Company" [ref=e519]
+                - cell "- Edit job type" [ref=e520]:
+                  - generic [ref=e521]:
+                    - generic [ref=e522]: "-"
+                    - button "Edit job type" [ref=e523] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e524]
+                - cell "Trainee Edit role" [ref=e525]:
+                  - generic [ref=e526]:
+                    - generic [ref=e527]: Trainee
+                    - button "Edit role" [ref=e528] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e529]
+                - cell "Active" [ref=e530]:
+                  - button "Active" [ref=e532] [cursor=pointer]
+                - cell "Set" [ref=e533]:
+                  - generic [ref=e535]:
+                    - textbox "New Password" [ref=e536]
+                    - button "Set" [ref=e537] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e538]:
+                  - generic [ref=e539]:
+                    - link "✏️" [ref=e540] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=7
+                    - button "🗑️" [ref=e542] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Test Company Empty אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e543]:
+                - cell "Test Director" [ref=e544]
+                - cell "test.director@shifty.test" [ref=e545]
+                - cell "Test Company Empty" [ref=e546]
+                - cell "אלחוט Edit job type" [ref=e547]:
+                  - generic [ref=e548]:
+                    - generic [ref=e549]: אלחוט
+                    - button "Edit job type" [ref=e550] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e551]
+                - cell "Mem-Mem Edit role" [ref=e552]:
+                  - generic [ref=e553]:
+                    - generic [ref=e554]: Mem-Mem
+                    - button "Edit role" [ref=e555] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e556]:
+                  - generic [ref=e557]: "46"
+                - cell "Active" [ref=e558]:
+                  - button "Active" [ref=e560] [cursor=pointer]
+                - cell "Set" [ref=e561]:
+                  - generic [ref=e563]:
+                    - textbox "New Password" [ref=e564]
+                    - button "Set" [ref=e565] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e566]:
+                  - generic [ref=e567]:
+                    - link "✏️" [ref=e568] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e570] [cursor=pointer]
+              - row "Test NoGrants test.nogrants@shifty.test Test Company Empty אלחוט Edit job type - Trainee Edit role 0 Active Set ✏️ 🗑️" [ref=e571]:
+                - cell "Test NoGrants" [ref=e572]
+                - cell "test.nogrants@shifty.test" [ref=e573]
+                - cell "Test Company Empty" [ref=e574]
+                - cell "אלחוט Edit job type" [ref=e575]:
+                  - generic [ref=e576]:
+                    - generic [ref=e577]: אלחוט
+                    - button "Edit job type" [ref=e578] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e579]
+                - cell "Trainee Edit role" [ref=e580]:
+                  - generic [ref=e581]:
+                    - generic [ref=e582]: Trainee
+                    - button "Edit role" [ref=e583] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e584]
+                - cell "Active" [ref=e585]:
+                  - button "Active" [ref=e587] [cursor=pointer]
+                - cell "Set" [ref=e588]:
+                  - generic [ref=e590]:
+                    - textbox "New Password" [ref=e591]
+                    - button "Set" [ref=e592] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e593]:
+                  - generic [ref=e594]:
+                    - link "✏️" [ref=e595] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=13
+                    - button "🗑️" [ref=e597] [cursor=pointer]
+              - row "Test Assigner test.assigner@shifty.test Test Company Full אלחוט Edit job type - Assigner Edit role 20 Active Set ✏️ 🗑️" [ref=e598]:
+                - cell "Test Assigner" [ref=e599]
+                - cell "test.assigner@shifty.test" [ref=e600]
+                - cell "Test Company Full" [ref=e601]
+                - cell "אלחוט Edit job type" [ref=e602]:
+                  - generic [ref=e603]:
+                    - generic [ref=e604]: אלחוט
+                    - button "Edit job type" [ref=e605] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e606]
+                - cell "Assigner Edit role" [ref=e607]:
+                  - generic [ref=e608]:
+                    - generic [ref=e609]: Assigner
+                    - button "Edit role" [ref=e610] [cursor=pointer]: ⚙️
+                - cell "20" [ref=e611]:
+                  - generic [ref=e612]: "20"
+                - cell "Active" [ref=e613]:
+                  - button "Active" [ref=e615] [cursor=pointer]
+                - cell "Set" [ref=e616]:
+                  - generic [ref=e618]:
+                    - textbox "New Password" [ref=e619]
+                    - button "Set" [ref=e620] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e621]:
+                  - generic [ref=e622]:
+                    - link "✏️" [ref=e623] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=12
+                    - button "🗑️" [ref=e625] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Test Company Full אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e626]:
+                - cell "Test Director" [ref=e627]
+                - cell "test.director@shifty.test" [ref=e628]
+                - cell "Test Company Full" [ref=e629]
+                - cell "אלחוט Edit job type" [ref=e630]:
+                  - generic [ref=e631]:
+                    - generic [ref=e632]: אלחוט
+                    - button "Edit job type" [ref=e633] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e634]
+                - cell "Mem-Mem Edit role" [ref=e635]:
+                  - generic [ref=e636]:
+                    - generic [ref=e637]: Mem-Mem
+                    - button "Edit role" [ref=e638] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e639]:
+                  - generic [ref=e640]: "46"
+                - cell "Active" [ref=e641]:
+                  - button "Active" [ref=e643] [cursor=pointer]
+                - cell "Set" [ref=e644]:
+                  - generic [ref=e646]:
+                    - textbox "New Password" [ref=e647]
+                    - button "Set" [ref=e648] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e649]:
+                  - generic [ref=e650]:
+                    - link "✏️" [ref=e651] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e653] [cursor=pointer]
+              - row "Test Manager test.manager@shifty.test Test Company Full אלחוט Edit job type - Mapotz Edit role 40 Active Set ✏️ 🗑️" [ref=e654]:
+                - cell "Test Manager" [ref=e655]
+                - cell "test.manager@shifty.test" [ref=e656]
+                - cell "Test Company Full" [ref=e657]
+                - cell "אלחוט Edit job type" [ref=e658]:
+                  - generic [ref=e659]:
+                    - generic [ref=e660]: אלחוט
+                    - button "Edit job type" [ref=e661] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e662]
+                - cell "Mapotz Edit role" [ref=e663]:
+                  - generic [ref=e664]:
+                    - generic [ref=e665]: Mapotz
+                    - button "Edit role" [ref=e666] [cursor=pointer]: ⚙️
+                - cell "40" [ref=e667]:
+                  - generic [ref=e668]: "40"
+                - cell "Active" [ref=e669]:
+                  - button "Active" [ref=e671] [cursor=pointer]
+                - cell "Set" [ref=e672]:
+                  - generic [ref=e674]:
+                    - textbox "New Password" [ref=e675]
+                    - button "Set" [ref=e676] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e677]:
+                  - generic [ref=e678]:
+                    - link "✏️" [ref=e679] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=10
+                    - button "🗑️" [ref=e681] [cursor=pointer]
+              - row "Test Member test.member@shifty.test Test Company Full אלחוט Edit job type - Employee Edit role 0 Active Set ✏️ 🗑️" [ref=e682]:
+                - cell "Test Member" [ref=e683]
+                - cell "test.member@shifty.test" [ref=e684]
+                - cell "Test Company Full" [ref=e685]
+                - cell "אלחוט Edit job type" [ref=e686]:
+                  - generic [ref=e687]:
+                    - generic [ref=e688]: אלחוט
+                    - button "Edit job type" [ref=e689] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e690]
+                - cell "Employee Edit role" [ref=e691]:
+                  - generic [ref=e692]:
+                    - generic [ref=e693]: Employee
+                    - button "Edit role" [ref=e694] [cursor=pointer]: ⚙️
+                - cell "0" [ref=e695]
+                - cell "Active" [ref=e696]:
+                  - button "Active" [ref=e698] [cursor=pointer]
+                - cell "Set" [ref=e699]:
+                  - generic [ref=e701]:
+                    - textbox "New Password" [ref=e702]
+                    - button "Set" [ref=e703] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e704]:
+                  - generic [ref=e705]:
+                    - link "✏️" [ref=e706] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=11
+                    - button "🗑️" [ref=e708] [cursor=pointer]
+              - row "Test Owner test.owner@shifty.test Test Company Full אלחוט Edit job type - Owner Edit role 88 Active Set ✏️ 🗑️" [ref=e709]:
+                - cell "Test Owner" [ref=e710]
+                - cell "test.owner@shifty.test" [ref=e711]
+                - cell "Test Company Full" [ref=e712]
+                - cell "אלחוט Edit job type" [ref=e713]:
+                  - generic [ref=e714]:
+                    - generic [ref=e715]: אלחוט
+                    - button "Edit job type" [ref=e716] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e717]
+                - cell "Owner Edit role" [ref=e718]:
+                  - generic [ref=e719]:
+                    - generic [ref=e720]: Owner
+                    - button "Edit role" [ref=e721] [cursor=pointer]: ⚙️
+                - cell "88" [ref=e722]:
+                  - generic [ref=e723]: "88"
+                - cell "Active" [ref=e724]:
+                  - button "Active" [ref=e726] [cursor=pointer]
+                - cell "Set" [ref=e727]:
+                  - generic [ref=e729]:
+                    - textbox "New Password" [ref=e730]
+                    - button "Set" [ref=e731] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e732]:
+                  - generic [ref=e733]:
+                    - link "✏️" [ref=e734] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=8
+                    - button "🗑️" [ref=e736] [cursor=pointer]
+              - row "Test Director test.director@shifty.test Tzafona אלחוט Edit job type - Mem-Mem Edit role 46 Active Set ✏️ 🗑️" [ref=e737]:
+                - cell "Test Director" [ref=e738]
+                - cell "test.director@shifty.test" [ref=e739]
+                - cell "Tzafona" [ref=e740]
+                - cell "אלחוט Edit job type" [ref=e741]:
+                  - generic [ref=e742]:
+                    - generic [ref=e743]: אלחוט
+                    - button "Edit job type" [ref=e744] [cursor=pointer]: ⚙️
+                - cell "-" [ref=e745]
+                - cell "Mem-Mem Edit role" [ref=e746]:
+                  - generic [ref=e747]:
+                    - generic [ref=e748]: Mem-Mem
+                    - button "Edit role" [ref=e749] [cursor=pointer]: ⚙️
+                - cell "46" [ref=e750]:
+                  - generic [ref=e751]: "46"
+                - cell "Active" [ref=e752]:
+                  - button "Active" [ref=e754] [cursor=pointer]
+                - cell "Set" [ref=e755]:
+                  - generic [ref=e757]:
+                    - textbox "New Password" [ref=e758]
+                    - button "Set" [ref=e759] [cursor=pointer]
+                - cell "✏️ 🗑️" [ref=e760]:
+                  - generic [ref=e761]:
+                    - link "✏️" [ref=e762] [cursor=pointer]:
+                      - /url: /Admin/EditProfile?UserId=9
+                    - button "🗑️" [ref=e764] [cursor=pointer]
+          - generic [ref=e765]:
+            - generic [ref=e766]: "⚠️ User Deletion Warning:"
+            - generic [ref=e767]:
+              - text: "Deleting a user will permanently remove::"
+              - text: • All their shift assignments (shifts will become empty)
+              - text: • All their time-off requests (approved, pending, and declined)
+              - text: • All their swap requests (both from and to the user)
+              - text: • The user account itself
+              - strong [ref=e768]: This action cannot be undone. Use with extreme caution.
+        - generic [ref=e769]:
+          - heading "Add User" [level=2] [ref=e770]
+          - generic [ref=e772]:
+            - generic [ref=e773]:
+              - generic [ref=e774]: Email
+              - textbox [ref=e775]
+            - generic [ref=e776]:
+              - generic [ref=e777]: Display name
+              - textbox [ref=e778]
+            - generic [ref=e779]:
+              - generic [ref=e780]: Role
+              - combobox [ref=e781] [cursor=pointer]:
+                - option "Owner" [selected]
+                - option "BC"
+                - option "CO"
+                - option "Alhut PL"
+                - option "Text PL"
+                - option "Kabar"
+                - option "Alhut SL"
+                - option "Text SL"
+                - option "Department Lead"
+                - option "Assigner"
+                - option "Soldier"
+                - option "Trainee"
+            - generic [ref=e782]:
+              - generic [ref=e783]: Company
+              - combobox [ref=e784] [cursor=pointer]:
+                - option "-- -- Select Company -- --" [selected]
+                - option "Camps"
+                - option "City"
+                - option "Element"
+                - option "GAP"
+                - option "Hamasa"
+                - option "Hir"
+                - option "Hitazmut"
+                - option "Inside"
+                - option "Kabah"
+                - option "Matot"
+                - option "Multi Test A"
+                - option "Multi Test B"
+                - option "Out"
+                - option "Radio"
+                - option "SystemAdmins"
+                - option "Test Company"
+                - option "Test Company Empty"
+                - option "Test Company Full"
+                - option "Tzafona"
+                - option "Yeadim"
+            - generic [ref=e785]:
+              - generic [ref=e786]: Job Type
+              - combobox [ref=e787] [cursor=pointer]:
+                - option "-- Select Job Type --" [selected]
+                - option "190 - אלחוט"
+                - option "190 - ב\"ר"
+                - option "190 - חק\"ם"
+                - option "190 - טקסט"
+            - generic [ref=e788]:
+              - generic [ref=e789]: Password
+              - textbox [ref=e790]
+            - button "+ Add" [ref=e792] [cursor=pointer]:
+              - generic [ref=e793]: +
+              - generic [ref=e794]: Add
+        - generic [ref=e795]:
+          - heading "Bulk Import (CSV)" [level=2] [ref=e796]
+          - paragraph [ref=e797]:
+            - text: "CSV format:"
+            - code [ref=e798]: Email,DisplayName,Password,Role,Phone
+            - text: (first row = header, max 500 rows). All imported users will be required to change their password on first login.
+          - generic [ref=e800]:
+            - button "Choose File" [ref=e801]
+            - button "Import" [ref=e802] [cursor=pointer]:
+              - generic [ref=e803]: Import
+      - generic [ref=e804]:
+        - button "▼ Quick Info" [expanded] [ref=e805] [cursor=pointer]:
+          - generic [ref=e806]: ▼
+          - generic [ref=e807]: Quick Info
+        - generic [ref=e809]:
+          - button "Quick Info" [ref=e810] [cursor=pointer]:
+            - generic [ref=e811]:
+              - img [ref=e813]
+              - generic [ref=e815]: Quick Info
+            - img [ref=e817]
+          - generic [ref=e820]:
+            - img "No one is on-call right now" [ref=e823]
+            - paragraph [ref=e827]: No one is on-call right now
+            - paragraph [ref=e828]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"

@@ -404,3 +404,101 @@ test.describe('Module M: Overview Calendar', () => {
     await saveEvidence(page, EVIDENCE, 'M-16-manager-overview.png');
   });
 });
+
+// =============================================================================
+// Phase 2 (P1): Overview Calendar Extended — M-17 through M-19
+// =============================================================================
+
+test.describe('Module M: Overview Calendar Extended (P1)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsOwner(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // M-17: GetOverviewData API returns structured data
+  // ---------------------------------------------------------------------------
+  test('M-17: GetOverviewData API returns structured data', async ({ page }) => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - dayOfWeek);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const startDate = weekStart.toISOString().split('T')[0];
+    const endDate = weekEnd.toISOString().split('T')[0];
+
+    const response = await page.request.get(
+      `http://localhost:5000/Api/Calendar/GetOverviewData?startDate=${startDate}&endDate=${endDate}`
+    );
+
+    // ASSERT: API responds (200 or 400)
+    expect([200, 400]).toContain(response.status());
+
+    if (response.status() === 200) {
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data).toHaveProperty('data');
+    }
+
+    await saveEvidence(page, EVIDENCE, 'M-17-api-overview-data.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // M-18: Note modal exists on overview calendar (if CanEditNotes)
+  // ---------------------------------------------------------------------------
+  test('M-18: Note modal structure exists on overview page', async ({ page }) => {
+    await navigateTo(page, '/Calendar/Overview');
+
+    const calendarContainer = page.locator('.overview-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    // Check for note modal (may be hidden)
+    const noteModal = page.locator('#noteModal');
+    const modalExists = await noteModal.count() > 0;
+
+    if (modalExists) {
+      // ASSERT: Modal has correct structure
+      const modalRole = await noteModal.getAttribute('role');
+      expect(modalRole).toBe('dialog');
+
+      // ASSERT: Modal has expected form fields
+      const noteText = page.locator('#noteText');
+      await expect(noteText).toHaveCount(1);
+
+      const noteUserId = page.locator('#noteUserId');
+      await expect(noteUserId).toHaveCount(1);
+
+      const noteDate = page.locator('#noteDate');
+      await expect(noteDate).toHaveCount(1);
+    }
+    // If no modal, user may not have CanEditNotes permission — valid state
+
+    await saveEvidence(page, EVIDENCE, 'M-18-note-modal.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // M-19: Overview calendar date navigation
+  // ---------------------------------------------------------------------------
+  test('M-19: Overview date navigation changes period', async ({ page }) => {
+    await navigateTo(page, '/Calendar/Overview');
+
+    const calendarContainer = page.locator('.overview-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    const dateLabel = page.locator('.overview-calendar__date-label');
+    await expect(dateLabel).toBeVisible({ timeout: 5000 });
+    const initialDateText = await dateLabel.innerText();
+
+    // Click next
+    const nextBtn = page.locator('.overview-calendar__nav-btn').last();
+    await expect(nextBtn).toBeVisible({ timeout: 5000 });
+    await nextBtn.click();
+    await page.waitForLoadState('networkidle');
+
+    // ASSERT: Date label changed
+    const newDateText = await page.locator('.overview-calendar__date-label').innerText();
+    expect(newDateText).not.toBe(initialDateText);
+
+    await saveEvidence(page, EVIDENCE, 'M-19-date-navigation.png');
+  });
+});

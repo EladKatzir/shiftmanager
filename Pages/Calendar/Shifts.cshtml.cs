@@ -267,6 +267,14 @@ public class ShiftsModel : PageModel
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
 
+        // Look up company names for shift types (molecule mode shows cross-company shifts)
+        var companyIds = shiftTypes.Select(st => st.CompanyId).Distinct().ToList();
+        var companyNames = companyIds.Count > 1
+            ? await _db.Companies.IgnoreQueryFilters()
+                .Where(c => companyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name)
+            : new Dictionary<int, string>();
+
         // Build rows - one per shift type
         var rows = new List<ExcelCalendarRow>();
         foreach (var shiftType in shiftTypes)
@@ -275,7 +283,8 @@ public class ShiftsModel : PageModel
             {
                 Id = $"shift-{shiftType.Id}",
                 Label = $"{shiftType.Name} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})",
-                Color = shiftType.RowColor
+                Color = shiftType.RowColor,
+                CompanyName = companyNames.GetValueOrDefault(shiftType.CompanyId)
             };
 
             // Build cells for each date

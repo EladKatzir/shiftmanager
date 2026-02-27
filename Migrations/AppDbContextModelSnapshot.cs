@@ -2457,11 +2457,13 @@ namespace ShiftManager.Migrations
 
                     b.HasIndex("JobTypeId");
 
-                    b.HasIndex("MoleculeId");
-
                     b.HasIndex("ShiftGroupingId");
 
                     b.HasIndex("CompanyId", "Key");
+
+                    b.HasIndex("MoleculeId", "JobTypeId", "Key")
+                        .IsUnique()
+                        .HasFilter("MoleculeId IS NOT NULL AND JobTypeId IS NOT NULL");
 
                     b.ToTable("ShiftTypes");
                 });

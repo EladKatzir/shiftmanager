@@ -9045,6 +9045,30 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Radar_ConflictDetected" xml:space="preserve">
     <value>Conflict detected</value>
   </data>
+  <data name="Radar_Understaffed" xml:space="preserve">
+    <value>Understaffed</value>
+  </data>
+  <data name="Radar_Overstaffed" xml:space="preserve">
+    <value>Overstaffed</value>
+  </data>
+  <data name="Radar_Conflict" xml:space="preserve">
+    <value>Conflict</value>
+  </data>
+  <data name="Radar_Needed" xml:space="preserve">
+    <value>needed</value>
+  </data>
+  <data name="Radar_Extra" xml:space="preserve">
+    <value>extra</value>
+  </data>
+  <data name="Radar_Shift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="Radar_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Radar_Staffing" xml:space="preserve">
+    <value>Staffing</value>
+  </data>
   <data name="Offline_SavedOffline" xml:space="preserve">
     <value>Saved offline</value>
   </data>
@@ -11208,6 +11232,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_TraineeDifferentCompany" xml:space="preserve">
     <value>Trainee must belong to the same company as the assignment</value>
   </data>
+  <data name="Error_UserNotInMolecule" xml:space="preserve">
+    <value>User does not belong to the same molecule as this shift</value>
+  </data>
+  <data name="Error_TraineeDifferentMolecule" xml:space="preserve">
+    <value>Trainee must belong to the same molecule as the assignment</value>
+  </data>
 
   <!-- Command Palette Navigation (JS localization) -->
   <data name="Nav_Requests" xml:space="preserve">
@@ -11878,6 +11908,42 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Blueprints_HebrewNamePlaceholder" xml:space="preserve">
     <value>משמרת יום</value>
+  </data>
+  <data name="Blueprints_CompanyOnly" xml:space="preserve">
+    <value>Company Only</value>
+  </data>
+  <data name="Blueprints_MoleculeScopeHint" xml:space="preserve">
+    <value>Optional: Make visible across the molecule</value>
+  </data>
+  <data name="Blueprints_SelectJobType" xml:space="preserve">
+    <value>Select Job Type</value>
+  </data>
+  <data name="Blueprints_Scope" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="Blueprints_PublishToMolecule" xml:space="preserve">
+    <value>Publish to Molecule</value>
+  </data>
+  <data name="Blueprints_Unpublish" xml:space="preserve">
+    <value>Unpublish</value>
+  </data>
+  <data name="Blueprints_Publish" xml:space="preserve">
+    <value>Publish</value>
+  </data>
+  <data name="Blueprints_SelectBothMoleculeAndJobType" xml:space="preserve">
+    <value>Please select both a molecule and job type</value>
+  </data>
+  <data name="Blueprints_FailedToPublish" xml:space="preserve">
+    <value>Failed to publish</value>
+  </data>
+  <data name="Blueprints_ConfirmUnpublish" xml:space="preserve">
+    <value>Remove molecule scope? This will make the shift type visible only to this company.</value>
+  </data>
+  <data name="Blueprints_FailedToUnpublish" xml:space="preserve">
+    <value>Failed to unpublish</value>
+  </data>
+  <data name="Blueprints_DuplicateInMolecule" xml:space="preserve">
+    <value>A shift type with the same key is already published to this molecule. Each shift type should only be published once per molecule to avoid duplicate rows.</value>
   </data>
   <data name="LangMgmt_FilterByLanguage" xml:space="preserve">
     <value>Filter by language</value>

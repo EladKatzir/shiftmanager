@@ -19,6 +19,7 @@ public class ExcelCalendarRow
     public string Label { get; set; } = string.Empty;
     public string? Color { get; set; }
     public string? GroupId { get; set; }
+    public string? CompanyName { get; set; }
     public Dictionary<DateOnly, ExcelCalendarCell> Cells { get; set; } = new();
 }
 

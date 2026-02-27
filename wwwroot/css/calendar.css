@@ -1119,7 +1119,7 @@
 
 .shift-table th {
   background-color: var(--primary);
-  color: var(--primary-contrast);
+  color: var(--primary-contrast) !important;
   font-weight: var(--font-semibold);
   position: sticky;
   top: 0;
@@ -2184,7 +2184,7 @@
     top: 0;
     z-index: var(--z-sticky);
     background: var(--primary);
-    color: var(--primary-contrast);
+    color: var(--primary-contrast) !important;
 }
 
 .excel-calendar__header th {
@@ -2232,6 +2232,23 @@
     white-space: nowrap;
 }
 
+.excel-calendar__row-label .company-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 0.125rem 0.4rem;
+    border-radius: 0.25rem;
+    background: var(--primary-soft, rgba(0,123,255,0.1));
+    color: var(--primary);
+    font-weight: 500;
+    white-space: nowrap;
+    margin-inline-start: 0.25rem;
+    vertical-align: middle;
+}
+
+[data-theme="dark"] .excel-calendar__row-label .company-badge {
+    color: var(--primary-contrast);
+}
+
 /* Corner cell (sticky both ways) */
 .excel-calendar__corner {
     position: sticky;
@@ -2239,6 +2256,7 @@
     left: 0;
     z-index: calc(var(--z-sticky) + 1);
     background: var(--primary);
+    color: var(--primary-contrast) !important;
 }
 
 /* Data cells */

@@ -216,6 +216,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShiftType>()
             .HasIndex(s => new { s.CompanyId, s.Key });
 
+        // Prevent duplicate ShiftType Keys within the same molecule+jobType scope
+        modelBuilder.Entity<ShiftType>()
+            .HasIndex(s => new { s.MoleculeId, s.JobTypeId, s.Key })
+            .IsUnique()
+            .HasFilter("MoleculeId IS NOT NULL AND JobTypeId IS NOT NULL");
+
         // Multitenancy Phase 1: Update ShiftAssignment index to include CompanyId
         modelBuilder.Entity<ShiftAssignment>()
             .HasIndex(a => new { a.CompanyId, a.ShiftInstanceId, a.UserId }).IsUnique();

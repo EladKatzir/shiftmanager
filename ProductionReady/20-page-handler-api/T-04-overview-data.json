@@ -1,4 +1,0 @@
-{
-  "status": 200,
-  "body": "{\"success\":true,\"data\":{\"users\":[{\"id\":1,\"name\":\"\\u05DE\\u05E0\\u05D4\\u05DC \\u05DE\\u05E2\\u05E8\\u05DB\\u05EA\"},{\"id\":2,\"name\":\"Test Director\"}],\"notes\":[],\"vacations\":[],\"chores\":[],\"onDuties\":[],\"shifts\":[],\"timestamp\":\"2026-02-09T00:13:30.1073563Z\"}}"
-}

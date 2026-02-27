@@ -1,7 +1,0 @@
-{
-  "status": 400,
-  "data": {
-    "success": false,
-    "message": "Invalid date format"
-  }
-}

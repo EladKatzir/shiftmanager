@@ -27,6 +27,17 @@ public interface IBusyUserService
         DateOnly endDate,
         TimeOnly start,
         TimeOnly end);
+
+    /// <summary>
+    /// Molecule-aware overload: Get busy status for users across multiple companies in a molecule.
+    /// Uses IgnoreQueryFilters to query across company boundaries.
+    /// </summary>
+    Task<Dictionary<DateOnly, Dictionary<int, BusyStatus>>> GetBusyUsersByDateRangeForCompaniesAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        TimeOnly start,
+        TimeOnly end,
+        List<int> companyIds);
 }
 
 public class BusyStatus
@@ -290,6 +301,136 @@ public class BusyUserService : IBusyUserService
                     status.Reasons.Add("shift");
                 }
 
+                if (choreUsers != null && choreUsers.Contains(userId))
+                {
+                    status.HasChore = true;
+                    status.Reasons.Add("chore");
+                }
+
+                if (status.IsBusy)
+                {
+                    dateResult[userId] = status;
+                }
+            }
+
+            result[date] = dateResult;
+        }
+
+        return result;
+    }
+
+    // SECURITY-AUDITED: SAFE — IgnoreQueryFilters re-scoped by explicit companyIds parameter;
+    // called only from molecule-mode paths that have already validated molecule access
+    public async Task<Dictionary<DateOnly, Dictionary<int, BusyStatus>>> GetBusyUsersByDateRangeForCompaniesAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        TimeOnly start,
+        TimeOnly end,
+        List<int> companyIds)
+    {
+        var result = new Dictionary<DateOnly, Dictionary<int, BusyStatus>>();
+
+        var rangeDays = endDate.DayNumber - startDate.DayNumber;
+        if (rangeDays > 366)
+            throw new ArgumentException("Date range cannot exceed 366 days");
+
+        var allDates = new List<DateOnly>();
+        for (var d = startDate; d <= endDate; d = d.AddDays(1))
+        {
+            allDates.Add(d);
+            result[d] = new Dictionary<int, BusyStatus>();
+        }
+
+        if (allDates.Count == 0 || companyIds.Count == 0)
+            return result;
+
+        // Get all active user IDs across all companies in the molecule
+        var users = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.IsActive && companyIds.Contains(u.CompanyId))
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        // --- Vacations ---
+        var vacRangeStart = startDate.AddDays(-1);
+        var vacRangeEnd = endDate.AddDays(1);
+
+        var potentialVacations = await _db.TimeOffRequests
+            .IgnoreQueryFilters()
+            .Where(r => r.Status == RequestStatus.Approved
+                     && companyIds.Contains(r.CompanyId)
+                     && r.StartDate <= vacRangeEnd
+                     && r.EndDate >= vacRangeStart)
+            .ToListAsync();
+
+        var vacationRanges = potentialVacations.Select(r => new
+        {
+            r.UserId,
+            ActualStart = r.GetActualStartDateTime(),
+            ActualEnd = r.GetActualEndDateTime()
+        }).ToList();
+
+        // --- Shifts ---
+        var shiftData = await (from a in _db.ShiftAssignments.IgnoreQueryFilters()
+                               join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
+                               join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
+                               where companyIds.Contains(si.CompanyId) &&
+                                     si.WorkDate >= startDate &&
+                                     si.WorkDate <= endDate &&
+                                     a.UserId != null &&
+                                     st.Key != ShiftType.KEY_OFFLINE &&
+                                     st.Start < end && start < st.End
+                               select new { Date = si.WorkDate, UserId = a.UserId!.Value })
+                               .ToListAsync();
+
+        var shiftUsersByDate = shiftData
+            .GroupBy(x => x.Date)
+            .ToDictionary(g => g.Key, g => new HashSet<int>(g.Select(x => x.UserId)));
+
+        // --- Chores ---
+        var choreData = await _db.Chores
+            .IgnoreQueryFilters()
+            .Where(c => companyIds.Contains(c.CompanyId) &&
+                        c.Date >= startDate &&
+                        c.Date <= endDate &&
+                        c.CanceledAt == null)
+            .Select(c => new { c.Date, c.UserId })
+            .ToListAsync();
+
+        var choreUsersByDate = choreData
+            .GroupBy(x => x.Date)
+            .ToDictionary(g => g.Key, g => new HashSet<int>(g.Select(x => x.UserId)));
+
+        // --- Build per-date status ---
+        foreach (var date in allDates)
+        {
+            var checkDateTime = date.ToDateTime(start);
+            var checkEndDateTime = date.ToDateTime(end);
+
+            var vacationUsers = new HashSet<int>(
+                vacationRanges
+                    .Where(v => checkDateTime < v.ActualEnd && checkEndDateTime > v.ActualStart)
+                    .Select(v => v.UserId));
+
+            shiftUsersByDate.TryGetValue(date, out var shiftUsers);
+            choreUsersByDate.TryGetValue(date, out var choreUsers);
+
+            var dateResult = new Dictionary<int, BusyStatus>();
+
+            foreach (var userId in users)
+            {
+                var status = new BusyStatus();
+
+                if (vacationUsers.Contains(userId))
+                {
+                    status.HasVacation = true;
+                    status.Reasons.Add("vacation");
+                }
+                if (shiftUsers != null && shiftUsers.Contains(userId))
+                {
+                    status.HasShift = true;
+                    status.Reasons.Add("shift");
+                }
                 if (choreUsers != null && choreUsers.Contains(userId))
                 {
                     status.HasChore = true;

@@ -267,3 +267,168 @@ test.describe('Module N: Time-Off Requests', () => {
     await saveEvidence(page, EVIDENCE, 'N-12-duplicate-timeoff.png');
   });
 });
+
+// =============================================================================
+// Phase 2 (P1): Time-Off Extended — N-13 through N-17
+// =============================================================================
+
+test.describe('Module N: Time-Off Extended (P1)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsOwner(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // N-13: Time-off request form has all required fields
+  // ---------------------------------------------------------------------------
+  test('N-13: Time-off request form structure is complete', async ({ page }) => {
+    await navigateTo(page, '/My/Requests');
+
+    const requestsPage = page.locator('.requests-page');
+    await expect(requestsPage).toBeVisible({ timeout: 15000 });
+
+    // ASSERT: Vacation type selector exists
+    const vacationType = page.locator('#vacationType');
+    await expect(vacationType).toBeVisible({ timeout: 5000 });
+
+    // ASSERT: Start date field exists
+    const startDate = page.locator('#startDate');
+    await expect(startDate).toHaveCount(1);
+
+    // ASSERT: End date container exists
+    const endDateContainer = page.locator('#endDateContainer');
+    await expect(endDateContainer).toHaveCount(1);
+
+    // ASSERT: Reason textarea exists
+    const reason = page.locator('textarea[name*="Reason"], textarea#Reason, textarea[id*="Reason"]');
+    const reasonCount = await reason.count();
+    expect(reasonCount).toBeGreaterThanOrEqual(1);
+
+    // ASSERT: Submit button exists (scoped to main content to avoid hidden sidebar form)
+    const submitBtn = page.locator('#main-content form button[type="submit"]').first();
+    await expect(submitBtn).toBeVisible({ timeout: 5000 });
+
+    await saveEvidence(page, EVIDENCE, 'N-13-form-fields.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // N-14: After-duty vacation type hides end date
+  // ---------------------------------------------------------------------------
+  test('N-14: AfterDuty vacation type hides end date field', async ({ page }) => {
+    await navigateTo(page, '/My/Requests');
+
+    const requestsPage = page.locator('.requests-page');
+    await expect(requestsPage).toBeVisible({ timeout: 15000 });
+
+    const vacationType = page.locator('#vacationType');
+    await expect(vacationType).toBeVisible({ timeout: 5000 });
+
+    // Select AfterDuty type (value=1)
+    await vacationType.selectOption('1');
+    await page.waitForTimeout(500);
+
+    // ASSERT: End date container should be hidden
+    const endDateContainer = page.locator('#endDateContainer');
+    const isHidden = await endDateContainer.evaluate(el => {
+      const style = window.getComputedStyle(el);
+      return style.display === 'none' || el.hidden;
+    });
+    expect(isHidden).toBe(true);
+
+    // Switch back to Regular (value=0)
+    await vacationType.selectOption('0');
+    await page.waitForTimeout(500);
+
+    // ASSERT: End date container should be visible again
+    const isVisible = await endDateContainer.evaluate(el => {
+      const style = window.getComputedStyle(el);
+      return style.display !== 'none' && !el.hidden;
+    });
+    expect(isVisible).toBe(true);
+
+    await saveEvidence(page, EVIDENCE, 'N-14-afterduty-hide-enddate.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // N-15: Request history shows status badges
+  // ---------------------------------------------------------------------------
+  test('N-15: Request history renders with status badges', async ({ page }) => {
+    await navigateTo(page, '/My/Requests');
+
+    const requestsPage = page.locator('.requests-page');
+    await expect(requestsPage).toBeVisible({ timeout: 15000 });
+
+    // ASSERT: History section exists
+    const historySection = page.locator('.history-section');
+    const historyCount = await historySection.count();
+    expect(historyCount).toBeGreaterThanOrEqual(1);
+
+    // Check for request items or empty state
+    const requestItems = page.locator('.request-item');
+    const itemCount = await requestItems.count();
+
+    if (itemCount > 0) {
+      // ASSERT: Request items have status badges
+      const statusBadges = page.locator('.status-badge');
+      const badgeCount = await statusBadges.count();
+      expect(badgeCount).toBeGreaterThanOrEqual(1);
+    } else {
+      // Empty state is valid — verify empty state element
+      const emptyState = page.locator('.empty-state');
+      const emptyCount = await emptyState.count();
+      expect(emptyCount).toBeGreaterThanOrEqual(1);
+    }
+
+    await saveEvidence(page, EVIDENCE, 'N-15-request-history.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // N-16: Swap request form visible if user has shifts
+  // ---------------------------------------------------------------------------
+  test('N-16: Swap request section renders on Requests page', async ({ page }) => {
+    await navigateTo(page, '/My/Requests');
+
+    const requestsPage = page.locator('.requests-page');
+    await expect(requestsPage).toBeVisible({ timeout: 15000 });
+
+    // The swap section should render (either form or empty state)
+    const formsSection = page.locator('.forms-section');
+    await expect(formsSection).toBeVisible({ timeout: 5000 });
+
+    // ASSERT: There should be at least 1 card (time-off form)
+    const cards = formsSection.locator('.card');
+    const cardCount = await cards.count();
+    expect(cardCount).toBeGreaterThanOrEqual(1);
+
+    await saveEvidence(page, EVIDENCE, 'N-16-swap-section.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // N-17: Cancel button requires confirmation dialog
+  // ---------------------------------------------------------------------------
+  test('N-17: Request cancel mechanism exists', async ({ page }) => {
+    await navigateTo(page, '/My/Requests');
+
+    const requestsPage = page.locator('.requests-page');
+    await expect(requestsPage).toBeVisible({ timeout: 15000 });
+
+    // Check if any pending requests have cancel buttons
+    const cancelBtns = page.locator('.btn-cancel, form[action*="CancelRequest"] button');
+    const cancelCount = await cancelBtns.count();
+
+    if (cancelCount > 0) {
+      // ASSERT: Cancel buttons use onclick confirm
+      const firstCancel = cancelBtns.first();
+      const onclick = await firstCancel.evaluate(el => {
+        const form = el.closest('form');
+        return form ? form.getAttribute('onsubmit') : el.getAttribute('onclick');
+      });
+      // Should have confirmation dialog
+      expect(onclick || '').toContain('confirm');
+    }
+
+    // ASSERT: Page renders correctly regardless
+    await expect(requestsPage).toBeVisible();
+
+    await saveEvidence(page, EVIDENCE, 'N-17-cancel-mechanism.png');
+  });
+});

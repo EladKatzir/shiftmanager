@@ -73,6 +73,51 @@ public class RateLimitingService : IRateLimitingService, IDisposable
         _attempts.TryRemove(key, out _);
     }
 
+    public IReadOnlyList<RateLimitInfo> GetActiveEntries(string keyPrefix, int maxAttempts, int windowMinutes)
+    {
+        var now = DateTime.UtcNow;
+        var windowStart = now.AddMinutes(-windowMinutes);
+        var results = new List<RateLimitInfo>();
+
+        foreach (var kvp in _attempts)
+        {
+            if (!kvp.Key.StartsWith(keyPrefix, StringComparison.Ordinal))
+                continue;
+
+            lock (kvp.Value)
+            {
+                // Prune old timestamps
+                kvp.Value.Attempts.RemoveAll(t => t < windowStart);
+
+                if (kvp.Value.Attempts.Count >= maxAttempts)
+                {
+                    results.Add(new RateLimitInfo
+                    {
+                        Key = kvp.Key,
+                        AttemptCount = kvp.Value.Attempts.Count,
+                        LastAttempt = kvp.Value.Attempts.Count > 0 ? kvp.Value.Attempts[^1] : null
+                    });
+                }
+            }
+        }
+
+        return results;
+    }
+
+    public int ResetByPrefix(string prefix)
+    {
+        var removed = 0;
+        foreach (var key in _attempts.Keys)
+        {
+            if (key.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                if (_attempts.TryRemove(key, out _))
+                    removed++;
+            }
+        }
+        return removed;
+    }
+
     private void CleanupExpiredEntries()
     {
         var cutoff = DateTime.UtcNow.AddMinutes(-EntryExpiryMinutes);

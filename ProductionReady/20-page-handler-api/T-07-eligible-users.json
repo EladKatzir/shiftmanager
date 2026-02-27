@@ -1,4 +1,0 @@
-{
-  "status": 401,
-  "body": "{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"status\":401,\"detail\":\"Missing X-API-Key header\",\"instance\":\"/Api/OnDuty/GetEligibleUsers\"}"
-}

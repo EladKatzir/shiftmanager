@@ -280,6 +280,9 @@
             const savedCompanyId = '@(Model.CompanyId > 0 ? Model.CompanyId.ToString() : "")';
             const savedJobTypeId = '@(Model.JobTypeId > 0 ? Model.JobTypeId.ToString() : "")';
 
+            // Track company value when switching to Director role (Bug 2 fix)
+            var savedCompanyValue = '';
+
             // Load role templates dynamically from API
             fetch('/Api/Signup/GetSignupOptions?handler=RoleTemplates', { credentials: 'same-origin' })
                 .then(function(r) {
@@ -426,17 +429,25 @@
             // Role change -> toggle company field visibility
             roleSelect.addEventListener('change', function() {
                 if (isDirectorOrAreaAdmin()) {
+                    // Save current company value before clearing (Bug 2 fix)
+                    if (companySelect.value) {
+                        savedCompanyValue = companySelect.value;
+                    }
                     companyField.style.display = 'none';
                     companySelect.required = false;
+                    companySelect.disabled = true; // Bug 1 fix: prevent empty value from POSTing
                     companySelect.value = '';
                     if (directorHqHint) directorHqHint.style.display = 'block';
                 } else {
                     companyField.style.display = '';
                     companySelect.required = true;
+                    companySelect.disabled = false;
                     if (directorHqHint) directorHqHint.style.display = 'none';
-                    // If molecule already selected, re-fetch companies
-                    if (moleculeSelect.value) {
+                    // Bug 2 fix: only re-fetch if dropdown is empty; otherwise restore saved value
+                    if (moleculeSelect.value && companySelect.options.length <= 1) {
                         moleculeSelect.dispatchEvent(new Event('change'));
+                    } else if (savedCompanyValue && companySelect.querySelector('option[value="' + savedCompanyValue + '"]')) {
+                        companySelect.value = savedCompanyValue;
                     }
                 }
                 checkProgress();

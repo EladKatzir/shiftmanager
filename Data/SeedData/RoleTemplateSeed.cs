@@ -310,7 +310,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
 
         // ============================================
-        // ALHUT LEAD (Template 3) — 39 grants
+        // ALHUT LEAD (Template 3) — 40 grants
         // Employee base (SAR) + lead-specific grants. AssignAlhutShifts at ETM.
         // ============================================
         grants.Add(G(3, 1, SAR));    // ViewShifts
@@ -352,10 +352,11 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 112, SAR));  // AccessAdminNavigation
         grants.Add(G(3, 114, SAR));  // ManagerHomeAccess
         grants.Add(G(3, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
+        grants.Add(G(3, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
         grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
 
         // ============================================
-        // TEXT LEAD (Template 4) — 39 grants
+        // TEXT LEAD (Template 4) — 40 grants
         // Same as AlhutLead but Text-specific
         // ============================================
         grants.Add(G(4, 1, SAR));
@@ -397,10 +398,11 @@ public static class RoleTemplateSeed
         grants.Add(G(4, 112, SAR));
         grants.Add(G(4, 114, SAR));
         grants.Add(G(4, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
+        grants.Add(G(4, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
         grants.Add(G(4, 120, SAR));
 
         // ============================================
-        // BR DIRECTOR (Template 2) — 45 grants
+        // BR DIRECTOR (Template 2) — 50 grants
         // Employee base (SAR) + BR management. AssignBRShifts + ViewAllShifts at ETM.
         // Dual ApproveVacations: BR + Hakam via TargetJobTypeId sentinels (resolved in Program.cs).
         // ============================================
@@ -446,13 +448,18 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 29, SAR));   // EditUsers
         grants.Add(G(2, 40, SAR));   // EditCompany (S-01)
         grants.Add(G(2, 116, SAR));  // ManageJoinRequests
+        grants.Add(G(2, 38, SAR));   // AssignRoles
         grants.Add(G(2, 118, SAR));  // EditCompanyUsers
+        grants.Add(G(2, 32, SAR));    // ResetPasswords (BUG 1 fix)
+        grants.Add(G(2, 33, SAR));    // AssignJobTypes (BUG 2 fix)
+        grants.Add(G(2, 24, SAR, targetJobTypeId: JT_SENTINEL_BR));   // ApproveExtendedLeave (BR — BUG 3 fix)
+        grants.Add(G(2, 24, SAR, targetJobTypeId: JT_SENTINEL_HAKAM)); // ApproveExtendedLeave (Hakam — BUG 3 fix)
         grants.Add(G(2, 112, SAR));  // AccessAdminNavigation
         grants.Add(G(2, 114, SAR));  // ManagerHomeAccess
         grants.Add(G(2, 120, SAR));  // ViewSystemAlerts
 
         // ============================================
-        // ALHUT DIRECTOR (Template 5) — 46 grants
+        // ALHUT DIRECTOR (Template 5) — 49 grants
         // All AlhutLead grants widened to ETM + director extras. Self-scoped stay SAR.
         // ============================================
         // Self-scoped (stay SAR)
@@ -504,9 +511,12 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 118, ETM));  // EditCompanyUsers
         grants.Add(G(5, 119, ETM));  // ManageAnnouncements
         grants.Add(G(5, 121, ETM));  // ViewAllAreas
+        grants.Add(G(5, 32, ETM));   // ResetPasswords (BUG 1 fix)
+        grants.Add(G(5, 33, ETM));   // AssignJobTypes (BUG 2 fix)
+        grants.Add(G(5, 24, ETM, useOwnJobType: true));  // ApproveExtendedLeave (OWN — BUG 3 fix)
 
         // ============================================
-        // TEXT DIRECTOR (Template 6) — 46 grants
+        // TEXT DIRECTOR (Template 6) — 49 grants
         // Same as AlhutDirector but Text-specific
         // ============================================
         grants.Add(G(6, 21, SAR));
@@ -555,9 +565,12 @@ public static class RoleTemplateSeed
         grants.Add(G(6, 118, ETM));
         grants.Add(G(6, 119, ETM));
         grants.Add(G(6, 121, ETM));
+        grants.Add(G(6, 32, ETM));   // ResetPasswords (BUG 1 fix)
+        grants.Add(G(6, 33, ETM));   // AssignJobTypes (BUG 2 fix)
+        grants.Add(G(6, 24, ETM, useOwnJobType: true));  // ApproveExtendedLeave (OWN — BUG 3 fix)
 
         // ============================================
-        // MOLECULE ADMIN (Template 7) — 67 grants
+        // MOLECULE ADMIN (Template 7) — 87 grants
         // All BRDirector grants widened to ETM + admin extras.
         // ApproveVacations ALL (supersedes BR+HAKAM). Added AssignAlhut+Text.
         // ============================================
@@ -629,9 +642,30 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 70, ETM));
         grants.Add(G(7, 71, ETM));
         grants.Add(G(7, 72, ETM));
+        grants.Add(G(7, 32, ETM));   // ResetPasswords (BUG 1 fix)
+        grants.Add(G(7, 33, ETM));   // AssignJobTypes (BUG 2 fix)
+        grants.Add(G(7, 24, ETM));   // ApproveExtendedLeave (ALL — BUG 3 fix)
+        // Tech grants (GAP 1 fix)
+        grants.Add(G(7, 6, ETM));    // AssignTechShifts
+        grants.Add(G(7, 77, ETM));   // ViewHanavaCalendar
+        grants.Add(G(7, 78, ETM));   // ViewDeltaCalendar
+        grants.Add(G(7, 79, ETM));   // ViewYekevCalendar
+        grants.Add(G(7, 80, ETM));   // ViewMoviltechCalendar
+        grants.Add(G(7, 81, ETM));   // AssignHanavaShifts
+        grants.Add(G(7, 82, ETM));   // AssignDeltaShifts
+        grants.Add(G(7, 83, ETM));   // AssignYekevShifts
+        grants.Add(G(7, 84, ETM));   // AssignMoviltechShifts
+        grants.Add(G(7, 85, ETM));   // ManageHanavaBlueprints
+        grants.Add(G(7, 86, ETM));   // ManageHanavaPrograms
+        grants.Add(G(7, 87, ETM));   // ManageDeltaBlueprints
+        grants.Add(G(7, 88, ETM));   // ManageDeltaPrograms
+        grants.Add(G(7, 89, ETM));   // ManageYekevBlueprints
+        grants.Add(G(7, 90, ETM));   // ManageYekevPrograms
+        grants.Add(G(7, 91, ETM));   // ManageMoviltechBlueprints
+        grants.Add(G(7, 92, ETM));   // ManageMoviltechPrograms
 
         // ============================================
-        // DEPARTMENT LEAD (Template 9) — 25 grants
+        // DEPARTMENT LEAD (Template 9) — 44 grants
         // Employee base (SAR) + department management grants
         // ============================================
         grants.Add(G(9, 1, SAR));
@@ -660,9 +694,29 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 47, SAR));
         grants.Add(G(9, 52, SAR));
         grants.Add(G(9, 53, SAR));
+        grants.Add(G(9, 112, SAR));  // AccessAdminNavigation (GAP 3 fix)
+        grants.Add(G(9, 114, SAR));  // ManagerHomeAccess (GAP 3 fix)
+        // Tech grants (GAP 1 fix)
+        grants.Add(G(9, 6, SAR));    // AssignTechShifts
+        grants.Add(G(9, 77, SAR));   // ViewHanavaCalendar
+        grants.Add(G(9, 78, SAR));   // ViewDeltaCalendar
+        grants.Add(G(9, 79, SAR));   // ViewYekevCalendar
+        grants.Add(G(9, 80, SAR));   // ViewMoviltechCalendar
+        grants.Add(G(9, 81, SAR));   // AssignHanavaShifts
+        grants.Add(G(9, 82, SAR));   // AssignDeltaShifts
+        grants.Add(G(9, 83, SAR));   // AssignYekevShifts
+        grants.Add(G(9, 84, SAR));   // AssignMoviltechShifts
+        grants.Add(G(9, 85, SAR));   // ManageHanavaBlueprints
+        grants.Add(G(9, 86, SAR));   // ManageHanavaPrograms
+        grants.Add(G(9, 87, SAR));   // ManageDeltaBlueprints
+        grants.Add(G(9, 88, SAR));   // ManageDeltaPrograms
+        grants.Add(G(9, 89, SAR));   // ManageYekevBlueprints
+        grants.Add(G(9, 90, SAR));   // ManageYekevPrograms
+        grants.Add(G(9, 91, SAR));   // ManageMoviltechBlueprints
+        grants.Add(G(9, 92, SAR));   // ManageMoviltechPrograms
 
         // ============================================
-        // AREA ADMIN (Template 10) — 81 grants
+        // AREA ADMIN (Template 10) — 102 grants
         // Merges Directors + MoleculeAdmin at ETA. ALL jobtype wins.
         // ============================================
         grants.Add(G(10, 21, SAR));
@@ -747,101 +801,177 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 111, ETA));
         grants.Add(G(10, 107, ETA));
         grants.Add(G(10, 108, ETA));
+        grants.Add(G(10, 32, ETA));   // ResetPasswords (BUG 1 fix)
+        grants.Add(G(10, 33, ETA));   // AssignJobTypes (BUG 2 fix)
+        grants.Add(G(10, 24, ETA));   // ApproveExtendedLeave (ALL — BUG 3 fix)
+        grants.Add(G(10, 47, ETA));   // ManageDepartments
+        // Tech grants (GAP 1 fix)
+        grants.Add(G(10, 6, ETA));    // AssignTechShifts
+        grants.Add(G(10, 77, ETA));   // ViewHanavaCalendar
+        grants.Add(G(10, 78, ETA));   // ViewDeltaCalendar
+        grants.Add(G(10, 79, ETA));   // ViewYekevCalendar
+        grants.Add(G(10, 80, ETA));   // ViewMoviltechCalendar
+        grants.Add(G(10, 81, ETA));   // AssignHanavaShifts
+        grants.Add(G(10, 82, ETA));   // AssignDeltaShifts
+        grants.Add(G(10, 83, ETA));   // AssignYekevShifts
+        grants.Add(G(10, 84, ETA));   // AssignMoviltechShifts
+        grants.Add(G(10, 85, ETA));   // ManageHanavaBlueprints
+        grants.Add(G(10, 86, ETA));   // ManageHanavaPrograms
+        grants.Add(G(10, 87, ETA));   // ManageDeltaBlueprints
+        grants.Add(G(10, 88, ETA));   // ManageDeltaPrograms
+        grants.Add(G(10, 89, ETA));   // ManageYekevBlueprints
+        grants.Add(G(10, 90, ETA));   // ManageYekevPrograms
+        grants.Add(G(10, 91, ETA));   // ManageMoviltechBlueprints
+        grants.Add(G(10, 92, ETA));   // ManageMoviltechPrograms
 
         // ============================================
-        // OWNER (Template 11) — 88 grants at ETP
-        // All AreaAdmin grants at ETP + system grants. Self-scoped stay SAR.
+        // OWNER (Template 11) — 123 grants at ETP (ALL grant types, ALL canGive)
+        // Self-scoped grants stay SAR. Every other grant at ETP with canGive:true.
         // ============================================
-        grants.Add(G(11, 21, SAR));
-        grants.Add(G(11, 25, SAR));
-        grants.Add(G(11, 65, SAR, useOwnJobType: true));
-        grants.Add(G(11, 66, SAR, useOwnJobType: true));
-        grants.Add(G(11, 67, SAR, useOwnJobType: true));
-        grants.Add(G(11, 68, SAR, useOwnJobType: true));
-        grants.Add(G(11, 1, ETP));
-        grants.Add(G(11, 16, ETP));
-        grants.Add(G(11, 12, ETP));
-        grants.Add(G(11, 20, ETP));
-        grants.Add(G(11, 115, ETP));
-        grants.Add(G(11, 117, ETP));
-        grants.Add(G(11, 35, ETP));
-        grants.Add(G(11, 39, ETP));
-        grants.Add(G(11, 110, ETP));
-        grants.Add(G(11, 61, ETP));
-        grants.Add(G(11, 62, ETP));
-        grants.Add(G(11, 63, ETP));
-        grants.Add(G(11, 64, ETP));
-        grants.Add(G(11, 3, ETP, canGive: true));
-        grants.Add(G(11, 4, ETP, canGive: true));
-        grants.Add(G(11, 5, ETP, canGive: true));
-        grants.Add(G(11, 2, ETP));
-        grants.Add(G(11, 7, ETP));
-        grants.Add(G(11, 8, ETP));
-        grants.Add(G(11, 9, ETP));
-        grants.Add(G(11, 10, ETP));
-        grants.Add(G(11, 11, ETP));
-        grants.Add(G(11, 69, ETP));
-        grants.Add(G(11, 70, ETP));
-        grants.Add(G(11, 71, ETP));
-        grants.Add(G(11, 72, ETP));
-        grants.Add(G(11, 73, ETP));
-        grants.Add(G(11, 74, ETP));
-        grants.Add(G(11, 75, ETP));
-        grants.Add(G(11, 76, ETP));
-        grants.Add(G(11, 109, ETP));
-        grants.Add(G(11, 17, ETP));
-        grants.Add(G(11, 18, ETP));
-        grants.Add(G(11, 19, ETP));
-        grants.Add(G(11, 22, ETP));
-        grants.Add(G(11, 23, ETP));
-        grants.Add(G(11, 26, ETP));
-        grants.Add(G(11, 27, ETP));
-        grants.Add(G(11, 28, ETP));
-        grants.Add(G(11, 29, ETP));
-        grants.Add(G(11, 30, ETP));
-        grants.Add(G(11, 31, ETP));
-        grants.Add(G(11, 34, ETP));
-        grants.Add(G(11, 36, ETP, canGive: true));
-        grants.Add(G(11, 37, ETP));
-        grants.Add(G(11, 38, ETP, canGive: true));
-        grants.Add(G(11, 40, ETP));   // EditCompany (S-01)
-        grants.Add(G(11, 41, ETP));
-        grants.Add(G(11, 45, ETP));
-        grants.Add(G(11, 48, ETP));
-        grants.Add(G(11, 49, ETP));
-        grants.Add(G(11, 50, ETP));
-        grants.Add(G(11, 52, ETP));
-        grants.Add(G(11, 53, ETP));
-        grants.Add(G(11, 59, ETP));
-        grants.Add(G(11, 116, ETP));
-        grants.Add(G(11, 118, ETP));
-        grants.Add(G(11, 112, ETP));
-        grants.Add(G(11, 113, ETP));
-        grants.Add(G(11, 114, ETP));
-        grants.Add(G(11, 119, ETP));
-        grants.Add(G(11, 120, ETP));
-        grants.Add(G(11, 121, ETP));
-        // AreaAdmin extras at ETP
-        grants.Add(G(11, 13, ETP, canGive: true));
-        grants.Add(G(11, 14, ETP, canGive: true));
-        grants.Add(G(11, 15, ETP));
-        grants.Add(G(11, 42, ETP));
-        grants.Add(G(11, 43, ETP));
-        grants.Add(G(11, 44, ETP));
-        grants.Add(G(11, 46, ETP));
-        grants.Add(G(11, 51, ETP));
-        grants.Add(G(11, 122, ETP));
-        grants.Add(G(11, 111, ETP));
-        grants.Add(G(11, 107, ETP));
-        grants.Add(G(11, 108, ETP));
-        // Owner system-level extras
+        // Self-scoped grants (SAR)
+        grants.Add(G(11, 21, SAR, canGive: true));   // RequestVacation
+        grants.Add(G(11, 25, SAR, canGive: true));   // RequestSwap
+        grants.Add(G(11, 65, SAR, canGive: true, useOwnJobType: true));  // CanBeAssignedAlhutShifts
+        grants.Add(G(11, 66, SAR, canGive: true, useOwnJobType: true));  // CanBeAssignedTextShifts
+        grants.Add(G(11, 67, SAR, canGive: true, useOwnJobType: true));  // CanBeAssignedBRShifts
+        grants.Add(G(11, 68, SAR, canGive: true, useOwnJobType: true));  // CanBeAssignedHakamShifts
+        // View grants (ETP)
+        grants.Add(G(11, 1, ETP, canGive: true));    // ViewShifts
+        grants.Add(G(11, 2, ETP, canGive: true));    // ViewAllShifts
+        grants.Add(G(11, 12, ETP, canGive: true));   // ViewDuties
+        grants.Add(G(11, 16, ETP, canGive: true));   // ViewChores
+        grants.Add(G(11, 20, ETP, canGive: true));   // ViewVacations
+        grants.Add(G(11, 28, ETP, canGive: true));   // ViewUsers
+        grants.Add(G(11, 34, ETP, canGive: true));   // ViewAllUsers
+        grants.Add(G(11, 35, ETP, canGive: true));   // ViewGrants
+        grants.Add(G(11, 39, ETP, canGive: true));   // ViewHierarchy
+        grants.Add(G(11, 61, ETP, canGive: true));   // ViewAlhutShiftCalendar
+        grants.Add(G(11, 62, ETP, canGive: true));   // ViewTextShiftCalendar
+        grants.Add(G(11, 63, ETP, canGive: true));   // ViewBRShiftCalendar
+        grants.Add(G(11, 64, ETP, canGive: true));   // ViewHakamShiftCalendar
+        grants.Add(G(11, 115, ETP, canGive: true));  // ViewCompanyCalendar
+        grants.Add(G(11, 117, ETP, canGive: true));  // ViewCompanyUsers
+        // Shift assignment + management (ETP)
+        grants.Add(G(11, 3, ETP, canGive: true));    // AssignAlhutShifts
+        grants.Add(G(11, 4, ETP, canGive: true));    // AssignTextShifts
+        grants.Add(G(11, 5, ETP, canGive: true));    // AssignBRShifts
+        grants.Add(G(11, 6, ETP, canGive: true));    // AssignTechShifts
+        grants.Add(G(11, 7, ETP, canGive: true));    // EditShiftPrograms
+        grants.Add(G(11, 8, ETP, canGive: true));    // CreateShiftPrograms
+        grants.Add(G(11, 9, ETP, canGive: true));    // DeleteShiftPrograms
+        grants.Add(G(11, 10, ETP, canGive: true));   // EditShiftTypes
+        grants.Add(G(11, 11, ETP, canGive: true));   // CreateShiftTypes
+        grants.Add(G(11, 109, ETP, canGive: true));  // ManageShiftCapacity
+        grants.Add(G(11, 110, ETP, canGive: true));  // WriteOverviewNotes
+        // Blueprint/program management by type (ETP)
+        grants.Add(G(11, 69, ETP, canGive: true));   // ManageAlhutBlueprints
+        grants.Add(G(11, 70, ETP, canGive: true));   // ManageAlhutPrograms
+        grants.Add(G(11, 71, ETP, canGive: true));   // ManageTextBlueprints
+        grants.Add(G(11, 72, ETP, canGive: true));   // ManageTextPrograms
+        grants.Add(G(11, 73, ETP, canGive: true));   // ManageBRBlueprints
+        grants.Add(G(11, 74, ETP, canGive: true));   // ManageBRPrograms
+        grants.Add(G(11, 75, ETP, canGive: true));   // ManageHakamBlueprints
+        grants.Add(G(11, 76, ETP, canGive: true));   // ManageHakamPrograms
+        // Duty grants (ETP)
+        grants.Add(G(11, 13, ETP, canGive: true));   // AssignHakamDuties
+        grants.Add(G(11, 14, ETP, canGive: true));   // AssignKatzinDuties
+        grants.Add(G(11, 15, ETP, canGive: true));   // EditDutyPrograms
+        grants.Add(G(11, 111, ETP, canGive: true));  // ManageOnDutyTypes
+        grants.Add(G(11, 122, ETP, canGive: true));  // ManageOnDuty
+        // Chore grants (ETP)
+        grants.Add(G(11, 17, ETP, canGive: true));   // AssignChores
+        grants.Add(G(11, 18, ETP, canGive: true));   // EditChoreTypes
+        grants.Add(G(11, 19, ETP, canGive: true));   // CreateChoreTypes
+        // Vacation grants (ETP)
+        grants.Add(G(11, 22, ETP, canGive: true));   // ApproveVacations
+        grants.Add(G(11, 23, ETP, canGive: true));   // OverrideVacationLimits
+        grants.Add(G(11, 24, ETP, canGive: true));   // ApproveExtendedLeave
+        // Swap grants (ETP)
+        grants.Add(G(11, 26, ETP, canGive: true));   // ApproveSwaps
+        grants.Add(G(11, 27, ETP, canGive: true));   // InitiateSwap
+        // User management (ETP)
+        grants.Add(G(11, 29, ETP, canGive: true));   // EditUsers
+        grants.Add(G(11, 30, ETP, canGive: true));   // CreateUsers
+        grants.Add(G(11, 31, ETP, canGive: true));   // DeactivateUsers
+        grants.Add(G(11, 32, ETP, canGive: true));   // ResetPasswords
+        grants.Add(G(11, 33, ETP, canGive: true));   // AssignJobTypes
+        grants.Add(G(11, 116, ETP, canGive: true));  // ManageJoinRequests
+        grants.Add(G(11, 118, ETP, canGive: true));  // EditCompanyUsers
+        // Grant management (ETP)
+        grants.Add(G(11, 36, ETP, canGive: true));   // AssignGrants
+        grants.Add(G(11, 37, ETP, canGive: true));   // RevokeGrants
+        grants.Add(G(11, 38, ETP, canGive: true));   // AssignRoles
+        // Hierarchy (ETP)
+        grants.Add(G(11, 40, ETP, canGive: true));   // EditCompany
+        grants.Add(G(11, 41, ETP, canGive: true));   // EditMolecule
+        grants.Add(G(11, 42, ETP, canGive: true));   // EditArea
+        grants.Add(G(11, 43, ETP, canGive: true));   // CreateCompany
+        grants.Add(G(11, 44, ETP, canGive: true));   // CreateMolecule
+        grants.Add(G(11, 45, ETP, canGive: true));   // ManageShiftGroupings
+        grants.Add(G(11, 46, ETP, canGive: true));   // ManageJobTypes
+        grants.Add(G(11, 47, ETP, canGive: true));   // ManageDepartments
+        grants.Add(G(11, 123, ETP, canGive: true));  // ReorderHierarchy
+        // Settings (ETP)
+        grants.Add(G(11, 48, ETP, canGive: true));   // ViewSettings
+        grants.Add(G(11, 49, ETP, canGive: true));   // EditCompanySettings
+        grants.Add(G(11, 50, ETP, canGive: true));   // EditMoleculeSettings
+        grants.Add(G(11, 51, ETP, canGive: true));   // EditAreaSettings
+        // Analytics (ETP)
+        grants.Add(G(11, 52, ETP, canGive: true));   // ViewAnalytics
+        grants.Add(G(11, 53, ETP, canGive: true));   // ViewReports
+        grants.Add(G(11, 54, ETP, canGive: true));   // ExportData
+        // Email (ETP)
+        grants.Add(G(11, 55, ETP, canGive: true));   // SendNotifications
+        grants.Add(G(11, 56, ETP, canGive: true));   // ConfigureEmailSettings
+        // System (ETP)
         grants.Add(G(11, 57, ETP, canGive: true));   // AdminAccess
-        grants.Add(G(11, 58, ETP));                  // SystemConfiguration
-        grants.Add(G(11, 60, ETP));                  // ManageApiKeys
-        grants.Add(G(11, 54, ETP));                  // ExportData
-        grants.Add(G(11, 55, ETP));                  // SendNotifications
-        grants.Add(G(11, 56, ETP));                  // ConfigureEmailSettings
-        grants.Add(G(11, 123, ETP));                 // ReorderHierarchy
+        grants.Add(G(11, 58, ETP, canGive: true));   // SystemConfiguration
+        grants.Add(G(11, 59, ETP, canGive: true));   // ViewAuditLog
+        grants.Add(G(11, 60, ETP, canGive: true));   // ManageApiKeys
+        // Navigation (ETP)
+        grants.Add(G(11, 112, ETP, canGive: true));  // AccessAdminNavigation
+        grants.Add(G(11, 113, ETP, canGive: true));  // DirectorHubAccess
+        grants.Add(G(11, 114, ETP, canGive: true));  // ManagerHomeAccess
+        grants.Add(G(11, 119, ETP, canGive: true));  // ManageAnnouncements
+        grants.Add(G(11, 120, ETP, canGive: true));  // ViewSystemAlerts
+        grants.Add(G(11, 121, ETP, canGive: true));  // ViewAllAreas
+        // Tech calendars + assignment + management (ETP)
+        grants.Add(G(11, 77, ETP, canGive: true));   // ViewHanavaCalendar
+        grants.Add(G(11, 78, ETP, canGive: true));   // ViewDeltaCalendar
+        grants.Add(G(11, 79, ETP, canGive: true));   // ViewYekevCalendar
+        grants.Add(G(11, 80, ETP, canGive: true));   // ViewMoviltechCalendar
+        grants.Add(G(11, 81, ETP, canGive: true));   // AssignHanavaShifts
+        grants.Add(G(11, 82, ETP, canGive: true));   // AssignDeltaShifts
+        grants.Add(G(11, 83, ETP, canGive: true));   // AssignYekevShifts
+        grants.Add(G(11, 84, ETP, canGive: true));   // AssignMoviltechShifts
+        grants.Add(G(11, 85, ETP, canGive: true));   // ManageHanavaBlueprints
+        grants.Add(G(11, 86, ETP, canGive: true));   // ManageHanavaPrograms
+        grants.Add(G(11, 87, ETP, canGive: true));   // ManageDeltaBlueprints
+        grants.Add(G(11, 88, ETP, canGive: true));   // ManageDeltaPrograms
+        grants.Add(G(11, 89, ETP, canGive: true));   // ManageYekevBlueprints
+        grants.Add(G(11, 90, ETP, canGive: true));   // ManageYekevPrograms
+        grants.Add(G(11, 91, ETP, canGive: true));   // ManageMoviltechBlueprints
+        grants.Add(G(11, 92, ETP, canGive: true));   // ManageMoviltechPrograms
+        // Tech eligibility (ETP — Owner can delegate to users)
+        grants.Add(G(11, 93, ETP, canGive: true));   // CanBeAssignedHanava
+        grants.Add(G(11, 94, ETP, canGive: true));   // CanBeAssignedDelta
+        grants.Add(G(11, 95, ETP, canGive: true));   // CanBeAssignedYekev
+        grants.Add(G(11, 96, ETP, canGive: true));   // CanBeAssignedMoviltech
+        // Helper molecule — Shiklut (ETP)
+        grants.Add(G(11, 97, ETP, canGive: true));   // ViewShiklutCalendar
+        grants.Add(G(11, 98, ETP, canGive: true));   // AssignShiklutChores
+        grants.Add(G(11, 99, ETP, canGive: true));   // ManageShiklutBlueprints
+        grants.Add(G(11, 100, ETP, canGive: true));  // ManageShiklutPrograms
+        grants.Add(G(11, 101, ETP, canGive: true));  // CanBeAssignedShiklut
+        // Helper molecule — NOC (ETP)
+        grants.Add(G(11, 102, ETP, canGive: true));  // ViewNOCCalendar
+        grants.Add(G(11, 103, ETP, canGive: true));  // AssignNOCChores
+        grants.Add(G(11, 104, ETP, canGive: true));  // ManageNOCBlueprints
+        grants.Add(G(11, 105, ETP, canGive: true));  // ManageNOCPrograms
+        grants.Add(G(11, 106, ETP, canGive: true));  // CanBeAssignedNOC
+        // Katzin duty management (ETP)
+        grants.Add(G(11, 107, ETP, canGive: true));  // ManageKatzinBlueprints
+        grants.Add(G(11, 108, ETP, canGive: true));  // ManageKatzinPrograms
 
         return grants;
     }

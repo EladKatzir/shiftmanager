@@ -82,6 +82,54 @@
         </div>
     }
 
+    <!-- Rate-Limited Signup IPs Section -->
+    <div class="page-header mb-4 mt-5">
+        <h2><loc key="LockedUsers_RateLimitedSignups">Rate-Limited Signup IPs</loc></h2>
+        <p class="text-muted"><loc key="LockedUsers_RateLimitedSubtitle">IPs that have exceeded the signup rate limit (50 attempts / 10 minutes)</loc></p>
+    </div>
+
+    @if (Model.RateLimitedSignups.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <p class="text-muted mb-0"><loc key="LockedUsers_NoRateLimitedIPs">No rate-limited IPs</loc></p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th><loc key="LockedUsers_IPAddress">IP Address</loc></th>
+                            <th><loc key="LockedUsers_Attempts">Attempts</loc></th>
+                            <th><loc key="LockedUsers_LastAttempt">Last Attempt</loc></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model.RateLimitedSignups)
+                        {
+                            <tr>
+                                <td>@entry.Key.Replace("signup:ip:", "")</td>
+                                <td>@entry.AttemptCount</td>
+                                <td>@(entry.LastAttempt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+                <form method="post" asp-page-handler="ClearSignupRateLimits" class="d-inline">
+                    <button type="submit" class="btn btn-warning" onclick="return confirm('@Localizer["LockedUsers_ConfirmClearRateLimits"].Value');">
+                        <loc key="LockedUsers_ClearAll">Clear All</loc>
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+
     <div class="mt-3">
         <a href="/Owner/Hub" class="btn btn-outline-secondary">
             <loc key="BackToOwnerHub">Back to Owner Hub</loc>

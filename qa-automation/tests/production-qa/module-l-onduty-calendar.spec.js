@@ -455,3 +455,149 @@ test.describe('Module L: On-Duty Calendar Full Flow', () => {
     await contextB.close();
   });
 });
+
+// =============================================================================
+// Phase 2 (P1): On-Duty Calendar Extended — L-19 through L-23
+// =============================================================================
+
+test.describe('Module L: On-Duty Calendar Extended (P1)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsOwner(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // L-19: GetOnCallData API returns structured JSON
+  // ---------------------------------------------------------------------------
+  test('L-19: GetOnCallData API returns structured data', async ({ page }) => {
+    // Get areaId from the OnCall page
+    await navigateTo(page, '/Calendar/OnCall');
+    const areaSelect = page.locator('#areaSelect');
+    const hasAreaSelect = await areaSelect.count() > 0;
+
+    let areaId = '1'; // default fallback
+    if (hasAreaSelect) {
+      areaId = await areaSelect.inputValue();
+    }
+
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - dayOfWeek);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const startDate = weekStart.toISOString().split('T')[0];
+    const endDate = weekEnd.toISOString().split('T')[0];
+
+    const response = await page.request.get(
+      `http://localhost:5000/Api/Calendar/GetOnCallData?areaId=${areaId}&startDate=${startDate}&endDate=${endDate}`
+    );
+
+    // ASSERT: API responds (200 or 400 if invalid area)
+    expect([200, 400]).toContain(response.status());
+
+    if (response.status() === 200) {
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data).toHaveProperty('data');
+    }
+
+    await saveEvidence(page, EVIDENCE, 'L-19-api-oncall-data.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // L-20: OnCall calendar 2-week view
+  // ---------------------------------------------------------------------------
+  test('L-20: OnCall calendar 2-week view renders correctly', async ({ page }) => {
+    await navigateTo(page, '/Calendar/OnCall?ViewMode=2weeks');
+
+    const calendarContainer = page.locator('.oncall-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    const hasTable = await page.locator('.excel-calendar__table').count() > 0;
+    const hasEmpty = await page.locator('.oncall-calendar__empty').count() > 0;
+    expect(hasTable || hasEmpty).toBe(true);
+
+    if (hasTable) {
+      const headerDays = page.locator('.excel-calendar__header-day');
+      const headerCount = await headerDays.count();
+      // ASSERT: 2-week view has 14 header columns
+      expect(headerCount).toBe(14);
+    }
+
+    await saveEvidence(page, EVIDENCE, 'L-20-two-week-view.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // L-21: OnCall calendar legend shows duty types
+  // ---------------------------------------------------------------------------
+  test('L-21: OnCall calendar legend shows duty type entries', async ({ page }) => {
+    await navigateTo(page, '/Calendar/OnCall');
+
+    const calendarContainer = page.locator('.oncall-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    const legend = page.locator('.oncall-calendar__legend');
+    const legendCount = await legend.count();
+
+    if (legendCount > 0) {
+      const legendItems = legend.locator('.oncall-calendar__legend-item');
+      const itemCount = await legendItems.count();
+      expect(itemCount).toBeGreaterThanOrEqual(1);
+    }
+
+    await expect(calendarContainer).toBeVisible();
+    await saveEvidence(page, EVIDENCE, 'L-21-legend-duty-types.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // L-22: OnCall date navigation changes period
+  // ---------------------------------------------------------------------------
+  test('L-22: OnCall date navigation forward/backward', async ({ page }) => {
+    await navigateTo(page, '/Calendar/OnCall');
+
+    const calendarContainer = page.locator('.oncall-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    const dateLabel = page.locator('.oncall-calendar__date-label');
+    await expect(dateLabel).toBeVisible({ timeout: 5000 });
+    const initialDateText = await dateLabel.innerText();
+
+    // Click next
+    const nextBtn = page.locator('.oncall-calendar__nav-btn').last();
+    await expect(nextBtn).toBeVisible({ timeout: 5000 });
+    await nextBtn.click();
+    await page.waitForLoadState('networkidle');
+
+    // ASSERT: Date label changed
+    const newDateText = await page.locator('.oncall-calendar__date-label').innerText();
+    expect(newDateText).not.toBe(initialDateText);
+
+    await saveEvidence(page, EVIDENCE, 'L-22-date-navigation.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // L-23: OnCall calendar JustMine toggle
+  // ---------------------------------------------------------------------------
+  test('L-23: OnCall JustMine toggle works', async ({ page }) => {
+    await navigateTo(page, '/Calendar/OnCall');
+
+    const calendarContainer = page.locator('.oncall-calendar');
+    await expect(calendarContainer).toBeVisible({ timeout: 15000 });
+
+    const justMineLink = page.locator('a[href*="JustMine"]');
+    const linkCount = await justMineLink.count();
+
+    if (linkCount > 0) {
+      const btn = justMineLink.first();
+      await expect(btn).toBeVisible({ timeout: 5000 });
+      await btn.click();
+      await page.waitForLoadState('networkidle');
+
+      // ASSERT: URL reflects toggle
+      expect(page.url().toLowerCase()).toContain('justmine');
+    }
+
+    await expect(calendarContainer).toBeVisible();
+    await saveEvidence(page, EVIDENCE, 'L-23-just-mine.png');
+  });
+});

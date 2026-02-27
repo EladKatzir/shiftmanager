@@ -9050,6 +9050,30 @@
   <data name="Radar_ConflictDetected" xml:space="preserve">
     <value>זוהתה התנגשות</value>
   </data>
+  <data name="Radar_Understaffed" xml:space="preserve">
+    <value>חוסר באיוש</value>
+  </data>
+  <data name="Radar_Overstaffed" xml:space="preserve">
+    <value>עודף באיוש</value>
+  </data>
+  <data name="Radar_Conflict" xml:space="preserve">
+    <value>התנגשות</value>
+  </data>
+  <data name="Radar_Needed" xml:space="preserve">
+    <value>נדרשים</value>
+  </data>
+  <data name="Radar_Extra" xml:space="preserve">
+    <value>עודף</value>
+  </data>
+  <data name="Radar_Shift" xml:space="preserve">
+    <value>משמרת</value>
+  </data>
+  <data name="Radar_Date" xml:space="preserve">
+    <value>תאריך</value>
+  </data>
+  <data name="Radar_Staffing" xml:space="preserve">
+    <value>איוש</value>
+  </data>
   <data name="Offline_SavedOffline" xml:space="preserve">
     <value>נשמר במצב לא מקוון</value>
   </data>
@@ -11174,6 +11198,12 @@
   <data name="Error_TraineeDifferentCompany" xml:space="preserve">
     <value>המתמחה חייב להשתייך לאותה חברה כמו השיבוץ</value>
   </data>
+  <data name="Error_UserNotInMolecule" xml:space="preserve">
+    <value>המשתמש אינו שייך לאותו מולקולה כמו המשמרת</value>
+  </data>
+  <data name="Error_TraineeDifferentMolecule" xml:space="preserve">
+    <value>המתמחה חייב להשתייך לאותו מולקולה כמו השיבוץ</value>
+  </data>
 
   <!-- Command Palette Navigation (JS localization) -->
   <data name="Nav_Requests" xml:space="preserve">
@@ -11844,6 +11874,42 @@
   </data>
   <data name="Blueprints_HebrewNamePlaceholder" xml:space="preserve">
     <value>משמרת יום</value>
+  </data>
+  <data name="Blueprints_CompanyOnly" xml:space="preserve">
+    <value>חברה בלבד</value>
+  </data>
+  <data name="Blueprints_MoleculeScopeHint" xml:space="preserve">
+    <value>אופציונלי: הפוך לגלוי ברחבי המולקולה</value>
+  </data>
+  <data name="Blueprints_SelectJobType" xml:space="preserve">
+    <value>בחר סוג תפקיד</value>
+  </data>
+  <data name="Blueprints_Scope" xml:space="preserve">
+    <value>היקף</value>
+  </data>
+  <data name="Blueprints_PublishToMolecule" xml:space="preserve">
+    <value>פרסם למולקולה</value>
+  </data>
+  <data name="Blueprints_Unpublish" xml:space="preserve">
+    <value>בטל פרסום</value>
+  </data>
+  <data name="Blueprints_Publish" xml:space="preserve">
+    <value>פרסם</value>
+  </data>
+  <data name="Blueprints_SelectBothMoleculeAndJobType" xml:space="preserve">
+    <value>יש לבחור גם מולקולה וגם סוג תפקיד</value>
+  </data>
+  <data name="Blueprints_FailedToPublish" xml:space="preserve">
+    <value>הפרסום נכשל</value>
+  </data>
+  <data name="Blueprints_ConfirmUnpublish" xml:space="preserve">
+    <value>להסיר את היקף המולקולה? סוג המשמרת יהיה גלוי רק לחברה זו.</value>
+  </data>
+  <data name="Blueprints_FailedToUnpublish" xml:space="preserve">
+    <value>ביטול הפרסום נכשל</value>
+  </data>
+  <data name="Blueprints_DuplicateInMolecule" xml:space="preserve">
+    <value>סוג משמרת עם אותו מפתח כבר פורסם למולקולה זו. יש לפרסם כל סוג משמרת פעם אחת בלבד למולקולה כדי למנוע שורות כפולות.</value>
   </data>
   <data name="LangMgmt_FilterByLanguage" xml:space="preserve">
     <value>סנן לפי שפה</value>

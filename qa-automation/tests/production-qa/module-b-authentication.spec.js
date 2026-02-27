@@ -289,4 +289,259 @@ test.describe('Module B: Authentication', () => {
       path: '/',
     }]);
   });
+
+  // -----------------------------------------------------------------------
+  // B-13  Login with return URL redirect (open redirect prevention)
+  // -----------------------------------------------------------------------
+  test('B-13: Login with return URL redirects back to requested page', async ({ page }) => {
+    // Navigate directly to a protected page while unauthenticated.
+    // The auth middleware should redirect to login with a returnUrl parameter.
+    // After successful login, the app should redirect to the return URL
+    // (or to onboarding if that middleware takes priority — both are valid).
+
+    // Part 1: Verify returnUrl is captured when accessing a protected page
+    await page.goto(`${BASE_URL}/Calendar/Shifts`);
+    await page.waitForLoadState('networkidle');
+
+    // STRICT: Should have been redirected to the login page
+    expect(page.url()).toContain('/Auth/Login');
+
+    // STRICT: The login URL should include a returnUrl query parameter
+    const loginUrl = page.url();
+    expect(loginUrl.toLowerCase()).toContain('returnurl');
+
+    // STRICT: The returnUrl should reference the originally requested page
+    const urlObj = new URL(loginUrl);
+    const returnUrl = urlObj.searchParams.get('returnUrl') ||
+                      urlObj.searchParams.get('ReturnUrl') || '';
+    expect(returnUrl).toContain('/Calendar/Shifts');
+
+    // Now login as owner
+    const emailInput = page.locator('input[name="Email"], input#Email').first();
+    const passInput = page.locator('input[name="Password"], input#Password').first();
+    await expect(emailInput).toBeVisible({ timeout: 10000 });
+    await emailInput.fill('admin@local');
+    await passInput.fill('admin123');
+
+    const submitBtn = page.locator('form:has(input[name="Email"]) button[type="submit"]').first();
+    await Promise.all([
+      page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 15000 }),
+      submitBtn.click(),
+    ]);
+
+    // STRICT: After login, should be redirected to Calendar/Shifts OR to
+    // an intermediate page like /My/Onboarding (which takes priority).
+    // Either way, we must NOT remain on the login page.
+    await page.waitForLoadState('networkidle');
+    expect(page.url()).not.toContain('/Auth/Login');
+
+    await saveEvidence(page, EVIDENCE, 'B-13-return-url-redirect.png');
+
+    // Part 2: Verify open redirect prevention — an external returnUrl
+    // must NOT cause a redirect to an external domain.
+    // Login.cshtml.cs uses Url.IsLocalUrl() which rejects non-local URLs.
+    await page.goto(`${BASE_URL}/Auth/Login?returnUrl=https://evil.example.com`);
+    await page.waitForLoadState('networkidle');
+
+    // Fill in login form again
+    const emailInput2 = page.locator('input[name="Email"], input#Email').first();
+    const passInput2 = page.locator('input[name="Password"], input#Password').first();
+    await expect(emailInput2).toBeVisible({ timeout: 10000 });
+    await emailInput2.fill('admin@local');
+    await passInput2.fill('admin123');
+
+    const submitBtn2 = page.locator('form:has(input[name="Email"]) button[type="submit"]').first();
+    await Promise.all([
+      page.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 15000 }),
+      submitBtn2.click(),
+    ]);
+
+    // STRICT: Should NOT be redirected to the external URL
+    await page.waitForLoadState('networkidle');
+    expect(page.url()).not.toContain('evil.example.com');
+    // Should remain on localhost (safe redirect to home or onboarding)
+    expect(page.url()).toContain('localhost');
+
+    await saveEvidence(page, EVIDENCE, 'B-13-open-redirect-blocked.png');
+  });
+
+  // -----------------------------------------------------------------------
+  // B-19  Auth cookie is HttpOnly (prevents XSS-based session theft)
+  // -----------------------------------------------------------------------
+  test('B-19: Auth cookie has HttpOnly and security attributes', async ({ page }) => {
+    // Intercept the login POST response to inspect Set-Cookie headers.
+    // document.cookie will NOT show HttpOnly cookies, so we MUST check
+    // the raw response headers.
+
+    await page.goto(`${BASE_URL}/Auth/Login`);
+    await page.waitForLoadState('networkidle');
+
+    const emailInput = page.locator('input[name="Email"], input#Email').first();
+    const passInput = page.locator('input[name="Password"], input#Password').first();
+    await expect(emailInput).toBeVisible({ timeout: 10000 });
+    await emailInput.fill('admin@local');
+    await passInput.fill('admin123');
+
+    // Capture the login POST response
+    const submitBtn = page.locator('form:has(input[name="Email"]) button[type="submit"]').first();
+    const [response] = await Promise.all([
+      page.waitForResponse(resp =>
+        resp.url().includes('/Auth/Login') && resp.request().method() === 'POST',
+        { timeout: 15000 }
+      ),
+      submitBtn.click(),
+    ]);
+
+    // Get Set-Cookie headers from the response
+    const headers = response.headers();
+    const setCookieHeader = headers['set-cookie'] || '';
+
+    // Also get all cookies via browser context for completeness
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find(c => c.name === 'shiftmgr.auth');
+
+    // STRICT: The auth cookie must exist
+    expect(authCookie).toBeTruthy();
+
+    // STRICT: The auth cookie must have HttpOnly flag
+    // Playwright's cookie API exposes httpOnly directly
+    expect(authCookie.httpOnly).toBe(true);
+
+    // STRICT: SameSite should be set (Lax per Program.cs configuration)
+    expect(authCookie.sameSite).toBe('Lax');
+
+    // Verify via Set-Cookie header as additional check (if available)
+    if (setCookieHeader.includes('shiftmgr.auth')) {
+      expect(setCookieHeader.toLowerCase()).toContain('httponly');
+      expect(setCookieHeader.toLowerCase()).toContain('samesite=lax');
+    }
+
+    // STRICT: document.cookie must NOT contain the auth cookie
+    // (proves HttpOnly is working — JS can't access it)
+    const jsVisibleCookies = await page.evaluate(() => document.cookie);
+    expect(jsVisibleCookies).not.toContain('shiftmgr.auth');
+
+    await saveEvidence(page, EVIDENCE, 'B-19-cookie-httponly.png');
+  });
+});
+
+// =============================================================================
+// Module B Extensions (P1): Session & Security Tests
+// =============================================================================
+
+test.describe('Module B: Session & Security (P1)', () => {
+
+  // -----------------------------------------------------------------------
+  // B-14  Session persists across navigation
+  // -----------------------------------------------------------------------
+  test('B-14: Session persists across page navigation', async ({ page }) => {
+    await loginAsOwner(page);
+
+    // Navigate to multiple pages to verify session persists
+    await navigateTo(page, '/Calendar/Shifts');
+    await expect(page).not.toHaveURL(/\/Auth\/Login/);
+
+    await navigateTo(page, '/Admin/Users');
+    await expect(page).not.toHaveURL(/\/Auth\/Login/);
+
+    await navigateTo(page, '/Owner/FeatureFlags');
+    await expect(page).not.toHaveURL(/\/Auth\/Login/);
+
+    // STRICT: Still logged in after 3 navigations
+    const logoutForm = page.locator('form[action*="Logout"]').first();
+    const isStillLoggedIn = await logoutForm.count() > 0;
+    expect(isStillLoggedIn).toBe(true);
+
+    await saveEvidence(page, EVIDENCE, 'B-14-session-persists.png');
+  });
+
+  // -----------------------------------------------------------------------
+  // B-15  Concurrent sessions from same user
+  // -----------------------------------------------------------------------
+  test('B-15: Concurrent sessions from same user', async ({ browser }) => {
+    const contextA = await browser.newContext();
+    const contextB = await browser.newContext();
+    const pageA = await contextA.newPage();
+    const pageB = await contextB.newPage();
+
+    // Login as owner in both contexts
+    await pageA.goto(`${BASE_URL}/Auth/Login`);
+    await pageA.waitForLoadState('networkidle');
+    await pageA.locator('input[name="Email"]').first().fill('admin@local');
+    await pageA.locator('input[name="Password"]').first().fill('admin123');
+    await Promise.all([
+      pageA.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 15000 }),
+      pageA.locator('form:has(input[name="Email"]) button[type="submit"]').first().click(),
+    ]);
+
+    await pageB.goto(`${BASE_URL}/Auth/Login`);
+    await pageB.waitForLoadState('networkidle');
+    await pageB.locator('input[name="Email"]').first().fill('admin@local');
+    await pageB.locator('input[name="Password"]').first().fill('admin123');
+    await Promise.all([
+      pageB.waitForURL(url => !url.toString().includes('/Auth/Login'), { timeout: 15000 }),
+      pageB.locator('form:has(input[name="Email"]) button[type="submit"]').first().click(),
+    ]);
+
+    // STRICT: Both sessions should be active
+    await pageA.goto(`${BASE_URL}/Calendar/Shifts`);
+    await pageA.waitForLoadState('networkidle');
+    await expect(pageA).not.toHaveURL(/\/Auth\/Login/);
+
+    await pageB.goto(`${BASE_URL}/Calendar/Shifts`);
+    await pageB.waitForLoadState('networkidle');
+    await expect(pageB).not.toHaveURL(/\/Auth\/Login/);
+
+    await saveEvidence(pageA, EVIDENCE, 'B-15-concurrent-session-A.png');
+    await saveEvidence(pageB, EVIDENCE, 'B-15-concurrent-session-B.png');
+
+    await contextA.close();
+    await contextB.close();
+  });
+
+  // -----------------------------------------------------------------------
+  // B-20  Password hash not exposed in API responses
+  // -----------------------------------------------------------------------
+  test('B-20: Password hash not exposed in API responses', async ({ page }) => {
+    await loginAsOwner(page);
+
+    // Fetch user list API (used by admin pages)
+    const response = await page.request.get(`${BASE_URL}/Admin/Users?handler=GetUsers`);
+
+    // STRICT: Response should not contain password hash or salt
+    const responseText = await response.text();
+    expect(responseText.toLowerCase()).not.toContain('passwordhash');
+    expect(responseText.toLowerCase()).not.toContain('passwordsalt');
+
+    await saveEvidence(page, EVIDENCE, 'B-20-no-password-hash.png');
+  });
+
+  // -----------------------------------------------------------------------
+  // B-21  Account lockout after failed attempts
+  // -----------------------------------------------------------------------
+  test('B-21: Account lockout mechanism exists', async ({ page }) => {
+    await navigateTo(page, '/Auth/Login');
+
+    // Attempt multiple failed logins with wrong password
+    for (let i = 0; i < 5; i++) {
+      const emailInput = page.locator('input[name="Email"]').first();
+      const passInput = page.locator('input[name="Password"]').first();
+      await emailInput.fill('admin@local');
+      await passInput.fill('wrongpassword' + i);
+      const submitBtn = page.locator('form:has(input[name="Email"]) button[type="submit"]').first();
+      await submitBtn.click();
+      await page.waitForLoadState('networkidle');
+    }
+
+    // STRICT: After 5 failed attempts, we should still be on the login page
+    // with an error message (lockout or error)
+    await expect(page).toHaveURL(/\/Auth\/Login/);
+
+    // Check for any error message or lockout indicator
+    const pageText = await page.locator('body').innerText();
+    const hasErrorOrLockout = /error|locked|invalid|failed|incorrect|too many/i.test(pageText);
+    expect(hasErrorOrLockout).toBe(true);
+
+    await saveEvidence(page, EVIDENCE, 'B-21-lockout-mechanism.png');
+  });
 });

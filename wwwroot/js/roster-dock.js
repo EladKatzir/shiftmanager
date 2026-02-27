@@ -110,8 +110,13 @@
         employeeList.innerHTML = '<p class="loading-text">' + (window.AppLocalizer?.Roster_Loading || 'Loading employees...') + '</p>';
 
         try {
-            // Use the new EmployeeAvailability endpoint for 7-day availability cubes
-            const response = await fetch('/Calendar/Table?handler=EmployeeAvailability', {
+            // Use the EmployeeAvailability endpoint for 7-day availability cubes
+            // Forward molecule params from URL if present (for cross-company visibility)
+            const urlParams = new URLSearchParams(window.location.search);
+            let availUrl = '/Calendar/Table?handler=EmployeeAvailability';
+            if (urlParams.get('MoleculeId')) availUrl += '&moleculeId=' + encodeURIComponent(urlParams.get('MoleculeId'));
+            if (urlParams.get('JobTypeId')) availUrl += '&jobTypeId=' + encodeURIComponent(urlParams.get('JobTypeId'));
+            const response = await fetch(availUrl, {
                 method: 'GET',
                 credentials: 'same-origin'
             });

@@ -151,8 +151,23 @@ public class EditModel : PageModel
     {
         try
         {
+            // Validate GrantTypeId exists and is active
+            if (!await _db.GrantTypes.AnyAsync(gt => gt.Id == request.GrantTypeId && gt.IsActive))
+                return new JsonResult(new { success = false, error = "Invalid grant type" });
+
+            // Validate ScopeMode is a valid enum value
+            if (!Enum.IsDefined(typeof(GrantScopeMode), request.ScopeMode))
+                return new JsonResult(new { success = false, error = "Invalid scope mode" });
+
+            var resolvedTargetJobTypeId = request.TargetJobTypeId > 0 ? request.TargetJobTypeId : (int?)null;
+
+            // Explicit null-safe duplicate check (EF Core nullable column comparison)
             var exists = await _db.RoleTemplateGrants
-                .AnyAsync(rtg => rtg.RoleTemplateId == Id && rtg.GrantTypeId == request.GrantTypeId);
+                .AnyAsync(rtg => rtg.RoleTemplateId == Id
+                    && rtg.GrantTypeId == request.GrantTypeId
+                    && (resolvedTargetJobTypeId == null
+                        ? rtg.TargetJobTypeId == null
+                        : rtg.TargetJobTypeId == resolvedTargetJobTypeId));
 
             if (exists)
                 return new JsonResult(new { success = false, error = "Grant already assigned to this template" });
@@ -164,18 +179,56 @@ public class EditModel : PageModel
                 CanOwn = request.CanOwn,
                 CanGive = request.CanGive,
                 ScopeMode = request.ScopeMode,
+                UseOwnJobType = request.UseOwnJobType,
+                TargetJobTypeId = resolvedTargetJobTypeId,
                 IsOverride = true
             };
 
             _db.RoleTemplateGrants.Add(grant);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Grant added to template {TemplateId}: GrantTypeId={GrantTypeId}", Id, request.GrantTypeId);
+            _logger.LogInformation("Grant added to template {TemplateId}: GrantTypeId={GrantTypeId}, CanOwn={CanOwn}, CanGive={CanGive}, Scope={Scope}",
+                Id, request.GrantTypeId, request.CanOwn, request.CanGive, request.ScopeMode);
             return new JsonResult(new { success = true, grantId = grant.Id });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding grant to template {TemplateId}", Id);
+            return new JsonResult(new { success = false, error = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Update an existing grant on this role template (AJAX).
+    /// </summary>
+    public async Task<IActionResult> OnPostUpdateGrantAsync([FromBody] UpdateGrantRequest request)
+    {
+        try
+        {
+            // Validate ScopeMode is a valid enum value
+            if (!Enum.IsDefined(typeof(GrantScopeMode), request.ScopeMode))
+                return new JsonResult(new { success = false, error = "Invalid scope mode" });
+
+            var grant = await _db.RoleTemplateGrants.FindAsync(request.GrantId);
+            if (grant == null || grant.RoleTemplateId != Id)
+                return new JsonResult(new { success = false, error = "Grant not found" });
+
+            grant.CanOwn = request.CanOwn;
+            grant.CanGive = request.CanGive;
+            grant.ScopeMode = request.ScopeMode;
+            grant.UseOwnJobType = request.UseOwnJobType;
+            grant.TargetJobTypeId = request.TargetJobTypeId > 0 ? request.TargetJobTypeId : null;
+            grant.IsOverride = true;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Grant updated on template {TemplateId}: GrantId={GrantId}, CanOwn={CanOwn}, CanGive={CanGive}, Scope={Scope}",
+                Id, request.GrantId, request.CanOwn, request.CanGive, request.ScopeMode);
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating grant on template {TemplateId}", Id);
             return new JsonResult(new { success = false, error = "An error occurred" });
         }
     }
@@ -250,6 +303,18 @@ public class EditModel : PageModel
         public bool CanOwn { get; set; } = true;
         public bool CanGive { get; set; }
         public GrantScopeMode ScopeMode { get; set; } = GrantScopeMode.SameAsRole;
+        public bool UseOwnJobType { get; set; }
+        public int? TargetJobTypeId { get; set; }
+    }
+
+    public class UpdateGrantRequest
+    {
+        public int GrantId { get; set; }
+        public bool CanOwn { get; set; } = true;
+        public bool CanGive { get; set; }
+        public GrantScopeMode ScopeMode { get; set; } = GrantScopeMode.SameAsRole;
+        public bool UseOwnJobType { get; set; }
+        public int? TargetJobTypeId { get; set; }
     }
 
     public class RemoveGrantRequest

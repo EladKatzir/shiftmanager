@@ -1,4 +1,0 @@
-{
-  "status": 200,
-  "body": "{\"companies\":[{\"id\":19,\"name\":\"Multi Test A\"},{\"id\":20,\"name\":\"Multi Test B\"},{\"id\":17,\"name\":\"Test Company Empty\"},{\"id\":18,\"name\":\"Test Company Full\"},{\"id\":4,\"name\":\"\\u05D4\\u05E2\\u05D9\\u05E8\"},{\"id\":2,\"name\":\"\\u05D7\\u05D9\\u05E8\"},{\"id\":5,\"name\":\"\\u05D8\\u05E7\\u05D8\\u05D9\"},{\"id\":3,\"name\":\"\\u05DE\\u05D7\\u05E0\\u05D5\\u05EA\"},{\"id\":1,\"name\":\"\\u05E6\\u05E4\\u05D5\\u05E0\\u05D4\"}]}"
-}

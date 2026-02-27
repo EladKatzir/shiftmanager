@@ -70,13 +70,11 @@ public class EditProfileModel : LocalizedPageModel
     public DateOnly? DateOfBirth { get; set; }
 
     [BindProperty]
-    public string? Department { get; set; }
-
-    [BindProperty]
-    public string? JobTitle { get; set; }
-
-    [BindProperty]
     public DateOnly? HireDate { get; set; }
+
+    // Computed display-only fields (derived from user's organizational hierarchy)
+    public string? MoleculeName { get; set; }
+    public string? ComputedJobTitle { get; set; }
 
     [BindProperty]
     public string? Skills { get; set; }
@@ -159,7 +157,7 @@ public class EditProfileModel : LocalizedPageModel
             return Forbid();
         }
 
-        LoadUserData(user);
+        await LoadUserDataAsync(user);
         await LoadOrganizationalOptionsAsync(user);
         await LoadRecentChangesAsync();
 
@@ -181,7 +179,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -195,7 +193,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -208,7 +206,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -221,7 +219,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -234,7 +232,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -247,33 +245,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
-                await LoadOrganizationalOptionsAsync(user);
-            }
-            await LoadRecentChangesAsync();
-            return Page();
-        }
-
-        if (!string.IsNullOrWhiteSpace(Department) && Department.Length > 100)
-        {
-            ErrorMessage = _localizer["Error_DepartmentTooLong"].Value;
-            var user = await _db.Users.FindAsync(UserId);
-            if (user != null)
-            {
-                LoadUserData(user);
-                await LoadOrganizationalOptionsAsync(user);
-            }
-            await LoadRecentChangesAsync();
-            return Page();
-        }
-
-        if (!string.IsNullOrWhiteSpace(JobTitle) && JobTitle.Length > 100)
-        {
-            ErrorMessage = _localizer["Error_JobTitleTooLong"].Value;
-            var user = await _db.Users.FindAsync(UserId);
-            if (user != null)
-            {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -286,7 +258,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -299,7 +271,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -312,7 +284,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -325,7 +297,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -338,7 +310,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -352,7 +324,7 @@ public class EditProfileModel : LocalizedPageModel
             var user = await _db.Users.FindAsync(UserId);
             if (user != null)
             {
-                LoadUserData(user);
+                await LoadUserDataAsync(user);
                 await LoadOrganizationalOptionsAsync(user);
             }
             await LoadRecentChangesAsync();
@@ -386,7 +358,7 @@ public class EditProfileModel : LocalizedPageModel
             if (!success)
             {
                 ErrorMessage = error;
-                LoadUserData(targetUser);
+                await LoadUserDataAsync(targetUser);
                 await LoadOrganizationalOptionsAsync(targetUser);
                 await LoadRecentChangesAsync();
                 return Page();
@@ -406,8 +378,8 @@ public class EditProfileModel : LocalizedPageModel
             Phone = Phone,
             City = City,
             DateOfBirth = DateOfBirth,
-            Department = Department,
-            JobTitle = JobTitle,
+            Department = targetUser.LegacyDepartment,
+            JobTitle = targetUser.JobTitle,
             HireDate = HireDate,
             Skills = skillsList.Any() ? JsonSerializer.Serialize(skillsList) : null,
             Certifications = certificationsList.Any() ? JsonSerializer.Serialize(certificationsList) : null,
@@ -423,7 +395,7 @@ public class EditProfileModel : LocalizedPageModel
         if (!updateSuccess)
         {
             ErrorMessage = updateError;
-            LoadUserData(targetUser);
+            await LoadUserDataAsync(targetUser);
             await LoadOrganizationalOptionsAsync(targetUser);
             await LoadRecentChangesAsync();
             return Page();
@@ -489,7 +461,7 @@ public class EditProfileModel : LocalizedPageModel
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == UserId);
-        LoadUserData(targetUser!);
+        await LoadUserDataAsync(targetUser!);
         await LoadOrganizationalOptionsAsync(targetUser!);
         await LoadRecentChangesAsync();
 
@@ -519,14 +491,14 @@ public class EditProfileModel : LocalizedPageModel
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == UserId);
-        LoadUserData(user!);
+        await LoadUserDataAsync(user!);
         await LoadOrganizationalOptionsAsync(user!);
         await LoadRecentChangesAsync();
 
         return Page();
     }
 
-    private void LoadUserData(AppUser user)
+    private async Task LoadUserDataAsync(AppUser user)
     {
         Email = user.Email;
         DisplayName = user.DisplayName;
@@ -534,8 +506,6 @@ public class EditProfileModel : LocalizedPageModel
         Phone = user.Phone;
         City = user.City;
         DateOfBirth = user.DateOfBirth;
-        Department = user.LegacyDepartment;
-        JobTitle = user.JobTitle;
         HireDate = user.HireDate;
         EmergencyContactName = user.EmergencyContactName;
         EmergencyContactPhone = user.EmergencyContactPhone;
@@ -546,6 +516,31 @@ public class EditProfileModel : LocalizedPageModel
         JobTypeId = user.JobTypeId;
         DepartmentId = user.DepartmentId;
         Rank = user.Rank;
+
+        // Molecule name: User → Company → Molecule
+        // SECURITY: IgnoreQueryFilters safe — fetching by explicit user.CompanyId
+        var company = await _db.Companies
+            .IgnoreQueryFilters()
+            .Include(c => c.Molecule)
+            .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+        MoleculeName = company?.Molecule?.DisplayName;
+
+        // Computed job title: JobType + Role
+        var roleKey = $"Role_{user.Role}";
+        var roleName = _localizer[roleKey].Value;
+        if (user.JobTypeId.HasValue)
+        {
+            var jobType = await _db.JobTypes
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(jt => jt.Id == user.JobTypeId.Value);
+            ComputedJobTitle = jobType != null
+                ? $"{jobType.DisplayName} — {roleName}"
+                : roleName;
+        }
+        else
+        {
+            ComputedJobTitle = roleName;
+        }
 
         // Parse skills and certifications
         var skillsList = ParseJsonArray(user.Skills);

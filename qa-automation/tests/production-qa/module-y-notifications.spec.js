@@ -169,3 +169,145 @@ test.describe('Module Y: Notifications', () => {
     await saveEvidence(page, EVIDENCE, 'Y-08-no-console-errors.png');
   });
 });
+
+// =============================================================================
+// Phase 2 (P1): Notifications Extended — Y-09 through Y-13
+// =============================================================================
+
+test.describe('Module Y: Notifications Extended (P1)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsOwner(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Y-09: Notification list structure (item, icon, content, actions)
+  // ---------------------------------------------------------------------------
+  test('Y-09: Notification items have correct DOM structure', async ({ page }) => {
+    await navigateTo(page, '/My/NotificationCenter');
+    await page.waitForLoadState('networkidle');
+
+    // ASSERT: Either notifications exist or empty state shows
+    const notifItems = page.locator('.notification-item');
+    const emptyState = page.locator('.empty-state');
+    const itemCount = await notifItems.count();
+    const emptyCount = await emptyState.count();
+
+    expect(itemCount > 0 || emptyCount > 0).toBe(true);
+
+    if (itemCount > 0) {
+      const first = notifItems.first();
+
+      // ASSERT: Item has icon
+      const icon = first.locator('.notification-icon');
+      const iconCount = await icon.count();
+      expect(iconCount).toBeGreaterThanOrEqual(1);
+
+      // ASSERT: Item has title (h4)
+      const title = first.locator('h4');
+      const titleCount = await title.count();
+      expect(titleCount).toBeGreaterThanOrEqual(1);
+
+      // ASSERT: Item has message (p)
+      const message = first.locator('p');
+      const msgCount = await message.count();
+      expect(msgCount).toBeGreaterThanOrEqual(1);
+    }
+
+    await saveEvidence(page, EVIDENCE, 'Y-09-notification-structure.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Y-10: Unread notifications have visual indicator
+  // ---------------------------------------------------------------------------
+  test('Y-10: Unread notifications have unread indicator', async ({ page }) => {
+    await navigateTo(page, '/My/NotificationCenter');
+    await page.waitForLoadState('networkidle');
+
+    // Check for unread items
+    const unreadItems = page.locator('.notification-item.unread');
+    const unreadCount = await unreadItems.count();
+
+    if (unreadCount > 0) {
+      // ASSERT: Unread items have visual indicator
+      const indicator = unreadItems.first().locator('.unread-indicator');
+      const indicatorCount = await indicator.count();
+      expect(indicatorCount).toBeGreaterThanOrEqual(1);
+    }
+
+    // ASSERT: Page renders regardless
+    expect(page.url()).toContain('/My/NotificationCenter');
+
+    await saveEvidence(page, EVIDENCE, 'Y-10-unread-indicator.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Y-11: Mark All as Read button shows when unread exist
+  // ---------------------------------------------------------------------------
+  test('Y-11: Mark All as Read button conditional visibility', async ({ page }) => {
+    await navigateTo(page, '/My/NotificationCenter');
+    await page.waitForLoadState('networkidle');
+
+    // Check for mark-all-as-read form
+    const markAllForm = page.locator('form[action*="MarkAllAsRead"], form:has(button:has-text("MarkAllAsRead"))');
+    const markAllCount = await markAllForm.count();
+
+    // Also check for unread items
+    const unreadItems = page.locator('.notification-item.unread');
+    const unreadCount = await unreadItems.count();
+
+    if (unreadCount > 0) {
+      // ASSERT: If unread exist, Mark All button should exist
+      expect(markAllCount).toBeGreaterThanOrEqual(1);
+    }
+    // If no unread, mark all button may or may not show — both valid
+
+    await saveEvidence(page, EVIDENCE, 'Y-11-mark-all-read.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Y-12: Delete notification form has confirmation
+  // ---------------------------------------------------------------------------
+  test('Y-12: Delete notification requires confirmation', async ({ page }) => {
+    await navigateTo(page, '/My/NotificationCenter');
+    await page.waitForLoadState('networkidle');
+
+    const notifItems = page.locator('.notification-item');
+    const itemCount = await notifItems.count();
+
+    if (itemCount > 0) {
+      // Check for delete forms
+      const deleteForms = page.locator('form[action*="Delete"], form:has(button:has-text("Delete"))');
+      const deleteCount = await deleteForms.count();
+
+      if (deleteCount > 0) {
+        // ASSERT: Delete form has onsubmit confirm
+        const firstForm = deleteForms.first();
+        const onsubmit = await firstForm.getAttribute('onsubmit');
+        expect(onsubmit || '').toContain('confirm');
+      }
+    }
+
+    await saveEvidence(page, EVIDENCE, 'Y-12-delete-confirmation.png');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Y-13: Notification bell in layout header
+  // ---------------------------------------------------------------------------
+  test('Y-13: Notification bell exists in page header', async ({ page }) => {
+    await navigateTo(page, '/');
+    await page.waitForLoadState('networkidle');
+
+    // ASSERT: Notification bell link/icon exists in the header/nav
+    const bellLink = page.locator('a[href*="NotificationCenter"], a[href*="Notification"], [class*="notification-bell"], [class*="notif-bell"]');
+    const bellCount = await bellLink.count();
+
+    // The bell might also be an icon within a nav element
+    const navBell = page.locator('nav a[href*="Notification"], header a[href*="Notification"], .sidebar a[href*="Notification"]');
+    const navBellCount = await navBell.count();
+
+    // ASSERT: At least one notification link exists somewhere in the UI
+    expect(bellCount + navBellCount).toBeGreaterThanOrEqual(1);
+
+    await saveEvidence(page, EVIDENCE, 'Y-13-notification-bell.png');
+  });
+});

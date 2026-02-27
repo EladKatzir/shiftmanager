@@ -130,8 +130,31 @@ public class ScopeSwitcherModel : PageModel
             IsDefault = false
         });
 
-        // Add company scope if user belongs to a company
-        if (user.CompanyId > 0 && company != null)
+        // Add company scope(s) based on user's access level
+        if (isDirector && userContext?.Path?.Molecule != null)
+        {
+            // Directors see all non-HQ companies in their molecule
+            var moleculeCompanies = await _db.Companies
+                .Where(c => c.MoleculeId == userContext.Path.Molecule.Id && !c.IsHeadquarters)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            var isFirst = true;
+            foreach (var molCompany in moleculeCompanies)
+            {
+                scopes.Add(new ScopeDto
+                {
+                    Type = "company",
+                    Id = molCompany.Id,
+                    Name = molCompany.DisplayName ?? molCompany.Name,
+                    ParentId = molCompany.MoleculeId,
+                    ParentType = "molecule",
+                    IsDefault = isFirst
+                });
+                isFirst = false;
+            }
+        }
+        else if (user.CompanyId > 0 && company != null)
         {
             scopes.Add(new ScopeDto
             {

@@ -1,3 +1,0 @@
-[
-  "[ErrorBoundary] TypeError: Cannot set properties of null (setting 'textContent')\n    at updateSelectedCount (http://localhost:5000/Admin/Users:2979:38)\n    at HTMLDocument.<anonymous> (http://localhost:5000/Admin/Users:3039:13) {source: http://localhost:5000/Admin/Users, lineno: 2979, colno: 38}"
-]

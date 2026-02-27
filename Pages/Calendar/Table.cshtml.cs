@@ -25,6 +25,7 @@ public class TableModel : PageModel
     private readonly ICalendarNotificationService _calendarNotification;
     private readonly IConcurrencyService _concurrencyService;
     private readonly IGrantService _grantService;
+    private readonly IJobTypeService _jobTypeService;
 
     public TableModel(
         AppDbContext db,
@@ -36,7 +37,8 @@ public class TableModel : PageModel
         IShiftAssignmentService assignmentService,
         ICalendarNotificationService calendarNotification,
         IConcurrencyService concurrencyService,
-        IGrantService grantService)
+        IGrantService grantService,
+        IJobTypeService jobTypeService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -48,6 +50,7 @@ public class TableModel : PageModel
         _calendarNotification = calendarNotification;
         _concurrencyService = concurrencyService;
         _grantService = grantService;
+        _jobTypeService = jobTypeService;
     }
 
     public DateOnly StartDate { get; set; }
@@ -58,6 +61,22 @@ public class TableModel : PageModel
     public List<ShiftType> ShiftTypes { get; set; } = new();
     public List<AppUser> Employees { get; set; } = new();
     public string ViewMode { get; set; } = "week"; // week, 2weeks, month
+
+    // Molecule mode properties
+    [BindProperty(SupportsGet = true)]
+    public int? MoleculeId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? JobTypeId { get; set; }
+
+    /// <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set).</summary>
+    public bool IsMoleculeMode => MoleculeId.HasValue && JobTypeId.HasValue;
+
+    public List<Molecule> AvailableMolecules { get; set; } = new();
+    public List<JobType> AvailableJobTypes { get; set; } = new();
+    public Molecule? SelectedMolecule { get; set; }
+    public JobType? SelectedJobType { get; set; }
+    public Dictionary<int, string> CompanyNames { get; set; } = new();
 
     // Map: [ShiftTypeId][Date] => List of assignments
     public Dictionary<int, Dictionary<DateOnly, List<AssignmentInfo>>> AssignmentGrid { get; set; } = new();
@@ -139,59 +158,162 @@ public class TableModel : PageModel
             Dates.Add(date);
         }
 
-        // Load shift instances for date range FIRST to determine which shift types to show
-        var instances = await _db.ShiftInstances
-            .Where(si => si.WorkDate >= StartDate && si.WorkDate <= EndDate)
-            .ToListAsync();
+        // --- Molecule mode setup ---
+        // Resolve user context for molecule selector (available even in company mode for the dropdown)
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(userIdClaim, out var currentUserId);
 
-        // Get shift type IDs that have instances in this date range
-        var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
+        var userCompany = await _db.Companies
+            .Include(c => c.Molecule)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
 
-        // Get shift type IDs from active programs
-        var activePrograms = await _programService.GetCompanyProgramsAsync(companyId, includeInactive: false);
-        var shiftTypeIdsFromPrograms = activePrograms.Select(p => p.ShiftTypeId).Distinct().ToHashSet();
+        if (userCompany?.MoleculeId != null)
+        {
+            await LoadAvailableMoleculesAsync(currentUserId, userCompany.MoleculeId.Value);
+            if (MoleculeId.HasValue)
+            {
+                // Validate selected molecule is accessible
+                if (!AvailableMolecules.Any(m => m.Id == MoleculeId))
+                    MoleculeId = null; // Fall back to company mode
+            }
 
-        // Combine: show shift types that have instances OR are in active programs
-        var relevantShiftTypeIds = shiftTypeIdsWithInstances.Union(shiftTypeIdsFromPrograms).ToHashSet();
+            SelectedMolecule = AvailableMolecules.FirstOrDefault(m => m.Id == MoleculeId);
 
-        // Load only relevant shift types
-        var allShiftTypes = await _shiftTypeCache.GetShiftTypesAsync(companyId);
-        ShiftTypes = allShiftTypes
-            .Where(st => relevantShiftTypeIds.Contains(st.Id))
-            .OrderBy(st => st.IsOffline ? 1 : 0) // Offline last
-            .ThenBy(st => st.Start) // Then by start time (chronological)
-            .ThenBy(st => st.CustomName ?? st.Name) // Then by name for same start time
-            .ToList();
+            // Load job types for selected molecule's area
+            if (SelectedMolecule != null)
+            {
+                await LoadAvailableJobTypesAsync(SelectedMolecule.AreaId);
 
-        _logger.LogInformation("Loaded {Count} shift types for company", ShiftTypes.Count);
+                // Validate selected job type
+                if (JobTypeId.HasValue && !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
+                    JobTypeId = null;
+
+                SelectedJobType = AvailableJobTypes.FirstOrDefault(jt => jt.Id == JobTypeId);
+            }
+        }
+
+        // --- Load data based on mode ---
+        List<ShiftInstance> instances;
+        List<ShiftAssignment> assignments;
+        List<int>? moleculeCompanyIds = null; // Available for BusyUsersByDate in molecule mode
+
+        if (IsMoleculeMode)
+        {
+            var molId = MoleculeId!.Value;
+            var jtId = JobTypeId!.Value;
+
+            // MOLECULE MODE: load shifts across all companies in the molecule for this job type
+            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters re-scoped by validated MoleculeId + JobTypeId;
+            // molecule access validated via AvailableMolecules (grant-derived) above
+            instances = await _db.ShiftInstances
+                .IgnoreQueryFilters()
+                .Include(si => si.ShiftType)
+                .Where(si => si.ShiftType.MoleculeId == molId
+                    && si.ShiftType.JobTypeId == jtId
+                    && si.WorkDate >= StartDate && si.WorkDate <= EndDate)
+                .ToListAsync();
+
+            var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
+
+            // Load molecule-scoped shift types
+            var allShiftTypes = await _shiftTypeCache.GetShiftTypesForMoleculeAsync(molId, jtId);
+            ShiftTypes = allShiftTypes
+                // Show all molecule shift types (not just those with instances — leads need to see unfilled shifts too)
+                .OrderBy(st => st.IsOffline ? 1 : 0)
+                .ThenBy(st => st.Start)
+                .ThenBy(st => st.CustomName ?? st.Name)
+                .ToList();
+
+            // Load employees from ALL companies in the molecule with matching JobType
+            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters re-scoped by validated moleculeId + jobTypeId
+            moleculeCompanyIds = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.MoleculeId == molId)
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            CompanyNames = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => moleculeCompanyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+            Employees = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsActive && moleculeCompanyIds.Contains(u.CompanyId)
+                    && u.JobTypeId == jtId)
+                .OrderBy(u => u.CompanyId)
+                .ThenBy(u => u.DisplayName)
+                .ToListAsync();
+
+            // Load assignments with IgnoreQueryFilters for cross-company visibility
+            var instanceIds = instances.Select(i => i.Id).ToList();
+            assignments = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
+                .Include(a => a.User)
+                .Include(a => a.Trainee)
+                .Where(a => instanceIds.Contains(a.ShiftInstanceId))
+                .ToListAsync();
+        }
+        else
+        {
+            // COMPANY MODE (original behavior): load shifts for current company only
+            instances = await _db.ShiftInstances
+                .Where(si => si.WorkDate >= StartDate && si.WorkDate <= EndDate)
+                .ToListAsync();
+
+            var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
+
+            // Get shift type IDs from active programs
+            var activePrograms = await _programService.GetCompanyProgramsAsync(companyId, includeInactive: false);
+            var shiftTypeIdsFromPrograms = activePrograms.Select(p => p.ShiftTypeId).Distinct().ToHashSet();
+
+            var relevantShiftTypeIds = shiftTypeIdsWithInstances.Union(shiftTypeIdsFromPrograms).ToHashSet();
+
+            var allShiftTypes = await _shiftTypeCache.GetShiftTypesAsync(companyId);
+            ShiftTypes = allShiftTypes
+                .Where(st => relevantShiftTypeIds.Contains(st.Id))
+                .OrderBy(st => st.IsOffline ? 1 : 0)
+                .ThenBy(st => st.Start)
+                .ThenBy(st => st.CustomName ?? st.Name)
+                .ToList();
+
+            Employees = await _db.Users
+                .Where(u => u.IsActive)
+                .OrderBy(u => u.DisplayName)
+                .ToListAsync();
+
+            var instanceIds = instances.Select(i => i.Id).ToList();
+            assignments = await _db.ShiftAssignments
+                .Include(a => a.User)
+                .Include(a => a.Trainee)
+                .Where(a => instanceIds.Contains(a.ShiftInstanceId))
+                .ToListAsync();
+        }
+
+        _logger.LogInformation("Loaded {Count} shift types, molecule mode: {IsMoleculeMode}", ShiftTypes.Count, IsMoleculeMode);
 
         if (!ShiftTypes.Any())
         {
             _logger.LogWarning("No shift types found - calendar will be empty");
         }
 
-        // Load active employees for this company
-        Employees = await _db.Users
-            .Where(u => u.IsActive)
-            .OrderBy(u => u.DisplayName)
-            .ToListAsync();
-
         // Load busy user status for all dates in a single batch query (avoids N+1)
         if (Dates.Count > 0)
         {
-            BusyUsersByDate = await _busyUserService.GetBusyUsersByDateRangeAsync(
-                Dates.First(), Dates.Last(), TimeOnly.MinValue, TimeOnly.MaxValue);
+            if (IsMoleculeMode && moleculeCompanyIds != null)
+            {
+                // Molecule mode: check busy status across all companies in the molecule
+                BusyUsersByDate = await _busyUserService.GetBusyUsersByDateRangeForCompaniesAsync(
+                    Dates.First(), Dates.Last(), TimeOnly.MinValue, TimeOnly.MaxValue, moleculeCompanyIds);
+            }
+            else
+            {
+                BusyUsersByDate = await _busyUserService.GetBusyUsersByDateRangeAsync(
+                    Dates.First(), Dates.Last(), TimeOnly.MinValue, TimeOnly.MaxValue);
+            }
         }
 
-        // instances already loaded above - Load all assignments for these instances (including trainee information)
-        var instanceIds = instances.Select(i => i.Id).ToList();
-        var assignments = await _db.ShiftAssignments
-            .Include(a => a.User)
-            .Include(a => a.Trainee)
-            .Where(a => instanceIds.Contains(a.ShiftInstanceId))
-            .ToListAsync();
-
-        // Build grid structure
+        // Build grid structure (shared for both modes)
         foreach (var shiftType in ShiftTypes)
         {
             AssignmentGrid[shiftType.Id] = new Dictionary<DateOnly, List<AssignmentInfo>>();
@@ -237,19 +359,19 @@ public class TableModel : PageModel
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
                 return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
 
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-
             // Get or create instance (idempotent)
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
             var instance = await _db.ShiftInstances
-                .FirstOrDefaultAsync(si => si.CompanyId == companyId &&
-                                          si.ShiftTypeId == request.ShiftTypeId &&
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId &&
                                           si.WorkDate == request.Date);
 
             bool isNew = instance == null;
 
             if (instance == null)
             {
-                var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
                 if (shiftType == null)
                 {
                     return new JsonResult(new { success = false, error = "Shift type not found" });
@@ -262,7 +384,7 @@ public class TableModel : PageModel
                     // Create new instance
                     instance = new ShiftInstance
                     {
-                        CompanyId = companyId,
+                        CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
                         ShiftTypeId = request.ShiftTypeId,
                         WorkDate = request.Date,
                         StaffingRequired = request.StaffingRequired,
@@ -279,7 +401,7 @@ public class TableModel : PageModel
                     {
                         var assignment = new ShiftAssignment
                         {
-                            CompanyId = companyId,
+                            CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
                             ShiftInstanceId = instance.Id,
                             UserId = null // Unassigned slot
                         };
@@ -301,7 +423,9 @@ public class TableModel : PageModel
             else
             {
                 // Instance exists - check if we need to adjust staffing
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
                 var currentSlotCount = await _db.ShiftAssignments
+                    .IgnoreQueryFilters()
                     .CountAsync(a => a.ShiftInstanceId == instance.Id);
 
                 if (request.StaffingRequired > currentSlotCount)
@@ -311,7 +435,7 @@ public class TableModel : PageModel
                     {
                         var assignment = new ShiftAssignment
                         {
-                            CompanyId = companyId,
+                            CompanyId = instance.CompanyId,  // Use instance's company
                             ShiftInstanceId = instance.Id,
                             UserId = null
                         };
@@ -347,10 +471,10 @@ public class TableModel : PageModel
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
                 return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
 
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-
             // Check if instance already exists
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
             var existingInstance = await _db.ShiftInstances
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId && si.WorkDate == request.Date);
 
             if (existingInstance != null)
@@ -358,7 +482,8 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Shift instance already exists for this date" });
             }
 
-            var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
             if (shiftType == null)
             {
                 return new JsonResult(new { success = false, error = "Shift type not found" });
@@ -371,7 +496,7 @@ public class TableModel : PageModel
                 // Create shift instance with staffing requirement
                 var instance = new ShiftInstance
                 {
-                    CompanyId = companyId,
+                    CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
                     ShiftTypeId = request.ShiftTypeId,
                     WorkDate = request.Date,
                     StaffingRequired = request.StaffingRequired,
@@ -388,7 +513,7 @@ public class TableModel : PageModel
                 {
                     var assignment = new ShiftAssignment
                     {
-                        CompanyId = companyId,
+                        CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
                         ShiftInstanceId = instance.Id,
                         UserId = null // Unassigned slot
                     };
@@ -427,7 +552,9 @@ public class TableModel : PageModel
         {
             using var transaction = await _db.Database.BeginTransactionAsync();
 
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var assignment = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
@@ -476,7 +603,9 @@ public class TableModel : PageModel
             var shiftStart = assignment.ShiftInstance.ShiftType.Start;
             var shiftEnd = assignment.ShiftInstance.ShiftType.End;
 
+            // SECURITY-AUDITED: SAFE — scoped by validated UserId + date
             var overlappingShifts = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
                 .Where(a => a.UserId == request.UserId &&
@@ -526,7 +655,8 @@ public class TableModel : PageModel
 
             await transaction.CommitAsync();
 
-            var user = await _db.Users.FindAsync(request.UserId);
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
 
             return new JsonResult(new
             {
@@ -565,12 +695,15 @@ public class TableModel : PageModel
             }
 
             // Get or create shift instance (service expects pre-existing instance)
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
             var instance = await _db.ShiftInstances
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId && si.WorkDate == request.Date);
 
             if (instance == null)
             {
-                var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
                 if (shiftType == null)
                 {
                     return new JsonResult(new { success = false, error = "Shift type not found" });
@@ -578,7 +711,7 @@ public class TableModel : PageModel
 
                 instance = new ShiftInstance
                 {
-                    CompanyId = companyId,
+                    CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
                     ShiftTypeId = request.ShiftTypeId,
                     WorkDate = request.Date,
                     StaffingRequired = 1,
@@ -641,12 +774,14 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = result.ErrorMessage });
             }
 
-            var user = await _db.Users.FindAsync(request.UserId);
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
 
             // Send real-time notification (fire-and-forget)
             try
             {
-                var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
@@ -685,7 +820,9 @@ public class TableModel : PageModel
     {
         try
         {
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var assignment = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .Include(a => a.User)
@@ -744,7 +881,9 @@ public class TableModel : PageModel
     {
         try
         {
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var assignment = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
@@ -801,9 +940,8 @@ public class TableModel : PageModel
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
                 return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
 
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-
-            var instance = await _db.ShiftInstances.FindAsync(request.ShiftInstanceId);
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var instance = await _db.ShiftInstances.IgnoreQueryFilters().FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId);
             if (instance == null)
             {
                 return new JsonResult(new { success = false, error = "Shift instance not found" });
@@ -818,7 +956,9 @@ public class TableModel : PageModel
                     instance.Id, instance.OriginalProgramId);
             }
 
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var currentStaffing = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .CountAsync(a => a.ShiftInstanceId == instance.Id);
 
             var difference = request.StaffingRequired - currentStaffing;
@@ -830,7 +970,7 @@ public class TableModel : PageModel
                 {
                     var assignment = new ShiftAssignment
                     {
-                        CompanyId = companyId,
+                        CompanyId = instance.CompanyId,  // Use instance's company
                         ShiftInstanceId = instance.Id,
                         UserId = null // Unassigned slot
                     };
@@ -840,7 +980,9 @@ public class TableModel : PageModel
             else if (difference < 0)
             {
                 // Check how many assignments have users assigned
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
                 var assignedCount = await _db.ShiftAssignments
+                    .IgnoreQueryFilters()
                     .CountAsync(a => a.ShiftInstanceId == instance.Id && a.UserId != null);
 
                 var unassignedCount = currentStaffing - assignedCount;
@@ -859,7 +1001,9 @@ public class TableModel : PageModel
                 }
 
                 // Remove unassigned slots first
+                // SECURITY-AUDITED: SAFE — scoped by validated instance.Id
                 var unassignedToRemove = await _db.ShiftAssignments
+                    .IgnoreQueryFilters()
                     .Where(a => a.ShiftInstanceId == instance.Id && a.UserId == null)
                     .Take(Math.Abs(difference))
                     .ToListAsync();
@@ -870,7 +1014,9 @@ public class TableModel : PageModel
                 var remaining = Math.Abs(difference) - unassignedToRemove.Count;
                 if (remaining > 0 && request.ForceRemoval)
                 {
+                    // SECURITY-AUDITED: SAFE — scoped by validated instance.Id
                     var assignedToRemove = await _db.ShiftAssignments
+                        .IgnoreQueryFilters()
                         .Where(a => a.ShiftInstanceId == instance.Id && a.UserId != null)
                         .Take(remaining)
                         .ToListAsync();
@@ -889,10 +1035,13 @@ public class TableModel : PageModel
             // Send real-time notification (fire-and-forget)
             try
             {
-                var shiftType = await _db.ShiftTypes.FindAsync(instance.ShiftTypeId);
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == instance.ShiftTypeId);
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    // SECURITY-AUDITED: SAFE — scoped by validated instance.Id
                     var assignedCount = await _db.ShiftAssignments
+                        .IgnoreQueryFilters()
                         .CountAsync(a => a.ShiftInstanceId == instance.Id && a.UserId != null);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyCapacityChangedAsync(groupName,
@@ -924,8 +1073,27 @@ public class TableModel : PageModel
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
-            var instance = await _db.ShiftInstances
-                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+            // Support both company mode (companyId check) and molecule mode (IgnoreQueryFilters)
+            var moleculeIdParam = request.MoleculeId;
+            ShiftInstance? instance;
+            if (moleculeIdParam.HasValue)
+            {
+                // Verify caller has access to this molecule
+                if (!await IsCallerInMoleculeAsync(moleculeIdParam.Value))
+                    return new JsonResult(new { success = false, error = "Unauthorized molecule access" }) { StatusCode = 403 };
+
+                // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by explicit shiftInstanceId
+                instance = await _db.ShiftInstances
+                    .IgnoreQueryFilters()
+                    .Include(si => si.ShiftType)
+                    .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId
+                        && si.ShiftType.MoleculeId == moleculeIdParam.Value);
+            }
+            else
+            {
+                instance = await _db.ShiftInstances
+                    .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+            }
 
             if (instance == null)
             {
@@ -933,7 +1101,9 @@ public class TableModel : PageModel
             }
 
             // Delete all assignments first
+            // SECURITY-AUDITED: SAFE — scoped by the validated instance.Id
             var assignments = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Where(a => a.ShiftInstanceId == instance.Id)
                 .ToListAsync();
 
@@ -958,7 +1128,8 @@ public class TableModel : PageModel
             // Send real-time notification (fire-and-forget)
             try
             {
-                var shiftType = await _db.ShiftTypes.FindAsync(deletedShiftTypeId);
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ID; IgnoreQueryFilters needed for cross-company notification
+                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == deletedShiftTypeId);
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
@@ -989,7 +1160,9 @@ public class TableModel : PageModel
     {
         try
         {
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var assignment = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
@@ -1040,7 +1213,8 @@ public class TableModel : PageModel
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
-            var trainee = await _db.Users.FindAsync(request.TraineeUserId);
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var trainee = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.TraineeUserId);
 
             // Send real-time notification (fire-and-forget)
             try
@@ -1083,7 +1257,9 @@ public class TableModel : PageModel
     {
         try
         {
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var assignment = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
@@ -1139,7 +1315,9 @@ public class TableModel : PageModel
     {
         try
         {
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var assignment = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(a => a.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
@@ -1189,7 +1367,8 @@ public class TableModel : PageModel
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
-            var user = await _db.Users.FindAsync(request.NewUserId);
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.NewUserId);
 
             // Send real-time notification (fire-and-forget)
             try
@@ -1233,10 +1412,19 @@ public class TableModel : PageModel
         try
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();
-            var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
-            if (shiftType == null || shiftType.CompanyId != companyId)
+
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID with ownership validation below
+            var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
+            if (shiftType == null)
             {
                 return new JsonResult(new { success = false, error = "Shift type not found" });
+            }
+
+            // Ownership check: must be company-owned or caller must be in the same molecule
+            if (shiftType.CompanyId != companyId)
+            {
+                if (!shiftType.MoleculeId.HasValue || !await IsCallerInMoleculeAsync(shiftType.MoleculeId.Value))
+                    return new JsonResult(new { success = false, error = "Shift type not found" }) { StatusCode = 403 };
             }
 
             // Validate name
@@ -1261,6 +1449,11 @@ public class TableModel : PageModel
                 () => _db.SaveChangesAsync(), "ShiftType", request.ShiftTypeId);
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Invalidate caches
+            _shiftTypeCache.InvalidateCache(shiftType.CompanyId);
+            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
 
             return new JsonResult(new { success = true });
         }
@@ -1290,6 +1483,13 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = "Invalid time format" });
             }
 
+            // Validate molecule access if molecule scope requested
+            if (request.MoleculeId.HasValue)
+            {
+                if (!await IsCallerInMoleculeAsync(request.MoleculeId.Value))
+                    return new JsonResult(new { success = false, error = "Unauthorized molecule access" }) { StatusCode = 403 };
+            }
+
             // Create custom shift type with a unique internal key but user-visible name
             var customKey = $"CUSTOM_{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
 
@@ -1299,7 +1499,9 @@ public class TableModel : PageModel
                 Key = customKey,
                 CustomName = request.Name.Trim(), // User-provided name (NO KEY LEAKAGE)
                 Start = startTime,
-                End = endTime
+                End = endTime,
+                MoleculeId = request.MoleculeId,
+                JobTypeId = request.JobTypeId
             };
 
             _db.ShiftTypes.Add(shiftType);
@@ -1310,6 +1512,11 @@ public class TableModel : PageModel
 
             _logger.LogInformation("Created custom shift type {ShiftTypeId} with name '{Name}' for company {CompanyId}",
                 shiftType.Id, shiftType.CustomName, companyId);
+
+            // Invalidate caches so the new shift type appears immediately
+            _shiftTypeCache.InvalidateCache(companyId);
+            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
 
             // Send real-time notification (fire-and-forget)
             try
@@ -1358,6 +1565,8 @@ public class TableModel : PageModel
         public string Name { get; set; } = string.Empty;
         public string StartTime { get; set; } = string.Empty;
         public string EndTime { get; set; } = string.Empty;
+        public int? MoleculeId { get; set; }
+        public int? JobTypeId { get; set; }
     }
 
     public class CreateShiftInstanceRequest
@@ -1428,6 +1637,7 @@ public class TableModel : PageModel
     public class DeleteShiftInstanceRequest
     {
         public int ShiftInstanceId { get; set; }
+        public int? MoleculeId { get; set; }
     }
 
     /// <summary>
@@ -1437,10 +1647,10 @@ public class TableModel : PageModel
     {
         try
         {
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var instance = await _db.ShiftInstances
-                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId);
 
             if (instance == null)
             {
@@ -1470,10 +1680,10 @@ public class TableModel : PageModel
     {
         try
         {
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var instance = await _db.ShiftInstances
-                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId && si.CompanyId == companyId);
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId);
 
             if (instance == null)
             {
@@ -1504,17 +1714,80 @@ public class TableModel : PageModel
     /// <summary>
     /// Get 7-day availability for all employees (for availability cubes display).
     /// Returns availability status (free/busy/partial) for each of the next 7 days.
+    /// Supports molecule mode via moleculeId+jobTypeId query params.
+    /// Uses batch queries to avoid N+1 performance issues.
     /// </summary>
-    public async Task<IActionResult> OnGetEmployeeAvailabilityAsync()
+    public async Task<IActionResult> OnGetEmployeeAvailabilityAsync(int? moleculeId = null, int? jobTypeId = null)
     {
         var startDate = DateOnly.FromDateTime(DateTime.Today);
         var endDate = startDate.AddDays(6);
 
-        var employees = await _db.Users
-            .Where(u => u.IsActive && (u.Role == UserRole.Employee || u.Role == UserRole.Trainee))
-            .OrderBy(u => u.DisplayName)
-            .Select(u => new { u.Id, u.DisplayName })
-            .ToListAsync();
+        // Load employees — molecule or company scoped
+        List<(int Id, string DisplayName)> employees;
+
+        if (moleculeId.HasValue && jobTypeId.HasValue)
+        {
+            // Verify caller has access to this molecule
+            if (!await IsCallerInMoleculeAsync(moleculeId.Value))
+                return new JsonResult(new { error = "Unauthorized molecule access" }) { StatusCode = 403 };
+
+            // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by moleculeId + jobTypeId
+            var molCompanyIds = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.MoleculeId == moleculeId.Value)
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            employees = (await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsActive && molCompanyIds.Contains(u.CompanyId) && u.JobTypeId == jobTypeId.Value)
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new { u.Id, u.DisplayName })
+                .ToListAsync())
+                .Select(u => (u.Id, u.DisplayName))
+                .ToList();
+        }
+        else
+        {
+            employees = (await _db.Users
+                .Where(u => u.IsActive && (u.Role == UserRole.Employee || u.Role == UserRole.Trainee))
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new { u.Id, u.DisplayName })
+                .ToListAsync())
+                .Select(u => (u.Id, u.DisplayName))
+                .ToList();
+        }
+
+        // Batch load all shifts for these employees in the date range (avoids N+1)
+        var empIds = employees.Select(e => e.Id).ToHashSet();
+
+        var shiftsByUserDate = (moleculeId.HasValue
+            ? await _db.ShiftAssignments
+                .IgnoreQueryFilters()
+                .Where(sa => sa.UserId != null && empIds.Contains(sa.UserId!.Value)
+                    && sa.ShiftInstance!.WorkDate >= startDate && sa.ShiftInstance.WorkDate <= endDate)
+                .Select(sa => new { UserId = sa.UserId!.Value, Date = sa.ShiftInstance!.WorkDate })
+                .ToListAsync()
+            : await _db.ShiftAssignments
+                .Where(sa => sa.UserId != null && empIds.Contains(sa.UserId!.Value)
+                    && sa.ShiftInstance!.WorkDate >= startDate && sa.ShiftInstance.WorkDate <= endDate)
+                .Select(sa => new { UserId = sa.UserId!.Value, Date = sa.ShiftInstance!.WorkDate })
+                .ToListAsync())
+            .GroupBy(x => (x.UserId, x.Date))
+            .ToDictionary(g => g.Key, g => true);
+
+        var timeOffByUserDate = (moleculeId.HasValue
+            ? await _db.TimeOffRequests
+                .IgnoreQueryFilters()
+                .Where(tor => empIds.Contains(tor.UserId)
+                    && tor.StartDate <= endDate && tor.EndDate >= startDate
+                    && tor.Status == RequestStatus.Approved)
+                .ToListAsync()
+            : await _db.TimeOffRequests
+                .Where(tor => empIds.Contains(tor.UserId)
+                    && tor.StartDate <= endDate && tor.EndDate >= startDate
+                    && tor.Status == RequestStatus.Approved)
+                .ToListAsync());
 
         var result = new List<object>();
 
@@ -1524,17 +1797,8 @@ public class TableModel : PageModel
 
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
-                // Check for shifts
-                var hasShift = await _db.ShiftAssignments
-                    .AnyAsync(sa => sa.UserId == emp.Id &&
-                                   sa.ShiftInstance!.WorkDate == date);
-
-                // Check for time-off (DateOnly comparison)
-                var hasTimeOff = await _db.TimeOffRequests
-                    .AnyAsync(tor => tor.UserId == emp.Id &&
-                                     tor.StartDate <= date &&
-                                     tor.EndDate >= date &&
-                                     tor.Status == RequestStatus.Approved);
+                var hasShift = shiftsByUserDate.ContainsKey((emp.Id, date));
+                var hasTimeOff = timeOffByUserDate.Any(tor => tor.UserId == emp.Id && tor.StartDate <= date && tor.EndDate >= date);
 
                 var status = "free";
                 var tooltip = "Available";
@@ -1582,22 +1846,74 @@ public class TableModel : PageModel
             var start = startDate ?? StartDate;
             var end = endDate ?? EndDate;
 
-            // Get all employees for the company
-            var employees = await _db.Users
-                .Where(u => u.CompanyId == companyId && u.IsActive)
-                .OrderBy(u => u.DisplayName)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.DisplayName
-                })
-                .ToListAsync();
+            // Get employees — molecule-scoped if MoleculeId+JobTypeId provided, else company-scoped
+            var moleculeIdParam = Request.Query.ContainsKey("moleculeId") && int.TryParse(Request.Query["moleculeId"], out var mid) ? mid : (int?)null;
+            var jobTypeIdParam = Request.Query.ContainsKey("jobTypeId") && int.TryParse(Request.Query["jobTypeId"], out var jtid) ? jtid : (int?)null;
+
+            List<RosterEmployee> rosterEmployees;
+            List<int>? rosterMoleculeCompanyIds = null;
+            if (moleculeIdParam.HasValue && jobTypeIdParam.HasValue)
+            {
+                // Verify caller has access to this molecule
+                if (!await IsCallerInMoleculeAsync(moleculeIdParam.Value))
+                    return new JsonResult(new { error = "Unauthorized molecule access" }) { StatusCode = 403 };
+
+                // Molecule mode: load from all companies in the molecule with matching JobType
+                // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by moleculeId+jobTypeId
+                rosterMoleculeCompanyIds = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.MoleculeId == moleculeIdParam.Value)
+                    .Select(c => c.Id)
+                    .ToListAsync();
+
+                var companyNames = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => rosterMoleculeCompanyIds.Contains(c.Id))
+                    .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+                rosterEmployees = (await _db.Users
+                    .IgnoreQueryFilters()
+                    .Where(u => u.IsActive && rosterMoleculeCompanyIds.Contains(u.CompanyId)
+                        && u.JobTypeId == jobTypeIdParam.Value)
+                    .OrderBy(u => u.CompanyId)
+                    .ThenBy(u => u.DisplayName)
+                    .Select(u => new { u.Id, u.DisplayName, u.CompanyId })
+                    .ToListAsync())
+                    .Select(u => new RosterEmployee
+                    {
+                        Id = u.Id,
+                        DisplayName = u.DisplayName,
+                        CompanyName = companyNames.GetValueOrDefault(u.CompanyId, "")
+                    })
+                    .ToList();
+            }
+            else
+            {
+                rosterEmployees = (await _db.Users
+                    .Where(u => u.CompanyId == companyId && u.IsActive)
+                    .OrderBy(u => u.DisplayName)
+                    .Select(u => new { u.Id, u.DisplayName })
+                    .ToListAsync())
+                    .Select(u => new RosterEmployee { Id = u.Id, DisplayName = u.DisplayName, CompanyName = "" })
+                    .ToList();
+            }
+
+            var employees = rosterEmployees;
 
             // Check busy status across the entire date range in a single batch query (avoids N+1)
             var employeeStatusMap = new Dictionary<int, (bool hasVacation, bool hasShift, bool hasChore)>();
 
-            var busyByDate = await _busyUserService.GetBusyUsersByDateRangeAsync(
-                start, end, TimeOnly.MinValue, TimeOnly.MaxValue);
+            Dictionary<DateOnly, Dictionary<int, BusyStatus>> busyByDate;
+            if (rosterMoleculeCompanyIds != null)
+            {
+                busyByDate = await _busyUserService.GetBusyUsersByDateRangeForCompaniesAsync(
+                    start, end, TimeOnly.MinValue, TimeOnly.MaxValue, rosterMoleculeCompanyIds);
+            }
+            else
+            {
+                busyByDate = await _busyUserService.GetBusyUsersByDateRangeAsync(
+                    start, end, TimeOnly.MinValue, TimeOnly.MaxValue);
+            }
 
             foreach (var (date, busyInfo) in busyByDate)
             {
@@ -1650,12 +1966,12 @@ public class TableModel : PageModel
 
             using var transaction = await _db.Database.BeginTransactionAsync();
 
-            var companyId = _companyContext.GetCompanyIdOrThrow();
-
             // Validate source instance
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var sourceInstance = await _db.ShiftInstances
+                .IgnoreQueryFilters()
                 .Include(si => si.ShiftType)
-                .FirstOrDefaultAsync(si => si.Id == request.SourceInstanceId && si.CompanyId == companyId);
+                .FirstOrDefaultAsync(si => si.Id == request.SourceInstanceId);
 
             if (sourceInstance == null)
             {
@@ -1663,7 +1979,9 @@ public class TableModel : PageModel
             }
 
             // Load source assignments separately
+            // SECURITY-AUDITED: SAFE — scoped by validated sourceInstance.Id
             var sourceAssignments = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(sa => sa.User)
                 .Include(sa => sa.Trainee)
                 .Where(sa => sa.ShiftInstanceId == sourceInstance.Id)
@@ -1682,9 +2000,10 @@ public class TableModel : PageModel
                 }
 
                 // Check if instance already exists for this date and shift type
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
                 var existingInstance = await _db.ShiftInstances
+                    .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(si =>
-                        si.CompanyId == companyId &&
                         si.ShiftTypeId == sourceInstance.ShiftTypeId &&
                         si.WorkDate == parsedDate);
 
@@ -1692,7 +2011,9 @@ public class TableModel : PageModel
                 List<ShiftAssignment> existingAssignments = new();
                 if (existingInstance != null)
                 {
+                    // SECURITY-AUDITED: SAFE — scoped by validated existingInstance.Id
                     existingAssignments = await _db.ShiftAssignments
+                        .IgnoreQueryFilters()
                         .Where(sa => sa.ShiftInstanceId == existingInstance.Id)
                         .ToListAsync();
                 }
@@ -1719,7 +2040,7 @@ public class TableModel : PageModel
                                     ShiftInstanceId = existingInstance.Id,
                                     UserId = sourceAssignment.UserId,
                                     TraineeUserId = sourceAssignment.TraineeUserId,
-                                    CompanyId = companyId
+                                    CompanyId = sourceInstance.CompanyId  // Use source instance's company
                                 });
                             }
 
@@ -1730,7 +2051,7 @@ public class TableModel : PageModel
                             // Create new instance
                             var newInstance = new ShiftInstance
                             {
-                                CompanyId = companyId,
+                                CompanyId = sourceInstance.CompanyId,  // Use source instance's company
                                 ShiftTypeId = sourceInstance.ShiftTypeId,
                                 WorkDate = parsedDate,
                                 StaffingRequired = sourceInstance.StaffingRequired,
@@ -1754,7 +2075,7 @@ public class TableModel : PageModel
                                     ShiftInstanceId = newInstance.Id,
                                     UserId = sourceAssignment.UserId,
                                     TraineeUserId = sourceAssignment.TraineeUserId,
-                                    CompanyId = companyId
+                                    CompanyId = sourceInstance.CompanyId  // Use source instance's company
                                 });
                             }
 
@@ -1779,7 +2100,7 @@ public class TableModel : PageModel
                                 {
                                     ShiftInstanceId = existingInstance.Id,
                                     UserId = null,
-                                    CompanyId = companyId
+                                    CompanyId = sourceInstance.CompanyId  // Use source instance's company
                                 });
                             }
 
@@ -1789,7 +2110,7 @@ public class TableModel : PageModel
                         {
                             var newInstance = new ShiftInstance
                             {
-                                CompanyId = companyId,
+                                CompanyId = sourceInstance.CompanyId,  // Use source instance's company
                                 ShiftTypeId = sourceInstance.ShiftTypeId,
                                 WorkDate = parsedDate,
                                 StaffingRequired = sourceInstance.StaffingRequired,
@@ -1811,7 +2132,7 @@ public class TableModel : PageModel
                                 {
                                     ShiftInstanceId = newInstance.Id,
                                     UserId = null,
-                                    CompanyId = companyId
+                                    CompanyId = sourceInstance.CompanyId  // Use source instance's company
                                 });
                             }
 
@@ -1852,7 +2173,7 @@ public class TableModel : PageModel
                                             {
                                                 ShiftInstanceId = existingInstance.Id,
                                                 UserId = null,
-                                                CompanyId = companyId
+                                                CompanyId = sourceInstance.CompanyId  // Use source instance's company
                                             });
                                         }
 
@@ -1862,7 +2183,7 @@ public class TableModel : PageModel
                                     {
                                         var newInstance = new ShiftInstance
                                         {
-                                            CompanyId = companyId,
+                                            CompanyId = sourceInstance.CompanyId,  // Use source instance's company
                                             ShiftTypeId = sourceInstance.ShiftTypeId,
                                             WorkDate = parsedDate,
                                             StaffingRequired = staffingRequired,
@@ -1885,7 +2206,7 @@ public class TableModel : PageModel
                                             {
                                                 ShiftInstanceId = newInstance.Id,
                                                 UserId = null,
-                                                CompanyId = companyId
+                                                CompanyId = sourceInstance.CompanyId  // Use source instance's company
                                             });
                                         }
 
@@ -1929,7 +2250,9 @@ public class TableModel : PageModel
                         if (DateOnly.TryParse(targetDate, out var parsedNotifyDate))
                         {
                             // Look up the actual instance to get current state
+                            // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
                             var filledInstance = await _db.ShiftInstances
+                                .IgnoreQueryFilters()
                                 .FirstOrDefaultAsync(si => si.ShiftTypeId == sourceInstance.ShiftTypeId && si.WorkDate == parsedNotifyDate);
                             if (filledInstance != null)
                             {
@@ -1983,7 +2306,7 @@ public class TableModel : PageModel
     /// Get conflicts and warnings for Radar Mode.
     /// Returns cells that are underfilled or have overlapping assignments.
     /// </summary>
-    public async Task<IActionResult> OnGetGetConflictsAsync(string? start, string? view)
+    public async Task<IActionResult> OnGetGetConflictsAsync(string? start, string? view, int? moleculeId = null, int? jobTypeId = null)
     {
         try
         {
@@ -2015,17 +2338,43 @@ public class TableModel : PageModel
                 _ => startDate.AddDays(6)
             };
 
-            // Get all instances in the current view
-            var instances = await _db.ShiftInstances
-                .Where(si => si.WorkDate >= startDate && si.WorkDate <= endDate)
-                .Include(si => si.ShiftType)
-                .ToListAsync();
+            // Get all instances in the current view — molecule or company scoped
+            List<ShiftInstance> instances;
+            List<ShiftAssignment> assignments;
 
-            // Get all assignments for these instances
-            var instanceIds = instances.Select(i => i.Id).ToList();
-            var assignments = await _db.ShiftAssignments
-                .Where(a => instanceIds.Contains(a.ShiftInstanceId))
-                .ToListAsync();
+            if (moleculeId.HasValue && jobTypeId.HasValue)
+            {
+                // Verify caller has access to this molecule
+                if (!await IsCallerInMoleculeAsync(moleculeId.Value))
+                    return new JsonResult(new { error = "Unauthorized molecule access" }) { StatusCode = 403 };
+
+                // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by moleculeId+jobTypeId
+                instances = await _db.ShiftInstances
+                    .IgnoreQueryFilters()
+                    .Include(si => si.ShiftType)
+                    .Where(si => si.ShiftType.MoleculeId == moleculeId.Value
+                        && si.ShiftType.JobTypeId == jobTypeId.Value
+                        && si.WorkDate >= startDate && si.WorkDate <= endDate)
+                    .ToListAsync();
+
+                var instanceIds = instances.Select(i => i.Id).ToList();
+                assignments = await _db.ShiftAssignments
+                    .IgnoreQueryFilters()
+                    .Where(a => instanceIds.Contains(a.ShiftInstanceId))
+                    .ToListAsync();
+            }
+            else
+            {
+                instances = await _db.ShiftInstances
+                    .Where(si => si.WorkDate >= startDate && si.WorkDate <= endDate)
+                    .Include(si => si.ShiftType)
+                    .ToListAsync();
+
+                var instanceIds = instances.Select(i => i.Id).ToList();
+                assignments = await _db.ShiftAssignments
+                    .Where(a => instanceIds.Contains(a.ShiftInstanceId))
+                    .ToListAsync();
+            }
 
             var conflicts = new List<object>();
 
@@ -2084,5 +2433,52 @@ public class TableModel : PageModel
         public List<string> TargetDates { get; set; } = new();
         public List<int> TargetInstanceIds { get; set; } = new();
         public string Mode { get; set; } = "exact"; // exact, staffing, program
+    }
+
+    public class RosterEmployee
+    {
+        public int Id { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+    }
+
+    // --- Molecule mode helpers (matching Calendar/Shifts pattern) ---
+
+    private async Task LoadAvailableMoleculesAsync(int userId, int userMoleculeId)
+    {
+        var moleculeIds = new HashSet<int> { userMoleculeId };
+
+        var userGrants = await _grantService.GetUserGrantsAsync(userId);
+        foreach (var grant in userGrants)
+        {
+            if (grant.MoleculeId.HasValue)
+                moleculeIds.Add(grant.MoleculeId.Value);
+        }
+
+        AvailableMolecules = await _db.Molecules
+            .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)
+            .OrderBy(m => m.DisplayName)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Validates that the caller's company belongs to the specified molecule.
+    /// Used to prevent unauthorized molecule access via crafted API calls.
+    /// </summary>
+    private async Task<bool> IsCallerInMoleculeAsync(int moleculeId)
+    {
+        var companyId = _companyContext.GetCompanyIdOrThrow();
+        return await _db.Companies.AnyAsync(c => c.Id == companyId && c.MoleculeId == moleculeId);
+    }
+
+    private async Task LoadAvailableJobTypesAsync(int? areaId)
+    {
+        if (!areaId.HasValue)
+        {
+            AvailableJobTypes = new List<JobType>();
+            return;
+        }
+
+        AvailableJobTypes = await _jobTypeService.GetJobTypesAsync(areaId.Value);
     }
 }

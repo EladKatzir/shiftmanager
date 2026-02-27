@@ -18,15 +18,18 @@ public class LockedUsersModel : PageModel
     private readonly AppDbContext _db;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<LockedUsersModel> _logger;
+    private readonly IRateLimitingService _rateLimiting;
 
-    public LockedUsersModel(AppDbContext db, IAuditLogService auditLogService, ILogger<LockedUsersModel> logger)
+    public LockedUsersModel(AppDbContext db, IAuditLogService auditLogService, ILogger<LockedUsersModel> logger, IRateLimitingService rateLimiting)
     {
         _db = db;
         _auditLogService = auditLogService;
         _logger = logger;
+        _rateLimiting = rateLimiting;
     }
 
     public List<LockedUserInfo> LockedUsers { get; set; } = new();
+    public List<RateLimitInfo> RateLimitedSignups { get; set; } = new();
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
 
@@ -36,6 +39,7 @@ public class LockedUsersModel : PageModel
         if (TempData["ErrorMessage"] is string error) ErrorMessage = error;
 
         await LoadLockedUsersAsync();
+        RateLimitedSignups = _rateLimiting.GetActiveEntries("signup:ip:", 50, 10).ToList();
     }
 
     public async Task<IActionResult> OnPostUnlockAsync(int userId)
@@ -65,6 +69,25 @@ public class LockedUsersModel : PageModel
             null);
 
         TempData["SuccessMessage"] = $"Account for {user.DisplayName} has been unlocked.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostClearSignupRateLimitsAsync()
+    {
+        var count = _rateLimiting.ResetByPrefix("signup:ip:");
+
+        var currentUserId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : 0;
+        _logger.LogInformation("Admin {AdminId} cleared {Count} signup rate limit entries", currentUserId, count);
+
+        await _auditLogService.LogUserActionAsync(
+            currentUserId,
+            "SignupRateLimitsCleared",
+            "RateLimiting",
+            null,
+            $"Cleared {count} signup rate limit entries",
+            null);
+
+        TempData["SuccessMessage"] = $"Cleared {count} rate-limited signup entries.";
         return RedirectToPage();
     }
 

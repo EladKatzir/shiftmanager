@@ -1,4 +1,0 @@
-{
-  "status": 200,
-  "body": "{\"scopes\":[{\"type\":\"mine\",\"id\":1,\"name\":\"My Shifts\",\"isDefault\":false},{\"type\":\"company\",\"id\":15,\"name\":\"\\u05DE\\u05E0\\u05D4\\u05DC\\u05D9 \\u05DE\\u05E2\\u05E8\\u05DB\\u05EA\",\"parentId\":9,\"parentType\":\"molecule\",\"isDefault\":true},{\"type\":\"molecule\",\"id\":9,\"name\":\"\\u05DE\\u05E2\\u05E8\\u05DB\\u05EA\",\"parentId\":1,\"parentType\":\"area\",\"isDefault\":false},{\"type\":\"area\",\"id\":1,\"name\":\"190\",\"parentId\":1,\"parentType\":\"project\",\"isDefault\":false}],\"currentScope\":{\"type\":\"company\",\"id\":15},\"userContext\":{\"userId\":1,\"isWorkforce\":true,\"isTech\":false,\"isOwner\":true,\"isDirector\":true}}"
-}

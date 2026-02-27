@@ -23,6 +23,8 @@ public class BlueprintsModel : PageModel
     private readonly ILogger<BlueprintsModel> _logger;
     private readonly ITenantResolver _tenantResolver;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly IJobTypeService _jobTypeService;
+    private readonly IShiftTypeCacheService _shiftTypeCache;
 
     public BlueprintsModel(
         AppDbContext db,
@@ -30,7 +32,9 @@ public class BlueprintsModel : PageModel
         IAuditLogService auditLogService,
         ILogger<BlueprintsModel> logger,
         ITenantResolver tenantResolver,
-        IConcurrencyService concurrencyService)
+        IConcurrencyService concurrencyService,
+        IJobTypeService jobTypeService,
+        IShiftTypeCacheService shiftTypeCache)
     {
         _db = db;
         _localizationService = localizationService;
@@ -38,6 +42,8 @@ public class BlueprintsModel : PageModel
         _logger = logger;
         _tenantResolver = tenantResolver;
         _concurrencyService = concurrencyService;
+        _jobTypeService = jobTypeService;
+        _shiftTypeCache = shiftTypeCache;
     }
 
     public List<ShiftType> ShiftTypes { get; set; } = new();
@@ -51,6 +57,13 @@ public class BlueprintsModel : PageModel
     [BindProperty] public TimeOnly NewShiftStart { get; set; } = new TimeOnly(9, 0);
     [BindProperty] public TimeOnly NewShiftEnd { get; set; } = new TimeOnly(17, 0);
 
+    // Molecule scope fields for create form
+    [BindProperty] public int? NewShiftMoleculeId { get; set; }
+    [BindProperty] public int? NewShiftJobTypeId { get; set; }
+
+    public List<Molecule> AvailableMolecules { get; set; } = new();
+    public List<JobType> AvailableJobTypes { get; set; } = new();
+
     public async Task OnGetAsync(string? success = null, string? error = null)
     {
         Success = success;
@@ -59,11 +72,29 @@ public class BlueprintsModel : PageModel
         var companyId = _tenantResolver.GetCurrentTenantId();
 
         var allShiftTypes = await _db.ShiftTypes
+            .Include(st => st.Molecule)
+            .Include(st => st.JobType)
             .Where(st => st.CompanyId == companyId)
             .ToListAsync();
 
         // Sort by SortOrder in memory (it's a [NotMapped] computed property)
         ShiftTypes = allShiftTypes.OrderBy(st => st.SortOrder).ToList();
+
+        // Load molecules for molecule scope selector
+        var company = await _db.Companies
+            .Include(c => c.Molecule)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company?.MoleculeId != null && company.Molecule?.AreaId != null)
+        {
+            // Filter to molecules in the same Area as the user's company
+            AvailableMolecules = await _db.Molecules
+                .Where(m => m.IsActive && m.AreaId == company.Molecule!.AreaId)
+                .OrderBy(m => m.DisplayName)
+                .ToListAsync();
+
+            AvailableJobTypes = await _jobTypeService.GetJobTypesAsync(company.Molecule.AreaId);
+        }
     }
 
     /// <summary>
@@ -98,6 +129,12 @@ public class BlueprintsModel : PageModel
                 return RedirectToPage(new { error = $"Shift type with key '{NewShiftKey}' already exists" });
             }
 
+            // Validate molecule scope: both or neither must be set
+            if (NewShiftMoleculeId.HasValue != NewShiftJobTypeId.HasValue)
+            {
+                return RedirectToPage(new { error = "Both Molecule and Job Type must be selected together, or leave both empty" });
+            }
+
             // Generate NameKey for localization
             var nameKey = $"ShiftType_{NewShiftKey}_Name";
 
@@ -108,7 +145,9 @@ public class BlueprintsModel : PageModel
                 Key = NewShiftKey,
                 NameKey = nameKey,
                 Start = NewShiftStart,
-                End = NewShiftEnd
+                End = NewShiftEnd,
+                MoleculeId = NewShiftMoleculeId,
+                JobTypeId = NewShiftJobTypeId
             };
 
             _db.ShiftTypes.Add(shiftType);
@@ -117,14 +156,17 @@ public class BlueprintsModel : PageModel
             if (!saveResult.Success)
                 return RedirectToPage(new { error = "A concurrency conflict occurred. Please try again." });
 
+            // Invalidate caches
+            _shiftTypeCache.InvalidateCache(companyId);
+            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+
             // Create localization overrides for both cultures
             await _localizationService.UpsertOverrideAsync(
                 companyId, "en-US", nameKey, NewShiftNameEn, userId);
 
             await _localizationService.UpsertOverrideAsync(
                 companyId, "he-IL", nameKey, NewShiftNameHe, userId);
-
-            // Audit log
 
             _logger.LogInformation(
                 "Created ShiftType {Key} for Company {CompanyId} by User {UserId}",
@@ -169,7 +211,10 @@ public class BlueprintsModel : PageModel
             await _localizationService.UpsertOverrideAsync(
                 companyId, "he-IL", shiftType.NameKey, nameHe, userId);
 
-            // Audit log
+            // Invalidate caches (name changes affect display in calendar views)
+            _shiftTypeCache.InvalidateCache(companyId);
+            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
 
             _logger.LogInformation(
                 "Updated ShiftType {Key} names for Company {CompanyId}",
@@ -219,7 +264,10 @@ public class BlueprintsModel : PageModel
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
-            // Audit log
+            // Invalidate caches (time changes affect calendar rendering)
+            _shiftTypeCache.InvalidateCache(companyId);
+            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
 
             _logger.LogInformation(
                 "Updated ShiftType {Key} times for Company {CompanyId}",
@@ -339,11 +387,20 @@ public class BlueprintsModel : PageModel
                 "DELETE EXECUTING: Removing ShiftType - ShiftTypeId={ShiftTypeId}, Key={Key}, InstanceCount={InstanceCount}",
                 shiftTypeId, shiftType.Key, instanceCount);
 
+            // Capture scope before deletion for cache invalidation
+            var deletedMoleculeId = shiftType.MoleculeId;
+            var deletedJobTypeId = shiftType.JobTypeId;
+
             _db.ShiftTypes.Remove(shiftType);
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
             if (!saveResult.Success)
                 return RedirectToPage(new { error = "A concurrency conflict occurred. Please try again." });
+
+            // Invalidate caches
+            _shiftTypeCache.InvalidateCache(companyId);
+            if (deletedMoleculeId.HasValue && deletedJobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(deletedMoleculeId.Value, deletedJobTypeId.Value);
 
             _logger.LogInformation(
                 "DELETE SUCCESS: ShiftType removed from database - ShiftTypeId={ShiftTypeId}, Key={Key}",
@@ -367,6 +424,126 @@ public class BlueprintsModel : PageModel
         {
             _logger.LogError(ex, "Failed to delete ShiftType");
             return RedirectToPage(new { error = "Failed to delete shift type" });
+        }
+    }
+
+    /// <summary>
+    /// Publishes an existing ShiftType to a molecule scope by setting MoleculeId and JobTypeId.
+    /// </summary>
+    public async Task<IActionResult> OnPostPublishToMoleculeAsync(int shiftTypeId, int moleculeId, int jobTypeId)
+    {
+        try
+        {
+            var companyId = _tenantResolver.GetCurrentTenantId();
+
+            // Validate molecule exists and is in the same Area as the user's company
+            var company = await _db.Companies.Include(c => c.Molecule)
+                .FirstOrDefaultAsync(c => c.Id == companyId);
+            var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == moleculeId && m.IsActive);
+            if (molecule == null || company?.Molecule?.AreaId != molecule.AreaId)
+                return new JsonResult(new { success = false, error = "Invalid molecule for your area" });
+
+            var shiftType = await _db.ShiftTypes
+                .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
+
+            if (shiftType == null)
+                return new JsonResult(new { success = false, error = "Shift type not found" });
+
+            // Check for duplicate: another ShiftType with the same Key already published to this molecule
+            var duplicate = await _db.ShiftTypes
+                .IgnoreQueryFilters()
+                .AnyAsync(st => st.MoleculeId == moleculeId
+                    && st.JobTypeId == jobTypeId
+                    && st.Key == shiftType.Key
+                    && st.Id != shiftTypeId);
+
+            if (duplicate)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    error = "A shift type with the same key is already published to this molecule. Duplicate rows will appear in the calendar.",
+                    isDuplicate = true
+                });
+            }
+
+            shiftType.MoleculeId = moleculeId;
+            shiftType.JobTypeId = jobTypeId;
+
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Invalidate caches
+            _shiftTypeCache.InvalidateCache(companyId);
+            _shiftTypeCache.InvalidateMoleculeCache(moleculeId, jobTypeId);
+
+            _logger.LogInformation(
+                "Published ShiftType {Key} to Molecule {MoleculeId} + JobType {JobTypeId}",
+                shiftType.Key, moleculeId, jobTypeId);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            when (dbEx.InnerException?.Message.Contains("UNIQUE constraint failed") == true)
+        {
+            return new JsonResult(new
+            {
+                success = false,
+                error = "A shift type with the same key is already published to this molecule.",
+                isDuplicate = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish ShiftType to molecule");
+            return new JsonResult(new { success = false, error = "Failed to publish to molecule" });
+        }
+    }
+
+    /// <summary>
+    /// Unpublishes a ShiftType from molecule scope (reverts to company-only).
+    /// </summary>
+    public async Task<IActionResult> OnPostUnpublishFromMoleculeAsync(int shiftTypeId)
+    {
+        try
+        {
+            var companyId = _tenantResolver.GetCurrentTenantId();
+
+            var shiftType = await _db.ShiftTypes
+                .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
+
+            if (shiftType == null)
+                return new JsonResult(new { success = false, error = "Shift type not found" });
+
+            // Capture old scope for cache invalidation
+            var oldMoleculeId = shiftType.MoleculeId;
+            var oldJobTypeId = shiftType.JobTypeId;
+
+            shiftType.MoleculeId = null;
+            shiftType.JobTypeId = null;
+
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Invalidate caches
+            _shiftTypeCache.InvalidateCache(companyId);
+            if (oldMoleculeId.HasValue && oldJobTypeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(oldMoleculeId.Value, oldJobTypeId.Value);
+
+            _logger.LogInformation(
+                "Unpublished ShiftType {Key} from molecule scope",
+                shiftType.Key);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to unpublish ShiftType from molecule");
+            return new JsonResult(new { success = false, error = "Failed to unpublish from molecule" });
         }
     }
 

@@ -161,62 +161,186 @@
 
     <!-- Tab: Grants -->
     <div class="tab-panel" id="tab-grants">
-        <div class="form-card">
-            <div class="grants-header">
-                <h2><loc key="RoleTemplates_AssignedGrants">Assigned Grants</loc></h2>
-                <div class="add-grant-row">
-                    <select id="grantTypeSelect">
-                        <option value="">-- <loc key="RoleTemplates_SelectGrant">Select Grant</loc> --</option>
-                        @foreach (var gt in Model.AllGrantTypes)
-                        {
-                            var already = Model.TemplateGrants.Any(tg => tg.GrantTypeId == gt.Id);
-                            if (!already)
-                            {
-                                <option value="@gt.Id">@gt.Key (@Localizer[gt.NameKey])</option>
+        <!-- Add Grant Panel -->
+        <div class="form-card add-grant-card">
+            <h2><loc key="RoleTemplates_AddNewGrant">Add Grant</loc></h2>
+            <div class="add-grant-form">
+                <div class="add-grant-row-top">
+                    <div class="form-group fg-wide">
+                        <label><loc key="RoleTemplates_GrantType">Grant Type</loc></label>
+                        <select id="grantTypeSelect">
+                            <option value="">-- <loc key="RoleTemplates_SelectGrant">Select Grant</loc> --</option>
+                            @{
+                                GrantCategory? lastCat = null;
+                                foreach (var gt in Model.AllGrantTypes)
+                                {
+                                    var already = Model.TemplateGrants.Any(tg => tg.GrantTypeId == gt.Id);
+                                    if (gt.Category != lastCat)
+                                    {
+                                        if (lastCat != null) { @:</optgroup>
+                                        }
+                                        lastCat = gt.Category;
+                                        @:<optgroup label="@gt.Category">
+                                    }
+                                    var disabledAttr = already ? "disabled=\"disabled\"" : "";
+                                    var suffix = already ? " [assigned]" : "";
+                                    @:<option value="@gt.Id" @Html.Raw(disabledAttr) data-cat="@gt.Category" data-key="@gt.Key">@gt.Key (@Localizer[gt.NameKey])@suffix</option>
+                                }
+                                if (lastCat != null) { @:</optgroup>
+                                }
                             }
-                        }
-                    </select>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="addGrant()">
+                        </select>
+                    </div>
+                    <div class="form-group fg-narrow">
+                        <label><loc key="RoleTemplates_ScopeMode">Scope</loc></label>
+                        <select id="addScopeMode">
+                            @foreach (var sm in Enum.GetValues<GrantScopeMode>())
+                            {
+                                <option value="@((int)sm)">@sm</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="add-grant-row-bottom">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="addCanOwn" checked />
+                        <loc key="RoleTemplates_CanOwn">CanOwn</loc>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="addCanGive" />
+                        <loc key="RoleTemplates_CanGive">CanGive</loc>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="addUseOwnJobType" />
+                        <loc key="RoleTemplates_UseOwnJobType">UseOwnJobType</loc>
+                    </label>
+                    <div class="form-group fg-narrow">
+                        <label><loc key="RoleTemplates_TargetJobType">Target JobType</loc></label>
+                        <select id="addTargetJobType">
+                            <option value="0">-- <loc key="None">None</loc> --</option>
+                            @foreach (var jt in Model.AvailableJobTypes)
+                            {
+                                <option value="@jt.Id">@(jt.DisplayName ?? jt.Name)</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="addGrant()">
                         + <loc key="Add">Add</loc>
                     </button>
                 </div>
             </div>
+        </div>
 
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th><loc key="RoleTemplates_GrantKey">Grant</loc></th>
-                        <th><loc key="RoleTemplates_Category">Category</loc></th>
-                        <th><loc key="RoleTemplates_CanOwn">CanOwn</loc></th>
-                        <th><loc key="RoleTemplates_CanGive">CanGive</loc></th>
-                        <th><loc key="RoleTemplates_ScopeMode">Scope</loc></th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="grantsTableBody">
-                    @foreach (var g in Model.TemplateGrants)
-                    {
-                        <tr id="grant-row-@g.Id">
-                            <td>
-                                <span class="template-key">@g.GrantType.Key</span>
-                                <br><span class="text-muted text-small">@Localizer[g.GrantType.NameKey]</span>
-                            </td>
-                            <td><span class="badge badge-scope">@g.GrantType.Category</span></td>
-                            <td>@(g.CanOwn ? "Yes" : "No")</td>
-                            <td>@(g.CanGive ? "Yes" : "No")</td>
-                            <td>@g.ScopeMode</td>
-                            <td>
-                                <button type="button" class="btn btn-danger btn-sm"
-                                        onclick="removeGrant(@g.Id)">X</button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <!-- Assigned Grants by Category -->
+        <div class="form-card">
+            <div class="grants-header">
+                <h2><loc key="RoleTemplates_AssignedGrants">Assigned Grants</loc>
+                    <span class="tab-count" id="grantTotalCount">@Model.TemplateGrants.Count</span>
+                </h2>
+                <div class="grants-toolbar">
+                    <input type="text" id="grantSearchInput" placeholder="@Localizer["Search"]..."
+                           class="grant-search-input" oninput="filterGrants(this.value)" />
+                </div>
+            </div>
+
             @if (!Model.TemplateGrants.Any())
             {
-                <p class="empty-state"><loc key="RoleTemplates_NoGrants">No grants assigned to this template.</loc></p>
+                <p class="empty-state" id="grantsEmptyState"><loc key="RoleTemplates_NoGrants">No grants assigned to this template.</loc></p>
             }
+
+            @{
+                var groupedGrants = Model.TemplateGrants
+                    .GroupBy(g => g.GrantType.Category)
+                    .OrderBy(g => g.Key);
+            }
+
+            <div id="grantsContainer">
+                @foreach (var group in groupedGrants)
+                {
+                    <div class="grant-category-section" data-category="@group.Key">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span class="category-chevron">&#x25BC;</span>
+                            <span class="category-name">@group.Key</span>
+                            <span class="tab-count">@group.Count()</span>
+                        </div>
+                        <div class="category-body">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width: 200px"><loc key="RoleTemplates_GrantKey">Grant</loc></th>
+                                        <th style="width: 70px"><loc key="RoleTemplates_CanOwn">CanOwn</loc></th>
+                                        <th style="width: 70px"><loc key="RoleTemplates_CanGive">CanGive</loc></th>
+                                        <th style="width: 140px"><loc key="RoleTemplates_ScopeMode">Scope</loc></th>
+                                        <th style="width: 90px"><loc key="RoleTemplates_UseOwnJobType">OwnJT</loc></th>
+                                        <th style="width: 120px"><loc key="RoleTemplates_TargetJobType">TargetJT</loc></th>
+                                        <th style="width: 70px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var g in group.OrderBy(x => x.GrantType.Key))
+                                    {
+                                        <tr id="grant-row-@g.Id" class="grant-row"
+                                            data-grant-key="@g.GrantType.Key"
+                                            data-grant-name="@Localizer[g.GrantType.NameKey]">
+                                            <td>
+                                                <span class="template-key">@g.GrantType.Key</span>
+                                                <br><span class="text-muted text-small">@Localizer[g.GrantType.NameKey]</span>
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" class="grant-toggle"
+                                                       data-field="canOwn" data-grant-id="@g.Id"
+                                                       @(g.CanOwn ? "checked" : "")
+                                                       onchange="updateGrant(@g.Id)" />
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" class="grant-toggle"
+                                                       data-field="canGive" data-grant-id="@g.Id"
+                                                       @(g.CanGive ? "checked" : "")
+                                                       onchange="updateGrant(@g.Id)" />
+                                            </td>
+                                            <td>
+                                                <select class="grant-select" data-field="scopeMode"
+                                                        data-grant-id="@g.Id"
+                                                        onchange="updateGrant(@g.Id)">
+                                                    @foreach (var sm in Enum.GetValues<GrantScopeMode>())
+                                                    {
+                                                        var smSelected = g.ScopeMode == sm ? "selected=\"selected\"" : "";
+                                                        @:<option value="@((int)sm)" @Html.Raw(smSelected)>@sm</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" class="grant-toggle"
+                                                       data-field="useOwnJobType" data-grant-id="@g.Id"
+                                                       @(g.UseOwnJobType ? "checked" : "")
+                                                       onchange="updateGrant(@g.Id)" />
+                                            </td>
+                                            <td>
+                                                <select class="grant-select grant-select-sm"
+                                                        data-field="targetJobTypeId" data-grant-id="@g.Id"
+                                                        onchange="updateGrant(@g.Id)">
+                                                    <option value="0">--</option>
+                                                    @foreach (var jt in Model.AvailableJobTypes)
+                                                    {
+                                                        var jtSelected = g.TargetJobTypeId == jt.Id ? "selected=\"selected\"" : "";
+                                                        var jtName = jt.DisplayName ?? jt.Name;
+                                                        @:<option value="@jt.Id" @Html.Raw(jtSelected)>@jtName</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                        onclick="removeGrant(@g.Id)"
+                                                        title="@Localizer["Remove"]">&#x2715;</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 
@@ -250,7 +374,7 @@
                             </select>
                             <input type="text" name="LabelDisplayNamesEN" value="@label.DisplayNameEN" placeholder="English" />
                             <input type="text" name="LabelDisplayNamesHE" value="@label.DisplayNameHE" placeholder="Hebrew" dir="rtl" />
-                            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.label-row').remove()">X</button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.label-row').remove()">&#x2715;</button>
                         </div>
                     }
                 </div>
@@ -268,7 +392,7 @@
 
 @section Styles {
 <style>
-.edit-template-container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+.edit-template-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 .page-header { margin-bottom: 1.5rem; }
 .page-header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .page-header h1 { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.75rem; }
@@ -276,7 +400,6 @@
 .template-key-display { font-family: monospace; }
 .header-stats { display: flex; gap: 1.5rem; }
 .header-stat { font-size: 0.9rem; color: var(--muted); }
-.header-stat::first-line { font-weight: 600; color: var(--text); }
 
 .tabs-nav { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; }
 .tab-btn {
@@ -297,7 +420,7 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
     padding: 1.5rem; margin-bottom: 1.5rem;
 }
-.form-card h2 { margin: 0 0 1rem 0; font-size: 1.1rem; }
+.form-card h2 { margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
 .section-desc { color: var(--muted); font-size: 0.85rem; margin: -0.5rem 0 1rem 0; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -306,7 +429,7 @@
 .form-group label { font-size: 0.85rem; font-weight: 600; }
 .form-group input, .form-group select {
     padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--background); font-size: 0.9rem;
+    background: var(--background); font-size: 0.9rem; color: var(--text);
 }
 .input-disabled { opacity: 0.6; cursor: not-allowed; }
 .form-hint { font-size: 0.75rem; color: var(--muted); }
@@ -319,21 +442,68 @@
 
 .form-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
 
+/* Add Grant Card */
+.add-grant-card { border-color: var(--primary); border-style: dashed; }
+.add-grant-card h2 { color: var(--primary); margin-bottom: 0.75rem; }
+.add-grant-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.add-grant-row-top { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+.add-grant-row-bottom { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; }
+.fg-wide { flex: 1; min-width: 300px; }
+.fg-narrow { min-width: 140px; }
+
+/* Grants table */
 .grants-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
 .grants-header h2 { margin: 0; }
-.add-grant-row { display: flex; gap: 0.5rem; align-items: center; }
-.add-grant-row select { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 250px; }
+.grants-toolbar { display: flex; gap: 0.5rem; align-items: center; }
+.grant-search-input {
+    padding: 0.4rem 0.75rem; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--background); font-size: 0.85rem; width: 220px; color: var(--text);
+}
+
+/* Category sections */
+.grant-category-section { margin-bottom: 0.5rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.category-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1rem; background: var(--background);
+    cursor: pointer; font-weight: 600; font-size: 0.85rem;
+    user-select: none; border-bottom: 1px solid var(--border);
+}
+.category-header:hover { background: var(--border); }
+.category-chevron { transition: transform 0.15s ease; font-size: 0.7rem; }
+.category-header.collapsed .category-chevron { transform: rotate(-90deg); }
+.category-header.collapsed + .category-body { display: none; }
+.category-name { flex: 1; }
 
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 0.6rem 0.75rem; text-align: start; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-.data-table th { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-.template-key { font-family: monospace; font-weight: 600; }
+.data-table th, .data-table td {
+    padding: 0.5rem 0.6rem; text-align: start; border-bottom: 1px solid var(--border); font-size: 0.8rem;
+}
+.data-table th {
+    font-weight: 600; font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); background: var(--background);
+}
+.template-key { font-family: monospace; font-weight: 600; font-size: 0.8rem; }
 .text-muted { color: var(--muted); }
-.text-small { font-size: 0.75rem; }
+.text-small { font-size: 0.7rem; }
+
+.grant-toggle { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+.grant-select {
+    padding: 0.25rem 0.4rem; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--background); font-size: 0.75rem; width: 100%; color: var(--text);
+}
+.grant-select-sm { font-size: 0.7rem; }
+
+/* Save indicator */
+.grant-row.saving { opacity: 0.5; pointer-events: none; }
+.grant-row.saved { animation: savedFlash 0.6s ease; }
+@@keyframes savedFlash {
+    0% { background: transparent; }
+    30% { background: rgba(34, 197, 94, 0.15); }
+    100% { background: transparent; }
+}
 
 .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
 .badge-system { background: var(--primary-light, #dbeafe); color: var(--primary); }
-.badge-scope { background: var(--background); border: 1px solid var(--border); }
 
 .label-row {
     display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem;
@@ -342,7 +512,7 @@
 @@media (max-width: 768px) { .label-row { grid-template-columns: 1fr; } }
 .label-row select, .label-row input {
     padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;
-    font-size: 0.85rem; background: var(--background);
+    font-size: 0.85rem; background: var(--background); color: var(--text);
 }
 
 .empty-state { color: var(--muted); text-align: center; padding: 2rem; font-style: italic; }
@@ -364,13 +534,30 @@
 .alert { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
 .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
 .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+/* Toast notification */
+.toast {
+    position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.25rem;
+    border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+    z-index: 9999; opacity: 0; transform: translateY(10px);
+    transition: all 0.3s ease; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { background: #166534; color: white; }
+.toast-error { background: #991b1b; color: white; }
 </style>
 }
+
+<div class="toast" id="toast"></div>
 
 @section Scripts {
 <script>
 var templateId = @Model.Id;
-var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+var updateTimers = {};
+
+function getAntiForgeryToken() {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+}
 
 function switchTab(tabName, btn) {
     document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
@@ -379,19 +566,58 @@ function switchTab(tabName, btn) {
     btn.classList.add('active');
 }
 
+function toggleCategory(header) {
+    header.classList.toggle('collapsed');
+}
+
+function showToast(message, type) {
+    var toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast toast-' + type + ' show';
+    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+}
+
+function filterGrants(query) {
+    var q = query.toLowerCase();
+    document.querySelectorAll('.grant-row').forEach(function(row) {
+        var key = (row.dataset.grantKey || '').toLowerCase();
+        var name = (row.dataset.grantName || '').toLowerCase();
+        row.style.display = (!q || key.indexOf(q) !== -1 || name.indexOf(q) !== -1) ? '' : 'none';
+    });
+    // Show/hide category sections that have no visible rows
+    document.querySelectorAll('.grant-category-section').forEach(function(section) {
+        var visibleRows = Array.from(section.querySelectorAll('.grant-row'))
+            .filter(function(r) { return r.style.display !== 'none'; });
+        section.style.display = visibleRows.length > 0 ? '' : 'none';
+    });
+}
+
 function addGrant() {
     var select = document.getElementById('grantTypeSelect');
     var grantTypeId = parseInt(select.value);
-    if (!grantTypeId) return;
+    if (!grantTypeId) { showToast('Please select a grant type', 'error'); return; }
+
+    var scopeMode = parseInt(document.getElementById('addScopeMode').value);
+    var canOwn = document.getElementById('addCanOwn').checked;
+    var canGive = document.getElementById('addCanGive').checked;
+    var useOwnJobType = document.getElementById('addUseOwnJobType').checked;
+    var targetJobTypeId = parseInt(document.getElementById('addTargetJobType').value) || 0;
 
     fetch('?handler=AddGrant&id=' + templateId, {
         method: 'POST',
         credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',
-            'RequestVerificationToken': antiForgeryToken
+            'RequestVerificationToken': getAntiForgeryToken()
         },
-        body: JSON.stringify({ grantTypeId: grantTypeId, canOwn: true, canGive: false, scopeMode: 0 })
+        body: JSON.stringify({
+            grantTypeId: grantTypeId,
+            canOwn: canOwn,
+            canGive: canGive,
+            scopeMode: scopeMode,
+            useOwnJobType: useOwnJobType,
+            targetJobTypeId: targetJobTypeId
+        })
     })
     .then(function(r) {
         if (!r.ok) throw new Error('Request failed: ' + r.status);
@@ -399,23 +625,83 @@ function addGrant() {
     })
     .then(function(data) {
         if (data.success) {
+            showToast('Grant added', 'success');
             window.location.reload();
         } else {
-            alert(data.error || 'Failed to add grant');
+            showToast(data.error || 'Failed to add grant', 'error');
         }
     })
-    .catch(function(err) { alert('Error: ' + err.message); });
+    .catch(function(err) { showToast('Error: ' + err.message, 'error'); });
+}
+
+function updateGrant(grantId) {
+    // Debounce: wait 300ms after last change before saving
+    if (updateTimers[grantId]) clearTimeout(updateTimers[grantId]);
+
+    updateTimers[grantId] = setTimeout(function() {
+        delete updateTimers[grantId];
+        var row = document.getElementById('grant-row-' + grantId);
+        if (!row) return;
+
+        var canOwn = row.querySelector('[data-field="canOwn"]').checked;
+        var canGive = row.querySelector('[data-field="canGive"]').checked;
+        var scopeMode = parseInt(row.querySelector('[data-field="scopeMode"]').value);
+        var useOwnJobType = row.querySelector('[data-field="useOwnJobType"]').checked;
+        var targetJobTypeId = parseInt(row.querySelector('[data-field="targetJobTypeId"]').value) || 0;
+
+        row.classList.add('saving');
+
+        fetch('?handler=UpdateGrant&id=' + templateId, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({
+                grantId: grantId,
+                canOwn: canOwn,
+                canGive: canGive,
+                scopeMode: scopeMode,
+                useOwnJobType: useOwnJobType,
+                targetJobTypeId: targetJobTypeId
+            })
+        })
+        .then(function(r) {
+            if (!r.ok) throw new Error('Request failed: ' + r.status);
+            return r.json();
+        })
+        .then(function(data) {
+            row.classList.remove('saving');
+            if (data.success) {
+                row.classList.add('saved');
+                setTimeout(function() { row.classList.remove('saved'); }, 600);
+            } else {
+                showToast(data.error || 'Failed to update', 'error');
+            }
+        })
+        .catch(function(err) {
+            row.classList.remove('saving');
+            showToast('Error: ' + err.message, 'error');
+        });
+    }, 300);
 }
 
 function removeGrant(grantId) {
     if (!confirm('Remove this grant from the template?')) return;
+
+    // Clear any pending debounce timer for this grant
+    if (updateTimers[grantId]) {
+        clearTimeout(updateTimers[grantId]);
+        delete updateTimers[grantId];
+    }
 
     fetch('?handler=RemoveGrant&id=' + templateId, {
         method: 'POST',
         credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',
-            'RequestVerificationToken': antiForgeryToken
+            'RequestVerificationToken': getAntiForgeryToken()
         },
         body: JSON.stringify({ grantId: grantId })
     })
@@ -425,17 +711,18 @@ function removeGrant(grantId) {
     })
     .then(function(data) {
         if (data.success) {
-            var row = document.getElementById('grant-row-' + grantId);
-            if (row) row.remove();
+            showToast('Grant removed', 'success');
+            window.location.reload();
         } else {
-            alert(data.error || 'Failed to remove grant');
+            showToast(data.error || 'Failed to remove', 'error');
         }
     })
-    .catch(function(err) { alert('Error: ' + err.message); });
+    .catch(function(err) { showToast('Error: ' + err.message, 'error'); });
 }
 
 var availableJobTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-    Model.AvailableJobTypes.Select(jt => new { jt.Id, Name = jt.DisplayName ?? jt.Name })));
+    Model.AvailableJobTypes.Select(jt => new { jt.Id, Name = jt.DisplayName ?? jt.Name }),
+    new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default }));
 
 function addLabelRow() {
     var container = document.getElementById('labelsContainer');
@@ -469,7 +756,7 @@ function addLabelRow() {
     var removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'btn btn-danger btn-sm';
-    removeBtn.textContent = 'X';
+    removeBtn.innerHTML = '&#x2715;';
     removeBtn.onclick = function() { row.remove(); };
 
     row.appendChild(select);

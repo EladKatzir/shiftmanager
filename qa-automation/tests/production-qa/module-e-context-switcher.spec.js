@@ -7,6 +7,7 @@ const {
   saveEvidence,
   navigateTo,
   createUser,
+  ensureFeatureFlag,
   TEST_PASSWORD,
   ROLE_ENUM,
 } = require('../../helpers/production-qa-helpers');
@@ -14,6 +15,11 @@ const {
 const EVIDENCE = '05-context-switcher';
 
 test.describe('Module E: Context Switcher', () => {
+  test('E-00: Ensure context switcher feature flag is enabled', async ({ page }) => {
+    await loginAsOwner(page);
+    await ensureFeatureFlag(page, 'FF_ENABLE_COMPANY_SWITCHER');
+  });
+
   test('E-01: Owner sees context switcher with company list', async ({ page }) => {
     await loginAsOwner(page);
     await navigateTo(page, '/');
@@ -261,21 +267,8 @@ test.describe('Module E: Context Switcher', () => {
   });
 
   test('E-07: Employee does NOT see context switcher', async ({ page }) => {
-    // Create an employee user to test with
-    await loginAsOwner(page);
-    await navigateTo(page, '/Admin/Users');
-
-    const empEmail = `e07.emp.${Date.now()}@test`;
-    await createUser(page, {
-      email: empEmail,
-      displayName: 'E07 Employee NoSwitcher',
-      role: 'Employee',
-      password: TEST_PASSWORD,
-    });
-
-    // Logout owner and login as employee
-    await logout(page);
-    await login(page, empEmail, TEST_PASSWORD);
+    // Use a pre-seeded employee user (from QaTestUserSeed)
+    await login(page, 'emp.tz.alhut@test', TEST_PASSWORD);
 
     // Navigate to home
     await navigateTo(page, '/');

@@ -158,8 +158,9 @@ public class FeatureFlagService : IFeatureFlagService
 
         await _context.SaveChangesAsync();
 
-        // Invalidate cache for this flag
+        // Invalidate cache for this flag and re-warm to ensure sync IsEnabled() works
         InvalidateCache(flagName, companyId, userId);
+        await WarmCacheAsync();
     }
 
     /// <inheritdoc/>
@@ -211,8 +212,9 @@ public class FeatureFlagService : IFeatureFlagService
 
             _logger.LogInformation("Deleted feature flag {FlagName} (Id: {FlagId})", flagName, flagId);
 
-            // Invalidate cache for this flag
+            // Invalidate cache for this flag and re-warm to ensure sync IsEnabled() works
             InvalidateCache(flagName, flag.CompanyId, flag.UserId);
+            await WarmCacheAsync();
         }
     }
 
@@ -222,7 +224,9 @@ public class FeatureFlagService : IFeatureFlagService
         var cacheKey = BuildCacheKey(flagName, userId, companyId);
         _cache.Remove(cacheKey);
 
-        // Also invalidate the warm cache so it gets refreshed on next WarmCacheAsync or IsEnabled
+        // Remove the warm cache entirely — it will be re-warmed by the caller.
+        // The sync IsEnabled() will return false until the warm cache is repopulated,
+        // which SetFlagAsync handles by calling WarmCacheAsync after invalidation.
         _cache.Remove(WarmCacheKey);
 
         _logger.LogDebug("Cache invalidated for feature flag {FlagName} (key: {CacheKey})", flagName, cacheKey);
@@ -252,9 +256,34 @@ public class FeatureFlagService : IFeatureFlagService
             return resolved;
         }
 
-        // No cache available — return false (safe default, never hit DB synchronously)
-        _logger.LogDebug("Feature flag {FlagName} not in warm cache, returning false (cache miss)", flagName);
-        return false;
+        // No cache available — try to re-warm synchronously from DB as a fallback.
+        // This ensures flags work even after the warm cache expires (5-minute TTL).
+        try
+        {
+            var rewarmedFlags = _context.FeatureFlags
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .ToList();
+
+            _cache.Set(WarmCacheKey, rewarmedFlags, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = WarmCacheExpiration
+            });
+
+            _logger.LogDebug("Feature flag warm cache re-populated synchronously with {Count} flags", rewarmedFlags.Count);
+
+            var resolved = ResolveFlagFromList(rewarmedFlags, flagName, userId, companyId);
+            _cache.Set(cacheKey, resolved, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CacheExpiration
+            });
+            return resolved;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to re-warm feature flag cache synchronously, returning false for {FlagName}", flagName);
+            return false;
+        }
     }
 
     /// <inheritdoc/>
