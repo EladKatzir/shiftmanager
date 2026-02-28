@@ -1082,10 +1082,15 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
-            // Validate job type is valid for user's molecule
-            if (!await _jobTypeService.CanUserHaveJobTypeAsync(id, jobTypeId.Value))
+            // Validate job type is valid for user's area/molecule
+            var validation = await _jobTypeService.ValidateJobTypeForUserAsync(id, jobTypeId.Value);
+            if (validation != JobTypeValidationResult.Valid)
             {
-                TempData["ErrorMessage"] = _localizer["Error_JobTypeNotAvailableForMolecule"].Value;
+                TempData["ErrorMessage"] = validation switch
+                {
+                    JobTypeValidationResult.MoleculeMismatch => _localizer["Error_JobTypeNotAvailableForMolecule"].Value,
+                    _ => _localizer["Error_InvalidJobTypeSelected"].Value
+                };
                 return RedirectToPage();
             }
 

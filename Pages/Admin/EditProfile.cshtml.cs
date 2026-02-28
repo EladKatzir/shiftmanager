@@ -405,9 +405,15 @@ public class EditProfileModel : LocalizedPageModel
         // Validate job type is valid for user's molecule before assigning
         if (JobTypeId.HasValue && JobTypeId != targetUser.JobTypeId)
         {
-            if (!await _jobTypeService.CanUserHaveJobTypeAsync(targetUser.Id, JobTypeId.Value))
+            var validation = await _jobTypeService.ValidateJobTypeForUserAsync(targetUser.Id, JobTypeId.Value);
+            if (validation != JobTypeValidationResult.Valid)
             {
-                ErrorMessage = _localizer["Error_JobTypeNotAvailableForMolecule"];
+                ErrorMessage = validation switch
+                {
+                    JobTypeValidationResult.MoleculeMismatch => _localizer["Error_JobTypeNotAvailableForMolecule"],
+                    JobTypeValidationResult.JobTypeNotFound => _localizer["Error_InvalidJobTypeSelected"],
+                    _ => _localizer["Error_InvalidJobTypeSelected"]
+                };
                 await LoadUserDataAsync(targetUser);
                 await LoadOrganizationalOptionsAsync(targetUser);
                 await LoadRecentChangesAsync();

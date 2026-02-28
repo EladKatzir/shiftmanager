@@ -77,8 +77,8 @@ public class JobTypeService : IJobTypeService
         if (jobType == null)
             return false;
 
-        // Validate the user can have this job type (same area)
-        if (!await CanUserHaveJobTypeAsync(userId, jobTypeId))
+        // Validate the user can have this job type (same area/molecule)
+        if (await ValidateJobTypeForUserAsync(userId, jobTypeId) != JobTypeValidationResult.Valid)
             return false;
 
         user.JobTypeId = jobTypeId;
@@ -100,8 +100,8 @@ public class JobTypeService : IJobTypeService
         if (newJobType == null)
             return false;
 
-        // Validate the user can have this job type (same area)
-        if (!await CanUserHaveJobTypeAsync(userId, newJobTypeId))
+        // Validate the user can have this job type (same area/molecule)
+        if (await ValidateJobTypeForUserAsync(userId, newJobTypeId) != JobTypeValidationResult.Valid)
             return false;
 
         var oldJobTypeId = user.JobTypeId;
@@ -129,24 +129,24 @@ public class JobTypeService : IJobTypeService
     }
 
     // Validation
-    public async Task<bool> CanUserHaveJobTypeAsync(int userId, int jobTypeId)
+    public async Task<JobTypeValidationResult> ValidateJobTypeForUserAsync(int userId, int jobTypeId)
     {
         var user = await _db.Users.FindAsync(userId);
         if (user == null)
-            return false;
+            return JobTypeValidationResult.UserNotFound;
 
         var jobType = await GetJobTypeAsync(jobTypeId);
         if (jobType == null)
-            return false;
+            return JobTypeValidationResult.JobTypeNotFound;
 
         // Get user's hierarchy context to determine their area
         var userContext = await _hierarchyService.GetUserHierarchyContextAsync(userId);
         if (userContext == null)
-            return false;
+            return JobTypeValidationResult.UserNotFound;
 
         // Job type must be in the same area as the user
         if (jobType.AreaId != userContext.Path.Area.Id)
-            return false;
+            return JobTypeValidationResult.AreaMismatch;
 
         // If job type is molecule-specific, user must be in that molecule
         if (jobType.MoleculeId.HasValue)
@@ -154,10 +154,10 @@ public class JobTypeService : IJobTypeService
             var company = await _db.Companies.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
             if (company == null || company.MoleculeId != jobType.MoleculeId)
-                return false;
+                return JobTypeValidationResult.MoleculeMismatch;
         }
 
-        return true;
+        return JobTypeValidationResult.Valid;
     }
 
     // CRUD and admin operations

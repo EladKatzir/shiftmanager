@@ -2,6 +2,15 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+public enum JobTypeValidationResult
+{
+    Valid,
+    UserNotFound,
+    JobTypeNotFound,
+    AreaMismatch,
+    MoleculeMismatch
+}
+
 public interface IJobTypeService
 {
     // Query operations
@@ -21,7 +30,7 @@ public interface IJobTypeService
     Task<bool> RemoveJobTypeAsync(int userId, int? removedByUserId = null);
 
     // Validation
-    Task<bool> CanUserHaveJobTypeAsync(int userId, int jobTypeId);
+    Task<JobTypeValidationResult> ValidateJobTypeForUserAsync(int userId, int jobTypeId);
 
     // CRUD and admin operations
     Task<JobType> CreateJobTypeAsync(string name, int areaId, TimeOnly start, TimeOnly end, bool isActive = true);
