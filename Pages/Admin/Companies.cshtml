@@ -434,7 +434,7 @@
 {
     <div class="alert-success">
         <span style="font-size: 1.25rem;">✓</span>
-        <span>@Html.Encode(Model.Success)</span>
+        <span>@Model.Success</span>
     </div>
 }
 
@@ -447,11 +447,11 @@
     {
         <div class="alert-error">
             <span style="font-size: 1.25rem;">✗</span>
-            <span>@Html.Encode(Model.Error)</span>
+            <span>@Model.Error</span>
         </div>
     }
 
-    <form method="post" asp-page-handler="AddCompany">
+    <form method="post" asp-page-handler="AddCompany" accept-charset="UTF-8">
         <!-- Company Details Fieldset -->
         <fieldset class="form-fieldset">
             <legend class="fieldset-legend">@Localizer["CompanyDetails"]</legend>
@@ -557,9 +557,9 @@
                 @foreach (var c in Model.Companies)
                 {
                     <tr>
-                        <td><strong>@Html.Encode(c.Name)</strong></td>
-                        <td><code>@Html.Encode(c.Slug)</code></td>
-                        <td>@Html.Encode(c.DisplayName ?? "-")</td>
+                        <td><strong>@c.Name</strong></td>
+                        <td><code>@c.Slug</code></td>
+                        <td>@(c.DisplayName ?? "-")</td>
                         <td>@c.UserCount</td>
                         <td>
                             <div class="table-actions">

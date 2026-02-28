@@ -58,8 +58,8 @@
     <p class="page-subtitle"><loc key="ViewAndManageRoleAssignments" /></p>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
-@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div> }
 
 <div class="section-card">
     <div class="view-tabs">
@@ -105,9 +105,9 @@
                 @foreach (var ur in Model.UserRoles)
                 {
                     <tr>
-                        <td><a href="/Admin/EditProfile?UserId=@ur.UserId">@Html.Encode(ur.UserName)</a></td>
+                        <td><a href="/Admin/EditProfile?UserId=@ur.UserId">@(ur.UserName)</a></td>
                         <td><strong>@Localizer[ur.RoleNameKey]</strong></td>
-                        <td><span class="scope-text">@Html.Encode(ur.ScopeDescription)</span></td>
+                        <td><span class="scope-text">@(ur.ScopeDescription)</span></td>
                         <td>
                             @if (ur.IsActive)
                             {

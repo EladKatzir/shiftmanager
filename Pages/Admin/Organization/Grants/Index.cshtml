@@ -57,8 +57,8 @@
     <p class="page-subtitle"><loc key="ViewAndManageUserGrants" /></p>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
-@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div> }
 
 <div class="section-card">
     <div class="view-tabs">
@@ -104,9 +104,9 @@
                 @foreach (var g in Model.Grants)
                 {
                     <tr>
-                        <td><a href="/Admin/EditProfile?UserId=@g.UserId">@Html.Encode(g.UserName)</a></td>
+                        <td><a href="/Admin/EditProfile?UserId=@g.UserId">@(g.UserName)</a></td>
                         <td><strong>@Localizer[g.GrantTypeName]</strong></td>
-                        <td><span class="scope-text">@Html.Encode(g.ScopeDescription)</span></td>
+                        <td><span class="scope-text">@(g.ScopeDescription)</span></td>
                         <td>
                             @if (g.CanOwn) { <span class="badge badge-own"><loc key="Own" /></span> }
                             @if (g.CanGive) { <span class="badge badge-give"><loc key="Give" /></span> }
@@ -164,8 +164,8 @@
                 @foreach (var u in Model.UserSummaries)
                 {
                     <tr>
-                        <td><strong>@Html.Encode(u.UserName)</strong></td>
-                        <td>@Html.Encode(u.Email)</td>
+                        <td><strong>@(u.UserName)</strong></td>
+                        <td>@(u.Email)</td>
                         <td><span class="badge badge-count">@u.GrantCount</span></td>
                         <td>
                             <div class="table-actions">

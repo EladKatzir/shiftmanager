@@ -265,19 +265,25 @@ th { text-align: left; color: var(--text); }
 .btn-ghost { background: transparent; border-color: var(--border); }
 .btn:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-/* Force white text on primary backgrounds in light mode */
-:root:not([data-theme="dark"]) .btn-primary,
-:root:not([data-theme="dark"]) [class*="primary"][class*="bg"],
-:root:not([data-theme="dark"]) [style*="background: var(--primary)"],
-:root:not([data-theme="dark"]) [style*="background-color: var(--primary)"] {
-  color: white !important;
+/* Force contrasting text on primary backgrounds (all modes).
+   Covers inline-style variants (with/without space after colon)
+   and common CSS class patterns. */
+.btn-primary,
+[class*="primary"][class*="bg"],
+[style*="background: var(--primary)"],
+[style*="background-color: var(--primary)"],
+[style*="background:var(--primary)"],
+[style*="background-color:var(--primary)"] {
+  color: var(--primary-contrast) !important;
 }
 
-:root:not([data-theme="dark"]) .btn-primary *,
-:root:not([data-theme="dark"]) [class*="primary"][class*="bg"] *,
-:root:not([data-theme="dark"]) [style*="background: var(--primary)"] *,
-:root:not([data-theme="dark"]) [style*="background-color: var(--primary)"] * {
-  color: white !important;
+.btn-primary *,
+[class*="primary"][class*="bg"] *,
+[style*="background: var(--primary)"] *,
+[style*="background-color: var(--primary)"] *,
+[style*="background:var(--primary)"] *,
+[style*="background-color:var(--primary)"] * {
+  color: var(--primary-contrast) !important;
 }
 
 /* ========================================
@@ -2495,7 +2501,13 @@ body, p, h1, h2, h3, h4, h5, h6, div, span, label {
   color: var(--text) !important;
 }
 
-/* Table descendants inherit text color from parent (allows dark-bg headers to set white text) */
+/* Table header descendants inherit text color from parent.
+   Prevents the global 'span { color: var(--text) }' rule from overriding
+   inherited contrasting colors on dark-background headers (e.g. --primary). */
+th span,
+th a {
+  color: inherit;
+}
 
 /* Warning/highlighting styles for better UX */
 .warning-highlight {
@@ -6521,10 +6533,19 @@ code {
 }
 
 /* ----------------------------------------
-   Dark Mode: Table Header
+   Dark Mode: Table Header & Cell Text
    ---------------------------------------- */
 :root[data-theme="dark"] th {
   background-color: var(--surface-soft);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] td {
+  color: var(--text);
+}
+
+:root[data-theme="dark"] table {
+  color: var(--text);
 }
 
 /* ----------------------------------------
@@ -6736,6 +6757,20 @@ code {
    Mirror manual dark mode overrides for system preference
    ---------------------------------------- */
 @media (prefers-color-scheme: dark) {
+  /* Table text color for system dark preference */
+  :root:not([data-theme="light"]) th {
+    background-color: var(--surface-soft);
+    color: var(--text);
+  }
+
+  :root:not([data-theme="light"]) td {
+    color: var(--text);
+  }
+
+  :root:not([data-theme="light"]) table {
+    color: var(--text);
+  }
+
   :root:not([data-theme="light"]) .tooltip-shift-type {
     color: var(--primary);
   }

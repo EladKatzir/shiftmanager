@@ -2193,6 +2193,14 @@
     text-align: center;
     border-bottom: 2px solid var(--border-strong);
     white-space: nowrap;
+    color: var(--primary-contrast);
+}
+
+/* Ensure all descendants (span, etc.) inside header inherit contrasting color
+   instead of picking up the global 'span { color: var(--text) }' rule */
+.excel-calendar__header th *,
+.excel-calendar__corner * {
+    color: inherit;
 }
 
 .excel-calendar__header-day {

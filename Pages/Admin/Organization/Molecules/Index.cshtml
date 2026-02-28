@@ -94,11 +94,11 @@
 
 @if (!string.IsNullOrEmpty(Model.Success))
 {
-    <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div>
+    <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div>
 }
 @if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div>
+    <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div>
 }
 
 <div class="section-card">
@@ -158,9 +158,9 @@
                 @foreach (var m in Model.Molecules)
                 {
                     <tr>
-                        <td>@Html.Encode(m.ProjectName)</td>
-                        <td>@Html.Encode(m.AreaName)</td>
-                        <td><strong>@Html.Encode(m.DisplayName)</strong><br /><small style="color: var(--text-muted);">@Html.Encode(m.Name)</small></td>
+                        <td>@(m.ProjectName)</td>
+                        <td>@(m.AreaName)</td>
+                        <td><strong>@(m.DisplayName)</strong><br /><small style="color: var(--text-muted);">@(m.Name)</small></td>
                         <td><span class="badge @IndexModel.GetMoleculeTypeBadgeClass(m.Type)">@Model.GetMoleculeTypeDisplay(m.Type)</span></td>
                         <td>@m.CompanyCount</td>
                         <td>@m.DepartmentCount</td>

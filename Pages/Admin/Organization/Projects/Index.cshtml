@@ -51,8 +51,8 @@
     <p class="page-subtitle"><loc key="CreateAndManageProjects" /></p>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div> }
-@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }
+@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div> }
 
 <div class="section-card">
     <h3 class="section-header"><loc key="CreateNewProject" /></h3>
@@ -81,7 +81,7 @@
             @foreach (var p in Model.Projects)
             {
                 <tr>
-                    <td><strong>@Html.Encode(p.DisplayName)</strong><br /><small style="color: var(--text-muted);">@Html.Encode(p.Name)</small></td>
+                    <td><strong>@(p.DisplayName)</strong><br /><small style="color: var(--text-muted);">@(p.Name)</small></td>
                     <td>@p.AreaCount</td>
                     <td>@if (p.IsActive) { <span class="badge badge-active"><loc key="Active" /></span> } else { <span class="badge badge-inactive"><loc key="Inactive" /></span> }</td>
                     <td>@p.CreatedAt.ToString("yyyy-MM-dd")</td>

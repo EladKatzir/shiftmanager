@@ -98,11 +98,11 @@
 
 @if (!string.IsNullOrEmpty(Model.Success))
 {
-    <div class="alert-success"><span>&#10003;</span><span>@Html.Encode(Model.Success)</span></div>
+    <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div>
 }
 @if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="alert-error"><span>&#10007;</span><span>@Html.Encode(Model.Error)</span></div>
+    <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div>
 }
 
 <div class="section-card">
@@ -174,9 +174,9 @@
                 @foreach (var jt in Model.JobTypes)
                 {
                     <tr>
-                        <td>@Html.Encode(jt.ProjectName)</td>
-                        <td>@Html.Encode(jt.AreaName)</td>
-                        <td><strong>@Html.Encode(jt.DisplayName)</strong><br /><small style="color: var(--text-muted);">@Html.Encode(jt.Name)</small></td>
+                        <td>@(jt.ProjectName)</td>
+                        <td>@(jt.AreaName)</td>
+                        <td><strong>@(jt.DisplayName)</strong><br /><small style="color: var(--text-muted);">@(jt.Name)</small></td>
                         <td>
                             @if (!string.IsNullOrEmpty(jt.Color))
                             {
