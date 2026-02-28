@@ -11995,6 +11995,24 @@
   <data name="Error_Signup_HQNotFound" xml:space="preserve">
     <value>חברת מטה לא נמצאה למולקולה זו. פנה לתמיכה.</value>
   </data>
+  <data name="Error_Signup_InvalidDepartment" xml:space="preserve">
+    <value>המחלקה שנבחרה אינה תקינה. בחר מחלקה תקפה למולקולה זו.</value>
+  </data>
+  <data name="Error_Signup_SelectDepartment" xml:space="preserve">
+    <value>יש לבחור מחלקה עבור מולקולה זו.</value>
+  </data>
+  <data name="Error_CannotAddCompanyToTechMolecule" xml:space="preserve">
+    <value>לא ניתן להוסיף פלוגות למולקולה טכנית. השתמש במחלקות במקום.</value>
+  </data>
+  <data name="Error_CannotAddDepartmentToNonTechMolecule" xml:space="preserve">
+    <value>ניתן להוסיף מחלקות למולקולות טכניות בלבד.</value>
+  </data>
+  <data name="Grant_ManageHierarchy" xml:space="preserve">
+    <value>ניהול היררכיה</value>
+  </data>
+  <data name="Grant_ManageHierarchy_Desc" xml:space="preserve">
+    <value>הוספה, שינוי שם ומחיקה של פלוגות ומחלקות בהיררכיה הארגונית.</value>
+  </data>
   <data name="AreaAdmin" xml:space="preserve">
     <value>קב"ב</value>
   </data>

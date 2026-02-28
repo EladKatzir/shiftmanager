@@ -112,7 +112,7 @@ public class GetSignupOptionsModel : PageModel
     }
 
     /// <summary>
-    /// Gets job types filtered by molecule's area.
+    /// Gets job types filtered by molecule (molecule-specific + area-wide).
     /// </summary>
     public async Task<IActionResult> OnGetJobTypesAsync(int moleculeId)
     {
@@ -128,14 +128,7 @@ public class GetSignupOptionsModel : PageModel
 
         try
         {
-            // Get the area ID from the molecule
-            var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == moleculeId);
-            if (molecule == null)
-            {
-                return new JsonResult(new { error = "Molecule not found" }) { StatusCode = 404 };
-            }
-
-            var jobTypesRaw = await _jobTypeService.GetJobTypesAsync(molecule.AreaId);
+            var jobTypesRaw = await _jobTypeService.GetJobTypesForMoleculeAsync(moleculeId);
             var jobTypes = jobTypesRaw
                 .Select(jt => new JobTypeOption
                 {
@@ -244,7 +237,8 @@ public class GetSignupOptionsModel : PageModel
                     DisplayNameEN = rt.DisplayNameEN,
                     DisplayNameHE = rt.DisplayNameHE,
                     NameKey = rt.NameKey,
-                    DerivedUserRole = rt.DerivedUserRole.HasValue ? (int)rt.DerivedUserRole.Value : (int?)null
+                    DerivedUserRole = rt.DerivedUserRole.HasValue ? (int)rt.DerivedUserRole.Value : (int?)null,
+                    ScopeLevel = (int)rt.ScopeLevel
                 })
                 .ToList();
 
@@ -311,6 +305,8 @@ public class RoleTemplateOption
     /// <summary>Localized display name resolved from NameKey (server-side).</summary>
     public string? DisplayName { get; set; }
     public int? DerivedUserRole { get; set; }
+    /// <summary>RoleScopeLevel enum value — used by client to filter templates by molecule type.</summary>
+    public int ScopeLevel { get; set; }
 }
 
 #endregion

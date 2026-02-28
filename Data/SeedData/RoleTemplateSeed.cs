@@ -663,6 +663,7 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 90, ETM));   // ManageYekevPrograms
         grants.Add(G(7, 91, ETM));   // ManageMoviltechBlueprints
         grants.Add(G(7, 92, ETM));   // ManageMoviltechPrograms
+        grants.Add(G(7, 124, ETM));  // ManageHierarchy (add/rename/delete companies & departments)
 
         // ============================================
         // DEPARTMENT LEAD (Template 9) — 44 grants
@@ -805,6 +806,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 33, ETA));   // AssignJobTypes (BUG 2 fix)
         grants.Add(G(10, 24, ETA));   // ApproveExtendedLeave (ALL — BUG 3 fix)
         grants.Add(G(10, 47, ETA));   // ManageDepartments
+        grants.Add(G(10, 124, ETA));  // ManageHierarchy (add/rename/delete companies & departments)
         // Tech grants (GAP 1 fix)
         grants.Add(G(10, 6, ETA));    // AssignTechShifts
         grants.Add(G(10, 77, ETA));   // ViewHanavaCalendar
@@ -911,6 +913,7 @@ public static class RoleTemplateSeed
         grants.Add(G(11, 46, ETP, canGive: true));   // ManageJobTypes
         grants.Add(G(11, 47, ETP, canGive: true));   // ManageDepartments
         grants.Add(G(11, 123, ETP, canGive: true));  // ReorderHierarchy
+        grants.Add(G(11, 124, ETP, canGive: true));  // ManageHierarchy
         // Settings (ETP)
         grants.Add(G(11, 48, ETP, canGive: true));   // ViewSettings
         grants.Add(G(11, 49, ETP, canGive: true));   // EditCompanySettings

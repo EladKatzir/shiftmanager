@@ -276,6 +276,11 @@ public static class GrantTypeSeed
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "ReorderHierarchy", NameKey = "Grant_ReorderHierarchy", DescriptionKey = "Grant_ReorderHierarchy_Desc", Category = GrantCategory.Hierarchy, DefaultScope = GrantScopeLevel.Project, IsSystem = true });
 
+        // ============================================
+        // HIERARCHY MANAGE (write access: add/rename/delete companies and departments)
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "ManageHierarchy", NameKey = "Grant_ManageHierarchy", DescriptionKey = "Grant_ManageHierarchy_Desc", Category = GrantCategory.Hierarchy, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }

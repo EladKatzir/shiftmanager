@@ -7,6 +7,11 @@ public interface IJobTypeService
     // Query operations
     Task<JobType?> GetJobTypeAsync(int jobTypeId);
     Task<List<JobType>> GetJobTypesAsync(int areaId);
+    /// <summary>
+    /// Returns job types applicable to a specific molecule: molecule-specific ones plus
+    /// area-wide ones (where MoleculeId is null) from the molecule's area.
+    /// </summary>
+    Task<List<JobType>> GetJobTypesForMoleculeAsync(int moleculeId);
     Task<List<JobType>> GetAllJobTypesAsync();
     Task<JobType?> GetUserJobTypeAsync(int userId);
     Task<List<AppUser>> GetUsersWithJobTypeAsync(int jobTypeId);

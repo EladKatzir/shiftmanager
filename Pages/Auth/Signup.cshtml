@@ -289,6 +289,13 @@
             const savedJobTypeId = '@(Model.JobTypeId > 0 ? Model.JobTypeId.ToString() : "")';
             const savedDepartmentId = '@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")';
             var currentMoleculeIsTech = false;
+            // Full list of role templates (loaded once, filtered per molecule type)
+            var allRoleTemplates = [];
+
+            // RoleScopeLevel constants (from Models/Support/RoleScopeLevel.cs)
+            var SCOPE_COMPANY_JOBTYPE = 2;  // AlhutLead, TextLead — Workforce only
+            var SCOPE_DEPARTMENT = 3;       // DepartmentLead — Tech only
+            var SCOPE_MOLECULE_JOBTYPE = 5; // AlhutDirector, TextDirector — Workforce only
 
             // Track company value when switching to Director role (Bug 2 fix)
             var savedCompanyValue = '';
@@ -301,30 +308,52 @@
                 })
                 .then(function(data) {
                     if (!data.roleTemplates || data.roleTemplates.length === 0) return;
-                    roleSelect.innerHTML = '';
-                    data.roleTemplates.forEach(function(rt) {
-                        var opt = document.createElement('option');
-                        opt.value = rt.derivedUserRole != null ? rt.derivedUserRole.toString() : '';
-                        opt.setAttribute('data-template-id', rt.id);
-                        // Priority: custom DisplayNameEN/HE → server-resolved DisplayName → Key
-                        var name = isHebrew ? (rt.displayNameHE || rt.displayNameEN) : (rt.displayNameEN || rt.displayNameHE);
-                        opt.textContent = name || rt.displayName || rt.key;
-                        // Restore selection from form post-back
-                        if (savedTemplateId && rt.id.toString() === savedTemplateId) {
-                            opt.selected = true;
-                        } else if (!savedTemplateId && rt.derivedUserRole != null && rt.derivedUserRole.toString() === savedRole) {
-                            opt.selected = true;
-                        }
-                        roleSelect.appendChild(opt);
-                    });
-                    // Sync template ID on initial load
-                    syncTemplateId();
-                    // Trigger role change handler to update UI state
-                    roleSelect.dispatchEvent(new Event('change'));
+                    allRoleTemplates = data.roleTemplates;
+                    populateRoleDropdown(allRoleTemplates);
                 })
                 .catch(function() {
                     // Fallback: keep current state (page will have empty dropdown)
                 });
+
+            // Populate role dropdown from a (potentially filtered) list of templates
+            function populateRoleDropdown(templates) {
+                var previousTemplateId = templateIdInput ? templateIdInput.value : '';
+                roleSelect.innerHTML = '';
+                templates.forEach(function(rt) {
+                    var opt = document.createElement('option');
+                    opt.value = rt.derivedUserRole != null ? rt.derivedUserRole.toString() : '';
+                    opt.setAttribute('data-template-id', rt.id);
+                    var name = isHebrew ? (rt.displayNameHE || rt.displayNameEN) : (rt.displayNameEN || rt.displayNameHE);
+                    opt.textContent = name || rt.displayName || rt.key;
+                    // Restore selection from form post-back or previous selection
+                    var matchId = previousTemplateId || savedTemplateId;
+                    if (matchId && rt.id.toString() === matchId) {
+                        opt.selected = true;
+                    } else if (!matchId && rt.derivedUserRole != null && rt.derivedUserRole.toString() === savedRole) {
+                        opt.selected = true;
+                    }
+                    roleSelect.appendChild(opt);
+                });
+                syncTemplateId();
+                roleSelect.dispatchEvent(new Event('change'));
+            }
+
+            // Filter role templates based on molecule type:
+            // - Tech molecules: hide CompanyJobType (2) and MoleculeJobType (5) scoped roles
+            // - Workforce/Helper: hide Department (3) scoped roles
+            function filterRoleTemplatesForMoleculeType(isTech) {
+                if (allRoleTemplates.length === 0) return;
+                var filtered = allRoleTemplates.filter(function(rt) {
+                    if (isTech) {
+                        // Tech: exclude job-type-specific workforce roles
+                        return rt.scopeLevel !== SCOPE_COMPANY_JOBTYPE && rt.scopeLevel !== SCOPE_MOLECULE_JOBTYPE;
+                    } else {
+                        // Workforce/Helper: exclude department-scoped roles
+                        return rt.scopeLevel !== SCOPE_DEPARTMENT;
+                    }
+                });
+                populateRoleDropdown(filtered);
+            }
 
             // Sync hidden RequestedRoleTemplateId when role selection changes
             function syncTemplateId() {
@@ -473,6 +502,9 @@
             moleculeSelect.addEventListener('change', async function() {
                 var moleculeId = this.value;
                 currentMoleculeIsTech = isMoleculeTech();
+
+                // Filter role templates by molecule type (Tech vs Workforce/Helper)
+                filterRoleTemplatesForMoleculeType(currentMoleculeIsTech);
 
                 // Reset company/department dropdown
                 companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"].Value.Trim()</option>';

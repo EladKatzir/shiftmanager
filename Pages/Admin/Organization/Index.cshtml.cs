@@ -6,7 +6,9 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Helpers;
 using ShiftManager.Services;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace ShiftManager.Pages.Admin.Organization;
@@ -20,18 +22,21 @@ public class IndexModel : LocalizedPageModel
     private readonly IHierarchyService _hierarchyService;
     private readonly ILogger<IndexModel> _logger;
     private readonly ICompanyCacheService _companyCacheService;
+    private readonly IGrantService _grantService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IHierarchyService hierarchyService,
         ILogger<IndexModel> logger,
-        ICompanyCacheService companyCacheService) : base(localizer)
+        ICompanyCacheService companyCacheService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _hierarchyService = hierarchyService;
         _logger = logger;
         _companyCacheService = companyCacheService;
+        _grantService = grantService;
     }
 
     // View Models
@@ -54,10 +59,21 @@ public class IndexModel : LocalizedPageModel
     public int TotalActiveAreas { get; set; }
     public int TotalActiveMolecules { get; set; }
 
+    /// <summary>Whether the current user has ManageHierarchy grant (can add/rename/delete).</summary>
+    public bool CanManageHierarchy { get; set; }
+
     public async Task OnGetAsync()
     {
+        CanManageHierarchy = await CurrentUserHasManageHierarchyAsync();
         // Load all hierarchy data
         await LoadHierarchyDataAsync();
+    }
+
+    private async Task<bool> CurrentUserHasManageHierarchyAsync()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId)) return false;
+        return await _grantService.HasGrantAsync(userId, "ManageHierarchy");
     }
 
     private async Task LoadHierarchyDataAsync()
@@ -172,6 +188,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAddCompanyAsync()
     {
+        if (!await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
         if (string.IsNullOrWhiteSpace(EntityName) || ParentMoleculeId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
@@ -219,6 +238,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRenameCompanyAsync()
     {
+        if (!await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
         if (EntityId <= 0 || string.IsNullOrWhiteSpace(EntityName))
         {
             TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
@@ -250,6 +272,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteCompanyAsync()
     {
+        if (!await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
         if (EntityId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidId"].Value;
@@ -313,6 +338,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAddDepartmentAsync()
     {
+        if (!await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
         if (string.IsNullOrWhiteSpace(EntityName) || ParentMoleculeId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
@@ -356,6 +384,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRenameDepartmentAsync()
     {
+        if (!await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
         if (EntityId <= 0 || string.IsNullOrWhiteSpace(EntityName))
         {
             TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
@@ -386,6 +417,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteDepartmentAsync()
     {
+        if (!await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
         if (EntityId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidId"].Value;
@@ -458,19 +492,5 @@ public class IndexModel : LocalizedPageModel
     }
 
     private static bool ContainsDangerousContent(string? input)
-    {
-        if (string.IsNullOrEmpty(input)) return false;
-        var patterns = new[]
-        {
-            @"<script",
-            @"javascript:",
-            @"on\w+\s*=",
-            @"<iframe",
-            @"<object",
-            @"<embed",
-            @"<form",
-            @"<input"
-        };
-        return patterns.Any(p => Regex.IsMatch(input, p, RegexOptions.IgnoreCase));
-    }
+        => InputSanitizer.ContainsDangerousContent(input);
 }

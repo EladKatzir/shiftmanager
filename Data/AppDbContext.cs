@@ -929,6 +929,17 @@ public class AppDbContext : DbContext
             .HasForeignKey(jt => jt.AreaId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // JobType → Molecule (optional molecule-specific scoping)
+        modelBuilder.Entity<JobType>()
+            .HasOne(jt => jt.Molecule)
+            .WithMany()
+            .HasForeignKey(jt => jt.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<JobType>()
+            .HasIndex(jt => jt.MoleculeId);
+
         // AppUser → JobType relationship
         modelBuilder.Entity<AppUser>()
             .HasOne(u => u.JobType)

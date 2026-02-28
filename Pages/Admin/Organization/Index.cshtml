@@ -807,6 +807,8 @@
                                                                         <span class="tree-icon tree-icon-company">C</span>
                                                                         <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
                                                                         <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
+                                                                        @if (Model.CanManageHierarchy)
+                                                                        {
                                                                         <span class="tree-item-actions">
                                                                             <button class="tree-action-btn js-rename-btn"
                                                                                     loc-title="Rename"
@@ -832,6 +834,7 @@
                                                                                         data-label="@(company.DisplayName ?? company.Name)">&#128465;</button>
                                                                             }
                                                                         </span>
+                                                                        }
                                                                     </div>
                                                                 </div>
                                                             }
@@ -847,6 +850,8 @@
                                                                         {
                                                                             <span class="badge badge-inactive"><loc key="Inactive" /></span>
                                                                         }
+                                                                        @if (Model.CanManageHierarchy)
+                                                                        {
                                                                         <span class="tree-item-actions">
                                                                             <button class="tree-action-btn js-rename-btn"
                                                                                     loc-title="Rename"
@@ -872,10 +877,11 @@
                                                                                         data-label="@dept.DisplayName">&#128465;</button>
                                                                             }
                                                                         </span>
+                                                                        }
                                                                     </div>
                                                                 </div>
                                                             }
-                                                            @if (showAddCompany)
+                                                            @if (Model.CanManageHierarchy && showAddCompany)
                                                             {
                                                                 <button type="button" class="tree-add-btn js-add-btn"
                                                                         data-handler="AddCompany"
@@ -884,7 +890,7 @@
                                                                     + <loc key="AddCompany" />
                                                                 </button>
                                                             }
-                                                            @if (showAddDepartment)
+                                                            @if (Model.CanManageHierarchy && showAddDepartment)
                                                             {
                                                                 <button type="button" class="tree-add-btn js-add-btn"
                                                                         data-handler="AddDepartment"
@@ -938,6 +944,8 @@
                             <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
                             <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                             <span class="badge badge-inactive"><loc key="NeedsAssignment" /></span>
+                            @if (Model.CanManageHierarchy)
+                            {
                             <span class="tree-item-actions">
                                 <button class="tree-action-btn js-rename-btn"
                                         loc-title="Rename"
@@ -963,6 +971,7 @@
                                             data-label="@(company.DisplayName ?? company.Name)">&#128465;</button>
                                 }
                             </span>
+                            }
                         </div>
                     </div>
                 }

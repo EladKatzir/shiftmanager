@@ -32,6 +32,20 @@ public class JobTypeService : IJobTypeService
             .ToListAsync();
     }
 
+    public async Task<List<JobType>> GetJobTypesForMoleculeAsync(int moleculeId)
+    {
+        var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == moleculeId);
+        if (molecule == null) return new List<JobType>();
+
+        return await _db.JobTypes.IgnoreQueryFilters()
+            .Where(jt => jt.IsActive
+                && jt.AreaId == molecule.AreaId
+                && (jt.MoleculeId == null || jt.MoleculeId == moleculeId))
+            .OrderBy(jt => jt.SortOrder)
+            .ThenBy(jt => jt.Name)
+            .ToListAsync();
+    }
+
     public async Task<List<JobType>> GetAllJobTypesAsync()
     {
         return await _db.JobTypes.IgnoreQueryFilters()

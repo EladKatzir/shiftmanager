@@ -454,36 +454,8 @@ public class CompaniesModel : LocalizedPageModel
     /// <summary>
     /// Detects potentially dangerous content like script tags, HTML tags, and JavaScript event handlers
     /// </summary>
-    private static bool ContainsDangerousContent(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-            return false;
-
-        // Check for script tags, HTML tags, and JavaScript event handlers
-        var dangerousPatterns = new[]
-        {
-            @"<script[^>]*>",
-            @"</script>",
-            @"javascript:",
-            @"on\w+\s*=",  // onclick, onerror, onload, etc.
-            @"<iframe[^>]*>",
-            @"<object[^>]*>",
-            @"<embed[^>]*>",
-            @"<img[^>]*>",
-            @"<link[^>]*>",
-            @"<style[^>]*>",
-            @"eval\s*\(",
-            @"expression\s*\(",
-        };
-
-        foreach (var pattern in dangerousPatterns)
-        {
-            if (Regex.IsMatch(input, pattern, RegexOptions.IgnoreCase))
-                return true;
-        }
-
-        return false;
-    }
+    private static bool ContainsDangerousContent(string? input)
+        => InputSanitizer.ContainsDangerousContent(input);
 
     /// <summary>
     /// Auto-generates slugs for legacy companies that were created without one.
