@@ -191,6 +191,13 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        // Companies should only be added to Workforce or Helper molecules, not Tech
+        if (molecule.Type == MoleculeType.Tech)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CannotAddCompanyToTechMolecule"].Value;
+            return RedirectToPage();
+        }
+
         var slug = GenerateSlug(EntityName);
         var company = new Company
         {
@@ -264,23 +271,35 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Cascade delete related data
-        await _db.SwapRequests.IgnoreQueryFilters().Where(sr => sr.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.ShiftInstances.IgnoreQueryFilters().Where(si => si.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.ShiftTypes.IgnoreQueryFilters().Where(st => st.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.Configs.IgnoreQueryFilters().Where(c => c.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.DirectorCompanies.Where(dc => dc.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.CompanyId == EntityId).ExecuteDeleteAsync();
-        await _db.UserJoinRequests.IgnoreQueryFilters().Where(jr => jr.CompanyId == EntityId).ExecuteDeleteAsync();
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            // Cascade delete related data
+            await _db.SwapRequests.IgnoreQueryFilters().Where(sr => sr.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.ShiftInstances.IgnoreQueryFilters().Where(si => si.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.ShiftTypes.IgnoreQueryFilters().Where(st => st.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.Configs.IgnoreQueryFilters().Where(c => c.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.DirectorCompanies.Where(dc => dc.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.UserJoinRequests.IgnoreQueryFilters().Where(jr => jr.CompanyId == EntityId).ExecuteDeleteAsync();
 
-        // Deactivate remaining users
-        await _db.Users.IgnoreQueryFilters().Where(u => u.CompanyId == EntityId)
-            .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsActive, false));
+            // Deactivate remaining users
+            await _db.Users.IgnoreQueryFilters().Where(u => u.CompanyId == EntityId)
+                .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsActive, false));
 
-        _db.Companies.Remove(company);
-        await _db.SaveChangesAsync();
+            _db.Companies.Remove(company);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete company {CompanyId}", EntityId);
+            TempData["ErrorMessage"] = _localizer["Error_AnErrorOccurred"].Value;
+            return RedirectToPage();
+        }
+
         _companyCacheService.InvalidateAll();
         _logger.LogInformation("Company {CompanyId} '{Name}' deleted from hierarchy page", EntityId, company.Name);
 
@@ -303,6 +322,19 @@ public class IndexModel : LocalizedPageModel
         if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        // Departments should only be added to Tech molecules
+        var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == ParentMoleculeId);
+        if (molecule == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;
+            return RedirectToPage();
+        }
+        if (molecule.Type != MoleculeType.Tech)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CannotAddDepartmentToNonTechMolecule"].Value;
             return RedirectToPage();
         }
 
@@ -418,7 +450,11 @@ public class IndexModel : LocalizedPageModel
         slug = Regex.Replace(slug, @"[\s]+", "-");
         slug = Regex.Replace(slug, @"-+", "-");
         slug = slug.Trim('-');
-        return string.IsNullOrEmpty(slug) ? "company" : slug;
+        // For non-Latin names (e.g. Hebrew), the slug may be empty after stripping.
+        // Append a unique suffix to avoid duplicate slugs.
+        if (string.IsNullOrEmpty(slug))
+            slug = "company-" + Guid.NewGuid().ToString("N")[..8];
+        return slug;
     }
 
     private static bool ContainsDangerousContent(string? input)

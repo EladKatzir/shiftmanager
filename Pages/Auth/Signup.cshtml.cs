@@ -213,7 +213,12 @@ public class SignupModel : LocalizedPageModel
 
             CompanyId = hqCompany.Id;
         }
-        // Tech molecule: auto-assign HQ company, use DepartmentId from form
+        // Tech molecule: require department selection and auto-assign HQ company
+        else if (moleculeType == MoleculeType.Tech && (!DepartmentId.HasValue || DepartmentId.Value <= 0))
+        {
+            Error = _localizer["Error_Signup_SelectDepartment"];
+            return Page();
+        }
         else if (moleculeType == MoleculeType.Tech && DepartmentId.HasValue && DepartmentId.Value > 0)
         {
             // Validate department exists and belongs to this molecule

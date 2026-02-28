@@ -808,10 +808,13 @@
                                                                         <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
                                                                         <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                                                                         <span class="tree-item-actions">
-                                                                            <button class="tree-action-btn"
+                                                                            <button class="tree-action-btn js-rename-btn"
                                                                                     loc-title="Rename"
                                                                                     loc-aria-label="RenameCompany"
-                                                                                    onclick="openModal('RenameCompany', @company.Id, '@Html.Raw(company.Name.Replace("'", "\\'"))', '@Html.Raw((company.DisplayName ?? "").Replace("'", "\\'"))')">&#9998;</button>
+                                                                                    data-handler="RenameCompany"
+                                                                                    data-id="@company.Id"
+                                                                                    data-name="@company.Name"
+                                                                                    data-display-name="@(company.DisplayName ?? "")">&#9998;</button>
                                                                             @if (company.UserCount > 0)
                                                                             {
                                                                                 <button class="tree-action-btn tree-action-btn--danger"
@@ -821,10 +824,12 @@
                                                                             }
                                                                             else
                                                                             {
-                                                                                <button class="tree-action-btn tree-action-btn--danger"
+                                                                                <button class="tree-action-btn tree-action-btn--danger js-delete-btn"
                                                                                         loc-title="Delete"
                                                                                         loc-aria-label="DeleteCompany"
-                                                                                        onclick="confirmDelete('DeleteCompany', @company.Id, '@Html.Raw((company.DisplayName ?? company.Name).Replace("'", "\\'"))')">&#128465;</button>
+                                                                                        data-handler="DeleteCompany"
+                                                                                        data-id="@company.Id"
+                                                                                        data-label="@(company.DisplayName ?? company.Name)">&#128465;</button>
                                                                             }
                                                                         </span>
                                                                     </div>
@@ -843,10 +848,13 @@
                                                                             <span class="badge badge-inactive"><loc key="Inactive" /></span>
                                                                         }
                                                                         <span class="tree-item-actions">
-                                                                            <button class="tree-action-btn"
+                                                                            <button class="tree-action-btn js-rename-btn"
                                                                                     loc-title="Rename"
                                                                                     loc-aria-label="RenameDepartment"
-                                                                                    onclick="openModal('RenameDepartment', @dept.Id, '@Html.Raw(dept.Name.Replace("'", "\\'"))', '@Html.Raw(dept.DisplayName.Replace("'", "\\'"))')">&#9998;</button>
+                                                                                    data-handler="RenameDepartment"
+                                                                                    data-id="@dept.Id"
+                                                                                    data-name="@dept.Name"
+                                                                                    data-display-name="@dept.DisplayName">&#9998;</button>
                                                                             @if (dept.UserCount > 0)
                                                                             {
                                                                                 <button class="tree-action-btn tree-action-btn--danger"
@@ -856,10 +864,12 @@
                                                                             }
                                                                             else
                                                                             {
-                                                                                <button class="tree-action-btn tree-action-btn--danger"
+                                                                                <button class="tree-action-btn tree-action-btn--danger js-delete-btn"
                                                                                         loc-title="Delete"
                                                                                         loc-aria-label="DeleteDepartment"
-                                                                                        onclick="confirmDelete('DeleteDepartment', @dept.Id, '@Html.Raw(dept.DisplayName.Replace("'", "\\'"))')">&#128465;</button>
+                                                                                        data-handler="DeleteDepartment"
+                                                                                        data-id="@dept.Id"
+                                                                                        data-label="@dept.DisplayName">&#128465;</button>
                                                                             }
                                                                         </span>
                                                                     </div>
@@ -867,16 +877,18 @@
                                                             }
                                                             @if (showAddCompany)
                                                             {
-                                                                <button type="button" class="tree-add-btn"
-                                                                        onclick="openModal('AddCompany', 0, '', '', @molecule.Id)"
+                                                                <button type="button" class="tree-add-btn js-add-btn"
+                                                                        data-handler="AddCompany"
+                                                                        data-parent-id="@molecule.Id"
                                                                         loc-aria-label="AddCompany">
                                                                     + <loc key="AddCompany" />
                                                                 </button>
                                                             }
                                                             @if (showAddDepartment)
                                                             {
-                                                                <button type="button" class="tree-add-btn"
-                                                                        onclick="openModal('AddDepartment', 0, '', '', @molecule.Id)"
+                                                                <button type="button" class="tree-add-btn js-add-btn"
+                                                                        data-handler="AddDepartment"
+                                                                        data-parent-id="@molecule.Id"
                                                                         loc-aria-label="AddDepartment">
                                                                     + <loc key="AddDepartment" />
                                                                 </button>
@@ -927,10 +939,13 @@
                             <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                             <span class="badge badge-inactive"><loc key="NeedsAssignment" /></span>
                             <span class="tree-item-actions">
-                                <button class="tree-action-btn"
+                                <button class="tree-action-btn js-rename-btn"
                                         loc-title="Rename"
                                         loc-aria-label="RenameCompany"
-                                        onclick="openModal('RenameCompany', @company.Id, '@Html.Raw(company.Name.Replace("'", "\\'"))', '@Html.Raw((company.DisplayName ?? "").Replace("'", "\\'"))')">&#9998;</button>
+                                        data-handler="RenameCompany"
+                                        data-id="@company.Id"
+                                        data-name="@company.Name"
+                                        data-display-name="@(company.DisplayName ?? "")">&#9998;</button>
                                 @if (company.UserCount > 0)
                                 {
                                     <button class="tree-action-btn tree-action-btn--danger"
@@ -940,10 +955,12 @@
                                 }
                                 else
                                 {
-                                    <button class="tree-action-btn tree-action-btn--danger"
+                                    <button class="tree-action-btn tree-action-btn--danger js-delete-btn"
                                             loc-title="Delete"
                                             loc-aria-label="DeleteCompany"
-                                            onclick="confirmDelete('DeleteCompany', @company.Id, '@Html.Raw((company.DisplayName ?? company.Name).Replace("'", "\\'"))')">&#128465;</button>
+                                            data-handler="DeleteCompany"
+                                            data-id="@company.Id"
+                                            data-label="@(company.DisplayName ?? company.Name)">&#128465;</button>
                                 }
                             </span>
                         </div>
@@ -1030,24 +1047,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ================================================================
-// Modal management
+// Modal management (using data-attributes for XSS safety)
 // ================================================================
 
-const modalTitles = {
-    'AddCompany':        '@Html.Raw(Localizer["AddCompany"].Value.Replace("'", "\\'"))',
-    'AddDepartment':     '@Html.Raw(Localizer["AddDepartment"].Value.Replace("'", "\\'"))',
-    'RenameCompany':     '@Html.Raw(Localizer["RenameCompany"].Value.Replace("'", "\\'"))',
-    'RenameDepartment':  '@Html.Raw(Localizer["RenameDepartment"].Value.Replace("'", "\\'"))'
-};
+const modalTitles = @Json.Serialize(new Dictionary<string, string> {
+    { "AddCompany", Localizer["AddCompany"].Value },
+    { "AddDepartment", Localizer["AddDepartment"].Value },
+    { "RenameCompany", Localizer["RenameCompany"].Value },
+    { "RenameDepartment", Localizer["RenameDepartment"].Value }
+});
 
-/**
- * Opens the reusable modal for add/rename operations.
- * @@param {string} handler   - The page handler name (AddCompany, RenameCompany, etc.)
- * @@param {number} entityId  - Entity ID (0 for add operations)
- * @@param {string} name      - Current name (empty for add)
- * @@param {string} displayName - Current display name (empty for add)
- * @@param {number} [parentId]  - Parent molecule ID (for add operations)
- */
 function openModal(handler, entityId, name, displayName, parentId) {
     const overlay = document.getElementById('orgModal');
     const form = document.getElementById('orgModalForm');
@@ -1057,22 +1066,13 @@ function openModal(handler, entityId, name, displayName, parentId) {
     const entityIdInput = document.getElementById('orgModalEntityId');
     const parentIdInput = document.getElementById('orgModalParentId');
 
-    // Set the form action to the correct handler
     form.action = '?handler=' + handler;
-
-    // Set modal title
     titleEl.textContent = modalTitles[handler] || handler;
-
-    // Populate fields
     entityIdInput.value = entityId || 0;
     parentIdInput.value = parentId || 0;
     nameInput.value = name || '';
     displayNameInput.value = displayName || '';
-
-    // Show modal
     overlay.classList.add('visible');
-
-    // Focus the name input
     setTimeout(function() { nameInput.focus(); }, 100);
 }
 
@@ -1082,39 +1082,53 @@ function closeModal() {
 
 // Close modal on overlay click
 document.getElementById('orgModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
-    }
+    if (e.target === this) closeModal();
 });
 
 // Close modal on Escape key
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal();
-    }
+    if (e.key === 'Escape') closeModal();
 });
 
 // ================================================================
-// Delete confirmation
+// Data-attribute event delegation (XSS-safe)
 // ================================================================
 
-const deleteConfirmText = '@Html.Raw(Localizer["Confirm_DeleteEntity"].Value.Replace("'", "\\'"))';
+const deleteConfirmText = @Json.Serialize(Localizer["Confirm_DeleteEntity"].Value);
 
-/**
- * Shows a browser confirm dialog and submits the delete form.
- * @@param {string} handler - DeleteCompany or DeleteDepartment
- * @@param {number} entityId - The entity ID to delete
- * @@param {string} entityLabel - The display name shown in the confirm dialog
- */
-function confirmDelete(handler, entityId, entityLabel) {
-    var message = deleteConfirmText.replace('{0}', entityLabel);
-    if (!confirm(message)) {
-        return;
-    }
+// Rename buttons
+document.querySelectorAll('.js-rename-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        openModal(
+            this.dataset.handler,
+            parseInt(this.dataset.id),
+            this.dataset.name,
+            this.dataset.displayName
+        );
+    });
+});
 
-    var form = document.getElementById('deleteForm');
-    form.action = '?handler=' + handler;
-    document.getElementById('deleteEntityId').value = entityId;
-    form.submit();
-}
+// Add buttons
+document.querySelectorAll('.js-add-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        openModal(
+            this.dataset.handler,
+            0, '', '',
+            parseInt(this.dataset.parentId)
+        );
+    });
+});
+
+// Delete buttons
+document.querySelectorAll('.js-delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var message = deleteConfirmText.replace('{0}', this.dataset.label);
+        if (!confirm(message)) return;
+
+        var form = document.getElementById('deleteForm');
+        form.action = '?handler=' + this.dataset.handler;
+        document.getElementById('deleteEntityId').value = this.dataset.id;
+        form.submit();
+    });
+});
 </script>
