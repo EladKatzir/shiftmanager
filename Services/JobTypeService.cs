@@ -20,16 +20,8 @@ public class JobTypeService : IJobTypeService
     {
         return await _db.JobTypes.IgnoreQueryFilters()
             .Include(jt => jt.Area)
+            .Include(jt => jt.Molecule)
             .FirstOrDefaultAsync(jt => jt.Id == jobTypeId && jt.IsActive);
-    }
-
-    public async Task<List<JobType>> GetJobTypesAsync(int areaId)
-    {
-        return await _db.JobTypes.IgnoreQueryFilters()
-            .Where(jt => jt.AreaId == areaId && jt.IsActive)
-            .OrderBy(jt => jt.SortOrder)
-            .ThenBy(jt => jt.Name)
-            .ToListAsync();
     }
 
     public async Task<List<JobType>> GetJobTypesForMoleculeAsync(int moleculeId)
