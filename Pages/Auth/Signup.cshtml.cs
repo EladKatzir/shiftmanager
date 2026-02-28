@@ -65,7 +65,10 @@ public class SignupModel : LocalizedPageModel
     [BindProperty]
     public int CompanyId { get; set; }
 
-    [BindProperty, Required]
+    [BindProperty]
+    public int? DepartmentId { get; set; }
+
+    [BindProperty]
     public int JobTypeId { get; set; }
 
     [BindProperty, Required]
@@ -181,6 +184,14 @@ public class SignupModel : LocalizedPageModel
                 RequestedRole = signupTemplate.DerivedUserRole.Value;
         }
 
+        // Resolve molecule type for Tech-aware signup
+        MoleculeType? moleculeType = null;
+        if (MoleculeId.HasValue && MoleculeId.Value > 0)
+        {
+            var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == MoleculeId.Value);
+            moleculeType = molecule?.Type;
+        }
+
         // Director/AreaAdmin HQ auto-resolve: get assigned to the molecule's HQ company
         if (RequestedRole == UserRole.Director || RequestedRole == UserRole.AreaAdmin)
         {
@@ -201,6 +212,31 @@ public class SignupModel : LocalizedPageModel
             }
 
             CompanyId = hqCompany.Id;
+        }
+        // Tech molecule: auto-assign HQ company, use DepartmentId from form
+        else if (moleculeType == MoleculeType.Tech && DepartmentId.HasValue && DepartmentId.Value > 0)
+        {
+            // Validate department exists and belongs to this molecule
+            var dept = await _db.Departments.FirstOrDefaultAsync(d => d.Id == DepartmentId.Value && d.MoleculeId == MoleculeId!.Value);
+            if (dept == null)
+            {
+                Error = _localizer["Error_Signup_InvalidDepartment"];
+                return Page();
+            }
+
+            var hqCompany = await _db.Companies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.MoleculeId == MoleculeId!.Value && c.IsHeadquarters);
+
+            if (hqCompany == null)
+            {
+                Error = _localizer["Error_Signup_HQNotFound"];
+                return Page();
+            }
+
+            CompanyId = hqCompany.Id;
+            // Clear JobTypeId — tech users don't have job types
+            JobTypeId = 0;
         }
 
         if (CompanyId <= 0)
@@ -263,7 +299,8 @@ public class SignupModel : LocalizedPageModel
             PasswordHash = hash,
             PasswordSalt = salt,
             CompanyId = CompanyId,
-            JobTypeId = JobTypeId,
+            JobTypeId = JobTypeId > 0 ? JobTypeId : null,
+            DepartmentId = DepartmentId > 0 ? DepartmentId : null,
             RequestedRole = RequestedRole,
             RequestedRoleTemplateId = signupTemplate?.Id ?? RequestedRoleTemplateId,
             Status = JoinRequestStatus.Pending,

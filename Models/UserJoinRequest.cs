@@ -47,6 +47,12 @@ public class UserJoinRequest : IBelongsToCompany
     public int? JobTypeId { get; set; }
 
     /// <summary>
+    /// Department selected by the user during signup (Tech molecules only).
+    /// When set, CompanyId points to the molecule's HQ company for tenant scoping.
+    /// </summary>
+    public int? DepartmentId { get; set; }
+
+    /// <summary>
     /// Current status of the request
     /// </summary>
     public JoinRequestStatus Status { get; set; } = JoinRequestStatus.Pending;
@@ -84,6 +90,7 @@ public class UserJoinRequest : IBelongsToCompany
     // Navigation properties
     public Company? Company { get; set; }
     public JobType? JobType { get; set; }
+    public Department? Department { get; set; }
     public RoleTemplate? RequestedRoleTemplate { get; set; }
     public AppUser? ReviewedByUser { get; set; }
     public AppUser? CreatedUser { get; set; }

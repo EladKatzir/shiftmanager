@@ -1509,6 +1509,7 @@ public class UsersModel : LocalizedPageModel
                 PasswordSalt = joinRequest.PasswordSalt,
                 CompanyId = joinRequest.CompanyId,
                 JobTypeId = joinRequest.JobTypeId,
+                DepartmentId = joinRequest.DepartmentId,
                 Role = approveTemplate?.DerivedUserRole ?? joinRequest.RequestedRole,
                 RoleTemplateId = approveTemplate?.Id,
                 IsActive = true

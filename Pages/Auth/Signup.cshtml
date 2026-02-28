@@ -146,6 +146,7 @@
                                 @foreach (var molecule in Model.AvailableMolecules)
                                 {
                                     <option value="@molecule.Id" data-area-id="@molecule.AreaId"
+                                            data-type="@((int)molecule.Type)"
                                             selected="@(Model.MoleculeId == molecule.Id)">
                                         @(molecule.DisplayName ?? molecule.Name)
                                     </option>
@@ -154,7 +155,7 @@
                         </div>
 
                         <div class="auth-field" id="companyField">
-                            <label class="auth-field__label" for="CompanyId"><loc key="Company" /></label>
+                            <label class="auth-field__label" id="companyLabel" for="CompanyId"><loc key="Company" /></label>
                             <select id="CompanyId"
                                     name="CompanyId"
                                     class="auth-field__select"
@@ -166,6 +167,9 @@
                                 <loc key="Loading" />...
                             </div>
                         </div>
+
+                        @* Hidden field for DepartmentId (populated by JS for Tech molecules) *@
+                        <input type="hidden" id="DepartmentId" name="DepartmentId" value="@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")" />
 
                         <div id="directorHqHint" class="auth-field" style="display: none; color: var(--info); font-size: var(--text-small);">
                             @Localizer["Auth_DirectorAutoHQ"]
@@ -257,14 +261,17 @@
             }
         })();
 
-        // Cascading dropdowns with Director-aware company handling
+        // Cascading dropdowns with Director-aware company handling and Tech molecule support
         (function() {
             const roleSelect = document.getElementById('RequestedRole');
             const templateIdInput = document.getElementById('RequestedRoleTemplateId');
             const moleculeSelect = document.getElementById('MoleculeId');
             const companySelect = document.getElementById('CompanyId');
             const companyField = document.getElementById('companyField');
+            const companyLabel = document.getElementById('companyLabel');
             const jobTypeSelect = document.getElementById('JobTypeId');
+            const jobTypeField = document.getElementById('jobTypeField');
+            const departmentIdInput = document.getElementById('DepartmentId');
             const companyLoading = document.getElementById('companyLoading');
             const jobTypeLoading = document.getElementById('jobTypeLoading');
             const directorHqHint = document.getElementById('directorHqHint');
@@ -274,11 +281,14 @@
 
             const DIRECTOR_VALUE = '@((int)UserRole.Director)';
             const AREAADMIN_VALUE = '@((int)UserRole.AreaAdmin)';
+            const MOLECULE_TYPE_TECH = '1';
             const isHebrew = document.documentElement.lang === 'he';
             const savedRole = '@((int)Model.RequestedRole)';
             const savedTemplateId = '@(Model.RequestedRoleTemplateId?.ToString() ?? "")';
             const savedCompanyId = '@(Model.CompanyId > 0 ? Model.CompanyId.ToString() : "")';
             const savedJobTypeId = '@(Model.JobTypeId > 0 ? Model.JobTypeId.ToString() : "")';
+            const savedDepartmentId = '@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")';
+            var currentMoleculeIsTech = false;
 
             // Track company value when switching to Director role (Bug 2 fix)
             var savedCompanyValue = '';
@@ -365,8 +375,8 @@
                     return;
                 }
 
-                // Step 3: JobType + Role
-                var hasJobType = jobTypeSelect && jobTypeSelect.value !== '';
+                // Step 3: JobType + Role (Tech molecules skip JobType)
+                var hasJobType = currentMoleculeIsTech || (jobTypeSelect && jobTypeSelect.value !== '');
                 var hasRole = roleSelect.value !== '';
                 if (!hasJobType || !hasRole) {
                     updateSteps(3);
@@ -453,57 +463,111 @@
                 checkProgress();
             });
 
-            // Molecule change -> Load companies + job types
+            // Detect if selected molecule is Tech type
+            function isMoleculeTech() {
+                var selected = moleculeSelect.options[moleculeSelect.selectedIndex];
+                return selected && selected.getAttribute('data-type') === MOLECULE_TYPE_TECH;
+            }
+
+            // Molecule change -> Load companies/departments + job types
             moleculeSelect.addEventListener('change', async function() {
                 var moleculeId = this.value;
+                currentMoleculeIsTech = isMoleculeTech();
 
-                // Reset company dropdown
+                // Reset company/department dropdown
                 companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseCompanyFirst"].Value.Trim()</option>';
                 companySelect.disabled = true;
+                if (departmentIdInput) departmentIdInput.value = '';
 
-                // Load job types for this molecule's area
-                loadJobTypesForMolecule(moleculeId);
+                // Update label and job type visibility based on molecule type
+                if (currentMoleculeIsTech) {
+                    if (companyLabel) companyLabel.textContent = '@Localizer["Department"].Value.Trim()';
+                    if (jobTypeField) jobTypeField.style.display = 'none';
+                    if (jobTypeSelect) { jobTypeSelect.required = false; jobTypeSelect.disabled = true; }
+                } else {
+                    if (companyLabel) companyLabel.textContent = '@Localizer["Company"].Value.Trim()';
+                    if (jobTypeField) jobTypeField.style.display = '';
+                    if (jobTypeSelect) jobTypeSelect.required = true;
+                    // Load job types for this molecule's area
+                    loadJobTypesForMolecule(moleculeId);
+                }
 
                 if (!moleculeId || isDirectorOrAreaAdmin()) {
                     checkProgress();
                     return;
                 }
 
-                // Fetch companies (HQ already filtered by API)
                 companyLoading.style.display = 'block';
-                try {
-                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId, { credentials: 'same-origin' });
-                    if (!response.ok) throw new Error('Request failed: ' + response.status);
-                    var data = await response.json();
 
-                    if (data.companies && data.companies.length > 0) {
-                        companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"].Value.Trim()</option>';
-                        data.companies.forEach(function(company) {
-                            var option = document.createElement('option');
-                            option.value = company.id;
-                            option.textContent = company.name;
-                            // Restore selection from post-back
-                            if (savedCompanyId && company.id.toString() === savedCompanyId) {
-                                option.selected = true;
-                            }
-                            companySelect.appendChild(option);
-                        });
-                        companySelect.disabled = false;
-                    } else {
-                        companySelect.innerHTML = '<option value="">@Localizer["Auth_NoCompaniesAvailable"].Value.Trim()</option>';
+                if (currentMoleculeIsTech) {
+                    // Fetch departments for Tech molecules
+                    try {
+                        var response = await fetch('/Api/Signup/GetSignupOptions?handler=Departments&moleculeId=' + moleculeId, { credentials: 'same-origin' });
+                        if (!response.ok) throw new Error('Request failed: ' + response.status);
+                        var data = await response.json();
+
+                        if (data.departments && data.departments.length > 0) {
+                            companySelect.innerHTML = '<option value="">@Localizer["Auth_SelectDepartment"].Value.Trim()</option>';
+                            data.departments.forEach(function(dept) {
+                                var option = document.createElement('option');
+                                option.value = dept.id;
+                                option.textContent = dept.name;
+                                if (savedDepartmentId && dept.id.toString() === savedDepartmentId) {
+                                    option.selected = true;
+                                }
+                                companySelect.appendChild(option);
+                            });
+                            companySelect.disabled = false;
+                        } else {
+                            companySelect.innerHTML = '<option value="">@Localizer["Auth_NoDepartmentsAvailable"].Value.Trim()</option>';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching departments:', error);
+                        companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
+                    } finally {
+                        companyLoading.style.display = 'none';
                     }
-                } catch (error) {
-                    console.error('Error fetching companies:', error);
-                    companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
-                } finally {
-                    companyLoading.style.display = 'none';
+                } else {
+                    // Fetch companies for Workforce molecules (HQ already filtered by API)
+                    try {
+                        var response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId, { credentials: 'same-origin' });
+                        if (!response.ok) throw new Error('Request failed: ' + response.status);
+                        var data = await response.json();
+
+                        if (data.companies && data.companies.length > 0) {
+                            companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"].Value.Trim()</option>';
+                            data.companies.forEach(function(company) {
+                                var option = document.createElement('option');
+                                option.value = company.id;
+                                option.textContent = company.name;
+                                if (savedCompanyId && company.id.toString() === savedCompanyId) {
+                                    option.selected = true;
+                                }
+                                companySelect.appendChild(option);
+                            });
+                            companySelect.disabled = false;
+                        } else {
+                            companySelect.innerHTML = '<option value="">@Localizer["Auth_NoCompaniesAvailable"].Value.Trim()</option>';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching companies:', error);
+                        companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
+                    } finally {
+                        companyLoading.style.display = 'none';
+                    }
                 }
 
                 checkProgress();
             });
 
-            // Company change -> Update progress
+            // Company/Department change -> Sync hidden fields and update progress
             companySelect.addEventListener('change', function() {
+                if (currentMoleculeIsTech && departmentIdInput) {
+                    // For Tech molecules, the dropdown holds department IDs
+                    departmentIdInput.value = companySelect.value;
+                } else {
+                    if (departmentIdInput) departmentIdInput.value = '';
+                }
                 checkProgress();
             });
 

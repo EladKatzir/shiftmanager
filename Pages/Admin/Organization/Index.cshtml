@@ -347,6 +347,253 @@
             width: 24px;
         }
 
+        /* Message Banner */
+        .message-banner {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .message-banner--success {
+            background: var(--success-soft);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .message-banner--error {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .message-banner__close {
+            margin-inline-start: auto;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.125rem;
+            line-height: 1;
+            color: inherit;
+            opacity: 0.7;
+            padding: 0.25rem;
+        }
+
+        .message-banner__close:hover {
+            opacity: 1;
+        }
+
+        /* Tree Item Action Buttons */
+        .tree-item-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-inline-start: auto;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .tree-item:hover .tree-item-actions {
+            opacity: 1;
+        }
+
+        .tree-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+
+        .tree-action-btn:hover {
+            background: var(--surface-soft);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .tree-action-btn--danger:hover {
+            background: var(--danger-soft);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .tree-action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .tree-action-btn:disabled:hover {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-muted);
+        }
+
+        /* Add Entity Button (inline in tree) */
+        .tree-add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.625rem;
+            margin-top: 0.25rem;
+            margin-inline-start: 2.5rem;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.15s ease;
+        }
+
+        .tree-add-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        /* Modal Overlay */
+        .org-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .org-modal-overlay.visible {
+            display: flex;
+        }
+
+        .org-modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 480px;
+            margin: 1rem;
+            animation: orgModalIn 0.15s ease;
+        }
+
+        @@keyframes orgModalIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .org-modal__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .org-modal__title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .org-modal__close {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            transition: all 0.15s ease;
+        }
+
+        .org-modal__close:hover {
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+
+        .org-modal__body {
+            padding: 1.5rem;
+        }
+
+        .org-modal__body .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .org-modal__body .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .org-modal__body label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.375rem;
+        }
+
+        .org-modal__body input[type="text"] {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color 0.15s ease;
+            box-sizing: border-box;
+        }
+
+        .org-modal__body input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .org-modal__footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            border-color: var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+
         /* Responsive */
         @@media (max-width: 768px) {
             .page-title {
@@ -362,6 +609,10 @@
                 align-items: flex-start;
                 gap: 1rem;
             }
+
+            .tree-item-actions {
+                opacity: 1;
+            }
         }
     </style>
 }
@@ -371,6 +622,22 @@
     <h1 class="page-title"><loc key="OrganizationStructure" /></h1>
     <p class="page-subtitle"><loc key="ManageHierarchyProjectsAreasMolecules" /></p>
 </div>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="message-banner message-banner--success">
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="message-banner__close" onclick="this.parentElement.remove()" loc-aria-label="Close">&times;</button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="message-banner message-banner--error">
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="message-banner__close" onclick="this.parentElement.remove()" loc-aria-label="Close">&times;</button>
+    </div>
+}
 
 <!-- Stats Grid -->
 <div class="stats-grid">
@@ -500,8 +767,14 @@
                                                 var hasChildren = moleculeCompanies.Any() || moleculeDepts.Any();
 
                                                 <div class="tree-node">
+                                                    @{
+                                                        var moleculeExpandable = hasChildren
+                                                            || molecule.Type == MoleculeType.Workforce
+                                                            || molecule.Type == MoleculeType.Helper
+                                                            || molecule.Type == MoleculeType.Tech;
+                                                    }
                                                     <div class="tree-item">
-                                                        @if (hasChildren)
+                                                        @if (moleculeExpandable)
                                                         {
                                                             <button class="tree-expand" onclick="toggleNode(this)">&#9654;</button>
                                                         }
@@ -518,7 +791,12 @@
                                                         }
                                                     </div>
 
-                                                    @if (hasChildren)
+                                                    @{
+                                                        var showAddCompany = (molecule.Type == MoleculeType.Workforce || molecule.Type == MoleculeType.Helper);
+                                                        var showAddDepartment = (molecule.Type == MoleculeType.Tech);
+                                                        var showChildren = hasChildren || showAddCompany || showAddDepartment;
+                                                    }
+                                                    @if (showChildren)
                                                     {
                                                         <div class="tree-children">
                                                             @foreach (var company in moleculeCompanies)
@@ -529,6 +807,26 @@
                                                                         <span class="tree-icon tree-icon-company">C</span>
                                                                         <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
                                                                         <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
+                                                                        <span class="tree-item-actions">
+                                                                            <button class="tree-action-btn"
+                                                                                    loc-title="Rename"
+                                                                                    loc-aria-label="RenameCompany"
+                                                                                    onclick="openModal('RenameCompany', @company.Id, '@Html.Raw(company.Name.Replace("'", "\\'"))', '@Html.Raw((company.DisplayName ?? "").Replace("'", "\\'"))')">&#9998;</button>
+                                                                            @if (company.UserCount > 0)
+                                                                            {
+                                                                                <button class="tree-action-btn tree-action-btn--danger"
+                                                                                        disabled
+                                                                                        loc-title="Error_CannotDeleteCompanyWithOwners"
+                                                                                        loc-aria-label="DeleteCompany">&#128465;</button>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <button class="tree-action-btn tree-action-btn--danger"
+                                                                                        loc-title="Delete"
+                                                                                        loc-aria-label="DeleteCompany"
+                                                                                        onclick="confirmDelete('DeleteCompany', @company.Id, '@Html.Raw((company.DisplayName ?? company.Name).Replace("'", "\\'"))')">&#128465;</button>
+                                                                            }
+                                                                        </span>
                                                                     </div>
                                                                 </div>
                                                             }
@@ -544,8 +842,44 @@
                                                                         {
                                                                             <span class="badge badge-inactive"><loc key="Inactive" /></span>
                                                                         }
+                                                                        <span class="tree-item-actions">
+                                                                            <button class="tree-action-btn"
+                                                                                    loc-title="Rename"
+                                                                                    loc-aria-label="RenameDepartment"
+                                                                                    onclick="openModal('RenameDepartment', @dept.Id, '@Html.Raw(dept.Name.Replace("'", "\\'"))', '@Html.Raw(dept.DisplayName.Replace("'", "\\'"))')">&#9998;</button>
+                                                                            @if (dept.UserCount > 0)
+                                                                            {
+                                                                                <button class="tree-action-btn tree-action-btn--danger"
+                                                                                        disabled
+                                                                                        loc-title="Error_CannotDeleteDepartmentWithUsers"
+                                                                                        loc-aria-label="DeleteDepartment">&#128465;</button>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <button class="tree-action-btn tree-action-btn--danger"
+                                                                                        loc-title="Delete"
+                                                                                        loc-aria-label="DeleteDepartment"
+                                                                                        onclick="confirmDelete('DeleteDepartment', @dept.Id, '@Html.Raw(dept.DisplayName.Replace("'", "\\'"))')">&#128465;</button>
+                                                                            }
+                                                                        </span>
                                                                     </div>
                                                                 </div>
+                                                            }
+                                                            @if (showAddCompany)
+                                                            {
+                                                                <button type="button" class="tree-add-btn"
+                                                                        onclick="openModal('AddCompany', 0, '', '', @molecule.Id)"
+                                                                        loc-aria-label="AddCompany">
+                                                                    + <loc key="AddCompany" />
+                                                                </button>
+                                                            }
+                                                            @if (showAddDepartment)
+                                                            {
+                                                                <button type="button" class="tree-add-btn"
+                                                                        onclick="openModal('AddDepartment', 0, '', '', @molecule.Id)"
+                                                                        loc-aria-label="AddDepartment">
+                                                                    + <loc key="AddDepartment" />
+                                                                </button>
                                                             }
                                                         </div>
                                                     }
@@ -592,6 +926,26 @@
                             <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
                             <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                             <span class="badge badge-inactive"><loc key="NeedsAssignment" /></span>
+                            <span class="tree-item-actions">
+                                <button class="tree-action-btn"
+                                        loc-title="Rename"
+                                        loc-aria-label="RenameCompany"
+                                        onclick="openModal('RenameCompany', @company.Id, '@Html.Raw(company.Name.Replace("'", "\\'"))', '@Html.Raw((company.DisplayName ?? "").Replace("'", "\\'"))')">&#9998;</button>
+                                @if (company.UserCount > 0)
+                                {
+                                    <button class="tree-action-btn tree-action-btn--danger"
+                                            disabled
+                                            loc-title="Error_CannotDeleteCompanyWithOwners"
+                                            loc-aria-label="DeleteCompany">&#128465;</button>
+                                }
+                                else
+                                {
+                                    <button class="tree-action-btn tree-action-btn--danger"
+                                            loc-title="Delete"
+                                            loc-aria-label="DeleteCompany"
+                                            onclick="confirmDelete('DeleteCompany', @company.Id, '@Html.Raw((company.DisplayName ?? company.Name).Replace("'", "\\'"))')">&#128465;</button>
+                                }
+                            </span>
                         </div>
                     </div>
                 }
@@ -599,6 +953,41 @@
         </div>
     }
 </div>
+
+<!-- Entity Modal (reused for Add / Rename of Company and Department) -->
+<div id="orgModal" class="org-modal-overlay" role="dialog" aria-modal="true">
+    <div class="org-modal">
+        <div class="org-modal__header">
+            <h3 id="orgModalTitle" class="org-modal__title"></h3>
+            <button class="org-modal__close" onclick="closeModal()" loc-aria-label="Close">&times;</button>
+        </div>
+        <form id="orgModalForm" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="EntityId" id="orgModalEntityId" />
+            <input type="hidden" name="ParentMoleculeId" id="orgModalParentId" />
+            <div class="org-modal__body">
+                <div class="form-group">
+                    <label for="orgModalName"><loc key="Name" /></label>
+                    <input type="text" id="orgModalName" name="EntityName" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label for="orgModalDisplayName"><loc key="DisplayName" /></label>
+                    <input type="text" id="orgModalDisplayName" name="EntityDisplayName" autocomplete="off" />
+                </div>
+            </div>
+            <div class="org-modal__footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal()"><loc key="Cancel" /></button>
+                <button type="submit" class="btn btn-primary" id="orgModalSubmit"><loc key="Save" /></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete confirmation form (hidden, submitted via JS) -->
+<form id="deleteForm" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="EntityId" id="deleteEntityId" />
+</form>
 
 <script>
 function toggleNode(button) {
@@ -639,4 +1028,93 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.classList.add('expanded');
     });
 });
+
+// ================================================================
+// Modal management
+// ================================================================
+
+const modalTitles = {
+    'AddCompany':        '@Html.Raw(Localizer["AddCompany"].Value.Replace("'", "\\'"))',
+    'AddDepartment':     '@Html.Raw(Localizer["AddDepartment"].Value.Replace("'", "\\'"))',
+    'RenameCompany':     '@Html.Raw(Localizer["RenameCompany"].Value.Replace("'", "\\'"))',
+    'RenameDepartment':  '@Html.Raw(Localizer["RenameDepartment"].Value.Replace("'", "\\'"))'
+};
+
+/**
+ * Opens the reusable modal for add/rename operations.
+ * @@param {string} handler   - The page handler name (AddCompany, RenameCompany, etc.)
+ * @@param {number} entityId  - Entity ID (0 for add operations)
+ * @@param {string} name      - Current name (empty for add)
+ * @@param {string} displayName - Current display name (empty for add)
+ * @@param {number} [parentId]  - Parent molecule ID (for add operations)
+ */
+function openModal(handler, entityId, name, displayName, parentId) {
+    const overlay = document.getElementById('orgModal');
+    const form = document.getElementById('orgModalForm');
+    const titleEl = document.getElementById('orgModalTitle');
+    const nameInput = document.getElementById('orgModalName');
+    const displayNameInput = document.getElementById('orgModalDisplayName');
+    const entityIdInput = document.getElementById('orgModalEntityId');
+    const parentIdInput = document.getElementById('orgModalParentId');
+
+    // Set the form action to the correct handler
+    form.action = '?handler=' + handler;
+
+    // Set modal title
+    titleEl.textContent = modalTitles[handler] || handler;
+
+    // Populate fields
+    entityIdInput.value = entityId || 0;
+    parentIdInput.value = parentId || 0;
+    nameInput.value = name || '';
+    displayNameInput.value = displayName || '';
+
+    // Show modal
+    overlay.classList.add('visible');
+
+    // Focus the name input
+    setTimeout(function() { nameInput.focus(); }, 100);
+}
+
+function closeModal() {
+    document.getElementById('orgModal').classList.remove('visible');
+}
+
+// Close modal on overlay click
+document.getElementById('orgModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// ================================================================
+// Delete confirmation
+// ================================================================
+
+const deleteConfirmText = '@Html.Raw(Localizer["Confirm_DeleteEntity"].Value.Replace("'", "\\'"))';
+
+/**
+ * Shows a browser confirm dialog and submits the delete form.
+ * @@param {string} handler - DeleteCompany or DeleteDepartment
+ * @@param {number} entityId - The entity ID to delete
+ * @@param {string} entityLabel - The display name shown in the confirm dialog
+ */
+function confirmDelete(handler, entityId, entityLabel) {
+    var message = deleteConfirmText.replace('{0}', entityLabel);
+    if (!confirm(message)) {
+        return;
+    }
+
+    var form = document.getElementById('deleteForm');
+    form.action = '?handler=' + handler;
+    document.getElementById('deleteEntityId').value = entityId;
+    form.submit();
+}
 </script>

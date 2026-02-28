@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Data.SeedData;
+using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 
@@ -60,7 +61,8 @@ public class GetSignupOptionsModel : PageModel
                 {
                     Id = m.Id,
                     Name = m.DisplayName ?? m.Name,
-                    AreaId = m.AreaId
+                    AreaId = m.AreaId,
+                    Type = (int)m.Type
                 })
                 .ToListAsync();
 
@@ -154,6 +156,42 @@ public class GetSignupOptionsModel : PageModel
     }
 
     /// <summary>
+    /// Gets departments filtered by molecule ID (for Tech molecules).
+    /// </summary>
+    public async Task<IActionResult> OnGetDepartmentsAsync(int moleculeId)
+    {
+        if (!await IsPublicSignupEnabledAsync())
+        {
+            return new JsonResult(new { error = "Public signup is disabled" }) { StatusCode = 403 };
+        }
+
+        if (moleculeId <= 0)
+        {
+            return new JsonResult(new { error = "Invalid molecule ID" }) { StatusCode = 400 };
+        }
+
+        try
+        {
+            var departments = await _db.Departments
+                .Where(d => d.MoleculeId == moleculeId && d.IsActive)
+                .OrderBy(d => d.DisplayName ?? d.Name)
+                .Select(d => new DepartmentOption
+                {
+                    Id = d.Id,
+                    Name = d.DisplayName ?? d.Name
+                })
+                .ToListAsync();
+
+            return new JsonResult(new { departments });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching departments for molecule {MoleculeId}", moleculeId);
+            return StatusCode(500, new { error = "Error fetching departments" });
+        }
+    }
+
+    /// <summary>
     /// Gets all active job types (not cascaded from molecule — all share the same area).
     /// </summary>
     public async Task<IActionResult> OnGetAllJobTypesAsync()
@@ -239,9 +277,17 @@ public class MoleculeOption
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public int AreaId { get; set; }
+    /// <summary>MoleculeType enum value (0=Workforce, 1=Tech, 2=Helper, 3=System)</summary>
+    public int Type { get; set; }
 }
 
 public class CompanyOption
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class DepartmentOption
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;

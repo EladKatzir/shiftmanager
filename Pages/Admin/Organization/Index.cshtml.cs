@@ -7,6 +7,7 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using System.Text.RegularExpressions;
 
 namespace ShiftManager.Pages.Admin.Organization;
 
@@ -18,16 +19,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly IHierarchyService _hierarchyService;
     private readonly ILogger<IndexModel> _logger;
+    private readonly ICompanyCacheService _companyCacheService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IHierarchyService hierarchyService,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        ICompanyCacheService companyCacheService) : base(localizer)
     {
         _db = db;
         _hierarchyService = hierarchyService;
         _logger = logger;
+        _companyCacheService = companyCacheService;
     }
 
     // View Models
@@ -156,7 +160,235 @@ public class IndexModel : LocalizedPageModel
         TotalActiveMolecules = Molecules.Count(m => m.IsActive);
     }
 
-    // Helper method to get molecule type display name
+    // Bind properties for inline CRUD forms
+    [BindProperty] public int EntityId { get; set; }
+    [BindProperty] public string EntityName { get; set; } = string.Empty;
+    [BindProperty] public string EntityDisplayName { get; set; } = string.Empty;
+    [BindProperty] public int ParentMoleculeId { get; set; }
+
+    // ================================================================
+    // Company CRUD handlers
+    // ================================================================
+
+    public async Task<IActionResult> OnPostAddCompanyAsync()
+    {
+        if (string.IsNullOrWhiteSpace(EntityName) || ParentMoleculeId <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == ParentMoleculeId);
+        if (molecule == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        var slug = GenerateSlug(EntityName);
+        var company = new Company
+        {
+            Name = EntityName.Trim(),
+            DisplayName = string.IsNullOrWhiteSpace(EntityDisplayName) ? null : EntityDisplayName.Trim(),
+            Slug = slug,
+            MoleculeId = ParentMoleculeId,
+            IsHeadquarters = false
+        };
+
+        _db.Companies.Add(company);
+        await _db.SaveChangesAsync();
+        _companyCacheService.InvalidateAll();
+        _logger.LogInformation("Company '{Name}' added to molecule {MoleculeId} from hierarchy page", company.Name, ParentMoleculeId);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyCreated"].Value, company.Name);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRenameCompanyAsync()
+    {
+        if (EntityId <= 0 || string.IsNullOrWhiteSpace(EntityName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == EntityId);
+        if (company == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        company.Name = EntityName.Trim();
+        company.DisplayName = string.IsNullOrWhiteSpace(EntityDisplayName) ? null : EntityDisplayName.Trim();
+        await _db.SaveChangesAsync();
+        _companyCacheService.InvalidateAll();
+        _logger.LogInformation("Company {CompanyId} renamed to '{Name}' from hierarchy page", EntityId, company.Name);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"].Value, company.Name);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostDeleteCompanyAsync()
+    {
+        if (EntityId <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidId"].Value;
+            return RedirectToPage();
+        }
+
+        var company = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == EntityId);
+        if (company == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        // Prevent deletion if company has active users
+        var activeUserCount = await _db.Users.IgnoreQueryFilters().CountAsync(u => u.CompanyId == EntityId && u.IsActive);
+        if (activeUserCount > 0)
+        {
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_CannotDeleteCompanyWithUsers"].Value, activeUserCount);
+            return RedirectToPage();
+        }
+
+        // Cascade delete related data
+        await _db.SwapRequests.IgnoreQueryFilters().Where(sr => sr.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.ShiftInstances.IgnoreQueryFilters().Where(si => si.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.ShiftTypes.IgnoreQueryFilters().Where(st => st.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.Configs.IgnoreQueryFilters().Where(c => c.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.DirectorCompanies.Where(dc => dc.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.CompanyId == EntityId).ExecuteDeleteAsync();
+        await _db.UserJoinRequests.IgnoreQueryFilters().Where(jr => jr.CompanyId == EntityId).ExecuteDeleteAsync();
+
+        // Deactivate remaining users
+        await _db.Users.IgnoreQueryFilters().Where(u => u.CompanyId == EntityId)
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsActive, false));
+
+        _db.Companies.Remove(company);
+        await _db.SaveChangesAsync();
+        _companyCacheService.InvalidateAll();
+        _logger.LogInformation("Company {CompanyId} '{Name}' deleted from hierarchy page", EntityId, company.Name);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyDeleted"].Value, company.Name);
+        return RedirectToPage();
+    }
+
+    // ================================================================
+    // Department CRUD handlers
+    // ================================================================
+
+    public async Task<IActionResult> OnPostAddDepartmentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(EntityName) || ParentMoleculeId <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        var department = new Department
+        {
+            MoleculeId = ParentMoleculeId,
+            Name = EntityName.Trim(),
+            DisplayName = string.IsNullOrWhiteSpace(EntityDisplayName) ? EntityName.Trim() : EntityDisplayName.Trim(),
+            IsActive = true
+        };
+
+        _db.Departments.Add(department);
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Department '{Name}' added to molecule {MoleculeId} from hierarchy page", department.Name, ParentMoleculeId);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentCreated"].Value, department.Name);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRenameDepartmentAsync()
+    {
+        if (EntityId <= 0 || string.IsNullOrWhiteSpace(EntityName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        var department = await _db.Departments.IgnoreQueryFilters().FirstOrDefaultAsync(d => d.Id == EntityId);
+        if (department == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        department.Name = EntityName.Trim();
+        department.DisplayName = string.IsNullOrWhiteSpace(EntityDisplayName) ? EntityName.Trim() : EntityDisplayName.Trim();
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Department {DepartmentId} renamed to '{Name}' from hierarchy page", EntityId, department.Name);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentRenamed"].Value, department.Name);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostDeleteDepartmentAsync()
+    {
+        if (EntityId <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidId"].Value;
+            return RedirectToPage();
+        }
+
+        var department = await _db.Departments
+            .IgnoreQueryFilters()
+            .Include(d => d.Users)
+            .FirstOrDefaultAsync(d => d.Id == EntityId);
+
+        if (department == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        if (department.Users.Any(u => u.IsActive))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CannotDeleteDepartmentWithUsers"].Value;
+            return RedirectToPage();
+        }
+
+        _db.Departments.Remove(department);
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Department {DepartmentId} '{Name}' deleted from hierarchy page", EntityId, department.Name);
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentDeleted"].Value, department.Name);
+        return RedirectToPage();
+    }
+
+    // ================================================================
+    // Helpers
+    // ================================================================
+
     public string GetMoleculeTypeDisplay(MoleculeType type)
     {
         return type switch
@@ -168,7 +400,6 @@ public class IndexModel : LocalizedPageModel
         };
     }
 
-    // Helper method to get molecule type badge class
     public static string GetMoleculeTypeBadgeClass(MoleculeType type)
     {
         return type switch
@@ -178,5 +409,32 @@ public class IndexModel : LocalizedPageModel
             MoleculeType.Helper => "badge-helper",
             _ => "badge-default"
         };
+    }
+
+    private static string GenerateSlug(string name)
+    {
+        var slug = name.ToLowerInvariant().Trim();
+        slug = Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+        slug = Regex.Replace(slug, @"[\s]+", "-");
+        slug = Regex.Replace(slug, @"-+", "-");
+        slug = slug.Trim('-');
+        return string.IsNullOrEmpty(slug) ? "company" : slug;
+    }
+
+    private static bool ContainsDangerousContent(string? input)
+    {
+        if (string.IsNullOrEmpty(input)) return false;
+        var patterns = new[]
+        {
+            @"<script",
+            @"javascript:",
+            @"on\w+\s*=",
+            @"<iframe",
+            @"<object",
+            @"<embed",
+            @"<form",
+            @"<input"
+        };
+        return patterns.Any(p => Regex.IsMatch(input, p, RegexOptions.IgnoreCase));
     }
 }

@@ -46,15 +46,18 @@ public class CompaniesModel : LocalizedPageModel
         _concurrencyService = concurrencyService;
     }
 
-    public record CompanyVM(int Id, string Name, string? Slug, string? DisplayName, int UserCount);
+    public record CompanyVM(int Id, string Name, string? Slug, string? DisplayName, int UserCount, string? MoleculeName);
     public record DirectorVM(int Id, string DisplayName, string Email);
+    public record MoleculeVM(int Id, string Name, string DisplayName);
 
     public List<CompanyVM> Companies { get; set; } = new();
     public List<DirectorVM> AvailableDirectors { get; set; } = new();
+    public List<MoleculeVM> AvailableMolecules { get; set; } = new();
 
     [BindProperty] public string CompanyName { get; set; } = string.Empty;
     [BindProperty] public string CompanySlug { get; set; } = string.Empty;
     [BindProperty] public string CompanyDisplayName { get; set; } = string.Empty;
+    [BindProperty] public int? SelectedMoleculeId { get; set; }
 
     [BindProperty] public int? SelectedDirectorId { get; set; }
 
@@ -85,14 +88,23 @@ public class CompaniesModel : LocalizedPageModel
 
         Companies = await _db.Companies
             .IgnoreQueryFilters()
+            .Include(c => c.Molecule)
             .OrderBy(c => c.Name)
             .Select(c => new CompanyVM(
                 c.Id,
                 c.Name,
                 c.Slug,
                 c.DisplayName,
-                userCountsByCompany.GetValueOrDefault(c.Id, 0)
+                userCountsByCompany.GetValueOrDefault(c.Id, 0),
+                c.Molecule != null ? (c.Molecule.DisplayName ?? c.Molecule.Name) : null
             ))
+            .ToListAsync();
+
+        // Load molecules for the molecule dropdown
+        AvailableMolecules = await _db.Molecules
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.DisplayName ?? m.Name)
+            .Select(m => new MoleculeVM(m.Id, m.Name, m.DisplayName))
             .ToListAsync();
 
         // Load all users whose RoleTemplate derives to Director (or legacy Director role)
@@ -229,7 +241,8 @@ public class CompaniesModel : LocalizedPageModel
             {
                 Name = CompanyName,
                 Slug = CompanySlug,
-                DisplayName = string.IsNullOrWhiteSpace(CompanyDisplayName) ? CompanyName : CompanyDisplayName
+                DisplayName = string.IsNullOrWhiteSpace(CompanyDisplayName) ? CompanyName : CompanyDisplayName,
+                MoleculeId = SelectedMoleculeId > 0 ? SelectedMoleculeId : null
             };
 
             _db.Companies.Add(company);
