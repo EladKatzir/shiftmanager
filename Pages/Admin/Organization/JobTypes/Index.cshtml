@@ -118,12 +118,18 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">@Localizer["Area"] <span class="form-label-required">*</span></label>
-                    <select class="form-select" asp-for="SelectedAreaId" required>
+                    <select class="form-select" asp-for="SelectedAreaId" id="areaSelect" required>
                         <option value="">@Localizer["SelectArea"]</option>
                         @foreach (var a in Model.AvailableAreas)
                         {
                             <option value="@a.Id">@a.ProjectName - @a.Name</option>
                         }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["Molecule"]</label>
+                    <select class="form-select" asp-for="SelectedMoleculeId" id="moleculeSelect">
+                        <option value="">@Localizer["AllMolecules_AreaWide"]</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -162,6 +168,7 @@
                     <tr>
                         <th><loc key="Project" /></th>
                         <th><loc key="Area" /></th>
+                        <th><loc key="Molecule" /></th>
                         <th><loc key="JobType" /></th>
                         <th><loc key="Color" /></th>
                         <th><loc key="Order" /></th>
@@ -176,6 +183,7 @@
                     <tr>
                         <td>@(jt.ProjectName)</td>
                         <td>@(jt.AreaName)</td>
+                        <td>@(jt.MoleculeName ?? Localizer["AllMolecules_AreaWide"])</td>
                         <td><strong>@(jt.DisplayName)</strong><br /><small style="color: var(--text-muted);">@(jt.Name)</small></td>
                         <td>
                             @if (!string.IsNullOrEmpty(jt.Color))
@@ -229,3 +237,39 @@
         <p class="empty-state"><loc key="NoJobTypesYet" /></p>
     }
 </div>
+
+@section Scripts {
+    <script>
+    (function() {
+        var areaSelect = document.getElementById('areaSelect');
+        var moleculeSelect = document.getElementById('moleculeSelect');
+        if (!areaSelect || !moleculeSelect) return;
+
+        var allMolecules = @Json.Serialize(Model.AvailableMolecules);
+        var areaWideLabel = @Json.Serialize(Localizer["AllMolecules_AreaWide"].Value);
+
+        function updateMolecules() {
+            var areaId = parseInt(areaSelect.value);
+            moleculeSelect.innerHTML = '';
+
+            var defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = areaWideLabel;
+            moleculeSelect.appendChild(defaultOpt);
+
+            if (!areaId) return;
+
+            var filtered = allMolecules.filter(function(m) { return m.areaId === areaId; });
+            filtered.forEach(function(m) {
+                var opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                moleculeSelect.appendChild(opt);
+            });
+        }
+
+        areaSelect.addEventListener('change', updateMolecules);
+        updateMolecules();
+    })();
+    </script>
+}

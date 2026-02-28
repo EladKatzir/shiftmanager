@@ -177,10 +177,10 @@ public class MonthModel : PageModel
                     .Include(m => m.Area)
                     .FirstOrDefaultAsync(m => m.Id == company.MoleculeId);
 
-                if (molecule?.AreaId != null)
+                if (molecule != null)
                 {
-                    var jobTypesForArea = await _jobTypeService.GetJobTypesAsync(molecule.AreaId);
-                    AvailableJobTypes = jobTypesForArea
+                    var jobTypesForMolecule = await _jobTypeService.GetJobTypesForMoleculeAsync(molecule.Id);
+                    AvailableJobTypes = jobTypesForMolecule
                         .Select(jt => ValueTuple.Create(jt.Id, jt.DisplayName))
                         .ToList();
                 }

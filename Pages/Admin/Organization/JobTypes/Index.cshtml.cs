@@ -30,18 +30,21 @@ public class IndexModel : LocalizedPageModel
     }
 
     // View Models
-    public record JobTypeVM(int Id, string Name, string DisplayName, string? Color, int SortOrder, string AreaName, string ProjectName, bool IsActive, int UserCount);
+    public record JobTypeVM(int Id, string Name, string DisplayName, string? Color, int SortOrder, string AreaName, string ProjectName, string? MoleculeName, bool IsActive, int UserCount);
     public record AreaOption(int Id, string Name, string ProjectName);
+    public record MoleculeOption(int Id, string Name, int AreaId, string AreaName);
 
     // Data
     public List<JobTypeVM> JobTypes { get; set; } = new();
     public List<AreaOption> AvailableAreas { get; set; } = new();
+    public List<MoleculeOption> AvailableMolecules { get; set; } = new();
 
     // Form Bindings
     [BindProperty] public string JobTypeName { get; set; } = string.Empty;
     [BindProperty] public string JobTypeDisplayName { get; set; } = string.Empty;
     [BindProperty] public string? JobTypeColor { get; set; }
     [BindProperty] public int SelectedAreaId { get; set; }
+    [BindProperty] public int? SelectedMoleculeId { get; set; }
     [BindProperty] public int SortOrder { get; set; } = 0;
 
     public async Task OnGetAsync()
@@ -73,6 +76,7 @@ public class IndexModel : LocalizedPageModel
                 jt.SortOrder,
                 jt.Area.DisplayName,
                 jt.Area.Project.DisplayName,
+                jt.Molecule?.DisplayName,
                 jt.IsActive,
                 userCountsByJobType.GetValueOrDefault(jt.Id, 0)
             ))
@@ -91,6 +95,16 @@ public class IndexModel : LocalizedPageModel
             .ToListAsync())
             .OrderBy(a => a.ProjectName)
             .ThenBy(a => a.Name)
+            .ToList();
+
+        AvailableMolecules = (await _db.Molecules
+            .IgnoreQueryFilters()
+            .Where(m => m.IsActive)
+            .Include(m => m.Area)
+            .Select(m => new MoleculeOption(m.Id, m.DisplayName, m.AreaId, m.Area.DisplayName))
+            .ToListAsync())
+            .OrderBy(m => m.AreaName)
+            .ThenBy(m => m.Name)
             .ToList();
     }
 
@@ -115,6 +129,18 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        // Validate molecule belongs to selected area (if specified)
+        if (SelectedMoleculeId.HasValue)
+        {
+            var molecule = await _db.Molecules.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m => m.Id == SelectedMoleculeId.Value);
+            if (molecule == null || molecule.AreaId != SelectedAreaId)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_MoleculeMustBelongToArea"].Value;
+                return RedirectToPage();
+            }
+        }
+
         var jobType = await _jobTypeService.CreateJobTypeAsync(
             JobTypeName.Trim(),
             SelectedAreaId,
@@ -126,6 +152,7 @@ public class IndexModel : LocalizedPageModel
         jobType.DisplayName = string.IsNullOrWhiteSpace(JobTypeDisplayName) ? JobTypeName.Trim() : JobTypeDisplayName.Trim();
         jobType.Color = string.IsNullOrWhiteSpace(JobTypeColor) ? null : JobTypeColor.Trim();
         jobType.SortOrder = SortOrder;
+        jobType.MoleculeId = SelectedMoleculeId;
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Created JobType {JobTypeId}: {JobTypeName} in Area {AreaId}",

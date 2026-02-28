@@ -67,8 +67,8 @@ public class SetupTaskService : ISetupTaskService
             });
 
             // Task 3: Assign directors for each job type
-            // SECURITY-AUDITED: SAFE — scoped by molecule's areaId; admin setup wizard
-            var jobTypes = await _jobTypeService.GetJobTypesAsync(molecule.AreaId);
+            // SECURITY-AUDITED: SAFE — scoped by moleculeId; admin setup wizard
+            var jobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(moleculeId);
 
             foreach (var jobType in jobTypes)
             {
@@ -139,8 +139,8 @@ public class SetupTaskService : ISetupTaskService
         // Task 2: Assign Leads for each job type
         if (company.Molecule.Type == MoleculeType.Workforce)
         {
-            // SECURITY-AUDITED: SAFE — scoped by company's molecule's areaId; admin setup wizard
-            var jobTypes = await _jobTypeService.GetJobTypesAsync(company.Molecule.AreaId);
+            // SECURITY-AUDITED: SAFE — scoped by company's moleculeId; admin setup wizard
+            var jobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(company.MoleculeId!.Value);
 
             foreach (var jobType in jobTypes)
             {

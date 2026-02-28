@@ -402,6 +402,18 @@ public class EditProfileModel : LocalizedPageModel
         }
 
         // Update v3.0 organizational fields directly (not in ProfileUpdateDto)
+        // Validate job type is valid for user's molecule before assigning
+        if (JobTypeId.HasValue && JobTypeId != targetUser.JobTypeId)
+        {
+            if (!await _jobTypeService.CanUserHaveJobTypeAsync(targetUser.Id, JobTypeId.Value))
+            {
+                ErrorMessage = _localizer["Error_JobTypeNotAvailableForMolecule"];
+                await LoadUserDataAsync(targetUser);
+                await LoadOrganizationalOptionsAsync(targetUser);
+                await LoadRecentChangesAsync();
+                return Page();
+            }
+        }
         targetUser.JobTypeId = JobTypeId;
         targetUser.DepartmentId = DepartmentId;
 
@@ -578,11 +590,10 @@ public class EditProfileModel : LocalizedPageModel
 
             if (IsWorkforceMolecule)
             {
-                // Load job types for the area
-                var areaId = company.Molecule.AreaId;
+                // Load job types for the user's molecule
                 var areaDisplayName = company.Molecule.Area?.DisplayName ?? "";
-                var jobTypesForArea = await _jobTypeService.GetJobTypesAsync(areaId);
-                AvailableJobTypes = jobTypesForArea
+                var jobTypesForMolecule = await _jobTypeService.GetJobTypesForMoleculeAsync(company.MoleculeId!.Value);
+                AvailableJobTypes = jobTypesForMolecule
                     .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, areaDisplayName))
                     .ToList();
             }

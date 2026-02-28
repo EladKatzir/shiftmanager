@@ -69,11 +69,25 @@ public class IndexModel : LocalizedPageModel
         await LoadHierarchyDataAsync();
     }
 
-    private async Task<bool> CurrentUserHasManageHierarchyAsync()
+    private int? GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(userIdClaim, out var userId)) return false;
-        return await _grantService.HasGrantAsync(userId, "ManageHierarchy");
+        return int.TryParse(userIdClaim, out var userId) ? userId : null;
+    }
+
+    /// <summary>Unscoped check — used for UI (show/hide buttons). Any ManageHierarchy grant = show buttons.</summary>
+    private async Task<bool> CurrentUserHasManageHierarchyAsync()
+    {
+        var userId = GetCurrentUserId();
+        return userId.HasValue && await _grantService.HasGrantAsync(userId.Value, "ManageHierarchy");
+    }
+
+    /// <summary>Scoped check — used by POST handlers. Verifies the grant covers the target molecule.</summary>
+    private async Task<bool> CurrentUserCanManageMoleculeAsync(int moleculeId)
+    {
+        var userId = GetCurrentUserId();
+        return userId.HasValue && await _grantService.HasGrantWithScopeAsync(
+            userId.Value, "ManageHierarchy", moleculeId: moleculeId);
     }
 
     private async Task LoadHierarchyDataAsync()
@@ -188,7 +202,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAddCompanyAsync()
     {
-        if (!await CurrentUserHasManageHierarchyAsync())
+        if (ParentMoleculeId <= 0 || !await CurrentUserCanManageMoleculeAsync(ParentMoleculeId))
             return Forbid();
 
         if (string.IsNullOrWhiteSpace(EntityName) || ParentMoleculeId <= 0)
@@ -238,18 +252,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRenameCompanyAsync()
     {
-        if (!await CurrentUserHasManageHierarchyAsync())
-            return Forbid();
-
         if (EntityId <= 0 || string.IsNullOrWhiteSpace(EntityName))
         {
             TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
-            return RedirectToPage();
-        }
-
-        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
-        {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
             return RedirectToPage();
         }
 
@@ -257,6 +262,17 @@ public class IndexModel : LocalizedPageModel
         if (company == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        if (company.MoleculeId.HasValue && !await CurrentUserCanManageMoleculeAsync(company.MoleculeId.Value))
+            return Forbid();
+        if (!company.MoleculeId.HasValue && !await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
+
+        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
             return RedirectToPage();
         }
 
@@ -272,9 +288,6 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteCompanyAsync()
     {
-        if (!await CurrentUserHasManageHierarchyAsync())
-            return Forbid();
-
         if (EntityId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidId"].Value;
@@ -287,6 +300,11 @@ public class IndexModel : LocalizedPageModel
             TempData["ErrorMessage"] = _localizer["Error_CompanyNotFound"].Value;
             return RedirectToPage();
         }
+
+        if (company.MoleculeId.HasValue && !await CurrentUserCanManageMoleculeAsync(company.MoleculeId.Value))
+            return Forbid();
+        if (!company.MoleculeId.HasValue && !await CurrentUserHasManageHierarchyAsync())
+            return Forbid();
 
         // Prevent deletion if company has active users
         var activeUserCount = await _db.Users.IgnoreQueryFilters().CountAsync(u => u.CompanyId == EntityId && u.IsActive);
@@ -338,7 +356,7 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAddDepartmentAsync()
     {
-        if (!await CurrentUserHasManageHierarchyAsync())
+        if (ParentMoleculeId <= 0 || !await CurrentUserCanManageMoleculeAsync(ParentMoleculeId))
             return Forbid();
 
         if (string.IsNullOrWhiteSpace(EntityName) || ParentMoleculeId <= 0)
@@ -384,18 +402,9 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRenameDepartmentAsync()
     {
-        if (!await CurrentUserHasManageHierarchyAsync())
-            return Forbid();
-
         if (EntityId <= 0 || string.IsNullOrWhiteSpace(EntityName))
         {
             TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
-            return RedirectToPage();
-        }
-
-        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
-        {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
             return RedirectToPage();
         }
 
@@ -403,6 +412,15 @@ public class IndexModel : LocalizedPageModel
         if (department == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        if (!await CurrentUserCanManageMoleculeAsync(department.MoleculeId))
+            return Forbid();
+
+        if (ContainsDangerousContent(EntityName) || ContainsDangerousContent(EntityDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
             return RedirectToPage();
         }
 
@@ -417,9 +435,6 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteDepartmentAsync()
     {
-        if (!await CurrentUserHasManageHierarchyAsync())
-            return Forbid();
-
         if (EntityId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_InvalidId"].Value;
@@ -436,6 +451,9 @@ public class IndexModel : LocalizedPageModel
             TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
             return RedirectToPage();
         }
+
+        if (!await CurrentUserCanManageMoleculeAsync(department.MoleculeId))
+            return Forbid();
 
         if (department.Users.Any(u => u.IsActive))
         {

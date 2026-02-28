@@ -1081,6 +1081,14 @@ public class UsersModel : LocalizedPageModel
                 TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"].Value;
                 return RedirectToPage();
             }
+
+            // Validate job type is valid for user's molecule
+            if (!await _jobTypeService.CanUserHaveJobTypeAsync(id, jobTypeId.Value))
+            {
+                TempData["ErrorMessage"] = _localizer["Error_JobTypeNotAvailableForMolecule"].Value;
+                return RedirectToPage();
+            }
+
             jobTypeName = jobType.DisplayName;
         }
 

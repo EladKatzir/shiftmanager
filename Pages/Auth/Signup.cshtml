@@ -309,7 +309,12 @@
                 .then(function(data) {
                     if (!data.roleTemplates || data.roleTemplates.length === 0) return;
                     allRoleTemplates = data.roleTemplates;
-                    populateRoleDropdown(allRoleTemplates);
+                    // If a molecule is already selected (post-back), apply filtering immediately
+                    if (moleculeSelect.value) {
+                        filterRoleTemplatesForMoleculeType(isMoleculeTech());
+                    } else {
+                        populateRoleDropdown(allRoleTemplates);
+                    }
                 })
                 .catch(function() {
                     // Fallback: keep current state (page will have empty dropdown)

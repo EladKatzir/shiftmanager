@@ -182,7 +182,7 @@ public class TableModel : PageModel
             // Load job types for selected molecule's area
             if (SelectedMolecule != null)
             {
-                await LoadAvailableJobTypesAsync(SelectedMolecule.AreaId);
+                await LoadAvailableJobTypesAsync(SelectedMolecule.Id);
 
                 // Validate selected job type
                 if (JobTypeId.HasValue && !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
@@ -2471,14 +2471,14 @@ public class TableModel : PageModel
         return await _db.Companies.AnyAsync(c => c.Id == companyId && c.MoleculeId == moleculeId);
     }
 
-    private async Task LoadAvailableJobTypesAsync(int? areaId)
+    private async Task LoadAvailableJobTypesAsync(int? moleculeId)
     {
-        if (!areaId.HasValue)
+        if (!moleculeId.HasValue)
         {
             AvailableJobTypes = new List<JobType>();
             return;
         }
 
-        AvailableJobTypes = await _jobTypeService.GetJobTypesAsync(areaId.Value);
+        AvailableJobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(moleculeId.Value);
     }
 }

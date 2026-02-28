@@ -93,7 +93,7 @@ public class BlueprintsModel : PageModel
                 .OrderBy(m => m.DisplayName)
                 .ToListAsync();
 
-            AvailableJobTypes = await _jobTypeService.GetJobTypesAsync(company.Molecule.AreaId);
+            AvailableJobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(company.MoleculeId!.Value);
         }
     }
 

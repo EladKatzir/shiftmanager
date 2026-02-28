@@ -153,7 +153,19 @@ public class JobTypeService : IJobTypeService
             return false;
 
         // Job type must be in the same area as the user
-        return jobType.AreaId == userContext.Path.Area.Id;
+        if (jobType.AreaId != userContext.Path.Area.Id)
+            return false;
+
+        // If job type is molecule-specific, user must be in that molecule
+        if (jobType.MoleculeId.HasValue)
+        {
+            var company = await _db.Companies.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+            if (company == null || company.MoleculeId != jobType.MoleculeId)
+                return false;
+        }
+
+        return true;
     }
 
     // CRUD and admin operations
@@ -220,6 +232,7 @@ public class JobTypeService : IJobTypeService
         return await _db.JobTypes.IgnoreQueryFilters()
             .Include(jt => jt.Area)
                 .ThenInclude(a => a.Project)
+            .Include(jt => jt.Molecule)
             .AsNoTracking()
             .ToListAsync();
     }

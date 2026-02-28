@@ -7,22 +7,22 @@ namespace ShiftManager.Helpers;
 /// </summary>
 public static class InputSanitizer
 {
-    private static readonly string[] DangerousPatterns =
+    private static readonly Regex[] DangerousPatterns =
     {
-        @"<script[^>]*>",
-        @"</script>",
-        @"javascript:",
-        @"on\w+\s*=",       // onclick, onerror, onload, etc.
-        @"<iframe[^>]*>",
-        @"<object[^>]*>",
-        @"<embed[^>]*>",
-        @"<form[^>]*>",
-        @"<input[^>]*>",
-        @"<img[^>]*>",
-        @"<link[^>]*>",
-        @"<style[^>]*>",
-        @"eval\s*\(",
-        @"expression\s*\(",
+        new(@"<script[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"</script>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"javascript:", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"on\w+\s*=", RegexOptions.IgnoreCase | RegexOptions.Compiled),       // onclick, onerror, onload, etc.
+        new(@"<iframe[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<object[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<embed[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<form[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<input[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<img[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<link[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"<style[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"eval\s*\(", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"expression\s*\(", RegexOptions.IgnoreCase | RegexOptions.Compiled),
     };
 
     /// <summary>
@@ -32,9 +32,9 @@ public static class InputSanitizer
     {
         if (string.IsNullOrWhiteSpace(input)) return false;
 
-        foreach (var pattern in DangerousPatterns)
+        foreach (var regex in DangerousPatterns)
         {
-            if (Regex.IsMatch(input, pattern, RegexOptions.IgnoreCase))
+            if (regex.IsMatch(input))
                 return true;
         }
 
