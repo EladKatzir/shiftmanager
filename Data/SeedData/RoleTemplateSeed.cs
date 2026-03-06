@@ -42,11 +42,11 @@ public static class RoleTemplateSeed
             new RoleTemplate
             {
                 Id = 3,
-                Key = "AlhutLead",
-                NameKey = "Role_AlhutLead",
-                DescriptionKey = "Role_AlhutLead_Desc",
-                DisplayNameEN = "Alhut SL",
-                DisplayNameHE = "מפ\"צ אלחוט",
+                Key = "Lead",
+                NameKey = "Role_Lead",
+                DescriptionKey = "Role_Lead_Desc",
+                DisplayNameEN = "Squad Leader",
+                DisplayNameHE = "מפ\"צ",
                 ScopeLevel = RoleScopeLevel.CompanyJobType,
                 IsSystem = true,
                 SortOrder = 20,
@@ -56,45 +56,15 @@ public static class RoleTemplateSeed
             },
             new RoleTemplate
             {
-                Id = 4,
-                Key = "TextLead",
-                NameKey = "Role_TextLead",
-                DescriptionKey = "Role_TextLead_Desc",
-                DisplayNameEN = "Text SL",
-                DisplayNameHE = "מפ\"צ טקסט",
-                ScopeLevel = RoleScopeLevel.CompanyJobType,
-                IsSystem = true,
-                SortOrder = 21,
-                DerivedUserRole = UserRole.Manager,
-                IsVisibleInSignup = true,
-                CanBeAssignedByDefault = true
-            },
-            new RoleTemplate
-            {
                 Id = 5,
-                Key = "AlhutDirector",
-                NameKey = "Role_AlhutDirector",
-                DescriptionKey = "Role_AlhutDirector_Desc",
-                DisplayNameEN = "Alhut PL",
-                DisplayNameHE = "מ\"מ אלחוט",
+                Key = "Director",
+                NameKey = "Role_PlatoonLeader",
+                DescriptionKey = "Role_PlatoonLeader_Desc",
+                DisplayNameEN = "Platoon Leader",
+                DisplayNameHE = "מ\"מ",
                 ScopeLevel = RoleScopeLevel.MoleculeJobType,
                 IsSystem = true,
                 SortOrder = 5,
-                DerivedUserRole = UserRole.Director,
-                IsVisibleInSignup = true,
-                CanBeAssignedByDefault = true
-            },
-            new RoleTemplate
-            {
-                Id = 6,
-                Key = "TextDirector",
-                NameKey = "Role_TextDirector",
-                DescriptionKey = "Role_TextDirector_Desc",
-                DisplayNameEN = "Text PL",
-                DisplayNameHE = "מ\"מ טקסט",
-                ScopeLevel = RoleScopeLevel.MoleculeJobType,
-                IsSystem = true,
-                SortOrder = 6,
                 DerivedUserRole = UserRole.Director,
                 IsVisibleInSignup = true,
                 CanBeAssignedByDefault = true
@@ -310,8 +280,8 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
 
         // ============================================
-        // ALHUT LEAD (Template 3) — 40 grants
-        // Employee base (SAR) + lead-specific grants. AssignAlhutShifts at ETM.
+        // LEAD (Template 3) — 43 grants
+        // Employee base (SAR) + lead-specific grants. Assign shifts at ETM.
         // ============================================
         grants.Add(G(3, 1, SAR));    // ViewShifts
         grants.Add(G(3, 16, SAR));   // ViewChores
@@ -334,6 +304,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 68, SAR, useOwnJobType: true));
         // Lead-specific grants
         grants.Add(G(3, 3, ETM, useOwnJobType: true));    // AssignAlhutShifts (ETM, OWN)
+        grants.Add(G(3, 4, ETM, useOwnJobType: true));    // AssignTextShifts (ETM, OWN)
         grants.Add(G(3, 2, SAR));    // ViewAllShifts
         grants.Add(G(3, 7, SAR, useOwnJobType: true));    // EditShiftPrograms (OWN)
         grants.Add(G(3, 8, SAR, useOwnJobType: true));    // CreateShiftPrograms (OWN)
@@ -342,6 +313,8 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 11, SAR, useOwnJobType: true));   // CreateShiftTypes (OWN)
         grants.Add(G(3, 69, SAR, useOwnJobType: true));   // ManageAlhutBlueprints (OWN)
         grants.Add(G(3, 70, SAR, useOwnJobType: true));   // ManageAlhutPrograms (OWN)
+        grants.Add(G(3, 71, SAR, useOwnJobType: true));   // ManageTextBlueprints (OWN)
+        grants.Add(G(3, 72, SAR, useOwnJobType: true));   // ManageTextPrograms (OWN)
         grants.Add(G(3, 109, SAR, useOwnJobType: true));  // ManageShiftCapacity (OWN)
         grants.Add(G(3, 17, SAR));   // AssignChores
         grants.Add(G(3, 22, SAR, useOwnJobType: true));   // ApproveVacations (OWN)
@@ -354,52 +327,6 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
         grants.Add(G(3, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
         grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
-
-        // ============================================
-        // TEXT LEAD (Template 4) — 40 grants
-        // Same as AlhutLead but Text-specific
-        // ============================================
-        grants.Add(G(4, 1, SAR));
-        grants.Add(G(4, 16, SAR));
-        grants.Add(G(4, 12, SAR));
-        grants.Add(G(4, 20, SAR));
-        grants.Add(G(4, 21, SAR));
-        grants.Add(G(4, 25, SAR));
-        grants.Add(G(4, 115, SAR));
-        grants.Add(G(4, 117, SAR));
-        grants.Add(G(4, 35, SAR));
-        grants.Add(G(4, 39, SAR));
-        grants.Add(G(4, 110, SAR));
-        grants.Add(G(4, 61, SAR));
-        grants.Add(G(4, 62, SAR));
-        grants.Add(G(4, 63, SAR));
-        grants.Add(G(4, 64, SAR));
-        grants.Add(G(4, 65, SAR, useOwnJobType: true));
-        grants.Add(G(4, 66, SAR, useOwnJobType: true));
-        grants.Add(G(4, 67, SAR, useOwnJobType: true));
-        grants.Add(G(4, 68, SAR, useOwnJobType: true));
-        // Lead-specific (Text variant)
-        grants.Add(G(4, 4, ETM, useOwnJobType: true));    // AssignTextShifts (ETM, OWN)
-        grants.Add(G(4, 2, SAR));
-        grants.Add(G(4, 7, SAR, useOwnJobType: true));
-        grants.Add(G(4, 8, SAR, useOwnJobType: true));
-        grants.Add(G(4, 9, SAR, useOwnJobType: true));
-        grants.Add(G(4, 10, SAR, useOwnJobType: true));
-        grants.Add(G(4, 11, SAR, useOwnJobType: true));
-        grants.Add(G(4, 71, SAR, useOwnJobType: true));   // ManageTextBlueprints (OWN)
-        grants.Add(G(4, 72, SAR, useOwnJobType: true));   // ManageTextPrograms (OWN)
-        grants.Add(G(4, 109, SAR, useOwnJobType: true));
-        grants.Add(G(4, 17, SAR));
-        grants.Add(G(4, 22, SAR, useOwnJobType: true));
-        grants.Add(G(4, 26, SAR, useOwnJobType: true));
-        grants.Add(G(4, 28, SAR));
-        grants.Add(G(4, 36, SAR, useOwnJobType: true));
-        grants.Add(G(4, 37, SAR, useOwnJobType: true));
-        grants.Add(G(4, 112, SAR));
-        grants.Add(G(4, 114, SAR));
-        grants.Add(G(4, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
-        grants.Add(G(4, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
-        grants.Add(G(4, 120, SAR));
 
         // ============================================
         // BR DIRECTOR (Template 2) — 50 grants
@@ -459,8 +386,8 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 120, SAR));  // ViewSystemAlerts
 
         // ============================================
-        // ALHUT DIRECTOR (Template 5) — 49 grants
-        // All AlhutLead grants widened to ETM + director extras. Self-scoped stay SAR.
+        // DIRECTOR (Template 5) — 52 grants
+        // All Lead grants widened to ETM + director extras. Self-scoped stay SAR.
         // ============================================
         // Self-scoped (stay SAR)
         grants.Add(G(5, 21, SAR));
@@ -469,7 +396,7 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 66, SAR, useOwnJobType: true));
         grants.Add(G(5, 67, SAR, useOwnJobType: true));
         grants.Add(G(5, 68, SAR, useOwnJobType: true));
-        // AlhutLead grants widened to ETM
+        // Lead grants widened to ETM
         grants.Add(G(5, 1, ETM));
         grants.Add(G(5, 16, ETM));
         grants.Add(G(5, 12, ETM));
@@ -484,14 +411,17 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 63, ETM));
         grants.Add(G(5, 64, ETM));
         grants.Add(G(5, 3, ETM, canGive: true, useOwnJobType: true));  // AssignAlhutShifts (ETM, OWN, CanGive)
+        grants.Add(G(5, 4, ETM, canGive: true, useOwnJobType: true));  // AssignTextShifts (ETM, OWN, CanGive)
         grants.Add(G(5, 2, ETM));
         grants.Add(G(5, 7, ETM, useOwnJobType: true));
         grants.Add(G(5, 8, ETM, useOwnJobType: true));
         grants.Add(G(5, 9, ETM, useOwnJobType: true));
         grants.Add(G(5, 10, ETM, useOwnJobType: true));
         grants.Add(G(5, 11, ETM, useOwnJobType: true));
-        grants.Add(G(5, 69, ETM, useOwnJobType: true));
-        grants.Add(G(5, 70, ETM, useOwnJobType: true));
+        grants.Add(G(5, 69, ETM, useOwnJobType: true));   // ManageAlhutBlueprints (OWN)
+        grants.Add(G(5, 70, ETM, useOwnJobType: true));   // ManageAlhutPrograms (OWN)
+        grants.Add(G(5, 71, ETM, useOwnJobType: true));   // ManageTextBlueprints (OWN)
+        grants.Add(G(5, 72, ETM, useOwnJobType: true));   // ManageTextPrograms (OWN)
         grants.Add(G(5, 109, ETM, useOwnJobType: true));
         grants.Add(G(5, 17, ETM));
         grants.Add(G(5, 22, ETM, useOwnJobType: true));
@@ -514,60 +444,6 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 32, ETM));   // ResetPasswords (BUG 1 fix)
         grants.Add(G(5, 33, ETM));   // AssignJobTypes (BUG 2 fix)
         grants.Add(G(5, 24, ETM, useOwnJobType: true));  // ApproveExtendedLeave (OWN — BUG 3 fix)
-
-        // ============================================
-        // TEXT DIRECTOR (Template 6) — 49 grants
-        // Same as AlhutDirector but Text-specific
-        // ============================================
-        grants.Add(G(6, 21, SAR));
-        grants.Add(G(6, 25, SAR));
-        grants.Add(G(6, 65, SAR, useOwnJobType: true));
-        grants.Add(G(6, 66, SAR, useOwnJobType: true));
-        grants.Add(G(6, 67, SAR, useOwnJobType: true));
-        grants.Add(G(6, 68, SAR, useOwnJobType: true));
-        grants.Add(G(6, 1, ETM));
-        grants.Add(G(6, 16, ETM));
-        grants.Add(G(6, 12, ETM));
-        grants.Add(G(6, 20, ETM));
-        grants.Add(G(6, 115, ETM));
-        grants.Add(G(6, 117, ETM));
-        grants.Add(G(6, 35, ETM));
-        grants.Add(G(6, 39, ETM));
-        grants.Add(G(6, 110, ETM));
-        grants.Add(G(6, 61, ETM));
-        grants.Add(G(6, 62, ETM));
-        grants.Add(G(6, 63, ETM));
-        grants.Add(G(6, 64, ETM));
-        grants.Add(G(6, 4, ETM, canGive: true, useOwnJobType: true));  // AssignTextShifts
-        grants.Add(G(6, 2, ETM));
-        grants.Add(G(6, 7, ETM, useOwnJobType: true));
-        grants.Add(G(6, 8, ETM, useOwnJobType: true));
-        grants.Add(G(6, 9, ETM, useOwnJobType: true));
-        grants.Add(G(6, 10, ETM, useOwnJobType: true));
-        grants.Add(G(6, 11, ETM, useOwnJobType: true));
-        grants.Add(G(6, 71, ETM, useOwnJobType: true));   // ManageTextBlueprints
-        grants.Add(G(6, 72, ETM, useOwnJobType: true));   // ManageTextPrograms
-        grants.Add(G(6, 109, ETM, useOwnJobType: true));
-        grants.Add(G(6, 17, ETM));
-        grants.Add(G(6, 22, ETM, useOwnJobType: true));
-        grants.Add(G(6, 26, ETM, useOwnJobType: true));
-        grants.Add(G(6, 28, ETM));
-        grants.Add(G(6, 36, ETM, useOwnJobType: true));
-        grants.Add(G(6, 37, ETM, useOwnJobType: true));
-        grants.Add(G(6, 112, ETM));
-        grants.Add(G(6, 114, ETM));
-        grants.Add(G(6, 120, ETM));
-        grants.Add(G(6, 34, ETM));
-        grants.Add(G(6, 38, ETM));
-        grants.Add(G(6, 40, ETM));   // EditCompany (S-01)
-        grants.Add(G(6, 113, ETM));
-        grants.Add(G(6, 116, ETM));
-        grants.Add(G(6, 118, ETM));
-        grants.Add(G(6, 119, ETM));
-        grants.Add(G(6, 121, ETM));
-        grants.Add(G(6, 32, ETM));   // ResetPasswords (BUG 1 fix)
-        grants.Add(G(6, 33, ETM));   // AssignJobTypes (BUG 2 fix)
-        grants.Add(G(6, 24, ETM, useOwnJobType: true));  // ApproveExtendedLeave (OWN — BUG 3 fix)
 
         // ============================================
         // MOLECULE ADMIN (Template 7) — 87 grants

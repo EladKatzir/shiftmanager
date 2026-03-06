@@ -161,7 +161,7 @@ test.describe('Module A: Seeding & Fresh Database', () => {
     // STRICT: verify known template names appear
     const expectedTemplates = [
       'Employee', 'Owner', 'Assigner', 'MoleculeAdmin', 'AreaAdmin',
-      'AlhutLead', 'TextLead', 'BRDirector',
+      'Lead', 'Director', 'BRDirector',
     ];
 
     let foundCount = 0;

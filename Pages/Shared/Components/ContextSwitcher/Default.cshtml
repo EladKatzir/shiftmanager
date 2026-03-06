@@ -35,7 +35,14 @@ else if (Model.HasSingleContext && Model.CurrentContext != null)
     <div class="context-switcher context-switcher--single" id="contextSwitcher">
         <div class="context-switcher__label">
             <span aria-hidden="true">📍</span>
-            <span><loc key="ContextSwitcher_CurrentlyViewing" /></span>
+            @if (Model.IsMoleculeMode)
+            {
+                <span><loc key="ContextSwitcher_MoleculeLabel" /></span>
+            }
+            else
+            {
+                <span><loc key="ContextSwitcher_CurrentlyViewing" /></span>
+            }
         </div>
         <div class="context-switcher__static"
              @if (Model.CurrentContext.NeedsTruncation)
@@ -52,10 +59,18 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
 {
     <div class="context-switcher @(Model.HasManyContexts ? "context-switcher--many" : "")"
          id="contextSwitcher"
-         data-total-contexts="@Model.TotalContextCount">
+         data-total-contexts="@Model.TotalContextCount"
+         data-switch-mode="@(Model.IsMoleculeMode ? "molecule" : "company")">
         <div class="context-switcher__label">
             <span aria-hidden="true">📍</span>
-            <span><loc key="ContextSwitcher_CurrentlyViewing" /></span>
+            @if (Model.IsMoleculeMode)
+            {
+                <span><loc key="ContextSwitcher_MoleculeLabel" /></span>
+            }
+            else
+            {
+                <span><loc key="ContextSwitcher_CurrentlyViewing" /></span>
+            }
         </div>
 
         @* Warning banner when current context became unavailable *@
@@ -292,12 +307,20 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
             // Clear search before navigating
             clearSearch();
 
-            // Submit via POST (D-03: company switching is POST-only)
+            // Submit via POST (D-03: context switching is POST-only)
+            var switchMode = switcher.dataset.switchMode;
             var form = document.createElement('form');
             form.method = 'POST';
-            form.action = '/Owner/SelectCompany';
             var input = document.createElement('input');
-            input.type = 'hidden'; input.name = 'companyId'; input.value = contextId;
+            input.type = 'hidden';
+            if (switchMode === 'molecule') {
+                form.action = '/Api/SelectMolecule';
+                input.name = 'moleculeId';
+            } else {
+                form.action = '/Owner/SelectCompany';
+                input.name = 'companyId';
+            }
+            input.value = contextId;
             form.appendChild(input);
             var returnInput = document.createElement('input');
             returnInput.type = 'hidden'; returnInput.name = 'returnUrl'; returnInput.value = window.location.pathname;

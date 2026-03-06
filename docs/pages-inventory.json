@@ -1,0 +1,2253 @@
+[
+  {
+    "id": 1,
+    "path": "Pages/Index.cshtml",
+    "route": "/",
+    "section": "Root",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize]",
+      "grantChecks": ["AccessAdminNavigation"],
+      "scopeMode": "company"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline",
+      "keyCount": 20
+    },
+    "dependencies": {
+      "services": ["AppDbContext", "IAnnouncementService", "IGrantService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["/Auth/Login"],
+      "outbound": ["/Calendar/Month", "/Requests/Index", "/Admin/Users", "/MyTeam/Index", "/Admin/Analytics", "/My/Requests", "/My/Profile"]
+    },
+    "findings": [
+      "Silent early return if user not found — blank dashboard with no error",
+      "NextShiftDate uses server-local DateTime formatting — potential timezone display issues",
+      "TeamMembersCount counts ALL users in company regardless of context"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 2,
+    "path": "Pages/AccessDenied.cshtml",
+    "route": "/AccessDenied",
+    "section": "Root",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "none"
+    },
+    "handlers": {
+      "get": ["OnGet"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper",
+      "keyCount": 2
+    },
+    "dependencies": {
+      "services": [],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["ASP.NET authorization middleware"],
+      "outbound": ["/Calendar/Month"]
+    },
+    "findings": [
+      "Page title 'Access Denied - Shift Manager' is hardcoded in English, not localized",
+      "2-second auto-redirect timeout is hardcoded with no user control",
+      "Protected paths list prevents redirect loops including to /AccessDenied itself"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 3,
+    "path": "Pages/Error.cshtml",
+    "route": "/Error",
+    "section": "Root",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "none"
+    },
+    "handlers": {
+      "get": ["OnGet"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper",
+      "keyCount": 2
+    },
+    "dependencies": {
+      "services": [],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["Exception handler middleware"],
+      "outbound": []
+    },
+    "findings": [
+      "Extremely minimal — no request ID or correlation displayed",
+      "Code-behind uses global namespace (no namespace declaration)"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 4,
+    "path": "Pages/Diagnostic.cshtml",
+    "route": "/Diagnostic",
+    "section": "Root",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Roles = nameof(UserRole.Owner))]",
+      "grantChecks": [],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline",
+      "keyCount": 12
+    },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["/Home/Index"],
+      "outbound": []
+    },
+    "findings": [
+      "Uses role-based [Authorize(Roles)] instead of grant-based policy — known exception",
+      "Localization key 'ShiftInstancesForOctober2025' is hardcoded to a specific month name",
+      "Take(500) limit on ShiftInstances prevents OOM on large deployments"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 5,
+    "path": "Pages/GriffinDiagnostic.cshtml",
+    "route": "/GriffinDiagnostic",
+    "section": "Root",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]",
+      "grantChecks": ["AdminAccess"],
+      "scopeMode": "tenant"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "inline",
+      "keyCount": 20
+    },
+    "dependencies": {
+      "services": ["IGriffinConfigService", "IGriffinService", "IHttpClientFactory", "IConfiguration", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["Admin navigation"],
+      "outbound": ["/Owner/GriffinConfig", "/Auth/Login", "/GriffinDiagnostic"]
+    },
+    "findings": [
+      "Uses border-left instead of border-inline-start in .field CSS — RTL bug",
+      "Layout=null standalone page with custom CSS, inconsistent with admin page pattern",
+      "Makes actual HTTP connection test to Griffin server during page load"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 6,
+    "path": "Pages/Auth/Login.cshtml",
+    "route": "/Auth/Login",
+    "section": "Auth",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": ["OnPostAsync", "OnPostGriffinAsync"],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline+code-behind",
+      "keyCount": 25
+    },
+    "dependencies": {
+      "services": ["AppDbContext", "IRateLimitingService", "IValidationService", "IGriffinConfigService", "IGriffinService", "IHierarchyService", "IGrantService", "IRoleService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["/Auth/Logout", "/Auth/Signup", "/Auth/ForgotPassword", "ASP.NET auth middleware"],
+      "outbound": ["/Auth/ForgotPassword", "/Auth/Signup", "/My/Onboarding", "/Home/Index", "/"]
+    },
+    "findings": [
+      "Email domain suggestion hardcodes @d360.dom domain",
+      "Login-time RoleTemplate backfill and auto-grant reconciliation on every login",
+      "Rate limiting: 10 attempts/15min per IP, 15/15min per account, lockout after 10 failures"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 7,
+    "path": "Pages/Auth/Logout.cshtml",
+    "route": "/Auth/Logout",
+    "section": "Auth",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "none"
+    },
+    "handlers": {
+      "get": [],
+      "post": ["OnPostAsync"],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline",
+      "keyCount": 8
+    },
+    "dependencies": {
+      "services": ["IMemoryCache"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["Layout navigation POST"],
+      "outbound": ["/Auth/Login"]
+    },
+    "findings": [
+      "GET to /Auth/Logout shows 'Logging out... Please wait' indefinitely — no GET handler",
+      "Differentiates Griffin ADFS logout (clears token cookie + cache) from regular logout",
+      "3-second auto-redirect via HTML meta refresh"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 8,
+    "path": "Pages/Auth/Signup.cshtml",
+    "route": "/Auth/Signup",
+    "section": "Auth",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": ["OnPostAsync"],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline+code-behind",
+      "keyCount": 30
+    },
+    "dependencies": {
+      "services": ["AppDbContext", "IFeatureFlagService", "IValidationService", "INotificationService", "IRateLimitingService", "ICompanyCacheService", "IRoleService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Signup/GetSignupOptions"]
+    },
+    "navigation": {
+      "inbound": ["/Auth/Login"],
+      "outbound": ["/Auth/Login"]
+    },
+    "findings": [
+      "HTML minlength=6 on password but no server-side min length enforcement documented",
+      "Exposes organizational structure (molecules, companies, departments) when signup enabled",
+      "Rate limiting: 50 attempts per 10 minutes per IP"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": ["AllowPublicSignup"]
+  },
+  {
+    "id": 9,
+    "path": "Pages/Auth/ForgotPassword.cshtml",
+    "route": "/Auth/ForgotPassword",
+    "section": "Auth",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": ["OnPostAsync", "OnPostChangePasswordAsync"],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline+code-behind",
+      "keyCount": 15
+    },
+    "dependencies": {
+      "services": ["AppDbContext", "IMailService", "IRateLimitingService", "IValidationService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["/Auth/Login"],
+      "outbound": ["/Auth/Login"]
+    },
+    "findings": [
+      "HTML minlength=6 but server enforces 12 chars (D-09) — UX inconsistency",
+      "800ms constant-time delay on failed lookup to prevent user enumeration",
+      "Air-gapped fallback: displays temp password on screen when email delivery fails"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 10,
+    "path": "Pages/Auth/GriffinCallback.cshtml",
+    "route": "/Auth/GriffinCallback",
+    "section": "Auth",
+    "type": "page",
+    "auth": {
+      "attribute": "[AllowAnonymous]",
+      "grantChecks": [],
+      "scopeMode": "none"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+code-behind",
+      "keyCount": 8
+    },
+    "dependencies": {
+      "services": ["IGriffinService", "IGriffinConfigService", "ISecurityLogger"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["Griffin ADFS server redirect"],
+      "outbound": ["/Auth/Login", "/Home/Index"]
+    },
+    "findings": [
+      "Uses Bootstrap alert classes inconsistently with other auth pages that use custom auth CSS",
+      "Cookie-based returnUrl approach with query string fallback",
+      "Checks for pending approval users separately if main auth returns null"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 11,
+    "path": "Pages/Home/Index.cshtml",
+    "route": "/Home/Index",
+    "section": "Home",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize]",
+      "grantChecks": ["AccessAdminNavigation", "DirectorHubAccess", "AdminAccess"],
+      "scopeMode": "company"
+    },
+    "handlers": {
+      "get": ["OnGetAsync"],
+      "post": [],
+      "other": []
+    },
+    "localization": {
+      "pattern": "tag-helper+inline",
+      "keyCount": 25
+    },
+    "dependencies": {
+      "services": ["AppDbContext", "ICompanyContext", "IGrantService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["/Auth/Login", "/Auth/GriffinCallback"],
+      "outbound": ["/Calendar/Month", "/My/NotificationCenter", "/My/Requests", "/Requests/Index", "/Admin/Companies", "/Admin/Analytics", "/Diagnostic"]
+    },
+    "findings": [
+      "UnreadNotificationsCount from top-5 only — understates true unread count",
+      "DaysOff calculated as 7 minus DaysWithShifts — misleading metric",
+      "Uses Task.WhenAll for parallel query execution (Phase 2C optimization)"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 12,
+    "path": "Pages/Admin/Index.cshtml",
+    "route": "/Admin/Index",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]",
+      "grantChecks": ["AdminAccess", "DirectorHubAccess", "ViewHierarchy", "EditCompany", "ManageJobTypes", "ManageDepartments", "ViewSettings", "ManageAnnouncements", "SystemConfiguration", "ManageOnDuty"],
+      "scopeMode": "tiered"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 20 },
+    "dependencies": {
+      "services": ["AppDbContext", "ITenantResolver", "IDirectorService", "IGrantService", "IFeatureFlagService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": {
+      "inbound": ["Sidebar navigation"],
+      "outbound": ["/Admin/Users", "/Admin/Companies", "/Admin/Organization", "/Admin/Settings", "/Admin/Announcements", "/Admin/Config", "/Admin/Analytics", "/Admin/AuditLog", "/Admin/Directors", "/Admin/DutyRotation", "/Admin/SetupTasks"]
+    },
+    "findings": [
+      "Three-tier stat scoping (Owner/Director/Manager) must match Users page logic",
+      "Feature-flagged cards: DutyRotation, SetupTasks, VacationApproval",
+      "Multiple uncached DB queries per stat — no caching"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": ["DutyRotationEnabled", "SetupTasksEnabled", "VacationApprovalEnabled"]
+  },
+  {
+    "id": 13,
+    "path": "Pages/Admin/Analytics.cshtml",
+    "route": "/Admin/Analytics",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]",
+      "grantChecks": [],
+      "scopeMode": "company"
+    },
+    "handlers": { "get": ["OnGetAsync", "OnGetExportCsvAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IAnalyticsService", "ICompanyCacheService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "UTF-8 BOM added to CSV for Hebrew Excel compatibility",
+      "No additional grant check beyond ManagerHomeAccess — any manager sees full analytics",
+      "Multiple analytics queries per page load with no caching"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 14,
+    "path": "Pages/Admin/Announcements.cshtml",
+    "route": "/Admin/Announcements",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManageAnnouncements\")]",
+      "grantChecks": ["ManageAnnouncements"],
+      "scopeMode": "company"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["IAnnouncementService", "ICurrentUserService", "IRoleService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "Scope targeting supports All/Department/Role audiences",
+      "No visible XSS sanitization on announcement content",
+      "JS toggles Department/Role dropdowns based on scope selection"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 15,
+    "path": "Pages/Admin/AuditLog.cshtml",
+    "route": "/Admin/AuditLog",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]",
+      "grantChecks": [],
+      "scopeMode": "company"
+    },
+    "handlers": { "get": ["OnGetAsync", "OnGetExportCsvAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["AppDbContext", "ICompanyCacheService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "CSV export capped at 10,000 records with UTF-8 BOM",
+      "Pagination at 50 records per page",
+      "Expandable detail rows via per-row JS toggle function"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 16,
+    "path": "Pages/Admin/Companies.cshtml",
+    "route": "/Admin/Companies",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:EditCompany\")]",
+      "grantChecks": ["EditCompany"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAddCompanyAsync", "OnPostRenameCompanyAsync", "OnPostDeleteCompanyAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 12 },
+    "dependencies": {
+      "services": ["ISetupTaskService", "ICompanyCacheService", "IRoleService", "IConcurrencyService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "Transactional company creation: company + manager + director + defaults + setup tasks",
+      "11-step cascade delete across 10 related tables",
+      "XSS validation via InputSanitizer.ContainsDangerousContent()"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 17,
+    "path": "Pages/Admin/Config.cshtml",
+    "route": "/Admin/Config",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]",
+      "grantChecks": [],
+      "scopeMode": "company"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync", "OnPostAddOnDutyTypeAsync", "OnPostDeleteOnDutyTypeAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["ICompanyContext", "IAuditLogService", "IEmailConfigService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "Default OnDuty types Hakam(0) and Lead(1) are read-only and cannot be deleted",
+      "Custom OnDuty types auto-increment TypeValue from max existing",
+      "RestHours 0-24 and WeeklyCap 0-168 range validation"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 18,
+    "path": "Pages/Admin/Directors.cshtml",
+    "route": "/Admin/Directors",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:AssignRoles\")]",
+      "grantChecks": ["AssignRoles"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAssignAsync", "OnPostRevokeAsync", "OnPostReassignAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 8 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "No service layer abstraction — uses direct AppDbContext access",
+      "Reassign: soft-deletes old assignment then creates new (not in-place update)",
+      "IgnoreQueryFilters for cross-company director/company lookups"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 19,
+    "path": "Pages/Admin/DutyRotation/Index.cshtml",
+    "route": "/Admin/DutyRotation",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManageOnDuty\")]",
+      "grantChecks": ["ManageOnDuty"],
+      "scopeMode": "company"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostEditAsync", "OnPostDeleteAsync", "OnPostAddQueueMemberAsync", "OnPostRemoveQueueMemberAsync", "OnPostReorderQueueAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["IDutyRotationService", "IFeatureFlagService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "Hard 404 when DutyRotationEnabled flag is disabled",
+      "Queue reorder passes comma-separated IDs via hidden input",
+      "JS moveQueueItem() + submitReorder() for drag-like reordering"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": ["DutyRotationEnabled"]
+  },
+  {
+    "id": 20,
+    "path": "Pages/Admin/EditProfile.cshtml",
+    "route": "/Admin/EditProfile",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]",
+      "grantChecks": [],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync", "OnPostDeleteAvatarAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 20 },
+    "dependencies": {
+      "services": ["IProfileService", "IAvatarService", "IRoleService", "IJobTypeService", "IAuditLogService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Users"], "outbound": [] },
+    "findings": [
+      "Workforce molecules show JobType field; Tech molecules show Department field",
+      "RoleTemplate change triggers auto-grant assignment/cleanup via IRoleService",
+      "Profile change audit log shows last 30 days at bottom of page"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 21,
+    "path": "Pages/Admin/Users.cshtml",
+    "route": "/Admin/Users",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]",
+      "grantChecks": ["AdminAccess", "ManageJoinRequests", "DirectorHubAccess"],
+      "scopeMode": "tiered"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateUserAsync", "OnPostApproveJoinRequestAsync", "OnPostRejectJoinRequestAsync", "OnPostBatchApproveAsync", "OnPostToggleActiveAsync", "OnPostToggleLockoutAsync", "OnPostChangeRoleAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 20 },
+    "dependencies": {
+      "services": ["IDirectorService", "IGrantService", "IRoleService", "IJobTypeService", "IConcurrencyService", "ITraineeService", "IAuditLogService", "IMailService", "INotificationService", "ICompanyContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index", "Sidebar"], "outbound": ["/Admin/EditProfile"] },
+    "findings": [
+      "Three-tier scoping: Owner (all), Director (molecule-scoped), Manager (own company)",
+      "User deactivation cascades: nulls TraineeUserId, removes shifts, cleans grants/DirectorCompany",
+      "Batch approval for multiple join requests in one action"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 22,
+    "path": "Pages/Admin/Organization/Index.cshtml",
+    "route": "/Admin/Organization",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ViewHierarchy\")]",
+      "grantChecks": ["ViewHierarchy"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAddCompanyAsync", "OnPostAddDepartmentAsync", "OnPostRenameCompanyAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IHierarchyService", "ICompanyCacheService", "IGrantService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": ["/Admin/Organization/Projects", "/Admin/Organization/Areas", "/Admin/Organization/Molecules", "/Admin/Organization/JobTypes", "/Admin/Organization/Departments", "/Admin/Organization/Hierarchy", "/Admin/Organization/Grants", "/Admin/Organization/Roles", "/Admin/Organization/ShiftGroupings"] },
+    "findings": [
+      "Very large page ~52KB with full hierarchy tree and inline CRUD",
+      "POST handlers check CurrentUserCanManageMoleculeAsync for scoped authorization",
+      "Inline company/department creation within the tree view"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 23,
+    "path": "Pages/Admin/Organization/Areas/Index.cshtml",
+    "route": "/Admin/Organization/Areas",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:EditArea\")]",
+      "grantChecks": ["EditArea"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 8 },
+    "dependencies": {
+      "services": ["AppDbContext", "IJobTypeService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": [] },
+    "findings": [
+      "Delete blocked if area has molecules or job types",
+      "Shows NoProjectsAvailable message when no projects exist",
+      "Delete button only rendered when dependency counts are zero"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 24,
+    "path": "Pages/Admin/Organization/Departments/Index.cshtml",
+    "route": "/Admin/Organization/Departments",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManageDepartments\")]",
+      "grantChecks": ["ManageDepartments"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 8 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": [] },
+    "findings": [
+      "Restricted to Tech-type molecules only — Workforce/Helper cannot have departments",
+      "Delete blocked if department has users",
+      "Info box explains Tech-molecule restriction"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 25,
+    "path": "Pages/Admin/Organization/Grants/Index.cshtml",
+    "route": "/Admin/Organization/Grants",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ViewGrants\")]",
+      "grantChecks": ["ViewGrants"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostRevokeAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["AppDbContext", "IGrantService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": ["/Admin/EditProfile", "/Admin/Organization/Grants/Assign"] },
+    "findings": [
+      "Auto-grants (IsAutoGrant=true) cannot be revoked manually — shows ManagedByRole label",
+      "Dual view mode: user summary vs detailed grant list",
+      "Badge system: Auto (blue), Manual (green), Own (purple), Give (amber)"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 26,
+    "path": "Pages/Admin/Organization/Grants/Assign.cshtml",
+    "route": "/Admin/Organization/Grants/Assign",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:AssignGrants\")]",
+      "grantChecks": ["AssignGrants"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 12 },
+    "dependencies": {
+      "services": ["AppDbContext", "IGrantService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Grants"], "outbound": ["/Admin/Organization/Grants"] },
+    "findings": [
+      "Six-dimensional scope selection: Project/Area/Molecule/Company/Department/JobType",
+      "Duplicate prevention: checks existing grant with same user+type+scope",
+      "Grant description shown interactively when grant type selected"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 27,
+    "path": "Pages/Admin/Organization/Hierarchy/Index.cshtml",
+    "route": "/Admin/Organization/Hierarchy",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ViewHierarchy\")]",
+      "grantChecks": ["ViewHierarchy"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": ["Breadcrumb", "HierarchyTree"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": ["/Admin/Organization/Projects", "/Admin/Organization/Areas", "/Admin/Organization/Molecules", "/Admin/Companies"] },
+    "findings": [
+      "Read-only hierarchy tree view with HierarchyTree ViewComponent",
+      "Duplicate quick-links near top and in legacy section at bottom",
+      "Uses emoji icons for stat pills — inconsistent with other admin pages"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 28,
+    "path": "Pages/Admin/Organization/JobTypes/Index.cshtml",
+    "route": "/Admin/Organization/JobTypes",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManageJobTypes\")]",
+      "grantChecks": ["ManageJobTypes"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["AppDbContext", "IJobTypeService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": [] },
+    "findings": [
+      "Dynamic molecule dropdown filtered by selected area via JS IIFE",
+      "Two-step create: IJobTypeService.CreateJobTypeAsync then property updates",
+      "Delete blocked if job type has users"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 29,
+    "path": "Pages/Admin/Organization/Molecules/Index.cshtml",
+    "route": "/Admin/Organization/Molecules",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:EditMolecule\")]",
+      "grantChecks": ["EditMolecule"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["AppDbContext", "ISetupTaskService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": [] },
+    "findings": [
+      "Creating a molecule auto-creates a headquarters (HQ) company",
+      "Auto-generates setup tasks via ISetupTaskService on creation",
+      "Type badges: Workforce (primary), Tech (accent), Helper (warning)"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 30,
+    "path": "Pages/Admin/Organization/Projects/Index.cshtml",
+    "route": "/Admin/Organization/Projects",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:EditArea\")]",
+      "grantChecks": ["EditArea"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 6 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": [] },
+    "findings": [
+      "Simplest CRUD page — minimal form with just name fields",
+      "Uses Grant:EditArea policy (shared with Areas, no dedicated project grant)",
+      "Delete blocked if project has areas"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 31,
+    "path": "Pages/Admin/Organization/Roles/Index.cshtml",
+    "route": "/Admin/Organization/Roles",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:AssignRoles\")]",
+      "grantChecks": ["AssignRoles"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostRevokeAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 12 },
+    "dependencies": {
+      "services": ["IRoleService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": ["/Admin/EditProfile", "/Admin/Organization/Roles/Assign"] },
+    "findings": [
+      "Role revocation cascade: soft-deletes assignment and cleans up auto-grants",
+      "System roles are seeded and cannot be deleted; Custom roles are user-created",
+      "Dual view: role catalog vs assignment management"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 32,
+    "path": "Pages/Admin/Organization/Roles/Assign.cshtml",
+    "route": "/Admin/Organization/Roles/Assign",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:AssignRoles\")]",
+      "grantChecks": ["AssignRoles"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 12 },
+    "dependencies": {
+      "services": ["IRoleService", "IJobTypeService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Roles"], "outbound": ["/Admin/Organization/Roles"] },
+    "findings": [
+      "Dynamic scope fields: JS updateScopeVisibility() based on role's data-scope-level",
+      "Auto-grant cascade: assigning a role auto-creates grants defined in template",
+      "Scope level mapping covers 8 levels from Implicit to Project"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 33,
+    "path": "Pages/Admin/Organization/ShiftGroupings/Index.cshtml",
+    "route": "/Admin/Organization/ShiftGroupings",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ManageShiftGroupings\")]",
+      "grantChecks": ["ManageShiftGroupings"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostToggleActiveAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 8 },
+    "dependencies": {
+      "services": ["IShiftGroupingService", "IJobTypeService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization"], "outbound": [] },
+    "findings": [
+      "Native HTML select-multiple for companies and job types (no JS enhancement)",
+      "No delete guard — shift groupings can always be deleted",
+      "Creates junction records for ShiftGroupingCompany and ShiftGroupingJobType"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 34,
+    "path": "Pages/Admin/Settings/Index.cshtml",
+    "route": "/Admin/Settings",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:ViewSettings\")]",
+      "grantChecks": ["ViewSettings"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IHierarchySettingsService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "Cascading settings: Area -> Molecule -> Company with override/inherit pattern",
+      "Effective settings display shows source attribution badges per level",
+      "Clear-override checkboxes allow inheriting from parent level"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 35,
+    "path": "Pages/Admin/Settings/ApprovalRules.cshtml",
+    "route": "/Admin/Settings/ApprovalRules",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:SystemConfiguration\")]",
+      "grantChecks": ["SystemConfiguration"],
+      "scopeMode": "company"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostUpdateAsync", "OnPostDeleteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IVacationApprovalService", "IJobTypeService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index", "/Admin/Settings"], "outbound": [] },
+    "findings": [
+      "Orphaned rule detection for rules referencing deleted job types or users",
+      "Supports auto-approval thresholds, second approval for extended leave",
+      "Company-scoped — no cross-company rule management"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": ["VacationApprovalEnabled"]
+  },
+  {
+    "id": 36,
+    "path": "Pages/Admin/SetupTasks/Index.cshtml",
+    "route": "/Admin/SetupTasks",
+    "section": "Admin",
+    "type": "page",
+    "auth": {
+      "attribute": "[Authorize(Policy = \"Grant:SystemConfiguration\")]",
+      "grantChecks": ["SystemConfiguration"],
+      "scopeMode": "cross-tenant"
+    },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCompleteAsync", "OnPostSkipAsync", "OnPostStartAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["ISetupTaskService", "IFeatureFlagService", "AppDbContext"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Index"], "outbound": [] },
+    "findings": [
+      "Hard 404 when SetupTasksEnabled is disabled",
+      "Three view modes: personal pending, all tasks, progress dashboard",
+      "Per-molecule progress bars with completion percentage"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": ["SetupTasksEnabled"]
+  },
+  {
+    "id": 37,
+    "path": "Pages/Api/Calendar/GetShiftsData.cshtml",
+    "route": "/Api/Calendar/GetShiftsData",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "molecule" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IShiftCalendarService", "IScopeFilterService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Shifts"], "outbound": [] },
+    "findings": [
+      "No check that current user belongs to requested molecule — any authenticated user can query any moleculeId",
+      "C-07 optimization: batch-loads capacities in 2 queries instead of N+1",
+      "IgnoreQueryFilters on ShiftAssignments scoped by already-filtered instanceIds"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 38,
+    "path": "Pages/Api/Calendar/GetChoresData.cshtml",
+    "route": "/Api/Calendar/GetChoresData",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "molecule" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IChoreTypeService", "IScopeFilterService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Chores"], "outbound": [] },
+    "findings": [
+      "No check that user belongs to requested molecule — same gap as GetShiftsData",
+      "Only returns active chores (CanceledAt == null) and active chore types",
+      "IgnoreQueryFilters on Chores and Users filtered by resolved companyIds"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 39,
+    "path": "Pages/Api/Calendar/GetOnCallData.cshtml",
+    "route": "/Api/Calendar/GetOnCallData",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "area" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IScopeFilterService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/OnCall"], "outbound": [] },
+    "findings": [
+      "No check that user belongs to requested area",
+      "OnDutyTypeConfigs are global (not scoped by company/area)",
+      "requiresOfficerRank exposed in type config for client-side UI"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 40,
+    "path": "Pages/Api/Calendar/GetOverviewData.cshtml",
+    "route": "/Api/Calendar/GetOverviewData",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IUserDayNoteService", "ICompanyContext", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Overview"], "outbound": [] },
+    "findings": [
+      "companyId param can be supplied by any user — possible tenant filter mismatch",
+      "Users query capped at Take(2000) for memory safety",
+      "Uses tenant query filters (no IgnoreQueryFilters) for most queries"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 41,
+    "path": "Pages/Api/Calendar/QuickAddChore.cshtml",
+    "route": "/Api/Calendar/QuickAddChore",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:AssignChores\")]", "grantChecks": ["AssignChores"], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IChoreService", "INotificationService", "IAuditLogService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Week", "/Calendar/Month"], "outbound": [] },
+    "findings": [
+      "Conflict detection: SHIFT_CONFLICT and VACATION_CONFLICT with structured response",
+      "ForceAssign flag allows overriding some conflict checks",
+      "Service-level permission checks: CanUserManageChoresAsync + CanUserManageChoreForAssigneeAsync"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 42,
+    "path": "Pages/Api/Calendar/QuickAddOnDuty.cshtml",
+    "route": "/Api/Calendar/QuickAddOnDuty",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ManageOnDuty\")]", "grantChecks": ["ManageOnDuty"], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IOnDutyService", "INotificationService", "IAuditLogService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Week", "/Calendar/Month"], "outbound": [] },
+    "findings": [
+      "Officer rank requirement handled as distinct 403 OFFICER_RANK_REQUIRED error",
+      "Validates OnDutyType is a defined enum value",
+      "Parallels QuickAddChore in structure and validation"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 43,
+    "path": "Pages/Api/Calendar/DeleteChore.cshtml",
+    "route": "/Api/Calendar/DeleteChore",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:AssignChores\")]", "grantChecks": ["AssignChores"], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IChoreService", "INotificationService", "IAuditLogService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Week", "/Calendar/Month"], "outbound": [] },
+    "findings": [
+      "Soft-delete pattern: CancelChoreAsync sets CanceledAt",
+      "Loads chore before canceling to capture notification data",
+      "Full audit logging with ChoreDeletedQuick action"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 44,
+    "path": "Pages/Api/Calendar/DeleteOnDuty.cshtml",
+    "route": "/Api/Calendar/DeleteOnDuty",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ManageOnDuty\")]", "grantChecks": ["ManageOnDuty"], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IOnDutyService", "INotificationService", "IAuditLogService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Week", "/Calendar/Month"], "outbound": [] },
+    "findings": [
+      "Parallels DeleteChore in structure",
+      "Soft-delete via CancelOnDutyAsync",
+      "Full notification and audit logging"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 45,
+    "path": "Pages/Api/Calendar/RestoreChore.cshtml",
+    "route": "/Api/Calendar/RestoreChore",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:AssignChores\")]", "grantChecks": ["AssignChores"], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IChoreService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Chores"], "outbound": [] },
+    "findings": [
+      "Missing audit logging — contrast with DeleteChore which logs",
+      "Missing notification — no restore notification sent",
+      "No explicit current-user permission check beyond policy attribute"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 46,
+    "path": "Pages/Api/Calendar/ShiftHistory.cshtml",
+    "route": "/Api/Calendar/ShiftHistory",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AdminAccess", "DirectorHubAccess"], "scopeMode": "tiered" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IGrantService", "IDirectorService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Table"], "outbound": [] },
+    "findings": [
+      "User-based filtering uses fragile string matching: Description.Contains(UserId=X)",
+      "Three-tier scoping: Admin (all), Director (managed companies), Regular (own company)",
+      "No 500 catch-all — unhandled exceptions produce framework-default errors"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 47,
+    "path": "Pages/Api/Friends/Ids.cshtml",
+    "route": "/Api/Friends/Ids",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IFriendshipService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Shifts"], "outbound": [] },
+    "findings": [
+      "Simple single-purpose endpoint returning friend user IDs",
+      "Scoped to current user only — reads own friend list"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 48,
+    "path": "Pages/Api/Game/GetConfiguration.cshtml",
+    "route": "/Api/Game/GetConfiguration",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Game/Leaderboard"], "outbound": [] },
+    "findings": [
+      "Anonymous users get sensible defaults (game config is cosmetic)",
+      "Config keys parsed from company Configs table with Game prefix",
+      "Milestones parsed from comma-separated string with robust int parsing"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 49,
+    "path": "Pages/Api/Game/GetLeaderboard.cshtml",
+    "route": "/Api/Game/GetLeaderboard",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Game/Leaderboard"], "outbound": [] },
+    "findings": [
+      "If user not in top 10, calculates rank separately and returns as userBest",
+      "Company-scoped leaderboard (not cross-company)",
+      "Supports all-time and monthly filtering"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 50,
+    "path": "Pages/Api/Game/GetLocalization.cshtml",
+    "route": "/Api/Game/GetLocalization",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "none" },
+    "handlers": { "get": ["OnGet"], "post": [], "other": [] },
+    "localization": { "pattern": "inline", "keyCount": 40 },
+    "dependencies": {
+      "services": ["IStringLocalizer"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Game/Leaderboard"], "outbound": [] },
+    "findings": [
+      "Synchronous handler (OnGet, not OnGetAsync)",
+      "Returns deeply nested JSON with roast messages per milestone (7 thresholds x 3 variants)",
+      "AllowAnonymous — game localization accessible without auth"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 51,
+    "path": "Pages/Api/Game/SaveScore.cshtml",
+    "route": "/Api/Game/SaveScore",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Game/Leaderboard"], "outbound": [] },
+    "findings": [
+      "Client-submitted score is trusted — no server-side validation or anti-cheat",
+      "Rank calculation uses IgnoreQueryFilters (global rank, cross-company)",
+      "No duplicate detection — every POST creates a new GameScore entry"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 52,
+    "path": "Pages/Api/Hierarchy/Create.cshtml",
+    "route": "/Api/Hierarchy/Create",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:CreateHierarchy\")]", "grantChecks": ["CreateHierarchy"], "scopeMode": "cross-tenant" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IAuditLogService", "ISetupTaskService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Hierarchy"], "outbound": [] },
+    "findings": [
+      "Auto-generates setup tasks for new Molecules and Companies",
+      "Slug generation converts name to lowercase-hyphenated",
+      "Name validation max 100 characters"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 53,
+    "path": "Pages/Api/Hierarchy/Delete.cshtml",
+    "route": "/Api/Hierarchy/Delete",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:DeleteHierarchy\")]", "grantChecks": ["DeleteHierarchy"], "scopeMode": "cross-tenant" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IAuditLogService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Hierarchy"], "outbound": [] },
+    "findings": [
+      "Company deletion is hard-delete while all others are soft-delete (IsActive=false)",
+      "Molecule child check does NOT filter by IsActive — inconsistency with other checks",
+      "Only active children block deletion (MED-011 fix)"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 54,
+    "path": "Pages/Api/Hierarchy/Move.cshtml",
+    "route": "/Api/Hierarchy/Move",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ReorderHierarchy\")]", "grantChecks": ["ReorderHierarchy"], "scopeMode": "cross-tenant" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IAuditLogService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Hierarchy"], "outbound": [] },
+    "findings": [
+      "Projects cannot be moved (no case for project)",
+      "No validation that target is in same tenant — allows cross-tenant move if grant held",
+      "Moving a Company changes MoleculeId which cascades into scope filter results"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 55,
+    "path": "Pages/Api/Hierarchy/MoveTargets.cshtml",
+    "route": "/Api/Hierarchy/MoveTargets",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ReorderHierarchy\")]", "grantChecks": ["ReorderHierarchy"], "scopeMode": "cross-tenant" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Hierarchy"], "outbound": [] },
+    "findings": [
+      "Projects return empty targets (top-level, cannot be moved)",
+      "Excludes current parent from targets to prevent no-op moves",
+      "Only returns active entities as targets"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 56,
+    "path": "Pages/Api/Hierarchy/Rename.cshtml",
+    "route": "/Api/Hierarchy/Rename",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:EditHierarchy\")]", "grantChecks": ["EditHierarchy"], "scopeMode": "cross-tenant" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IAuditLogService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Hierarchy"], "outbound": [] },
+    "findings": [
+      "Only updates DisplayName, not Name or Slug",
+      "Name max 100 characters with .Trim()",
+      "Captures old and new name in audit log"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 57,
+    "path": "Pages/Api/Hierarchy/Reorder.cshtml",
+    "route": "/Api/Hierarchy/Reorder",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ReorderHierarchy\")]", "grantChecks": ["ReorderHierarchy"], "scopeMode": "cross-tenant" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IAuditLogService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Admin/Organization/Hierarchy"], "outbound": [] },
+    "findings": [
+      "Validates all entities belong to same parent (prevents cross-parent reorder)",
+      "Does not support Project reordering",
+      "Valid entity types: area, molecule, company, department (static HashSet)"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": true,
+    "featureFlags": []
+  },
+  {
+    "id": 58,
+    "path": "Pages/Api/Localization.cshtml",
+    "route": "/Api/Localization",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "dynamic", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IStringLocalizer", "ICompanyLocalizationService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["Global JS"], "outbound": [] },
+    "findings": [
+      "Company localization overrides take priority over base localization",
+      "Uses SelectedCompanyId claim first, falls back to CompanyId",
+      "On error returns empty dict — JS client uses key names as fallback"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 59,
+    "path": "Pages/Api/OnDuty/GetEligibleUsers.cshtml",
+    "route": "/Api/OnDuty/GetEligibleUsers",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ManageOnDuty\")]", "grantChecks": ["ManageOnDuty"], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IOnDutyService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Week", "/Calendar/Month"], "outbound": [] },
+    "findings": [
+      "Returns rich rank info: rank, rankAbbreviation, rankDisplayName, isOfficer",
+      "Includes user email in response — potential privacy concern",
+      "requiresOfficer flag returned for client-side UI logic"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 60,
+    "path": "Pages/Api/ScheduleExport.cshtml",
+    "route": "/Api/ScheduleExport",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "company" },
+    "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 1 },
+    "dependencies": {
+      "services": ["IScheduleExportService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Month"], "outbound": [] },
+    "findings": [
+      "Date range capped at 365 days to prevent excessive resource consumption",
+      "Supports PDF, Excel (.xlsx), and CSV export formats",
+      "No 500 catch-all — unhandled exceptions produce framework errors"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 61,
+    "path": "Pages/Api/ScopeSwitcher.cshtml",
+    "route": "/Api/ScopeSwitcher",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AdminAccess", "DirectorHubAccess", "ViewShiftsMolecule", "ViewShiftsArea"], "scopeMode": "tiered" },
+    "handlers": { "get": ["OnGetAsync", "OnGetHierarchyAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IGrantService", "IHierarchyService", "ICompanyCacheService", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["ScopeSwitcher ViewComponent"], "outbound": [] },
+    "findings": [
+      "Dynamically constructs grant keys from calendar type: View{CalendarType}Molecule/Area",
+      "Directors see non-HQ companies only (!c.IsHeadquarters)",
+      "Full hierarchy handler eager-loads Project->Area->Molecule->Company/Department tree"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 62,
+    "path": "Pages/Api/SessionStatus.cshtml",
+    "route": "/Api/SessionStatus",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "none" },
+    "handlers": { "get": ["OnGet"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": [],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["_Layout JS polling"], "outbound": ["/Auth/Login"] },
+    "findings": [
+      "Calling this endpoint triggers sliding expiration — extends session",
+      "Warning threshold at 60 minutes remaining triggers state:warning",
+      "Minimized response — does not expose userId, username, or session times"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 63,
+    "path": "Pages/Api/Signup/GetSignupOptions.cshtml",
+    "route": "/Api/Signup/GetSignupOptions",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "none" },
+    "handlers": { "get": ["OnGetMoleculesAsync", "OnGetCompaniesAsync", "OnGetJobTypesAsync", "OnGetDepartmentsAsync", "OnGetAllJobTypesAsync", "OnGetRoleTemplatesAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "inline", "keyCount": 5 },
+    "dependencies": {
+      "services": ["IFeatureFlagService", "IJobTypeService", "IRoleService", "IStringLocalizer", "AppDbContext"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Auth/Signup"], "outbound": [] },
+    "findings": [
+      "Exposes organizational structure to anonymous users when signup enabled",
+      "Every handler checks AllowPublicSignup feature flag — returns 403 if disabled",
+      "Companies exclude HQ; Role templates include ScopeLevel for client filtering"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": ["AllowPublicSignup"]
+  },
+  {
+    "id": 64,
+    "path": "Pages/Api/TechShift/Eligible.cshtml",
+    "route": "/Api/TechShift/Eligible",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ManageShifts\")]", "grantChecks": ["ManageShifts"], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["ITechShiftService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Table"], "outbound": [] },
+    "findings": [
+      "Security comment: NEVER return raw AppUser — projects to {Id, DisplayName} only",
+      "Maps tech shift type to grant key (e.g., HANAVA -> CanBeAssignedHanava)",
+      "Optional companyId filter for scoping"
+    ],
+    "hasCrud": false,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 65,
+    "path": "Pages/Api/Telemetry.cshtml",
+    "route": "/Api/Telemetry",
+    "section": "Api",
+    "type": "api",
+    "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "none" },
+    "handlers": { "get": [], "post": ["OnPostEventAsync", "OnPostEventBatchAsync", "OnPostErrorAsync", "OnPostErrorBatchAsync", "OnPostPerformanceAsync", "OnPostPerformanceBatchAsync"], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": {
+      "services": ["IClientTelemetryService"],
+      "viewComponents": [],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["Global JS telemetry"], "outbound": [] },
+    "findings": [
+      "In-memory rate limiting: 30 req/min/IP with periodic cleanup every 5 minutes",
+      "D-08 field truncation: all strings capped (EventType 100, StackTrace 5000, etc.)",
+      "Batch limits: Events 50, Errors 20, Performance 50"
+    ],
+    "hasCrud": true,
+    "hasRealtime": false,
+    "ignoreQueryFilters": false,
+    "featureFlags": []
+  },
+  {
+    "id": 66,
+    "path": "Pages/Calendar/Index.cshtml",
+    "route": "/Calendar",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "none" },
+    "handlers": { "get": ["OnGet"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper", "keyCount": 11 },
+    "dependencies": { "services": [], "viewComponents": [], "signalR": null, "apiEndpoints": [] },
+    "navigation": { "inbound": ["Sidebar"], "outbound": ["/Calendar/Shifts", "/Calendar/Chores", "/Calendar/OnCall", "/Calendar/Overview"] },
+    "findings": [ "Trivially empty OnGet — pure navigation landing page", "Uses emoji icons for visual distinction", "data-ui-version=v2 marks redesigned UI" ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": []
+  },
+  {
+    "id": 67,
+    "path": "Pages/Calendar/Shifts.cshtml",
+    "route": "/Calendar/Shifts",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AssignAlhutShifts", "AssignTextShifts"], "scopeMode": "molecule" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 25 },
+    "dependencies": {
+      "services": ["IShiftCalendarService", "IGrantService", "ICompanyContext", "IJobTypeService"],
+      "viewComponents": ["ExcelCalendarTable", "Breadcrumb"],
+      "signalR": "shifts-{moleculeId}-{jobTypeId}",
+      "apiEndpoints": ["/Api/Calendar/GetShiftsData", "/Api/Friends/Ids"]
+    },
+    "navigation": { "inbound": ["/Calendar"], "outbound": ["/Calendar/Month"] },
+    "findings": [
+      "SignalR real-time: joins shifts-{moleculeId}-{jobTypeId} group, handles onAssignmentChanged/onCapacityChanged",
+      "Read-only page — shift management is on Calendar/Table",
+      "Filter modal is placeholder TODO — shows alert"
+    ],
+    "hasCrud": false, "hasRealtime": true, "ignoreQueryFilters": true, "featureFlags": []
+  },
+  {
+    "id": 68,
+    "path": "Pages/Calendar/Table.cshtml",
+    "route": "/Calendar/Table",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["AssignAlhutShifts", "AssignTextShifts", "AssignBRShifts", "AssignTechShifts"], "scopeMode": "molecule" },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostEnsureShiftInstanceAsync", "OnPostCreateShiftInstanceAsync", "OnPostAssignUserToSlotAsync", "OnPostAssignEmployeeAsync", "OnPostUnassignEmployeeAsync", "OnPostClearAssignmentAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IShiftAssignmentService", "IBusyUserService", "IShiftTypeCacheService", "IShiftProgramService", "ICalendarNotificationService", "IConcurrencyService", "IGrantService", "ICompanyContext", "IJobTypeService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": "shifts-{moleculeId}-{jobTypeId}",
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["/Calendar/Shifts", "/Calendar/Day"], "outbound": ["/Calendar/Month"] },
+    "findings": [
+      "Override token system: soft warnings require user confirmation via cryptographic token",
+      "EnsureShiftInstance/CreateShiftInstance lack explicit grant checks — rely on page-level policy",
+      "All saves go through SaveWithConcurrencyHandlingAsync (returns 409 on conflict)"
+    ],
+    "hasCrud": true, "hasRealtime": true, "ignoreQueryFilters": true, "featureFlags": []
+  },
+  {
+    "id": 69,
+    "path": "Pages/Calendar/Day.cshtml",
+    "route": "/Calendar/Day",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AccessAdminNavigation", "ViewAnalytics"], "scopeMode": "scope-switcher" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 30 },
+    "dependencies": {
+      "services": ["IScopeFilterService", "ICompanyContext", "IChoreService", "IGrantService", "ILocalizationService", "IUserPreferenceService"],
+      "viewComponents": ["Breadcrumb", "CalendarSkeleton", "ShowMyItemsToggle", "ScopeSwitcher"],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Calendar/QuickAddChore", "/Api/Calendar/QuickAddOnDuty"]
+    },
+    "navigation": { "inbound": ["/Calendar/Week", "/Calendar/Month"], "outbound": ["/Calendar/Month", "/Calendar/Week", "/Calendar/Table", "/Public/Chores", "/Public/OnDuty"] },
+    "findings": [
+      "Massive code duplication: LoadShiftsAsync/LoadChoresAsync/LoadOnDutiesAsync copied across Day/Week/Month",
+      "TryCreateValidDate clamps invalid dates to nearest valid (handles Feb 29)",
+      "Quick-add forms submit to API endpoints via client-side JS"
+    ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": []
+  },
+  {
+    "id": 70,
+    "path": "Pages/Calendar/Week.cshtml",
+    "route": "/Calendar/Week",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AccessAdminNavigation"], "scopeMode": "scope-switcher" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 25 },
+    "dependencies": {
+      "services": ["IScopeFilterService", "ICompanyContext", "IChoreService", "IGrantService", "ILocalizationService"],
+      "viewComponents": ["Breadcrumb", "CalendarSkeleton", "ShowMyItemsToggle", "ScopeSwitcher"],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Calendar/QuickAddChore", "/Api/Calendar/QuickAddOnDuty"]
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Month"], "outbound": ["/Calendar/Month", "/Calendar/Day"] },
+    "findings": [
+      "Significant DRY violation — code duplicated from Day page",
+      "7-column grid (Sunday-Saturday), US convention week start",
+      "IDirectorService injected but not obviously used"
+    ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": []
+  },
+  {
+    "id": 71,
+    "path": "Pages/Calendar/Month.cshtml",
+    "route": "/Calendar/Month",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AccessAdminNavigation"], "scopeMode": "scope-switcher" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 25 },
+    "dependencies": {
+      "services": ["IScopeFilterService", "ICompanyContext", "IChoreService", "IGrantService", "IJobTypeService", "IDirectorService"],
+      "viewComponents": ["Breadcrumb", "CalendarSkeleton", "ShowMyItemsToggle", "ScopeSwitcher"],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Calendar/QuickAddChore", "/Api/Calendar/QuickAddOnDuty"]
+    },
+    "navigation": { "inbound": ["/Calendar/Day", "/Calendar/Week", "/", "/Home/Index"], "outbound": ["/Calendar/Day", "/Calendar/Week"] },
+    "findings": [
+      "Localization key mismatch: uses OnDutyHakam/OnDutyLead (no underscore) vs Day/Week OnDuty_Hakam/OnDuty_Lead",
+      "42-day grid always renders 6 weeks regardless of month length",
+      "Additional v3.0 filters: JobType dropdown and ShiftGrouping dropdown"
+    ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": []
+  },
+  {
+    "id": 72,
+    "path": "Pages/Calendar/Chores.cshtml",
+    "route": "/Calendar/Chores",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AssignChores", "ViewChores"], "scopeMode": "molecule" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IChoreService", "IChoreTypeService", "IGrantService", "ICompanyContext"],
+      "viewComponents": ["ExcelCalendarTable", "Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Calendar/GetChoresData"]
+    },
+    "navigation": { "inbound": ["/Calendar"], "outbound": [] },
+    "findings": [
+      "Users loaded cross-company within molecule via IgnoreQueryFilters",
+      "ChoreType filter allows viewing specific chore categories",
+      "Simpler than Shifts calendar — no SignalR, no real-time"
+    ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": []
+  },
+  {
+    "id": 73,
+    "path": "Pages/Calendar/OnCall.cshtml",
+    "route": "/Calendar/OnCall",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["ManageOnDutyTypes", "ViewAllAreas"], "scopeMode": "area" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 15 },
+    "dependencies": {
+      "services": ["IOnDutyService", "IGrantService", "ICompanyContext"],
+      "viewComponents": ["ExcelCalendarTable", "Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Calendar/GetOnCallData"]
+    },
+    "navigation": { "inbound": ["/Calendar"], "outbound": [] },
+    "findings": [
+      "Backup type detection heuristic: checks if name contains 'Backup' (en) or Hebrew equivalent",
+      "On-duty is global by design but filtered by area",
+      "Custom duty types with bilingual NameEn/NameHe with culture-based selection"
+    ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": []
+  },
+  {
+    "id": 74,
+    "path": "Pages/Calendar/Overview.cshtml",
+    "route": "/Calendar/Overview",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["WriteOverviewNotes"], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostSaveNoteAsync"], "other": [] },
+    "localization": { "pattern": "tag-helper+inline", "keyCount": 10 },
+    "dependencies": {
+      "services": ["IUserDayNoteService", "IGrantService", "ICompanyContext"],
+      "viewComponents": ["ExcelCalendarTable", "Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": ["/Api/Calendar/GetOverviewData"]
+    },
+    "navigation": { "inbound": ["/Calendar"], "outbound": [] },
+    "findings": [
+      "Company-scoped (NOT cross-company) — different from other Excel calendars",
+      "Note save validates target user is in same company",
+      "Calendar assignments are always read-only — only notes are editable"
+    ],
+    "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": []
+  },
+  {
+    "id": 75,
+    "path": "Pages/Chores/Calendar.cshtml",
+    "route": "/Chores/Calendar",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["ManagerHomeAccess"], "scopeMode": "company" },
+    "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateChoreAsync", "OnPostReplaceShiftWithChoreAsync", "OnPostCancelChoreAsync"], "other": [] },
+    "localization": { "pattern": "code-behind", "keyCount": 20 },
+    "dependencies": {
+      "services": ["IChoreService", "INotificationService", "IAuditLogService"],
+      "viewComponents": ["Breadcrumb"],
+      "signalR": null,
+      "apiEndpoints": []
+    },
+    "navigation": { "inbound": ["Admin navigation"], "outbound": [] },
+    "findings": [
+      "Shift conflict resolution: conflicts trigger dialog to confirm replace shift with chore",
+      "OnPostCancelChoreAsync reads ChoreId from Request.Form manually to avoid binding conflicts",
+      "Security logging: logs unauthorized cancel attempts with SECURITY: prefix"
+    ],
+    "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": []
+  },
+  {
+    "id": 76,
+    "path": "Pages/Schedule/Index.cshtml",
+    "route": "/Schedule",
+    "section": "Calendar",
+    "type": "page",
+    "auth": { "attribute": "[Authorize]", "grantChecks": ["AccessAdminNavigation"], "scopeMode": "user" },
+    "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] },
+    "localization": { "pattern": "none", "keyCount": 0 },
+    "dependencies": { "services": ["IGrantService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] },
+    "navigation": { "inbound": ["Main nav"], "outbound": ["/Calendar/Month", "/Calendar/Week", "/Calendar/Day", "/Calendar/Table"] },
+    "findings": [ "Very lightweight — essentially a routing shell that sets display flags", "DefaultView and DefaultMode parsed from query params with safe fallbacks", "Minimal code-behind: sets IsAdmin, UserName, DefaultView, DefaultMode" ],
+    "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": []
+  },
+  { "id": 77, "path": "Pages/Owner/Index.cshtml", "route": "/Owner/Index", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync", "OnGetLegacyAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Sidebar"], "outbound": ["/Owner/Hub/Index"] }, "findings": [ "Redirects to /Owner/Hub/Index by default; legacy panel via ?handler=Legacy", "Calculates database size by reading app.db file info directly", "Computes uptime from Process.GetCurrentProcess().StartTime" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 78, "path": "Pages/Owner/AreaConfig.cshtml", "route": "/Owner/AreaConfig", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostUpdateSettingsAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IAuditLogService", "ITenantResolver", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Creates AreaSettings on first save if not existing (upsert pattern)", "Settings apply globally across tenants for a given area", "Range validation: restHours 0-24, weeklyHourCap 0-168" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 79, "path": "Pages/Owner/Backup.cshtml", "route": "/Owner/Backup", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync", "OnGetDownloadAsync"], "post": ["OnPostCreateAsync", "OnPostRestoreAsync", "OnPostDeleteAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IAuditLogService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Path traversal protection: GetValidatedBackupPath validates no .. or path separators", "Pre-restore backup created automatically before overwrite", "All operations audit-logged with timestamps" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 80, "path": "Pages/Owner/Blueprints.cshtml", "route": "/Owner/Blueprints", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["ManagerHomeAccess"], "scopeMode": "tenant" }, "handlers": { "get": ["OnGetAsync", "OnGetCheckUsageAsync"], "post": ["OnPostCreateAsync", "OnPostUpdateNameAsync", "OnPostUpdateTimeAsync", "OnPostDeleteAsync", "OnPostPublishAsync", "OnPostUnpublishAsync", "OnPostMigrateNameKeysAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IShiftTypeCacheService", "IConcurrencyService", "ICompanyLocalizationService", "IAuditLogService", "IJobTypeService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Concurrency handling via SaveWithConcurrencyHandlingAsync", "Cache invalidation after every write operation", "Usage check before delete to warn user of dependent records" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 81, "path": "Pages/Owner/ClearCompanySelection.cshtml", "route": "/Owner/ClearCompanySelection", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "none" }, "handlers": { "get": [], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "none", "keyCount": 0 }, "dependencies": { "services": ["IOwnerCompanySelectorService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Owner pages"], "outbound": ["/Owner/Index"] }, "findings": [ "POST-only with redirect — no GET rendering", "Clears company selection cookie" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 82, "path": "Pages/Owner/DataLifecycle.cshtml", "route": "/Owner/DataLifecycle", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:SystemConfiguration\")]", "grantChecks": ["SystemConfiguration"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync", "OnGetDownloadArchiveAsync"], "post": ["OnPostPreviewArchiveAsync", "OnPostCreateArchiveAsync", "OnPostPurgeAsync", "OnPostImportAsync"], "other": [] }, "localization": { "pattern": "code-behind", "keyCount": 15 }, "dependencies": { "services": ["IArchiveService", "IPurgeService", "IImportService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "SHA256 hash for archive integrity verification", "Typed confirmation for destructive purge (user must type exact string)", "Optional SQLite VACUUM after purge" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 83, "path": "Pages/Owner/DatabaseConsole.cshtml", "route": "/Owner/DatabaseConsole", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:SystemConfiguration\")]", "grantChecks": ["SystemConfiguration"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Read-only SQLite connection (SqliteOpenMode.ReadOnly) prevents mutations", "Semicolon rejection prevents multi-statement SQL injection", "Only SELECT queries allowed — blocks INSERT/UPDATE/DELETE/DROP" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 84, "path": "Pages/Owner/EmailConfig.cshtml", "route": "/Owner/EmailConfig", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:ConfigureEmailSettings\")]", "grantChecks": ["ConfigureEmailSettings"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync", "OnGetExportLogsJsonAsync", "OnGetExportLogsCsvAsync"], "post": ["OnPostAsync", "OnPostSendTestAsync"], "other": [] }, "localization": { "pattern": "code-behind", "keyCount": 12 }, "dependencies": { "services": ["IEmailConfigService", "IMailService", "IEmailApiLogService", "IAuditLogService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": ["/Owner/EmailTemplates"] }, "findings": [ "Uses SendMailDirectAsync (synchronous) for test emails to avoid race condition", "API key encrypted at rest via IEmailConfigService", "CSV export includes UTF-8 BOM for Hebrew Excel compatibility" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 85, "path": "Pages/Owner/EmailTemplates.cshtml", "route": "/Owner/EmailTemplates", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostSaveAsync", "OnPostResetAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IEmailTemplateService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/EmailConfig"], "outbound": ["/Owner/EmailConfig"] }, "findings": [ "Iterates over all EmailTemplateType enum values for complete list", "Template variables are type-specific ({UserName}, {ShiftDate}, etc.)", "Reset to default message supported" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 86, "path": "Pages/Owner/FeatureFlags.cshtml", "route": "/Owner/FeatureFlags", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:SystemConfiguration\")]", "grantChecks": ["SystemConfiguration"], "scopeMode": "global" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostToggleAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IFeatureFlagService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Changes take effect immediately via cache invalidation", "Only shows global flags (filters out company/user-specific overrides)", "Grouped by category: Operations, UI Features, Excel Calendars, Features, API Endpoints" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 87, "path": "Pages/Owner/GameConfig.cshtml", "route": "/Owner/GameConfig", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Extensive input validation with range checks for all numeric fields", "Settings stored as key-value pairs in AppConfig table", "Company-scoped game configuration" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 88, "path": "Pages/Owner/GriffinConfig.cshtml", "route": "/Owner/GriffinConfig", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync", "OnPostTestConnectionAsync"], "other": [] }, "localization": { "pattern": "code-behind", "keyCount": 12 }, "dependencies": { "services": ["IGriffinConfigService", "IGriffinApiLogService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index", "/GriffinDiagnostic"], "outbound": ["/GriffinDiagnostic"] }, "findings": [ "Test connection saves config before testing (critical fix noted in comments)", "System-wide config (single instance, not per-company)", "Diagnostic output shows full request/response" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 89, "path": "Pages/Owner/LanguageEditMode.cshtml", "route": "/Owner/LanguageEditMode", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "none" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "none", "keyCount": 0 }, "dependencies": { "services": [], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/LanguageManagement"], "outbound": ["/"] }, "findings": [ "GET-only: sets cookies and redirects, no rendered UI", "Cookies are HttpOnly=false intentionally — JS needs to read them", "Validates companyId + culture query params" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 90, "path": "Pages/Owner/LanguageManagement.cshtml", "route": "/Owner/LanguageManagement", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostSaveSettingsAsync", "OnPostAddOverrideAsync", "OnPostDeleteOverrideAsync", "OnPostBulkSaveDraftsAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["ILanguageManagementService", "ICompanyLocalizationService", "IOwnerCompanySelectorService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": ["/Owner/LanguageEditMode"] }, "findings": [ "IgnoreAntiforgeryToken for JSON POST from JavaScript (bulk save drafts)", "Bulk save drafts API for in-app edit mode", "Company-scoped translation overrides" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 91, "path": "Pages/Owner/LockedUsers.cshtml", "route": "/Owner/LockedUsers", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostUnlockAsync", "OnPostClearSignupRateLimitsAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IRateLimitingService", "AppDbContext"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/Index"], "outbound": [] }, "findings": [ "Shows both actively locked AND recently locked (within 1 hour, expired) users", "Enriches with source IP from audit logs (most recent LoginFailed per user)", "Rate-limited signups section uses IRateLimitingService.GetActiveEntries()" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 92, "path": "Pages/Owner/MasterPrograms.cshtml", "route": "/Owner/MasterPrograms", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["ManagerHomeAccess"], "scopeMode": "tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostDeleteAsync", "OnPostGenerateAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IMasterProgramService", "IShiftProgramService", "IAuditLogService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "MasterProgram wraps multiple Programs for batch application", "Generation modal with date range and overwrite option", "Audit logging for all CRUD operations" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 93, "path": "Pages/Owner/Permissions.cshtml", "route": "/Owner/Permissions", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": ["/Admin/Organization/Grants", "/Admin/Organization/Grants/Assign", "/Admin/Organization/Roles"] }, "findings": [ "Read-only dashboard with grant type breakdown (top 10 by count)", "Two separate DB queries joined in-memory for EF Core compatibility", "Recent grants show auto vs manual badge, grantor name, date" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 94, "path": "Pages/Owner/Programs.cshtml", "route": "/Owner/Programs", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["ManagerHomeAccess"], "scopeMode": "tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateProgramAsync", "OnPostUpdateProgramAsync", "OnPostDeleteProgramAsync", "OnPostGenerateInstancesAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["IShiftProgramService", "IAuditLogService", "ITenantResolver"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Per-day staffing overrides submitted as JSON string, parsed server-side", "Date range validation caps generation at 365 days", "Audit log service injected but CRUD uses logger only — missing explicit audit writes" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 95, "path": "Pages/Owner/SelectCompany.cshtml", "route": "/Owner/SelectCompany", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "none" }, "handlers": { "get": ["OnGet"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "none", "keyCount": 0 }, "dependencies": { "services": ["IOwnerCompanySelectorService", "IAuditLogService", "IRateLimitingService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Owner pages"], "outbound": ["/Owner/Index"] }, "findings": [ "D-03 fix: GET removed for CSRF prevention — company switching is POST-only", "Rate limiting: 10 switches per 15 minutes per user", "Url.IsLocalUrl() validation on returnUrl to prevent open redirect" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 96, "path": "Pages/Owner/SystemHealth.cshtml", "route": "/Owner/SystemHealth", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["IFeatureFlagService", "IConfiguration", "IWebHostEnvironment", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index", "/Home/Index"], "outbound": [] }, "findings": [ "Checks if owner uses default password admin123 via PasswordHasher.Verify()", "Checks if public signup is enabled (security warning)", "Memory threshold 500MB, disk space 100MB, error threshold >10" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 97, "path": "Pages/Owner/Telemetry.cshtml", "route": "/Owner/Telemetry", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:SystemConfiguration\")]", "grantChecks": ["SystemConfiguration"], "scopeMode": "system" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCleanupAsync"], "other": [] }, "localization": { "pattern": "code-behind", "keyCount": 20 }, "dependencies": { "services": ["IClientTelemetryService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": [] }, "findings": [ "Lazy tab loading: only queries data for active tab", "Web Vitals rating: good (>=75%), needs improvement, poor (>=25%)", "Cleanup reports counts of deleted events, errors, and metrics" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 98, "path": "Pages/Owner/Hub/Index.cshtml", "route": "/Owner/Hub", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 25 }, "dependencies": { "services": ["IRoleService", "ICompanyCacheService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Index"], "outbound": ["/Admin/Organization/Hierarchy", "/Admin/Users", "/Owner/Hub/Grants", "/Owner/Programs", "/Owner/FeatureFlags", "/Admin/Analytics", "/Owner/Hub/SeedData"] }, "findings": [ "7 dashboard cards with 19 quick-link buttons to all Owner pages", "Seed data health determined by orphaned companies check", "Feature flags count queries Configs table for Feature:* keys" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 99, "path": "Pages/Owner/Hub/AuditSearch.cshtml", "route": "/Owner/Hub/AuditSearch", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync", "OnGetExportCsvAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/Index"], "outbound": [] }, "findings": [ "CSV formula injection protection (prefixes =, +, -, @ with single quote)", "Cross-tenant audit log search with full filtering and pagination", "10,000 record export cap with UTF-8 BOM" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 100, "path": "Pages/Owner/Hub/ExportUserData.cshtml", "route": "/Owner/Hub/ExportUserData", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync", "OnGetExportAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/Index"], "outbound": [] }, "findings": [ "GDPR-style user data export as JSON", "Includes all user-related data: profile, assignments, requests, grants", "Cross-tenant export capability" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 101, "path": "Pages/Owner/Hub/Grants.cshtml", "route": "/Owner/Hub/Grants", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostRevokeAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IGrantService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/Index"], "outbound": [] }, "findings": [ "CanGive delegation tracking — shows who can delegate each grant", "Cross-tenant grant management with revoke capability", "Auto-grant protection same as Admin Grants page" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 102, "path": "Pages/Owner/Hub/SeedData.cshtml", "route": "/Owner/Hub/SeedData", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostReseedAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/Index"], "outbound": [] }, "findings": [ "Displays seed data health: entity counts and orphaned records", "Reseed capability for fixing missing/corrupted seed data", "Cross-tenant view of all seeded entities" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 103, "path": "Pages/Owner/Hub/RoleTemplates/Index.cshtml", "route": "/Owner/Hub/RoleTemplates", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IRoleService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/Index"], "outbound": ["/Owner/Hub/RoleTemplates/Create", "/Owner/Hub/RoleTemplates/Edit"] }, "findings": [ "Lists all role templates with assignment counts and grant counts", "System vs Custom badge distinction", "Links to Create and Edit sub-pages" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 104, "path": "Pages/Owner/Hub/RoleTemplates/Create.cshtml", "route": "/Owner/Hub/RoleTemplates/Create", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["IRoleService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/RoleTemplates"], "outbound": ["/Owner/Hub/RoleTemplates"] }, "findings": [ "Creates custom role template with grant selection", "Scope level selection determines which grants are applicable", "Redirects to index on success" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 105, "path": "Pages/Owner/Hub/RoleTemplates/Edit.cshtml", "route": "/Owner/Hub/RoleTemplates/Edit", "section": "Owner", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:AdminAccess\")]", "grantChecks": ["AdminAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["IRoleService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Owner/Hub/RoleTemplates"], "outbound": ["/Owner/Hub/RoleTemplates"] }, "findings": [ "Edits existing role template grants", "Changes cascade to all users with this role via auto-grant system", "System templates may have restrictions on editing" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 106, "path": "Pages/My/Index.cshtml", "route": "/My", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 30 }, "dependencies": { "services": ["AppDbContext", "ILocalizationService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Sidebar"], "outbound": [] }, "findings": [ "Unified timeline of shifts, vacations, on-duty, and chores in configurable date range", "Hardcoded English strings in JS timeline metadata (Day, Days, Hours)", "Returns empty data silently if user/claim invalid — no error page" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 107, "path": "Pages/My/ApiKeys.cshtml", "route": "/My/ApiKeys", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCreateAsync", "OnPostRevokeAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IApiKeyService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/My"], "outbound": [] }, "findings": [ "Feature-flagged: returns NotFound if ApiKeysEnabled is disabled", "API key shown once on creation then never again", "Revoke soft-deletes the key" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": ["ApiKeysEnabled"] },
+  { "id": 108, "path": "Pages/My/Help.cshtml", "route": "/My/Help", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": ["OnGet"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 20 }, "dependencies": { "services": [], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Sidebar"], "outbound": [] }, "findings": [ "Static FAQ page with no data loading", "All content localized via tag helpers", "Collapsible sections for each FAQ topic" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 109, "path": "Pages/My/NotificationCenter.cshtml", "route": "/My/NotificationCenter", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostMarkReadAsync", "OnPostMarkAllReadAsync", "OnPostDeleteAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["INotificationService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Home/Index", "Sidebar"], "outbound": [] }, "findings": [ "Mark individual or all notifications as read", "Delete removes notification permanently", "Notifications scoped to current user only" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 110, "path": "Pages/My/Onboarding.cshtml", "route": "/My/Onboarding", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Auth/Login"], "outbound": ["/"] }, "findings": [ "3-step wizard: welcome, profile setup, completion", "Forced redirect from Login when HasCompletedOnboarding is false", "Sets HasCompletedOnboarding=true on completion" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 111, "path": "Pages/My/Profile.cshtml", "route": "/My/Profile", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync", "OnPostUploadAvatarAsync", "OnPostDeleteAvatarAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IProfileService", "IAvatarService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/", "Sidebar"], "outbound": [] }, "findings": [ "Self-service profile editing: display name, phone, preferred name, city, DOB", "Avatar upload with file size/type validation", "Skills and certifications management" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 112, "path": "Pages/My/Requests.cshtml", "route": "/My/Requests", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostCancelAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Home/Index", "Sidebar"], "outbound": ["/Requests/TimeOff/Create", "/Requests/Swaps/Create"] }, "findings": [ "Shows user's own time-off and swap requests with status", "Cancel pending requests functionality", "Links to create new requests" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 113, "path": "Pages/My/Settings.cshtml", "route": "/My/Settings", "section": "My", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IUserPreferenceService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Sidebar"], "outbound": [] }, "findings": [ "Military rank selection with locale-aware display", "Notification digest preferences (email frequency)", "Subscription toggles for notification types" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 114, "path": "Pages/My/_TimelineItem.cshtml", "route": null, "section": "My", "type": "partial", "auth": { "attribute": "none (partial)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 5 }, "dependencies": { "services": [], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/My"], "outbound": [] }, "findings": [ "Partial view for rendering individual timeline items", "Used by My/Index for timeline rendering", "Handles shift, vacation, chore, and on-duty item types" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 115, "path": "Pages/Director/Index.cshtml", "route": "/Director", "section": "Director", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:DirectorHubAccess\")]", "grantChecks": ["DirectorHubAccess"], "scopeMode": "molecule" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IDirectorService", "IGrantService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Sidebar"], "outbound": ["/Director/CompanyFilter", "/Director/NotificationHub"] }, "findings": [ "Director dashboard with molecule-scoped company overview", "Shows staffing metrics across managed companies", "Links to company filter and notification hub" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 116, "path": "Pages/Director/CompanyFilter.cshtml", "route": "/Director/CompanyFilter", "section": "Director", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:DirectorHubAccess\")]", "grantChecks": ["DirectorHubAccess"], "scopeMode": "molecule" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IDirectorService", "AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Director"], "outbound": [] }, "findings": [ "Filters which companies the director sees in their dashboard", "Company selection persisted in session/cookie", "Molecule-scoped company list" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 117, "path": "Pages/Director/NotificationHub.cshtml", "route": "/Director/NotificationHub", "section": "Director", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:DirectorHubAccess\")]", "grantChecks": ["DirectorHubAccess"], "scopeMode": "molecule" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostMarkReadAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["INotificationService", "IDirectorService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Director"], "outbound": [] }, "findings": [ "Aggregated notifications across managed companies", "Mark read functionality for director-level notifications", "Molecule-scoped notification aggregation" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 118, "path": "Pages/Director/ViewAsMode.cshtml", "route": "/Director/ViewAsMode", "section": "Director", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:DirectorHubAccess\")]", "grantChecks": ["DirectorHubAccess"], "scopeMode": "molecule" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IViewAsModeService", "IDirectorService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Director"], "outbound": [] }, "findings": [ "Impersonation feature: director can view as specific manager", "IViewAsModeService stores the impersonation context", "Security-sensitive: must validate target user is in director's scope" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 119, "path": "Pages/Friends/Index.cshtml", "route": "/Friends", "section": "Friends", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostSendRequestAsync", "OnPostAcceptRequestAsync", "OnPostRejectRequestAsync", "OnPostRemoveFriendAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IFriendshipService", "IFeatureFlagService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Sidebar"], "outbound": [] }, "findings": [ "POST handlers do NOT check FriendshipsEnabled feature flag — only GET does", "friendId in SendRequest is user-supplied with no scope validation", "Search functionality via SearchQuery parameter" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": ["FriendshipsEnabled"] },
+  { "id": 120, "path": "Pages/Game/Leaderboard.cshtml", "route": "/Game/Leaderboard", "section": "Game", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": [], "signalR": null, "apiEndpoints": ["/Api/Game/GetConfiguration", "/Api/Game/GetLeaderboard", "/Api/Game/GetLocalization", "/Api/Game/SaveScore"] }, "navigation": { "inbound": ["Sidebar"], "outbound": [] }, "findings": [ "Company-scoped leaderboard with OPSEC name abbreviation", "Match-3 game with client-side scoring (no server-side anti-cheat)", "All-time and monthly leaderboard views" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 121, "path": "Pages/MyTeam/Index.cshtml", "route": "/MyTeam", "section": "MyTeam", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/", "/Home/Index"], "outbound": [] }, "findings": [ "SPA-like page with mostly client-side rendering", "Empty code-behind — minimal server logic", "Company-scoped team member list" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 122, "path": "Pages/Assignments/Manage.cshtml", "route": "/Assignments/Manage", "section": "Assignments", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["ManagerHomeAccess"], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAssignAsync", "OnPostUnassignAsync", "OnPostSwapAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IShiftAssignmentService", "INotificationService", "IAuditLogService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Table"], "outbound": [] }, "findings": [ "IDOR protections: HIGH-001 validates user belongs to manager's scope, HIGH-002 validates assignment belongs to company", "Creates notifications for assignment changes", "Full audit logging for all assignment mutations" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 123, "path": "Pages/Requests/Index.cshtml", "route": "/Requests", "section": "Requests", "type": "page", "auth": { "attribute": "[Authorize(Policy = \"Grant:ManagerHomeAccess\")]", "grantChecks": ["ManagerHomeAccess"], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostApproveTimeOffAsync", "OnPostRejectTimeOffAsync", "OnPostApproveSwapAsync", "OnPostRejectSwapAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 15 }, "dependencies": { "services": ["IVacationApprovalService", "ISwapService", "INotificationService", "IAuditLogService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Home/Index", "Sidebar"], "outbound": [] }, "findings": [ "WCAG 2.1 accessible tabs for time-off and swap requests", "Transactional swap approval with atomic side-effects", "Company-scoped request management" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 124, "path": "Pages/Requests/Swaps/Create.cshtml", "route": "/Requests/Swaps/Create", "section": "Requests", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["ISwapService", "INotificationService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/My/Requests"], "outbound": ["/My/Requests"] }, "findings": [ "Creates swap request between two shift assignments", "Validates both assignments exist and are swappable", "Notification sent to target user and managers" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 125, "path": "Pages/Requests/TimeOff/Create.cshtml", "route": "/Requests/TimeOff/Create", "section": "Requests", "type": "page", "auth": { "attribute": "[Authorize]", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 12 }, "dependencies": { "services": ["IVacationApprovalService", "INotificationService"], "viewComponents": ["Breadcrumb"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/My/Requests"], "outbound": ["/My/Requests"] }, "findings": [ "Overlap prevention: checks for existing approved/pending time-off in date range", "Auto-approval rules applied if configured", "Notification sent to approvers" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 126, "path": "Pages/Public/Chores.cshtml", "route": "/Public/Chores", "section": "Public", "type": "page", "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IChoreService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Day"], "outbound": [] }, "findings": [ "AllowAnonymous — publicly accessible chore board", "Shift conflict resolution for chore display", "Company-scoped via query parameter" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 127, "path": "Pages/Public/Feedback.cshtml", "route": "/Public/Feedback", "section": "Public", "type": "page", "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": ["OnGetAsync"], "post": ["OnPostAsync"], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Footer link"], "outbound": [] }, "findings": [ "Dual-purpose: employee feedback and owner system feedback", "AllowAnonymous — accessible without authentication", "Simple form submission to database" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 128, "path": "Pages/Public/OnDuty.cshtml", "route": "/Public/OnDuty", "section": "Public", "type": "page", "auth": { "attribute": "[AllowAnonymous]", "grantChecks": [], "scopeMode": "company" }, "handlers": { "get": ["OnGetAsync"], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IOnDutyService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Day"], "outbound": [] }, "findings": [ "AllowAnonymous — publicly accessible on-duty board", "Military rank display with rank abbreviations", "Company-scoped via query parameter" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 129, "path": "Pages/Shared/_Layout.cshtml", "route": null, "section": "Shared", "type": "layout", "auth": { "attribute": "none (layout)", "grantChecks": ["AccessAdminNavigation", "AdminAccess", "DirectorHubAccess", "ViewShifts", "ViewChores", "ViewDuties", "ViewAnalytics", "ViewAuditLog", "ViewAllUsers", "EditCompany", "ViewSettings", "ManageOnDuty", "SystemConfiguration"], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 50 }, "dependencies": { "services": ["IHttpContextAccessor", "IStringLocalizer<SharedResources>", "IViewAsModeService", "IFeatureFlagService"], "viewComponents": ["SystemAlerts", "LanguageEditModeBanner", "ContextSwitcher", "DecisionRibbon", "UnreadNotificationCount", "LanguageToggle", "OnCallWidget"], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["All pages"], "outbound": ["/Home/Index", "/Director/Index", "/Calendar/Shifts", "/Calendar/Month", "/Calendar/Overview", "/Requests/Index", "/Admin/Analytics", "/Admin/AuditLog", "/Admin/Users", "/MyTeam/Index", "/Admin/Companies", "/Admin/Index", "/Admin/Config", "/Admin/DutyRotation", "/Admin/SetupTasks", "/Admin/Settings/ApprovalRules", "/Owner/Index", "/Owner/Telemetry", "/Friends", "/Calendar/Table", "/Public/Chores", "/Calendar/Chores", "/Public/OnDuty", "/Calendar/OnCall", "/My/Profile", "/My/Help", "/My/Settings", "/My/NotificationCenter", "/My/Requests", "/Auth/Logout"] }, "findings": [ "1042-line master layout with sidebar, header, bottom dock, and command palette", "20+ deferred JS files loaded; inline anti-forgery token patching for fetch", "Grant-based navigation branching: admin vs employee sidebar with feature-flag gating" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": ["EnableCompanySwitcher", "ExcelCalendars", "ExcelCalendarShifts", "ExcelCalendarChores", "ExcelCalendarOnCall", "FriendshipsEnabled", "DutyRotationEnabled", "SetupTasksEnabled", "VacationApprovalEnabled", "WidgetsEnabled"] },
+  { "id": 130, "path": "Pages/_ViewImports.cshtml", "route": null, "section": "Shared", "type": "partial", "auth": { "attribute": "none (imports)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "none", "keyCount": 0 }, "dependencies": { "services": [], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["All Razor Pages (implicit)"], "outbound": [] }, "findings": [ "Registers Microsoft + ShiftManager custom tag helpers (<require-grant>, <loc>, <icon>)", "Makes Models and Models.Support namespaces globally available", "5-line file that enables all custom tag helper infrastructure" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 131, "path": "Pages/Shared/_LocalizationScript.cshtml", "route": null, "section": "Shared", "type": "partial", "auth": { "attribute": "none (partial)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "inline", "keyCount": 173 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["_Layout.cshtml"], "outbound": [] }, "findings": [ "Bridges 173 server-side localization keys to window.AppLocalizer JS object", "Categories: shift management, calendar inline edit, command palette, roster dock, radar", "Uses Html.Raw(JsonSerializer.Serialize()) for JSON-safe string escaping" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 132, "path": "Pages/Shared/_ValidationMessage.cshtml", "route": null, "section": "Shared", "type": "partial", "auth": { "attribute": "none (partial)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "none", "keyCount": 0 }, "dependencies": { "services": [], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": [], "outbound": [] }, "findings": [ "Accessible validation error span with aria-live='polite' (B-008 compliance)", "Takes string model for property name, uses asp-validation-for tag helper", "Defined but appears to have no current callers in other .cshtml files" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 133, "path": "Pages/Shared/Components/CalendarSkeleton/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 1 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Table", "/Calendar/Week", "/Calendar/Month", "/Calendar/Day"], "outbound": [] }, "findings": [ "4 sub-partials for month/week/day/table skeleton variants (B-007 compliance)", "Full ARIA status region with role='status', aria-busy, aria-live='polite'", "Visual variety via modular arithmetic on item counts to avoid monotonous patterns" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 134, "path": "Pages/Shared/Components/ContextSwitcher/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": ["DirectorHubAccess"], "scopeMode": "cross-tenant" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 10 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>", "AppDbContext", "ITenantResolver", "IGrantService", "ILogger"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["_Layout.cshtml"], "outbound": ["/Owner/SelectCompany"] }, "findings": [ "4 display states: error, no contexts, single context, multi-context with search", "POST form to /Owner/SelectCompany for CSRF-safe company switching (D-03 compliance)", "IgnoreQueryFilters() for Director company resolution with explicit Where filtering" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": ["EnableCompanySwitcher"] },
+  { "id": 135, "path": "Pages/Shared/Components/ErrorBanner/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 2 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": [], "outbound": [] }, "findings": [ "Persistent page-level error/warning/info banner with dismiss and retry actions", "RetryAction executes arbitrary JS (safe: server-side-only invocation)", "Defined but currently no pages invoke this component directly" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 136, "path": "Pages/Shared/Components/ErrorToast/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 2 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": [], "outbound": [] }, "findings": [ "Transient toast with configurable auto-dismiss delay and fade-out animation", "Uses aria-live='assertive' (interrupts screen reader) vs ErrorBanner's 'polite'", "Defined but no pages currently invoke directly — JS showToast() handles most toasts" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 137, "path": "Pages/Shared/Components/ExcelCalendarTable/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 7 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Shifts", "/Calendar/Chores", "/Calendar/OnCall", "/Calendar/Overview"], "outbound": [] }, "findings": [ "Excel-style grid table with date columns, collapsible groups, and drag-to-reorder", "Hebrew day names hardcoded in view rather than using localization system", "Uses @functions block for inline ExcelCalendarRowViewModel and dynamic partial model" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 138, "path": "Pages/Shared/Components/HierarchyTree/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": ["EditHierarchy", "ReorderHierarchy", "DeleteHierarchy", "CreateHierarchy"], "scopeMode": "cross-tenant" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 30 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>", "AppDbContext", "IGrantService", "ILogger"], "viewComponents": [], "signalR": null, "apiEndpoints": ["/Api/Hierarchy/Rename", "/Api/Hierarchy/Reorder", "/Api/Hierarchy/Create", "/Api/Hierarchy/Delete", "/Api/Hierarchy/Move", "/Api/Hierarchy/MoveTargets"] }, "navigation": { "inbound": ["/Admin/Organization/Index", "/Admin/Organization/Hierarchy"], "outbound": [] }, "findings": [ "Interactive tree with inline edit, context menu, and SortableJS drag-and-drop", "~500 lines of CSS embedded inline in the view instead of external stylesheet", "IgnoreQueryFilters() for full cross-tenant hierarchy load (audited safe on admin pages)" ], "hasCrud": true, "hasRealtime": false, "ignoreQueryFilters": true, "featureFlags": [] },
+  { "id": 139, "path": "Pages/Shared/Components/LanguageToggle/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 1 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>", "ILanguageManagementService", "ITenantResolver"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["_Layout.cshtml", "/Auth/Login"], "outbound": [] }, "findings": [ "Switches language by setting .AspNetCore.Culture cookie and reloading page", "Company-specific language settings with en-US/he-IL fallback", "toggleLanguage() is a global function — not IIFE-wrapped, namespace collision risk" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 140, "path": "Pages/Shared/Components/LoadingSkeleton/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 1 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": [], "outbound": [] }, "findings": [ "Generic skeleton placeholders: text, heading, avatar, button, card, row variants", "Uses Html.Raw() for inline styles from server-side model (safe: no user input)", "Defined but no pages currently invoke this component directly" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 141, "path": "Pages/Shared/Components/LoadingSpinner/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 1 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": [], "outbound": [] }, "findings": [ "Animated spinner with configurable size (small/medium/large) and optional label", "Always provides visually-hidden screen reader text even when ShowLabel is false", "Defined but no pages currently invoke this component directly" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 142, "path": "Pages/Shared/Components/OnCallWidget/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "company" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 5 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>", "IWidgetService", "ITenantResolver"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["_Layout.cshtml (bottom dock)"], "outbound": [] }, "findings": [ "Quick-info contacts: on-call officers, friends, company contacts with tel: links", "Phone numbers rendered with dir='ltr' to prevent RTL digit reversal", "Returns empty content for unauthenticated users (graceful no-op)" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": ["WidgetsEnabled"] },
+  { "id": 143, "path": "Pages/Shared/Components/Pagination/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 8 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Table", "/Owner/Hub/AuditSearch", "/Admin/AuditLog", "/Admin/Users"], "outbound": [] }, "findings": [ "Ellipsis logic: always shows first, last, and current +/- 1 pages (B-009 compliance)", "Preserves existing query string parameters when navigating pages", "Page size change resets to page 1; SVG arrows inline (no icon dependency)" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 144, "path": "Pages/Shared/Components/ScopeSwitcher/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": ["ViewShiftsMolecule", "ViewShiftsArea", "ViewChoresMolecule", "ViewChoresArea"], "scopeMode": "varies" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 6 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>", "AppDbContext", "IGrantService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Month", "/Calendar/Week", "/Calendar/Day", "/Api/ScopeSwitcher"], "outbound": [] }, "findings": [ "Scope resolution priority: URL query > Cookie > Parameter > Default ('company')", "Grant-based scope availability: molecule/area scopes only if user has view grants", "Scope persisted in both localStorage and cookie (30 days, SameSite=Lax)" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 145, "path": "Pages/Shared/Components/ShowMyItemsToggle/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper+inline", "keyCount": 6 }, "dependencies": { "services": ["IStringLocalizer<SharedResources>", "IUserPreferenceService"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["/Calendar/Month", "/Calendar/Week", "/Calendar/Day"], "outbound": [] }, "findings": [ "Toggle for 'Show My Items Only' filtering on calendar views", "State persisted via cookie (30 days, SameSite=Strict) with page reload", "toggleShowMyItems() is a global function — not IIFE-wrapped, namespace collision risk" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 146, "path": "Pages/Shared/Components/UnreadNotificationCount/Default.cshtml", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "user" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "none", "keyCount": 0 }, "dependencies": { "services": ["AppDbContext"], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["_Layout.cshtml (header bar)"], "outbound": [] }, "findings": [ "Uses int.Parse() on NameIdentifier claim instead of int.TryParse() (convention violation)", "Inline styles on badge span instead of CSS classes (maintenance concern)", "Shows count or '99+' if exceeds 99; returns empty on any exception (silent failure)" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] },
+  { "id": 147, "path": "ViewComponents/BreadcrumbViewComponent.cs", "route": null, "section": "Shared", "type": "component", "auth": { "attribute": "none (component)", "grantChecks": [], "scopeMode": "none" }, "handlers": { "get": [], "post": [], "other": [] }, "localization": { "pattern": "tag-helper", "keyCount": 0 }, "dependencies": { "services": [], "viewComponents": [], "signalR": null, "apiEndpoints": [] }, "navigation": { "inbound": ["Most admin, owner, my, and calendar pages"], "outbound": [] }, "findings": [ "Most widely used ViewComponent — referenced by ~60 pages across all sections", "Discovered in audit but full implementation not in batch 7 scope", "Provides hierarchical page breadcrumb navigation" ], "hasCrud": false, "hasRealtime": false, "ignoreQueryFilters": false, "featureFlags": [] }
+]

@@ -797,7 +797,10 @@
                     }
                 </td>
                 <td>@u.Email</td>
-                <td>@u.CompanyName</td>
+                @{
+                    var hasDirTooltip = Model.DirectorCompanyNames.TryGetValue(u.Id, out var dirCompanyNames);
+                }
+                <td title="@(hasDirTooltip ? string.Join(", ", dirCompanyNames!) : "")">@u.CompanyName</td>
                 <td class="editable-cell" data-cell-type="jobtype" data-user-id="@u.Id">
                     <div class="cell-display">
                         <span class="cell-display__value">@(u.JobTypeName ?? "-")</span>

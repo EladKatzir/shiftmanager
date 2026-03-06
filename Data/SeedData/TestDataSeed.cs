@@ -501,8 +501,7 @@ public static class TestDataSeed
         var jobType = await context.JobTypes.FirstOrDefaultAsync(jt => jt.Id == jobTypeId);
         return jobType?.Name switch
         {
-            "Alhut" => "AlhutLead",
-            "Text" => "TextLead",
+            "Alhut" or "Text" => "Lead",
             _ => "BRDirector"
         };
     }
@@ -513,8 +512,7 @@ public static class TestDataSeed
         var jobType = await context.JobTypes.FirstOrDefaultAsync(jt => jt.Id == jobTypeId);
         return jobType?.Name switch
         {
-            "Alhut" => "AlhutDirector",
-            "Text" => "TextDirector",
+            "Alhut" or "Text" => "Director",
             _ => "MoleculeAdmin"
         };
     }

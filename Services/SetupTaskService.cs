@@ -294,8 +294,7 @@ public class SetupTaskService : ISetupTaskService
     {
         return jobTypeName.ToLower() switch
         {
-            "alhut" => SetupTaskType.AssignAlhutDirector,
-            "text" => SetupTaskType.AssignTextDirector,
+            "alhut" or "text" => SetupTaskType.AssignDirector,
             _ => null
         };
     }
@@ -304,8 +303,7 @@ public class SetupTaskService : ISetupTaskService
     {
         return jobTypeName.ToLower() switch
         {
-            "alhut" => SetupTaskType.AssignAlhutLead,
-            "text" => SetupTaskType.AssignTextLead,
+            "alhut" or "text" => SetupTaskType.AssignLead,
             _ => null
         };
     }

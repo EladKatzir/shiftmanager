@@ -146,14 +146,14 @@ public static class QaTestUserSeed
         AddUser(defs, "owner2@test", "Owner 2", UserRole.Owner, "SystemAdmins", null, "Owner", companies, templates, alhut, br, text, hakam);
 
         // --- Directors ---
-        AddUser(defs, "dir.alhut@test", "Dir Alhut", UserRole.Director, "Tzafona", "Alhut", "AlhutDirector", companies, templates, alhut, br, text, hakam);
-        AddUser(defs, "dir.text@test", "Dir Text", UserRole.Director, "Hitazmut", "Text", "TextDirector", companies, templates, alhut, br, text, hakam);
+        AddUser(defs, "dir.alhut@test", "Dir Alhut", UserRole.Director, "Tzafona", "Alhut", "Director", companies, templates, alhut, br, text, hakam);
+        AddUser(defs, "dir.text@test", "Dir Text", UserRole.Director, "Hitazmut", "Text", "Director", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "dir.br@test", "Dir BR", UserRole.Director, "Hir", "BR", "BRDirector", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "dir.hakam@test", "Dir Hakam", UserRole.Director, "Yeadim", "Hakam", "Employee", companies, templates, alhut, br, text, hakam);
 
         // --- Managers / Leads ---
-        AddUser(defs, "mgr.alhut.tz@test", "Mgr Alhut TZ", UserRole.Manager, "Tzafona", "Alhut", "AlhutLead", companies, templates, alhut, br, text, hakam);
-        AddUser(defs, "mgr.text.tz@test", "Mgr Text TZ", UserRole.Manager, "Tzafona", "Text", "TextLead", companies, templates, alhut, br, text, hakam);
+        AddUser(defs, "mgr.alhut.tz@test", "Mgr Alhut TZ", UserRole.Manager, "Tzafona", "Alhut", "Lead", companies, templates, alhut, br, text, hakam);
+        AddUser(defs, "mgr.text.tz@test", "Mgr Text TZ", UserRole.Manager, "Tzafona", "Text", "Lead", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "mgr.br.hir@test", "Mgr BR Hir", UserRole.Manager, "Hir", "BR", "BRDirector", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "mgr.hakam.ella@test", "Mgr Hakam Ella", UserRole.Manager, "Hitazmut", "Hakam", "Employee", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "moladmin.oren@test", "MolAdmin Oren", UserRole.Manager, "Tzafona", "Alhut", "MoleculeAdmin", companies, templates, alhut, br, text, hakam);

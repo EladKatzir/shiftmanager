@@ -190,21 +190,18 @@ public class ChoresModel : PageModel
 
     private async Task LoadAvailableMoleculesAsync(int userId, int userMoleculeId)
     {
-        // Start with user's own molecule
-        var moleculeIds = new HashSet<int> { userMoleculeId };
+        // Use grant-based scope resolution that handles all scope levels
+        // (Project → Area → Molecule → Company → Self)
+        var moleculeIds = new HashSet<int>(
+            await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewChores"));
 
-        // Add molecules from grants (specifically AssignChores or ViewChores grants)
-        var userGrants = await _grantService.GetUserGrantsAsync(userId);
-        foreach (var grant in userGrants)
-        {
-            if (grant.MoleculeId.HasValue &&
-                (grant.GrantType?.Key == "AssignChores" || grant.GrantType?.Key == "ViewChores"))
-            {
-                moleculeIds.Add(grant.MoleculeId.Value);
-            }
-        }
+        // Also include molecules from AssignChores grant
+        foreach (var id in await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "AssignChores"))
+            moleculeIds.Add(id);
 
-        // Load molecules
+        // Always include user's own molecule as fallback
+        moleculeIds.Add(userMoleculeId);
+
         AvailableMolecules = await _db.Molecules
             .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)
             .OrderBy(m => m.DisplayName)

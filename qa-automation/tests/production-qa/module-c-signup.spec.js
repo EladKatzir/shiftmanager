@@ -14,8 +14,8 @@ const EVIDENCE = '03-signup';
 
 /**
  * Helper: fill the signup form through the cascade dropdowns.
- * Selects the first available molecule, waits for the company cascade,
- * then selects the first available company.
+ * New cascade order: Molecule → JobType → Role → Company.
+ * Role selection triggers company loading; Director/AreaAdmin hides company.
  */
 async function fillSignupForm(page, { email, displayName, password }) {
   const emailInput = page.locator('#Email');
@@ -30,30 +30,21 @@ async function fillSignupForm(page, { email, displayName, password }) {
   await nameInput.fill(displayName);
   await passInput.fill(password);
 
-  // Select first molecule (index 1 because index 0 is the placeholder)
+  // Step 1: Select first molecule (index 1 because index 0 is the placeholder)
   const moleculeSelect = page.locator('#MoleculeId');
   await expect(moleculeSelect).toBeVisible({ timeout: 5000 });
   const moleculeOptionCount = await moleculeSelect.locator('option:not([value=""])').count();
   expect(moleculeOptionCount).toBeGreaterThan(0);
   await moleculeSelect.selectOption({ index: 1 });
 
-  // Wait for cascade to populate company dropdown
-  const companySelect = page.locator('#CompanyId');
-  // Wait until the company dropdown is no longer disabled
-  await expect(companySelect).toBeEnabled({ timeout: 10000 });
-
-  const companyOptionCount = await companySelect.locator('option:not([value=""])').count();
-  expect(companyOptionCount).toBeGreaterThan(0);
-  await companySelect.selectOption({ index: 1 });
-
-  // Wait for cascade to populate job type dropdown (loaded when molecule is selected)
+  // Step 2: Wait for job type dropdown to populate (loaded when molecule is selected)
   const jobTypeSelect = page.locator('#JobTypeId');
   await expect(jobTypeSelect).toBeEnabled({ timeout: 10000 });
   const jobTypeOptionCount = await jobTypeSelect.locator('option:not([value=""])').count();
   expect(jobTypeOptionCount).toBeGreaterThan(0);
   await jobTypeSelect.selectOption({ index: 1 });
 
-  // Wait for role templates to load via API (RequestedRole populated dynamically)
+  // Step 3: Wait for role templates to load via API (populated asynchronously on page load)
   const roleSelect = page.locator('#RequestedRole');
   await expect(roleSelect).toBeVisible({ timeout: 5000 });
   // Wait until the API populates real options (replaces the "Loading..." placeholder)
@@ -62,6 +53,18 @@ async function fillSignupForm(page, { email, displayName, password }) {
     return sel && sel.options.length > 0 && sel.options[0].value !== '';
   }, { timeout: 10000 });
   await roleSelect.selectOption({ index: 0 });
+
+  // Step 4: Wait for company dropdown (role change triggers company loading)
+  // Director/AreaAdmin roles hide the company field; for other roles, wait for it
+  const companyField = page.locator('#companyField');
+  const companyVisible = await companyField.isVisible({ timeout: 3000 }).catch(() => false);
+  if (companyVisible) {
+    const companySelect = page.locator('#CompanyId');
+    await expect(companySelect).toBeEnabled({ timeout: 10000 });
+    const companyOptionCount = await companySelect.locator('option:not([value=""])').count();
+    expect(companyOptionCount).toBeGreaterThan(0);
+    await companySelect.selectOption({ index: 1 });
+  }
 }
 
 test.describe('Module C: Signup & Join Requests', () => {

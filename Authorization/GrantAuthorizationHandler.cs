@@ -41,7 +41,8 @@ public class GrantAuthorizationHandler : AuthorizationHandler<GrantRequirement>
             ProjectId: _currentUserService.ProjectId,
             AreaId: _currentUserService.AreaId,
             MoleculeId: _currentUserService.MoleculeId,
-            CompanyId: _currentUserService.CompanyId
+            CompanyId: _currentUserService.CompanyId,
+            JobTypeId: _currentUserService.JobTypeId
         );
 
         var hasGrant = await _grantService.HasGrantAsync(userId, grantKey, scope);

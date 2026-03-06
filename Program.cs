@@ -103,6 +103,14 @@ builder.Services.AddWebOptimizer(pipeline =>
     pipeline.MinifyCssFiles("css/**/*.css");
 });
 
+// Configure HTML encoder to allow Hebrew characters through as UTF-8
+// instead of encoding them as HTML entities (&#x5D0; etc.)
+builder.Services.AddSingleton(
+    System.Text.Encodings.Web.HtmlEncoder.Create(
+        System.Text.Unicode.UnicodeRanges.BasicLatin,
+        System.Text.Unicode.UnicodeRanges.Hebrew,
+        System.Text.Unicode.UnicodeRanges.GeneralPunctuation));
+
 // Configure localization
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -568,6 +576,53 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
+    // PRE-SEED: Rename system templates whose Key changed in seed (e.g., AlhutLead→Lead, AlhutDirector→Director).
+    // Must run BEFORE the key-based upsert below, otherwise the upsert would insert duplicates.
+    {
+        var seedTemplates = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
+        var seedById = seedTemplates.ToDictionary(r => r.Id);
+        var existingSystem = await db.RoleTemplates.Where(r => r.IsSystem).ToListAsync();
+
+        var renameCount = 0;
+        foreach (var existing in existingSystem)
+        {
+            if (!seedById.TryGetValue(existing.Id, out var seed)) continue;
+
+            var changed = false;
+
+            // Rename Key if it differs (e.g., "AlhutLead" → "Lead")
+            if (existing.Key != seed.Key)
+            {
+                logger.LogInformation("Renaming system RoleTemplate ID={Id} Key: {OldKey} → {NewKey}", existing.Id, existing.Key, seed.Key);
+                existing.Key = seed.Key;
+                existing.NameKey = seed.NameKey;
+                existing.DescriptionKey = seed.DescriptionKey;
+                changed = true;
+            }
+
+            // Force-update DisplayName if seed value differs (handles "Alhut SL" → "Squad Leader" etc.)
+            if (!string.IsNullOrEmpty(seed.DisplayNameEN) && existing.DisplayNameEN != seed.DisplayNameEN)
+            {
+                logger.LogInformation("Updating RoleTemplate ID={Id} DisplayNameEN: {Old} → {New}", existing.Id, existing.DisplayNameEN, seed.DisplayNameEN);
+                existing.DisplayNameEN = seed.DisplayNameEN;
+                changed = true;
+            }
+            if (!string.IsNullOrEmpty(seed.DisplayNameHE) && existing.DisplayNameHE != seed.DisplayNameHE)
+            {
+                existing.DisplayNameHE = seed.DisplayNameHE;
+                changed = true;
+            }
+
+            if (changed) renameCount++;
+        }
+
+        if (renameCount > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Pre-seed: renamed/updated {Count} system role templates", renameCount);
+        }
+    }
+
     // H-04: Seed RoleTemplates — upsert-style (insert missing by Key, update existing with missing fields)
     {
         var roleTemplates = ShiftManager.Data.SeedData.RoleTemplateSeed.GetRoleTemplates();
@@ -649,6 +704,120 @@ using (var scope = app.Services.CreateScope())
             db.RoleTemplateGrants.AddRange(newMappings);
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded {MappingCount} new grant mappings", newMappings.Count);
+        }
+    }
+
+    // POST-SEED CLEANUP: Remove orphaned role templates (TextLead, TextDirector) after merge.
+    // These templates were removed from the seed; remap any references to their merged counterparts.
+    // Idempotent — only runs if the orphan keys still exist in the DB.
+    {
+        var orphanMergeMap = new Dictionary<string, string>
+        {
+            { "TextLead", "Lead" },         // TextLead users → Lead
+            { "TextDirector", "Director" }   // TextDirector users → Director
+        };
+
+        var orphanKeys = orphanMergeMap.Keys.ToList();
+        var orphanTemplates = await db.RoleTemplates
+            .Where(r => orphanKeys.Contains(r.Key))
+            .ToListAsync();
+
+        if (orphanTemplates.Any())
+        {
+            // Resolve target template IDs
+            var targetKeys = orphanMergeMap.Values.ToHashSet();
+            var targetTemplates = await db.RoleTemplates
+                .Where(r => targetKeys.Contains(r.Key))
+                .ToDictionaryAsync(r => r.Key, r => r.Id);
+
+            foreach (var orphan in orphanTemplates)
+            {
+                var targetKey = orphanMergeMap[orphan.Key];
+                if (!targetTemplates.TryGetValue(targetKey, out var targetId))
+                {
+                    logger.LogWarning("Cannot clean up orphan template {Key} (ID={Id}): target template {TargetKey} not found",
+                        orphan.Key, orphan.Id, targetKey);
+                    continue;
+                }
+
+                logger.LogInformation("Merging orphan RoleTemplate {Key} (ID={OldId}) → {TargetKey} (ID={NewId})",
+                    orphan.Key, orphan.Id, targetKey, targetId);
+
+                // Remap AppUser.RoleTemplateId
+                var usersToRemap = await db.Users.IgnoreQueryFilters()
+                    .Where(u => u.RoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                foreach (var user in usersToRemap)
+                    user.RoleTemplateId = targetId;
+                if (usersToRemap.Any())
+                    logger.LogInformation("  Remapped {Count} AppUser.RoleTemplateId from {Old} to {New}", usersToRemap.Count, orphan.Id, targetId);
+
+                // Remap UserRoleAssignment.RoleTemplateId
+                var assignmentsToRemap = await db.UserRoleAssignments.IgnoreQueryFilters()
+                    .Where(a => a.RoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                foreach (var assignment in assignmentsToRemap)
+                    assignment.RoleTemplateId = targetId;
+                if (assignmentsToRemap.Any())
+                    logger.LogInformation("  Remapped {Count} UserRoleAssignment.RoleTemplateId from {Old} to {New}", assignmentsToRemap.Count, orphan.Id, targetId);
+
+                // Remap UserJoinRequest.RequestedRoleTemplateId
+                var requestsToRemap = await db.UserJoinRequests.IgnoreQueryFilters()
+                    .Where(r => r.RequestedRoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                foreach (var request in requestsToRemap)
+                    request.RequestedRoleTemplateId = targetId;
+                if (requestsToRemap.Any())
+                    logger.LogInformation("  Remapped {Count} UserJoinRequest.RequestedRoleTemplateId from {Old} to {New}", requestsToRemap.Count, orphan.Id, targetId);
+
+                // Remap GriffinConfig.DefaultProvisionedRoleTemplateId
+                var configsToRemap = await db.GriffinConfigs.IgnoreQueryFilters()
+                    .Where(c => c.DefaultProvisionedRoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                foreach (var config in configsToRemap)
+                    config.DefaultProvisionedRoleTemplateId = targetId;
+                if (configsToRemap.Any())
+                    logger.LogInformation("  Remapped {Count} GriffinConfig.DefaultProvisionedRoleTemplateId from {Old} to {New}", configsToRemap.Count, orphan.Id, targetId);
+
+                // Null out RoleAssignmentAudit references (FK with Restrict delete — would block removal)
+                var auditsFrom = await db.RoleAssignmentAudits.IgnoreQueryFilters()
+                    .Where(a => a.FromRoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                foreach (var audit in auditsFrom)
+                    audit.FromRoleTemplateId = targetId;
+
+                var auditsTo = await db.RoleAssignmentAudits.IgnoreQueryFilters()
+                    .Where(a => a.ToRoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                foreach (var audit in auditsTo)
+                    audit.ToRoleTemplateId = targetId;
+
+                var auditCount = auditsFrom.Count + auditsTo.Count;
+                if (auditCount > 0)
+                    logger.LogInformation("  Remapped {Count} RoleAssignmentAudit references from {Old} to {New}", auditCount, orphan.Id, targetId);
+
+                // Delete RoleTemplateGrants for the orphan
+                var orphanGrants = await db.RoleTemplateGrants
+                    .Where(g => g.RoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                db.RoleTemplateGrants.RemoveRange(orphanGrants);
+                if (orphanGrants.Any())
+                    logger.LogInformation("  Deleted {Count} RoleTemplateGrants for orphan template {Key}", orphanGrants.Count, orphan.Key);
+
+                // Delete RoleTemplateJobTypeLabels for the orphan
+                var orphanLabels = await db.RoleTemplateJobTypeLabels
+                    .Where(l => l.RoleTemplateId == orphan.Id)
+                    .ToListAsync();
+                db.RoleTemplateJobTypeLabels.RemoveRange(orphanLabels);
+                if (orphanLabels.Any())
+                    logger.LogInformation("  Deleted {Count} RoleTemplateJobTypeLabels for orphan template {Key}", orphanLabels.Count, orphan.Key);
+
+                // Delete the orphan template itself
+                db.RoleTemplates.Remove(orphan);
+            }
+
+            await db.SaveChangesAsync();
+            logger.LogInformation("Orphan role template cleanup complete: processed {Count} templates", orphanTemplates.Count);
         }
     }
 
@@ -1229,13 +1398,14 @@ app.Use(async (context, next) =>
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
     // Content Security Policy — unsafe-inline required for inline event handlers (onclick, onchange, etc.)
+    // TEMPORARY: Relaxed CSP for Figma design capture — REVERT AFTER CAPTURE
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
+        "script-src 'self' 'unsafe-inline' https://*.figma.com https://mcp.figma.com; " +
         "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data:; " +
+        "img-src 'self' data: https://*.figma.com; " +
         "font-src 'self'; " +
-        "connect-src 'self' ws: wss:; " +
+        "connect-src 'self' ws: wss: https://*.figma.com https://mcp.figma.com; " +
         "frame-ancestors 'none'";
 
     // Remove potentially revealing server headers

@@ -243,7 +243,7 @@ public class IndexModel : LocalizedPageModel
 
         _db.Companies.Add(company);
         await _db.SaveChangesAsync();
-        _companyCacheService.InvalidateAll();
+        _companyCacheService.InvalidateCache(company.Id);
         _logger.LogInformation("Company '{Name}' added to molecule {MoleculeId} from hierarchy page", company.Name, ParentMoleculeId);
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyCreated"].Value, company.Name);
@@ -279,7 +279,7 @@ public class IndexModel : LocalizedPageModel
         company.Name = EntityName.Trim();
         company.DisplayName = string.IsNullOrWhiteSpace(EntityDisplayName) ? null : EntityDisplayName.Trim();
         await _db.SaveChangesAsync();
-        _companyCacheService.InvalidateAll();
+        _companyCacheService.InvalidateCache(EntityId);
         _logger.LogInformation("Company {CompanyId} renamed to '{Name}' from hierarchy page", EntityId, company.Name);
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"].Value, company.Name);
@@ -343,7 +343,7 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        _companyCacheService.InvalidateAll();
+        _companyCacheService.InvalidateCache(EntityId);
         _logger.LogInformation("Company {CompanyId} '{Name}' deleted from hierarchy page", EntityId, company.Name);
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyDeleted"].Value, company.Name);

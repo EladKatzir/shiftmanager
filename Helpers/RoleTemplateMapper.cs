@@ -14,7 +14,7 @@ public static class RoleTemplateMapper
     /// <summary>
     /// Maps a UserRole enum value to the corresponding RoleTemplate key.
     /// For Manager and Director roles, uses the jobTypeName to disambiguate
-    /// between job-type-specific templates (e.g., AlhutLead vs BRDirector).
+    /// between job-type-specific templates (e.g., Lead vs BRDirector).
     /// </summary>
     public static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName = null)
     {
@@ -27,14 +27,12 @@ public static class RoleTemplateMapper
             UserRole.Trainee => "Trainee",
             UserRole.Manager => jobTypeName switch
             {
-                "Alhut" => "AlhutLead",
-                "Text" => "TextLead",
+                "Alhut" or "Text" => "Lead",
                 _ => "BRDirector"
             },
             UserRole.Director => jobTypeName switch
             {
-                "Alhut" => "AlhutDirector",
-                "Text" => "TextDirector",
+                "Alhut" or "Text" => "Director",
                 _ => "MoleculeAdmin"
             },
             _ => "Employee"

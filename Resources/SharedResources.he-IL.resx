@@ -4929,6 +4929,15 @@
   <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
     <value>החלף חברה</value>
   </data>
+  <data name="ContextSwitcher_MoleculeLabel" xml:space="preserve">
+    <value>צופה במולקולה</value>
+  </data>
+  <data name="ContextSwitcher_SwitchMolecule" xml:space="preserve">
+    <value>החלף מולקולה</value>
+  </data>
+  <data name="Users_DirectorMoleculeScope" xml:space="preserve">
+    <value>{0} ({1} פלוגות)</value>
+  </data>
   <data name="ContextSwitcher_NoResults" xml:space="preserve">
     <value>לא נמצאו חברות תואמות</value>
   </data>
@@ -6189,6 +6198,18 @@
   <data name="Role_AlhutLead_Desc" xml:space="preserve">
     <value>מנהל משמרות אלחוט בחברה אחת</value>
   </data>
+  <data name="Role_Lead" xml:space="preserve">
+    <value>מפ"צ</value>
+  </data>
+  <data name="Role_Lead_Desc" xml:space="preserve">
+    <value>מנהל משמרות עבור סוג התפקיד שלו בתוך פלוגה</value>
+  </data>
+  <data name="Role_PlatoonLeader" xml:space="preserve">
+    <value>מ"מ</value>
+  </data>
+  <data name="Role_PlatoonLeader_Desc" xml:space="preserve">
+    <value>מנהל משמרות עבור סוג התפקיד שלו בכל הפלוגות במולקולה</value>
+  </data>
   <data name="Role_TextLead" xml:space="preserve">
     <value>מפקד צוות טקסט</value>
   </data>
@@ -6790,6 +6811,15 @@
   </data>
   <data name="Error_LoadingData" xml:space="preserve">
     <value>שגיאה בטעינת נתונים</value>
+  </data>
+  <data name="Auth_StepUnit" xml:space="preserve">
+    <value>יחידה</value>
+  </data>
+  <data name="Auth_ChooseRoleFirst" xml:space="preserve">
+    <value>בחר תפקיד קודם</value>
+  </data>
+  <data name="Auth_SelectRole" xml:space="preserve">
+    <value>בחר תפקיד...</value>
   </data>
 
   <!-- A-015: Miscellaneous -->

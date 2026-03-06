@@ -2446,14 +2446,13 @@ public class TableModel : PageModel
 
     private async Task LoadAvailableMoleculesAsync(int userId, int userMoleculeId)
     {
-        var moleculeIds = new HashSet<int> { userMoleculeId };
+        // Use grant-based scope resolution that handles all scope levels
+        // (Project → Area → Molecule → Company → Self)
+        var moleculeIds = new HashSet<int>(
+            await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewShifts"));
 
-        var userGrants = await _grantService.GetUserGrantsAsync(userId);
-        foreach (var grant in userGrants)
-        {
-            if (grant.MoleculeId.HasValue)
-                moleculeIds.Add(grant.MoleculeId.Value);
-        }
+        // Always include user's own molecule as fallback
+        moleculeIds.Add(userMoleculeId);
 
         AvailableMolecules = await _db.Molecules
             .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)

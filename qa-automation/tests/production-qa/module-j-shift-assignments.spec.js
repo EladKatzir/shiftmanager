@@ -325,9 +325,9 @@ test.describe('Module J: Shift Assignment Lifecycle', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // J-12: Manager (AlhutLead) can access shifts calendar
+  // J-12: Manager (Lead/Alhut) can access shifts calendar
   // ---------------------------------------------------------------------------
-  test('J-12: AlhutLead manager can access shifts calendar', async ({ page }) => {
+  test('J-12: Lead (Alhut) manager can access shifts calendar', async ({ page }) => {
     await logout(page);
     await login(page, 'mgr.alhut.tz@test', TEST_PASSWORD);
 
@@ -345,9 +345,9 @@ test.describe('Module J: Shift Assignment Lifecycle', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // J-13: TextLead manager can access shifts calendar
+  // J-13: Lead (Text) manager can access shifts calendar
   // ---------------------------------------------------------------------------
-  test('J-13: TextLead manager can access shifts calendar', async ({ page }) => {
+  test('J-13: Lead (Text) manager can access shifts calendar', async ({ page }) => {
     await logout(page);
     await login(page, 'mgr.text.tz@test', TEST_PASSWORD);
 

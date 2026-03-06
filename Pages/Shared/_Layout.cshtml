@@ -86,11 +86,17 @@
                     // Store token globally for explicit use
                     window.__RequestVerificationToken = token;
 
-                    // Intercept all fetch requests to add token
+                    // Intercept same-origin fetch requests to add token
                     var originalFetch = window.fetch;
                     window.fetch = function(url, options) {
                         options = options || {};
-                        if (options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(options.method.toUpperCase()) !== -1) {
+                        // Only add CSRF token to same-origin requests (skip external URLs like Figma capture)
+                        var isSameOrigin = true;
+                        try {
+                            var reqUrl = new URL(url, window.location.origin);
+                            isSameOrigin = reqUrl.origin === window.location.origin;
+                        } catch(e) { /* relative URLs are same-origin */ }
+                        if (isSameOrigin && options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(options.method.toUpperCase()) !== -1) {
                             options.headers = options.headers || {};
                             // Only add if not already present
                             if (!options.headers['RequestVerificationToken'] && !options.headers['X-XSRF-TOKEN']) {
@@ -277,6 +283,8 @@
         }
     })();
     </script>
+    <!-- TEMPORARY: Figma capture script for design export -->
+    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
 </head>
 <body data-role="@role" data-role-template="@roleTemplateKey">
     @* B-02: noscript fallback for JS-disabled browsers - Critical for air-gapped military networks *@

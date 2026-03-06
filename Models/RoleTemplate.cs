@@ -5,7 +5,7 @@ namespace ShiftManager.Models;
 public class RoleTemplate
 {
     public int Id { get; set; }
-    public string Key { get; set; } = string.Empty;  // "BRDirector", "AlhutLead"
+    public string Key { get; set; } = string.Empty;  // "BRDirector", "Lead", "Director"
     public string NameKey { get; set; } = string.Empty;
     public string DescriptionKey { get; set; } = string.Empty;
     public RoleScopeLevel ScopeLevel { get; set; }

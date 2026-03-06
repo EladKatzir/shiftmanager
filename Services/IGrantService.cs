@@ -20,6 +20,7 @@ public interface IGrantService
 
     // Scope resolution - determines which entities a user can access based on their grants
     Task<List<int>> GetAccessibleCompanyIdsForGrantAsync(int userId, string grantKey);
+    Task<List<int>> GetAccessibleMoleculeIdsForGrantAsync(int userId, string grantKey);
     Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId);
 
     // Grant management

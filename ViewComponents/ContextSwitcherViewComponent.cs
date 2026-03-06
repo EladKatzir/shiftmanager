@@ -90,27 +90,26 @@ public class ContextSwitcherViewComponent : ViewComponent
             }
             else if (isDirector)
             {
-                // Resolve director's accessible companies via grant scope (DirectorHubAccess grant
-                // scoped to MoleculeId resolves to all companies in that molecule)
-                var directorCompanyIds = await _grantService
-                    .GetAccessibleCompanyIdsForGrantAsync(userId, "DirectorHubAccess");
+                // Directors switch between molecules (not companies) — shifts are molecule-scoped
+                model.IsMoleculeMode = true;
 
-                // Get the companies with their molecules, excluding HQ placeholders
-                var companies = await _context.Companies
+                var moleculeIds = await _grantService
+                    .GetAccessibleMoleculeIdsForGrantAsync(userId, "DirectorHubAccess");
+
+                // SECURITY-AUDITED: SAFE — scoped by grant resolution; IgnoreQueryFilters needed
+                // because directors manage molecules outside their own tenant (HQ company)
+                var accessibleMolecules = await _context.Molecules
                     .IgnoreQueryFilters()
-                    .Where(c => directorCompanyIds.Contains(c.Id) && !c.IsHeadquarters)
-                    .Include(c => c.Molecule)
-                    .OrderBy(c => c.Name)
+                    .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)
+                    .Include(m => m.Area)
+                    .OrderBy(m => m.Name)
                     .ToListAsync();
 
-                foreach (var company in companies)
+                foreach (var mol in accessibleMolecules)
                 {
                     contexts.Add(CreateContextOption(
-                        company.Id,
-                        company.Name,
-                        "company",
-                        company.Molecule?.Name ?? "",
-                        company.MoleculeId));
+                        mol.Id, mol.Name, "molecule",
+                        mol.Area?.Name ?? "", mol.Id));
                 }
             }
             else
@@ -161,17 +160,33 @@ public class ContextSwitcherViewComponent : ViewComponent
             model.HasManyContexts = contexts.Count >= MANY_CONTEXTS_THRESHOLD;
             model.TotalContextCount = contexts.Count;
 
-            // Get current context from tenant resolver
-            var currentCompanyId = _tenantResolver.GetCurrentTenantId();
-            var currentContext = contexts.FirstOrDefault(c => c.Id == currentCompanyId)
-                ?? contexts.FirstOrDefault();
-
-            // Edge Case: Current context was deleted or became unavailable
-            if (currentCompanyId > 0 && !contexts.Any(c => c.Id == currentCompanyId))
+            // Resolve current context — directors use molecule ID, owners use company ID
+            ContextOption? currentContext;
+            if (model.IsMoleculeMode)
             {
-                model.CurrentContextUnavailable = true;
-                // Fall back to first available context
-                currentContext = contexts.FirstOrDefault();
+                // For directors: match against molecule ID from cookie or MoleculeId claim
+                var currentMoleculeId = _tenantResolver.GetDirectorSelectedMoleculeId() ?? 0;
+                currentContext = contexts.FirstOrDefault(c => c.Id == currentMoleculeId)
+                    ?? contexts.FirstOrDefault();
+
+                if (currentMoleculeId > 0 && !contexts.Any(c => c.Id == currentMoleculeId))
+                {
+                    model.CurrentContextUnavailable = true;
+                    currentContext = contexts.FirstOrDefault();
+                }
+            }
+            else
+            {
+                // For owners: match against company ID from tenant resolver
+                var currentCompanyId = _tenantResolver.GetCurrentTenantId();
+                currentContext = contexts.FirstOrDefault(c => c.Id == currentCompanyId)
+                    ?? contexts.FirstOrDefault();
+
+                if (currentCompanyId > 0 && !contexts.Any(c => c.Id == currentCompanyId))
+                {
+                    model.CurrentContextUnavailable = true;
+                    currentContext = contexts.FirstOrDefault();
+                }
             }
 
             // Group contexts by molecule
@@ -251,6 +266,8 @@ public class ContextSwitcherViewModel
     public bool HasError { get; set; }
     /// <summary>Localized error message to display</summary>
     public string? ErrorMessage { get; set; }
+    /// <summary>True when the switcher operates at molecule level (directors) vs company level (owners)</summary>
+    public bool IsMoleculeMode { get; set; }
 }
 
 public class ContextGroup

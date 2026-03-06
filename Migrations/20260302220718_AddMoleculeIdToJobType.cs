@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -11,10 +11,21 @@ namespace ShiftManager.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
+                name: "DepartmentId",
+                table: "UserJoinRequests",
+                type: "INTEGER",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
                 name: "MoleculeId",
                 table: "JobTypes",
                 type: "INTEGER",
                 nullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserJoinRequests_DepartmentId",
+                table: "UserJoinRequests",
+                column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobTypes_MoleculeId",
@@ -28,6 +39,14 @@ namespace ShiftManager.Migrations
                 principalTable: "Molecules",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_UserJoinRequests_Departments_DepartmentId",
+                table: "UserJoinRequests",
+                column: "DepartmentId",
+                principalTable: "Departments",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
@@ -37,9 +56,21 @@ namespace ShiftManager.Migrations
                 name: "FK_JobTypes_Molecules_MoleculeId",
                 table: "JobTypes");
 
+            migrationBuilder.DropForeignKey(
+                name: "FK_UserJoinRequests_Departments_DepartmentId",
+                table: "UserJoinRequests");
+
+            migrationBuilder.DropIndex(
+                name: "IX_UserJoinRequests_DepartmentId",
+                table: "UserJoinRequests");
+
             migrationBuilder.DropIndex(
                 name: "IX_JobTypes_MoleculeId",
                 table: "JobTypes");
+
+            migrationBuilder.DropColumn(
+                name: "DepartmentId",
+                table: "UserJoinRequests");
 
             migrationBuilder.DropColumn(
                 name: "MoleculeId",

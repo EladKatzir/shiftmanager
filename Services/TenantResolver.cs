@@ -86,4 +86,34 @@ public class TenantResolver : ITenantResolver
         return _tenantIdOverride.HasValue ||
                _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
     }
+
+    private const string DirectorMoleculeCookieName = "director_selected_molecule";
+
+    public int? GetDirectorSelectedMoleculeId()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        var user = httpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            return null;
+
+        // Only relevant for Director/AreaAdmin roles
+        if (!user.IsInRole(nameof(UserRole.Director)) && !user.IsInRole(nameof(UserRole.AreaAdmin)))
+            return null;
+
+        // Priority 1: Cookie (explicitly selected molecule)
+        if (httpContext?.Request.Cookies.TryGetValue(DirectorMoleculeCookieName, out var cookieValue) == true
+            && int.TryParse(cookieValue, out var moleculeId))
+        {
+            return moleculeId;
+        }
+
+        // Priority 2: MoleculeId claim (set at login)
+        var moleculeIdClaim = user.FindFirst("MoleculeId");
+        if (moleculeIdClaim != null && int.TryParse(moleculeIdClaim.Value, out var claimMoleculeId))
+        {
+            return claimMoleculeId;
+        }
+
+        return null;
+    }
 }

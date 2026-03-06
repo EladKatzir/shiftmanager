@@ -318,6 +318,12 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // SelectMolecule API - used by context switcher for director molecule selection
+        if (path.StartsWithSegments("/Api/SelectMolecule", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         // Signup API - used by public signup page for cascading dropdowns (molecule → company → job type)
         if (path.StartsWithSegments("/Api/Signup", StringComparison.OrdinalIgnoreCase))
         {

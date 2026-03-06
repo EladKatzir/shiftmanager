@@ -5432,6 +5432,15 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
     <value>Switch Company</value>
   </data>
+  <data name="ContextSwitcher_MoleculeLabel" xml:space="preserve">
+    <value>Viewing Molecule</value>
+  </data>
+  <data name="ContextSwitcher_SwitchMolecule" xml:space="preserve">
+    <value>Switch Molecule</value>
+  </data>
+  <data name="Users_DirectorMoleculeScope" xml:space="preserve">
+    <value>{0} ({1} companies)</value>
+  </data>
   <data name="ContextSwitcher_NoResults" xml:space="preserve">
     <value>No matching companies found</value>
   </data>
@@ -6701,6 +6710,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Role_AlhutLead_Desc" xml:space="preserve">
     <value>Manages Alhut shifts within a single company</value>
   </data>
+  <data name="Role_Lead" xml:space="preserve">
+    <value>Squad Leader</value>
+  </data>
+  <data name="Role_Lead_Desc" xml:space="preserve">
+    <value>Manages shifts for their job type within a company</value>
+  </data>
+  <data name="Role_PlatoonLeader" xml:space="preserve">
+    <value>Platoon Leader</value>
+  </data>
+  <data name="Role_PlatoonLeader_Desc" xml:space="preserve">
+    <value>Manages shifts for their job type across all companies in the molecule</value>
+  </data>
   <data name="Role_TextLead" xml:space="preserve">
     <value>Text Lead</value>
   </data>
@@ -7302,6 +7323,15 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Error_LoadingData" xml:space="preserve">
     <value>Error loading data</value>
+  </data>
+  <data name="Auth_StepUnit" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="Auth_ChooseRoleFirst" xml:space="preserve">
+    <value>Select a role first</value>
+  </data>
+  <data name="Auth_SelectRole" xml:space="preserve">
+    <value>Select a role...</value>
   </data>
 
   <!-- A-015: Miscellaneous -->

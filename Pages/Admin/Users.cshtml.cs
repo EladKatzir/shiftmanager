@@ -33,6 +33,7 @@ public class UsersModel : LocalizedPageModel
     private readonly IRoleService _roleService;
     private readonly IJobTypeService _jobTypeService;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly ITenantResolver _tenantResolver;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -47,7 +48,8 @@ public class UsersModel : LocalizedPageModel
         IGrantService grantService,
         IRoleService roleService,
         IJobTypeService jobTypeService,
-        IConcurrencyService concurrencyService)
+        IConcurrencyService concurrencyService,
+        ITenantResolver tenantResolver)
         : base(localizer)
     {
         _db = db;
@@ -62,6 +64,7 @@ public class UsersModel : LocalizedPageModel
         _roleService = roleService;
         _jobTypeService = jobTypeService;
         _concurrencyService = concurrencyService;
+        _tenantResolver = tenantResolver;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId);
@@ -80,6 +83,9 @@ public class UsersModel : LocalizedPageModel
     public List<JoinRequestVM> JoinRequests { get; set; } = new();
     public List<Company> AvailableCompanies { get; set; } = new();
     public List<MoleculeOption> AvailableMolecules { get; set; } = new();
+
+    /// <summary>Tooltip data: director user ID → list of managed company names</summary>
+    public Dictionary<int, List<string>> DirectorCompanyNames { get; set; } = new();
     public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
 
     // Pagination properties
@@ -204,38 +210,69 @@ public class UsersModel : LocalizedPageModel
 
         // For directors without ManageJoinRequests grant, fall back to DirectorHubAccess scope
         // which correctly resolves all companies in their molecule
-        if (!accessibleCompanyIds.Any())
+        var isDirectorUser = await _grantService.HasGrantAsync(currentUserId, "DirectorHubAccess");
+        if (!accessibleCompanyIds.Any() && isDirectorUser)
         {
-            var isDirector = await _grantService.HasGrantAsync(currentUserId, "DirectorHubAccess");
-            if (isDirector)
+            accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "DirectorHubAccess");
+        }
+
+        // For directors: also build a list that includes HQ for join request queries.
+        // Tech users' join requests have CompanyId = HQ (see UserJoinRequest.cs:51),
+        // so excluding HQ makes them invisible to directors.
+        var joinRequestCompanyIds = accessibleCompanyIds;
+        if (isDirectorUser && accessibleCompanyIds.Any())
+        {
+            // accessibleCompanyIds may already include HQ; ensure it does for join requests
+            var hqCompanyIds = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => accessibleCompanyIds.Contains(c.Id) && c.IsHeadquarters)
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            if (!hqCompanyIds.Any())
             {
-                accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "DirectorHubAccess");
-                // Exclude HQ companies — directors manage real companies, not HQ placeholders
-                if (accessibleCompanyIds.Any())
+                // HQ wasn't in the grant-resolved list; find HQ for the director's molecule
+                var directorMoleculeId = _tenantResolver.GetDirectorSelectedMoleculeId();
+                if (directorMoleculeId.HasValue)
                 {
-                    var hqIds = await _db.Companies
+                    var hqForMolecule = await _db.Companies
                         .IgnoreQueryFilters()
-                        .Where(c => accessibleCompanyIds.Contains(c.Id) && c.IsHeadquarters)
+                        .Where(c => c.MoleculeId == directorMoleculeId.Value && c.IsHeadquarters)
                         .Select(c => c.Id)
-                        .ToListAsync();
-                    accessibleCompanyIds = accessibleCompanyIds.Where(id => !hqIds.Contains(id)).ToList();
+                        .FirstOrDefaultAsync();
+                    if (hqForMolecule > 0)
+                    {
+                        joinRequestCompanyIds = accessibleCompanyIds.Append(hqForMolecule).ToList();
+                    }
                 }
             }
+            // else: HQ already in list, joinRequestCompanyIds = accessibleCompanyIds (includes HQ)
+
+            // For user display, exclude HQ (directors manage real companies, not HQ placeholders)
+            accessibleCompanyIds = accessibleCompanyIds.Where(id => !hqCompanyIds.Contains(id)).ToList();
         }
 
         // Final fall back to user's own company if still empty
         if (!accessibleCompanyIds.Any())
         {
             accessibleCompanyIds = new List<int> { currentUser.CompanyId };
+            joinRequestCompanyIds = accessibleCompanyIds;
+        }
+
+        // Auto-default molecule filter for directors viewing the page
+        if (isDirectorUser && !UserFilterMoleculeId.HasValue && !IsOwner)
+        {
+            UserFilterMoleculeId = _tenantResolver.GetDirectorSelectedMoleculeId();
         }
 
         // Load join requests with filters and scoping
         // IgnoreQueryFilters: tenant filter would restrict to admin's own company,
-        // but join requests need cross-company visibility scoped by accessibleCompanyIds
+        // but join requests need cross-company visibility scoped by joinRequestCompanyIds
+        // (includes HQ for directors so tech join requests are visible)
         var joinRequestsQuery = _db.UserJoinRequests
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(jr => accessibleCompanyIds.Contains(jr.CompanyId))
+            .Where(jr => joinRequestCompanyIds.Contains(jr.CompanyId))
             .Where(jr => jr.Status == FilterStatus);
 
         if (FilterCompanyId.HasValue)
@@ -429,7 +466,26 @@ public class UsersModel : LocalizedPageModel
                 .ToDictionaryAsync(c => c.Id, c => c.Name)
             : new Dictionary<int, string>();
 
-        // Build user list, handling Directors specially
+        // Pre-load molecule names for directors (resolve via company → molecule)
+        var directorMoleculeLookup = new Dictionary<int, string>();
+        if (directorUserIds.Any())
+        {
+            var directorCompanyIds = userData
+                .Where(u => u.Role == UserRole.Director)
+                .Select(u => u.CompanyId)
+                .Distinct()
+                .ToList();
+
+            directorMoleculeLookup = await _db.Companies
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => directorCompanyIds.Contains(c.Id) && c.MoleculeId.HasValue)
+                .Include(c => c.Molecule)
+                .Where(c => c.Molecule != null)
+                .ToDictionaryAsync(c => c.Id, c => c.Molecule!.Name);
+        }
+
+        // Build user list — directors get a single row with molecule scope display
         var userList = new List<UserVM>();
 
         foreach (var u in userData)
@@ -437,31 +493,41 @@ public class UsersModel : LocalizedPageModel
             if (u.Role == UserRole.Director)
             {
                 var managedCompanyIds = directorCompanyMap.TryGetValue(u.Id, out var ids) ? ids : new List<int>();
+                var companyCount = managedCompanyIds.Count;
 
-                // Create one entry per managed company
-                foreach (var companyId in managedCompanyIds)
-                {
-                    var companyName = managedCompaniesLookup.TryGetValue(companyId, out var name)
-                        ? name
-                        : $"Company #{companyId}";
+                // Resolve molecule name from the director's home company
+                var moleculeName = directorMoleculeLookup.TryGetValue(u.CompanyId, out var molName)
+                    ? molName
+                    : "?";
 
-                    userList.Add(new UserVM(
-                        u.Id,
-                        u.DisplayName,
-                        u.Email,
-                        companyName,
-                        u.Role.ToString(),
-                        u.IsActive,
-                        u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
-                        u.LockoutEnd,
-                        u.JobTypeId,
-                        u.JobType?.DisplayName,
-                        u.JobType?.Name,
-                        u.Department?.DisplayName,
-                        userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
-                        u.RoleTemplateId
-                    ));
-                }
+                // Build display: "אלחוט (3 פלוגות)" with tooltip listing company names
+                var scopeDisplay = string.Format(
+                    _localizer["Users_DirectorMoleculeScope"],
+                    moleculeName,
+                    companyCount);
+
+                // Build tooltip data: list of managed company names
+                var companyNames = managedCompanyIds
+                    .Select(id => managedCompaniesLookup.TryGetValue(id, out var n) ? n : $"#{id}")
+                    .ToList();
+                DirectorCompanyNames[u.Id] = companyNames;
+
+                userList.Add(new UserVM(
+                    u.Id,
+                    u.DisplayName,
+                    u.Email,
+                    scopeDisplay,
+                    u.Role.ToString(),
+                    u.IsActive,
+                    u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTime.UtcNow,
+                    u.LockoutEnd,
+                    u.JobTypeId,
+                    u.JobType?.DisplayName,
+                    u.JobType?.Name,
+                    u.Department?.DisplayName,
+                    userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
+                    u.RoleTemplateId
+                ));
             }
             else
             {
@@ -2115,8 +2181,8 @@ public class UsersModel : LocalizedPageModel
             "BRDirector" => GrantScope.Company(companyId),
             "Employee" => GrantScope.Company(companyId),
 
-            // CompanyJobType-scoped templates (need CompanyId + JobTypeId)
-            "AlhutLead" or "TextLead" => new GrantScope(CompanyId: companyId, JobTypeId: jobTypeId),
+            // Lead — CompanyJobType scope (need CompanyId + JobTypeId)
+            "Lead" => new GrantScope(CompanyId: companyId, JobTypeId: jobTypeId),
 
             // Molecule-scoped templates
             "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
@@ -2128,8 +2194,8 @@ public class UsersModel : LocalizedPageModel
                 ? GrantScope.Area(company.Molecule.Area.Id)
                 : GrantScope.Company(companyId),
 
-            // MoleculeJobType-scoped templates (need MoleculeId + JobTypeId)
-            "AlhutDirector" or "TextDirector" => company.MoleculeId.HasValue
+            // Director — MoleculeJobType scope (need MoleculeId + JobTypeId)
+            "Director" => company.MoleculeId.HasValue
                 ? new GrantScope(MoleculeId: company.MoleculeId.Value, JobTypeId: jobTypeId)
                 : GrantScope.Company(companyId),
 

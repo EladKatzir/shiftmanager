@@ -154,9 +154,11 @@ public class ShiftsModel : PageModel
         // Calculate date range
         CalculateDateRange();
 
-        // Check edit permission
-        CanEdit = await _grantService.HasGrantAsync(currentUserId, "AssignAlhutShifts") ||
-                  await _grantService.HasGrantAsync(currentUserId, "AssignTextShifts");
+        // Check edit permission scoped to the selected molecule and job type
+        CanEdit = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignAlhutShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
+                  await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
+                  await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
+                  await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId);
 
         // Build calendar data based on mode
         if (MoleculeId.HasValue && JobTypeId.HasValue)
@@ -220,20 +222,14 @@ public class ShiftsModel : PageModel
 
     private async Task LoadAvailableMoleculesAsync(int userId, int userMoleculeId)
     {
-        // Start with user's own molecule
-        var moleculeIds = new HashSet<int> { userMoleculeId };
+        // Use grant-based scope resolution that handles all scope levels
+        // (Project → Area → Molecule → Company → Self)
+        var moleculeIds = new HashSet<int>(
+            await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewShifts"));
 
-        // Add molecules from grants
-        var userGrants = await _grantService.GetUserGrantsAsync(userId);
-        foreach (var grant in userGrants)
-        {
-            if (grant.MoleculeId.HasValue)
-            {
-                moleculeIds.Add(grant.MoleculeId.Value);
-            }
-        }
+        // Always include user's own molecule as fallback
+        moleculeIds.Add(userMoleculeId);
 
-        // Load molecules
         AvailableMolecules = await _db.Molecules
             .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)
             .OrderBy(m => m.DisplayName)

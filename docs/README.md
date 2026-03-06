@@ -89,7 +89,7 @@ ShiftManager is an enterprise-grade shift scheduling system designed specificall
 4. Submit time-off requests via Requests → Time Off
 5. Check notifications regularly for shift updates
 
-**See [USAGE_GUIDE.md](USAGE_GUIDE.md) for detailed instructions**
+**See [guides/USAGE_GUIDE.md](guides/USAGE_GUIDE.md) for detailed instructions**
 
 ### For IT Administrators
 
@@ -125,29 +125,58 @@ dotnet run
 # Default login: admin@local / admin123
 ```
 
-**See [project.md](project.md) for complete technical documentation (2100+ lines)**
+**See [reference/project.md](reference/project.md) for complete technical documentation (2100+ lines)**
 
 ---
 
 ## Documentation
 
+### Folder Structure
+
+```
+docs/
+├── README.md              ← You are here
+├── CLAUDE.md              ← Project instructions for Claude Code
+├── inventory/             ← Factual snapshots: features, components, browser support
+├── guides/                ← How-to docs: deployment, customization, testing guides
+├── reference/             ← Stable reference: architecture, API, grants, design decisions
+│   └── genesis/           ← 23-chapter architecture deep-dive (verified accurate)
+├── testing/               ← QA plans, test data, flaky-test policy
+└── archive/               ← Completed plans, historical docs (kept for traceability)
+    ├── plans/             ← 22 completed implementation plans (all implemented)
+    ├── planner/           ← Old UI spec documents
+    ├── audits/            ← Historical audit reports
+    ├── ui-overhaul/       ← UI overhaul completion records
+    └── misc/              ← Superseded/informal docs
+```
+
 ### By Audience
 
 **For End Users:**
-- [USAGE_GUIDE.md](USAGE_GUIDE.md) - Complete user guide with role-based instructions
+- [guides/USAGE_GUIDE.md](guides/USAGE_GUIDE.md) - Complete user guide with role-based instructions
 
 **For IT Administrators & Deployment:**
 - [AIR_GAPPED_DEPLOYMENT_GUIDE.txt](AIR_GAPPED_DEPLOYMENT_GUIDE.txt) - Offline Windows deployment guide
 - [FinalProductPublish/DEPLOYMENT_GUIDE.txt](FinalProductPublish/DEPLOYMENT_GUIDE.txt) - Production deployment manual
 - [FinalProductPublish/README.txt](FinalProductPublish/README.txt) - Deployment package overview
 - [PRE_DEMO_CHECKLIST.txt](PRE_DEMO_CHECKLIST.txt) - Pre-deployment verification procedures
-- [GRIFFIN_OWNER_GUIDE.md](GRIFFIN_OWNER_GUIDE.md) - Complete guide for Griffin ADFS authentication in air-gapped environments
+- [guides/GRIFFIN_OWNER_GUIDE.md](guides/GRIFFIN_OWNER_GUIDE.md) - Griffin ADFS authentication guide
+- [guides/DEPLOYMENT-CHECKLIST.md](guides/DEPLOYMENT-CHECKLIST.md) - Deployment verification checklist
+- [guides/DEPLOYMENT-SOP.md](guides/DEPLOYMENT-SOP.md) - Standard operating procedure
 
 **For Developers:**
-- [project.md](project.md) - Complete technical documentation (architecture, APIs, database schema)
-- [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API reference with 27 endpoints
-- [CUSTOMIZATION_GUIDE.md](CUSTOMIZATION_GUIDE.md) - UI/UX customization instructions
-- [TERMINOLOGY.md](TERMINOLOGY.md) - UI vs. code terminology mapping
+- [reference/project.md](reference/project.md) - Complete technical documentation (architecture, APIs, database schema)
+- [reference/genesis/00-INDEX.md](reference/genesis/00-INDEX.md) - 23-chapter architecture deep-dive (start here)
+- [reference/API_DOCUMENTATION.md](reference/API_DOCUMENTATION.md) - REST API reference
+- [reference/GRANTS-AND-PERMISSIONS-DEEP-DIVE.md](reference/GRANTS-AND-PERMISSIONS-DEEP-DIVE.md) - Grant system reference
+- [guides/CUSTOMIZATION_GUIDE.md](guides/CUSTOMIZATION_GUIDE.md) - UI/UX customization instructions
+- [reference/TERMINOLOGY.md](reference/TERMINOLOGY.md) - UI vs. code terminology mapping
+- [inventory/FEATURE-INVENTORY.md](inventory/FEATURE-INVENTORY.md) - Complete feature checklist
+
+**Testing & QA:**
+- [testing/COMPREHENSIVE-TEST-PLAN.md](testing/COMPREHENSIVE-TEST-PLAN.md) - Full test plan (950 test cases)
+- [testing/TEST-PLAN-REVIEW.md](testing/TEST-PLAN-REVIEW.md) - Critical review with 26 blocking findings
+- [testing/TEST-DATA.md](testing/TEST-DATA.md) - Test user credentials and data strategy
 
 **Reference:**
 - [Build-Release.ps1](Build-Release.ps1) - Automated build pipeline documentation
@@ -351,7 +380,7 @@ Navigate to **http://localhost:5000** and login with:
 - **Service-oriented**: Clean separation of concerns with injectable services
 - **API-first**: 27 REST endpoints for external integrations
 
-**For detailed architecture documentation, see [project.md](project.md)**
+**For detailed architecture documentation, see [reference/project.md](reference/project.md)**
 
 ---
 
@@ -373,7 +402,7 @@ Navigate to **http://localhost:5000** and login with:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=app.db"
+    "Default": "Data Source=app.db"
   }
 }
 ```
@@ -434,12 +463,12 @@ ShiftManager supports authentication via Griffin ADFS for air-gapped military/go
 - Login page shows warning when Griffin is temporarily unavailable
 
 **Documentation:**
-- **[GRIFFIN_OWNER_GUIDE.md](GRIFFIN_OWNER_GUIDE.md)** - Complete owner/admin guide with:
+- **[guides/GRIFFIN_OWNER_GUIDE.md](guides/GRIFFIN_OWNER_GUIDE.md)** - Complete owner/admin guide with:
   - Step-by-step setup for local development and air-gapped environments
   - Authentication flows and user lifecycle management
   - Configuration options and troubleshooting procedures
   - FAQ covering every aspect of Griffin ADFS integration
-- [project.md](project.md) Configuration section - Technical reference
+- [reference/project.md](reference/project.md) Configuration section - Technical reference
 
 ---
 
@@ -500,10 +529,10 @@ ShiftManager supports authentication via Griffin ADFS for air-gapped military/go
 ### Getting Help
 
 **Documentation:**
-- [USAGE_GUIDE.md](USAGE_GUIDE.md) - User guide for all roles
-- [project.md](project.md) - Complete technical documentation
-- [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - API reference
-- [CUSTOMIZATION_GUIDE.md](CUSTOMIZATION_GUIDE.md) - UI customization
+- [guides/USAGE_GUIDE.md](guides/USAGE_GUIDE.md) - User guide for all roles
+- [reference/project.md](reference/project.md) - Complete technical documentation
+- [reference/API_DOCUMENTATION.md](reference/API_DOCUMENTATION.md) - API reference
+- [guides/CUSTOMIZATION_GUIDE.md](guides/CUSTOMIZATION_GUIDE.md) - UI customization
 
 **Deployment Issues:**
 - [AIR_GAPPED_DEPLOYMENT_GUIDE.txt](AIR_GAPPED_DEPLOYMENT_GUIDE.txt) - Offline deployment troubleshooting
@@ -511,7 +540,7 @@ ShiftManager supports authentication via Griffin ADFS for air-gapped military/go
 
 **Reporting Issues:**
 - Check Event Viewer (Windows Logs → Application) for error details
-- Review [TERMINOLOGY.md](TERMINOLOGY.md) for understanding UI vs. code terminology
+- Review [reference/TERMINOLOGY.md](reference/TERMINOLOGY.md) for understanding UI vs. code terminology
 - Provide exact error messages and steps to reproduce
 
 ---

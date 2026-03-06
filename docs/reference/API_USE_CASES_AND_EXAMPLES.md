@@ -8,7 +8,7 @@
 - [Notification APIs](#notification-apis)
 - [Analytics APIs](#analytics-apis)
 - [Audit & Compliance APIs](#audit--compliance-apis)
-- [Webhook APIs](#webhook-apis)
+- [Webhook APIs](#webhook-apis) *(NOT IMPLEMENTED — design only)*
 - [Common Patterns](#common-patterns)
 - [Error Handling](#error-handling)
 
@@ -1020,6 +1020,10 @@ export default TimeOffRequestScreen;
 ---
 
 ## Webhook APIs
+
+> **WARNING: NOT IMPLEMENTED** — The webhook API described below is a design document only.
+> As of March 2026, ShiftManager does **not** have webhook endpoints. Do not rely on these examples.
+> This section is retained for future reference.
 
 ### 7. Register Webhook (POST /api/v1/webhooks)
 

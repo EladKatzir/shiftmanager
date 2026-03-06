@@ -266,6 +266,84 @@ public class GrantService : IGrantService
         return companyIds.ToList();
     }
 
+    public async Task<List<int>> GetAccessibleMoleculeIdsForGrantAsync(int userId, string grantKey)
+    {
+        var grantType = await GetGrantTypeByKeyAsync(grantKey);
+        if (grantType == null)
+            return new List<int>();
+
+        var userContext = await _hierarchyService.GetUserHierarchyContextAsync(userId);
+
+        var grants = await _db.Grants
+            .Where(g => g.UserId == userId && g.GrantTypeId == grantType.Id && g.CanOwn)
+            .ToListAsync();
+
+        if (!grants.Any())
+            return new List<int>();
+
+        var moleculeIds = new HashSet<int>();
+
+        foreach (var grant in grants)
+        {
+            // Project scope - all molecules in project
+            if (grant.ProjectId.HasValue)
+            {
+                // SECURITY-AUDITED: SAFE — scoped by grant's ProjectId; resolves molecules within granted project scope
+                var projectMoleculeIds = await _db.Molecules
+                    .IgnoreQueryFilters()
+                    .Where(m => m.Area!.ProjectId == grant.ProjectId.Value && m.IsActive)
+                    .Select(m => m.Id)
+                    .ToListAsync();
+                foreach (var id in projectMoleculeIds)
+                    moleculeIds.Add(id);
+                continue;
+            }
+
+            // Area scope - all molecules in area
+            if (grant.AreaId.HasValue)
+            {
+                // SECURITY-AUDITED: SAFE — scoped by grant's AreaId; resolves molecules within granted area scope
+                var areaMoleculeIds = await _db.Molecules
+                    .IgnoreQueryFilters()
+                    .Where(m => m.AreaId == grant.AreaId.Value && m.IsActive)
+                    .Select(m => m.Id)
+                    .ToListAsync();
+                foreach (var id in areaMoleculeIds)
+                    moleculeIds.Add(id);
+                continue;
+            }
+
+            // Molecule scope - just that molecule
+            if (grant.MoleculeId.HasValue)
+            {
+                moleculeIds.Add(grant.MoleculeId.Value);
+                continue;
+            }
+
+            // Company scope - that company's molecule
+            if (grant.CompanyId.HasValue)
+            {
+                // SECURITY-AUDITED: SAFE — scoped by grant's CompanyId; resolves to the company's molecule
+                var companyMoleculeId = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.Id == grant.CompanyId.Value && c.MoleculeId.HasValue)
+                    .Select(c => c.MoleculeId!.Value)
+                    .FirstOrDefaultAsync();
+                if (companyMoleculeId > 0)
+                    moleculeIds.Add(companyMoleculeId);
+                continue;
+            }
+
+            // Self scope (no scope defined) - user's own molecule
+            if (userContext?.Path.Molecule != null)
+            {
+                moleculeIds.Add(userContext.Path.Molecule.Id);
+            }
+        }
+
+        return moleculeIds.ToList();
+    }
+
     public async Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId)
     {
         var accessibleCompanyIds = await GetAccessibleCompanyIdsForGrantAsync(userId, grantKey);

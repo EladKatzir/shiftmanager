@@ -28,9 +28,9 @@ const EVIDENCE = '29-grants-roletemplates';
 test.describe('Module AA: Grants & Role Templates (P0)', () => {
 
   // -----------------------------------------------------------------------
-  // AA-09  Seeded templates have correct grants (AlhutLead verification)
+  // AA-09  Seeded templates have correct grants (Lead verification)
   // -----------------------------------------------------------------------
-  test('AA-09: Seeded AlhutLead template has expected grants', async ({ page }) => {
+  test('AA-09: Seeded Lead template has expected grants', async ({ page }) => {
     await loginAsOwner(page);
     await navigateTo(page, '/Owner/Hub/RoleTemplates');
 
@@ -38,12 +38,12 @@ test.describe('Module AA: Grants & Role Templates (P0)', () => {
     const pageHeading = page.locator('h1, h2').first();
     await expect(pageHeading).toBeVisible({ timeout: 10000 });
 
-    // STRICT: Find the AlhutLead row in the template list
-    const alhutLeadLink = page.locator('a:has-text("AlhutLead"), td:has-text("AlhutLead")').first();
-    await expect(alhutLeadLink).toBeVisible({ timeout: 10000 });
+    // STRICT: Find the Lead row in the template list
+    const leadLink = page.locator('a:has-text("Lead"), td:has-text("Lead")').first();
+    await expect(leadLink).toBeVisible({ timeout: 10000 });
 
-    // Navigate to AlhutLead detail/edit page
-    const anyEditLink = page.locator('tr:has-text("AlhutLead") a[href*="Edit"]').first();
+    // Navigate to Lead detail/edit page
+    const anyEditLink = page.locator('tr:has-text("Lead") a[href*="Edit"]').first();
     await expect(anyEditLink).toBeVisible({ timeout: 5000 });
     await anyEditLink.click();
     await page.waitForLoadState('networkidle');
@@ -51,8 +51,8 @@ test.describe('Module AA: Grants & Role Templates (P0)', () => {
     // STRICT: We should be on the edit page
     await expect(page).toHaveURL(/RoleTemplates\/Edit/);
 
-    // STRICT: The page should show this is AlhutLead
-    await assertPageContains(page, 'AlhutLead');
+    // STRICT: The page should show this is Lead
+    await assertPageContains(page, 'Lead');
 
     // STRICT: Switch to Grants tab if present and verify grants are listed.
     // The edit page may show grants inline (no tab) or in a tabbed UI.
@@ -63,7 +63,7 @@ test.describe('Module AA: Grants & Role Templates (P0)', () => {
       await page.waitForTimeout(500);
     }
 
-    // STRICT: AlhutLead should have grants listed on the grants tab.
+    // STRICT: Lead should have grants listed on the grants tab.
     // Tab panel is #tab-grants, grant rows are <tr class="grant-row"> inside #grantsContainer.
     if (grantsTabVisible) {
       await expect(page.locator('#tab-grants')).toBeVisible({ timeout: 3000 });
@@ -78,10 +78,10 @@ test.describe('Module AA: Grants & Role Templates (P0)', () => {
     const headerText = await headerStat.textContent();
     const headerGrantCount = parseInt(headerText.trim());
 
-    // STRICT: AlhutLead must have at least 1 grant (seeded data includes shift grants)
+    // STRICT: Lead must have at least 1 grant (seeded data includes shift grants for both Alhut and Text)
     expect(headerGrantCount).toBeGreaterThanOrEqual(1);
 
-    await saveEvidence(page, EVIDENCE, 'AA-09-alhutlead-grants.png');
+    await saveEvidence(page, EVIDENCE, 'AA-09-lead-grants.png');
   });
 
   // -----------------------------------------------------------------------
@@ -477,8 +477,8 @@ test.describe('Module AA: Role Template CRUD (P1)', () => {
     await loginAsOwner(page);
     await navigateTo(page, '/Owner/Hub/RoleTemplates');
 
-    // Find a template with grants (AlhutLead has seeded grants)
-    const alhutEdit = page.locator('tr:has-text("AlhutLead") a[href*="Edit"]').first();
+    // Find a template with grants (Lead has seeded grants)
+    const alhutEdit = page.locator('tr:has-text("Lead") a[href*="Edit"]').first();
     await expect(alhutEdit).toBeVisible({ timeout: 10000 });
     await alhutEdit.click();
     await page.waitForLoadState('networkidle');
