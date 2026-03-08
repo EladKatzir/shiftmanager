@@ -12851,9 +12851,6 @@
   <data name="NoChoreTypesYet" xml:space="preserve">
     <value>טרם נוצרו סוגי תורנויות</value>
   </data>
-  <data name="NoMoleculesAvailable" xml:space="preserve">
-    <value>אין מולקולות זמינות</value>
-  </data>
   <data name="Placeholder_ChoreTypeName" xml:space="preserve">
     <value>לדוגמה: kitchen_duty</value>
   </data>
