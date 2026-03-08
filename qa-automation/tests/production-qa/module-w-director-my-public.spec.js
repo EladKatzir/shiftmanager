@@ -6,32 +6,32 @@ const EVIDENCE = '23-director-my-public';
 
 test.describe('Module W: Director, My, Public Pages', () => {
 
-  test('W-01: Director hub dashboard renders', async ({ page }) => {
+  test('W-01: Admin hub dashboard renders for director', async ({ page }) => {
     await login(page, 'dir.alhut@test', TEST_PASSWORD);
-    await navigateTo(page, '/Director/Index');
+    await navigateTo(page, '/Admin/Index');
 
     // ASSERT: Page loaded without error (navigateTo checks for 500s)
     const heading = page.locator('main h1, main h2').first();
     await expect(heading).toBeVisible({ timeout: 10000 });
 
-    // ASSERT: Director page has meaningful content (not an error page)
-    await expect(page.locator('main, .page-content, .director-hub').first()).toBeVisible({ timeout: 5000 });
+    // ASSERT: Admin page has meaningful content (not an error page)
+    await expect(page.locator('main, .page-content').first()).toBeVisible({ timeout: 5000 });
 
-    await saveEvidence(page, EVIDENCE, 'W-01-director-hub.png');
+    await saveEvidence(page, EVIDENCE, 'W-01-admin-hub.png');
   });
 
-  test('W-02: Director page has company/filter controls', async ({ page }) => {
+  test('W-02: Admin hub has command center controls for director', async ({ page }) => {
     await login(page, 'dir.alhut@test', TEST_PASSWORD);
-    await navigateTo(page, '/Director/Index');
+    await navigateTo(page, '/Admin/Index');
 
     // ASSERT: Page loaded and has content
     const heading = page.locator('main h1, main h2').first();
     await expect(heading).toBeVisible({ timeout: 10000 });
 
-    // ASSERT: Director page has main content area
-    await expect(page.locator('main, .page-content, .director-hub').first()).toBeVisible({ timeout: 5000 });
+    // ASSERT: Admin page has main content area
+    await expect(page.locator('main, .page-content').first()).toBeVisible({ timeout: 5000 });
 
-    await saveEvidence(page, EVIDENCE, 'W-02-director-filter.png');
+    await saveEvidence(page, EVIDENCE, 'W-02-admin-hub-controls.png');
   });
 
   test('W-03: My Profile page loads with form fields', async ({ page }) => {

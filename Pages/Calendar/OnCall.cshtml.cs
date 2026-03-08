@@ -68,6 +68,7 @@ public class OnCallModel : PageModel
     public Area? SelectedArea { get; set; }
     public List<DutyTypeInfo> DutyTypes { get; set; } = new();
     public int CurrentUserId { get; set; }
+    public List<AppUser> Users { get; set; } = new();
 
     // Navigation
     public DateOnly StartDate { get; set; }
@@ -138,8 +139,9 @@ public class OnCallModel : PageModel
         // Calculate date range
         CalculateDateRange();
 
-        // Check edit permission - using ManageOnDutyTypes grant
-        CanEdit = await _grantService.HasGrantAsync(currentUserId, "ManageOnDutyTypes");
+        // Check edit permission - ManageOnDuty is for assigning on-duty shifts;
+        // ManageOnDutyTypes is for admin configuration of type definitions
+        CanEdit = await _grantService.HasGrantAsync(currentUserId, "ManageOnDuty");
 
         // Build calendar data (duty types as rows, dates as columns)
         await BuildDutyTypeBasedCalendarAsync();
@@ -327,6 +329,24 @@ public class OnCallModel : PageModel
             onDuties = onDuties
                 .Where(o => o.User != null && companyIdsInArea.Contains(o.User.CompanyId))
                 .ToList();
+
+            // Load users for bottom-sheet dropdown
+            Users = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => companyIdsInArea.Contains(u.CompanyId) && u.IsActive)
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new AppUser { Id = u.Id, DisplayName = u.DisplayName, CompanyId = u.CompanyId })
+                .ToListAsync();
+        }
+        else
+        {
+            // No area filter — load all active users for dropdown
+            Users = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsActive)
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new AppUser { Id = u.Id, DisplayName = u.DisplayName, CompanyId = u.CompanyId })
+                .ToListAsync();
         }
 
         // If "Just Mine" filter is set, filter by current user

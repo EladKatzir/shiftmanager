@@ -108,25 +108,20 @@ public class BlueprintsModel : PageModel
             var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
             // Validate
-            if (string.IsNullOrWhiteSpace(NewShiftKey))
-            {
-                return RedirectToPage(new { error = "Shift key is required" });
-            }
-
             if (string.IsNullOrWhiteSpace(NewShiftNameEn) || string.IsNullOrWhiteSpace(NewShiftNameHe))
             {
                 return RedirectToPage(new { error = "Both English and Hebrew names are required" });
             }
 
-            // Ensure key is uppercase and doesn't already exist
-            NewShiftKey = NewShiftKey.ToUpperInvariant().Replace(" ", "_");
-            var keyExists = await _db.ShiftTypes.AnyAsync(st =>
-                st.CompanyId == companyId &&
-                st.Key == NewShiftKey);
-
-            if (keyExists)
+            // Auto-generate key from English name: "Night Extra" → "CUSTOM_NIGHT_EXTRA"
+            NewShiftKey = "CUSTOM_" + System.Text.RegularExpressions.Regex.Replace(
+                NewShiftNameEn.Trim(), @"[^a-zA-Z0-9]+", "_").ToUpperInvariant().Trim('_');
+            // Ensure unique key — append numeric suffix if needed
+            var baseKey = NewShiftKey;
+            var suffix = 1;
+            while (await _db.ShiftTypes.AnyAsync(st => st.CompanyId == companyId && st.Key == NewShiftKey))
             {
-                return RedirectToPage(new { error = $"Shift type with key '{NewShiftKey}' already exists" });
+                NewShiftKey = $"{baseKey}_{suffix++}";
             }
 
             // Validate molecule scope: both or neither must be set

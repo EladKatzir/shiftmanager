@@ -62,13 +62,6 @@
         <form method="post" asp-page-handler="CreateShiftType">
             <div class="form-group-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
                 <div class="form-group">
-                    <label asp-for="NewShiftKey"><loc key="Label_ShiftKey">Shift Key</loc></label>
-                    <input type="text" asp-for="NewShiftKey" class="form-control"
-                           placeholder="@Localizer["Blueprints_ShiftKeyPlaceholder"]" required />
-                    <small class="form-text text-muted">@Localizer["Blueprints_ShiftKeyHint"]</small>
-                </div>
-
-                <div class="form-group">
                     <label asp-for="NewShiftNameEn"><loc key="Label_EnglishName">English Name</loc></label>
                     <input type="text" asp-for="NewShiftNameEn" class="form-control"
                            placeholder="@Localizer["Blueprints_EnglishNamePlaceholder"]" required />
@@ -442,12 +435,16 @@
                     console.error('Failed to fetch localization values', err);
                 }
 
-                document.getElementById('editNameModal').style.display = 'block';
+                var m = document.getElementById('editNameModal');
+                m.style.display = 'flex';
+                m.classList.add('is-open');
             });
         });
 
         function closeEditNameModal() {
-            document.getElementById('editNameModal').style.display = 'none';
+            var m = document.getElementById('editNameModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
         }
 
         async function saveShiftName() {
@@ -499,12 +496,16 @@
                 document.getElementById('editStartTime').value = start;
                 document.getElementById('editEndTime').value = end;
 
-                document.getElementById('editTimeModal').style.display = 'block';
+                var m = document.getElementById('editTimeModal');
+                m.style.display = 'flex';
+                m.classList.add('is-open');
             });
         });
 
         function closeEditTimeModal() {
-            document.getElementById('editTimeModal').style.display = 'none';
+            var m = document.getElementById('editTimeModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
         }
 
         async function saveShiftTimes() {
@@ -570,11 +571,15 @@
         // Publish to Molecule
         function showPublishModal(shiftTypeId) {
             document.getElementById('publishShiftId').value = shiftTypeId;
-            document.getElementById('publishModal').style.display = 'flex';
+            var m = document.getElementById('publishModal');
+            m.style.display = 'flex';
+            m.classList.add('is-open');
         }
 
         function closePublishModal() {
-            document.getElementById('publishModal').style.display = 'none';
+            var m = document.getElementById('publishModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
         }
 
         async function publishToMolecule() {
@@ -672,7 +677,8 @@
             document.getElementById('deleteConfirmButton').setAttribute('data-can-submit', 'false');
 
             // Show modal
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
+            modal.classList.add('is-open');
 
             // Focus trap for accessibility
             const closeButton = modal.querySelector('.close-modal');
@@ -777,6 +783,7 @@
 
         function closeDeleteConfirmModal() {
             const modal = document.getElementById('deleteConfirmModal');
+            modal.classList.remove('is-open');
             modal.style.display = 'none';
             modal.setAttribute('data-modal-state', 'hidden');
         }
@@ -784,7 +791,7 @@
         // Keyboard support for accessibility
         document.addEventListener('keydown', function(e) {
             const modal = document.getElementById('deleteConfirmModal');
-            if (modal && modal.style.display === 'block' && e.key === 'Escape') {
+            if (modal && modal.classList.contains('is-open') && e.key === 'Escape') {
                 closeDeleteConfirmModal();
             }
         });
@@ -878,6 +885,23 @@
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transform: none;
+        transition: opacity 0.2s, visibility 0.2s;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        max-width: none;
+        max-height: none;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .modal.is-open {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
     }
 
     .modal-dialog {

@@ -7,7 +7,7 @@ namespace ShiftManager.Services;
 
 public interface IChoreService
 {
-    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null);
+    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null, int? choreTypeId = null);
     Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null);
     Task<(bool Success, string Message)> RestoreChoreAsync(int choreId);
     Task<(bool Success, string Message, Chore? Chore)> ReplaceShiftWithChoreAsync(int shiftAssignmentId, string title, string? notes = null);
@@ -218,7 +218,8 @@ public class ChoreService : IChoreService
         string title,
         string? notes = null,
         bool forceAssign = false,
-        int? moleculeId = null)
+        int? moleculeId = null,
+        int? choreTypeId = null)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -299,6 +300,7 @@ public class ChoreService : IChoreService
                 {
                     CompanyId = assignee.CompanyId,
                     MoleculeId = effectiveMoleculeId,
+                    ChoreTypeId = choreTypeId,
                     UserId = assigneeId,
                     Date = date,
                     Title = title.Trim(),

@@ -1,0 +1,289 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.DutyTypes.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["DutyTypes"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["DutyTypes"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
+
+        .alert-success, .alert-error {
+            padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500;
+        }
+        .alert-success { background: var(--success); color: var(--success-text); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .alert-error { background: var(--danger); color: var(--danger-text); border: 1px solid rgba(244, 67, 54, 0.3); }
+
+        .section-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+        }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text);
+            margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+
+        .info-box { padding: 1rem; background: var(--surface-soft); border-left: 4px solid var(--primary);
+            border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-muted); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 0; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input, .form-select {
+            width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text);
+            background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; transition: all 0.15s ease;
+        }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .form-check { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; }
+        .form-check input[type="checkbox"] { width: 1.125rem; height: 1.125rem; accent-color: var(--primary); cursor: pointer; }
+        .form-check label { font-size: 0.875rem; font-weight: 500; color: var(--text); cursor: pointer; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost { background: transparent; color: var(--text); border-color: transparent; font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost:hover { background: var(--surface-soft); border-color: var(--border); }
+        .btn-sm { font-size: 0.8125rem; padding: 0.375rem 0.75rem; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { padding: 0.875rem; text-align: start; font-size: 0.8125rem; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.025em; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background-color 0.15s ease; }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .data-table td { padding: 1rem 0.875rem; font-size: 0.9375rem; color: var(--text); }
+        .table-actions { display: flex; gap: 0.5rem; white-space: nowrap; }
+
+        .badge {
+            display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
+            font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
+        }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted); }
+        .badge-active { background: var(--success-soft); color: var(--success); }
+        .badge-builtin { background: var(--primary-soft); color: var(--primary); }
+
+        .color-swatch {
+            display: inline-block; width: 20px; height: 20px; border-radius: 4px;
+            border: 1px solid var(--border); vertical-align: middle; margin-right: 0.5rem;
+        }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+
+        .edit-row { display: none; background: var(--surface-soft); }
+        .edit-row.active { display: table-row; }
+        .edit-row td { padding: 1rem 0.875rem; }
+        .edit-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; align-items: end; }
+
+        @@media (max-width: 768px) {
+            .page-title { font-size: 1.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .table-actions { flex-direction: column; }
+            .edit-form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageDutyTypes" /></h1>
+    <p class="page-subtitle">@Localizer["CreateAndManageDutyTypes"]</p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div>
+}
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="CreateNewDutyType" /></h3>
+
+    <div class="info-box">
+        <loc key="DutyTypesAreGlobal" />
+    </div>
+
+    <form method="post" asp-page-handler="Create">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">@Localizer["NameEnglish"] <span class="form-label-required">*</span></label>
+                <input class="form-input" asp-for="NameEn" placeholder="e.g. Officer" maxlength="100" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["NameHebrew"] <span class="form-label-required">*</span></label>
+                <input class="form-input" asp-for="NameHe" placeholder="e.g. קצין" maxlength="100" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["Icon"]</label>
+                <input class="form-input" asp-for="Icon" placeholder="📌" maxlength="10" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">@Localizer["Color"]</label>
+                <input class="form-input" type="color" asp-for="Color" value="#6366f1" />
+            </div>
+            <div class="form-check">
+                <input type="checkbox" asp-for="RequiresOfficerRank" id="createOfficerRank" />
+                <label for="createOfficerRank">@Localizer["RequiresOfficerRank"]</label>
+            </div>
+        </div>
+        <button class="btn btn-primary" type="submit"><loc key="CreateDutyType" /></button>
+    </form>
+</div>
+
+<div class="section-card">
+    <h3 class="section-header"><loc key="AllDutyTypes" /> (@Model.DutyTypes.Count)</h3>
+    @if (Model.DutyTypes.Any())
+    {
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>@Localizer["Icon"]</th>
+                        <th>@Localizer["NameEnglish"]</th>
+                        <th>@Localizer["NameHebrew"]</th>
+                        <th>@Localizer["Color"]</th>
+                        <th>@Localizer["RequiresOfficerRank"]</th>
+                        <th>@Localizer["Status"]</th>
+                        <th>@Localizer["Assignments"]</th>
+                        <th style="width:1%">@Localizer["Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var dt in Model.DutyTypes)
+                {
+                    <tr>
+                        <td style="font-size: 1.5rem;">@dt.Icon</td>
+                        <td><strong>@dt.NameEn</strong></td>
+                        <td>@dt.NameHe</td>
+                        <td>
+                            <span class="color-swatch" style="background-color: @dt.Color;"></span>
+                            <code>@dt.Color</code>
+                        </td>
+                        <td>
+                            @if (dt.RequiresOfficerRank)
+                            {
+                                <span class="badge badge-active">@Localizer["Yes"]</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--text-muted);">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (dt.IsBuiltIn)
+                            {
+                                <span class="badge badge-builtin"><loc key="BuiltIn" /></span>
+                            }
+                            else if (dt.IsActive)
+                            {
+                                <span class="badge badge-active"><loc key="Active" /></span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive"><loc key="Inactive" /></span>
+                            }
+                        </td>
+                        <td>@dt.AssignmentCount</td>
+                        <td>
+                            @if (!dt.IsBuiltIn)
+                            {
+                                <div class="table-actions">
+                                    <button type="button" class="btn btn-ghost" onclick="toggleEditRow(@dt.Id)">
+                                        @Localizer["Edit"]
+                                    </button>
+                                    <form method="post" asp-page-handler="ToggleActive" style="display:inline">
+                                        <input type="hidden" name="id" value="@dt.Id" />
+                                        <button type="submit" class="btn btn-ghost">
+                                            @(dt.IsActive ? Localizer["Deactivate"] : Localizer["Activate"])
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                    @if (!dt.IsBuiltIn)
+                    {
+                        <tr class="edit-row" id="edit-row-@dt.Id">
+                            <td colspan="8">
+                                <form method="post" asp-page-handler="Update">
+                                    <input type="hidden" asp-for="EditId" value="@dt.Id" />
+                                    <div class="edit-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["NameEnglish"] <span class="form-label-required">*</span></label>
+                                            <input class="form-input" name="EditNameEn" value="@dt.NameEn" maxlength="100" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["NameHebrew"] <span class="form-label-required">*</span></label>
+                                            <input class="form-input" name="EditNameHe" value="@dt.NameHe" maxlength="100" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["Icon"]</label>
+                                            <input class="form-input" name="EditIcon" value="@dt.Icon" maxlength="10" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["Color"]</label>
+                                            <input class="form-input" type="color" name="EditColor" value="@dt.Color" />
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" name="EditRequiresOfficerRank" value="true" id="editOfficerRank-@dt.Id"
+                                                   @(dt.RequiresOfficerRank ? "checked" : "") />
+                                            <label for="editOfficerRank-@dt.Id">@Localizer["RequiresOfficerRank"]</label>
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem; align-items: end;">
+                                            <button type="submit" class="btn btn-primary btn-sm">@Localizer["Save"]</button>
+                                            <button type="button" class="btn btn-ghost btn-sm" onclick="toggleEditRow(@dt.Id)">@Localizer["Cancel"]</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="empty-state"><loc key="NoDutyTypesYet" /></p>
+    }
+</div>
+
+@section Scripts {
+    <script>
+    (function() {
+        window.toggleEditRow = function(id) {
+            var row = document.getElementById('edit-row-' + id);
+            if (!row) return;
+            // Close all other edit rows first
+            var allEditRows = document.querySelectorAll('.edit-row.active');
+            allEditRows.forEach(function(r) {
+                if (r.id !== 'edit-row-' + id) {
+                    r.classList.remove('active');
+                }
+            });
+            row.classList.toggle('active');
+        };
+    })();
+    </script>
+}

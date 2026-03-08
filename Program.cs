@@ -260,7 +260,6 @@ builder.Services.AddScoped<IShiftTypeCacheService, ShiftTypeCacheService>();
 builder.Services.AddScoped<IAppConfigCacheService, AppConfigCacheService>();
 builder.Services.AddScoped<ICompanyCacheService, CompanyCacheService>();
 
-builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();

@@ -70,6 +70,7 @@ public class ChoresModel : PageModel
     public Molecule? SelectedMolecule { get; set; }
     public List<ChoreType> ChoreTypes { get; set; } = new();
     public int CurrentUserId { get; set; }
+    public List<AppUser> Users { get; set; } = new();
 
     // Navigation
     public DateOnly StartDate { get; set; }
@@ -212,6 +213,9 @@ public class ChoresModel : PageModel
     {
         // Get all users in companies belonging to this molecule
         var users = await GetUsersForMoleculeAsync(moleculeId);
+
+        // Expose full user list for bottom-sheet dropdown (before JustMine filter)
+        Users = users;
 
         // Filter to just current user if "Just Mine" is enabled
         if (JustMine)

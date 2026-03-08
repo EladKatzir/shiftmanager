@@ -9,7 +9,7 @@ public enum ValidationSeverity { Error, Warning }
 /// <summary>
 /// Category of validation check for UI grouping and override scoping.
 /// </summary>
-public enum ValidationCategory { JobType, ShiftGrouping, WeeklyHours, RestHours, Trainee, Concurrency, TechShift }
+public enum ValidationCategory { JobType, ShiftGrouping, WeeklyHours, RestHours, Trainee, Concurrency, TechShift, Overlap, TimeOff, ChoreConflict, OnDutyConflict }
 
 /// <summary>
 /// A single validation issue found during shift assignment checks.

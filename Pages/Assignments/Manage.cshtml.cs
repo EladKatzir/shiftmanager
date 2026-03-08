@@ -18,7 +18,7 @@ namespace ShiftManager.Pages.Assignments;
 public class ManageModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
-    private readonly IConflictChecker _checker;
+    private readonly IShiftAssignmentService _assignmentService;
     private readonly INotificationService _notificationService;
     private readonly ILogger<ManageModel> _logger;
     private readonly ICompanyContext _companyContext;
@@ -28,11 +28,11 @@ public class ManageModel : LocalizedPageModel
     private readonly IGrantService _grantService;
     private readonly IConcurrencyService _concurrencyService;
 
-    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IConflictChecker checker, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService)
+    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IShiftAssignmentService assignmentService, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService)
         : base(localizer)
     {
         _db = db;
-        _checker = checker;
+        _assignmentService = assignmentService;
         _notificationService = notificationService;
         _logger = logger;
         _companyContext = companyContext;
@@ -208,13 +208,19 @@ public class ManageModel : LocalizedPageModel
             return Page();
         }
 
-        var conflict = await _checker.CanAssignAsync(SelectedUserId.Value, Instance);
-        if (!conflict.Allowed)
+        var validation = await _assignmentService.ValidateShiftAssignmentAsync(SelectedUserId.Value, Instance.Id);
+        if (!validation.CanAssign)
         {
-            _logger.LogWarning("Conflict add user {UserId} to shiftInstance {InstanceId}: {Reasons}",
-                       SelectedUserId, Instance.Id, string.Join("; ", conflict.Reasons));
-            Error = string.Join(" ", conflict.Reasons);
+            _logger.LogWarning("Validation blocked add user {UserId} to shiftInstance {InstanceId}: {Errors}",
+                       SelectedUserId, Instance.Id, string.Join("; ", validation.Errors.Select(e => e.Message)));
+            Error = string.Join(" ", validation.Errors.Select(e => e.Message));
             return Page();
+        }
+        // Show overrideable warnings (for now, log them — UI override flow to be added later)
+        if (validation.Warnings.Count > 0)
+        {
+            _logger.LogInformation("Validation warnings for user {UserId} to shiftInstance {InstanceId}: {Warnings}",
+                       SelectedUserId, Instance.Id, string.Join("; ", validation.Warnings.Select(w => w.Message)));
         }
 
         _db.ShiftAssignments.Add(new ShiftAssignment

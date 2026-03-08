@@ -195,7 +195,7 @@ public class UsersModel : LocalizedPageModel
         // ✅ Grant-based: Determine Owner status via AdminAccess grant
         IsOwner = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
 
-        // Load all companies for Owner user management (exclude HQ — auto-assigned for Directors)
+        // Load companies for user creation form (exclude HQ — auto-assigned for Directors)
         if (IsOwner)
         {
             Companies = await _db.Companies
@@ -203,6 +203,11 @@ public class UsersModel : LocalizedPageModel
                 .Where(c => !c.IsHeadquarters)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
+        }
+        else
+        {
+            // Non-owner admins: populate from their accessible companies (resolved below)
+            // Deferred — will be set after accessibleCompanyIds is determined
         }
 
         // ✅ Grant-based: Determine accessible company IDs via ManageJoinRequests grant scope
@@ -257,6 +262,16 @@ public class UsersModel : LocalizedPageModel
         {
             accessibleCompanyIds = new List<int> { currentUser.CompanyId };
             joinRequestCompanyIds = accessibleCompanyIds;
+        }
+
+        // Populate Companies for non-owner admins (for user creation form)
+        if (!IsOwner && !Companies.Any())
+        {
+            Companies = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => accessibleCompanyIds.Contains(c.Id) && !c.IsHeadquarters)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
         }
 
         // Auto-default molecule filter for directors viewing the page

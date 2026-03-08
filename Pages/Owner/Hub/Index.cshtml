@@ -220,6 +220,34 @@
                 <span class="hub-action-link"><loc key="OwnerHub_ManageSeedData">Manage seed data</loc> &rarr;</span>
             </div>
         </a>
+
+        @* Company Configuration — items moved from Owner sidebar *@
+        <div class="hub-card hub-card-companyconfig">
+            <div class="hub-card-header">
+                <div class="hub-card-icon">&#x2699;</div>
+                <h2><loc key="Owner_Section_CompanyConfig">Company Configuration</loc></h2>
+            </div>
+            <div class="hub-card-actions">
+                @if (Model.DutyRotationEnabled)
+                {
+                    <a href="/Admin/DutyRotation" class="hub-action-link">
+                        <loc key="Section_DutyRotation">Duty Rotations</loc>
+                    </a>
+                }
+                @if (Model.SetupTasksEnabled)
+                {
+                    <a href="/Admin/SetupTasks" class="hub-action-link">
+                        <loc key="Section_SetupTasks">Setup Tasks</loc>
+                    </a>
+                }
+                @if (Model.VacationApprovalEnabled)
+                {
+                    <a href="/Admin/Settings/ApprovalRules" class="hub-action-link">
+                        <loc key="Section_ApprovalRules">Approval Rules</loc>
+                    </a>
+                }
+            </div>
+        </div>
     </div>
 
     @* Quick Links Section *@
@@ -473,6 +501,7 @@
 .hub-card-settings:hover::before { background: #8b5cf6; }
 .hub-card-analytics:hover::before { background: #ec4899; }
 .hub-card-seeddata:hover::before { background: #22c55e; }
+.hub-card-companyconfig:hover::before { background: #14b8a6; }
 
 /* Quick Links Section */
 .hub-quick-links {

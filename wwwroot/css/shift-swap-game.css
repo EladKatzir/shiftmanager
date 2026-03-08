@@ -266,6 +266,62 @@
   }
 }
 
+/* Override blanket prefers-reduced-motion rule from tokens.css (* selector).
+   The game is an opt-in easter egg — users deliberately open it, so they
+   should see the animations. These selectors have higher specificity than
+   the * rule, so our !important wins over their !important. */
+@media (prefers-reduced-motion: reduce) {
+  .shift-swap-modal {
+    transition: opacity 0.3s ease !important;
+  }
+  .shift-swap-content {
+    transition: transform 0.3s ease !important;
+  }
+  .shift-swap-tile {
+    transition: all 0.2s ease !important;
+  }
+  .shift-swap-tile.selected {
+    animation: pulse 1s ease-in-out infinite !important;
+  }
+  .shift-swap-tile.clearing {
+    animation: clearTile 0.3s ease forwards !important;
+  }
+  .shift-swap-tile.super-merge {
+    animation: superMergeClear 1.5s ease forwards !important;
+  }
+  .shift-swap-tile.mega-combo {
+    animation: megaComboClear 2s ease forwards, rainbowPulse 0.5s ease infinite !important;
+  }
+  .shift-swap-tile.hint-highlight {
+    animation: hintPulse 1.5s ease-in-out infinite !important;
+  }
+  .shift-swap-close {
+    transition: all 0.2s ease !important;
+  }
+  .shift-swap-trophy,
+  .shift-swap-hint {
+    transition: all 0.2s ease !important;
+  }
+  .floating-combo-text.show {
+    animation: floatUp 2.5s ease forwards !important;
+  }
+  .roasting-popup {
+    transition: opacity 0.3s ease !important;
+  }
+  .roasting-popup-content {
+    transition: transform 0.3s ease !important;
+  }
+  .roasting-trophy-icon {
+    animation: trophyBounce 0.6s ease !important;
+  }
+  .game-over-popup .game-over-icon {
+    animation: gameOverShake 0.5s ease !important;
+  }
+  .toast {
+    transition: all 0.3s ease !important;
+  }
+}
+
 /* Dark mode specific adjustments */
 [data-theme="dark"] .shift-swap-grid {
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);

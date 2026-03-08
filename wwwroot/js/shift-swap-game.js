@@ -14,12 +14,12 @@
     const BASE_ANIMATION_DURATION = 300;
 
     /**
-     * B-001-EXT: Get animation duration respecting reduced motion preference
+     * Get animation duration for the game.
+     * Always returns full duration — the game is an opt-in easter egg, so CSS
+     * animations are exempted from the blanket reduced-motion rule in tokens.css.
+     * The JS sleep() calls must match the CSS animation durations.
      */
     function getAnimationDuration() {
-        if (window.ReducedMotion && window.ReducedMotion.isEnabled()) {
-            return 50; // Minimal duration for reduced motion (some delay still needed for state changes)
-        }
         return BASE_ANIMATION_DURATION;
     }
 
@@ -165,9 +165,8 @@
         // Don't open if already open
         if (modalElement) return;
 
-        // B-001-EXT: Update animation duration based on reduced motion preference
         ANIMATION_DURATION = getAnimationDuration();
-        console.log('[ShiftSwapGame] Animation duration:', ANIMATION_DURATION, 'ms (reduced motion:', window.ReducedMotion && window.ReducedMotion.isEnabled(), ')');
+        console.log('[ShiftSwapGame] Animation duration:', ANIMATION_DURATION, 'ms');
 
         // Load configuration and localization
         const configLoaded = await loadGameConfiguration();
@@ -434,10 +433,8 @@
         toast.textContent = message;
         document.body.appendChild(toast);
 
-        // B-001-EXT: Check reduced motion preference
-        const reducedMotion = window.ReducedMotion && window.ReducedMotion.isEnabled();
-        const animationDelay = reducedMotion ? 0 : 10;
-        const animationTime = reducedMotion ? 0 : 300;
+        const animationDelay = 10;
+        const animationTime = 300;
 
         setTimeout(() => toast.classList.add('show'), animationDelay);
 

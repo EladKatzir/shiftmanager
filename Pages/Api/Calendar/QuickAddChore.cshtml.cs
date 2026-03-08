@@ -159,7 +159,8 @@ public class QuickAddChoreModel : PageModel
                 title: data.Title,
                 notes: data.Notes,
                 forceAssign: data.ForceAssign,
-                moleculeId: data.MoleculeId);
+                moleculeId: data.MoleculeId,
+                choreTypeId: data.ChoreTypeId);
 
             if (!result.Success)
             {
@@ -267,5 +268,6 @@ public class QuickAddChoreModel : PageModel
         public string? Notes { get; set; }
         public bool ForceAssign { get; set; } = false;
         public int? MoleculeId { get; set; }
+        public int? ChoreTypeId { get; set; }
     }
 }

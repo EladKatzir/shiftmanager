@@ -77,14 +77,19 @@
 
             <div class="form-group">
                 <label>@Localizer["Programs_WeeklyMask"]</label>
-                <div class="weekly-mask-selector">
-                    @foreach (var day in Enum.GetValues<DayOfWeek>())
-                    {
-                        <label class="day-checkbox">
-                            <input type="checkbox" name="SelectedDays" value="@day" />
-                            <span class="day-label">@day.ToString().Substring(0, 3)</span>
-                        </label>
-                    }
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div class="weekly-mask-selector">
+                        @foreach (var day in Enum.GetValues<DayOfWeek>())
+                        {
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="SelectedDays" value="@day" />
+                                <span class="day-label">@day.ToString().Substring(0, 3)</span>
+                            </label>
+                        }
+                    </div>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleAllDays(this)">
+                        <loc key="Programs_SelectAll" />
+                    </button>
                 </div>
             </div>
 
@@ -264,6 +269,13 @@
 
 @section Scripts {
     <script>
+        // Select All / Deselect All days toggle
+        function toggleAllDays(btn) {
+            const checkboxes = document.querySelectorAll('.weekly-mask-selector input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+
         // Collect per-day staffing before form submit
         function collectPerDayStaffing() {
             const perDayData = {};
@@ -286,12 +298,16 @@
                 document.getElementById('generateProgramId').value = programId;
                 document.getElementById('generateProgramName').textContent = '@Localizer["Program_Prefix"].Value.Trim()' + programName;
 
-                document.getElementById('generateModal').style.display = 'block';
+                var modal = document.getElementById('generateModal');
+                modal.style.display = 'flex';
+                modal.classList.add('is-open');
             });
         });
 
         function closeGenerateModal() {
-            document.getElementById('generateModal').style.display = 'none';
+            var modal = document.getElementById('generateModal');
+            modal.classList.remove('is-open');
+            modal.style.display = 'none';
         }
 
         // Modal backdrop click
@@ -321,7 +337,7 @@
     }
 
     .day-checkbox:hover {
-        background: var(--surface-hover);
+        background: var(--surface-soft);
     }
 
     .day-checkbox input[type="checkbox"] {
@@ -419,7 +435,7 @@
     }
 
     .day-inactive {
-        background: var(--surface-hover);
+        background: var(--surface-soft);
         color: var(--text-muted);
     }
 
@@ -453,6 +469,23 @@
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transform: none;
+        transition: opacity 0.2s, visibility 0.2s;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        max-width: none;
+        max-height: none;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .modal.is-open {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
     }
 
     .modal-dialog {

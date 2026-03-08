@@ -771,7 +771,7 @@ public class TableModel : PageModel
                         shiftInstanceId = instance.Id
                     });
                 }
-                return new JsonResult(new { success = false, error = result.ErrorMessage });
+                return new JsonResult(new { success = false, error = result.ErrorMessage, errorKey = result.ErrorKey });
             }
 
             // SECURITY-AUDITED: SAFE — entity lookup by unique ID

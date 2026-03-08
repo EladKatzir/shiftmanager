@@ -280,7 +280,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
 
         // ============================================
-        // LEAD (Template 3) — 43 grants
+        // LEAD (Template 3) — 46 grants
         // Employee base (SAR) + lead-specific grants. Assign shifts at ETM.
         // ============================================
         grants.Add(G(3, 1, SAR));    // ViewShifts
@@ -327,9 +327,13 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
         grants.Add(G(3, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
         grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
+        // Sidebar redesign: monitoring grants (molecule-scoped, own jobtype)
+        grants.Add(G(3, 52, ETM, useOwnJobType: true));   // ViewAnalytics
+        grants.Add(G(3, 53, ETM, useOwnJobType: true));   // ViewReports
+        grants.Add(G(3, 59, ETM, useOwnJobType: true));   // ViewAuditLog
 
         // ============================================
-        // BR DIRECTOR (Template 2) — 50 grants
+        // BR DIRECTOR (Template 2) — 54 grants
         // Employee base (SAR) + BR management. AssignBRShifts + ViewAllShifts at ETM.
         // Dual ApproveVacations: BR + Hakam via TargetJobTypeId sentinels (resolved in Program.cs).
         // ============================================
@@ -384,9 +388,14 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 112, SAR));  // AccessAdminNavigation
         grants.Add(G(2, 114, SAR));  // ManagerHomeAccess
         grants.Add(G(2, 120, SAR));  // ViewSystemAlerts
+        // Sidebar redesign: monitoring + people visibility
+        grants.Add(G(2, 34, SAR));   // ViewAllUsers
+        grants.Add(G(2, 52, SAR));   // ViewAnalytics
+        grants.Add(G(2, 53, SAR));   // ViewReports
+        grants.Add(G(2, 59, SAR));   // ViewAuditLog
 
         // ============================================
-        // DIRECTOR (Template 5) — 52 grants
+        // DIRECTOR (Template 5) — 55 grants
         // All Lead grants widened to ETM + director extras. Self-scoped stay SAR.
         // ============================================
         // Self-scoped (stay SAR)
@@ -444,9 +453,13 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 32, ETM));   // ResetPasswords (BUG 1 fix)
         grants.Add(G(5, 33, ETM));   // AssignJobTypes (BUG 2 fix)
         grants.Add(G(5, 24, ETM, useOwnJobType: true));  // ApproveExtendedLeave (OWN — BUG 3 fix)
+        // Sidebar redesign: monitoring grants (molecule-scoped, own jobtype)
+        grants.Add(G(5, 52, ETM, useOwnJobType: true));   // ViewAnalytics
+        grants.Add(G(5, 53, ETM, useOwnJobType: true));   // ViewReports
+        grants.Add(G(5, 59, ETM, useOwnJobType: true));   // ViewAuditLog
 
         // ============================================
-        // MOLECULE ADMIN (Template 7) — 87 grants
+        // MOLECULE ADMIN (Template 7) — 90 grants
         // All BRDirector grants widened to ETM + admin extras.
         // ApproveVacations ALL (supersedes BR+HAKAM). Added AssignAlhut+Text.
         // ============================================
@@ -540,6 +553,8 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 91, ETM));   // ManageMoviltechBlueprints
         grants.Add(G(7, 92, ETM));   // ManageMoviltechPrograms
         grants.Add(G(7, 124, ETM));  // ManageHierarchy (add/rename/delete companies & departments)
+        // Sidebar redesign: duty rotation management
+        grants.Add(G(7, 122, ETM));  // ManageOnDuty
 
         // ============================================
         // DEPARTMENT LEAD (Template 9) — 44 grants

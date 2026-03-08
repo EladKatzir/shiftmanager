@@ -20,7 +20,7 @@ namespace ShiftManager.Pages.Requests;
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
-    private readonly IConflictChecker _checker;
+    private readonly IShiftAssignmentService _assignmentService;
     private readonly INotificationService _notificationService;
     private readonly ITraineeService _traineeService;
     private readonly ILogger<IndexModel> _logger;
@@ -33,7 +33,7 @@ public class IndexModel : LocalizedPageModel
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        IConflictChecker checker,
+        IShiftAssignmentService assignmentService,
         INotificationService notificationService,
         ITraineeService traineeService,
         ILogger<IndexModel> logger,
@@ -45,7 +45,7 @@ public class IndexModel : LocalizedPageModel
         : base(localizer)
     {
         _db = db;
-        _checker = checker;
+        _assignmentService = assignmentService;
         _notificationService = notificationService;
         _traineeService = traineeService;
         _logger = logger;
@@ -379,10 +379,10 @@ public class IndexModel : LocalizedPageModel
 
         if (!s.ToUserId.HasValue) { s.Status = RequestStatus.Declined; await _concurrencyService.SaveWithConcurrencyHandlingAsync(() => _db.SaveChangesAsync(), "SwapRequest", id); await trx.CommitAsync(); return RedirectToPage(); }
 
-        var conflict = await _checker.CanAssignAsync(s.ToUserId.Value, si);
-        if (!conflict.Allowed)
+        var validation = await _assignmentService.ValidateShiftAssignmentAsync(s.ToUserId.Value, si.Id);
+        if (!validation.CanAssign)
         {
-            Error = _localizer["Error_CannotApproveSwap"] + ": " + string.Join(" ", conflict.Reasons);
+            Error = _localizer["Error_CannotApproveSwap"] + ": " + string.Join(" ", validation.Errors.Select(e => e.Message));
             await trx.RollbackAsync();
             await OnGetAsync();
             return Page();

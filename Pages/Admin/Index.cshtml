@@ -246,6 +246,43 @@
         </div>
     }
 
+    @* Director Tools — Only visible to users with DirectorHubAccess *@
+    @if (Model.IsDirector)
+    {
+        <h2 class="section-title">
+            <span class="section-icon">👔</span>
+            <loc key="Section_DirectorTools">Director Tools</loc>
+        </h2>
+        <div class="admin-tools-grid">
+            <a href="/Director/ViewAsMode" class="admin-tool-card">
+                <div class="tool-icon">👀</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_ViewAsManager">View As Manager</loc></h3>
+                    <p><loc key="Section_ViewAsManagerDesc">Impersonate Manager perspective</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Director/NotificationHub" class="admin-tool-card">
+                <div class="tool-icon">🔔</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_NotificationHub">Notification Hub</loc></h3>
+                    <p><loc key="Section_NotificationHubDesc">Cross-company notifications</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/Director/CompanyFilter" class="admin-tool-card">
+                <div class="tool-icon">🏢</div>
+                <div class="tool-content">
+                    <h3><loc key="Section_CompanyFilter">Company Filter</loc></h3>
+                    <p><loc key="Section_CompanyFilterDesc">Select which companies to manage</loc></p>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+        </div>
+    }
+
     @* Operations Management *@
     <h2 class="section-title">
         <span class="section-icon">📊</span>

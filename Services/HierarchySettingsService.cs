@@ -12,8 +12,8 @@ public class HierarchySettingsService : IHierarchySettingsService
     private readonly ILogger<HierarchySettingsService> _logger;
 
     // Default values if no settings exist
-    private const int DefaultRestHours = 11;
-    private const int DefaultWeeklyCap = 60;
+    private const int DefaultRestHours = 8;
+    private const int DefaultWeeklyCap = 56;
 
     public HierarchySettingsService(AppDbContext db, ILogger<HierarchySettingsService> logger)
     {

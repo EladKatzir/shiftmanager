@@ -23,6 +23,11 @@
 :root {
   /* Backwards compatibility aliases */
   --muted: var(--text-muted);
+  --background: var(--bg);
+  --primary-bg: var(--primary-soft);
+  --surface-hover: var(--surface-soft);
+  --hover-bg: var(--surface-soft);
+  --info-bg: var(--info-soft);
   --surface-elevated: var(--surface);
   --surface-strong: var(--text);
   
@@ -163,7 +168,7 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border
 
 .dropdown .menu a:hover {
   background: var(--primary);
-  color: white;
+  color: var(--primary-contrast);
   text-decoration: none;
 }
 .linklike { background:none; border:none; color:var(--primary); cursor:pointer; font:inherit; }
@@ -2747,6 +2752,9 @@ thead th {
 }
 
 .form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;

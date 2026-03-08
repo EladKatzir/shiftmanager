@@ -156,10 +156,20 @@
             </p>
         </div>
     }
+
+    @* Hidden select for bottom-sheet user dropdown (Strategy 1 in getAvailableUsers) *@
+    <select id="assigneeSelect-chores" data-role="assignee-select" style="display:none">
+        @foreach (var user in Model.Users)
+        {
+            <option value="@user.Id">@user.DisplayName</option>
+        }
+    </select>
+
 </div>
 
 @section Scripts {
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>

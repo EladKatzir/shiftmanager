@@ -62,7 +62,6 @@
       { "path": "/Owner/Blueprints", "name": "Shift Blueprints (Templates)", "policy": "IsManagerOrAdmin", "priority": 1, "testCategory": "scheduling" }
     ],
     "directorHub": [
-      { "path": "/Director/Index", "name": "Director Hub Dashboard", "policy": "IsDirector", "priority": 1, "testCategory": "cross-company" },
       { "path": "/Director/CompanyFilter", "name": "Company Filter", "policy": "IsDirector", "priority": 2, "testCategory": "cross-company" },
       { "path": "/Director/NotificationHub", "name": "Cross-Company Notifications", "policy": "IsDirector", "priority": 2, "testCategory": "notifications" },
       { "path": "/Director/ViewAsMode", "name": "View As Manager Mode", "policy": "IsDirector", "priority": 1, "testCategory": "authorization", "riskLevel": "high" }
@@ -152,7 +151,6 @@
     "priority2_important": {
       "description": "Important features - configuration, cross-company, notifications",
       "routes": [
-        "/Director/Index",
         "/Director/ViewAsMode",
         "/Admin/Config",
         "/Admin/ShiftTypes",

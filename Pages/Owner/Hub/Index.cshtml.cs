@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
 
@@ -19,13 +20,15 @@ public class IndexModel : PageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly IRoleService _roleService;
     private readonly ICompanyCacheService _companyCacheService;
+    private readonly IFeatureFlagService _featureFlagService;
 
-    public IndexModel(AppDbContext db, ILogger<IndexModel> logger, IRoleService roleService, ICompanyCacheService companyCacheService)
+    public IndexModel(AppDbContext db, ILogger<IndexModel> logger, IRoleService roleService, ICompanyCacheService companyCacheService, IFeatureFlagService featureFlagService)
     {
         _db = db;
         _logger = logger;
         _roleService = roleService;
         _companyCacheService = companyCacheService;
+        _featureFlagService = featureFlagService;
     }
 
     // Hierarchy Stats
@@ -61,6 +64,11 @@ public class IndexModel : PageModel
     // Seed Data Stats
     public int TotalSeedEntities { get; set; }
     public bool SeedDataHealthy { get; set; }
+
+    // Feature Flag Properties (for Company Configuration card)
+    public bool DutyRotationEnabled { get; set; }
+    public bool SetupTasksEnabled { get; set; }
+    public bool VacationApprovalEnabled { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -105,6 +113,11 @@ public class IndexModel : PageModel
             var featureFlagCount = await _db.FeatureFlags.CountAsync();
             TotalSeedEntities = grantTypeCount + roleTemplateCount + TotalProjects + featureFlagCount;
             SeedDataHealthy = !await _companyCacheService.HasOrphanedCompaniesAsync();
+
+            // Feature flags for Company Configuration card
+            DutyRotationEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.DutyRotationEnabled);
+            SetupTasksEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.SetupTasksEnabled);
+            VacationApprovalEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.VacationApprovalEnabled);
         }
         catch (Exception ex)
         {

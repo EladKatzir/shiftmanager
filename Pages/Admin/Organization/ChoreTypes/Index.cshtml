@@ -1,0 +1,306 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.ChoreTypes.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["ChoreTypes"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["ChoreTypes"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
+
+        .alert-success, .alert-error {
+            padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500;
+        }
+        .alert-success { background: var(--success); color: var(--success-text); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .alert-error { background: var(--danger); color: var(--danger-text); border: 1px solid rgba(244, 67, 54, 0.3); }
+
+        .section-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+        }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text);
+            margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+
+        .info-box { padding: 1rem; background: var(--surface-soft); border-left: 4px solid var(--primary);
+            border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-muted); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 0; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input, .form-select {
+            width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text);
+            background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; transition: all 0.15s ease;
+        }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost { background: transparent; color: var(--text); border-color: transparent; font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost:hover { background: var(--surface-soft); border-color: var(--border); }
+
+        .molecule-selector { margin-bottom: 2rem; }
+        .molecule-selector .form-group { max-width: 400px; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { padding: 0.875rem; text-align: start; font-size: 0.8125rem; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.025em; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background-color 0.15s ease; }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .data-table td { padding: 1rem 0.875rem; font-size: 0.9375rem; color: var(--text); }
+        .table-actions { display: flex; gap: 0.5rem; white-space: nowrap; }
+
+        .badge {
+            display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
+            font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
+        }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted); }
+        .badge-active { background: var(--success-soft); color: var(--success); }
+
+        .color-swatch {
+            display: inline-block; width: 20px; height: 20px; border-radius: 4px;
+            border: 1px solid var(--border); vertical-align: middle; margin-right: 0.5rem;
+        }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+
+        .edit-row { display: none; }
+        .edit-row.active { display: table-row; }
+        .edit-row td { background: var(--surface-soft); }
+        .edit-form-grid { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; }
+        .edit-form-grid .form-group { margin-bottom: 0; min-width: 140px; }
+        .edit-form-grid .form-input { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+
+        @@media (max-width: 768px) {
+            .page-title { font-size: 1.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .table-actions { flex-direction: column; }
+            .edit-form-grid { flex-direction: column; }
+        }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageChoreTypes" /></h1>
+    <p class="page-subtitle"><loc key="CreateAndManageChoreTypes" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div>
+}
+
+<div class="section-card molecule-selector">
+    <div class="info-box">
+        <loc key="ChoreTypesAreMoleculeScoped" />
+    </div>
+
+    @if (Model.AvailableMolecules.Any())
+    {
+        <form method="get">
+            <div class="form-group">
+                <label class="form-label">@Localizer["SelectMolecule"] <span class="form-label-required">*</span></label>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <select class="form-select" name="MoleculeId" id="moleculeSelector" style="max-width: 350px;">
+                        @foreach (var m in Model.AvailableMolecules)
+                        {
+                            <option value="@m.Id" selected="@(Model.MoleculeId == m.Id)">@m.Name</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-primary">@Localizer["Select"]</button>
+                </div>
+            </div>
+        </form>
+    }
+    else
+    {
+        <p class="empty-state"><loc key="NoMoleculesAvailable" /></p>
+    }
+</div>
+
+@if (Model.MoleculeId.HasValue)
+{
+    <div class="section-card">
+        <h3 class="section-header"><loc key="CreateNewChoreType" /></h3>
+
+        <form method="post" asp-page-handler="Create">
+            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">@Localizer["Name"] <span class="form-label-required">*</span></label>
+                    <input class="form-input" asp-for="ChoreTypeName" placeholder="chore-type-key" required maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["DisplayName"] <span class="form-label-required">*</span></label>
+                    <input class="form-input" asp-for="ChoreTypeDisplayName" placeholder="@Localizer["Placeholder_ChoreTypeName"]" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["Color"]</label>
+                    <input class="form-input" type="color" asp-for="ChoreTypeColor" value="#3b82f6" />
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit"><loc key="CreateChoreType" /></button>
+        </form>
+    </div>
+
+    <div class="section-card">
+        <h3 class="section-header"><loc key="AllChoreTypes" /> (@Model.ChoreTypes.Count)</h3>
+        @if (Model.ChoreTypes.Any())
+        {
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="DisplayName" /></th>
+                            <th><loc key="Name" /></th>
+                            <th><loc key="Color" /></th>
+                            <th><loc key="SortOrder" /></th>
+                            <th><loc key="Chores" /></th>
+                            <th><loc key="Status" /></th>
+                            <th style="width:1%"><loc key="Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var ct in Model.ChoreTypes)
+                    {
+                        <tr id="row-@ct.Id">
+                            <td><strong>@(ct.DisplayName)</strong></td>
+                            <td><small style="color: var(--text-muted);">@(ct.Name)</small></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(ct.Color))
+                                {
+                                    <span class="color-swatch" style="background-color: @ct.Color;"></span>
+                                    <code>@ct.Color</code>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">-</span>
+                                }
+                            </td>
+                            <td>@ct.SortOrder</td>
+                            <td>@ct.ChoreCount</td>
+                            <td>
+                                @if (ct.IsActive)
+                                {
+                                    <span class="badge badge-active"><loc key="Active" /></span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-inactive"><loc key="Inactive" /></span>
+                                }
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn btn-ghost js-edit-toggle" data-target="edit-@ct.Id">
+                                        @Localizer["Edit"]
+                                    </button>
+                                    @if (ct.IsActive)
+                                    {
+                                        <form method="post" asp-page-handler="Deactivate" style="display:inline">
+                                            <input type="hidden" name="id" value="@ct.Id" />
+                                            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                            <button type="submit" class="btn btn-ghost">@Localizer["Deactivate"]</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="Activate" style="display:inline">
+                                            <input type="hidden" name="id" value="@ct.Id" />
+                                            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                            <button type="submit" class="btn btn-ghost">@Localizer["Activate"]</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="edit-row" id="edit-@ct.Id">
+                            <td colspan="7">
+                                <form method="post" asp-page-handler="Update">
+                                    <input type="hidden" name="EditId" value="@ct.Id" />
+                                    <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                    <div class="edit-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["DisplayName"]</label>
+                                            <input class="form-input" name="EditDisplayName" value="@ct.DisplayName" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["Color"]</label>
+                                            <input class="form-input" type="color" name="EditColor" value="@(ct.Color ?? "#3b82f6")" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["SortOrder"]</label>
+                                            <input class="form-input" type="number" name="EditSortOrder" value="@ct.SortOrder" min="0" />
+                                        </div>
+                                        <div class="form-group" style="align-self: end;">
+                                            <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                                            <button type="button" class="btn btn-ghost js-edit-cancel" data-target="edit-@ct.Id">@Localizer["Cancel"]</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoChoreTypesYet" /></p>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+    (function() {
+        document.addEventListener('click', function(e) {
+            var toggleBtn = e.target.closest('.js-edit-toggle');
+            if (toggleBtn) {
+                var targetId = toggleBtn.getAttribute('data-target');
+                var editRow = document.getElementById(targetId);
+                if (editRow) {
+                    editRow.classList.toggle('active');
+                }
+                return;
+            }
+
+            var cancelBtn = e.target.closest('.js-edit-cancel');
+            if (cancelBtn) {
+                var targetId = cancelBtn.getAttribute('data-target');
+                var editRow = document.getElementById(targetId);
+                if (editRow) {
+                    editRow.classList.remove('active');
+                }
+                return;
+            }
+        });
+    })();
+    </script>
+}

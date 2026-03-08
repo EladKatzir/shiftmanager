@@ -989,18 +989,24 @@
                     }
                 </select>
             </div>
-            @if (Model.IsOwner)
+            @if (Model.Companies.Count > 0)
             {
                 <div class="filter-group" id="addUserCompanyField">
                     <label>@Localizer["Company"]</label>
                     <select asp-for="NewUserCompanyId" class="form-input" required>
-                        <option value="">-- @Localizer["SelectCompany"] --</option>
+                        @if (Model.Companies.Count > 1)
+                        {
+                            <option value="">-- @Localizer["SelectCompany"] --</option>
+                        }
                         @foreach (var company in Model.Companies)
                         {
                             <option value="@company.Id">@company.Name</option>
                         }
                     </select>
                 </div>
+            }
+            @if (Model.IsOwner)
+            {
                 <div class="filter-group" id="addUserMoleculeField" style="display:none;">
                     <label>@Localizer["Molecule"]</label>
                     <select asp-for="NewMoleculeId" class="form-input">

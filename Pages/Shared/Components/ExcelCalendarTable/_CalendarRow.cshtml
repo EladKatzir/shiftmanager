@@ -38,6 +38,14 @@
                 <button type="button" class="excel-calendar__add-btn" aria-label="@Localizer["AddAssignment"]">+</button>
             }
 
+            @if (cell?.Capacity != null && cell?.DefaultCapacity != null)
+            {
+                var isFull = cell.Capacity >= cell.DefaultCapacity;
+                <div class="excel-calendar__capacity-badge @(isFull ? "excel-calendar__capacity-badge--full" : "")">
+                    @cell.Capacity/@cell.DefaultCapacity
+                </div>
+            }
+
             <div class="excel-calendar__cell-content">
                 @if (cell?.Assignments?.Any() == true)
                 {

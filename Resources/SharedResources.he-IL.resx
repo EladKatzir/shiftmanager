@@ -103,7 +103,7 @@
     <value>משמרות הפקה וב"ר</value>
   </data>
   <data name="DayShifts" xml:space="preserve">
-    <value>משמרות רוחב</value>
+    <value>כונניות</value>
   </data>
   <data name="MyWorkSchedule" xml:space="preserve">
     <value>סידור העבודה שלי</value>
@@ -2944,8 +2944,8 @@
     <comment>Phase 20 - Chores management link</comment>
   </data>
   <data name="Calendar_OnDutyManagement" xml:space="preserve">
-    <value>משמרות רוחב</value>
-    <comment>Phase 20 - Day Shifts management link</comment>
+    <value>כונניות</value>
+    <comment>Phase 20 - On-Call management link</comment>
   </data>
   <data name="Calendar_QuickActions" xml:space="preserve">
     <value>פעולות מהירות</value>
@@ -2960,8 +2960,8 @@
     <comment>Phase 20 - Link to chore management</comment>
   </data>
   <data name="Calendar_ManageOnDuty" xml:space="preserve">
-    <value>נהל משמרות רוחב</value>
-    <comment>Phase 20 - Link to day shifts management</comment>
+    <value>נהל כונניות</value>
+    <comment>Phase 20 - Link to on-call management</comment>
   </data>
   <data name="Calendar_ManageItem" xml:space="preserve">
     <value>נהל</value>
@@ -4907,7 +4907,7 @@
     <value>שיבוץ</value>
   </data>
   <data name="Nav_Admin" xml:space="preserve">
-    <value>ניהול</value>
+    <value>ניהול מערכת</value>
   </data>
   <data name="Nav_System" xml:space="preserve">
     <value>מערכת</value>
@@ -8370,7 +8370,7 @@
     <comment>Message shown when calendar has no chores</comment>
   </data>
   <data name="Calendar_Empty_NoOnDuty" xml:space="preserve">
-    <value>לא נמצאו משמרות יומיות</value>
+    <value>לא נמצאו כונניות</value>
     <comment>Title shown when on-call calendar has no duty assignments</comment>
   </data>
   <data name="Calendar_Empty_NoOnDutyMessage" xml:space="preserve">
@@ -12723,6 +12723,34 @@
   <data name="Nav_MyGroups" xml:space="preserve">
     <value>הקבוצות שלי</value>
   </data>
+  <data name="Nav_CommandCenter" xml:space="preserve">
+    <value>מרכז פיקוד</value>
+    <comment>Sidebar navigation - unified landing page for admin roles</comment>
+  </data>
+  <data name="Nav_ShiftPlans" xml:space="preserve">
+    <value>תכנון משמרות</value>
+    <comment>Sidebar navigation - link to /Owner/Programs</comment>
+  </data>
+  <data name="Nav_Personal" xml:space="preserve">
+    <value>אישי</value>
+    <comment>Sidebar section header for personal features</comment>
+  </data>
+  <data name="Section_DirectorTools" xml:space="preserve">
+    <value>כלי מפקד</value>
+    <comment>Admin Hub section header for director utilities</comment>
+  </data>
+  <data name="Section_CompanyFilter" xml:space="preserve">
+    <value>סינון חברות</value>
+    <comment>Admin Hub card - director company filter</comment>
+  </data>
+  <data name="Section_CompanyFilterDesc" xml:space="preserve">
+    <value>בחר אילו חברות לנהל</value>
+    <comment>Admin Hub card description - company filter</comment>
+  </data>
+  <data name="Owner_Section_CompanyConfig" xml:space="preserve">
+    <value>הגדרות חברה</value>
+    <comment>Owner Panel section for items moved from sidebar</comment>
+  </data>
   <data name="MyGroupsSubtitle" xml:space="preserve">
     <value>צרו קבוצות מותאמות אישית למעקב אחר לוחות זמנים של חברים, עמיתים או צוותי משימה</value>
   </data>
@@ -12755,5 +12783,144 @@
   </data>
   <data name="NoGroupCalendars" xml:space="preserve">
     <value>אין עדיין לוחות קבוצה</value>
+  </data>
+  <data name="Programs_SelectAll" xml:space="preserve">
+    <value>בחר הכל</value>
+    <comment>Button to select/deselect all day checkboxes in Programs page</comment>
+  </data>
+  <data name="Filter_SearchLabel" xml:space="preserve">
+    <value>חיפוש שורות</value>
+    <comment>Label for filter search input in calendar</comment>
+  </data>
+  <data name="Filter_SearchPlaceholder" xml:space="preserve">
+    <value>הקלד שם לסינון...</value>
+    <comment>Placeholder for filter search input</comment>
+  </data>
+  <data name="Filter_Clear" xml:space="preserve">
+    <value>נקה סינון</value>
+    <comment>Button to clear active filter</comment>
+  </data>
+  <data name="Filter_Apply" xml:space="preserve">
+    <value>החל</value>
+    <comment>Button to apply filter</comment>
+  </data>
+  <data name="DragToMove" xml:space="preserve">
+    <value>גרור להזזה</value>
+    <comment>Tooltip for drag handle on bottom dock widget</comment>
+  </data>
+  <data name="Error_ShiftOverlap" xml:space="preserve">
+    <value>משמרת זו חופפת לשיבוץ קיים</value>
+  </data>
+  <data name="Warning_VacationConflict" xml:space="preserve">
+    <value>לעובד יש חופשה מאושרת בתאריך זה</value>
+  </data>
+  <data name="Warning_ChoreConflict" xml:space="preserve">
+    <value>לעובד יש תורנות משובצת בתאריך זה</value>
+  </data>
+  <data name="Warning_OnDutyConflict" xml:space="preserve">
+    <value>לעובד יש כוננות משובצת בתאריך זה</value>
+  </data>
+
+  <!-- ChoreTypes Admin Page -->
+  <data name="ManageChoreTypes" xml:space="preserve">
+    <value>ניהול סוגי תורנויות</value>
+  </data>
+  <data name="CreateAndManageChoreTypes" xml:space="preserve">
+    <value>יצירה וניהול סוגי תורנויות לתזמון משימות חוזרות</value>
+  </data>
+  <data name="ChoreTypesAreMoleculeScoped" xml:space="preserve">
+    <value>סוגי תורנויות משויכים למולקולה ספציפית</value>
+  </data>
+  <data name="CreateNewChoreType" xml:space="preserve">
+    <value>יצירת סוג תורנות חדש</value>
+  </data>
+  <data name="CreateChoreType" xml:space="preserve">
+    <value>צור סוג תורנות</value>
+  </data>
+  <data name="AllChoreTypes" xml:space="preserve">
+    <value>כל סוגי התורנויות</value>
+  </data>
+  <data name="NoChoreTypesYet" xml:space="preserve">
+    <value>טרם נוצרו סוגי תורנויות</value>
+  </data>
+  <data name="NoMoleculesAvailable" xml:space="preserve">
+    <value>אין מולקולות זמינות</value>
+  </data>
+  <data name="Placeholder_ChoreTypeName" xml:space="preserve">
+    <value>לדוגמה: kitchen_duty</value>
+  </data>
+  <data name="Error_ChoreTypeNameRequired" xml:space="preserve">
+    <value>שם סוג התורנות הוא שדה חובה</value>
+  </data>
+  <data name="Error_ChoreTypeDisplayNameRequired" xml:space="preserve">
+    <value>שם התצוגה של סוג התורנות הוא שדה חובה</value>
+  </data>
+  <data name="Error_ChoreTypeNotFound" xml:space="preserve">
+    <value>סוג התורנות לא נמצא</value>
+  </data>
+  <data name="Success_ChoreTypeCreated" xml:space="preserve">
+    <value>סוג תורנות '{0}' נוצר בהצלחה</value>
+  </data>
+  <data name="Success_ChoreTypeUpdated" xml:space="preserve">
+    <value>סוג תורנות '{0}' עודכן בהצלחה</value>
+  </data>
+  <data name="Success_ChoreTypeDeactivated" xml:space="preserve">
+    <value>סוג תורנות '{0}' הושבת</value>
+  </data>
+  <data name="Success_ChoreTypeActivated" xml:space="preserve">
+    <value>סוג תורנות '{0}' הופעל</value>
+  </data>
+
+  <!-- DutyTypes Admin Page -->
+  <data name="ManageDutyTypes" xml:space="preserve">
+    <value>ניהול סוגי כוננויות</value>
+  </data>
+  <data name="CreateAndManageDutyTypes" xml:space="preserve">
+    <value>יצירה וניהול הגדרות סוגי כוננות</value>
+  </data>
+  <data name="DutyTypesAreGlobal" xml:space="preserve">
+    <value>סוגי כוננויות הם גלובליים ומשותפים לכל האזורים</value>
+  </data>
+  <data name="CreateNewDutyType" xml:space="preserve">
+    <value>יצירת סוג כוננות חדש</value>
+  </data>
+  <data name="CreateDutyType" xml:space="preserve">
+    <value>צור סוג כוננות</value>
+  </data>
+  <data name="AllDutyTypes" xml:space="preserve">
+    <value>כל סוגי הכוננויות</value>
+  </data>
+  <data name="NoDutyTypesYet" xml:space="preserve">
+    <value>טרם נוצרו סוגי כוננויות</value>
+  </data>
+  <data name="BuiltIn" xml:space="preserve">
+    <value>מובנה</value>
+  </data>
+  <data name="RequiresOfficerRank" xml:space="preserve">
+    <value>דורש דרגת קצין</value>
+  </data>
+  <data name="Error_NameEnRequired" xml:space="preserve">
+    <value>שם באנגלית הוא שדה חובה (עד 100 תווים)</value>
+  </data>
+  <data name="Error_NameHeRequired" xml:space="preserve">
+    <value>שם בעברית הוא שדה חובה (עד 100 תווים)</value>
+  </data>
+  <data name="Error_DutyTypeNotFound" xml:space="preserve">
+    <value>סוג הכוננות לא נמצא</value>
+  </data>
+  <data name="Error_CannotEditBuiltInType" xml:space="preserve">
+    <value>לא ניתן לערוך סוגי כוננות מובנים</value>
+  </data>
+  <data name="Success_DutyTypeCreated" xml:space="preserve">
+    <value>סוג כוננות '{0}' נוצר בהצלחה</value>
+  </data>
+  <data name="Success_DutyTypeUpdated" xml:space="preserve">
+    <value>סוג כוננות '{0}' עודכן בהצלחה</value>
+  </data>
+  <data name="Success_DutyTypeActivated" xml:space="preserve">
+    <value>סוג כוננות '{0}' הופעל</value>
+  </data>
+  <data name="Success_DutyTypeDeactivated" xml:space="preserve">
+    <value>סוג כוננות '{0}' הושבת</value>
   </data>
 </root>

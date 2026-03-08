@@ -77,6 +77,8 @@ public class ShiftsModel : PageModel
     public Molecule? SelectedMolecule { get; set; }
     public JobType? SelectedJobType { get; set; }
     public int CurrentUserId { get; set; }
+    public List<AppUser> Users { get; set; } = new();
+    public List<ShiftType> ShiftTypes { get; set; } = new();
 
     // Navigation
     public DateOnly StartDate { get; set; }
@@ -173,6 +175,12 @@ public class ShiftsModel : PageModel
             }
         }
 
+        // Expose users for bottom-sheet dropdown (same query as BuildUserBasedCalendarAsync)
+        if (MoleculeId.HasValue && JobTypeId.HasValue)
+        {
+            Users = await _calendarService.GetUsersForCalendarAsync(MoleculeId.Value, JobTypeId.Value);
+        }
+
         _logger.LogInformation(
             "Shifts calendar loaded for User {UserId}, Molecule {MoleculeId}, JobType {JobTypeId}, Mode {Mode}, ViewMode {ViewMode}",
             currentUserId, MoleculeId, JobTypeId, Mode, ViewMode);
@@ -259,6 +267,9 @@ public class ShiftsModel : PageModel
             .ThenBy(st => st.CustomName ?? st.Key)
             .ToList();
 
+        // Expose shift types for user-mode bottom-sheet dropdown
+        ShiftTypes = shiftTypes;
+
         // Get shift instances and assignments
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
@@ -301,6 +312,16 @@ public class ShiftsModel : PageModel
 
     private async Task BuildUserBasedCalendarAsync(int moleculeId, int jobTypeId)
     {
+        // Load shift types for the bottom-sheet dropdown (in user-mode, user picks a shift type)
+        ShiftTypes = (await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId)
+            .OrderBy(st => st.Start)
+            .ToListAsync())
+            .OrderBy(st => st.Start)
+            .ThenBy(st => st.CustomName ?? st.Key)
+            .ToList();
+
         // Get users for this molecule/job type
         var users = await _calendarService.GetUsersForCalendarAsync(moleculeId, jobTypeId);
 
@@ -361,17 +382,19 @@ public class ShiftsModel : PageModel
                     .Where(a => a.ShiftInstanceId == instance.Id)
                     .ToList();
 
-                cell.Assignments = instanceAssignments.Select(a => new ExcelCalendarAssignment
-                {
-                    Id = a.Id,
-                    Name = a.User?.DisplayName ?? _localizer["Unassigned"].Value,
-                    IsTrainee = a.TraineeUserId.HasValue,
-                    UserId = a.UserId
-                }).ToList();
+                cell.Assignments = instanceAssignments
+                    .Where(a => a.UserId != null)
+                    .Select(a => new ExcelCalendarAssignment
+                    {
+                        Id = a.Id,
+                        Name = a.User?.DisplayName ?? _localizer["Unassigned"].Value,
+                        IsTrainee = a.TraineeUserId.HasValue,
+                        UserId = a.UserId
+                    }).ToList();
 
                 if (CapacityMode)
                 {
-                    cell.Capacity = instanceAssignments.Count;
+                    cell.Capacity = instanceAssignments.Count(a => a.UserId != null);
                     cell.DefaultCapacity = instance.StaffingRequired;
                 }
             }

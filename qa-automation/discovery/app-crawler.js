@@ -97,7 +97,6 @@ const KNOWN_ROUTES = {
 
     // Director routes (Policy: IsDirector - Owner + Director)
     Director: [
-        { path: '/Director/Index', name: 'Director Hub', policy: 'IsDirector' },
         { path: '/Director/CompanyFilter', name: 'Company Filter', policy: 'IsDirector' },
         { path: '/Director/NotificationHub', name: 'Notification Hub', policy: 'IsDirector' },
         { path: '/Director/ViewAsMode', name: 'View As Manager Mode', policy: 'IsDirector' },

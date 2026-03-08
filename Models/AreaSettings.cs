@@ -4,8 +4,8 @@ public class AreaSettings
 {
     public int Id { get; set; }
     public int AreaId { get; set; }
-    public int DefaultRestHours { get; set; } = 11;
-    public int DefaultWeeklyCap { get; set; } = 60;
+    public int DefaultRestHours { get; set; } = 8;
+    public int DefaultWeeklyCap { get; set; } = 56;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public int? UpdatedByUserId { get; set; }
 
