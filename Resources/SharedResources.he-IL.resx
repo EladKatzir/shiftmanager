@@ -12821,6 +12821,14 @@
     <value>לעובד יש כוננות משובצת בתאריך זה</value>
   </data>
 
+  <!-- ChoreTypes & DutyTypes breadcrumb/title keys -->
+  <data name="ChoreTypes" xml:space="preserve">
+    <value>סוגי תורנויות</value>
+  </data>
+  <data name="DutyTypes" xml:space="preserve">
+    <value>סוגי כוננויות</value>
+  </data>
+
   <!-- ChoreTypes Admin Page -->
   <data name="ManageChoreTypes" xml:space="preserve">
     <value>ניהול סוגי תורנויות</value>

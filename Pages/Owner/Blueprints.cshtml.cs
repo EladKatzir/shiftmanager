@@ -444,7 +444,8 @@ public class BlueprintsModel : PageModel
             if (shiftType == null)
                 return new JsonResult(new { success = false, error = "Shift type not found" });
 
-            // Check for duplicate: another ShiftType with the same Key already published to this molecule
+            // SECURITY-AUDITED: IgnoreQueryFilters is SAFE — requires Owner role ([Authorize(Policy = "Grant:OwnerAccess")]);
+            // duplicate check must span all companies in the molecule to prevent key collisions
             var duplicate = await _db.ShiftTypes
                 .IgnoreQueryFilters()
                 .AnyAsync(st => st.MoleculeId == moleculeId
