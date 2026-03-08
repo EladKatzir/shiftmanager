@@ -161,25 +161,25 @@
   --success: #52B788;
   --success-hover: #6BC99A;
   --success-soft: #1A3329;
-  --success-text: #0F1419;
+  --success-text: #FFFFFF;
   --success-rgb: 82, 183, 136;
 
   --warning: #F4D35E;
   --warning-hover: #F7DD7F;
   --warning-soft: #3D3520;
-  --warning-text: #0F1419;
+  --warning-text: #1A1F2B;
   --warning-rgb: 244, 211, 94;
 
   --danger: #FC8181;
   --danger-hover: #FD9A9A;
   --danger-soft: #3D2020;
-  --danger-text: #0F1419;
+  --danger-text: #FFFFFF;
   --danger-rgb: 252, 129, 129;
 
   --info: #5B9BD5;
   --info-hover: #7AB3E3;
   --info-soft: #1A2D42;
-  --info-text: #0F1419;
+  --info-text: #FFFFFF;
   --info-rgb: 91, 155, 213;
 
   /* Shift Type Colors (Dark Mode Variants) */
@@ -517,25 +517,25 @@ Verified Contrast Ratios (Dark Mode):
     --success: #52B788;
     --success-hover: #6BC99A;
     --success-soft: #1A3329;
-    --success-text: #0F1419;
+    --success-text: #FFFFFF;
     --success-rgb: 82, 183, 136;
 
     --warning: #F4D35E;
     --warning-hover: #F7DD7F;
     --warning-soft: #3D3520;
-    --warning-text: #0F1419;
+    --warning-text: #1A1F2B;
     --warning-rgb: 244, 211, 94;
 
     --danger: #FC8181;
     --danger-hover: #FD9A9A;
     --danger-soft: #3D2020;
-    --danger-text: #0F1419;
+    --danger-text: #FFFFFF;
     --danger-rgb: 252, 129, 129;
 
     --info: #5B9BD5;
     --info-hover: #7AB3E3;
     --info-soft: #1A2D42;
-    --info-text: #0F1419;
+    --info-text: #FFFFFF;
     --info-rgb: 91, 155, 213;
 
     /* Shift Type Colors (Dark Mode Variants) */

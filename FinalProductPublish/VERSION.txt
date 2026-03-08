@@ -1,18 +1,18 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 3.0.4
+                           Version 3.1.0
 ================================================================================
 
-VERSION: 3.0.4
-RELEASE DATE: 2026-02-27
-BUILD DATE: 2026-02-27 13:07:47 UTC
-GIT COMMIT: 7481832
-GIT BRANCH: merged-canonical
+VERSION: 3.1.0
+RELEASE DATE: 2026-03-08
+BUILD DATE: 2026-03-08 04:25:23 UTC
+GIT COMMIT: 73295f8
+GIT BRANCH: update
 
 PACKAGE INFORMATION:
-  Total Files:  751
+  Total Files:  1025
   DLL Count:    351
-  Package Size: 171 MB
+  Package Size: 188 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
   Platform:     Windows x64 (Server 2022 / Windows 10+)
 
@@ -130,7 +130,7 @@ INSTALLATION SUMMARY
 ================================================================================
 
 Installation Type: Self-Contained
-Installation Size: 171 MB
+Installation Size: 188 MB
 Installation Time: 1 minute (extract + configure)
 First Run Time:    5-10 seconds (database creation)
 
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-02-27 13:07:47 UTC
+Build Date:     2026-03-08 04:25:23 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v3.0.4
+  âœ“ Git tagged: v3.1.0
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (751 files)
+  âœ… Verified for completeness (1025 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v3.0.4)
+  âœ… Tagged in version control (v3.1.0)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-02-27 13:07:47 UTC
-Git Commit: 7481832
+Date: 2026-03-08 04:25:23 UTC
+Git Commit: 73295f8
 
 ================================================================================
 LICENSE

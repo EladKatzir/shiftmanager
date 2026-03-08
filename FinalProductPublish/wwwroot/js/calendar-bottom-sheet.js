@@ -306,7 +306,15 @@
             var selectLabel = document.createElement('label');
             selectLabel.className = 'bottom-sheet__field-label';
             selectLabel.setAttribute('for', 'bottom-sheet-user-select');
-            selectLabel.textContent = isHebrew() ? 'בחר משתמש' : 'Select User';
+
+            // Detect if dropdown shows shift types (user-mode) or users (shift-mode)
+            var hiddenSelect = document.querySelector('[data-role="assignee-select"]');
+            var itemType = hiddenSelect ? (hiddenSelect.dataset.itemType || 'user') : 'user';
+            if (itemType === 'shifttype') {
+                selectLabel.textContent = isHebrew() ? 'בחר משמרת' : 'Select Shift';
+            } else {
+                selectLabel.textContent = isHebrew() ? 'בחר משתמש' : 'Select User';
+            }
             fieldGroup.appendChild(selectLabel);
 
             var userSelect = document.createElement('select');
@@ -410,26 +418,47 @@
             // For chores, we need a title - prompt for it
             var title = prompt(isHebrew() ? 'כותרת התורנות:' : 'Chore title:');
             if (!title || !title.trim()) return;
-            window.quickAddChore(cellData.date, userId, title.trim());
+            // Pick up ChoreTypeId from the page filter dropdown (if set)
+            var choreTypeSelect = document.getElementById('choreTypeSelect');
+            var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
+            window.quickAddChore(cellData.date, userId, title.trim(), false, choreTypeId);
             close();
         } else if (calendarType === 'oncall' && typeof window.quickAddOnDuty === 'function') {
-            // For on-call, use type 0 (default Hakam)
-            var onDutyType = cellData.dutyType || 0;
+            // Extract duty type from row ID (format: "dutytype-{typeValue}")
+            var onDutyType = 0;
+            if (cellData.rowId && cellData.rowId.indexOf('dutytype-') === 0) {
+                onDutyType = parseInt(cellData.rowId.replace('dutytype-', ''), 10) || 0;
+            }
             window.quickAddOnDuty(cellData.date, userId, onDutyType);
             close();
-        } else {
-            // For shifts or generic - use the cell's add button click
-            var addBtn = document.querySelector(
-                '.excel-calendar__cell[data-row-id="' + cellData.rowId + '"][data-date="' + cellData.date + '"] .excel-calendar__add-btn'
-            );
-            if (addBtn) {
+        } else if (calendarType === 'shifts' && typeof window.quickAddShift === 'function') {
+            // Detect mode from row ID prefix
+            if (cellData.rowId && cellData.rowId.indexOf('user-') === 0) {
+                // User-mode: row is a user, dropdown value is the shift type
+                var userIdFromRow = cellData.rowId.replace('user-', '');
+                var shiftTypeFromSelect = userId; // "userId" here is actually the selected shift type ID
+                if (shiftTypeFromSelect && userIdFromRow) {
+                    window.quickAddShift(shiftTypeFromSelect, cellData.date, userIdFromRow);
+                    close();
+                } else {
+                    var noShiftMsg = isHebrew() ? 'נא לבחור משמרת' : 'Please select a shift';
+                    if (window.showToast) window.showToast(noShiftMsg, 'error');
+                }
+            } else if (cellData.rowId && cellData.rowId.indexOf('shift-') === 0) {
+                // Shift-mode: row is a shift type, dropdown value is the user
+                var shiftTypeId = cellData.rowId.replace('shift-', '');
+                window.quickAddShift(shiftTypeId, cellData.date, userId);
                 close();
-                addBtn.click();
             } else {
                 var noActionMsg = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
                 if (window.showToast) {
                     window.showToast(noActionMsg, 'error');
                 }
+            }
+        } else {
+            var noActionMsg = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
+            if (window.showToast) {
+                window.showToast(noActionMsg, 'error');
             }
         }
     }
@@ -599,11 +628,31 @@
         console.log('[BottomSheet] Initialized');
     }
 
+    // --- Handle add-btn clicks (desktop + touch) ---
+    function initAddButtonHandler() {
+        document.addEventListener('click', function (e) {
+            var addBtn = e.target.closest('.excel-calendar__add-btn');
+            if (!addBtn) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            var cell = addBtn.closest('.excel-calendar__cell');
+            if (!cell) return;
+
+            var cellData = extractCellData(cell);
+            if (cellData.date) {
+                open(cellData);
+            }
+        }, true);
+    }
+
     // --- Initialize on DOM ready ---
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() { init(); initAddButtonHandler(); });
     } else {
         init();
+        initAddButtonHandler();
     }
 
     // --- Expose for external use ---

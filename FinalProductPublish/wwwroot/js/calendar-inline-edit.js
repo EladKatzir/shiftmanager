@@ -77,8 +77,18 @@ function handleApiError(response, error = null) {
  * @param {string} title - Chore title
  * @param {boolean} forceAssign - Force assignment despite vacation conflict
  */
-async function quickAddChore(date, assigneeId, title, forceAssign = false) {
+async function quickAddChore(date, assigneeId, title, forceAssign = false, choreTypeId = null) {
     try {
+        var requestBody = {
+            date: date,
+            assigneeId: parseInt(assigneeId),
+            title: title.trim(),
+            notes: null,
+            forceAssign: forceAssign
+        };
+        if (choreTypeId != null) {
+            requestBody.choreTypeId = parseInt(choreTypeId);
+        }
         const response = await fetch('/Api/Calendar/QuickAddChore', {
             method: 'POST',
             headers: {
@@ -86,13 +96,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin',
-            body: JSON.stringify({
-                date: date,
-                assigneeId: parseInt(assigneeId),
-                title: title.trim(),
-                notes: null,
-                forceAssign: forceAssign
-            })
+            body: JSON.stringify(requestBody)
         });
 
         // Check for auth/permission errors before parsing JSON
@@ -116,6 +120,16 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
 
                     if (confirm(confirmMessage)) {
                         // Retry with forceAssign=true
+                        var retryBody = {
+                            date: date,
+                            assigneeId: parseInt(assigneeId),
+                            title: title.trim(),
+                            notes: null,
+                            forceAssign: true
+                        };
+                        if (choreTypeId != null) {
+                            retryBody.choreTypeId = parseInt(choreTypeId);
+                        }
                         const retryResponse = await fetch('/Api/Calendar/QuickAddChore', {
                             method: 'POST',
                             headers: {
@@ -123,13 +137,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false) {
                                 'X-Requested-With': 'XMLHttpRequest'
                             },
                             credentials: 'same-origin',
-                            body: JSON.stringify({
-                                date: date,
-                                assigneeId: parseInt(assigneeId),
-                                title: title.trim(),
-                                notes: null,
-                                forceAssign: true
-                            })
+                            body: JSON.stringify(retryBody)
                         });
 
                         if (!retryResponse.ok) {
@@ -293,6 +301,133 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
         handleApiError(null, error);
     }
 }
+
+/**
+ * Quick-add a shift assignment
+ * @param {number} shiftTypeId - ShiftType ID to assign
+ * @param {string} date - Date in yyyy-MM-dd format
+ * @param {number} assigneeId - User ID to assign
+ */
+async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
+    try {
+        const response = await fetch('/Calendar/Table?handler=AssignEmployee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                shiftTypeId: parseInt(shiftTypeId),
+                date: date,
+                userId: parseInt(assigneeId)
+            })
+        });
+
+        if (!response.ok) {
+            const culture = getCurrentCulture();
+            const errorMsg = culture === 'he-IL' ? 'שגיאה בשיבוץ עובד' : 'Error assigning employee';
+            showToast(errorMsg, 'error');
+            return;
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            const culture = getCurrentCulture();
+            const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
+            showToast(result.message || successMsg, 'success');
+            setTimeout(() => location.reload(), 500);
+        } else if (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1 ||
+                   (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried)) {
+            // Shift is at capacity — ask the user if they want to expand it
+            const culture = getCurrentCulture();
+            const confirmMsg = culture === 'he-IL'
+                ? 'המשמרת מלאה. להגדיל את התקן ולשבץ?'
+                : 'Shift is fully staffed. Increase capacity and assign?';
+            if (confirm(confirmMsg)) {
+                await expandCapacityAndRetry(shiftTypeId, date, assigneeId);
+            }
+        } else if (result.requiresOverride) {
+            // Warnings require override — show them and ask to confirm
+            const msgs = (result.warnings || []).map(function(w) { return w.message; }).join('\n');
+            const culture = getCurrentCulture();
+            const confirmLabel = culture === 'he-IL' ? 'אישורים נדרשים:\n' : 'Warnings:\n';
+            if (confirm(confirmLabel + msgs)) {
+                // Retry with override token
+                const retryResponse = await fetch('/Calendar/Table?handler=AssignEmployee', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        shiftTypeId: parseInt(shiftTypeId),
+                        date: date,
+                        userId: parseInt(assigneeId),
+                        overrideToken: result.overrideToken
+                    })
+                });
+                const retryResult = await retryResponse.json();
+                if (retryResult.success) {
+                    const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
+                    showToast(retryResult.message || successMsg, 'success');
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    showToast(retryResult.message || retryResult.error || 'Error', 'error');
+                }
+            }
+        } else {
+            showToast(result.message || result.error || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
+    try {
+        // First, find or create the shift instance to get its ID and current staffing
+        const lookupResponse = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                shiftTypeId: parseInt(shiftTypeId),
+                date: date,
+                staffingRequired: 1
+            })
+        });
+        const lookupResult = await lookupResponse.json();
+        if (!lookupResult.success || !lookupResult.instanceId) {
+            showToast(lookupResult.error || 'Could not find shift instance', 'error');
+            return;
+        }
+
+        // Increase staffing by 1
+        const newCapacity = (lookupResult.staffingRequired || 1) + 1;
+        const updateResponse = await fetch('/Calendar/Table?handler=UpdateShiftStaffing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                shiftInstanceId: lookupResult.instanceId,
+                staffingRequired: newCapacity
+            })
+        });
+        const updateResult = await updateResponse.json();
+        if (!updateResult.success) {
+            showToast(updateResult.error || 'Could not update capacity', 'error');
+            return;
+        }
+
+        // Now retry the assignment
+        await quickAddShift(shiftTypeId, date, assigneeId, true);
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+// Expose quickAddShift globally for bottom sheet integration
+window.quickAddShift = quickAddShift;
 
 /**
  * Delete an item (chore or on-duty) with undo toast
@@ -536,7 +671,9 @@ async function submitQuickAdd(date) {
             return;
         }
 
-        await quickAddChore(date, assigneeId, title);
+        var choreTypeSelect = document.getElementById('choreTypeSelect');
+        var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
+        await quickAddChore(date, assigneeId, title, false, choreTypeId);
     } else if (type === 'onduty') {
         const typeSelect = document.getElementById(`ondutyType-${date}`);
         const onDutyType = typeSelect ? typeSelect.value : '0';

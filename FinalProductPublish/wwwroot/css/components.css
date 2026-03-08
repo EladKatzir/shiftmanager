@@ -3449,6 +3449,31 @@ picture img {
   transform: rotate(180deg);
 }
 
+.bottom-dock__drag-handle {
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-1);
+  color: var(--primary-contrast);
+  opacity: 0.6;
+  font-size: 14px;
+  letter-spacing: 2px;
+  user-select: none;
+}
+
+.bottom-dock__drag-handle:hover {
+  opacity: 1;
+}
+
+.bottom-dock.is-dragging {
+  transition: none;
+  opacity: 0.9;
+}
+
+.bottom-dock.is-dragging .bottom-dock__drag-handle {
+  cursor: grabbing;
+}
+
 .bottom-dock__content {
   background: var(--surface);
   border: 1px solid var(--border);

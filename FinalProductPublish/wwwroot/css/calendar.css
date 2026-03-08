@@ -2193,6 +2193,14 @@
     text-align: center;
     border-bottom: 2px solid var(--border-strong);
     white-space: nowrap;
+    color: var(--primary-contrast);
+}
+
+/* Ensure all descendants (span, etc.) inside header inherit contrasting color
+   instead of picking up the global 'span { color: var(--text) }' rule */
+.excel-calendar__header th *,
+.excel-calendar__corner * {
+    color: inherit;
 }
 
 .excel-calendar__header-day {
@@ -2201,6 +2209,8 @@
 
 .excel-calendar__header-day--today {
     border-inline-start: 3px solid var(--accent);
+    background: var(--accent);
+    color: var(--primary-contrast) !important;
 }
 
 .excel-calendar__header-day--weekend {
@@ -2276,6 +2286,7 @@
 
 .excel-calendar__cell--today {
     border-inline-start: 3px solid var(--primary);
+    background: rgba(var(--primary-rgb), 0.08);
 }
 
 .excel-calendar__cell--readonly {
@@ -2345,6 +2356,26 @@
 .excel-calendar__badge--shift {
     background: var(--surface-soft);
     color: var(--text-muted);
+}
+
+/* Capacity badge */
+.excel-calendar__capacity-badge {
+    position: absolute;
+    top: 2px;
+    inset-inline-end: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: var(--radius-sm, 4px);
+    background: var(--info-soft);
+    color: var(--info);
+    line-height: 1.2;
+    pointer-events: none;
+}
+
+.excel-calendar__capacity-badge--full {
+    background: var(--success-soft);
+    color: var(--success);
 }
 
 /* Empty state */
@@ -2905,6 +2936,13 @@
     background: var(--card-bg, #fff);
     color: var(--text-primary, #212529);
     appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
     min-height: 44px;
 }
 

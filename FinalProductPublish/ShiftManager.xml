@@ -1141,6 +1141,16 @@
             <param name="bytes">File size in bytes</param>
             <returns>Formatted string like "45.2 KB" or "1.5 MB"</returns>
         </member>
+        <member name="T:ShiftManager.Helpers.InputSanitizer">
+            <summary>
+            Shared XSS/injection content validation for user-supplied strings.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Helpers.InputSanitizer.ContainsDangerousContent(System.String)">
+            <summary>
+            Returns true if the input contains patterns commonly associated with XSS or injection attacks.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Helpers.PrivacyHelper">
              <summary>
              Helper class for masking and protecting PII (Personally Identifiable Information).
@@ -1249,7 +1259,7 @@
             <summary>
             Maps a UserRole enum value to the corresponding RoleTemplate key.
             For Manager and Director roles, uses the jobTypeName to disambiguate
-            between job-type-specific templates (e.g., AlhutLead vs BRDirector).
+            between job-type-specific templates (e.g., Lead vs BRDirector).
             </summary>
         </member>
         <member name="T:ShiftManager.Hubs.CalendarHub">
@@ -2331,6 +2341,27 @@
             <inheritdoc />
         </member>
         <member name="M:ShiftManager.Migrations.AddUniqueIndexMoleculeShiftTypeKey.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddDepartmentIdToUserJoinRequests">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDepartmentIdToUserJoinRequests.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDepartmentIdToUserJoinRequests.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddMoleculeIdToJobType">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMoleculeIdToJobType.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMoleculeIdToJobType.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMoleculeIdToJobType.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
@@ -3743,6 +3774,12 @@
             by the CompanyIdInterceptor during SaveChanges.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.JobType.MoleculeId">
+            <summary>
+            Optional molecule-specific scoping. When null, the job type applies to all molecules
+            in the area. When set, it only applies to that specific molecule.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.MasterProgram">
             <summary>
             Represents a collection of Programs that form a complete weekly schedule.
@@ -4508,6 +4545,12 @@
             Used to determine the correct role template during approval.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.UserJoinRequest.DepartmentId">
+            <summary>
+            Department selected by the user during signup (Tech molecules only).
+            When set, CompanyId points to the molecule's HQ company for tenant scoping.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.UserJoinRequest.Status">
             <summary>
             Current status of the request
@@ -4680,11 +4723,40 @@
             Visible to users with AccessAdminNavigation grant.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.ChoreTypes.IndexModel.IsUserAuthorizedForMoleculeAsync(System.Int32)">
+            <summary>
+            Verifies the current user has grant access to the specified molecule.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.ChoreTypes.IndexModel.SanitizeColor(System.String)">
+            <summary>
+            Sanitizes a color value to a strict #RRGGBB hex format to prevent CSS injection.
+            Returns null if the input is empty or doesn't match the expected format.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.DutyTypes.IndexModel.SanitizeColor(System.String)">
+            <summary>
+            Sanitizes a color value to a strict #RRGGBB hex format to prevent CSS injection.
+            Returns null if the input is empty or doesn't match the expected format.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Admin.Organization.Hierarchy.IndexModel">
             <summary>
             Hierarchy Overview - Visual tree structure of Project → Area → Molecule
             Provides quick navigation and edit links for each level
             </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.Organization.IndexModel.CanManageHierarchy">
+            <summary>Whether the current user has ManageHierarchy grant (can add/rename/delete).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.IndexModel.CurrentUserHasManageHierarchyAsync">
+            <summary>Unscoped check — used for UI (show/hide buttons). Any ManageHierarchy grant = show buttons.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.IndexModel.CurrentUserCanManageMoleculeAsync(System.Int32)">
+            <summary>Scoped check — used by POST handlers. Verifies the grant covers the target molecule.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.UsersModel.DirectorCompanyNames">
+            <summary>Tooltip data: director user ID → list of managed company names</summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
@@ -4902,6 +4974,23 @@
             Department in hierarchy
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.SelectMoleculeModel">
+            <summary>
+            Page handler for Director to select which molecule to view.
+            Sets cookie with selected molecule ID for molecule-level context switching.
+            Mirrors the Owner/SelectCompany pattern but operates at molecule level.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.SelectMoleculeModel.OnGet">
+            <summary>
+            GET removed — molecule switching is POST-only to prevent CSRF via link.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.SelectMoleculeModel.OnPostAsync(System.Int32,System.String)">
+            <summary>
+            POST handler - allows molecule selection via form submission (anti-forgery token required).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.SessionStatusModel">
             <summary>
             API endpoint to check session authentication status
@@ -4927,7 +5016,12 @@
         </member>
         <member name="M:ShiftManager.Pages.Api.Signup.GetSignupOptionsModel.OnGetJobTypesAsync(System.Int32)">
             <summary>
-            Gets job types filtered by molecule's area.
+            Gets job types filtered by molecule (molecule-specific + area-wide).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.Signup.GetSignupOptionsModel.OnGetDepartmentsAsync(System.Int32)">
+            <summary>
+            Gets departments filtered by molecule ID (for Tech molecules).
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Api.Signup.GetSignupOptionsModel.OnGetAllJobTypesAsync">
@@ -4940,8 +5034,14 @@
             Gets role templates visible in signup dropdown.
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Api.Signup.MoleculeOption.Type">
+            <summary>MoleculeType enum value (0=Workforce, 1=Tech, 2=Helper, 3=System)</summary>
+        </member>
         <member name="P:ShiftManager.Pages.Api.Signup.RoleTemplateOption.DisplayName">
             <summary>Localized display name resolved from NameKey (server-side).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Api.Signup.RoleTemplateOption.ScopeLevel">
+            <summary>RoleScopeLevel enum value — used by client to filter templates by molecule type.</summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.TechShift.EligibleModel">
             <summary>
@@ -5222,12 +5322,6 @@
             - Leap years (Feb 29)
             - Invalid date values
             Returns null if the date cannot be created.
-            </summary>
-        </member>
-        <member name="T:ShiftManager.Pages.Director.IndexModel">
-            <summary>
-            Director Landing Page - Central hub for cross-company management.
-            ✅ P2-2: Provides company selection and quick access to management tools.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Game.LeaderboardModel">
@@ -6095,7 +6189,7 @@
             Returns (hasConflict, startDate, endDate, type)
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32})">
+        <member name="M:ShiftManager.Services.ChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32})">
             <summary>
             Create a new chore assignment
             </summary>
@@ -6220,19 +6314,6 @@
         </member>
         <member name="M:ShiftManager.Services.ConcurrencyService.SaveWithConcurrencyHandlingAsync(System.Func{System.Threading.Tasks.Task{System.Int32}},System.String,System.Nullable{System.Int32})">
             <inheritdoc />
-        </member>
-        <member name="M:ShiftManager.Services.ConflictChecker.MergeAndSumHours(System.Collections.Generic.List{System.ValueTuple{System.DateTime,System.DateTime}})">
-            <summary>
-            A-02: Merges overlapping time windows and sums total unique hours.
-            Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
-            should count as 8hr, not 16hr).
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.ConflictChecker.LogAndFail(System.Int32,System.Int32,System.String,System.String)">
-            <summary>
-            F-01: Log every conflict failure with structured data for metrics/monitoring.
-            Use grep for "ConflictBlocked" to count and categorize failures.
-            </summary>
         </member>
         <member name="T:ShiftManager.Services.DailyNotificationJob">
             <summary>
@@ -6962,12 +7043,6 @@
             A general database error occurred.
             </summary>
         </member>
-        <member name="P:ShiftManager.Services.ConflictResult.ErrorCode">
-            <summary>
-            B-03: Error code for UI localization. The Reasons list contains English defaults.
-            UI should check ErrorCode first and use localized string if available.
-            </summary>
-        </member>
         <member name="T:ShiftManager.Services.IDirectorService">
             <summary>
             Service for checking Director permissions
@@ -7359,6 +7434,12 @@
             Load Griffin config for current company (via ITenantResolver)
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IGriffinConfigService.GetAnyEnabledGriffinConfigAsync">
+            <summary>
+            Load any enabled Griffin config from the database (ignoring tenant context).
+            Used on the login page where no tenant context exists yet.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.IGriffinConfigService.GetGriffinConfigByCompanyIdAsync(System.Int32)">
             <summary>
             Load Griffin config for specific company
@@ -7507,6 +7588,12 @@
         <member name="T:ShiftManager.Services.NdjsonRecord">
             <summary>
             NDJSON record structure
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJobTypeService.GetJobTypesForMoleculeAsync(System.Int32)">
+            <summary>
+            Returns job types applicable to a specific molecule: molecule-specific ones plus
+            area-wide ones (where MoleculeId is null) from the molecule's area.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ILanguageManagementService">
@@ -8235,6 +8322,12 @@
             Checks if a tenant is currently resolved
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.ITenantResolver.GetDirectorSelectedMoleculeId">
+            <summary>
+            Gets the director's selected molecule ID from the cookie, falling back to the MoleculeId claim.
+            Returns null if the user is not a director or has no molecule context.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.ITraineeService">
             <summary>
             Service for managing trainee shadowing assignments
@@ -8776,6 +8869,13 @@
             <summary>
             Implementation of structured security event logging service.
             Provides consistent, structured logging for security-related events.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftAssignmentService.MergeAndSumHours(System.Collections.Generic.List{System.ValueTuple{System.DateTime,System.DateTime}})">
+            <summary>
+            Merges overlapping time windows and sums total unique hours.
+            Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
+            should count as 8hr, not 16hr). Ported from ConflictChecker.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftAssignmentService.IsUserInMoleculeAsync(System.Int32,System.Int32)">
@@ -9402,6 +9502,9 @@
         </member>
         <member name="P:ShiftManager.ViewComponents.ContextSwitcherViewModel.ErrorMessage">
             <summary>Localized error message to display</summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ContextSwitcherViewModel.IsMoleculeMode">
+            <summary>True when the switcher operates at molecule level (directors) vs company level (owners)</summary>
         </member>
         <member name="P:ShiftManager.ViewComponents.ContextOption.Name">
             <summary>Original full name of the context</summary>
