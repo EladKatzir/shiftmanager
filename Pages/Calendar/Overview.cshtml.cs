@@ -102,7 +102,7 @@ public class OverviewModel : PageModel
             _logger.LogWarning("Company {CompanyId} not found", companyId.Value);
             return RedirectToPage("/Error");
         }
-        CompanyName = company.DisplayName ?? company.Name ?? $"Company #{company.Id}";
+        CompanyName = company.LocalizedName;
 
         // Calculate date range
         CalculateDateRange();

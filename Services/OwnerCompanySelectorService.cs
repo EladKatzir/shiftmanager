@@ -122,7 +122,7 @@ public class OwnerCompanySelectorService : IOwnerCompanySelectorService
         }
 
         var company = await _companyCacheService.GetCompanyAsync(companyId.Value);
-        return company?.Name;
+        return company?.LocalizedName;
     }
 
     public int? GetHomeCompanyId()

@@ -636,6 +636,9 @@ namespace ShiftManager.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("NameHe")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SettingsJson")
                         .HasColumnType("TEXT");
 

@@ -160,7 +160,7 @@ public class IndexModel : LocalizedPageModel
         AvailableCompanies = await _db.Companies.IgnoreQueryFilters()
             .Include(c => c.Molecule)
             .OrderBy(c => c.Molecule!.Name).ThenBy(c => c.Name)
-            .Select(c => new CompanyOption(c.Id, c.Molecule != null ? $"{c.Molecule.DisplayName} / {c.Name}" : c.Name, c.MoleculeId))
+            .Select(c => new CompanyOption(c.Id, c.Molecule != null ? $"{c.Molecule.DisplayName} / {c.DisplayName ?? c.Name}" : c.DisplayName ?? c.Name, c.MoleculeId))
             .ToListAsync();
     }
 

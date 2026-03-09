@@ -146,7 +146,7 @@ public class ScopeSwitcherModel : PageModel
                 {
                     Type = "company",
                     Id = molCompany.Id,
-                    Name = molCompany.DisplayName ?? molCompany.Name,
+                    Name = molCompany.LocalizedName,
                     ParentId = molCompany.MoleculeId,
                     ParentType = "molecule",
                     IsDefault = isFirst
@@ -160,7 +160,7 @@ public class ScopeSwitcherModel : PageModel
             {
                 Type = "company",
                 Id = user.CompanyId,
-                Name = company.DisplayName ?? company.Name,
+                Name = company.LocalizedName,
                 ParentId = company.MoleculeId,
                 ParentType = "molecule",
                 IsDefault = true

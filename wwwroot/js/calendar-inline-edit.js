@@ -218,6 +218,17 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
         // Check for auth/permission errors before parsing JSON
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
+                // Check for specific error keys before generic handling
+                try {
+                    var errorResult = await response.clone().json();
+                    if (errorResult.error === 'OFFICER_RANK_REQUIRED') {
+                        var officerMsg = getCurrentCulture() === 'he-IL'
+                            ? 'סוג תורנות זה דורש דרגת קצין'
+                            : 'This duty type requires officer rank';
+                        showToast(officerMsg, 'error');
+                        return;
+                    }
+                } catch (e) { /* fall through to generic handler */ }
                 handleApiError(response);
                 return;
             }
@@ -470,9 +481,11 @@ async function deleteItem(itemType, itemId) {
                 deletedEl.style.textDecoration = 'line-through';
             }
 
-            // Show undo toast (chores support undo via restore)
+            // Show undo toast (chores support undo via restore, on-duty uses timed toast)
             if (itemType === 'chore') {
-                showUndoToast(itemId);
+                showUndoToast(itemId, 'chore');
+            } else if (itemType === 'onduty') {
+                showUndoToast(itemId, 'onduty');
             } else {
                 showToast(result.message || window.AppLocalizer?.ItemDeletedSuccessfully || 'Deleted', 'success');
                 setTimeout(() => location.reload(), 1500);
@@ -486,29 +499,37 @@ async function deleteItem(itemType, itemId) {
 }
 
 /**
- * Show an undo toast with countdown for chore deletion
- * @param {number} choreId - The deleted chore ID
+ * Show an undo toast with countdown for item deletion
+ * @param {number} itemId - The deleted item ID
+ * @param {string} itemType - 'chore' or 'onduty'
  */
-function showUndoToast(choreId) {
+function showUndoToast(itemId, itemType) {
     // Remove any existing undo toasts
     document.querySelectorAll('.toast-undo').forEach(t => t.remove());
 
     var culture = getCurrentCulture();
     var undoLabel = culture === 'he-IL' ? 'בטל' : 'Undo';
-    var deletedLabel = culture === 'he-IL' ? 'התורנות נמחקה.' : 'Item deleted.';
+    var deletedLabel = itemType === 'onduty'
+        ? (culture === 'he-IL' ? 'התורנות נמחקה.' : 'On-duty deleted.')
+        : (culture === 'he-IL' ? 'התורנות נמחקה.' : 'Chore deleted.');
+
+    // On-duty has no server-side restore, so no undo button
+    var hasUndo = (itemType === 'chore');
 
     var toast = document.createElement('div');
     toast.className = 'toast toast-undo show';
-    toast.innerHTML =
-        '<span class="toast-undo__text">' + deletedLabel + '</span>' +
-        '<button type="button" class="toast-undo__btn" data-chore-id="' + choreId + '">' + undoLabel + '</button>' +
-        '<span class="toast-undo__timer">5</span>';
+    var html = '<span class="toast-undo__text">' + deletedLabel + '</span>';
+    if (hasUndo) {
+        html += '<button type="button" class="toast-undo__btn" data-item-id="' + itemId + '">' + undoLabel + '</button>';
+    }
+    html += '<span class="toast-undo__timer">5</span>';
+    toast.innerHTML = html;
 
     document.body.appendChild(toast);
 
     var seconds = 5;
     var timerEl = toast.querySelector('.toast-undo__timer');
-    var undoBtn = toast.querySelector('.toast-undo__btn');
+    var undoBtn = hasUndo ? toast.querySelector('.toast-undo__btn') : null;
     var undone = false;
 
     var countdown = setInterval(function() {
@@ -523,38 +544,40 @@ function showUndoToast(choreId) {
         }
     }, 1000);
 
-    undoBtn.addEventListener('click', async function() {
-        undone = true;
-        clearInterval(countdown);
-        undoBtn.disabled = true;
-        undoBtn.textContent = '...';
+    if (undoBtn) {
+        undoBtn.addEventListener('click', async function() {
+            undone = true;
+            clearInterval(countdown);
+            undoBtn.disabled = true;
+            undoBtn.textContent = '...';
 
-        try {
-            var response = await fetch('/Api/Calendar/RestoreChore', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ id: parseInt(choreId) })
-            });
-            if (!response.ok) {
-                throw new Error('Request failed: ' + response.status);
-            }
-            var data = await response.json();
-            if (data.success) {
+            try {
+                var response = await fetch('/Api/Calendar/RestoreChore', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ id: parseInt(itemId) })
+                });
+                if (!response.ok) {
+                    throw new Error('Request failed: ' + response.status);
+                }
+                var data = await response.json();
+                if (data.success) {
+                    toast.remove();
+                    location.reload();
+                } else {
+                    showToast(data.message || window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
+                    toast.remove();
+                }
+            } catch (err) {
+                showToast(window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
                 toast.remove();
-                location.reload();
-            } else {
-                showToast(data.message || window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
-                toast.remove();
             }
-        } catch (err) {
-            showToast(window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
-            toast.remove();
-        }
-    });
+        });
+    }
 }
 
 /**
@@ -681,6 +704,104 @@ async function submitQuickAdd(date) {
         await quickAddOnDuty(date, assigneeId, onDutyType);
     }
 }
+
+// --- Desktop assignment removal (hover × button) ---
+(function initDesktopRemoveButtons() {
+    var culture = document.documentElement.lang || 'en';
+    var isHebrew = culture === 'he' || culture === 'he-IL';
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.excel-calendar__remove-btn');
+        if (!btn) return;
+
+        e.stopPropagation(); // Don't trigger cell click / bottom sheet
+
+        // Second click — confirmed
+        if (btn.dataset.confirming === 'true') {
+            if (btn._confirmTimeout) clearTimeout(btn._confirmTimeout);
+            executeRemoval(btn);
+            return;
+        }
+
+        // First click — enter confirm state
+        btn.dataset.confirming = 'true';
+        btn._originalHtml = btn.innerHTML;
+        btn.innerHTML = '✓';
+        btn.classList.add('excel-calendar__remove-btn--confirming');
+        btn.setAttribute('title', isHebrew ? 'לחץ שוב לאישור' : 'Click again to confirm');
+
+        btn._confirmTimeout = setTimeout(function () {
+            btn.dataset.confirming = '';
+            btn.innerHTML = btn._originalHtml;
+            btn.classList.remove('excel-calendar__remove-btn--confirming');
+            btn.setAttribute('title', isHebrew ? 'הסר' : 'Remove');
+        }, 3000);
+    });
+
+    function executeRemoval(btn) {
+        var assignmentId = parseInt(btn.dataset.assignmentId, 10);
+        if (isNaN(assignmentId)) return;
+
+        var assignmentEl = btn.closest('.excel-calendar__assignment');
+        var calendarType = detectCalendarTypeForRemoval();
+
+        if (calendarType === 'chores') {
+            deleteItem('chore', assignmentId);
+        } else if (calendarType === 'oncall') {
+            deleteItem('onduty', assignmentId);
+        } else {
+            // Shifts — call ClearAssignment
+            if (assignmentEl) {
+                assignmentEl.style.opacity = '0.3';
+                assignmentEl.style.pointerEvents = 'none';
+            }
+
+            fetch('/Calendar/Table?handler=ClearAssignment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ assignmentId: assignmentId })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                if (result.success) {
+                    showToast(isHebrew ? 'השיבוץ הוסר בהצלחה' : 'Assignment removed', 'success');
+                    if (assignmentEl) {
+                        assignmentEl.style.transition = 'opacity 0.3s, transform 0.3s';
+                        assignmentEl.style.opacity = '0';
+                        assignmentEl.style.transform = 'scale(0.8)';
+                        setTimeout(function () { assignmentEl.remove(); }, 300);
+                    }
+                } else {
+                    showToast(result.error || 'Error', 'error');
+                    if (assignmentEl) {
+                        assignmentEl.style.opacity = '';
+                        assignmentEl.style.pointerEvents = '';
+                    }
+                }
+            })
+            .catch(function () {
+                showToast(isHebrew ? 'שגיאת רשת' : 'Network error', 'error');
+                if (assignmentEl) {
+                    assignmentEl.style.opacity = '';
+                    assignmentEl.style.pointerEvents = '';
+                }
+            });
+        }
+    }
+
+    function detectCalendarTypeForRemoval() {
+        var el = document.querySelector('[data-calendar-type]');
+        if (el) return el.dataset.calendarType;
+        var path = window.location.pathname.toLowerCase();
+        if (path.includes('/chores')) return 'chores';
+        if (path.includes('/oncall')) return 'oncall';
+        return 'shifts';
+    }
+})();
 
 // Make functions globally available
 window.quickAddChore = quickAddChore;

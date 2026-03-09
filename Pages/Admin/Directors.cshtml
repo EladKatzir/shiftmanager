@@ -124,7 +124,7 @@
                     <option value="0">@Localizer["SelectCompany"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
-                        <option value="@company.Id">@company.Name (@company.Slug)</option>
+                        <option value="@company.Id">@company.LocalizedName (@company.Slug)</option>
                     }
                 </select>
             </div>
@@ -180,7 +180,7 @@
                                     <select name="newCompanyId" class="reassign-select">
                                         @foreach (var company in Model.AvailableCompanies.Where(c => c.Id != assignment.CompanyId))
                                         {
-                                            <option value="@company.Id">@company.Name</option>
+                                            <option value="@company.Id">@company.LocalizedName</option>
                                         }
                                     </select>
                                     <button type="submit" class="btn btn-outline-primary">

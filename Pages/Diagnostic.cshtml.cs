@@ -40,7 +40,7 @@ public class DiagnosticModel : PageModel
         // Get companies
         Companies = await _db.Companies
             .IgnoreQueryFilters()
-            .Select(c => new CompanyInfo(c.Id, c.Name, c.Slug))
+            .Select(c => new CompanyInfo(c.Id, c.DisplayName ?? c.Name, c.Slug))
             .ToListAsync();
 
         // Get all users for dropdown

@@ -26,8 +26,9 @@
     {
         var cell = row.Cells.GetValueOrDefault(day);
         var isTodayCell = day == today;
+        var isPastCell = day < today;
 
-        <td class="excel-calendar__cell @(isTodayCell ? "excel-calendar__cell--today" : "") @(isReadOnly ? "excel-calendar__cell--readonly" : "")"
+        <td class="excel-calendar__cell @(isTodayCell ? "excel-calendar__cell--today" : "") @(isPastCell ? "excel-calendar__cell--past" : "") @(isReadOnly ? "excel-calendar__cell--readonly" : "")"
             data-row-id="@row.Id"
             data-date="@day.ToString("yyyy-MM-dd")"
             role="gridcell"
@@ -51,11 +52,34 @@
                 {
                     foreach (var assignment in cell.Assignments)
                     {
-                        <div class="excel-calendar__assignment" data-assignment-id="@assignment.Id" data-user-id="@assignment.UserId">
+                        var roleColor = assignment.Role ?? "";
+                        var assignStyle = !string.IsNullOrEmpty(roleColor) ? $"--_role-color: {roleColor}" : "";
+                        <div class="excel-calendar__assignment"
+                             data-assignment-id="@assignment.Id"
+                             data-user-id="@assignment.UserId"
+                             data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
+                             data-trainee-name="@(assignment.TraineeName ?? "")"
+                             data-role-color="@roleColor"
+                             style="@assignStyle">
                             <span class="excel-calendar__assignment-name">@assignment.Name</span>
                             @if (assignment.IsTrainee)
                             {
                                 <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]">🎓</span>
+                            }
+                            @if (!string.IsNullOrEmpty(assignment.TraineeName))
+                            {
+                                <span class="excel-calendar__trainee-sub">
+                                    <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]">🎓</span>
+                                    @assignment.TraineeName
+                                </span>
+                            }
+                            @if (!isReadOnly && assignment.Id > 0)
+                            {
+                                <button type="button"
+                                        class="excel-calendar__remove-btn"
+                                        data-assignment-id="@assignment.Id"
+                                        aria-label="@Localizer["Remove"] @assignment.Name"
+                                        title="@Localizer["Remove"]">×</button>
                             }
                         </div>
                     }

@@ -572,7 +572,7 @@
                 @foreach (var c in Model.Companies)
                 {
                     <tr>
-                        <td><strong>@c.Name</strong></td>
+                        <td><strong>@(c.DisplayName ?? c.Name)</strong></td>
                         <td>@(c.MoleculeName ?? "-")</td>
                         <td><code>@c.Slug</code></td>
                         <td>@(c.DisplayName ?? "-")</td>
@@ -581,7 +581,7 @@
                             <div class="table-actions">
                                 <button type="button" class="btn btn-ghost"
                                         data-company-id="@c.Id"
-                                        data-company-name="@System.Web.HttpUtility.HtmlAttributeEncode(c.Name)"
+                                        data-company-name="@System.Web.HttpUtility.HtmlAttributeEncode(c.DisplayName ?? c.Name)"
                                         onclick="renameCompanyClick(this)">
                                     @Localizer["Rename"]
                                 </button>

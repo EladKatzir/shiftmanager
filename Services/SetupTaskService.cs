@@ -128,7 +128,7 @@ public class SetupTaskService : ISetupTaskService
         {
             Type = SetupTaskType.AssignBRDirector,
             Title = _localizer["SetupTask_AssignBRDirector_Title"],
-            Description = string.Format(_localizer["SetupTask_AssignBRDirector_Desc"], company.Name),
+            Description = string.Format(_localizer["SetupTask_AssignBRDirector_Desc"], company.LocalizedName),
             MoleculeId = company.MoleculeId,
             CompanyId = companyId,
             AssignedToUserId = assignToUserId,
@@ -150,8 +150,8 @@ public class SetupTaskService : ISetupTaskService
                     tasks.Add(new SetupTask
                     {
                         Type = taskType.Value,
-                        Title = string.Format(_localizer[$"SetupTask_{taskType.Value}_Title"], jobType.DisplayName, company.Name),
-                        Description = string.Format(_localizer[$"SetupTask_{taskType.Value}_Desc"], jobType.DisplayName, company.Name),
+                        Title = string.Format(_localizer[$"SetupTask_{taskType.Value}_Title"], jobType.DisplayName, company.LocalizedName),
+                        Description = string.Format(_localizer[$"SetupTask_{taskType.Value}_Desc"], jobType.DisplayName, company.LocalizedName),
                         MoleculeId = company.MoleculeId,
                         CompanyId = companyId,
                         JobTypeId = jobType.Id,
@@ -168,7 +168,7 @@ public class SetupTaskService : ISetupTaskService
         {
             Type = SetupTaskType.AssignAssigners,
             Title = _localizer["SetupTask_AssignAssigners_Title"],
-            Description = string.Format(_localizer["SetupTask_AssignAssigners_Desc"], company.Name),
+            Description = string.Format(_localizer["SetupTask_AssignAssigners_Desc"], company.LocalizedName),
             MoleculeId = company.MoleculeId,
             CompanyId = companyId,
             AssignedToUserId = assignToUserId,

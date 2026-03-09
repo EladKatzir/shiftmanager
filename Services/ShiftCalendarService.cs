@@ -56,6 +56,7 @@ public class ShiftCalendarService : IShiftCalendarService
         return await _db.ShiftAssignments
             .IgnoreQueryFilters()
             .Include(sa => sa.User)
+            .Include(sa => sa.Trainee)
             .Include(sa => sa.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
             .AsSplitQuery() // C-07: split multi-include query to avoid cartesian explosion

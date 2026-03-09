@@ -62,7 +62,7 @@ public class NotificationHubModel : PageModel
                                             n.Message,
                                             n.CreatedAt,
                                             n.IsRead,
-                                            c.Name,
+                                            c.DisplayName ?? c.Name,
                                             c.Slug ?? ""
                                         ))
                                         .Take(50)
@@ -82,7 +82,7 @@ public class NotificationHubModel : PageModel
                                       u.DisplayName,
                                       $"{t.StartDate:yyyy-MM-dd} to {t.EndDate:yyyy-MM-dd}: {t.Reason}",
                                       t.CreatedAt,
-                                      c.Name,
+                                      c.DisplayName ?? c.Name,
                                       c.Slug ?? ""
                                   ))
                                   .ToListAsync();
@@ -103,7 +103,7 @@ public class NotificationHubModel : PageModel
                                    fromUser.DisplayName,
                                    $"Swap with {toUser.DisplayName}",
                                    s.CreatedAt,
-                                   c.Name,
+                                   c.DisplayName ?? c.Name,
                                    c.Slug ?? ""
                                ))
                                .ToListAsync();

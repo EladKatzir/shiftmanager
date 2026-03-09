@@ -502,7 +502,7 @@
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
-                        <option value="@company.Id" selected="@(Model.FilterCompanyId == company.Id)">@company.Name</option>
+                        <option value="@company.Id" selected="@(Model.FilterCompanyId == company.Id)">@company.LocalizedName</option>
                     }
                 </select>
             </div>
@@ -721,7 +721,7 @@
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
-                        <option value="@company.Id" selected="@(Model.UserFilterCompanyId == company.Id)">@company.Name</option>
+                        <option value="@company.Id" selected="@(Model.UserFilterCompanyId == company.Id)">@company.LocalizedName</option>
                     }
                 </select>
             </div>
@@ -1000,7 +1000,7 @@
                         }
                         @foreach (var company in Model.Companies)
                         {
-                            <option value="@company.Id">@company.Name</option>
+                            <option value="@company.Id">@company.LocalizedName</option>
                         }
                     </select>
                 </div>

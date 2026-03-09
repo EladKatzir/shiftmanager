@@ -229,7 +229,7 @@ public class AssignModel : LocalizedPageModel
         AvailableCompanies = await _db.Companies
             .IgnoreQueryFilters()
             .OrderBy(c => c.Name)
-            .Select(c => new ScopeOption(c.Id, c.Name, "Company"))
+            .Select(c => new ScopeOption(c.Id, c.DisplayName ?? c.Name, "Company"))
             .ToListAsync();
 
         AvailableDepartments = await _db.Departments

@@ -28,6 +28,7 @@ public class ShiftsModel : PageModel
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<ShiftsModel> _logger;
     private readonly IJobTypeService _jobTypeService;
+    private readonly ITraineeService _traineeService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -36,7 +37,8 @@ public class ShiftsModel : PageModel
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
         ILogger<ShiftsModel> logger,
-        IJobTypeService jobTypeService)
+        IJobTypeService jobTypeService,
+        ITraineeService traineeService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -45,6 +47,7 @@ public class ShiftsModel : PageModel
         _localizer = localizer;
         _logger = logger;
         _jobTypeService = jobTypeService;
+        _traineeService = traineeService;
     }
 
     // Query parameters
@@ -78,6 +81,7 @@ public class ShiftsModel : PageModel
     public JobType? SelectedJobType { get; set; }
     public int CurrentUserId { get; set; }
     public List<AppUser> Users { get; set; } = new();
+    public List<AppUser> Trainees { get; set; } = new();
     public List<ShiftType> ShiftTypes { get; set; } = new();
 
     // Navigation
@@ -181,6 +185,12 @@ public class ShiftsModel : PageModel
             Users = await _calendarService.GetUsersForCalendarAsync(MoleculeId.Value, JobTypeId.Value);
         }
 
+        // Load trainees for trainee assignment dropdown
+        if (companyId.HasValue)
+        {
+            Trainees = await _traineeService.GetCompanyTraineesAsync(companyId.Value);
+        }
+
         _logger.LogInformation(
             "Shifts calendar loaded for User {UserId}, Molecule {MoleculeId}, JobType {JobTypeId}, Mode {Mode}, ViewMode {ViewMode}",
             currentUserId, MoleculeId, JobTypeId, Mode, ViewMode);
@@ -277,19 +287,30 @@ public class ShiftsModel : PageModel
         // Look up company names for shift types (molecule mode shows cross-company shifts)
         var companyIds = shiftTypes.Select(st => st.CompanyId).Distinct().ToList();
         var companyNames = companyIds.Count > 1
-            ? await _db.Companies.IgnoreQueryFilters()
+            ? (await _db.Companies.IgnoreQueryFilters()
                 .Where(c => companyIds.Contains(c.Id))
-                .ToDictionaryAsync(c => c.Id, c => c.Name)
+                .ToListAsync())
+                .ToDictionary(c => c.Id, c => c.LocalizedName)
             : new Dictionary<int, string>();
 
         // Build rows - one per shift type
         var rows = new List<ExcelCalendarRow>();
         foreach (var shiftType in shiftTypes)
         {
+            // Resolve localized name: CustomName > NameKey resource > Key resource > computed Name fallback
+            var localizedName = !string.IsNullOrWhiteSpace(shiftType.CustomName)
+                ? shiftType.CustomName
+                : !string.IsNullOrWhiteSpace(shiftType.NameKey)
+                    && _localizer[shiftType.NameKey].Value is var nkLocalized && nkLocalized != shiftType.NameKey
+                    ? nkLocalized
+                    : _localizer[shiftType.Key].Value is var keyLocalized && keyLocalized != shiftType.Key
+                        ? keyLocalized
+                        : shiftType.Name;
+
             var row = new ExcelCalendarRow
             {
                 Id = $"shift-{shiftType.Id}",
-                Label = $"{shiftType.Name} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})",
+                Label = $"{localizedName} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})",
                 Color = shiftType.RowColor,
                 CompanyName = companyNames.GetValueOrDefault(shiftType.CompanyId)
             };
@@ -388,8 +409,10 @@ public class ShiftsModel : PageModel
                     {
                         Id = a.Id,
                         Name = a.User?.DisplayName ?? _localizer["Unassigned"].Value,
-                        IsTrainee = a.TraineeUserId.HasValue,
-                        UserId = a.UserId
+                        IsTrainee = false, // Shift-mode rows are primary employees, never trainees
+                        UserId = a.UserId,
+                        TraineeUserId = a.TraineeUserId,
+                        TraineeName = a.Trainee?.DisplayName
                     }).ToList();
 
                 if (CapacityMode)
@@ -427,7 +450,9 @@ public class ShiftsModel : PageModel
                 Id = a.Id,
                 Name = a.ShiftInstance.ShiftType?.Name ?? "Shift",
                 IsTrainee = a.TraineeUserId == userId,
-                UserId = a.UserId
+                UserId = a.UserId,
+                TraineeUserId = a.TraineeUserId,
+                TraineeName = a.Trainee?.DisplayName
             }).ToList();
 
             // Add overlay data

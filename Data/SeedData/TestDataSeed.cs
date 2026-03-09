@@ -262,6 +262,7 @@ public static class TestDataSeed
                 Name = name,
                 Slug = slug,
                 DisplayName = name,
+                NameHe = name,
                 MoleculeId = moleculeId
             };
             context.Companies.Add(company);

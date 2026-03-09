@@ -224,15 +224,30 @@
         var titleEl = contentElement.querySelector('.bottom-sheet__title');
         var bodyEl = contentElement.querySelector('.bottom-sheet__body');
         var actionsEl = contentElement.querySelector('.bottom-sheet__actions');
+        var calendarType = detectCalendarType();
 
         // Clear previous content
         bodyEl.innerHTML = '';
         actionsEl.innerHTML = '';
 
-        // Set title
+        // Set title with RTL-aware separator
         var dateStr = cellData.date || '';
         var rowLabel = cellData.rowLabel || '';
-        titleEl.textContent = rowLabel + (dateStr ? ' — ' + formatDate(dateStr) : '');
+        var formattedDate = dateStr ? formatDate(dateStr) : '';
+        if (isHebrew()) {
+            titleEl.textContent = formattedDate + (rowLabel ? ' — ' + rowLabel : '');
+        } else {
+            titleEl.textContent = rowLabel + (formattedDate ? ' — ' + formattedDate : '');
+        }
+
+        // Context label below title
+        var contextLabel = buildContextLabel(cellData, calendarType);
+        if (contextLabel) {
+            var contextEl = document.createElement('div');
+            contextEl.className = 'bottom-sheet__context';
+            contextEl.textContent = contextLabel;
+            bodyEl.appendChild(contextEl);
+        }
 
         // Current assignments section
         if (cellData.assignments && cellData.assignments.length > 0) {
@@ -263,7 +278,7 @@
                     item.appendChild(badge);
                 }
 
-                // Remove button (only if not read-only)
+                // Remove button with tap-to-confirm pattern
                 if (!cellData.isReadOnly && assignment.id) {
                     var removeBtn = document.createElement('button');
                     removeBtn.type = 'button';
@@ -271,21 +286,48 @@
                     removeBtn.setAttribute('aria-label', (isHebrew() ? 'הסר ' : 'Remove ') + assignment.name);
                     removeBtn.innerHTML = '&times;';
                     removeBtn.addEventListener('click', function () {
-                        handleRemoveAssignment(cellData, assignment);
+                        tapToConfirmRemove(removeBtn, cellData, assignment);
                     });
                     item.appendChild(removeBtn);
                 }
 
                 list.appendChild(item);
+
+                // Trainee sub-row (shifts only)
+                if (calendarType === 'shifts' && !cellData.isReadOnly) {
+                    if (assignment.traineeName) {
+                        // Show existing trainee with remove button
+                        var traineeRow = document.createElement('div');
+                        traineeRow.className = 'bottom-sheet__trainee-row';
+                        traineeRow.innerHTML =
+                            '<span class="bottom-sheet__trainee-indicator">🎓</span>' +
+                            '<span class="bottom-sheet__trainee-name">' + escapeText(assignment.traineeName) + '</span>';
+                        var removeTraineeBtn = document.createElement('button');
+                        removeTraineeBtn.type = 'button';
+                        removeTraineeBtn.className = 'bottom-sheet__remove-btn bottom-sheet__remove-btn--small';
+                        removeTraineeBtn.innerHTML = '&times;';
+                        removeTraineeBtn.addEventListener('click', function () {
+                            handleRemoveTrainee(assignment.id);
+                        });
+                        traineeRow.appendChild(removeTraineeBtn);
+                        list.appendChild(traineeRow);
+                    } else if (assignment.id && !assignment.isTrainee) {
+                        // Show "Add Trainee" dropdown for assignments without a trainee
+                        var traineeAddRow = buildTraineeAddRow(assignment.id);
+                        if (traineeAddRow) {
+                            list.appendChild(traineeAddRow);
+                        }
+                    }
+                }
             });
 
             currentSection.appendChild(list);
             bodyEl.appendChild(currentSection);
         } else {
-            // Empty state
+            // Contextual empty state
             var emptyEl = document.createElement('div');
             emptyEl.className = 'bottom-sheet__empty-state';
-            emptyEl.textContent = isHebrew() ? 'אין שיבוצים עדיין' : 'No assignments yet';
+            emptyEl.textContent = getEmptyStateMessage(cellData, calendarType);
             bodyEl.appendChild(emptyEl);
         }
 
@@ -299,7 +341,54 @@
             addTitle.textContent = isHebrew() ? 'הוסף שיבוץ' : 'Add Assignment';
             addSection.appendChild(addTitle);
 
-            // User selector
+            // Chore-specific fields: title input + chore type dropdown
+            var choreTitleInput = null;
+            var choreTypeDropdown = null;
+            if (calendarType === 'chores') {
+                // Chore title input
+                var titleFieldGroup = document.createElement('div');
+                titleFieldGroup.className = 'bottom-sheet__field';
+                var titleLabel = document.createElement('label');
+                titleLabel.className = 'bottom-sheet__field-label';
+                titleLabel.setAttribute('for', 'bottom-sheet-chore-title');
+                titleLabel.textContent = isHebrew() ? 'כותרת התורנות' : 'Chore Title';
+                titleFieldGroup.appendChild(titleLabel);
+                choreTitleInput = document.createElement('input');
+                choreTitleInput.type = 'text';
+                choreTitleInput.className = 'bottom-sheet__input';
+                choreTitleInput.id = 'bottom-sheet-chore-title';
+                choreTitleInput.maxLength = 200;
+                choreTitleInput.placeholder = isHebrew() ? 'הזן כותרת...' : 'Enter title...';
+                titleFieldGroup.appendChild(choreTitleInput);
+                addSection.appendChild(titleFieldGroup);
+
+                // Chore type dropdown (if chore types exist on page)
+                var pageChoreTypes = document.getElementById('choreTypeSelect');
+                if (pageChoreTypes && pageChoreTypes.options.length > 1) {
+                    var ctFieldGroup = document.createElement('div');
+                    ctFieldGroup.className = 'bottom-sheet__field';
+                    var ctLabel = document.createElement('label');
+                    ctLabel.className = 'bottom-sheet__field-label';
+                    ctLabel.setAttribute('for', 'bottom-sheet-chore-type');
+                    ctLabel.textContent = isHebrew() ? 'סוג תורנות' : 'Chore Type';
+                    ctFieldGroup.appendChild(ctLabel);
+                    choreTypeDropdown = document.createElement('select');
+                    choreTypeDropdown.className = 'bottom-sheet__select';
+                    choreTypeDropdown.id = 'bottom-sheet-chore-type';
+                    // Copy options from page dropdown
+                    for (var ci = 0; ci < pageChoreTypes.options.length; ci++) {
+                        var ctOpt = document.createElement('option');
+                        ctOpt.value = pageChoreTypes.options[ci].value;
+                        ctOpt.textContent = pageChoreTypes.options[ci].textContent;
+                        ctOpt.selected = pageChoreTypes.options[ci].selected;
+                        choreTypeDropdown.appendChild(ctOpt);
+                    }
+                    ctFieldGroup.appendChild(choreTypeDropdown);
+                    addSection.appendChild(ctFieldGroup);
+                }
+            }
+
+            // User/ShiftType selector
             var fieldGroup = document.createElement('div');
             fieldGroup.className = 'bottom-sheet__field';
 
@@ -346,7 +435,12 @@
             assignBtn.className = 'btn btn-primary bottom-sheet__action-btn';
             assignBtn.textContent = isHebrew() ? 'שבץ' : 'Assign';
             assignBtn.addEventListener('click', function () {
-                handleAssign(cellData, userSelect.value);
+                // For chores, validate title inline instead of using prompt()
+                if (calendarType === 'chores') {
+                    handleChoreAssign(cellData, userSelect.value, choreTitleInput, choreTypeDropdown);
+                } else {
+                    handleAssign(cellData, userSelect.value);
+                }
             });
             actionsEl.appendChild(assignBtn);
         }
@@ -358,6 +452,224 @@
         cancelBtn.textContent = isHebrew() ? 'סגור' : 'Close';
         cancelBtn.addEventListener('click', close);
         actionsEl.appendChild(cancelBtn);
+    }
+
+    // --- Build context label for the sheet ---
+    function buildContextLabel(cellData, calendarType) {
+        var date = cellData.date ? formatDate(cellData.date) : '';
+        var label = cellData.rowLabel || '';
+        if (calendarType === 'shifts') {
+            if (cellData.rowId && cellData.rowId.indexOf('user-') === 0) {
+                return (isHebrew() ? 'משמרות של: ' : 'Shifts for: ') + label;
+            }
+            return (isHebrew() ? 'שיבוץ ל: ' : 'Assigning to: ') + label;
+        }
+        if (calendarType === 'chores') {
+            return (isHebrew() ? 'תורנויות של: ' : 'Chores for: ') + label;
+        }
+        if (calendarType === 'oncall') {
+            return label;
+        }
+        return '';
+    }
+
+    // --- Get contextual empty state message ---
+    function getEmptyStateMessage(cellData, calendarType) {
+        var date = cellData.date ? formatDate(cellData.date) : '';
+        var label = cellData.rowLabel || '';
+        if (calendarType === 'shifts') {
+            return isHebrew()
+                ? 'אין שיבוצים ל' + label + ' ב-' + date
+                : 'No one assigned to ' + label + ' on ' + date;
+        }
+        if (calendarType === 'chores') {
+            return isHebrew()
+                ? 'אין תורנויות ל' + label + ' ב-' + date
+                : 'No chores for ' + label + ' on ' + date;
+        }
+        if (calendarType === 'oncall') {
+            return isHebrew()
+                ? 'אין תורנים ב-' + date
+                : 'No ' + label + ' assigned on ' + date;
+        }
+        return isHebrew() ? 'אין שיבוצים עדיין' : 'No assignments yet';
+    }
+
+    // --- Tap-to-confirm pattern for remove buttons ---
+    function tapToConfirmRemove(btn, cellData, assignment) {
+        if (btn.dataset.confirming === 'true') {
+            // Second tap — execute; clear the reset timer
+            if (btn._confirmTimeout) clearTimeout(btn._confirmTimeout);
+            handleRemoveAssignment(cellData, assignment);
+            return;
+        }
+        // First tap — show confirmation state
+        btn.dataset.confirming = 'true';
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = isHebrew() ? '✓' : '✓';
+        btn.classList.add('bottom-sheet__remove-btn--confirming');
+        btn.setAttribute('aria-label', isHebrew() ? 'לחץ שוב לאישור' : 'Tap again to confirm');
+        // Reset after 3 seconds
+        var timeout = setTimeout(function () {
+            btn.dataset.confirming = '';
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('bottom-sheet__remove-btn--confirming');
+        }, 3000);
+        btn._confirmTimeout = timeout;
+    }
+
+    // --- Escape text for safe DOM insertion ---
+    function escapeText(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // --- Build trainee add row for a shift assignment ---
+    function buildTraineeAddRow(assignmentId) {
+        var traineeSelect = document.getElementById('traineeSelect');
+        if (!traineeSelect || traineeSelect.options.length === 0) return null;
+
+        var row = document.createElement('div');
+        row.className = 'bottom-sheet__trainee-row bottom-sheet__trainee-row--add';
+
+        var indicator = document.createElement('span');
+        indicator.className = 'bottom-sheet__trainee-indicator';
+        indicator.textContent = '🎓';
+        row.appendChild(indicator);
+
+        var select = document.createElement('select');
+        select.className = 'bottom-sheet__select bottom-sheet__select--small';
+        var defOpt = document.createElement('option');
+        defOpt.value = '';
+        defOpt.textContent = isHebrew() ? 'הוסף מתמחה...' : 'Add trainee...';
+        select.appendChild(defOpt);
+        for (var i = 0; i < traineeSelect.options.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = traineeSelect.options[i].value;
+            opt.textContent = traineeSelect.options[i].textContent;
+            select.appendChild(opt);
+        }
+        row.appendChild(select);
+
+        var addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-ghost bottom-sheet__trainee-add-btn';
+        addBtn.textContent = '+';
+        addBtn.addEventListener('click', function () {
+            var traineeId = parseInt(select.value, 10);
+            if (select.value && !isNaN(traineeId)) {
+                handleAddTrainee(assignmentId, traineeId);
+            }
+        });
+        row.appendChild(addBtn);
+
+        return row;
+    }
+
+    // --- Handle add trainee ---
+    function handleAddTrainee(assignmentId, traineeUserId) {
+        fetch('/Calendar/Table?handler=AddTrainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ assignmentId: assignmentId, traineeUserId: traineeUserId })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (result) {
+            if (result.success) {
+                var msg = isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned';
+                if (window.showToast) window.showToast(msg, 'success');
+                close();
+                setTimeout(function () { location.reload(); }, 500);
+            } else if (result.requiresOverride) {
+                // Show warnings and ask to confirm
+                var msgs = (result.warnings || []).map(function (w) { return w.message; }).join('\n');
+                var confirmLabel = isHebrew() ? 'אישורים נדרשים:\n' : 'Warnings:\n';
+                if (confirm(confirmLabel + msgs)) {
+                    // Retry with override
+                    fetch('/Calendar/Table?handler=AddTrainee', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ assignmentId: assignmentId, traineeUserId: traineeUserId, overrideToken: result.overrideToken })
+                    })
+                    .then(function (r2) { return r2.json(); })
+                    .then(function (r2) {
+                        if (r2.success) {
+                            if (window.showToast) window.showToast(isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned', 'success');
+                            close();
+                            setTimeout(function () { location.reload(); }, 500);
+                        } else {
+                            if (window.showToast) window.showToast(r2.error || 'Error', 'error');
+                        }
+                    });
+                }
+            } else {
+                if (window.showToast) window.showToast(result.error || 'Error', 'error');
+            }
+        })
+        .catch(function () {
+            if (window.showToast) window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+        });
+    }
+
+    // --- Handle remove trainee ---
+    function handleRemoveTrainee(assignmentId) {
+        fetch('/Calendar/Table?handler=RemoveTrainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ assignmentId: assignmentId })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (result) {
+            if (result.success) {
+                var msg = isHebrew() ? 'מתמחה הוסר בהצלחה' : 'Trainee removed';
+                if (window.showToast) window.showToast(msg, 'success');
+                close();
+                setTimeout(function () { location.reload(); }, 500);
+            } else {
+                if (window.showToast) window.showToast(result.error || 'Error', 'error');
+            }
+        })
+        .catch(function () {
+            if (window.showToast) window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+        });
+    }
+
+    // --- Handle chore assignment with inline form (replaces prompt()) ---
+    function handleChoreAssign(cellData, userId, titleInput, choreTypeDropdown) {
+        if (!userId) {
+            var msg = isHebrew() ? 'נא לבחור משתמש' : 'Please select a user';
+            if (window.showToast) window.showToast(msg, 'error');
+            return;
+        }
+        var title = titleInput ? titleInput.value.trim() : '';
+        if (!title) {
+            var titleMsg = isHebrew() ? 'נא להזין כותרת' : 'Please enter a title';
+            if (window.showToast) window.showToast(titleMsg, 'error');
+            if (titleInput) titleInput.focus();
+            return;
+        }
+        if (title.length > 200) {
+            var lenMsg = isHebrew() ? 'הכותרת ארוכה מדי (מקסימום 200 תווים)' : 'Title too long (max 200 characters)';
+            if (window.showToast) window.showToast(lenMsg, 'error');
+            return;
+        }
+        var choreTypeId = choreTypeDropdown ? (choreTypeDropdown.value || null) : null;
+        if (typeof window.quickAddChore === 'function') {
+            // Close after initiating — quickAddChore handles its own toasts/confirms
+            close();
+            window.quickAddChore(cellData.date, userId, title, false, choreTypeId);
+        }
     }
 
     // --- Get available users for assignment ---
@@ -414,15 +726,16 @@
 
         var calendarType = detectCalendarType();
 
-        if (calendarType === 'chores' && typeof window.quickAddChore === 'function') {
-            // For chores, we need a title - prompt for it
-            var title = prompt(isHebrew() ? 'כותרת התורנות:' : 'Chore title:');
-            if (!title || !title.trim()) return;
-            // Pick up ChoreTypeId from the page filter dropdown (if set)
-            var choreTypeSelect = document.getElementById('choreTypeSelect');
-            var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
-            window.quickAddChore(cellData.date, userId, title.trim(), false, choreTypeId);
-            close();
+        if (calendarType === 'chores') {
+            // Chores are handled by handleChoreAssign via the inline form — should not reach here
+            // Fallback: if somehow called from non-form path
+            if (typeof window.quickAddChore === 'function') {
+                var choreTypeSelect = document.getElementById('choreTypeSelect');
+                var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
+                var fallbackTitle = isHebrew() ? 'תורנות' : 'Chore';
+                window.quickAddChore(cellData.date, userId, fallbackTitle, false, choreTypeId);
+                close();
+            }
         } else if (calendarType === 'oncall' && typeof window.quickAddOnDuty === 'function') {
             // Extract duty type from row ID (format: "dutytype-{typeValue}")
             var onDutyType = 0;
@@ -463,14 +776,8 @@
         }
     }
 
-    // --- Handle remove assignment ---
+    // --- Handle remove assignment (called after tap-to-confirm) ---
     function handleRemoveAssignment(cellData, assignment) {
-        var confirmMsg = isHebrew()
-            ? 'האם למחוק את השיבוץ של ' + assignment.name + '?'
-            : 'Remove assignment for ' + assignment.name + '?';
-
-        if (!confirm(confirmMsg)) return;
-
         var calendarType = detectCalendarType();
 
         if (calendarType === 'chores' && typeof window.deleteItem === 'function') {
@@ -479,17 +786,33 @@
         } else if (calendarType === 'oncall' && typeof window.deleteItem === 'function') {
             window.deleteItem('onduty', assignment.id);
             close();
-        } else {
-            // Generic removal - try to find and click the delete button
-            var assignmentEl = document.querySelector('[data-assignment-id="' + assignment.id + '"]');
-            if (assignmentEl) {
-                var deleteBtn = assignmentEl.querySelector('.btn-delete-item, [data-action="delete"]');
-                if (deleteBtn) {
+        } else if (calendarType === 'shifts') {
+            // Shift removal via ClearAssignment handler on Calendar/Table
+            fetch('/Calendar/Table?handler=ClearAssignment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ assignmentId: assignment.id })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                if (result.success) {
+                    var msg = isHebrew() ? 'השיבוץ הוסר בהצלחה' : 'Assignment removed';
+                    if (window.showToast) window.showToast(msg, 'success');
                     close();
-                    deleteBtn.click();
-                    return;
+                    setTimeout(function () { location.reload(); }, 500);
+                } else {
+                    if (window.showToast) window.showToast(result.error || 'Error', 'error');
                 }
-            }
+            })
+            .catch(function () {
+                if (window.showToast) window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+            });
+        } else {
+            // Fallback for unknown calendar types
             var noRemoveMsg = isHebrew() ? 'לא ניתן למחוק שיבוץ כאן' : 'Cannot remove assignment here';
             if (window.showToast) {
                 window.showToast(noRemoveMsg, 'error');
@@ -546,12 +869,16 @@
         cellEl.querySelectorAll('.excel-calendar__assignment').forEach(function (assignEl) {
             var nameEl = assignEl.querySelector('.excel-calendar__assignment-name');
             var assignmentId = assignEl.dataset.assignmentId;
-            var isTrainee = !!assignEl.querySelector('.excel-calendar__badge--trainee');
+            var isTrainee = !!assignEl.querySelector(':scope > .excel-calendar__badge--trainee');
+            var traineeId = assignEl.dataset.traineeId || '';
+            var traineeName = assignEl.dataset.traineeName || '';
 
             assignments.push({
                 id: assignmentId ? parseInt(assignmentId, 10) : null,
                 name: nameEl ? nameEl.textContent.trim() : '',
-                isTrainee: isTrainee
+                isTrainee: isTrainee,
+                traineeId: traineeId ? parseInt(traineeId, 10) : null,
+                traineeName: traineeName || null
             });
         });
 

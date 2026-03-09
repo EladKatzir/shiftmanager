@@ -33,10 +33,11 @@ public class OwnerCompanySelectorViewComponent : ViewComponent
 
         var model = new OwnerCompanySelectorViewModel
         {
-            Companies = await _db.Companies
+            Companies = (await _db.Companies
                 .OrderBy(c => c.Name)
-                .Select(c => new CompanyOption { Id = c.Id, Name = c.Name })
-                .ToListAsync(),
+                .ToListAsync())
+                .Select(c => new CompanyOption { Id = c.Id, Name = c.LocalizedName })
+                .ToList(),
             SelectedCompanyId = _ownerCompanySelector.GetSelectedCompanyId(),
             HomeCompanyId = _ownerCompanySelector.GetHomeCompanyId()
         };

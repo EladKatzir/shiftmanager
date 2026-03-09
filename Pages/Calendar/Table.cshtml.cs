@@ -232,10 +232,11 @@ public class TableModel : PageModel
                 .Select(c => c.Id)
                 .ToListAsync();
 
-            CompanyNames = await _db.Companies
+            CompanyNames = (await _db.Companies
                 .IgnoreQueryFilters()
                 .Where(c => moleculeCompanyIds.Contains(c.Id))
-                .ToDictionaryAsync(c => c.Id, c => c.Name);
+                .ToListAsync())
+                .ToDictionary(c => c.Id, c => c.LocalizedName);
 
             Employees = await _db.Users
                 .IgnoreQueryFilters()
@@ -1866,10 +1867,11 @@ public class TableModel : PageModel
                     .Select(c => c.Id)
                     .ToListAsync();
 
-                var companyNames = await _db.Companies
+                var companyNames = (await _db.Companies
                     .IgnoreQueryFilters()
                     .Where(c => rosterMoleculeCompanyIds.Contains(c.Id))
-                    .ToDictionaryAsync(c => c.Id, c => c.Name);
+                    .ToListAsync())
+                    .ToDictionary(c => c.Id, c => c.LocalizedName);
 
                 rosterEmployees = (await _db.Users
                     .IgnoreQueryFilters()

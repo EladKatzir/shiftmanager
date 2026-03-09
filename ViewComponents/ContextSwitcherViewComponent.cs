@@ -81,8 +81,8 @@ public class ContextSwitcherViewComponent : ViewComponent
                         GroupName = molecule.Name,
                         GroupType = "molecule",
                         Options = molecule.Companies
-                            .OrderBy(c => c.Name)
-                            .Select(c => CreateContextOption(c.Id, c.Name, "company", molecule.Name, molecule.Id))
+                            .OrderBy(c => c.LocalizedName)
+                            .Select(c => CreateContextOption(c.Id, c.LocalizedName, "company", molecule.Name, molecule.Id))
                             .ToList()
                     };
                     contexts.AddRange(moleculeGroup.Options);
@@ -131,7 +131,7 @@ public class ContextSwitcherViewComponent : ViewComponent
                     {
                         contexts.Add(CreateContextOption(
                             company.Id,
-                            company.Name,
+                            company.LocalizedName,
                             "company",
                             company.Molecule?.Name ?? "",
                             company.MoleculeId));

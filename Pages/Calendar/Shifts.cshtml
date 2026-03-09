@@ -17,12 +17,11 @@
     new BreadcrumbItem { Label = Localizer["ShiftsCalendar"], IsActive = true }
 })
 
-<div class="shifts-calendar" data-ui-version="v2">
-    @* Toolbar *@
-    <div class="shifts-calendar__toolbar">
-        <div class="shifts-calendar__toolbar-row">
-            @* Molecule selector *@
-            <div class="shifts-calendar__selector">
+<div class="cal-page" data-ui-version="v2">
+    @* Toolbar — Row 1: Selectors + Date Nav + Print *@
+    <div class="cal-toolbar">
+        <div class="cal-toolbar__row">
+            <div class="cal-toolbar__selector">
                 <label for="moleculeSelect">@Localizer["Molecule"]</label>
                 <select id="moleculeSelect" class="form-select" onchange="updateCalendarFilters()">
                     @foreach (var molecule in Model.AvailableMolecules)
@@ -33,8 +32,7 @@
                 </select>
             </div>
 
-            @* JobType selector *@
-            <div class="shifts-calendar__selector">
+            <div class="cal-toolbar__selector">
                 <label for="jobTypeSelect">@Localizer["JobType"]</label>
                 <select id="jobTypeSelect" class="form-select" onchange="updateCalendarFilters()">
                     @foreach (var jobType in Model.AvailableJobTypes)
@@ -45,8 +43,7 @@
                 </select>
             </div>
 
-            @* View mode selector *@
-            <div class="shifts-calendar__selector">
+            <div class="cal-toolbar__selector">
                 <label for="viewModeSelect">@Localizer["ViewMode"]</label>
                 <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
                     <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
@@ -54,90 +51,74 @@
                     <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
                 </select>
             </div>
-        </div>
 
-        <div class="shifts-calendar__toolbar-row">
-            @* Date navigation *@
-            <div class="shifts-calendar__date-nav">
+            <div class="cal-toolbar__date-nav">
                 <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode"
-                   class="btn btn-ghost shifts-calendar__nav-btn"
+                   class="btn btn-ghost cal-toolbar__nav-btn"
                    title="@Localizer["Previous"]">
                     <span class="nav-icon">&larr;</span>
                     <span class="nav-text">@Localizer["Previous"]</span>
                 </a>
 
-                <div class="shifts-calendar__date-display">
+                <div class="cal-toolbar__date-display">
                     <input type="date"
                            id="datePickerInput"
                            value="@Model.StartDate.ToString("yyyy-MM-dd")"
                            onchange="navigateToDate(this.value)"
-                           class="shifts-calendar__date-picker" />
-                    <span class="shifts-calendar__date-label">
+                           class="cal-toolbar__date-picker" />
+                    <span class="cal-toolbar__date-label">
                         @Localization.FormatMediumDate(Model.StartDate) - @Localization.FormatMediumDate(Model.EndDate)
                     </span>
                 </div>
 
                 <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode"
-                   class="btn btn-ghost shifts-calendar__nav-btn"
+                   class="btn btn-ghost cal-toolbar__nav-btn"
                    title="@Localizer["Next"]">
                     <span class="nav-text">@Localizer["Next"]</span>
                     <span class="nav-icon">&rarr;</span>
                 </a>
             </div>
 
-            @* Action buttons *@
-            <div class="shifts-calendar__actions">
-                <button type="button" class="btn btn-secondary" onclick="window.print()" title="@Localizer["Print"]">
-                    <span class="btn-icon">&#128438;</span>
-                    <span class="btn-text">@Localizer["Print"]</span>
-                </button>
-            </div>
+            <button type="button" class="btn btn-secondary cal-toolbar__print" onclick="window.print()" title="@Localizer["Print"]">
+                <span class="btn-icon">&#128438;</span>
+                <span class="btn-text">@Localizer["Print"]</span>
+            </button>
         </div>
 
-        <div class="shifts-calendar__toolbar-row">
-            @* Mode toggles *@
-            <div class="shifts-calendar__toggles">
-                @* Shift/User mode toggle *@
-                <div class="shifts-calendar__toggle-group">
-                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift"
-                       class="btn @(Model.Mode == "shift" ? "btn-primary" : "btn-ghost")">
-                        @Localizer["ByShift"]
-                    </a>
-                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user"
-                       class="btn @(Model.Mode == "user" ? "btn-primary" : "btn-ghost")">
-                        @Localizer["ByUser"]
-                    </a>
-                </div>
+        @* Row 2: Mode toggles + Filter + Just Mine *@
+        <div class="cal-toolbar__controls">
+            <div class="cal-toolbar__toggle-group">
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift"
+                   class="btn @(Model.Mode == "shift" ? "btn-primary" : "btn-ghost")">
+                    @Localizer["ByShift"]
+                </a>
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user"
+                   class="btn @(Model.Mode == "user" ? "btn-primary" : "btn-ghost")">
+                    @Localizer["ByUser"]
+                </a>
+            </div>
 
-                @* Capacity mode toggle (edit permission required) *@
-                @if (Model.CanEdit)
-                {
-                    <div class="shifts-calendar__toggle-group">
-                        <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)"
-                           class="btn @(Model.CapacityMode ? "btn-primary" : "btn-ghost")">
-                            @Localizer["CapacityMode"]
-                        </a>
-                    </div>
-                }
-
-                @* Filter and Just Mine buttons *@
-                <div class="shifts-calendar__toggle-group">
-                    <button type="button" class="btn btn-ghost" onclick="openFilterModal()">
-                        <span class="btn-icon">&#128269;</span>
-                        @Localizer["Filter"]
-                    </button>
-                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)"
-                       class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
-                        @Localizer["JustMine"]
+            @if (Model.CanEdit)
+            {
+                <div class="cal-toolbar__toggle-group">
+                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)"
+                       class="btn @(Model.CapacityMode ? "btn-primary" : "btn-ghost")">
+                        @Localizer["CapacityMode"]
                     </a>
                 </div>
+            }
 
-                @* Show Friends toggle *@
-                <div class="shifts-calendar__toggle-group">
-                    <button id="friendsToggle" type="button" class="btn btn-ghost" onclick="toggleFriendsHighlight()">
-                        <span>🤝</span> <loc key="ShowFriends" />
-                    </button>
-                </div>
+            <span class="cal-toolbar__separator"></span>
+
+            <div class="cal-toolbar__toggle-group">
+                <button type="button" class="btn btn-ghost" onclick="openFilterModal()">
+                    <span class="btn-icon">&#128269;</span>
+                    @Localizer["Filter"]
+                </button>
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)"
+                   class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
+                    @Localizer["JustMine"]
+                </a>
             </div>
         </div>
     </div>
@@ -149,8 +130,8 @@
     }
     else
     {
-        <div class="shifts-calendar__empty">
-            <div class="shifts-calendar__empty-icon">
+        <div class="cal-empty">
+            <div class="cal-empty__icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                     <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -158,15 +139,23 @@
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
             </div>
-            <h3 class="shifts-calendar__empty-title">@Localizer["Calendar_Empty_NoShifts"]</h3>
-            <p class="shifts-calendar__empty-message">
-                @if (Model.AvailableJobTypes.Any())
+            <h3 class="cal-empty__title">@Localizer["Calendar_Empty_NoShifts"]</h3>
+            <p class="cal-empty__message">
+                @if (!Model.MoleculeId.HasValue)
+                {
+                    @Localizer["Calendar_Empty_SelectMolecule"]
+                }
+                else if (!Model.AvailableJobTypes.Any())
+                {
+                    @Localizer["Calendar_Empty_NoJobTypes"]
+                }
+                else if (!Model.JobTypeId.HasValue)
                 {
                     @Localizer["Calendar_Empty_SelectJobType"]
                 }
                 else
                 {
-                    @Localizer["Calendar_Empty_NoJobTypes"]
+                    @Localizer["Calendar_Empty_NoShiftsForSelection"]
                 }
             </p>
         </div>
@@ -174,13 +163,13 @@
 </div>
 
 @* Filter Modal *@
-<div id="filterModal" class="shifts-filter-modal" style="display: none;" onclick="if(event.target===this) closeFilterModal()">
-    <div class="shifts-filter-modal__dialog">
-        <div class="shifts-filter-modal__header">
+<div id="filterModal" class="cal-filter-modal" style="display: none;" onclick="if(event.target===this) closeFilterModal()">
+    <div class="cal-filter-modal__dialog">
+        <div class="cal-filter-modal__header">
             <h3><loc key="Filter" /></h3>
-            <button type="button" class="shifts-filter-modal__close" onclick="closeFilterModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+            <button type="button" class="cal-filter-modal__close" onclick="closeFilterModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
-        <div class="shifts-filter-modal__body">
+        <div class="cal-filter-modal__body">
             <div class="form-group">
                 <label for="filterSearchInput"><loc key="Filter_SearchLabel" /></label>
                 <input type="text" id="filterSearchInput" class="form-control"
@@ -188,7 +177,7 @@
                        onkeydown="if(event.key==='Enter'){event.preventDefault(); applyFilter();}" />
             </div>
         </div>
-        <div class="shifts-filter-modal__footer">
+        <div class="cal-filter-modal__footer">
             <button type="button" class="btn btn-ghost" onclick="clearFilter()"><loc key="Filter_Clear" /></button>
             <button type="button" class="btn btn-primary" onclick="applyFilter()"><loc key="Filter_Apply" /></button>
         </div>
@@ -202,7 +191,11 @@
     <select id="assigneeSelect-shifts" data-role="assignee-select" data-item-type="shifttype" style="display:none">
         @foreach (var st in Model.ShiftTypes)
         {
-            <option value="@st.Id">@st.Name (@st.Start.ToString("HH:mm")-@st.End.ToString("HH:mm"))</option>
+            var stName = !string.IsNullOrWhiteSpace(st.CustomName) ? st.CustomName
+                : (!string.IsNullOrWhiteSpace(st.NameKey) && Localizer[st.NameKey].Value is var nk && nk != st.NameKey) ? nk
+                : Localizer[st.Key].Value is var kl && kl != st.Key ? kl
+                : st.Name;
+            <option value="@st.Id">@stName (@st.Start.ToString("HH:mm")-@st.End.ToString("HH:mm"))</option>
         }
     </select>
 }
@@ -213,6 +206,17 @@ else
         @foreach (var user in Model.Users)
         {
             <option value="@user.Id">@user.DisplayName</option>
+        }
+    </select>
+}
+
+@* Hidden select for trainee assignment dropdown *@
+@if (Model.Trainees.Any())
+{
+    <select id="traineeSelect" data-role="trainee-select" style="display:none">
+        @foreach (var trainee in Model.Trainees)
+        {
+            <option value="@trainee.Id">@trainee.DisplayName</option>
         }
     </select>
 }
@@ -381,11 +385,11 @@ else
         document.addEventListener('keydown', function(e) {
             // Left arrow - previous period
             if (e.key === 'ArrowLeft' && e.altKey) {
-                document.querySelector('.shifts-calendar__nav-btn:first-child')?.click();
+                document.querySelector('.cal-toolbar__nav-btn:first-child')?.click();
             }
             // Right arrow - next period
             if (e.key === 'ArrowRight' && e.altKey) {
-                document.querySelector('.shifts-calendar__nav-btn:last-child')?.click();
+                document.querySelector('.cal-toolbar__nav-btn:last-child')?.click();
             }
             // P key - print
             if (e.key === 'p' && e.ctrlKey) {
@@ -396,317 +400,4 @@ else
     </script>
 }
 
-@section Styles {
-    <style>
-        /* Shifts Calendar Layout */
-        .shifts-calendar {
-            padding: 1rem;
-        }
-
-        .shifts-calendar__toolbar {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .shifts-calendar__toolbar-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .shifts-calendar__toolbar-row:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Selectors */
-        .shifts-calendar__selector {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-            min-width: 150px;
-        }
-
-        .shifts-calendar__selector label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .shifts-calendar__selector .form-select {
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background-color: var(--bg);
-            min-height: 38px;
-        }
-
-        /* Date Navigation */
-        .shifts-calendar__date-nav {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .shifts-calendar__nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            min-height: 38px;
-        }
-
-        .shifts-calendar__date-display {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            position: relative;
-        }
-
-        .shifts-calendar__date-picker {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .shifts-calendar__date-label {
-            font-weight: 600;
-            font-size: 0.95rem;
-            padding: 0.5rem 1rem;
-            background: var(--surface-soft);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        /* Actions */
-        .shifts-calendar__actions {
-            margin-left: auto;
-        }
-
-        .shifts-calendar__actions .btn-icon {
-            font-size: 1.1rem;
-        }
-
-        /* Toggles */
-        .shifts-calendar__toggles {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .shifts-calendar__toggle-group {
-            display: flex;
-            background: var(--surface-soft);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .shifts-calendar__toggle-group .btn {
-            border-radius: 0;
-            border: none;
-            min-height: 36px;
-        }
-
-        .shifts-calendar__toggle-group .btn:first-child {
-            border-radius: 6px 0 0 6px;
-        }
-
-        .shifts-calendar__toggle-group .btn:last-child {
-            border-radius: 0 6px 6px 0;
-        }
-
-        .shifts-calendar__toggle-group .btn:only-child {
-            border-radius: 6px;
-        }
-
-        /* Empty State */
-        .shifts-calendar__empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 4rem 2rem;
-            background: var(--surface);
-            border-radius: 12px;
-            border: 2px dashed var(--border);
-        }
-
-        .shifts-calendar__empty-icon {
-            color: var(--muted);
-            opacity: 0.5;
-            margin-bottom: 1.5rem;
-        }
-
-        .shifts-calendar__empty-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text);
-            margin: 0 0 0.75rem 0;
-        }
-
-        .shifts-calendar__empty-message {
-            color: var(--muted);
-            font-size: 0.95rem;
-            margin: 0;
-            max-width: 400px;
-            line-height: 1.5;
-        }
-
-        /* Responsive */
-        @@media (max-width: 768px) {
-            .shifts-calendar__toolbar-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .shifts-calendar__selector {
-                width: 100%;
-            }
-
-            .shifts-calendar__date-nav {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .shifts-calendar__actions {
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .shifts-calendar__actions .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .shifts-calendar__toggles {
-                width: 100%;
-            }
-
-            .shifts-calendar__toggle-group {
-                flex: 1;
-            }
-
-            .shifts-calendar__toggle-group .btn {
-                flex: 1;
-                justify-content: center;
-            }
-
-            .shifts-calendar__nav-btn .nav-text {
-                display: none;
-            }
-        }
-
-        @@media (max-width: 480px) {
-            .shifts-calendar {
-                padding: 0.5rem;
-            }
-
-            .shifts-calendar__toolbar {
-                padding: 0.75rem;
-            }
-
-            .shifts-calendar__date-label {
-                font-size: 0.85rem;
-                padding: 0.375rem 0.75rem;
-            }
-        }
-
-        /* Filter Modal */
-        .shifts-filter-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
-        }
-
-        .shifts-filter-modal.is-open {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .shifts-filter-modal__dialog {
-            background: var(--surface);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
-            margin-top: 120px;
-        }
-
-        .shifts-filter-modal__header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .shifts-filter-modal__header h3 {
-            margin: 0;
-            font-size: 1.1rem;
-        }
-
-        .shifts-filter-modal__close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--muted);
-            line-height: 1;
-        }
-
-        .shifts-filter-modal__close:hover {
-            color: var(--text);
-        }
-
-        .shifts-filter-modal__body {
-            padding: 1.25rem;
-        }
-
-        .shifts-filter-modal__body .form-control {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 0.95rem;
-        }
-
-        .shifts-filter-modal__footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-            padding: 1rem 1.25rem;
-            border-top: 1px solid var(--border);
-        }
-
-        /* Print styles */
-        @@media print {
-            .shifts-calendar__toolbar {
-                display: none;
-            }
-
-            .shifts-calendar {
-                padding: 0;
-            }
-        }
-    </style>
-}
+@* All toolbar/layout CSS is now in wwwroot/css/calendar.css (.cal-toolbar, .cal-empty, .cal-filter-modal) *@

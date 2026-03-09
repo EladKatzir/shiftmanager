@@ -2160,6 +2160,353 @@
 }
 
 /* ========================================
+   SHARED CALENDAR TOOLBAR
+   Used by Shifts, Chores, OnCall pages
+   ======================================== */
+
+.cal-page {
+    padding: 1rem;
+}
+
+.cal-toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Row 1: selectors + date nav + print */
+.cal-toolbar__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+/* Selector (dropdown with label) */
+.cal-toolbar__selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 130px;
+}
+
+.cal-toolbar__selector label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cal-toolbar__selector .form-select {
+    padding: 0.4rem 0.625rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    min-height: 34px;
+    font-size: 0.875rem;
+}
+
+/* Date navigation */
+.cal-toolbar__date-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-inline-start: auto;
+}
+
+.cal-toolbar__nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 34px;
+}
+
+.cal-toolbar__date-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.cal-toolbar__date-picker {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.cal-toolbar__date-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--surface-soft);
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Print button */
+.cal-toolbar__print {
+    min-height: 34px;
+}
+
+.cal-toolbar__print .btn-icon {
+    font-size: 1rem;
+}
+
+/* Row 2: toggles, filters, legend */
+.cal-toolbar__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cal-toolbar__toggle-group {
+    display: flex;
+    background: var(--surface-soft);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.cal-toolbar__toggle-group .btn {
+    border-radius: 0;
+    border: none;
+    min-height: 32px;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+}
+
+.cal-toolbar__toggle-group .btn:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.cal-toolbar__toggle-group .btn:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+.cal-toolbar__toggle-group .btn:only-child {
+    border-radius: 6px;
+}
+
+/* Legend */
+.cal-toolbar__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-inline-start: auto;
+}
+
+.cal-toolbar__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8rem;
+}
+
+.cal-toolbar__legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.cal-toolbar__legend-label {
+    color: var(--muted);
+}
+
+/* Separator between groups */
+.cal-toolbar__separator {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    align-self: center;
+}
+
+/* Empty State (shared) */
+.cal-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px dashed var(--border);
+}
+
+.cal-empty__icon {
+    color: var(--muted);
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+}
+
+.cal-empty__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 0.75rem 0;
+}
+
+.cal-empty__message {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+/* Filter Modal (shared) */
+.cal-filter-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.cal-filter-modal.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.cal-filter-modal__dialog {
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 400px;
+    margin-top: 120px;
+}
+
+.cal-filter-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.cal-filter-modal__header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.cal-filter-modal__close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--muted);
+    line-height: 1;
+}
+
+.cal-filter-modal__close:hover {
+    color: var(--text);
+}
+
+.cal-filter-modal__body {
+    padding: 1.25rem;
+}
+
+.cal-filter-modal__body .form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.cal-filter-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cal-toolbar__row,
+    .cal-toolbar__controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cal-toolbar__selector {
+        width: 100%;
+    }
+
+    .cal-toolbar__date-nav {
+        width: 100%;
+        justify-content: space-between;
+        margin-inline-start: 0;
+    }
+
+    .cal-toolbar__toggle-group {
+        flex: 1;
+    }
+
+    .cal-toolbar__toggle-group .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .cal-toolbar__legend {
+        margin-inline-start: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .cal-toolbar__nav-btn .nav-text {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .cal-page {
+        padding: 0.5rem;
+    }
+
+    .cal-toolbar {
+        padding: 0.75rem;
+    }
+
+    .cal-toolbar__date-label {
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+@media print {
+    .cal-toolbar {
+        display: none;
+    }
+
+    .cal-page {
+        padding: 0;
+    }
+}
+
+/* ========================================
    EXCEL CALENDAR TABLE STYLES
    ======================================== */
 
@@ -2215,6 +2562,10 @@
 
 .excel-calendar__header-day--weekend {
     background: var(--primary-hover);
+}
+
+.excel-calendar__header-day--past {
+    opacity: 0.55;
 }
 
 /* Date display in header */
@@ -2289,6 +2640,11 @@
     background: rgba(var(--primary-rgb), 0.08);
 }
 
+.excel-calendar__cell--past {
+    background: var(--surface-soft);
+    opacity: 0.6;
+}
+
 .excel-calendar__cell--readonly {
     cursor: default;
 }
@@ -2312,6 +2668,7 @@
     background: var(--accent-soft);
     border-radius: var(--radius-sm);
     font-size: var(--text-tiny);
+    position: relative;
 }
 
 .excel-calendar__assignment-name {
@@ -2319,6 +2676,51 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Desktop hover-reveal remove button */
+.excel-calendar__remove-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--danger-soft, rgba(220, 53, 69, 0.12));
+    color: var(--danger, #dc3545);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.excel-calendar__remove-btn:hover {
+    background: var(--danger, #dc3545);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+/* Show on hover — desktop only (pointer: fine = mouse/trackpad) */
+@media (pointer: fine) {
+    .excel-calendar__assignment:hover .excel-calendar__remove-btn {
+        display: inline-flex;
+    }
+}
+
+/* Confirm state: danger pulse */
+.excel-calendar__remove-btn--confirming {
+    display: inline-flex !important;
+    background: var(--danger, #dc3545);
+    color: #fff;
+    animation: confirmPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes confirmPulse {
+    from { opacity: 0.85; }
+    to   { opacity: 1; }
 }
 
 /* FYI badges */
@@ -2399,12 +2801,20 @@
     border: none;
     font-size: 14px;
     cursor: pointer;
-    opacity: 0;
+    opacity: 0.15;
     transition: opacity var(--transition-fast);
 }
 
 .excel-calendar__cell:hover .excel-calendar__add-btn {
     opacity: 1;
+}
+
+.excel-calendar__cell--past .excel-calendar__add-btn {
+    opacity: 0.08;
+}
+
+.excel-calendar__cell--past:hover .excel-calendar__add-btn {
+    opacity: 0.7;
 }
 
 /* Group header rows */
@@ -2991,6 +3401,143 @@
 
 .bottom-sheet__action-btn--secondary:hover {
     background: var(--hover-bg, #e9ecef);
+}
+
+/* Bottom sheet context label */
+.bottom-sheet__context {
+    font-size: var(--text-small, 0.85rem);
+    color: var(--text-muted, #6c757d);
+    padding: 0 var(--space-4, 1rem);
+    margin-bottom: var(--space-2, 0.5rem);
+}
+
+/* Bottom sheet input field (chore title) */
+.bottom-sheet__input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--bg-surface, #fff);
+    color: var(--text-primary, #212529);
+    box-sizing: border-box;
+    min-height: 44px;
+}
+
+.bottom-sheet__input:focus {
+    outline: none;
+    border-color: var(--primary, #1976d2);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+}
+
+/* Bottom sheet trainee rows */
+.bottom-sheet__trainee-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+    padding-inline-start: calc(var(--space-4, 1rem) + 8px);
+    font-size: var(--text-small, 0.85rem);
+    color: var(--text-muted, #6c757d);
+    border-inline-start: 2px solid var(--info, #0288d1);
+    margin-inline-start: var(--space-2, 0.5rem);
+}
+
+.bottom-sheet__trainee-row--add {
+    border-inline-start-style: dashed;
+}
+
+.bottom-sheet__trainee-indicator {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.bottom-sheet__trainee-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bottom-sheet__trainee-add-btn {
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: var(--radius-full, 50%);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.bottom-sheet__select--small {
+    padding: 6px 8px;
+    font-size: 13px;
+    min-height: 32px;
+    flex: 1;
+}
+
+/* Tap-to-confirm remove button state */
+.bottom-sheet__remove-btn--confirming {
+    background: var(--danger, #d32f2f) !important;
+    color: white !important;
+    animation: pulse-confirm 0.3s ease;
+}
+
+.bottom-sheet__remove-btn--small {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    font-size: 14px;
+    padding: 10px; /* expand touch target to 44px for WCAG 2.5.5 */
+    box-sizing: content-box;
+}
+
+@keyframes pulse-confirm {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Trainee sub-row in calendar grid */
+.excel-calendar__trainee-sub {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: var(--text-muted);
+    padding-inline-start: var(--space-2, 0.5rem);
+    border-inline-start: 2px solid var(--info, #0288d1);
+    margin-top: 1px;
+}
+
+/* Assignment badge with role color (chore type border) */
+.excel-calendar__assignment[data-role-color]:not([data-role-color=""]) {
+    border-inline-start: 3px solid var(--_role-color, var(--border));
+}
+
+/* Capacity badge improved contrast */
+.excel-calendar__capacity-badge {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    min-width: 28px;
+    text-align: center;
+}
+
+/* Hover "+" affordance for empty editable cells */
+.excel-calendar__cell:not(.excel-calendar__cell--readonly) .excel-calendar__cell-content:empty::after {
+    content: '+';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 32px;
+    color: var(--text-muted);
+    opacity: 0;
+    font-size: 18px;
+    font-weight: 300;
+    transition: opacity var(--transition-fast, 0.15s);
+}
+
+.excel-calendar__cell:not(.excel-calendar__cell--readonly):hover .excel-calendar__cell-content:empty::after {
+    opacity: 0.4;
 }
 
 /* Prevent body scroll when open */

@@ -330,6 +330,7 @@ public static class QaTestUserSeed
             {
                 Name = name,
                 DisplayName = displayName,
+                NameHe = displayName,
                 MoleculeId = moleculeId
             };
             db.Companies.Add(company);

@@ -36,9 +36,10 @@
                     var isToday = day == today;
                     var isWeekend = dayIndex == 5 || dayIndex == 6;
                     var showWeekend = Model.ViewMode == "month" && isWeekend;
+                    var isPast = day < today;
                     var dayName = isCompact ? shortHebrewDays[dayIndex] : hebrewDays[dayIndex];
 
-                    <th class="excel-calendar__header-day @(isToday ? "excel-calendar__header-day--today" : "") @(showWeekend ? "excel-calendar__header-day--weekend" : "")"
+                    <th class="excel-calendar__header-day @(isToday ? "excel-calendar__header-day--today" : "") @(isPast ? "excel-calendar__header-day--past" : "") @(showWeekend ? "excel-calendar__header-day--weekend" : "")"
                         scope="col"
                         data-date="@day.ToString("yyyy-MM-dd")">
                         <span class="excel-calendar__day-name">@dayName</span>

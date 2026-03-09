@@ -323,7 +323,7 @@ public class UsersModel : LocalizedPageModel
                 jr.Id,
                 jr.Email,
                 jr.DisplayName,
-                companies.TryGetValue(jr.CompanyId, out var company) ? company.Name : $"Company #{jr.CompanyId}",
+                companies.TryGetValue(jr.CompanyId, out var company) ? company.LocalizedName : $"Company #{jr.CompanyId}",
                 jr.RequestedRole.ToString(),
                 jr.JobType?.DisplayName,
                 jr.JobType?.Name,
@@ -474,11 +474,12 @@ public class UsersModel : LocalizedPageModel
 
         // Batch-load all managed company names (single query instead of per-director)
         var managedCompaniesLookup = allManagedCompanyIds.Any()
-            ? await _db.Companies
+            ? (await _db.Companies
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(c => allManagedCompanyIds.Contains(c.Id))
-                .ToDictionaryAsync(c => c.Id, c => c.Name)
+                .ToListAsync())
+                .ToDictionary(c => c.Id, c => c.LocalizedName)
             : new Dictionary<int, string>();
 
         // Pre-load molecule names for directors (resolve via company → molecule)
@@ -552,7 +553,7 @@ public class UsersModel : LocalizedPageModel
                 {
                     // ✅ FIX: Use TryGetValue to prevent KeyNotFoundException if company is missing
                     var companyName = userCompanies.TryGetValue(u.CompanyId, out var company)
-                        ? company.Name
+                        ? company.LocalizedName
                         : $"Company #{u.CompanyId}";
 
                     userList.Add(new UserVM(

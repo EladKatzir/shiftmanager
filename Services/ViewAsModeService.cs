@@ -91,6 +91,6 @@ public class ViewAsModeService : IViewAsModeService
             return null;
 
         var company = await _companyCacheService.GetCompanyAsync(companyId.Value);
-        return company?.Name;
+        return company?.LocalizedName;
     }
 }

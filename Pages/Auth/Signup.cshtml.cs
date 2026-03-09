@@ -282,7 +282,7 @@ public class SignupModel : LocalizedPageModel
 
         if (existingPendingRequest != null)
         {
-            PendingRequestMessage = _localizer["SignupPendingMessage", selectedCompany?.Name ?? "", _localizer[RequestedRole.ToString()].Value];
+            PendingRequestMessage = _localizer["SignupPendingMessage", selectedCompany?.LocalizedName ?? "", _localizer[RequestedRole.ToString()].Value];
             return Page();
         }
 
@@ -335,7 +335,7 @@ public class SignupModel : LocalizedPageModel
                 await _notificationService.NotifyOwnersOfAccessRequestAsync(
                     DisplayName,
                     Email,
-                    selectedCompany.Name,
+                    selectedCompany.LocalizedName,
                     joinRequest.Id,
                     selectedCompany.Id);
             }
@@ -345,7 +345,7 @@ public class SignupModel : LocalizedPageModel
             }
         });
 
-        PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.Name, _localizer[RequestedRole.ToString()].Value];
+        PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.LocalizedName, _localizer[RequestedRole.ToString()].Value];
 
         // Clear form fields
         Email = string.Empty;

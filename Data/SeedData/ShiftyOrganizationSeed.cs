@@ -101,49 +101,49 @@ public static class ShiftyOrganizationSeed
         // --- Oren Companies ---
         var orenCompanies = new List<Company>
         {
-            new() { Name = "Tzafona", DisplayName = "צפונה", MoleculeId = oren.Id },
-            new() { Name = "Hir", DisplayName = "חיר", MoleculeId = oren.Id },
-            new() { Name = "Camps", DisplayName = "מחנות", MoleculeId = oren.Id },
-            new() { Name = "City", DisplayName = "העיר", MoleculeId = oren.Id },
-            new() { Name = "Radio", DisplayName = "טקטי", MoleculeId = oren.Id }
+            new() { Name = "Tzafona", DisplayName = "צפונה", NameHe = "צפונה", MoleculeId = oren.Id },
+            new() { Name = "Hir", DisplayName = "חיר", NameHe = "חיר", MoleculeId = oren.Id },
+            new() { Name = "Camps", DisplayName = "מחנות", NameHe = "מחנות", MoleculeId = oren.Id },
+            new() { Name = "City", DisplayName = "העיר", NameHe = "העיר", MoleculeId = oren.Id },
+            new() { Name = "Radio", DisplayName = "טקטי", NameHe = "טקטי", MoleculeId = oren.Id }
         };
         db.Companies.AddRange(orenCompanies);
 
         // --- Ella Companies ---
         var ellaCompanies = new List<Company>
         {
-            new() { Name = "Hitazmut", DisplayName = "התעצמות", MoleculeId = ella.Id },
-            new() { Name = "GAP", DisplayName = "גא\"פ", MoleculeId = ella.Id },
-            new() { Name = "Yeadim", DisplayName = "יעדים", MoleculeId = ella.Id }
+            new() { Name = "Hitazmut", DisplayName = "התעצמות", NameHe = "התעצמות", MoleculeId = ella.Id },
+            new() { Name = "GAP", DisplayName = "גא\"פ", NameHe = "גא\"פ", MoleculeId = ella.Id },
+            new() { Name = "Yeadim", DisplayName = "יעדים", NameHe = "יעדים", MoleculeId = ella.Id }
         };
         db.Companies.AddRange(ellaCompanies);
 
         // --- Harava Companies ---
         var haravaCompanies = new List<Company>
         {
-            new() { Name = "Element", DisplayName = "אלמנט", MoleculeId = harava.Id }
+            new() { Name = "Element", DisplayName = "אלמנט", NameHe = "אלמנט", MoleculeId = harava.Id }
         };
         db.Companies.AddRange(haravaCompanies);
 
         // --- Shaked Companies ---
         var shakedCompanies = new List<Company>
         {
-            new() { Name = "Inside", DisplayName = "פנים", MoleculeId = shaked.Id },
-            new() { Name = "Out", DisplayName = "חוץ", MoleculeId = shaked.Id }
+            new() { Name = "Inside", DisplayName = "פנים", NameHe = "פנים", MoleculeId = shaked.Id },
+            new() { Name = "Out", DisplayName = "חוץ", NameHe = "חוץ", MoleculeId = shaked.Id }
         };
         db.Companies.AddRange(shakedCompanies);
 
         // --- Gefen Companies ---
         var gefenCompanies = new List<Company>
         {
-            new() { Name = "Hamasa", DisplayName = "חמסה", MoleculeId = gefen.Id },
-            new() { Name = "Kabah", DisplayName = "קבה\"ח", MoleculeId = gefen.Id },
-            new() { Name = "Matot", DisplayName = "מטות", MoleculeId = gefen.Id }
+            new() { Name = "Hamasa", DisplayName = "חמסה", NameHe = "חמסה", MoleculeId = gefen.Id },
+            new() { Name = "Kabah", DisplayName = "קבה\"ח", NameHe = "קבה\"ח", MoleculeId = gefen.Id },
+            new() { Name = "Matot", DisplayName = "מטות", NameHe = "מטות", MoleculeId = gefen.Id }
         };
         db.Companies.AddRange(gefenCompanies);
 
         // --- System Company (for admin users) ---
-        var systemAdmins = new Company { Name = "SystemAdmins", DisplayName = "מנהלי מערכת", MoleculeId = system.Id };
+        var systemAdmins = new Company { Name = "SystemAdmins", DisplayName = "מנהלי מערכת", NameHe = "מנהלי מערכת", MoleculeId = system.Id };
         db.Companies.Add(systemAdmins);
 
         // --- HQ Companies (for Director auto-assignment per molecule) ---
@@ -154,6 +154,7 @@ public static class ShiftyOrganizationSeed
             {
                 Name = "HQ",
                 DisplayName = "כלל צוותי",
+                NameHe = "כלל צוותי",
                 Slug = $"hq-{mol.Name.ToLowerInvariant()}",
                 MoleculeId = mol.Id,
                 IsHeadquarters = true

@@ -179,13 +179,12 @@ public class WidgetService : IWidgetService
         var contacts = new List<ContactInfo>();
         var targetDate = DateOnly.FromDateTime(date ?? DateTime.Today);
 
-        // Get company name
-        var company = await _context.Companies
-            .Where(c => c.Id == companyId)
-            .Select(c => new { c.Name })
-            .FirstOrDefaultAsync();
+        // Get company with localized name
+        var companyEntity = await _context.Companies
+            .FirstOrDefaultAsync(c => c.Id == companyId);
 
-        if (company == null) return contacts;
+        if (companyEntity == null) return contacts;
+        var companyDisplayName = companyEntity.LocalizedName;
 
         // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
         // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
@@ -233,11 +232,11 @@ public class WidgetService : IWidgetService
             {
                 UserId = shift.UserId,
                 Name = shift.DisplayName,
-                Role = $"{shiftTypeName} - {company.Name}",
+                Role = $"{shiftTypeName} - {companyDisplayName}",
                 PhoneNumber = shift.Phone ?? "",
                 AvatarInitial = GetInitial(shift.DisplayName),
                 ContactType = ContactType.CompanyOnCall,
-                CompanyName = company.Name,
+                CompanyName = companyDisplayName,
                 Rank = shift.Rank
             });
         }
