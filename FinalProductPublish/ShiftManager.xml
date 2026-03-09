@@ -2364,6 +2364,18 @@
         <member name="M:ShiftManager.Migrations.AddMoleculeIdToJobType.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddCompanyNameHe">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyNameHe.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyNameHe.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyNameHe.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3229,6 +3241,16 @@
         <member name="P:ShiftManager.Models.Chore.IsActive">
             <summary>
             Whether this chore is active (not canceled)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Company.NameHe">
+            <summary>
+            Hebrew display name for the company. When the UI culture is Hebrew, this is used instead of Name.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Company.LocalizedName">
+            <summary>
+            Returns the culture-appropriate display name: NameHe when Hebrew, otherwise DisplayName ?? Name.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.CompanyLanguageSettings">

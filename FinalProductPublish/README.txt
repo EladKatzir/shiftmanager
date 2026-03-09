@@ -76,8 +76,8 @@ FILES IN THIS FOLDER:
    he-IL/                       â† Hebrew language resources
 
 ðŸ“¦ Runtime & Dependencies:
-   1025 files                    â† .NET runtime + all dependencies
-   Total size: 188 MB
+   1515 files                    â† .NET runtime + all dependencies
+   Total size: 217 MB
 
 ================================================================================
 DEFAULT CREDENTIALS:
@@ -111,7 +111,7 @@ DEPLOYMENT CONFIDENCE: 99.9%
 ================================================================================
 
 âœ… Complete self-contained package verified
-âœ… All 1025 dependencies included
+âœ… All 1515 dependencies included
 âœ… SQLite database library present
 âœ… All runtime files included
 âœ… Configuration files ready
@@ -232,9 +232,9 @@ All dependencies are included. No internet connection required.
 
 Questions? See DEPLOYMENT_GUIDE.txt for comprehensive documentation.
 
-Version: v3.1.0
-Package Date: 2026-03-08
-Package Size: 188 MB
+Version: v3.1.2
+Package Date: 2026-03-09
+Package Size: 217 MB
 Deployment Type: Self-Contained
 
 ================================================================================
