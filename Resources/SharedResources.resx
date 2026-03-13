@@ -481,8 +481,17 @@
   <data name="MIDDLE" xml:space="preserve">
     <value>Afternoon</value>
   </data>
+  <data name="AFTERNOON" xml:space="preserve">
+    <value>Afternoon</value>
+  </data>
+  <data name="EVENING" xml:space="preserve">
+    <value>Evening</value>
+  </data>
+  <data name="OFFLINE" xml:space="preserve">
+    <value>Offline</value>
+  </data>
 
-  
+
   <data name="Monday" xml:space="preserve">
     <value>Monday</value>
   </data>

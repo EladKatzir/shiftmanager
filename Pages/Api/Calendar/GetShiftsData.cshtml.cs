@@ -22,17 +22,23 @@ public class GetShiftsDataModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetShiftsDataModel> _logger;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
 
     public GetShiftsDataModel(
         IShiftCalendarService shiftCalendarService,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
-        ILogger<GetShiftsDataModel> logger)
+        ILogger<GetShiftsDataModel> logger,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver)
     {
         _shiftCalendarService = shiftCalendarService;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -90,6 +96,15 @@ public class GetShiftsDataModel : PageModel
                 .GroupBy(a => a.ShiftInstanceId)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
+            // Pre-compute localized shift type names
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            var shiftTypeNames = new Dictionary<int, string>();
+            foreach (var st in instances.Select(i => i.ShiftType).Where(st => st != null).DistinctBy(st => st.Id))
+            {
+                shiftTypeNames[st.Id] = await _companyLocalizationService.ResolveShiftTypeNameAsync(st, companyId, culture);
+            }
+
             // Transform to cell data — no per-instance queries needed
             var cells = new List<object>();
             foreach (var instance in instances)
@@ -105,7 +120,7 @@ public class GetShiftsDataModel : PageModel
                 {
                     shiftInstanceId = instance.Id,
                     shiftTypeId = instance.ShiftTypeId,
-                    shiftTypeName = instance.ShiftType?.Key ?? "Unknown",
+                    shiftTypeName = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType?.Name ?? "Unknown"),
                     date = instance.WorkDate.ToString("yyyy-MM-dd"),
                     capacity,
                     assignedCount = instanceAssignments.Count(a => a.UserId.HasValue),

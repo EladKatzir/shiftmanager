@@ -26,6 +26,8 @@ public class ShiftsModel : PageModel
     private readonly IGrantService _grantService;
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<ShiftsModel> _logger;
     private readonly IJobTypeService _jobTypeService;
     private readonly ITraineeService _traineeService;
@@ -36,6 +38,8 @@ public class ShiftsModel : PageModel
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver,
         ILogger<ShiftsModel> logger,
         IJobTypeService jobTypeService,
         ITraineeService traineeService)
@@ -45,6 +49,8 @@ public class ShiftsModel : PageModel
         _grantService = grantService;
         _companyContext = companyContext;
         _localizer = localizer;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
         _logger = logger;
         _jobTypeService = jobTypeService;
         _traineeService = traineeService;
@@ -83,6 +89,7 @@ public class ShiftsModel : PageModel
     public List<AppUser> Users { get; set; } = new();
     public List<AppUser> Trainees { get; set; } = new();
     public List<ShiftType> ShiftTypes { get; set; } = new();
+    public Dictionary<int, string> LocalizedShiftTypeNames { get; set; } = new();
 
     // Navigation
     public DateOnly StartDate { get; set; }
@@ -295,17 +302,14 @@ public class ShiftsModel : PageModel
 
         // Build rows - one per shift type
         var rows = new List<ExcelCalendarRow>();
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var currentCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        var localizedNames = new Dictionary<int, string>();
         foreach (var shiftType in shiftTypes)
         {
-            // Resolve localized name: CustomName > NameKey resource > Key resource > computed Name fallback
-            var localizedName = !string.IsNullOrWhiteSpace(shiftType.CustomName)
-                ? shiftType.CustomName
-                : !string.IsNullOrWhiteSpace(shiftType.NameKey)
-                    && _localizer[shiftType.NameKey].Value is var nkLocalized && nkLocalized != shiftType.NameKey
-                    ? nkLocalized
-                    : _localizer[shiftType.Key].Value is var keyLocalized && keyLocalized != shiftType.Key
-                        ? keyLocalized
-                        : shiftType.Name;
+            var localizedName = await _companyLocalizationService.ResolveShiftTypeNameAsync(
+                shiftType, companyId, currentCulture);
+            localizedNames[shiftType.Id] = localizedName;
 
             var row = new ExcelCalendarRow
             {
@@ -319,6 +323,7 @@ public class ShiftsModel : PageModel
             row.Cells = BuildCellsForShiftType(shiftType.Id, instances, assignments);
             rows.Add(row);
         }
+        LocalizedShiftTypeNames = localizedNames;
 
         CalendarData = new ExcelCalendarTableViewModel
         {
@@ -359,6 +364,16 @@ public class ShiftsModel : PageModel
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
 
+        // Pre-resolve localized names for all shift types (used in user-mode cells)
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        var localizedShiftNames = new Dictionary<int, string>();
+        foreach (var st in ShiftTypes)
+        {
+            localizedShiftNames[st.Id] = await _companyLocalizationService.ResolveShiftTypeNameAsync(st, companyId, culture);
+        }
+        LocalizedShiftTypeNames = localizedShiftNames;
+
         // Build rows - one per user
         var rows = new List<ExcelCalendarRow>();
         foreach (var user in users)
@@ -370,7 +385,7 @@ public class ShiftsModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays);
+            row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
             rows.Add(row);
         }
 
@@ -432,7 +447,8 @@ public class ShiftsModel : PageModel
         int userId,
         List<ShiftInstance> instances,
         List<ShiftAssignment> assignments,
-        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays)
+        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
+        Dictionary<int, string> localizedShiftNames)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -448,7 +464,8 @@ public class ShiftsModel : PageModel
             cell.Assignments = userAssignments.Select(a => new ExcelCalendarAssignment
             {
                 Id = a.Id,
-                Name = a.ShiftInstance.ShiftType?.Name ?? "Shift",
+                Name = localizedShiftNames.GetValueOrDefault(a.ShiftInstance.ShiftTypeId,
+                    a.ShiftInstance.ShiftType?.Name ?? _localizer["Shift"].Value),
                 IsTrainee = a.TraineeUserId == userId,
                 UserId = a.UserId,
                 TraineeUserId = a.TraineeUserId,

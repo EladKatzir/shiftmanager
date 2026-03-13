@@ -145,6 +145,8 @@
         <loc key="Section_SchedulingConfig">Scheduling Configuration</loc>
     </h2>
     <div class="admin-tools-grid">
+        @if (User.IsInRole("Owner"))
+        {
         <a href="/Owner/Blueprints" class="admin-tool-card">
             <div class="tool-icon">📘</div>
             <div class="tool-content">
@@ -153,6 +155,7 @@
             </div>
             <div class="tool-arrow">→</div>
         </a>
+        }
 
         <a href="/Owner/Programs" class="admin-tool-card">
             <div class="tool-icon">📅</div>

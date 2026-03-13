@@ -1,0 +1,205 @@
+[
+  {
+    "id": "DR-RESP-SCROLL-HOME-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on home at 375px",
+    "screenshot": "home_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-CALENDAR_SHIFTS",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on calendar_shifts",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-CALENDAR_SHIFTS-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on calendar_shifts at 375px",
+    "screenshot": "calendar_shifts_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-CALENDAR_TABLE",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on calendar_table",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-CALENDAR_TABLE-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on calendar_table at 375px",
+    "screenshot": "calendar_table_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-CALENDAR_DAY",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on calendar_day",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-CALENDAR_DAY-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on calendar_day at 375px",
+    "screenshot": "calendar_day_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-CALENDAR_WEEK",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on calendar_week",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-CALENDAR_WEEK-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on calendar_week at 375px",
+    "screenshot": "calendar_week_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-CALENDAR_MONTH",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on calendar_month",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-CALENDAR_MONTH-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on calendar_month at 375px",
+    "screenshot": "calendar_month_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-CALENDAR_OVERVIEW",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on calendar_overview",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-CALENDAR_OVERVIEW-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on calendar_overview at 375px",
+    "screenshot": "calendar_overview_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-MY_REQUESTS",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "2 inputs without labels on my_requests",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-MY_REQUESTS-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on my_requests at 375px",
+    "screenshot": "my_requests_mobile_light.png"
+  },
+  {
+    "id": "DR-RESP-SCROLL-REQUESTS-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on requests at 375px",
+    "screenshot": "requests_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-ADMIN_USERS",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "54 inputs without labels on admin_users",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-ADMIN_USERS-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on admin_users at 375px",
+    "screenshot": "admin_users_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-OWNER_DATALIFECYCLE",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "1 inputs without labels on owner_datalifecycle",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-OWNER_EMAILTEMPLATES-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on owner_emailtemplates at 375px",
+    "screenshot": "owner_emailtemplates_mobile_light.png"
+  },
+  {
+    "id": "DR-RESP-SCROLL-OWNER_BLUEPRINTS-TABLET",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on owner_blueprints at 768px",
+    "screenshot": "owner_blueprints_tablet_light.png"
+  },
+  {
+    "id": "DR-RESP-SCROLL-OWNER_BLUEPRINTS-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on owner_blueprints at 375px",
+    "screenshot": "owner_blueprints_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-ADMIN_ORG_CHORETYPES",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "3 inputs without labels on admin_org_choretypes",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-ADMIN_ORG_CHORETYPES-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on admin_org_choretypes at 375px",
+    "screenshot": "admin_org_choretypes_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-ADMIN_ORG_DUTYTYPES",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "8 inputs without labels on admin_org_dutytypes",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-ADMIN_ORG_DUTYTYPES-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on admin_org_dutytypes at 375px",
+    "screenshot": "admin_org_dutytypes_mobile_light.png"
+  },
+  {
+    "id": "DR-A11Y-NOMAIN-NOTIFICATIONS",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "No <main> landmark on notifications",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-A11Y-NOLABEL-PROFILE",
+    "area": "Accessibility",
+    "severity": "P2",
+    "description": "14 inputs without labels on profile",
+    "screenshot": ""
+  },
+  {
+    "id": "DR-RESP-SCROLL-PROFILE-MOBILE",
+    "area": "Responsive",
+    "severity": "P2",
+    "description": "Horizontal scrollbar on profile at 375px",
+    "screenshot": "profile_mobile_light.png"
+  }
+]

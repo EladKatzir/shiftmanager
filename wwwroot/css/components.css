@@ -37,6 +37,23 @@
   top: 0;
 }
 
+/* DR-A11Y-01: Ensure skip-link meets WCAG AA contrast in dark mode
+   Default primary (#5B9BD5) with white text = ~2.8:1, below 4.5:1 threshold.
+   Use card surface background with standard text for reliable contrast. */
+:root[data-theme="dark"] .skip-link {
+  background: var(--bg-card, #1e293b);
+  color: var(--text, #e2e8f0);
+  border: 2px solid var(--primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .skip-link {
+    background: var(--bg-card, #1e293b);
+    color: var(--text, #e2e8f0);
+    border: 2px solid var(--primary);
+  }
+}
+
 /* B-037: Keyboard Navigation Focus Styles */
 
 /* Global keyboard focus indicator */
@@ -3390,6 +3407,13 @@ picture img {
    ---------------------------------------- */
 @media print {
   .page-loader {
+    display: none !important;
+  }
+
+  /* DR-PRINT-01: Hide bottom dock and system alerts in print output */
+  .bottom-dock,
+  .bottom-dock__toggle,
+  .system-alerts {
     display: none !important;
   }
 }

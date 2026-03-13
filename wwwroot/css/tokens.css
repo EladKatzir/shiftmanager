@@ -230,6 +230,7 @@
   --text-display: 2rem;      /* 32px - Page titles */
   --text-title: 1.5rem;      /* 24px - Section headers */
   --text-heading: 1.25rem;   /* 20px - Card titles */
+  --text-base: 1rem;         /* 16px - Alias for text-body */
   --text-body: 1rem;         /* 16px - Body text */
   --text-small: 0.875rem;    /* 14px - Captions, labels */
   --text-tiny: 0.75rem;      /* 12px - Badges, metadata */

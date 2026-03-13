@@ -28,6 +28,8 @@ public class OverviewModel : PageModel
     private readonly IGrantService _grantService;
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<OverviewModel> _logger;
 
     public OverviewModel(
@@ -36,6 +38,8 @@ public class OverviewModel : PageModel
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver,
         ILogger<OverviewModel> logger)
     {
         _db = db;
@@ -43,6 +47,8 @@ public class OverviewModel : PageModel
         _grantService = grantService;
         _companyContext = companyContext;
         _localizer = localizer;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
         _logger = logger;
     }
 
@@ -264,11 +270,17 @@ public class OverviewModel : PageModel
                         sa.ShiftInstance.WorkDate <= EndDate)
             .ToListAsync();
 
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+
         var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
         foreach (var assignment in assignments)
         {
             var date = assignment.ShiftInstance.WorkDate;
-            var shiftName = assignment.ShiftInstance.ShiftType?.Name ?? _localizer["Shift"].Value;
+            var shiftName = assignment.ShiftInstance.ShiftType != null
+                ? await _companyLocalizationService.ResolveShiftTypeNameAsync(
+                    assignment.ShiftInstance.ShiftType, companyId, culture)
+                : _localizer["Shift"].Value;
 
             // Add for primary user if assigned
             if (assignment.UserId.HasValue && userIds.Contains(assignment.UserId.Value))

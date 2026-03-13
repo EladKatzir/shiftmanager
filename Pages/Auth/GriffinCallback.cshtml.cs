@@ -34,15 +34,21 @@ public class GriffinCallbackModel : LocalizedPageModel
         _logger = logger;
     }
 
-    public async Task<IActionResult> OnGetAsync(string? token, string? returnUrl = null)
+    public async Task<IActionResult> OnGetAsync(
+        [FromQuery(Name = "token")] string? token,
+        [FromQuery(Name = "HashedToken")] string? hashedToken,
+        string? returnUrl = null)
     {
-        // 1. Validate token parameter
-        if (string.IsNullOrEmpty(token))
+        // 1. Validate token parameter — Griffin may send as "token" or "HashedToken"
+        var effectiveToken = token ?? hashedToken;
+        if (string.IsNullOrEmpty(effectiveToken))
         {
             Error = _localizer["Error_MissingAuthToken"].Value;
-            _logger.LogWarning("Griffin callback invoked without token parameter");
+            _logger.LogWarning("Griffin callback invoked without token parameter. Query: {Query}",
+                Request.QueryString.Value);
             return Page();
         }
+        token = effectiveToken;
 
         // 2. Load Griffin config
         var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();

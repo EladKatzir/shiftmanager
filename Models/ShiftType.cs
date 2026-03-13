@@ -63,10 +63,21 @@ public class ShiftType : IBelongsToCompany
                 KEY_MIDDLE => "Mid Shift",
                 KEY_EVENING => "Evening Shift",
                 KEY_OFFLINE => "Offline",
-                _ => Key // fallback to key if no match (should not happen for well-formed data)
+                _ => FormatCustomKey(Key)
             };
         }
         set { } // Empty setter since this is computed
+    }
+
+    /// <summary>
+    /// Formats a raw key like "CUSTOM_NORTH_SHIFT" into "North Shift" for display.
+    /// </summary>
+    private static string FormatCustomKey(string key)
+    {
+        var name = key.StartsWith("CUSTOM_", StringComparison.OrdinalIgnoreCase)
+            ? key.Substring(7) : key;
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo
+            .ToTitleCase(name.Replace('_', ' ').ToLower());
     }
 
     public TimeOnly Start { get; set; }

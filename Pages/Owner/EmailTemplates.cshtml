@@ -32,7 +32,7 @@
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             @Model.Error
-            <button type="button" class="btn-close" data-bs-dismiss="alert" loc-aria-label="Aria_CloseButton"></button>
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()" loc-aria-label="Aria_CloseButton"></button>
         </div>
     }
 
@@ -40,7 +40,7 @@
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" loc-aria-label="Aria_CloseButton"></button>
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()" loc-aria-label="Aria_CloseButton"></button>
         </div>
     }
 
@@ -99,8 +99,6 @@
 
                 <div class="template-actions">
                     <button type="button" class="btn btn-primary btn-sm edit-template-btn"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editModal"
                             data-template-type="@((int)template.Type)"
                             data-template-name="@template.DisplayName"
                             data-template-variables="@System.Text.Json.JsonSerializer.Serialize(template.AvailableVariables)"
@@ -125,13 +123,12 @@
 </div>
 
 <!-- Edit Template Modal -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+<div class="modal" id="editModal" role="dialog" aria-labelledby="editModalLabel" aria-modal="true">
+    <div class="modal-content large">
             <form method="post" asp-page-handler="SaveTemplate">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalLabel"><loc key="EmailTemplates_EditTemplate" /></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" loc-aria-label="Aria_CloseButton"></button>
+                    <button type="button" class="modal-close" onclick="closeEditModal()" loc-aria-label="Aria_CloseButton">&times;</button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" asp-for="EditingTemplateType" id="editingTemplateType" />
@@ -171,11 +168,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><loc key="Action_Cancel" /></button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()"><loc key="Action_Cancel" /></button>
                     <button type="submit" class="btn btn-primary"><loc key="Action_SaveChanges" /></button>
                 </div>
             </form>
-        </div>
     </div>
 </div>
 
@@ -198,6 +194,20 @@
         }
 
         // XSS-safe: Read template data from data attributes instead of inline onclick
+        function openEditModal() {
+            document.getElementById('editModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeEditModal();
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.edit-template-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
@@ -209,6 +219,7 @@
                         this.dataset.templateCustom,
                         this.dataset.templateEnabled === 'true'
                     );
+                    openEditModal();
                 });
             });
         });
@@ -229,6 +240,14 @@
     </script>
 
     <style>
+        #editModal {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
         .email-templates-container {
             max-width: 1400px;
             margin: 0 auto;

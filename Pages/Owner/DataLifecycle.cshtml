@@ -709,15 +709,32 @@
 </style>
 
 <script>
-// Persist active tab across postbacks
+// Tab switching without Bootstrap JS
 document.addEventListener('DOMContentLoaded', function() {
+    var tabs = document.querySelectorAll('#dataLifecycleTabs .nav-link');
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            // Deactivate all tabs and panes
+            tabs.forEach(function(t) {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('#dataLifecycleTabContent .tab-pane').forEach(function(p) {
+                p.classList.remove('show', 'active');
+            });
+            // Activate clicked tab and target pane
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            var target = document.querySelector(this.dataset.bsTarget);
+            if (target) target.classList.add('show', 'active');
+        });
+    });
+
+    // Persist active tab across postbacks
     var activeTab = '@Model.ActiveTab';
     if (activeTab) {
         var tabEl = document.getElementById(activeTab + '-tab');
-        if (tabEl) {
-            var tab = new bootstrap.Tab(tabEl);
-            tab.show();
-        }
+        if (tabEl) tabEl.click();
     }
 });
 </script>

@@ -26,6 +26,8 @@ public class TableModel : PageModel
     private readonly IConcurrencyService _concurrencyService;
     private readonly IGrantService _grantService;
     private readonly IJobTypeService _jobTypeService;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
 
     public TableModel(
         AppDbContext db,
@@ -38,7 +40,9 @@ public class TableModel : PageModel
         ICalendarNotificationService calendarNotification,
         IConcurrencyService concurrencyService,
         IGrantService grantService,
-        IJobTypeService jobTypeService)
+        IJobTypeService jobTypeService,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver)
     {
         _db = db;
         _companyContext = companyContext;
@@ -51,6 +55,19 @@ public class TableModel : PageModel
         _concurrencyService = concurrencyService;
         _grantService = grantService;
         _jobTypeService = jobTypeService;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
+    }
+
+    /// <summary>
+    /// Resolves the localized display name for a shift type using the full fallback chain.
+    /// </summary>
+    private Task<string> LocalizeShiftTypeName(ShiftType? shiftType)
+    {
+        if (shiftType == null) return Task.FromResult("Unknown");
+        return _companyLocalizationService.ResolveShiftTypeNameAsync(
+            shiftType, _tenantResolver.GetCurrentTenantId(),
+            System.Globalization.CultureInfo.CurrentUICulture.Name);
     }
 
     public DateOnly StartDate { get; set; }
@@ -77,6 +94,9 @@ public class TableModel : PageModel
     public Molecule? SelectedMolecule { get; set; }
     public JobType? SelectedJobType { get; set; }
     public Dictionary<int, string> CompanyNames { get; set; } = new();
+
+    // Pre-computed localized shift type names for use in Razor view
+    public Dictionary<int, string> LocalizedShiftTypeNames { get; set; } = new();
 
     // Map: [ShiftTypeId][Date] => List of assignments
     public Dictionary<int, Dictionary<DateOnly, List<AssignmentInfo>>> AssignmentGrid { get; set; } = new();
@@ -292,6 +312,12 @@ public class TableModel : PageModel
         }
 
         _logger.LogInformation("Loaded {Count} shift types, molecule mode: {IsMoleculeMode}", ShiftTypes.Count, IsMoleculeMode);
+
+        // Pre-compute localized names for Razor view
+        foreach (var st in ShiftTypes)
+        {
+            LocalizedShiftTypeNames[st.Id] = await LocalizeShiftTypeName(st);
+        }
 
         if (!ShiftTypes.Any())
         {
@@ -639,10 +665,11 @@ public class TableModel : PageModel
 
                 if (overlaps)
                 {
+                    var overlapName = await LocalizeShiftTypeName(existing.ShiftInstance.ShiftType);
                     return new JsonResult(new
                     {
                         success = false,
-                        error = $"Employee has an overlapping shift: {existing.ShiftInstance.ShiftType.Name} ({existingStart:HH:mm} - {existingEnd:HH:mm})"
+                        error = $"Employee has an overlapping shift: {overlapName} ({existingStart:HH:mm} - {existingEnd:HH:mm})"
                     });
                 }
             }
@@ -785,6 +812,7 @@ public class TableModel : PageModel
                 var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
@@ -793,7 +821,7 @@ public class TableModel : PageModel
                             UserDisplayName: user?.DisplayName,
                             Date: instance.WorkDate,
                             ShiftTypeId: shiftType.Id,
-                            ShiftTypeName: shiftType.Name,
+                            ShiftTypeName: localizedShiftName,
                             ChangeType: "Assigned"
                         ));
                 }
@@ -851,6 +879,7 @@ public class TableModel : PageModel
             {
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
@@ -859,7 +888,7 @@ public class TableModel : PageModel
                             UserDisplayName: removedUserName,
                             Date: workDate,
                             ShiftTypeId: shiftType.Id,
-                            ShiftTypeName: shiftType.Name,
+                            ShiftTypeName: localizedShiftName,
                             ChangeType: "Unassigned"
                         ));
                 }
@@ -907,6 +936,7 @@ public class TableModel : PageModel
                 var shiftType = assignment.ShiftInstance.ShiftType;
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
@@ -915,7 +945,7 @@ public class TableModel : PageModel
                             UserDisplayName: null,
                             Date: assignment.ShiftInstance.WorkDate,
                             ShiftTypeId: shiftType.Id,
-                            ShiftTypeName: shiftType.Name,
+                            ShiftTypeName: localizedShiftName,
                             ChangeType: "Cleared"
                         ));
                 }
@@ -1223,6 +1253,7 @@ public class TableModel : PageModel
                 var shiftType = assignment.ShiftInstance.ShiftType;
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
@@ -1231,7 +1262,7 @@ public class TableModel : PageModel
                             UserDisplayName: trainee?.DisplayName,
                             Date: assignment.ShiftInstance.WorkDate,
                             ShiftTypeId: shiftType.Id,
-                            ShiftTypeName: shiftType.Name,
+                            ShiftTypeName: localizedShiftName,
                             ChangeType: "TraineeAdded"
                         ));
                 }
@@ -1285,6 +1316,7 @@ public class TableModel : PageModel
                 var shiftType = assignment.ShiftInstance.ShiftType;
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
@@ -1293,7 +1325,7 @@ public class TableModel : PageModel
                             UserDisplayName: null,
                             Date: assignment.ShiftInstance.WorkDate,
                             ShiftTypeId: shiftType.Id,
-                            ShiftTypeName: shiftType.Name,
+                            ShiftTypeName: localizedShiftName,
                             ChangeType: "TraineeRemoved"
                         ));
                 }
@@ -1377,6 +1409,7 @@ public class TableModel : PageModel
                 var shiftType = assignment.ShiftInstance.ShiftType;
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
@@ -1385,7 +1418,7 @@ public class TableModel : PageModel
                             UserDisplayName: user?.DisplayName,
                             Date: assignment.ShiftInstance.WorkDate,
                             ShiftTypeId: shiftType.Id,
-                            ShiftTypeName: shiftType.Name,
+                            ShiftTypeName: localizedShiftName,
                             ChangeType: "Changed"
                         ));
                 }
@@ -1539,11 +1572,12 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for CreateCustomShiftType");
             }
 
+            var localizedShiftName = await LocalizeShiftTypeName(shiftType);
             return new JsonResult(new
             {
                 success = true,
                 shiftTypeId = shiftType.Id,
-                shiftName = shiftType.Name // Returns the user-friendly name
+                shiftName = localizedShiftName // Returns the user-friendly name
             });
         }
         catch (Exception ex)
@@ -2245,6 +2279,7 @@ public class TableModel : PageModel
                 var shiftType = sourceInstance.ShiftType;
                 if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
                 {
+                    var localizedShiftName = await LocalizeShiftTypeName(shiftType);
                     var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
                     // Send one notification per filled target date
                     foreach (var targetDate in request.TargetDates)
@@ -2265,7 +2300,7 @@ public class TableModel : PageModel
                                         UserDisplayName: null,
                                         Date: parsedNotifyDate,
                                         ShiftTypeId: shiftType.Id,
-                                        ShiftTypeName: shiftType.Name,
+                                        ShiftTypeName: localizedShiftName,
                                         ChangeType: "Filled"
                                     ));
                             }
@@ -2384,6 +2419,7 @@ public class TableModel : PageModel
             {
                 var instanceAssignments = assignments.Where(a => a.ShiftInstanceId == instance.Id).ToList();
                 var filledCount = instanceAssignments.Count(a => a.UserId.HasValue);
+                var localizedShiftName = await LocalizeShiftTypeName(instance.ShiftType);
 
                 // Check if underfilled
                 if (filledCount < instance.StaffingRequired)
@@ -2392,7 +2428,7 @@ public class TableModel : PageModel
                     {
                         instanceId = instance.Id,
                         shiftTypeId = instance.ShiftTypeId,
-                        shiftTypeName = instance.ShiftType.Name,
+                        shiftTypeName = localizedShiftName,
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "underfilled",
                         severity = "warning",
@@ -2409,7 +2445,7 @@ public class TableModel : PageModel
                     {
                         instanceId = instance.Id,
                         shiftTypeId = instance.ShiftTypeId,
-                        shiftTypeName = instance.ShiftType.Name,
+                        shiftTypeName = localizedShiftName,
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "overfilled",
                         severity = "error",

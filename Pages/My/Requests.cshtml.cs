@@ -23,19 +23,25 @@ public class RequestsModel : LocalizedPageModel
     private readonly IVacationApprovalService _vacationApprovalService;
     private readonly IFeatureFlagService _featureFlagService;
     private readonly IGrantService _grantService;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
     public RequestsModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<RequestsModel> logger,
         IVacationApprovalService vacationApprovalService,
         IFeatureFlagService featureFlagService,
-        IGrantService grantService) : base(localizer)
+        IGrantService grantService,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _vacationApprovalService = vacationApprovalService;
         _featureFlagService = featureFlagService;
         _grantService = grantService;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
     }
 
     [BindProperty]
@@ -110,7 +116,7 @@ public class RequestsModel : LocalizedPageModel
 
             // Load available shifts for swapping (user's upcoming assignments)
             _logger.LogInformation("Loading available shifts for swapping for user {UserId}", userId);
-            AvailableShifts = await _db.ShiftAssignments
+            var rawShifts = await _db.ShiftAssignments
                 .Where(sa => sa.UserId == userId)
                 .Join(_db.ShiftInstances,
                     sa => sa.ShiftInstanceId,
@@ -119,17 +125,27 @@ public class RequestsModel : LocalizedPageModel
                 .Join(_db.ShiftTypes,
                     x => x.Instance.ShiftTypeId,
                     st => st.Id,
-                    (x, st) => new AvailableShift
-                    {
-                        ShiftId = x.Assignment.Id,
-                        Date = x.Instance.WorkDate,
-                        ShiftTypeName = st.Name,
-                        StartTime = st.Start,
-                        EndTime = st.End
-                    })
-                .Where(s => s.Date >= DateOnly.FromDateTime(DateTime.Today))
-                .OrderBy(s => s.Date)
+                    (x, st) => new { x.Assignment, x.Instance, ShiftType = st })
+                .Where(x => x.Instance.WorkDate >= DateOnly.FromDateTime(DateTime.Today))
+                .OrderBy(x => x.Instance.WorkDate)
                 .ToListAsync();
+
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            var shiftTypeNames = new Dictionary<int, string>();
+            foreach (var st in rawShifts.Select(x => x.ShiftType).DistinctBy(st => st.Id))
+            {
+                shiftTypeNames[st.Id] = await _companyLocalizationService.ResolveShiftTypeNameAsync(st, companyId, culture);
+            }
+
+            AvailableShifts = rawShifts.Select(x => new AvailableShift
+            {
+                ShiftId = x.Assignment.Id,
+                Date = x.Instance.WorkDate,
+                ShiftTypeName = shiftTypeNames.GetValueOrDefault(x.ShiftType.Id, x.ShiftType.Name),
+                StartTime = x.ShiftType.Start,
+                EndTime = x.ShiftType.End
+            }).ToList();
             _logger.LogInformation("Loaded {Count} available shifts for user {UserId}", AvailableShifts.Count, userId);
 
             // Load available approvers — users who hold ApproveVacations or ApproveExtendedLeave grants

@@ -31,6 +31,8 @@ public class DayModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly IGrantService _grantService;
     private readonly ILocalizationService _localization;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
 
     public DayModel(
         AppDbContext db,
@@ -41,7 +43,9 @@ public class DayModel : PageModel
         IChoreService choreService,
         IScopeFilterService scopeFilterService,
         IGrantService grantService,
-        ILocalizationService localization)
+        ILocalizationService localization,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver)
     {
         _db = db;
         _companyContext = companyContext;
@@ -52,6 +56,8 @@ public class DayModel : PageModel
         _scopeFilterService = scopeFilterService;
         _grantService = grantService;
         _localization = localization;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
     }
 
     public DateOnly CurrentDate { get; set; }
@@ -204,6 +210,15 @@ public class DayModel : PageModel
         var assignmentsByInstance = assignments.GroupBy(a => a.ShiftInstanceId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
+        // Pre-compute localized shift type names
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        var shiftTypeNames = new Dictionary<int, string>();
+        foreach (var st in instances.Select(i => i.ShiftType).Where(st => st != null).DistinctBy(st => st.Id))
+        {
+            shiftTypeNames[st.Id] = await _companyLocalizationService.ResolveShiftTypeNameAsync(st, companyId, culture);
+        }
+
         foreach (var instance in instances)
         {
             if (assignmentsByInstance.TryGetValue(instance.Id, out var shiftAssignments))
@@ -219,14 +234,14 @@ public class DayModel : PageModel
                         Id = instance.Id,
                         EntityId = instance.Id,
                         Date = instance.WorkDate,
-                        Title = instance.ShiftType.Name,
+                        Title = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                         AssigneeName = assignment.UserName,
                         TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
                         ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
                         Icon = GetShiftIcon(instance.ShiftType.Key),
                         IsCurrentUser = isCurrentUser || isTrainee,
                         ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
-                        Details = string.IsNullOrEmpty(instance.Name) ? instance.ShiftType.Name : instance.Name,
+                        Details = string.IsNullOrEmpty(instance.Name) ? shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name) : instance.Name,
                         StaffingInfo = $"{shiftAssignments.Count}/{instance.StaffingRequired}",
                         IsTrainee = isTrainee
                     });
@@ -240,14 +255,14 @@ public class DayModel : PageModel
                     Id = instance.Id,
                     EntityId = instance.Id,
                     Date = instance.WorkDate,
-                    Title = instance.ShiftType.Name,
+                    Title = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                     AssigneeName = _localizer["Unassigned"].Value,
                     TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
                     ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
                     Icon = GetShiftIcon(instance.ShiftType.Key),
                     IsCurrentUser = false,
                     ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
-                    Details = instance.ShiftType.Name,
+                    Details = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                     StaffingInfo = $"0/{instance.StaffingRequired}"
                 });
             }

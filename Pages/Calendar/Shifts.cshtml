@@ -191,10 +191,7 @@
     <select id="assigneeSelect-shifts" data-role="assignee-select" data-item-type="shifttype" style="display:none">
         @foreach (var st in Model.ShiftTypes)
         {
-            var stName = !string.IsNullOrWhiteSpace(st.CustomName) ? st.CustomName
-                : (!string.IsNullOrWhiteSpace(st.NameKey) && Localizer[st.NameKey].Value is var nk && nk != st.NameKey) ? nk
-                : Localizer[st.Key].Value is var kl && kl != st.Key ? kl
-                : st.Name;
+            var stName = Model.LocalizedShiftTypeNames.GetValueOrDefault(st.Id, st.Name);
             <option value="@st.Id">@stName (@st.Start.ToString("HH:mm")-@st.End.ToString("HH:mm"))</option>
         }
     </select>

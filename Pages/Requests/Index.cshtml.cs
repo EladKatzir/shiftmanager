@@ -29,6 +29,8 @@ public class IndexModel : LocalizedPageModel
     private readonly IConcurrencyService _concurrencyService;
     private readonly IVacationApprovalService _vacationApprovalService;
     private readonly IFeatureFlagService _featureFlagService;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
@@ -41,7 +43,9 @@ public class IndexModel : LocalizedPageModel
         IGrantService grantService,
         IConcurrencyService concurrencyService,
         IVacationApprovalService vacationApprovalService,
-        IFeatureFlagService featureFlagService)
+        IFeatureFlagService featureFlagService,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver)
         : base(localizer)
     {
         _db = db;
@@ -54,6 +58,8 @@ public class IndexModel : LocalizedPageModel
         _concurrencyService = concurrencyService;
         _vacationApprovalService = vacationApprovalService;
         _featureFlagService = featureFlagService;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
     }
 
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
@@ -409,7 +415,10 @@ public class IndexModel : LocalizedPageModel
         // Send notification to original user (if there was one)
         if (originalUserId.HasValue)
         {
-            var shiftInfo = $"{shiftType.Name} on {si.WorkDate:MMM dd, yyyy} ({shiftType.Start:HH:mm} - {shiftType.End:HH:mm})";
+            var localizedName = await _companyLocalizationService.ResolveShiftTypeNameAsync(
+                shiftType, _tenantResolver.GetCurrentTenantId(),
+                System.Globalization.CultureInfo.CurrentUICulture.Name);
+            var shiftInfo = $"{localizedName} on {si.WorkDate:MMM dd, yyyy} ({shiftType.Start:HH:mm} - {shiftType.End:HH:mm})";
             await _notificationService.CreateSwapRequestNotificationAsync(originalUserId.Value, RequestStatus.Approved, shiftInfo, s.Id);
         }
 
@@ -466,13 +475,24 @@ public class IndexModel : LocalizedPageModel
 
         // Get shift information for notification before declining
         // IgnoreQueryFilters: all joined entities may be in a different company
-        var shiftInfo = await (from sr in _db.SwapRequests.IgnoreQueryFilters()
+        var shiftData = await (from sr in _db.SwapRequests.IgnoreQueryFilters()
                               join assign in _db.ShiftAssignments.IgnoreQueryFilters() on sr.FromAssignmentId equals assign.Id
                               join si in _db.ShiftInstances.IgnoreQueryFilters() on assign.ShiftInstanceId equals si.Id
                               join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
                               where sr.Id == id
-                              select new { assign.UserId, ShiftInfo = $"{st.Name} on {si.WorkDate:MMM dd, yyyy} ({st.Start:HH:mm} - {st.End:HH:mm})" })
+                              select new { assign.UserId, ShiftType = st, WorkDate = si.WorkDate })
                               .FirstOrDefaultAsync();
+
+        string? resolvedShiftInfo = null;
+        int? resolvedUserId = null;
+        if (shiftData != null)
+        {
+            var localizedName = await _companyLocalizationService.ResolveShiftTypeNameAsync(
+                shiftData.ShiftType, _tenantResolver.GetCurrentTenantId(),
+                System.Globalization.CultureInfo.CurrentUICulture.Name);
+            resolvedShiftInfo = $"{localizedName} on {shiftData.WorkDate:MMM dd, yyyy} ({shiftData.ShiftType.Start:HH:mm} - {shiftData.ShiftType.End:HH:mm})";
+            resolvedUserId = shiftData.UserId;
+        }
 
         s.Status = RequestStatus.Declined;
         {
@@ -486,9 +506,9 @@ public class IndexModel : LocalizedPageModel
         }
 
         // Send notification to user (if there was one)
-        if (shiftInfo != null && shiftInfo.UserId.HasValue)
+        if (resolvedUserId.HasValue)
         {
-            await _notificationService.CreateSwapRequestNotificationAsync(shiftInfo.UserId.Value, RequestStatus.Declined, shiftInfo.ShiftInfo, s.Id);
+            await _notificationService.CreateSwapRequestNotificationAsync(resolvedUserId.Value, RequestStatus.Declined, resolvedShiftInfo!, s.Id);
         }
 
         return RedirectToPage();

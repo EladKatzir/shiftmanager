@@ -57,4 +57,16 @@ public interface ICompanyLocalizationService
     /// Invalidate all cached overrides for a company
     /// </summary>
     void InvalidateCacheForCompany(int companyId);
+
+    /// <summary>
+    /// Resolve the localized display name for a shift type using the full fallback chain:
+    /// 1. Company override for NameKey (Blueprints-created custom names)
+    /// 2. Company override for raw Key
+    /// 3. .resx for NameKey
+    /// 4. .resx for "ShiftType_{Key}" pattern
+    /// 5. .resx for raw Key (e.g., "MORNING" → "בוקר")
+    /// 6. CustomName (non-localized single-language fallback)
+    /// 7. Computed Name from ShiftType model
+    /// </summary>
+    Task<string> ResolveShiftTypeNameAsync(ShiftType shiftType, int companyId, string culture);
 }

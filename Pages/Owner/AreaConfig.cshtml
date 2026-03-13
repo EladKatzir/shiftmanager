@@ -155,12 +155,16 @@ function openEditModal(areaId, areaName, restHours, weeklyCap) {
     document.getElementById('modalAreaName').textContent = areaName;
     document.getElementById('DefaultRestHours').value = restHours;
     document.getElementById('DefaultWeeklyCap').value = weeklyCap;
-    document.getElementById('editModal').style.display = 'flex';
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
+    const modal = document.getElementById('editModal');
+    modal.classList.remove('active');
+    modal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
@@ -351,7 +355,7 @@ document.addEventListener('keydown', function(e) {
     box-shadow: var(--shadow-sm);
 }
 
-/* Modal */
+/* Modal — must override components.css .modal base */
 .modal {
     position: fixed;
     inset: 0;
@@ -359,6 +363,9 @@ document.addEventListener('keydown', function(e) {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    max-width: none;
+    transform: none;
+    flex-direction: row;
 }
 
 .modal-backdrop {

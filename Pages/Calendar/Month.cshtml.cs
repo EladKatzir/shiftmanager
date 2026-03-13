@@ -33,6 +33,8 @@ public class MonthModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly IGrantService _grantService;
     private readonly IJobTypeService _jobTypeService;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
+    private readonly ITenantResolver _tenantResolver;
 
     public MonthModel(
         AppDbContext db,
@@ -44,7 +46,9 @@ public class MonthModel : PageModel
         IChoreService choreService,
         IScopeFilterService scopeFilterService,
         IGrantService grantService,
-        IJobTypeService jobTypeService)
+        IJobTypeService jobTypeService,
+        ICompanyLocalizationService companyLocalizationService,
+        ITenantResolver tenantResolver)
     {
         _db = db;
         _companyContext = companyContext;
@@ -56,6 +60,8 @@ public class MonthModel : PageModel
         _scopeFilterService = scopeFilterService;
         _grantService = grantService;
         _jobTypeService = jobTypeService;
+        _companyLocalizationService = companyLocalizationService;
+        _tenantResolver = tenantResolver;
     }
 
     public DateOnly CurrentMonth { get; set; }
@@ -298,6 +304,15 @@ public class MonthModel : PageModel
 
         var instances = await instancesQuery.ToListAsync();
 
+        // Pre-compute localized shift type names
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        var shiftTypeNames = new Dictionary<int, string>();
+        foreach (var st in instances.Select(i => i.ShiftType).Where(st => st != null).DistinctBy(st => st.Id))
+        {
+            shiftTypeNames[st.Id] = await _companyLocalizationService.ResolveShiftTypeNameAsync(st, companyId, culture);
+        }
+
         var instanceIds = instances.Select(i => i.Id).ToList();
 
         // IgnoreQueryFilters on both tables: assignments and users may belong to different companies
@@ -328,14 +343,14 @@ public class MonthModel : PageModel
                         Id = instance.Id,
                         EntityId = instance.Id,
                         Date = instance.WorkDate,
-                        Title = instance.ShiftType.Name,
+                        Title = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                         AssigneeName = assignment.UserName,
                         TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
                         ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
                         Icon = GetShiftIcon(instance.ShiftType.Key),
                         IsCurrentUser = isCurrentUser || isTrainee,
                         ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
-                        Details = string.IsNullOrEmpty(instance.Name) ? instance.ShiftType.Name : instance.Name,
+                        Details = string.IsNullOrEmpty(instance.Name) ? shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name) : instance.Name,
                         StaffingInfo = $"{shiftAssignments.Count}/{instance.StaffingRequired}",
                         IsTrainee = isTrainee
                     });
@@ -350,14 +365,14 @@ public class MonthModel : PageModel
                     Id = instance.Id,
                     EntityId = instance.Id,
                     Date = instance.WorkDate,
-                    Title = instance.ShiftType.Name,
+                    Title = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                     AssigneeName = _localizer["Unassigned"].Value,
                     TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
                     ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
                     Icon = GetShiftIcon(instance.ShiftType.Key),
                     IsCurrentUser = false,
                     ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
-                    Details = instance.ShiftType.Name,
+                    Details = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                     StaffingInfo = $"0/{instance.StaffingRequired}"
                 });
             }

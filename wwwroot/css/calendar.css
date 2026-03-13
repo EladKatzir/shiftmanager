@@ -2565,7 +2565,8 @@
 }
 
 .excel-calendar__header-day--past {
-    opacity: 0.55;
+    opacity: 0.45;
+    filter: grayscale(40%);
 }
 
 /* Date display in header */
@@ -2642,7 +2643,8 @@
 
 .excel-calendar__cell--past {
     background: var(--surface-soft);
-    opacity: 0.6;
+    opacity: 0.5;
+    filter: grayscale(40%);
 }
 
 .excel-calendar__cell--readonly {

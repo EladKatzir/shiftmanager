@@ -279,6 +279,50 @@ public class CompanyLocalizationService : ICompanyLocalizationService
         InvalidateCache(companyId, "he-IL");
     }
 
+    public async Task<string> ResolveShiftTypeNameAsync(ShiftType shiftType, int companyId, string culture)
+    {
+        // 1. Company override for NameKey (Blueprints-created custom names)
+        if (!string.IsNullOrWhiteSpace(shiftType.NameKey) && companyId > 0)
+        {
+            var val = await GetOverrideValueAsync(companyId, culture, shiftType.NameKey);
+            if (!string.IsNullOrEmpty(val)) return val;
+        }
+
+        // 2. Company override for raw Key
+        if (companyId > 0)
+        {
+            var val = await GetOverrideValueAsync(companyId, culture, shiftType.Key);
+            if (!string.IsNullOrEmpty(val)) return val;
+        }
+
+        // 3. .resx for NameKey
+        if (!string.IsNullOrWhiteSpace(shiftType.NameKey))
+        {
+            var loc = _baseLocalizer[shiftType.NameKey];
+            if (!loc.ResourceNotFound) return loc.Value;
+        }
+
+        // 4. .resx for "ShiftType_{Key}" pattern
+        {
+            var stKey = $"ShiftType_{shiftType.Key}";
+            var loc = _baseLocalizer[stKey];
+            if (!loc.ResourceNotFound) return loc.Value;
+        }
+
+        // 5. .resx for raw Key (e.g., "MORNING" → "בוקר")
+        {
+            var loc = _baseLocalizer[shiftType.Key];
+            if (!loc.ResourceNotFound) return loc.Value;
+        }
+
+        // 6. CustomName (non-localized single-language fallback)
+        if (!string.IsNullOrWhiteSpace(shiftType.CustomName))
+            return shiftType.CustomName;
+
+        // 7. Computed Name from ShiftType model
+        return shiftType.Name;
+    }
+
     // Validation methods
 
     private void ValidateCulture(string culture)

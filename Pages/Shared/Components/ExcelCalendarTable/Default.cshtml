@@ -9,8 +9,9 @@
         .ToList();
     var today = DateOnly.FromDateTime(DateTime.Today);
     var isCompact = Model.ViewMode == "month";
-    var hebrewDays = new[] { "ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת" };
-    var shortHebrewDays = new[] { "א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳" };
+    var culture = System.Globalization.CultureInfo.CurrentUICulture;
+    var dayNames = culture.DateTimeFormat.DayNames;
+    var shortDayNames = culture.DateTimeFormat.AbbreviatedDayNames;
 }
 
 @if (Model.IsReadOnly)
@@ -37,7 +38,7 @@
                     var isWeekend = dayIndex == 5 || dayIndex == 6;
                     var showWeekend = Model.ViewMode == "month" && isWeekend;
                     var isPast = day < today;
-                    var dayName = isCompact ? shortHebrewDays[dayIndex] : hebrewDays[dayIndex];
+                    var dayName = isCompact ? shortDayNames[dayIndex] : dayNames[dayIndex];
 
                     <th class="excel-calendar__header-day @(isToday ? "excel-calendar__header-day--today" : "") @(isPast ? "excel-calendar__header-day--past" : "") @(showWeekend ? "excel-calendar__header-day--weekend" : "")"
                         scope="col"

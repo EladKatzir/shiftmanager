@@ -477,6 +477,15 @@
   <data name="MIDDLE" xml:space="preserve">
     <value>אחר הצהריים</value>
   </data>
+  <data name="AFTERNOON" xml:space="preserve">
+    <value>אחה"צ</value>
+  </data>
+  <data name="EVENING" xml:space="preserve">
+    <value>ערב</value>
+  </data>
+  <data name="OFFLINE" xml:space="preserve">
+    <value>לא זמין</value>
+  </data>
 
   
   <data name="Monday" xml:space="preserve">
