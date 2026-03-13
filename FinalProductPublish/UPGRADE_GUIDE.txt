@@ -1,9 +1,9 @@
 ﻿================================================================================
                     SHIFTMANAGER UPGRADE GUIDE
-                           Version 3.1.2
+                           Version 3.1.3
 ================================================================================
 
-This guide explains how to upgrade ShiftManager from an older version to 3.1.2.
+This guide explains how to upgrade ShiftManager from an older version to 3.1.3.
 
 ================================================================================
 BEFORE YOU START
@@ -15,8 +15,8 @@ BEFORE YOU START
 âœ“ Have backup procedures ready
 âœ“ Note your current version number
 
-Current Version: 3.1.2
-Release Date: 2026-03-09
+Current Version: 3.1.3
+Release Date: 2026-03-13
 
 ================================================================================
 UPGRADE SCENARIOS
@@ -55,7 +55,7 @@ Step 4: Backup Current Installation (Optional but Recommended)
   - Or copy the entire folder to another location
 
 Step 5: Extract New Version
-  - Extract ShiftManager-v3.1.2-win-x64.zip
+  - Extract ShiftManager-v3.1.3-win-x64.zip
   - Extract to the same location as the old version
   - Overwrite files when prompted
 
@@ -105,7 +105,7 @@ Step 2: Backup Your Data
   - Copy the entire folder as backup (recommended)
 
 Step 3: Extract New Version
-  - Extract ShiftManager-v3.1.2-win-x64.zip
+  - Extract ShiftManager-v3.1.3-win-x64.zip
   - Extract to the same location as the old version
   - Overwrite all files when prompted
 
@@ -149,7 +149,7 @@ Step 2: Backup Your Data
   - Copy the entire folder as backup (recommended)
 
 Step 3: Extract New Version
-  - Extract ShiftManager-v3.1.2-win-x64.zip
+  - Extract ShiftManager-v3.1.3-win-x64.zip
   - Extract to the same location
   - Overwrite all files EXCEPT web.config (if you customized it)
 
@@ -245,7 +245,7 @@ Strategy:
   3. Merge your custom settings into the new file
   4. Check for new optional settings you may want to configure
 
-New Settings in 3.1.2:
+New Settings in 3.1.3:
   [List any new settings here]
 
 ================================================================================
@@ -320,9 +320,9 @@ For each issue, the guide provides step-by-step solutions.
 VERSION-SPECIFIC NOTES
 ================================================================================
 
-Version 3.1.2:
-  - Built: 2026-03-09 23:27:17 UTC
-  - Git Commit: 99f7a99
+Version 3.1.3:
+  - Built: 2026-03-13 21:15:05 UTC
+  - Git Commit: bd28afa
   - Changes: See VERSION.txt for full changelog
 
 Breaking Changes: None
@@ -341,7 +341,7 @@ If you encounter issues during upgrade:
 4. Review application logs for error messages
 5. Contact support with:
    - Old version number
-   - New version number (3.1.2)
+   - New version number (3.1.3)
    - Error messages
    - Steps taken so far
 
