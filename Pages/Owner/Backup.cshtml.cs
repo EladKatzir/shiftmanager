@@ -13,18 +13,26 @@ namespace ShiftManager.Pages.Owner;
 [Authorize(Policy = "Grant:AdminAccess")]
 public class BackupModel : PageModel
 {
-    private readonly IWebHostEnvironment _env;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<BackupModel> _logger;
+    private readonly string _dbPath;
+    private readonly string _backupsFolder;
 
     public BackupModel(
-        IWebHostEnvironment env,
+        IConfiguration configuration,
         IAuditLogService auditLogService,
         ILogger<BackupModel> logger)
     {
-        _env = env;
         _auditLogService = auditLogService;
         _logger = logger;
+
+        // Extract database path from connection string (same pattern as DatabaseBackupService)
+        var connectionString = configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+        var parts = connectionString.Split('=', 2);
+        _dbPath = parts.Length > 1 ? parts[1].Trim() : "app.db";
+
+        // Use configured backup directory, fallback to ./Backups
+        _backupsFolder = configuration.GetValue<string>("Backup:Directory") ?? "Backups";
     }
 
     public List<BackupFileInfo> Backups { get; set; } = new();
@@ -62,14 +70,14 @@ public class BackupModel : PageModel
         try
         {
             var currentUserId = GetCurrentUserId();
-            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
+            var backupsFolder = _backupsFolder;
             Directory.CreateDirectory(backupsFolder);
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var backupFileName = $"backup_{timestamp}.db";
             var backupFilePath = Path.Combine(backupsFolder, backupFileName);
 
-            var dbPath = Path.Combine(_env.ContentRootPath, "app.db");
+            var dbPath = _dbPath;
 
             if (!System.IO.File.Exists(dbPath))
             {
@@ -130,8 +138,8 @@ public class BackupModel : PageModel
                 return Page();
             }
 
-            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
-            var dbPath = Path.Combine(_env.ContentRootPath, "app.db");
+            var backupsFolder = _backupsFolder;
+            var dbPath = _dbPath;
 
             // Create a backup of current database before restoring
             var preRestoreBackup = Path.Combine(backupsFolder, $"pre_restore_{DateTime.Now:yyyyMMdd_HHmmss}.db");
@@ -260,7 +268,7 @@ public class BackupModel : PageModel
     {
         try
         {
-            var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
+            var backupsFolder = _backupsFolder;
             if (!Directory.Exists(backupsFolder))
             {
                 Directory.CreateDirectory(backupsFolder);
@@ -299,7 +307,7 @@ public class BackupModel : PageModel
             return null;
         }
 
-        var backupsFolder = Path.Combine(_env.ContentRootPath, "Backups");
+        var backupsFolder = _backupsFolder;
         var fullPath = Path.GetFullPath(Path.Combine(backupsFolder, backupFileName));
 
         // Ensure resolved path stays within Backups folder
