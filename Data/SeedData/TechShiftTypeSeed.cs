@@ -12,13 +12,14 @@ public static class TechShiftTypeSeed
     /// Gets the tech shift types to be seeded for a given company.
     /// Each tech shift type maps to a department-scoped grant for eligibility filtering.
     /// </summary>
-    public static List<ShiftType> GetTechShiftTypes(int companyId)
+    public static List<ShiftType> GetTechShiftTypes(int companyId, int moleculeId)
     {
         return new List<ShiftType>
         {
             new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = moleculeId,
                 Key = ShiftType.TECH_HANAVA,
                 TechShiftType = ShiftType.TECH_HANAVA,
                 CustomName = "Hanava Tech Shift",
@@ -30,6 +31,7 @@ public static class TechShiftTypeSeed
             new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = moleculeId,
                 Key = ShiftType.TECH_DELTA,
                 TechShiftType = ShiftType.TECH_DELTA,
                 CustomName = "Delta Tech Shift",
@@ -41,6 +43,7 @@ public static class TechShiftTypeSeed
             new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = moleculeId,
                 Key = ShiftType.TECH_YEKEV,
                 TechShiftType = ShiftType.TECH_YEKEV,
                 CustomName = "Yekev Tech Shift",
@@ -52,13 +55,15 @@ public static class TechShiftTypeSeed
             new ShiftType
             {
                 CompanyId = companyId,
+                MoleculeId = moleculeId,
                 Key = ShiftType.TECH_MOVILTECH,
                 TechShiftType = ShiftType.TECH_MOVILTECH,
                 CustomName = "Moviltech Tech Shift",
                 NameKey = "TechShift_Moviltech",
                 Start = new TimeOnly(8, 0),
                 End = new TimeOnly(16, 0),
-                RowColor = "#D9A04A"
+                RowColor = "#D9A04A",
+                RequiresOfficerRank = true
             }
         };
     }

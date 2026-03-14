@@ -185,6 +185,35 @@ public static class ShiftyOrganizationSeed
         await db.SaveChangesAsync();
 
         // ============================================================
+        // TECH SHIFT TYPES (for Shikma)
+        // ============================================================
+        var hqShikma = db.Companies.Local.FirstOrDefault(c => c.MoleculeId == shikma.Id && c.IsHeadquarters)
+            ?? await db.Companies.FirstOrDefaultAsync(c => c.MoleculeId == shikma.Id && c.IsHeadquarters);
+        if (hqShikma != null)
+        {
+            var techShiftTypes = TechShiftTypeSeed.GetTechShiftTypes(hqShikma.Id, shikma.Id);
+
+            // Set EligibleCompanyIds now that company IDs are known
+            foreach (var st in techShiftTypes)
+            {
+                if (st.TechShiftType == ShiftType.TECH_HANAVA || st.TechShiftType == ShiftType.TECH_DELTA)
+                {
+                    st.EligibleCompanyIds = System.Text.Json.JsonSerializer.Serialize(
+                        new[] { shikTao.Id, shikPie.Id, shikSamapkamia.Id });
+                }
+                else if (st.TechShiftType == ShiftType.TECH_YEKEV)
+                {
+                    st.EligibleCompanyIds = System.Text.Json.JsonSerializer.Serialize(
+                        new[] { shikYekev.Id });
+                }
+                // MOVILTECH: EligibleCompanyIds stays null (all companies), RequiresOfficerRank = true (set in TechShiftTypeSeed)
+            }
+
+            db.ShiftTypes.AddRange(techShiftTypes);
+            await db.SaveChangesAsync();
+        }
+
+        // ============================================================
         // SHIFT GROUPINGS (for Oren - Tzafon/Darom/Tacti structure)
         // ============================================================
 
