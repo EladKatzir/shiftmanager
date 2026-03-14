@@ -156,8 +156,9 @@ public class ShiftsModel : PageModel
         // Load available job types for selected molecule
         await LoadAvailableJobTypesAsync(SelectedMolecule?.Id);
 
-        // Validate selected job type
-        if (JobTypeId.HasValue && !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
+        // Validate selected job type — also fall back when user has no JobTypeId
+        // (e.g. Tech molecule users who don't get a JobTypeId during signup)
+        if (!JobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
         {
             JobTypeId = AvailableJobTypes.FirstOrDefault()?.Id;
         }
@@ -174,22 +175,23 @@ public class ShiftsModel : PageModel
                   await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId);
 
         // Build calendar data based on mode
-        if (MoleculeId.HasValue && JobTypeId.HasValue)
+        // JobTypeId may be null for Tech molecules — service handles nullable jobTypeId
+        if (MoleculeId.HasValue)
         {
             if (Mode == "user")
             {
-                await BuildUserBasedCalendarAsync(MoleculeId.Value, JobTypeId.Value);
+                await BuildUserBasedCalendarAsync(MoleculeId.Value, JobTypeId);
             }
             else
             {
-                await BuildShiftBasedCalendarAsync(MoleculeId.Value, JobTypeId.Value);
+                await BuildShiftBasedCalendarAsync(MoleculeId.Value, JobTypeId);
             }
         }
 
         // Expose users for bottom-sheet dropdown (same query as BuildUserBasedCalendarAsync)
-        if (MoleculeId.HasValue && JobTypeId.HasValue)
+        if (MoleculeId.HasValue)
         {
-            Users = await _calendarService.GetUsersForCalendarAsync(MoleculeId.Value, JobTypeId.Value);
+            Users = await _calendarService.GetUsersForCalendarAsync(MoleculeId.Value, JobTypeId);
         }
 
         // Load trainees for trainee assignment dropdown
@@ -272,12 +274,19 @@ public class ShiftsModel : PageModel
         AvailableJobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(moleculeId.Value);
     }
 
-    private async Task BuildShiftBasedCalendarAsync(int moleculeId, int jobTypeId)
+    private async Task BuildShiftBasedCalendarAsync(int moleculeId, int? jobTypeId)
     {
         // Get shift types for this molecule/job type
-        var shiftTypes = (await _db.ShiftTypes
+        var shiftTypeQuery = _db.ShiftTypes
             .IgnoreQueryFilters()
-            .Where(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId)
+            .Where(st => st.MoleculeId == moleculeId);
+
+        if (jobTypeId.HasValue)
+            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == jobTypeId.Value);
+        else
+            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
+
+        var shiftTypes = (await shiftTypeQuery
             .OrderBy(st => st.Start)
             .ToListAsync())
             .OrderBy(st => st.Start)
@@ -336,12 +345,19 @@ public class ShiftsModel : PageModel
         };
     }
 
-    private async Task BuildUserBasedCalendarAsync(int moleculeId, int jobTypeId)
+    private async Task BuildUserBasedCalendarAsync(int moleculeId, int? jobTypeId)
     {
         // Load shift types for the bottom-sheet dropdown (in user-mode, user picks a shift type)
-        ShiftTypes = (await _db.ShiftTypes
+        var shiftTypeQuery = _db.ShiftTypes
             .IgnoreQueryFilters()
-            .Where(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId)
+            .Where(st => st.MoleculeId == moleculeId);
+
+        if (jobTypeId.HasValue)
+            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == jobTypeId.Value);
+        else
+            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
+
+        ShiftTypes = (await shiftTypeQuery
             .OrderBy(st => st.Start)
             .ToListAsync())
             .OrderBy(st => st.Start)

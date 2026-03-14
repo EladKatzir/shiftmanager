@@ -23,37 +23,46 @@ public class ShiftCalendarService : IShiftCalendarService
         _companyCacheService = companyCacheService;
     }
 
-    public async Task<List<AppUser>> GetUsersForCalendarAsync(int moleculeId, int jobTypeId)
+    public async Task<List<AppUser>> GetUsersForCalendarAsync(int moleculeId, int? jobTypeId)
     {
         // C-07 OPTIMIZED: Single query with join instead of two separate queries
         // SECURITY-AUDITED: SAFE — re-scoped by molecule membership + jobTypeId
-        return await _db.Users
+        var query = _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive
-                && u.JobTypeId == jobTypeId
-                && _db.Companies.Any(c => c.Id == u.CompanyId && c.MoleculeId == moleculeId))
+                && _db.Companies.Any(c => c.Id == u.CompanyId && c.MoleculeId == moleculeId));
+
+        if (jobTypeId.HasValue)
+            query = query.Where(u => u.JobTypeId == jobTypeId.Value);
+
+        return await query
             .Include(u => u.JobType)
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
     }
 
-    public async Task<List<ShiftInstance>> GetShiftInstancesAsync(int moleculeId, int jobTypeId, DateOnly start, DateOnly end)
+    public async Task<List<ShiftInstance>> GetShiftInstancesAsync(int moleculeId, int? jobTypeId, DateOnly start, DateOnly end)
     {
         // SECURITY-AUDITED: SAFE — scoped by moleculeId + jobTypeId + date range
-        return await _db.ShiftInstances
+        var query = _db.ShiftInstances
             .IgnoreQueryFilters()
             .Include(si => si.ShiftType)
             .Where(si => si.ShiftType.MoleculeId == moleculeId
-                && si.ShiftType.JobTypeId == jobTypeId
                 && si.WorkDate >= start
-                && si.WorkDate <= end)
-            .ToListAsync();
+                && si.WorkDate <= end);
+
+        if (jobTypeId.HasValue)
+            query = query.Where(si => si.ShiftType.JobTypeId == jobTypeId.Value);
+        else
+            query = query.Where(si => si.ShiftType.JobTypeId == null);
+
+        return await query.ToListAsync();
     }
 
-    public async Task<List<ShiftAssignment>> GetAssignmentsAsync(int moleculeId, int jobTypeId, DateOnly start, DateOnly end)
+    public async Task<List<ShiftAssignment>> GetAssignmentsAsync(int moleculeId, int? jobTypeId, DateOnly start, DateOnly end)
     {
         // SECURITY-AUDITED: SAFE — scoped by moleculeId + jobTypeId + date range
-        return await _db.ShiftAssignments
+        var query = _db.ShiftAssignments
             .IgnoreQueryFilters()
             .Include(sa => sa.User)
             .Include(sa => sa.Trainee)
@@ -61,19 +70,30 @@ public class ShiftCalendarService : IShiftCalendarService
                 .ThenInclude(si => si.ShiftType)
             .AsSplitQuery() // C-07: split multi-include query to avoid cartesian explosion
             .Where(sa => sa.ShiftInstance.ShiftType.MoleculeId == moleculeId
-                && sa.ShiftInstance.ShiftType.JobTypeId == jobTypeId
                 && sa.ShiftInstance.WorkDate >= start
-                && sa.ShiftInstance.WorkDate <= end)
-            .ToListAsync();
+                && sa.ShiftInstance.WorkDate <= end);
+
+        if (jobTypeId.HasValue)
+            query = query.Where(sa => sa.ShiftInstance.ShiftType.JobTypeId == jobTypeId.Value);
+        else
+            query = query.Where(sa => sa.ShiftInstance.ShiftType.JobTypeId == null);
+
+        return await query.ToListAsync();
     }
 
-    public async Task<int> GetCapacityAsync(int shiftTypeId, int moleculeId, int jobTypeId, DateOnly date)
+    public async Task<int> GetCapacityAsync(int shiftTypeId, int moleculeId, int? jobTypeId, DateOnly date)
     {
-        var overrideCapacity = await _db.ShiftCapacityOverrides
+        var query = _db.ShiftCapacityOverrides
             .Where(o => o.ShiftTypeId == shiftTypeId
                 && o.MoleculeId == moleculeId
-                && o.JobTypeId == jobTypeId
-                && o.Date == date)
+                && o.Date == date);
+
+        if (jobTypeId.HasValue)
+            query = query.Where(o => o.JobTypeId == jobTypeId.Value);
+        else
+            query = query.Where(o => o.JobTypeId == null);
+
+        var overrideCapacity = await query
             .Select(o => (int?)o.Capacity)
             .FirstOrDefaultAsync();
 
@@ -105,30 +125,39 @@ public class ShiftCalendarService : IShiftCalendarService
     }
 
     public async Task<Dictionary<(int ShiftTypeId, DateOnly Date), int>> GetCapacitiesBatchAsync(
-        int moleculeId, int jobTypeId, DateOnly start, DateOnly end)
+        int moleculeId, int? jobTypeId, DateOnly start, DateOnly end)
     {
         var result = new Dictionary<(int ShiftTypeId, DateOnly Date), int>();
 
         // 1) Batch-load all capacity overrides for this scope and date range (single query)
-        var overrides = await _db.ShiftCapacityOverrides
+        var overrideQuery = _db.ShiftCapacityOverrides
             .Where(o => o.MoleculeId == moleculeId
-                && o.JobTypeId == jobTypeId
                 && o.Date >= start
-                && o.Date <= end)
-            .ToListAsync();
+                && o.Date <= end);
 
+        if (jobTypeId.HasValue)
+            overrideQuery = overrideQuery.Where(o => o.JobTypeId == jobTypeId.Value);
+        else
+            overrideQuery = overrideQuery.Where(o => o.JobTypeId == null);
+
+        var overrides = await overrideQuery.ToListAsync();
         var overrideLookup = overrides.ToLookup(o => (o.ShiftTypeId, o.Date));
 
         // 2) Batch-load all shift instances to get default StaffingRequired (single query)
         // SECURITY-AUDITED: SAFE — scoped by moleculeId + jobTypeId + date range
-        var instances = await _db.ShiftInstances
+        var instanceQuery = _db.ShiftInstances
             .IgnoreQueryFilters()
             .Include(si => si.ShiftType)
             .Where(si => si.ShiftType.MoleculeId == moleculeId
-                && si.ShiftType.JobTypeId == jobTypeId
                 && si.WorkDate >= start
-                && si.WorkDate <= end)
-            .ToListAsync();
+                && si.WorkDate <= end);
+
+        if (jobTypeId.HasValue)
+            instanceQuery = instanceQuery.Where(si => si.ShiftType.JobTypeId == jobTypeId.Value);
+        else
+            instanceQuery = instanceQuery.Where(si => si.ShiftType.JobTypeId == null);
+
+        var instances = await instanceQuery.ToListAsync();
 
         foreach (var instance in instances)
         {
@@ -143,13 +172,19 @@ public class ShiftCalendarService : IShiftCalendarService
         return result;
     }
 
-    public async Task SetCapacityOverrideAsync(int shiftTypeId, int moleculeId, int jobTypeId, DateOnly date, int capacity, int userId)
+    public async Task SetCapacityOverrideAsync(int shiftTypeId, int moleculeId, int? jobTypeId, DateOnly date, int capacity, int userId)
     {
-        var existing = await _db.ShiftCapacityOverrides
-            .FirstOrDefaultAsync(o => o.ShiftTypeId == shiftTypeId
+        var query = _db.ShiftCapacityOverrides
+            .Where(o => o.ShiftTypeId == shiftTypeId
                 && o.MoleculeId == moleculeId
-                && o.JobTypeId == jobTypeId
                 && o.Date == date);
+
+        if (jobTypeId.HasValue)
+            query = query.Where(o => o.JobTypeId == jobTypeId.Value);
+        else
+            query = query.Where(o => o.JobTypeId == null);
+
+        var existing = await query.FirstOrDefaultAsync();
 
         if (existing != null)
         {
@@ -173,19 +208,54 @@ public class ShiftCalendarService : IShiftCalendarService
         await _db.SaveChangesAsync();
     }
 
-    public async Task RemoveCapacityOverrideAsync(int shiftTypeId, int moleculeId, int jobTypeId, DateOnly date)
+    public async Task RemoveCapacityOverrideAsync(int shiftTypeId, int moleculeId, int? jobTypeId, DateOnly date)
     {
-        var existing = await _db.ShiftCapacityOverrides
-            .FirstOrDefaultAsync(o => o.ShiftTypeId == shiftTypeId
+        var query = _db.ShiftCapacityOverrides
+            .Where(o => o.ShiftTypeId == shiftTypeId
                 && o.MoleculeId == moleculeId
-                && o.JobTypeId == jobTypeId
                 && o.Date == date);
+
+        if (jobTypeId.HasValue)
+            query = query.Where(o => o.JobTypeId == jobTypeId.Value);
+        else
+            query = query.Where(o => o.JobTypeId == null);
+
+        var existing = await query.FirstOrDefaultAsync();
 
         if (existing != null)
         {
             _db.ShiftCapacityOverrides.Remove(existing);
             await _db.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<AppUser>> GetEligibleUsersForShiftTypeAsync(int moleculeId, int shiftTypeId)
+    {
+        // SECURITY-AUDITED: SAFE — scoped by moleculeId + shiftTypeId; eligibility filters applied
+        var shiftType = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(st => st.Id == shiftTypeId);
+
+        if (shiftType == null) return new List<AppUser>();
+
+        var query = _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.IsActive
+                && _db.Companies.Any(c => c.Id == u.CompanyId && c.MoleculeId == moleculeId));
+
+        // Apply company eligibility filter
+        var eligibleCompanyIds = shiftType.GetEligibleCompanyIdList();
+        if (eligibleCompanyIds != null)
+            query = query.Where(u => eligibleCompanyIds.Contains(u.CompanyId));
+
+        // Apply officer rank filter (SegenMishne = 9)
+        if (shiftType.RequiresOfficerRank)
+            query = query.Where(u => (int)u.Rank >= 9);
+
+        return await query
+            .Include(u => u.JobType)
+            .OrderBy(u => u.DisplayName)
+            .ToListAsync();
     }
 
     public async Task<AssignmentResult> AssignUserAsync(int shiftInstanceId, int userId, int assignedByUserId)

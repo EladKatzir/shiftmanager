@@ -43,7 +43,7 @@ public class GetShiftsDataModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(
         [FromQuery] int moleculeId,
-        [FromQuery] int jobTypeId,
+        [FromQuery] int? jobTypeId,
         [FromQuery] string startDate,
         [FromQuery] string endDate)
     {
@@ -62,8 +62,8 @@ public class GetShiftsDataModel : PageModel
                 return new JsonResult(new { success = false, message = "Invalid date format" }) { StatusCode = 400 };
             }
 
-            // Validate scope parameters
-            if (moleculeId <= 0 || jobTypeId <= 0)
+            // Validate scope parameters (jobTypeId is nullable for Tech molecules)
+            if (moleculeId <= 0 || (jobTypeId.HasValue && jobTypeId.Value <= 0))
             {
                 return new JsonResult(new { success = false, message = "Invalid scope parameters" }) { StatusCode = 400 };
             }
